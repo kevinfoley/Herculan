@@ -37,6 +37,40 @@ Eight functions each read one whole file into a global with `Ovl_ReadFile` (`ES1
 
 The heap is what `Mem_InitHeap` gives for the dword `0007e738`, also 3,700,000 ([who makes the heap](../simulation/memory.md#who-makes-the-heap)).
 
+### `BND\MAP.BND` and `BND\SHELLMAP.BND`
+
+The war map's map's constants ([the map](../shell/map.md#the-tuning-files)). `MAP.BND`, at `0009a420`, the base class's, the same numbers ES2's `Map` has in its image ([the six buttons](../../retail/shell/mission-map.md#the-six-buttons)):
+
+| Offset | Type | Value | Read by |
+|---|---|---|---|
+| 0 | `uint32` | the [first dword](#the-first-dword) | |
+| 4 | `int32` | 100000 | `Map_PanStepFor` (`0000911c`), the step's top |
+| 8 | `int32` | 5000 | `Map_PanStepFor`, the step's bottom |
+| 12 | `int32` | 5,000,000 | |
+| 16 | `int32` | 50000 | |
+| 20 | `int32` | 50000 | `Map_PanStepFor`, the altitude's bottom |
+| 24 | `int32` | 1,000,000 | `Map_PanStepFor`, the altitude's top |
+| 28 | `int32` | 200000 | `Map_Ctor` (`00008cfd`), the starting altitude |
+
+`SHELLMAP.BND`, at `0009a44c`, 142 bytes; the offsets the shell's map reads in its build:
+
+| Offset | Type | Value | Global | Read by |
+|---|---|---|---|---|
+| 0 | `uint32` | the [first dword](#the-first-dword) | | |
+| `0x24` | `int16` | 7 | `ShellMapBnd_SquadGadgetSize` (`0009a470`) | `ShellMap_BuildGadgets` (`0000d1bb`), a squad member's gadget size |
+| `0x2a` | `int16` | 13 | `ShellMapBnd_BaseGadgetSize` (`0009a476`) | the same, a base's |
+| `0x2c` | `int16` | 7 | `ShellMapBnd_SmallBaseGadgetSize` (`0009a478`) | the same, a base of type 5, 6 or 8 |
+| `0x32` | byte | 1 | `ShellMapBnd_DrawShapes` (`0009a47e`) | `ShellMap_Constructor` (`000094d9`): non-zero draws the zone's shapes, 0 the 2D icons |
+| `0x34` | `int16` | 10 | `ShellMapBnd_LineSpacing` (`0009a480`) | the constructor, a text label's height |
+| `0x36` | `int32` | 1000 | `ShellMapBnd_FullViewMargin` (`0009a482`) | `ShellMap_FitFullView` (`0000ce8a`), the margin |
+| `0x3a` | `int32` | 20000 | `ShellMapBnd_SquadViewMargin` (`0009a486`) | `ShellMap_FitSquad` (`0000d0a9`), the margin |
+| `0x7e` | `int16` | 3 | `ShellMapBnd_GadgetTextMargin` (`0009a4ca`) | `MapGadget_Ctor` (`0000da8d`), the text's margin on each side |
+| `0x80` | `int16` | 10 | `ShellMapBnd_CalloutHeight` (`0009a4cc`) | `ShellMap_PlaceCallout` (`0000d72b`), the box's height |
+| `0x82` | `int16` | 5 | `ShellMapBnd_CalloutGap` (`0009a4ce`) | the same, the gap |
+| `0x84` | `int16` | 5 | `ShellMapBnd_PointerWidth` (`0009a4d0`) | the same, the pointer's width |
+| `0x86` | `int32` | 50000 | `ShellMapBnd_BoundsMargin` (`0009a4d2`) | `ShellMap_LoadScriptDat` (`0000c068`), the bounds' margin |
+| `0x8a` | `int32` | 75000 | `ShellMapBnd_ShapeArenaSize` (`0009a4d6`) | `ShellMap_LoadResources` (`000093b3`) and `ShellMap_LoadShapeRoots` (`000092b9`), the shape arena's size |
+
 ## The simulator's files
 
 `CAM.BND` is [below](#bndcambnd). For the other 62 no loader was found ([Open](#open)). Six share a name with a shell file and hold other bytes: `ALERT`, `CAL_ALRT`, `CTL_ALRT`, `CTL_MGR`, `IMDEVICE` and `MAIN`, the last 30 bytes where the shell's is 20. `GRENADE.BND`, `GUNLIST.BND` and `SMOKE.BND` are byte for byte ES2's files of those names.
@@ -61,5 +95,5 @@ The heap is what `Mem_InitHeap` gives for the dword `0007e738`, also 3,700,000 (
 ## Open
 
 - **Open:** whether `ES1DBSIM` reads any `bnd\` file. `es2_xref` finds no reference to its `bnd` pointer `000980c0`, where the same sweep finds both pushes of `dmg`'s pointer `000980e0`; a case-insensitive search of the image's bytes finds no `cam` or `.bnd` string, where it finds `dmg` and `damage.cpp`.
-- **Open:** what the shell reads of seven of its eight files, and of `MAIN.BND`'s offsets 0, 4 and 16; what the byte `Shell_LowMemory` (`0007fd09`) changes.
+- **Open:** what the shell reads of `ALERT`, `CTL_ALRT`, `CAL_ALRT`, `CTL_MGR` and `IMDEVICE`, of `MAIN.BND`'s offsets 0, 4 and 16, and of `MAP.BND`'s and `SHELLMAP.BND`'s offsets the tables leave unread, which the map's running may read ([the map's Open](../shell/map.md#open)); what the byte `Shell_LowMemory` (`0007fd09`) changes.
 - **Open:** whether anything reads the first dword, and what wrote it.

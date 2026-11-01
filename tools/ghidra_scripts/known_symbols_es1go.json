@@ -1447,11 +1447,71 @@
       "type": "function",
       "confidence": "high",
       "name": "Map_LoadBnd",
-      "description": "No arguments: Ovl_ReadFile(bnd\\map, 1, 0x20, 0009a420) in stack order, the whole of BND\\MAP.BND. The static initialiser 00009174 registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "description": "No arguments: Ovl_ReadFile(bnd\\map, 1, 0x20, 0009a420) in stack order, the whole of BND\\MAP.BND. The static initialiser Map_StaticInit (00009174) registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
       "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
       "verified": {
         "bytes": "00008cd4+41",
         "sha1": "6284ed6dd9e9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00008cfd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Map_Ctor",
+      "description": "(map, rect) in stack order, callee-cleaned, map.cpp: ES2's Map_Ctor (VSHELL 0041fdc8) on ES1's layout, every field 4 bytes lower and the vtable MapVtable (0007e1ce) at +0x4a: width and height at +0x42/+0x46; GLViewport_Ctor (0) at +0, its rect +0x210..+0x21c the rect, its +0x220/+0x224 the negated half width and height and +0x208 1; the position +0xe/+0x12 0 and the altitude +0x16 MapBnd_StartAltitude (0009a43c); the focal shift +0xc 7; TSCamera_Ctor(0, Map_CameraOrientation (0009a444), +0xe, 0x80, 7, the viewport) at +8; the pan +0x36/+0x3a 0; Map_PanStepFor (0000911c).",
+      "source": "Herculan/docs/es1/shell/map.md#the-base-class; ES1GO decompile at 00008cfd; es2_naming.py diff ES1GO 00008cfd VSHELL 0041fdc8",
+      "verified": {
+        "bytes": "00008cfd+415",
+        "sha1": "f6cb7da6820a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00008e9c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Map_Dtor",
+      "description": "(map), callee-cleaned, map.cpp: stores MapVtable (0007e1ce) at +0x4a, destroys the viewport +0 through its slot +0x1c with 3 and the camera +8 through slot +4 of its table at +0x12 with 3, each when set. es2_xref finds one call, from ShellMap_Dtor (00009a73).",
+      "source": "Herculan/docs/es1/shell/map.md#the-base-class; ES1GO decompile at 00008e9c",
+      "verified": {
+        "bytes": "00008e9c+74",
+        "sha1": "985b6240b8cf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000911c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Map_PanStepFor",
+      "description": "(map), callee-cleaned, map.cpp: ES2's Map_PanStepFor (VSHELL 00420195) on ES1's layout: the pan step +0x3e from the altitude +0x16, ((altitude - MapBnd_AltitudeLow (0009a434) >> 3) * (MapBnd_PanStepHigh (0009a424) - MapBnd_PanStepLow (0009a428) >> 3)) / (MapBnd_AltitudeHigh (0009a438) - MapBnd_AltitudeLow >> 3) * 8 + MapBnd_PanStepLow, MAP.BND's values.",
+      "source": "Herculan/docs/es1/shell/map.md#the-base-class; ES1GO decompile at 0000911c; es2_naming.py diff ES1GO 0000911c VSHELL 00420195",
+      "verified": {
+        "bytes": "0000911c+88",
+        "sha1": "006198d5dca6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009174",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Map_StaticInit",
+      "description": "No arguments, map.cpp's static initialiser (static constructor table entry 0009a228): RegisterSubsystemLoader (0000fca0)(1, Map_LoadBnd (00008cd4)), then Map_CameraOrientation (0009a444) = {0xc000, 0, 0}. ES2's Map_StaticInit (VSHELL 004201e5), which registers no loader.",
+      "source": "Herculan/docs/es1/shell/map.md#the-base-class; ES1GO decompile at 00009174",
+      "verified": {
+        "bytes": "00009174+155",
+        "sha1": "039a8daab3fa",
         "scope": "body",
         "via": "decompile"
       }
@@ -1492,7 +1552,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_LoadShapeRoots",
-      "description": "(tag, path, out) in stack order, callee-cleaned, src\\shellmap.cpp: ES1DBSIM's Shape_LoadAllRoots (000635a8) without its skip. Opens path with VolRStream_CtorFromPath, pushes an arena with cursor 0, the limit the dword at 0009a4d6 and the base the pointer at 0007e20c (ArenaStack_Push), then for each chunk ClassItem_PeekTypeTag finds: a tag other than tag is a severity-5 assert (line 0x61); ClassItem_LoadResource in mode 0 into a 100-slot stack buffer, the loop not testing the count against it. Copies the pointers into an array from the current arena 000aa110 (Arena_Alloc), stores it through out, ArenaStack_Pop, closes the stream and returns the count in AX. es2_xref finds one call, from ShellMap_LoadZoneShapes (0000c7e3).",
+      "description": "(tag, path, out) in stack order, callee-cleaned, src\\shellmap.cpp: ES1DBSIM's Shape_LoadAllRoots (000635a8) without its skip. Opens path with VolRStream_CtorFromPath, pushes an arena with cursor 0, the limit the dword at ShellMapBnd_ShapeArenaSize (0009a4d6) and the base the pointer at 0007e20c (ArenaStack_Push), then for each chunk ClassItem_PeekTypeTag finds: a tag other than tag is a severity-5 assert (line 0x61); ClassItem_LoadResource in mode 0 into a 100-slot stack buffer, the loop not testing the count against it. Copies the pointers into an array from the current arena 000aa110 (Arena_Alloc), stores it through out, ArenaStack_Pop, closes the stream and returns the count in AX. es2_xref finds one call, from ShellMap_LoadZoneShapes (0000c7e3).",
       "source": "ES1GO disassembly at 000092b9",
       "verified": {
         "bytes": "000092b9+250",
@@ -1507,7 +1567,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_LoadResources",
-      "description": "(): registers 000092ae with Timer_AddCallback (00056509) at a count of 2, keeping the slot in the word 0007e20a; loads the folder names icons and mapshp under the dword 00086840 with ShellMap_LoadResource into 000aa2b8 and 000aa2bc, and the name 0007e256 under 00086850 with 00009275 into 000aa2c0; and Mem_New's a block of the word 0009a4d6's size into 0007e20c. es2_xref finds one call, from Shell_Main (00012ec7); ShellMap_ReleaseResources (00009453) undoes it.",
+      "description": "(): registers 000092ae with Timer_AddCallback (00056509) at a count of 2, keeping the slot in the word 0007e20a; loads the folder names icons and mapshp under the dword 00086840 with ShellMap_LoadResource into 000aa2b8 and 000aa2bc, and the name 0007e256 under 00086850 with 00009275 into ShellMap_LabelFont (000aa2c0); and Mem_New's a block of the word ShellMapBnd_ShapeArenaSize (0009a4d6)'s size into 0007e20c. es2_xref finds one call, from Shell_Main (00012ec7); ShellMap_ReleaseResources (00009453) undoes it.",
       "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile at 000093b3",
       "verified": {
         "bytes": "000093b3+160",
@@ -1522,11 +1582,146 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_ReleaseResources",
-      "description": "(): removes the timer callback slot 0007e20a with Timer_RemoveCallback, destroys the bitmap arrays 000aa2b8 and 000aa2bc with GLBitmapArray_Dtor(array, 3) and the object 000aa2c0 through its slot +0x1c with 3 when set, and Mem_Delete's 0007e20c when set. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
+      "description": "(): removes the timer callback slot 0007e20a with Timer_RemoveCallback, destroys the bitmap arrays 000aa2b8 and 000aa2bc with GLBitmapArray_Dtor(array, 3) and the object ShellMap_LabelFont (000aa2c0) through its slot +0x1c with 3 when set, and Mem_Delete's 0007e20c when set. es2_xref finds one call, from Shell_Main (00012ec7), at the shutdown.",
       "source": "Herculan/docs/es1/shell/startup.md#the-shutdown; ES1GO decompile at 00009453",
       "verified": {
         "bytes": "00009453+134",
         "sha1": "aa8b69bdc5c0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000094d9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_Constructor",
+      "description": "(map, rect) in stack order, callee-cleaned, src\\shellmap.cpp: the war map's map, 0x4c8 bytes allocated for a null map (0 when that fails), on Map_Ctor (00008cfd), with ShellMapVtable (0007e268) at +0x4a. Copies ShellMapBnd_DrawShapes (0009a47e) to ShellMap_DrawShapes (000aa2b6); loads data\\object.str's group 0 into +0x148 (count +0x198) and str\\maplabel's groups 0 and 1 into +0x1aa and +0x274 (counts +0x272, +0x33c) with StringTable_LoadFromFile (0001026a) and StringTable_LoadGroup (000103b8); builds 22 labels in ShellMap_LabelFont (000aa2c0): +0x362 and twenty at +0x366 in rows ShellMapBnd_LineSpacing (0009a480) high, and the callout +0x482 with fill colour 0x3f; builds the TSSunLight at +0x4e (intensity 100, words +0xc/+0xe/+0x10 7000, 0, -7000) and registers it with Light_Register; runs ShellMap_LoadScriptDat (0000c068), ShellMap_FitFullView (0000ce8a) and ShellMap_FitSquad (0000d0a9); makes the gadget window +0x134 with CTLWindow_Ctor (0001144a) and Widget_SetActiveRoot (0001070d); ShellMap_BuildGadgets (0000d1bb); the selected gadget +0x480 -1 and ShellMap_PlaceCallout (0000d72b); +0x4c1 2 and +0x4c0 0. ES2's ShellMap_Constructor (VSHELL 00423f43). es2_xref finds one call, from Shell_PrepareMission (0002a523).",
+      "source": "Herculan/docs/es1/shell/map.md#building-it; ES1GO decompile at 000094d9",
+      "verified": {
+        "bytes": "000094d9+1191",
+        "sha1": "3b167174f609",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009980",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_PositionElementCtor",
+      "description": "(element), callee-cleaned: allocates 12 bytes when element is null (returning 0 when that fails) and returns it, storing nothing. ShellMap_Constructor (000094d9) runs it with __vec_ctor over the eight squad positions at +0xd4, and ShellMap_LoadScriptDat (0000c068) with __vec_new for the points.",
+      "source": "Herculan/docs/es1/shell/map.md#building-it; ES1GO decompile at 00009980",
+      "verified": {
+        "bytes": "00009980+50",
+        "sha1": "a72c3364a24f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000099b2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_PointElementCtor",
+      "description": "(element), callee-cleaned: allocates 8 bytes when element is null and returns it, storing nothing. ShellMap_Constructor (000094d9) runs it with __vec_ctor over the callout pointer's three points at +0x486.",
+      "source": "Herculan/docs/es1/shell/map.md#building-it; ES1GO decompile at 000099b2",
+      "verified": {
+        "bytes": "000099b2+27",
+        "sha1": "8154d16a1724",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000099cd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSLight_Dtor",
+      "description": "(light, flags) in stack order, callee-cleaned, src\\shellmap.cpp: stores TSLightVtable (0007e2aa) at +0x12, TSContext_Dtor(+0x1e, 2) and TSContext_Dtor(+0, 0), and deletes the light for flags bit 0. Slot +4 of TSLightVtable. ES2's TSLight_Dtor (VSHELL 00427e02) without the destructor count.",
+      "source": "Herculan/docs/es1/shell/map.md#destroying-it; ES1GO decompile at 000099cd; es2_naming.py diff ES1GO 000099cd VSHELL 00427e02",
+      "verified": {
+        "bytes": "000099cd+64",
+        "sha1": "0fbc2a22c3e2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009a0d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSSunLight_Dtor",
+      "description": "(light, flags) in stack order, callee-cleaned, src\\shellmap.cpp: stores TSSunLightVtable (0007e2ca) and then TSLightVtable (0007e2aa) at +0x12, TSContext_Dtor(+0x1e, 2) and TSContext_Dtor(+0, 0), and deletes the light for flags bit 0. Slot +4 of TSSunLightVtable, which ShellMap_Dtor (00009a73) reaches for the map's sun. ES2's TSSunLight_Dtor (VSHELL 00427e3d) without the destructor counts.",
+      "source": "Herculan/docs/es1/shell/map.md#destroying-it; ES1GO decompile at 00009a0d; es2_naming.py diff ES1GO 00009a0d VSHELL 00427e3d",
+      "verified": {
+        "bytes": "00009a0d+102",
+        "sha1": "38fd295b331d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009a73",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_Dtor",
+      "description": "(map, flags) in stack order, callee-cleaned, src\\shellmap.cpp: stores ShellMapVtable (0007e268); Light_Unregister and destroys the sun +0x4e through its slot +4 with 3; Mem_Delete's the labels +0x362 and the twenty at +0x366; __vec_delete of the points +0x52; frees the headings +0x58, each waypoint group's refs and the groups +0x64, the mechs +0x6e, the bases +0x5e and the nav path +0x6a; destroys each of the +0xc8 zone objects of +0xd0 through its slot +0xc with 3 and frees the array; frees the callout label +0x482; GLBitmapArray_Dtor(+0x4c3, 3); Mem_Delete's each of the +0x47e gadgets of +0x3b6; WidgetRoot_Delete (0001074d)(+0x134); OwnedArray_Dtor (00010231) of the string tables +0x19a and +0x138 with 2; Map_Dtor (00008e9c); deletes the map for flags bit 0. es2_xref finds one call, from Shell_DeleteMissionMap (0002a4ec).",
+      "source": "Herculan/docs/es1/shell/map.md#destroying-it; ES1GO decompile at 00009a73",
+      "verified": {
+        "bytes": "00009a73+497",
+        "sha1": "0d36292865cb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000a9c8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_SkipIntro",
+      "description": "(map), callee-cleaned: ES2's ShellMap_SkipIntro (VSHELL 004253ef) on ES1's layout: an intro state +0x33e below 0x12 becomes 0x11. es2_xref finds three calls, from Shell_DeleteMissionMap (0002a4ec), Shell_HandleInput (00012be8) and WarMapMenu_OnMessage (0002c057).",
+      "source": "Herculan/docs/es1/shell/map.md#destroying-it; ES1GO decompile at 0000a9c8; es2_naming.py diff ES1GO 0000a9c8 VSHELL 004253ef",
+      "verified": {
+        "bytes": "0000a9c8+34",
+        "sha1": "f3dbd583ff2c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000a9ea",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_RevealAll",
+      "description": "(map), callee-cleaned: clears +0x346, sets +0x347 to the squad size +0xc6 and, with a nav path +0x6a, +0x348 to its waypoint count and +0x349 to one less; then the intro state +0x33e to 0x13. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/shell/map.md#destroying-it; ES1GO decompile at 0000a9ea",
+      "verified": {
+        "bytes": "0000a9ea+82",
+        "sha1": "c0f40c8c5ef8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000c068",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_LoadScriptDat",
+      "description": "(map), callee-cleaned, src\\shellmap.cpp: ES2's ShellMap_LoadScriptDat (VSHELL 004243d7) for ES1's nine blocks. Opens data\\script.dat (cfg\\filename.bin line 3) with FileRStream_Ctor, asserting at severity 5 (lines 0x4c1, 0x4c2) when the status is set; reads the 20-byte header (+0x4c7 = 1 when word 3 is 0, 1 or 2, else 0); keeps the points (+0x52, count +0x56; each widens the bounds +0x4a4..+0x4b8, which then widen by ShellMapBnd_BoundsMargin (0009a4d2)), the headings (+0x58/+0x5c), the waypoint groups (+0x64/+0x68), the mechs (+0x6e/+0x72, 0x62 bytes) and the bases (+0x5e/+0x62, 16 bytes), skipping blocks 4, 5 and 7; reads group 0 into +0x74 and, for each later group of roster +0x28 2, writes its side +0x44 into +8 of each base its member refs +0x34 name. Then ShellMap_LoadZoneShapes (0000c7e3)(map, header words 0 and 1), the nav path +0x6a (a 6-byte copy of the waypoint group +0xa6 names, or 0 for -1), ShellMap_PlaceSquad (0000cab1), and destroys the stream. es2_xref finds one call, from ShellMap_Constructor (000094d9).",
+      "source": "Herculan/docs/es1/shell/map.md#what-it-reads; ES1GO decompile at 0000c068",
+      "verified": {
+        "bytes": "0000c068+1915",
+        "sha1": "481981cd1ba6",
         "scope": "body",
         "via": "decompile"
       }
@@ -1537,7 +1732,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_LoadZoneShapes",
-      "description": "(map, theater, zone) in stack order, callee-cleaned, src\\shellmap.cpp: the map screen's load of a zone's shapes from dat\\zone<zone>, the file ES1DBSIM's Terrain_LoadZoneShapes (00020238) reads. For a negative zone it zeroes the map's int16 count +0xc8 and its pointers +0xca and +0xd0 and returns. Otherwise it builds the path by ltoa (radix 10) over the XXXX of a copy of 'zoneXXXX' (0007e378) and ResourcePath_BuildFolderName, opens it (severity-5 assert, line 0x565, when it fails), reads the word at +0 into a local it does not use again and the count into +0xc8. ShellMap_LoadShapeRoots(0x2bc0001, dgs\\<name>, map + 0xca), the name ShellMap_TheaterNames (0007e228)[theater], gives the root count, stored at +0xce; ShellMap_LoadResource(dba\\tex1) goes to +0x4c3. When the count is not 0 it allocates count pointers at +0xd0 and for each 20-byte record reads a shape index (2 bytes), a position (12) and three angles (6), stores +0x4c3 in the root shape's +0x26, builds TSObj_Ctor(0, roots[index]) and stores the angles at the object's +4, the position at +0x1e and 0 at +0x2a. Neither index is tested against a count, nor the object against null. Closes the zone file. It reads no dat\\<name>, and its objects carry no record pointer. es2_xref finds one call, from 0000c068 at 0000c779, which passes header words 0 and 1 of data\\script.dat.",
+      "description": "(map, theater, zone) in stack order, callee-cleaned, src\\shellmap.cpp: the map screen's load of a zone's shapes from dat\\zone<zone>, the file ES1DBSIM's Terrain_LoadZoneShapes (00020238) reads. For a negative zone it zeroes the map's int16 count +0xc8 and its pointers +0xca and +0xd0 and returns. Otherwise it builds the path by ltoa (radix 10) over the XXXX of a copy of 'zoneXXXX' (0007e378) and ResourcePath_BuildFolderName, opens it (severity-5 assert, line 0x565, when it fails), reads the word at +0 into a local it does not use again and the count into +0xc8. ShellMap_LoadShapeRoots(0x2bc0001, dgs\\<name>, map + 0xca), the name ShellMap_TheaterNames (0007e228)[theater], gives the root count, stored at +0xce; ShellMap_LoadResource(dba\\tex1) goes to +0x4c3. When the count is not 0 it allocates count pointers at +0xd0 and for each 20-byte record reads a shape index (2 bytes), a position (12) and three angles (6), stores +0x4c3 in the root shape's +0x26, builds TSObj_Ctor(0, roots[index]) and stores the angles at the object's +4, the position at +0x1e and 0 at +0x2a. Neither index is tested against a count, nor the object against null. Closes the zone file. It reads no dat\\<name>, and its objects carry no record pointer. es2_xref finds one call, from ShellMap_LoadScriptDat (0000c068) at 0000c779, which passes header words 0 and 1 of data\\script.dat.",
       "source": "Herculan/docs/es1/formats/zone-terrain.md",
       "verified": {
         "bytes": "0000c7e3+718",
@@ -1552,7 +1747,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_PlaceSquad",
-      "description": "(map), callee-cleaned, src\\shellmap.cpp: sets the squad size +0xc6 from the word Squad_MemberCount (0007ebc8); opens dat\\mforms (severity-5 assert, line 0x59e, when the stream status is set), reads the count into a local and then formation + 1 records of 0x1c bytes into one buffer, the formation being +0x9e; heading: +0xa4, when not negative, indexes the int16 table +0x58, else with a path +0x6a of two points or more 000553bc of its first leg less 0x4000, else 0, made a rotation by Math_BuildRotation2D; anchor: point +0xa2 of the 12-byte points +0x52, or the path's first point when +0xa2 is -1. Each of the eight member refs at +0xa8 that is not -1 and is below +0xc6 gets the anchor at +0xd4 + 12 * k, plus for k above 0 the record's int16 slot k with z 0 turned by 000552e0. The second half of VSHELL's ShellMap_ReadSquadHeader (00424db0), without its player.mec read. Caller found by es2_xref: 0000c068.",
+      "description": "(map), callee-cleaned, src\\shellmap.cpp: sets the squad size +0xc6 from the word Squad_MemberCount (0007ebc8); opens dat\\mforms (severity-5 assert, line 0x59e, when the stream status is set), reads the count into a local and then formation + 1 records of 0x1c bytes into one buffer, the formation being +0x9e; heading: +0xa4, when not negative, indexes the int16 table +0x58, else with a path +0x6a of two points or more 000553bc of its first leg less 0x4000, else 0, made a rotation by Math_BuildRotation2D; anchor: point +0xa2 of the 12-byte points +0x52, or the path's first point when +0xa2 is -1. Each of the eight member refs at +0xa8 that is not -1 and is below +0xc6 gets the anchor at +0xd4 + 12 * k, plus for k above 0 the record's int16 slot k with z 0 turned by 000552e0. The second half of VSHELL's ShellMap_ReadSquadHeader (00424db0), without its player.mec read. Caller found by es2_xref: ShellMap_LoadScriptDat (0000c068).",
       "source": "Herculan/docs/es1/formats/formations-dat.md#the-shells-squad",
       "verified": {
         "bytes": "0000cab1+958",
@@ -1572,6 +1767,81 @@
       "verified": {
         "bytes": "0000ce6f+27",
         "sha1": "70fe8cf87296",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000ce8a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_FitFullView",
+      "description": "(map), callee-cleaned: the full view in place of ES2's ShellMap_FitBounds (VSHELL 0042524e): the box of every base's point +2 that is not -1, every squad position +0xd4 whose member ref +0xa8 is not -1 and every nav path point that is not -1, widened on every side by ShellMapBnd_FullViewMargin (0009a482); its centre to +0x34a/+0x34e and the altitude max((halfX << shift) / 160, (halfY << shift) / 100) << 1, shift the word +0xc, to +0x352. es2_xref finds one call, from ShellMap_Constructor (000094d9).",
+      "source": "Herculan/docs/es1/shell/map.md#the-camera-views; ES1GO decompile at 0000ce8a",
+      "verified": {
+        "bytes": "0000ce8a+543",
+        "sha1": "fd4a598d860d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000d0a9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_FitSquad",
+      "description": "(map), callee-cleaned: ES2's ShellMap_FitSquad (VSHELL 004252e1) over the eight squad positions +0xd4 whose member ref +0xa8 is not -1, widened by ShellMapBnd_SquadViewMargin (0009a486); the centre to +0x356/+0x35a and the altitude max((halfX << shift) / 160, (halfY << shift) / 100) << 1, shift the word +0xc, to +0x35e, where ES2 divides by half the map's width and height and does not double. es2_xref finds one call, from ShellMap_Constructor (000094d9).",
+      "source": "Herculan/docs/es1/shell/map.md#the-camera-views; ES1GO decompile at 0000d0a9; es2_naming.py diff ES1GO 0000d0a9 VSHELL 004252e1",
+      "verified": {
+        "bytes": "0000d0a9+274",
+        "sha1": "fac26f594e4a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000d1bb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_BuildGadgets",
+      "description": "(map), callee-cleaned: puts the camera +0xe/+0x12/+0x16 at the full view +0x34a..+0x352, runs 00008f65 and 00008fa2; then MapGadget_Ctor (0000da8d) for each squad slot whose member ref +0xa8 is not -1 (text maplabel group 0 line 0 for slot 0, line 1 otherwise; size ShellMapBnd_SquadGadgetSize (0009a470); the position +0xd4 + 12 * slot) and for each base whose +8 is not -1 (text group 1's line of the type +0; size ShellMapBnd_SmallBaseGadgetSize (0009a478) for types 5, 6 and 8, else ShellMapBnd_BaseGadgetSize (0009a476); the base's point +2), each appended to +0x3b6 (count +0x47e) and registered with Widget_RegisterClickable (0001084f)(gadget, +0x134); then 00008f86. es2_xref finds one call, from ShellMap_Constructor (000094d9).",
+      "source": "Herculan/docs/es1/shell/map.md#the-gadgets; ES1GO decompile at 0000d1bb",
+      "verified": {
+        "bytes": "0000d1bb+535",
+        "sha1": "1a8afb96149a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000d72b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_PlaceCallout",
+      "description": "(map), callee-cleaned: returns for the selected gadget +0x480 -1; otherwise lays the callout box ShellMapBnd_CalloutHeight (0009a4cc) high beside the gadget, ShellMapBnd_CalloutGap (0009a4ce) from it, on its left when the gadget's x is right of the viewport's centre and on its right otherwise, the three pointer points +0x486 ShellMapBnd_PointerWidth (0009a4d0) wide between, all offset by the viewport rect's left and top, and Label_SetRect(+0x482, 2, box, 0). es2_xref finds eleven calls, from ShellMap_Constructor (000094d9), the camera moves 0000d43c..0000d56c, 0000d3d2, 0000d599 and 0000d657.",
+      "source": "Herculan/docs/es1/shell/map.md#the-callout; ES1GO decompile at 0000d72b",
+      "verified": {
+        "bytes": "0000d72b+780",
+        "sha1": "6b168acb3d7c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000da8d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MapGadget_Ctor",
+      "description": "(gadget, text, size, map, position) in stack order, callee-cleaned: allocates 0x38 bytes when gadget is null (0 when that fails); Widget_CtorRect (00011011) on the rect 0009a524, CTLButtonControlVtableShellMapCopy (0007e3c8) at +0x1c and the word +0x19 0; then MapGadgetVtable (0007e3f8) at +0x1c, map at +0x20, the 12-byte position at +0x24, size at +0x30, text at +0x32, and at +0x36 HudFont_MeasureString(ShellMap_LabelFont (000aa2c0), text) + 2 * ShellMapBnd_GadgetTextMargin (0009a4ca); runs 0000dbfb on it and returns it. es2_xref finds two calls, from ShellMap_BuildGadgets (0000d1bb).",
+      "source": "Herculan/docs/es1/shell/map.md#the-gadgets; ES1GO decompile at 0000da8d",
+      "verified": {
+        "bytes": "0000da8d+230",
+        "sha1": "d0384a6fa7bc",
         "scope": "body",
         "via": "decompile"
       }
@@ -1862,6 +2132,75 @@
       }
     },
     {
+      "address": "000101f4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "StringTable_Ctor",
+      "description": "(table), callee-cleaned: ES1DBSIM's StringTable_Ctor (00044f14) in different code: allocates 0x10 bytes when given none (0 when that fails), clears +0, +4, +8 and the int16s +0xc and +0xe, and returns the table.",
+      "source": "ES1GO decompile at 000101f4; es2_naming.py diff ES1GO 000101f4 ES1DBSIM 00044f14",
+      "verified": {
+        "bytes": "000101f4+61",
+        "sha1": "4dd80c8bac1c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00010231",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "OwnedArray_Dtor",
+      "description": "(holder, flags) in stack order, callee-cleaned: ES1DBSIM's OwnedArray_Dtor (00044f48): with holder non-null, Mem_Delete of the block +0 when set, then of holder for flags bit 0.",
+      "source": "ES1GO decompile at 00010231; es2_naming.py diff ES1GO 00010231 ES1DBSIM 00044f48",
+      "verified": {
+        "bytes": "00010231+57",
+        "sha1": "716569915bae",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001026a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "StringTable_LoadFromFile",
+      "description": "(table, path) in stack order, callee-cleaned: ES1DBSIM's StringTable_LoadFromFile (00044f78) with ES1DBSIM's StringTable_Load (00044fb0) inlined: opens path with VolRStream_CtorFromPath, reads the byte size into +8 through the stream's slot +0x1c, Mem_New's that many bytes at +0, reads them, sets the cursor +4 to the buffer, destroys the stream and returns 1.",
+      "source": "ES1GO decompile at 0001026a; es2_naming.py diff ES1GO 0001026a ES1DBSIM 00044f78",
+      "verified": {
+        "bytes": "0001026a+125",
+        "sha1": "654d1a5b5341",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000102e7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "StringTable_ReadNext",
+      "description": "(table, &attributes, &text) in stack order, callee-cleaned: ES1DBSIM's StringTable_ReadNext (00045004) in different code, by es2_naming.py diff.",
+      "source": "es2_naming.py diff ES1GO 000102e7 ES1DBSIM 00045004"
+    },
+    {
+      "address": "000103b8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "StringTable_LoadGroup",
+      "description": "(table, attributeDestination, capacity, destination) in stack order, callee-cleaned: ES1DBSIM's StringTable_LoadGroup (000450b0) in different code: reads the int16 group count at the cursor, calls StringTable_ReadNext (000102e7) that many times into consecutive destination entries (and attribute entries when that is non-null), clears the int16 +0xc and returns the count.",
+      "source": "ES1GO decompile at 000103b8; es2_naming.py diff ES1GO 000103b8 ES1DBSIM 000450b0",
+      "verified": {
+        "bytes": "000103b8+114",
+        "sha1": "86aeecbc6d78",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00010530",
       "binary": "ES1GO",
       "type": "function",
@@ -1882,7 +2221,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_MouseEventQueue_Start",
-      "description": "(): calls Input_GetMouseDevice_Thunk (00027bc9); registers 00010900 with Mouse_AddCallback (0005116b) for the events 0x1f into the word 0007e5d4; clears 0009adf8, 0009adf4, 000aa776, 000aa774 and 000aa79e; allocates with __vec_new (0005542c) two arrays of the word 0009adf0's count of 14-byte entries (element constructor 00010666) into 000aa78a and 000aa792; clears 000aa78e and 000aa786 and stores their addresses at 000aa79a and 000aa796; sets 000aa77e to 1000000 / Math_Q14Multiply (0005a2b8)(the word +4 of 000ab784, 0x35a1) / 2, 0007e5d8 to 0 and 0007e5dc to -1. Shell_PrepareMission (0002a523) calls it.",
+      "description": "(): calls Input_GetMouseDevice_Thunk (00027bc9); registers 00010900 with Mouse_AddCallback (0005116b) for the events 0x1f into the word 0007e5d4; clears 0009adf8, 0009adf4, 000aa776, 000aa774 and 000aa79e; allocates with __vec_new (0005542c) two arrays of the word 0009adf0's count of 14-byte entries (element constructor 00010666) into 000aa78a and 000aa792; clears 000aa78e and 000aa786 and stores their addresses at 000aa79a and 000aa796; sets 000aa77e to 1000000 / Math_Q14Multiply (0005a2b8)(the word +4 of 000ab784, 0x35a1) / 2, Widget_ActiveRoot (0007e5d8) to 0 and 0007e5dc to -1. Shell_PrepareMission (0002a523) calls it.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons; ES1GO decompile at 00010559",
       "verified": {
         "bytes": "00010559+269",
@@ -1907,12 +2246,57 @@
       }
     },
     {
+      "address": "0001070d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_SetActiveRoot",
+      "description": "(root), callee-cleaned: stores root in Widget_ActiveRoot (0007e5d8). ES1DBSIM's Widget_ClearPressed (00044310) without its Widget_PressedIndex write.",
+      "source": "ES1GO decompile at 0001070d; es2_naming.py diff ES1GO 0001070d ES1DBSIM 00044310",
+      "verified": {
+        "bytes": "0001070d+17",
+        "sha1": "27c45c225cf1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001074d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WidgetRoot_Delete",
+      "description": "(window), callee-cleaned: ES1DBSIM's WidgetRoot_Delete (00044350): with window non-null, stores 0007e5f8 at +0x352 and the viewport classes' tables 0007e612 and 0007e642 at +0x17, then Mem_Delete of window.",
+      "source": "ES1GO decompile at 0001074d; es2_naming.py diff ES1GO 0001074d ES1DBSIM 00044350",
+      "verified": {
+        "bytes": "0001074d+131",
+        "sha1": "2f0d271e1539",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001084f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_RegisterClickable",
+      "description": "(widget, list) in stack order, callee-cleaned: ES1DBSIM's Widget_RegisterClickable (000443d4): appends widget to the array at list + 0x252 and increments the int16 count at +0x250.",
+      "source": "ES1GO decompile at 0001084f",
+      "verified": {
+        "bytes": "0001084f+53",
+        "sha1": "8a7f3e09ef39",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0001098e",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "CockpitMouse_ProcessQueue",
-      "description": "No arguments: ES1DBSIM's CockpitMouse_ProcessQueue (000444d0) for the shell, with no Cursor_SyncPosition call. Returns 0 at once unless the word 0007e5d4 (the queue's mouse callback slot) and the dword 0007e5d8 (the widget root r) are set; otherwise swaps the queue pointers 000aa796 and 000aa79a, zeroes the count of the queue 000aa796 now holds and, for each 14-byte record {x, y, buttons, time} of the one 000aa79a holds: the buttons into the word 0007e66c; when the point differs from 0009adf4/0009adf8, stores it there and the point less r's +0x227/+0x22b at 0009ae08/0009ae0c and, with the byte 0007e5de clear, calls 000117ba(r, point) when 00010eb0(r, point) answers non-zero, or with it set calls slot +0x1c of the captured entry (index 0007e5dc of r's list +0x252) with the point less r's +0/+4 and 0001199a; clears 0007e5e0; a left press (bit 0, the byte 000aa774 clear) sets 000aa774 and calls 000115d2(r, point); a right press sets 000aa776; a left release clears 000aa774, sets 0007e5e0 when time less the dword 0007e5e4 is below 000aa77e, stores time there and the buttons | 1 in 0007e66c; a right release the same with 000aa776, 0007e5e8 and | 2; after a release calls 000116c2(r, point) with 0007e5de clear, or else sets the captured entry's +0x17 to 0, calls 0001199a, clears 0007e5de, calls the entry's slot +0xc with what its slot +0x14 returns and sets 0007e5dc to -1. Returns the queue 000aa79a holds. Shell_PollInput (0004de3a) and Shell_Main (00012ec7) call it.",
+      "description": "No arguments: ES1DBSIM's CockpitMouse_ProcessQueue (000444d0) for the shell, with no Cursor_SyncPosition call. Returns 0 at once unless the word 0007e5d4 (the queue's mouse callback slot) and the dword Widget_ActiveRoot (0007e5d8) (the widget root r) are set; otherwise swaps the queue pointers 000aa796 and 000aa79a, zeroes the count of the queue 000aa796 now holds and, for each 14-byte record {x, y, buttons, time} of the one 000aa79a holds: the buttons into the word 0007e66c; when the point differs from 0009adf4/0009adf8, stores it there and the point less r's +0x227/+0x22b at 0009ae08/0009ae0c and, with the byte 0007e5de clear, calls 000117ba(r, point) when 00010eb0(r, point) answers non-zero, or with it set calls slot +0x1c of the captured entry (index 0007e5dc of r's list +0x252) with the point less r's +0/+4 and 0001199a; clears 0007e5e0; a left press (bit 0, the byte 000aa774 clear) sets 000aa774 and calls 000115d2(r, point); a right press sets 000aa776; a left release clears 000aa774, sets 0007e5e0 when time less the dword 0007e5e4 is below 000aa77e, stores time there and the buttons | 1 in 0007e66c; a right release the same with 000aa776, 0007e5e8 and | 2; after a release calls 000116c2(r, point) with 0007e5de clear, or else sets the captured entry's +0x17 to 0, calls 0001199a, clears 0007e5de, calls the entry's slot +0xc with what its slot +0x14 returns and sets 0007e5dc to -1. Returns the queue 000aa79a holds. Shell_PollInput (0004de3a) and Shell_Main (00012ec7) call it.",
       "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile at 0001098e",
       "verified": {
         "bytes": "0001098e+995",
@@ -1920,6 +2304,24 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "00011011",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_CtorRect",
+      "description": "(widget, rect) in stack order, callee-cleaned: ES1DBSIM's Widget_CtorRect (000438fc) in different code, by es2_naming.py diff.",
+      "source": "es2_naming.py diff ES1GO 00011011 ES1DBSIM 000438fc"
+    },
+    {
+      "address": "0001144a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLWindow_Ctor",
+      "description": "(window, rect) in stack order, callee-cleaned: ES1DBSIM's CTLWindow_Ctor (00043cac) in different code, by es2_naming.py diff: 0x356 bytes, GLViewport_Ctor on +0x17, the window's vtable 0007e5f8 at +0x352.",
+      "source": "es2_naming.py diff ES1GO 0001144a ES1DBSIM 00043cac"
     },
     {
       "address": "000119e0",
@@ -2362,7 +2764,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_HandleInput",
-      "description": "(block), its argument removed by this function: the frame loop's input step, given the block Shell_PollInput (0004de3a) returned; a null block returns. When the keyboard word +0 lacks bit 0x4000 it clears bit 0x1000 of the word Shell_InputBlock (0007e73c) points at and looks the word up in the 15 dwords at 0007e880 (REPNE SCASD, targets 0x3c bytes on): Space and Shift+Space call 0000a9c8, ',' and Shift+',' 0000d657, '.' and Shift+'.' 0000d599, '-' and Shift+'-' slot +0xc and '=' and Shift+'=' slot +8 of the table at +0x4a of the object Shell_MissionMap (000809a4), each only while Shell_MissionMap (000809a4) is set and the byte 000809a8 is not 0, then setting 000809a8 to 3; Insert (0x52) calls DUIWindow_HandleNavKey (0001cc86)(0xf) when option 10 of Prefs_Options (000aa24e) is set; Ctrl+Esc and Alt+Esc set Shell_QuitRequested (0007e808); 0 and Ctrl+C do nothing. Any other word with the low byte 0x10, 0x2d or 0x2e (Q, X, C) sets Shell_QuitRequested with Ctrl or Alt (0x600) held unless it is C, and otherwise passes 'q', 'x' or 'c', less 0x20 with bit 0x800, or'd with 0x4000, to DUIWindow_SendChar (0001bb85) with +6 of the menu Shell_CurrentMenu (000817c8) when that is set. Then the block's +0x1d set calls DUIWindow_HandleNavKey (0001cc86)(0x1c) and Input_LatchButton (0004de18)(1, 1) and sets the byte 0007e87c, and +0x1d clear with 0007e87c set calls DUIWindow_HandleNavKey (0001cc86)(0x9c) and clears it; +0x1e set calls DUIWindow_HandleNavKey (0001cc86)(0xf) and Input_LatchButton(1, 2). Last, unless Shell_DebugMode (0007fd08) is set, a word with bit 0x4000 goes to DUIWindow_SendChar (0001bb85) with +6 of Shell_CurrentMenu (000817c8) when that is set. es2_xref finds one call, from Shell_Main (00012ec7), and its address stored at 0005d36e.",
+      "description": "(block), its argument removed by this function: the frame loop's input step, given the block Shell_PollInput (0004de3a) returned; a null block returns. When the keyboard word +0 lacks bit 0x4000 it clears bit 0x1000 of the word Shell_InputBlock (0007e73c) points at and looks the word up in the 15 dwords at 0007e880 (REPNE SCASD, targets 0x3c bytes on): Space and Shift+Space call ShellMap_SkipIntro (0000a9c8), ',' and Shift+',' 0000d657, '.' and Shift+'.' 0000d599, '-' and Shift+'-' slot +0xc and '=' and Shift+'=' slot +8 of the table at +0x4a of the object Shell_MissionMap (000809a4), each only while Shell_MissionMap (000809a4) is set and the byte 000809a8 is not 0, then setting 000809a8 to 3; Insert (0x52) calls DUIWindow_HandleNavKey (0001cc86)(0xf) when option 10 of Prefs_Options (000aa24e) is set; Ctrl+Esc and Alt+Esc set Shell_QuitRequested (0007e808); 0 and Ctrl+C do nothing. Any other word with the low byte 0x10, 0x2d or 0x2e (Q, X, C) sets Shell_QuitRequested with Ctrl or Alt (0x600) held unless it is C, and otherwise passes 'q', 'x' or 'c', less 0x20 with bit 0x800, or'd with 0x4000, to DUIWindow_SendChar (0001bb85) with +6 of the menu Shell_CurrentMenu (000817c8) when that is set. Then the block's +0x1d set calls DUIWindow_HandleNavKey (0001cc86)(0x1c) and Input_LatchButton (0004de18)(1, 1) and sets the byte 0007e87c, and +0x1d clear with 0007e87c set calls DUIWindow_HandleNavKey (0001cc86)(0x9c) and clears it; +0x1e set calls DUIWindow_HandleNavKey (0001cc86)(0xf) and Input_LatchButton(1, 2). Last, unless Shell_DebugMode (0007fd08) is set, a word with bit 0x4000 goes to DUIWindow_SendChar (0001bb85) with +6 of Shell_CurrentMenu (000817c8) when that is set. es2_xref finds one call, from Shell_Main (00012ec7), and its address stored at 0005d36e.",
       "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile and disassembly at 00012be8",
       "verified": {
         "bytes": "00012be8+735",
@@ -9532,7 +9934,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_DeleteMissionMap",
-      "description": "(): with Shell_MissionMap (000809a4) set, maybe_MouseEventQueue_Stop (000106af), 0000a9c8(map) and 00009a73(map, 3), and clears Shell_MissionMap. es2_xref finds seven calls, from Shell_PrepareMission (0002a523), UnArmedAlert_OnMessage (0002a650), WarMapMenu_OnMessage (0002c057) and ServiceBayMenu_OnMessage (0002d327). It opens the menu handlers' object file.",
+      "description": "(): with Shell_MissionMap (000809a4) set, maybe_MouseEventQueue_Stop (000106af), ShellMap_SkipIntro (0000a9c8)(map) and ShellMap_Dtor (00009a73)(map, 3), and clears Shell_MissionMap. es2_xref finds seven calls, from Shell_PrepareMission (0002a523), UnArmedAlert_OnMessage (0002a650), WarMapMenu_OnMessage (0002c057) and ServiceBayMenu_OnMessage (0002d327). It opens the menu handlers' object file.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons; ES1GO decompile and disassembly at 0002a4ec",
       "verified": {
         "bytes": "0002a4ec+55",
@@ -9547,7 +9949,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_PrepareMission",
-      "description": "(): Shell_DeleteMissionMap (0002a4ec); Mission_WriteObjectives (00018824)(000aad2a, the mission's .eng path); maybe_MouseEventQueue_Start (00010559); clears the byte 0007e5df; Shell_MissionMap (000809a4) = 000094d9(0, 000a02d4). es2_xref finds eight calls, from MainMenu_OnMessage (0002a70a), MissionMenu_OnMessage (0002b375), AnyDisabledAlert_OnMessage (0002a581), CareerMenu_OnMessage (0002aa0e), NewCareerAlert_OnMessage (0002aeec), CareerRecordsMenu_OnMessage (0002af94) and ServiceBayMenu_OnMessage (0002d327).",
+      "description": "(): Shell_DeleteMissionMap (0002a4ec); Mission_WriteObjectives (00018824)(000aad2a, the mission's .eng path); maybe_MouseEventQueue_Start (00010559); clears the byte 0007e5df; Shell_MissionMap (000809a4) = ShellMap_Constructor (000094d9)(0, 000a02d4). es2_xref finds eight calls, from MainMenu_OnMessage (0002a70a), MissionMenu_OnMessage (0002b375), AnyDisabledAlert_OnMessage (0002a581), CareerMenu_OnMessage (0002aa0e), NewCareerAlert_OnMessage (0002aeec), CareerRecordsMenu_OnMessage (0002af94) and ServiceBayMenu_OnMessage (0002d327).",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons; ES1GO decompile and disassembly at 0002a523",
       "verified": {
         "bytes": "0002a523+49",
@@ -9937,7 +10339,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WarMapMenu_OnMessage",
-      "description": "(menu, message) in stack order, its arguments removed by this function: slot +8 of WarMapMenu's vtable (00080bc6), the war map, screens 1500 and 1501. By the message's target +6 among the twelve ids of the REPNE SCASD table at 00080bdc, with cases at 00080c0c in bytes Ghidra left undefined but for 108's and 109's, and nothing for any other id: 100 becomes 3333 when CareerRecord_PlayerHasNoHerc (000161dc)(CareerRecord_Current (00014ef4)) answers non-zero, else 3000 when CareerRecord_AnyPilotUnarmed (0001620d)(CareerRecord_Current) does, else PlayerMec_Write (0002299e), 9999, Shell_DeleteMissionMap (0002a4ec) and the byte 000809a8 cleared; 99 in Shell_Mode (000aad56) 1 clears the current career record's byte +1 (0009b23b + 0x1f7 x the roster Career_Roster (0009b218)'s word +7), sets its word +4 to 1500, calls Career_Save (000168b0)(Career_Roster (0009b218), the roster's word +7) and becomes 1200, in any other mode becomes 1100, then sprintf(000aacfe, the string 00080994, anm\\esiege2.anm), the byte 0007fcd7 set to 2, Shell_DeleteMissionMap and 000809a8 cleared; 1800 becomes 1820 while the byte Shell_LowMemory (0007fd09) is set; 1700 calls 0000a9c8(Shell_MissionMap (000809a4)) with no test that it is set and in mode 1 sets the record's byte +1 to 1; 101 calls Dialog_PrevPage (00018df0)(Shell_Dialog (0009afc8)) and subtracts 1 from WarMap_BriefingPage (000809b2); 102 calls Dialog_NextPage (00018e18)(Shell_Dialog) and adds 1 to it; 108, 109, 1503, 1504, 1505 and 1506 call, while Shell_MissionMap is set, slot +8, +0xc, +0x10, +0x14, +0x18 or +0x1c of the table at the map's +0x4a with the map, then set 000809a8 to 3 and the byte +0 of the hotspot 1502, at the window +6's +0x19f + 0x38 x DUIWindow_FindHotspotById (0001be6f)(window, 1502).",
+      "description": "(menu, message) in stack order, its arguments removed by this function: slot +8 of WarMapMenu's vtable (00080bc6), the war map, screens 1500 and 1501. By the message's target +6 among the twelve ids of the REPNE SCASD table at 00080bdc, with cases at 00080c0c in bytes Ghidra left undefined but for 108's and 109's, and nothing for any other id: 100 becomes 3333 when CareerRecord_PlayerHasNoHerc (000161dc)(CareerRecord_Current (00014ef4)) answers non-zero, else 3000 when CareerRecord_AnyPilotUnarmed (0001620d)(CareerRecord_Current) does, else PlayerMec_Write (0002299e), 9999, Shell_DeleteMissionMap (0002a4ec) and the byte 000809a8 cleared; 99 in Shell_Mode (000aad56) 1 clears the current career record's byte +1 (0009b23b + 0x1f7 x the roster Career_Roster (0009b218)'s word +7), sets its word +4 to 1500, calls Career_Save (000168b0)(Career_Roster (0009b218), the roster's word +7) and becomes 1200, in any other mode becomes 1100, then sprintf(000aacfe, the string 00080994, anm\\esiege2.anm), the byte 0007fcd7 set to 2, Shell_DeleteMissionMap and 000809a8 cleared; 1800 becomes 1820 while the byte Shell_LowMemory (0007fd09) is set; 1700 calls ShellMap_SkipIntro (0000a9c8)(Shell_MissionMap (000809a4)) with no test that it is set and in mode 1 sets the record's byte +1 to 1; 101 calls Dialog_PrevPage (00018df0)(Shell_Dialog (0009afc8)) and subtracts 1 from WarMap_BriefingPage (000809b2); 102 calls Dialog_NextPage (00018e18)(Shell_Dialog) and adds 1 to it; 108, 109, 1503, 1504, 1505 and 1506 call, while Shell_MissionMap is set, slot +8, +0xc, +0x10, +0x14, +0x18 or +0x1c of the table at the map's +0x4a with the map, then set 000809a8 to 3 and the byte +0 of the hotspot 1502, at the window +6's +0x19f + 0x38 x DUIWindow_FindHotspotById (0001be6f)(window, 1502).",
       "source": "Herculan/docs/es1/shell/war-map.md#the-buttons; ES1GO decompile and disassembly at 0002c057",
       "verified": {
         "bytes": "0002c057+971",
@@ -17044,7 +17446,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_TSLight_SetIntensity",
-      "description": "(light, value) in stack order, callee-cleaned: stores value at +0x1a. Slot +8 of the light vtables 0007e2aa and 0007e2ca. The code of ES1DBSIM's maybe_TSLight_SetIntensity (0005b8a0), relocated operands aside.",
+      "description": "(light, value) in stack order, callee-cleaned: stores value at +0x1a. Slot +8 of the light vtables TSLightVtable (0007e2aa) and TSSunLightVtable (0007e2ca). The code of ES1DBSIM's maybe_TSLight_SetIntensity (0005b8a0), relocated operands aside.",
       "source": "ES1GO decompile at 0005361c",
       "verified": {
         "bytes": "0005361c+18",
@@ -24149,6 +24551,15 @@
       "source": "es1_naming.py vtables ES1GO"
     },
     {
+      "address": "0007e1ce",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MapVtable",
+      "description": "Map's vtable, after its class name Map at 0007e1c8: 0 at +0 and +4, then 00009043, 00009010, 000090be, 000090df, 00009076 and 0000909d at +8..+0x1c, then 00009106. Map_Ctor (00008cfd) and Map_Dtor (00008e9c) store it at +0x4a.",
+      "source": "Herculan/docs/es1/shell/map.md#the-base-class; es2_peek.py ES1GO 0007e1ce"
+    },
+    {
       "address": "0007e228",
       "binary": "ES1GO",
       "type": "data",
@@ -24156,6 +24567,60 @@
       "name": "ShellMap_TheaterNames",
       "description": "Four string pointers indexed by the theater, header word 0 of data\\script.dat: 0 temper, 1 ice, 2 desert, 3 urban. ShellMap_LoadZoneShapes (0000c7e3) names dgs\\<name> by it. ES1DBSIM's Terrain_TheaterNames (000924a0) has the order desert, temper, ice, urban.",
       "source": "ES1GO image at 0007e228"
+    },
+    {
+      "address": "0007e268",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapVtable",
+      "description": "ShellMap's vtable, after its class name at 0007e25c: 0 at +0, the draw 00009ca7 at +4, the camera moves 0000d43c, 0000d469, 0000d4b8, 0000d4e5, 0000d512, 0000d53f and 0000d56c at +8..+0x20. ShellMap_Constructor (000094d9) and ShellMap_Dtor (00009a73) store it at +0x4a.",
+      "source": "Herculan/docs/es1/shell/map.md#the-base-class; es2_peek.py ES1GO 0007e268"
+    },
+    {
+      "address": "0007e2aa",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "TSLightVtable",
+      "description": "TSLight's vtable in src\\shellmap.cpp, after its class name at 0007e2a0: 0, TSLight_Dtor (000099cd) at +4, maybe_TSLight_SetIntensity (0005361c) at +8.",
+      "source": "Herculan/docs/es1/shell/map.md#building-it; es2_peek.py ES1GO 0007e2aa"
+    },
+    {
+      "address": "0007e2ca",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "TSSunLightVtable",
+      "description": "TSSunLight's vtable, after its class name at 0007e2bc: 0, TSSunLight_Dtor (00009a0d) at +4, maybe_TSLight_SetIntensity (0005361c) at +8. ShellMap_Constructor (000094d9) stores it at +0x12 of the map's sun.",
+      "source": "Herculan/docs/es1/shell/map.md#building-it; es2_peek.py ES1GO 0007e2ca"
+    },
+    {
+      "address": "0007e3c8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CTLButtonControlVtableShellMapCopy",
+      "description": "src\\shellmap.cpp's copy of the button base's vtable, after the class name CTLButtonControl at 0007e3b4: 0, then 0000db73, 0000db7d, 0000db87, 0000db94, 0000db9e, 0000dbae and 0000dbbc at +4..+0x1c. MapGadget_Ctor (0000da8d) stores it at +0x1c before MapGadgetVtable (0007e3f8).",
+      "source": "Herculan/docs/es1/shell/map.md#the-gadgets; es2_peek.py ES1GO 0007e3c8"
+    },
+    {
+      "address": "0007e3f8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MapGadgetVtable",
+      "description": "MapGadget's vtable, after its class name at 0007e3ec: 0, then 0000dbc9, 0000db7d, 0000dbd3, 0000dbf1, 0000db9e, 0000dbae and 0000dbbc at +4..+0x1c. MapGadget_Ctor (0000da8d) stores it at +0x1c.",
+      "source": "Herculan/docs/es1/shell/map.md#the-gadgets; es2_peek.py ES1GO 0007e3f8"
+    },
+    {
+      "address": "0007e5d8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Widget_ActiveRoot",
+      "description": "The shell's root widget, ES1DBSIM's Widget_ActiveRoot (00094c54): Widget_SetActiveRoot (0001070d) stores it.",
+      "source": "Herculan/docs/es1/shell/map.md#building-it; ES1GO decompile at 0001070d"
     },
     {
       "address": "0007e716",
@@ -24838,7 +25303,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Shell_MissionMap",
-      "description": "the mission map, the 0x4c8-byte object 000094d9 builds, which reads data\\object.str and the maplabel resources: Shell_PrepareMission (0002a523) makes it and Shell_DeleteMissionMap (0002a4ec) destroys it.",
+      "description": "the mission map, the 0x4c8-byte object ShellMap_Constructor (000094d9) builds, which reads data\\object.str and the maplabel resources: Shell_PrepareMission (0002a523) makes it and Shell_DeleteMissionMap (0002a4ec) destroys it.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons"
     },
     {
@@ -25445,6 +25910,177 @@
       "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs"
     },
     {
+      "address": "0009a424",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MapBnd_PanStepHigh",
+      "description": "MAP.BND offset 4, int32, 100000 in the retail file: the pan step's top, read by Map_PanStepFor (0000911c).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a428",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MapBnd_PanStepLow",
+      "description": "MAP.BND offset 8, int32, 5000 in the retail file: the pan step's bottom, read by Map_PanStepFor (0000911c).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a434",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MapBnd_AltitudeLow",
+      "description": "MAP.BND offset 20, int32, 50000 in the retail file: the altitude Map_PanStepFor (0000911c) measures from.",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a438",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MapBnd_AltitudeHigh",
+      "description": "MAP.BND offset 24, int32, 1000000 in the retail file: the altitude Map_PanStepFor (0000911c) scales over.",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a43c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MapBnd_StartAltitude",
+      "description": "MAP.BND offset 28, int32, 200000 in the retail file: the altitude Map_Ctor (00008cfd) starts the camera at.",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a444",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Map_CameraOrientation",
+      "description": "The map camera's three int16 angles, {0xc000, 0, 0} from Map_StaticInit (00009174); Map_Ctor (00008cfd) passes it to TSCamera_Ctor. ES2's Map_CameraOrientation (VSHELL 0047189c).",
+      "source": "Herculan/docs/es1/shell/map.md#the-base-class; ES1GO decompile at 00009174"
+    },
+    {
+      "address": "0009a470",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_SquadGadgetSize",
+      "description": "SHELLMAP.BND offset 0x24, int16, 7 in the retail file: a squad member's gadget size, ShellMap_BuildGadgets (0000d1bb).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a476",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_BaseGadgetSize",
+      "description": "SHELLMAP.BND offset 0x2a, int16, 13 in the retail file: a base's gadget size but for types 5, 6 and 8, ShellMap_BuildGadgets (0000d1bb).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a478",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_SmallBaseGadgetSize",
+      "description": "SHELLMAP.BND offset 0x2c, int16, 7 in the retail file: the gadget size of a base of type 5, 6 or 8, ShellMap_BuildGadgets (0000d1bb).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a47e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_DrawShapes",
+      "description": "SHELLMAP.BND offset 0x32, a byte, 1 in the retail file: ShellMap_Constructor (000094d9) copies it to ShellMap_DrawShapes (000aa2b6). es2_xref --decode finds one instruction holding its address, that read.",
+      "source": "Herculan/docs/es1/shell/map.md#the-tuning-files"
+    },
+    {
+      "address": "0009a480",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_LineSpacing",
+      "description": "SHELLMAP.BND offset 0x34, int16, 10 in the retail file: the height of the map's text label rows, ShellMap_Constructor (000094d9).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a482",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_FullViewMargin",
+      "description": "SHELLMAP.BND offset 0x36, int32, 1000 in the retail file: ShellMap_FitFullView (0000ce8a)'s margin.",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a486",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_SquadViewMargin",
+      "description": "SHELLMAP.BND offset 0x3a, int32, 20000 in the retail file: ShellMap_FitSquad (0000d0a9)'s margin.",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a4ca",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_GadgetTextMargin",
+      "description": "SHELLMAP.BND offset 0x7e, int16, 3 in the retail file: the margin each side of a gadget's text, MapGadget_Ctor (0000da8d).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a4cc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_CalloutHeight",
+      "description": "SHELLMAP.BND offset 0x80, int16, 10 in the retail file: the callout box's height, ShellMap_PlaceCallout (0000d72b).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a4ce",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_CalloutGap",
+      "description": "SHELLMAP.BND offset 0x82, int16, 5 in the retail file: the callout's gap from its gadget, ShellMap_PlaceCallout (0000d72b).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a4d0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_PointerWidth",
+      "description": "SHELLMAP.BND offset 0x84, int16, 5 in the retail file: the callout pointer's width, ShellMap_PlaceCallout (0000d72b).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a4d2",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_BoundsMargin",
+      "description": "SHELLMAP.BND offset 0x86, int32, 50000 in the retail file: the margin ShellMap_LoadScriptDat (0000c068) widens the bounds by.",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
+      "address": "0009a4d6",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMapBnd_ShapeArenaSize",
+      "description": "SHELLMAP.BND offset 0x8a, int32, 75000 in the retail file: the size of the shape arena ShellMap_LoadResources (000093b3) allocates and ShellMap_LoadShapeRoots (000092b9) limits its loads by.",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#bndmapbnd-and-bndshellmapbnd"
+    },
+    {
       "address": "0009ae64",
       "binary": "ES1GO",
       "type": "data",
@@ -25911,6 +26547,24 @@
       "name": "Prefs_Handlers",
       "description": "17 dwords, a handler per option of Prefs_Options (000aa24e) or 0, which Prefs_Load (000081ca), Prefs_SetOption (00008378), Prefs_CommitAll (000082b0) and Prefs_RevertAll (00008316) call with the option's value.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aa2b6",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMap_DrawShapes",
+      "description": "A byte: ShellMap_Constructor (000094d9) copies ShellMapBnd_DrawShapes (0009a47e) into it; the draw step 0000aff0 draws the zone's shapes when it is set and the 2D icons with Bitmap_BlitRotatedUnpacked when it is 0.",
+      "source": "Herculan/docs/es1/shell/map.md#the-tuning-files"
+    },
+    {
+      "address": "000aa2c0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMap_LabelFont",
+      "description": "The map's font, which ShellMap_LoadResources (000093b3) loads from the name 0007e256 (map) with 00009275: ShellMap_Constructor (000094d9) builds its labels in it and MapGadget_Ctor (0000da8d) measures in it.",
+      "source": "Herculan/docs/es1/shell/map.md#building-it"
     },
     {
       "address": "000aa7ac",
