@@ -126,4 +126,10 @@ public sealed class Es1MenuGlobals {
 
 	/// <summary>The word <c>0007ff92</c>, −1 in the image: the area the hangar's press test last found, −1 for none.</summary>
 	public short HangarArea { get; set; } = -1;
+
+	/// <summary>
+	/// <c>Fabrication_Chassis</c> (<c>000808a4</c>), 0 in the image: the chassis BUILD shows (<see cref="Es1FabricationMenu"/>),
+	/// kept between visits.
+	/// </summary>
+	public short FabricationChassis { get; set; }
 }

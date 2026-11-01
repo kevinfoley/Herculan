@@ -419,6 +419,37 @@ public sealed class Es1HangarBay {
 	}
 
 	/// <summary>
+	/// <c>Hangar_BuildIntoSelected</c> (<c>00029d68</c>)(<paramref name="chassis"/>)
+	/// (docs/es1/shell/repair-and-build.md#build--screen-2000), nothing for a selected slot of −1:
+	/// <see cref="Es1Hangar.MarkedSlotWord"/> set to the chassis' word of <c>Chassis_BuildMissions</c> (<c>000808d8</c>,
+	/// <see cref="Es1CareerAfterMission.MarkedHercMissions"/>) and <see cref="Es1Hangar.Dword"/> to its price in tons
+	/// (<see cref="Es1RepairCosts.ChassisPrices"/>); a HERC of the chassis with every mount empty
+	/// (<c>Herc_Ctor</c> (<c>00022f5e</c>)(0, chassis), <see cref="Es1HercRecord.Create"/>) stored in the selected slot over
+	/// whatever it held; the price × 1000 taken from <c>Career_Salvage</c>; its diagram built
+	/// (<see cref="Es1HercDiagrams.Build"/>(HERC, the word)) unless <c>Shell_LowMemory</c> is set, which this engine does
+	/// not set; and the HERC count up 1. Retail reads the tables and stores the slot with no bounds test; a chassis outside
+	/// the eight or a slot outside the array builds nothing here, engine guards.
+	/// </summary>
+	public void BuildIntoSelected(short chassis) {
+		if (Hangar is not { } hangar || hangar.SelectedSlot == -1) {
+			return;
+		}
+
+		short slot = hangar.SelectedSlot;
+		if (chassis is < 0 or >= Es1HercArt.ChassisCount || slot >= hangar.Slots.Length || slot < 0) {
+			return;
+		}
+
+		hangar.MarkedSlotWord = Es1CareerAfterMission.MarkedHercMissions[chassis];
+		hangar.Dword = Es1RepairCosts.ChassisPrices[chassis];
+		var herc = Es1HercRecord.Create(chassis);
+		hangar.Slots[slot] = herc;
+		_mission.Roster.Salvage -= hangar.Dword * 1000;
+		_data.HercDiagrams.Build(herc, hangar.MarkedSlotWord);
+		hangar.HercCount++;
+	}
+
+	/// <summary>
 	/// <c>Hangar_ShowSlot</c> (<c>00029651</c>)(<paramref name="slot"/>) (docs/es1/shell/hangar.md#showing-a-bay): the
 	/// selected HERC taken out (<see cref="LeaveSelectedHerc"/>); the marked slot −1 when it is the selected slot and that
 	/// holds no HERC; for slot −1 the first empty slot (<see cref="Es1Hangar.FindFreeSlot"/>), and with none the selection

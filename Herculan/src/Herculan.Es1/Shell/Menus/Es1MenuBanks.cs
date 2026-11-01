@@ -7,8 +7,9 @@ namespace Herculan.Es1.Shell.Menus;
 /// <summary>
 /// The bitmap arrays the menus' picture tiles and CREW's hotspots draw from, retail's statics: the build's banks
 /// <c>000813d4</c>, <c>000813d8</c> and <c>000813dc</c>, which <see cref="ForControl"/> loads and <see cref="Free"/>
-/// releases, and CREW's <c>CrewAssignMenu_Portraits</c> (<c>0007ebcc</c>) and <c>CrewAssignMenu_Mesh</c>
-/// (<c>0007ebd0</c>) (docs/es1/shell/hangar.md#the-screen). The class is this engine's bundle of those globals, one per
+/// releases, CREW's <c>CrewAssignMenu_Portraits</c> (<c>0007ebcc</c>) and <c>CrewAssignMenu_Mesh</c>
+/// (<c>0007ebd0</c>) (docs/es1/shell/hangar.md#the-screen), and BUILD's <c>Fabrication_ChassisArt</c> (<c>000ab20e</c>)
+/// (docs/es1/shell/repair-and-build.md#build--screen-2000). The class is this engine's bundle of those globals, one per
 /// menu context; every member is retail's. A bank is a <c>.DBA</c>'s frames, none when the file does not read.
 /// </summary>
 public sealed class Es1MenuBanks {
@@ -45,6 +46,9 @@ public sealed class Es1MenuBanks {
 
 	/// <summary><c>CrewAssignMenu_Mesh</c> (<c>0007ebd0</c>), <c>res32\mesh.dba</c> from CREW's opening to its closing.</summary>
 	public IReadOnlyList<DynamixBitmap>? CrewMesh { get; set; }
+
+	/// <summary><c>Fabrication_ChassisArt</c> (<c>000ab20e</c>), <c>res32\blueherx.dba</c> from BUILD's opening to its closing (<see cref="Es1FabricationMenu"/>).</summary>
+	public IReadOnlyList<DynamixBitmap>? ChassisArt { get; set; }
 
 	/// <summary>
 	/// <c>Resource_LoadBitmapArray</c> (<c>0004b7df</c>) of <c>res32\</c><paramref name="name"/>: the file's frames. A file

@@ -20,8 +20,8 @@ public sealed class Es1HercArt {
 	/// <summary>The weapon an empty mount carries, 17.</summary>
 	public const short EmptyMount = Es1HercRecord.EmptyMount;
 
-	/// <summary>The words at <c>000803c8</c>: each chassis' mount count.</summary>
-	public static readonly short[] MountCounts = [3, 3, 4, 5, 6, 7, 8, 9];
+	/// <inheritdoc cref="Es1HercRecord.MountCounts"/>
+	public static readonly short[] MountCounts = Es1HercRecord.MountCounts;
 
 	/// <summary><c>Herc_MountDrawOrder</c> (<c>000803d8</c>), nine words per chassis, the mounts in the order the diagram draws them.</summary>
 	public static readonly short[][] MountDrawOrder = [

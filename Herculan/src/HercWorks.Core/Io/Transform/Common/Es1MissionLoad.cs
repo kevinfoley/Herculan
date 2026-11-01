@@ -812,9 +812,6 @@ public sealed class Es1MissionLoad {
 	/// hangar, through its step 5, <c>car\sm_play.mec</c>.
 	/// </summary>
 	private sealed class SquadBuild {
-		/// <summary>The words at <c>000803c8</c>: each chassis' mount count.</summary>
-		private static readonly short[] ChassisMountCounts = [3, 3, 4, 5, 6, 7, 8, 9];
-
 		private readonly Es1MissionLoad _load;
 		private readonly Func<short, int> _roll;
 
@@ -905,26 +902,22 @@ public sealed class Es1MissionLoad {
 		}
 
 		/// <summary>
-		/// A squadmate's new HERC: <c>Herc_Ctor</c> for chassis -1, then the mech record's chassis, that chassis' mount count,
-		/// its weapons and mount words, its <c>0x62</c>, and <c>Herc_SetAllStatus</c>(<i>h</i>, 100).
+		/// A squadmate's new HERC: <c>Herc_Ctor</c> for chassis -1 (<see cref="Es1HercRecord.Create"/>), then the mech
+		/// record's chassis, that chassis' mount count, its weapons and mount words, its <c>0x62</c>, and
+		/// <c>Herc_SetAllStatus</c>(<i>h</i>, 100).
 		/// </summary>
 		private static Es1HercRecord NewHerc(short[] mech) {
 			short chassis = mech[24];
-			if (chassis < 0 || chassis >= ChassisMountCounts.Length) {
+			if (chassis < 0 || chassis >= Es1HercRecord.MountCounts.Length) {
 				throw new InvalidDataException($"A squadmate's mech type, {chassis}, is no chassis the table at 000803c8 covers.");
 			}
 
-			int mounts = ChassisMountCounts[chassis];
-			var herc = new Es1HercRecord {
-				Chassis = chassis,
-				Weapons = mech[25..(25 + mounts)],
-				MountWords = mech[39..(39 + mounts)],
-				Word = mech[49],
-				Status = Enumerable.Repeat(Es1HercRecord.FullStatus, Es1HercRecord.StatusLength).ToArray(),
-			};
-
-			// HercStatus_Ctor leaves the pilot's condition as the allocation left it; the player file's write sets it.
-			herc.PilotCondition = 0;
+			int mounts = Es1HercRecord.MountCounts[chassis];
+			var herc = Es1HercRecord.Create(-1);
+			herc.Chassis = chassis;
+			herc.Weapons = mech[25..(25 + mounts)];
+			herc.MountWords = mech[39..(39 + mounts)];
+			herc.Word = mech[49];
 			herc.SetAllStatus(Es1HercRecord.FullStatus);
 			return herc;
 		}

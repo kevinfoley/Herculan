@@ -136,7 +136,8 @@ public sealed class Es1ShellMission {
 	public Es1Hangar? Hangar { get; set; }
 
 	/// <summary>
-	/// <c>SingleMission_Start</c> (<c>00036807</c>) (docs/es1/shell/single-mission.md#starting-the-mission): the path built
+	/// <c>SingleMission_Start</c> (<c>00036807</c>) (docs/es1/shell/single-mission.md#starting-the-mission): the weapon
+	/// stock loaded from <c>car\s_armory.dat</c> (<see cref="Es1CareerRoster.LoadStock"/>); the path built
 	/// from <see cref="MissionKind"/>; the mission loaded in the mode-0 load, which writes <c>data\script.dat</c>,
 	/// <c>data\mission.var</c> and <c>data\player.mec</c> (<see cref="Es1SingleMission"/>); and the paths saved with
 	/// <see cref="WriteRestore"/>. A load that fails is reported and the restore still written, as retail writes it after
@@ -144,8 +145,7 @@ public sealed class Es1ShellMission {
 	/// its arrays) loads nothing, an engine guard.
 	/// </summary>
 	public void StartSingleMission() {
-		// PLACEHOLDER: Inventory_LoadFile (00027e02)(the stock 000aad62, car\s_armory.dat), the weapon stock, which the arming
-		// screen and the results read (S4's and S2's, docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock); not loaded.
+		Roster.LoadStock("S_ARMORY.DAT");
 		if (BuildSingleMissionPath(MissionKind) is { } name && _data.Random is { } random) {
 			var p = _data.MissionParams;
 			var missionParams = new Es1MissionParams(p[0], p[1], p[2], p[3], p[4]);

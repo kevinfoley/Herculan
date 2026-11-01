@@ -1137,9 +1137,21 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 2000:
-				// PLACEHOLDER: BUILD, P16b's: 0003f6f8's Hangar_SelectNext(3), FabricationMenu_Ctor (000307c9)(0) made the current
-				// menu, and the dword 0007fce4 set to the HERC diagrams' areas 0008003c.
+			case Es1FabricationMenu.Screen:
+				// 0003f6f8: Hangar_SelectNext(3), which gives the marked slot a free slot when it has none and selects it;
+				// FabricationMenu_Ctor (000307c9)(0), BUILD, made the current menu; and the dword 0007fce4 set to the HERC
+				// diagrams' areas 0008003c as 1900's case sets it. With no bay nothing is selected, an engine guard.
+				if (_menuContext != null) {
+					if (Bay is { } bay) {
+						foreach (var wait in bay.SelectNext(3)) {
+							yield return wait;
+						}
+					}
+
+					CurrentMenu = new Es1FabricationMenu(_menuContext);
+					Globals.HangarAreas = _menuContext.Data.HercDiagrams.Art.Hotspots;
+				}
+
 				break;
 			case 1310:
 			case 1320:

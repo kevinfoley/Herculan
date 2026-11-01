@@ -304,8 +304,7 @@ public sealed class Es1CareerRoster {
 		Func<short, int> below = bound => _data.Random?.Below(bound) ?? 0;
 		ShuffleNameGroups(below);
 
-		var stock = ReadShellFile(Es1SingleMission.CarFolder, "C_ARMORY.DAT", new Es1InventoryTransformer());
-		Stocks[0].Read(stock ?? new Es1Inventory());
+		LoadStock("C_ARMORY.DAT");
 		var hangar = Es1Hangar.Read(ReadShellFile(Es1SingleMission.CarFolder, "CAR_INIT.DAT", new Es1HercListTransformer()) ?? new Es1HercList());
 		_mission.Hangar = hangar;
 		var tech = ReadShellFile("bst", _mission.Mode == 1 ? "TECH_0.DAT" : "TECH_SNG.DAT", new Es1TechFileTransformer()) ?? new Es1TechFile();
@@ -688,6 +687,14 @@ public sealed class Es1CareerRoster {
 		Console.Error.WriteLine($"cfg\\filename.bin has no entry {entry}: its file is not written.");
 		return null;
 	}
+
+	/// <summary>
+	/// <c>Inventory_LoadFile</c> (<c>00027e02</c>)(the stock the dword <c>000aad62</c> points to, <c>car\</c><paramref name="name"/>)
+	/// (docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock): the file read into stock 0 (<see cref="Es1WeaponStock.Read"/>).
+	/// A file that is missing or does not read is reported and read as no records, so the stock is left empty, an engine guard.
+	/// </summary>
+	public void LoadStock(string name) =>
+		Stocks[0].Read(ReadShellFile(Es1SingleMission.CarFolder, name, new Es1InventoryTransformer()) ?? new Es1Inventory());
 
 	/// <summary>A starting file from the shell's archives through <paramref name="transformer"/>; none, reported, when it is missing or does not read.</summary>
 	private T? ReadShellFile<T>(string folder, string name, HercWorks.Core.Io.Transform.ByteTransformer<T> transformer) where T : class {

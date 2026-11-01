@@ -156,6 +156,7 @@ public static class Es1MenuBuild {
 							Es1CareerStatsAlert.StatsPanel => Es1CareerStatsAlert.StatsHandler(context),
 							Es1ArmingMenu.WeaponPanel => Es1ArmingMenu.WeaponInfoHandler(context),
 							Es1ArmingMenu.MissilePanel => Es1ArmingMenu.MissileInfoHandler(context),
+							Es1FabricationMenu.Panel => Es1FabricationMenu.PanelHandler(context),
 							>= Es1CrewAssignMenu.FirstPortrait and <= Es1CrewAssignMenu.LastPortrait => Es1CrewAssignMenu.PortraitHandler(context),
 							>= Es1CrewAssignMenu.FirstLines and <= Es1CrewAssignMenu.LastLines => Es1CrewAssignMenu.LinesHandler(context),
 							>= Es1CrewAssignMenu.FirstTile and <= Es1CrewAssignMenu.LastTile => Es1CrewAssignMenu.BayNumberHandler(context),
@@ -506,15 +507,14 @@ public static class Es1MenuBuild {
 	}
 
 	/// <summary>
-	/// The handler 1502 and 2005 are given in place of their own (<see cref="HotspotIds"/>): it draws nothing. The ported
-	/// handlers are 1522's, the debriefing's results panel (<see cref="Es1DebriefingMenu.ResultsHandler"/>), 1231's, the
-	/// career's stats (<see cref="Es1CareerStatsAlert.StatsHandler"/>), CREW's three
-	/// (<see cref="Es1CrewAssignMenu.PortraitHandler"/>, <see cref="Es1CrewAssignMenu.LinesHandler"/>,
-	/// <see cref="Es1CrewAssignMenu.BayNumberHandler"/>) and ARMING's two (<see cref="Es1ArmingMenu.WeaponInfoHandler"/>,
-	/// <see cref="Es1ArmingMenu.MissileInfoHandler"/>).
+	/// The handler 1502 is given in place of its own (<see cref="HotspotIds"/>): it draws nothing. The ported handlers are
+	/// 1522's, the debriefing's results panel (<see cref="Es1DebriefingMenu.ResultsHandler"/>), 1231's, the career's stats
+	/// (<see cref="Es1CareerStatsAlert.StatsHandler"/>), CREW's three (<see cref="Es1CrewAssignMenu.PortraitHandler"/>,
+	/// <see cref="Es1CrewAssignMenu.LinesHandler"/>, <see cref="Es1CrewAssignMenu.BayNumberHandler"/>), ARMING's two
+	/// (<see cref="Es1ArmingMenu.WeaponInfoHandler"/>, <see cref="Es1ArmingMenu.MissileInfoHandler"/>) and BUILD's
+	/// (<see cref="Es1FabricationMenu.PanelHandler"/>).
 	/// </summary>
 	private static void HotspotPlaceholder(Es1ShellRenderContext context, Es1Rect rect, short id) {
-		// PLACEHOLDER: the hotspot handlers 0002bbaf and 0002845c, the war map's and BUILD's, later parts'; the area draws
-		// nothing.
+		// PLACEHOLDER: the hotspot handler 0002bbaf, the war map's, S5's; the area draws nothing.
 	}
 }

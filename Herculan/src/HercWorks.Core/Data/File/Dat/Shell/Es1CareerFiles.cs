@@ -62,6 +62,36 @@ public class Es1HercRecord {
 	/// <summary>The weapon an empty mount carries, <c>0x11</c>.</summary>
 	public const short EmptyMount = 17;
 
+	/// <summary>The words at <c>ES1GO 000803c8</c>: each chassis' mount count.</summary>
+	public static readonly short[] MountCounts = [3, 3, 4, 5, 6, 7, 8, 9];
+
+	/// <summary>
+	/// <c>Herc_Ctor</c> (<c>ES1GO 00022f5e</c>)(0, <paramref name="chassis"/>)'s record fields
+	/// (docs/es1/formats/car-hercs-and-stock.md#the-herc-record): the chassis; for −1 no mounts, otherwise the chassis'
+	/// <see cref="MountCounts"/> mounts, each <see cref="EmptyMount"/> with word 0; the word <c>+0x2c</c> 2; and the status
+	/// block <c>HercStatus_Ctor</c>'s, every word 100 but internal word 9, which keeps what the allocation held: 0, as the
+	/// shell's heap zero-fills its blocks (docs/es1/simulation/memory.md#the-heap). The constructor's other fields, the
+	/// current mount <c>+0x70</c> and the diagram's from <c>+0x72</c>, are not the record's. Retail reads the mount count
+	/// past the table for a chassis past 7; such a chassis, like any other outside the table, gets no mounts here, an engine
+	/// guard.
+	/// </summary>
+	public static Es1HercRecord Create(short chassis) {
+		int mounts = chassis >= 0 && chassis < MountCounts.Length ? MountCounts[chassis] : 0;
+		var herc = new Es1HercRecord {
+			Chassis = chassis,
+			Weapons = Enumerable.Repeat(EmptyMount, mounts).ToArray(),
+			MountWords = new short[mounts],
+			Word = ConstructorWord,
+			Status = Enumerable.Repeat(FullStatus, StatusLength).ToArray(),
+		};
+
+		herc.PilotCondition = 0;
+		return herc;
+	}
+
+	/// <summary>The word <c>+0x2c</c> <see cref="Create"/> sets.</summary>
+	private const short ConstructorWord = 2;
+
 	/// <summary>The status word every write sets in a single mission, and the value of every word <c>HercStatus_Ctor</c> sets.</summary>
 	public const short FullStatus = 100;
 
