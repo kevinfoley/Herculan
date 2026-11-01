@@ -31180,7 +31180,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSNullObj_Render",
-      "description": "Frameless: RET 4, with no Ghidra function. Slot +0x20 of the vtable 0009b0da, which es2_xref finds stored at 00067512 and 00067545, in TSNullObj's load function. ES2's TSNullObj_Render (DBSIM 00474da4).",
+      "description": "Frameless: RET 4. Slot +0x20 of the vtable 0009b0da, which es2_xref finds stored at 00067512 and 00067545, in TSNullObj's load function. ES2's TSNullObj_Render (DBSIM 00474da4).",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; ES1DBSIM disassembly at 00054034",
       "verified": {
         "bytes": "00054034+3",
@@ -31195,7 +31195,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSPoly_Render",
-      "description": "Frameless: RET 4, with no Ghidra function. Slot +0x20 of the vtable 0009b132, which es2_xref finds stored 16 times by the poly classes' load functions from 00067603 to 0006824b, and of 000929ea and 00092b5a. ES2's TSPoly_Render (DBSIM 00474dac).",
+      "description": "Frameless: RET 4. Slot +0x20 of the vtable 0009b132, which es2_xref finds stored 16 times by the poly classes' load functions from 00067603 to 0006824b, and of 000929ea and 00092b5a. ES2's TSPoly_Render (DBSIM 00474dac).",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; ES1DBSIM disassembly at 00054038",
       "verified": {
         "bytes": "00054038+3",

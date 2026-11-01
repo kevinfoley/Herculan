@@ -1577,6 +1577,21 @@
       }
     },
     {
+      "address": "0000ddc8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Context_GetTransform",
+      "description": "(context), callee-cleaned. The code of ES1DBSIM's Context_GetTransform (000016e8), relocated operands aside: it calls GO.EXE's own copy, BuildEulerRotationMatrixQ14 (000589c4).",
+      "source": "ES1GO decompile at 0000ddc8; es2_naming.py diff ES1GO 0000ddc8 ES1DBSIM 000016e8",
+      "verified": {
+        "bytes": "0000ddc8+66",
+        "sha1": "fea33539586c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000e518",
       "binary": "ES1GO",
       "type": "function",
@@ -16984,8 +16999,8 @@
       "type": "function",
       "confidence": "high",
       "name": "TSContext_Ctor",
-      "description": "(context), callee-cleaned: TSContext's constructor, allocating 0x16 bytes when context is null; the point at +0 and the int16 triple at +0xc are constructed inline, and the vtable 00087032 goes to +0x12. The code of ES1DBSIM's TSContext_Ctor (0005b754), relocated operands aside.",
-      "source": "ES1GO decompile at 000534d0",
+      "description": "(context), callee-cleaned. The code of ES1DBSIM's TSContext_Ctor (0005b754), relocated operands aside.",
+      "source": "ES1GO decompile at 000534d0; es2_naming.py diff ES1GO 000534d0 ES1DBSIM 0005b754",
       "verified": {
         "bytes": "000534d0+122",
         "sha1": "25190bb24c06",
@@ -17014,8 +17029,8 @@
       "type": "function",
       "confidence": "high",
       "name": "TSContext_Dtor",
-      "description": "(context, flags), callee-cleaned: TSContext's destructor, slot +4 of its vtable 00087032: stores that vtable at +0x12 and calls Mem_Delete when flags bit 0 is set; returns at once for a null context. The code of ES1DBSIM's TSContext_Dtor (0005b878), relocated operands aside.",
-      "source": "ES1GO decompile at 000535f4",
+      "description": "(context, flags), callee-cleaned. The code of ES1DBSIM's TSContext_Dtor (0005b878), relocated operands aside.",
+      "source": "ES1GO decompile at 000535f4; es2_naming.py diff ES1GO 000535f4 ES1DBSIM 0005b878",
       "verified": {
         "bytes": "000535f4+40",
         "sha1": "da67d7f34621",
@@ -22186,8 +22201,8 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_FillSpanList",
-      "description": "(spans, origin), C convention: ES2's Raster_FillSpanList (DBSIM 00486928) statement for statement, with the clip block 0008441c and the colour ramps 00085da9.",
-      "source": "Herculan/docs/retail/rendering/polygon-fill.md#span-lists",
+      "description": "(spans, origin), C convention. The code of ES1DBSIM's Raster_FillSpanList (0008f68c), relocated operands aside.",
+      "source": "ES1GO decompile at 0006a1ac; es2_naming.py diff ES1GO 0006a1ac ES1DBSIM 0008f68c",
       "verified": {
         "bytes": "0006a1ac+458",
         "sha1": "7ee8f6487971",
@@ -23338,7 +23353,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_SetPageOrigin",
-      "description": "(page, point), C convention: the VGA_8 driver's slot 15: stores the row table 00088852's word for point.y plus point.x >> 2 at 00088e92 + 4*page, and (point.x & 3) * 2 at the byte 00088eba + page while 00084476 is set (else 0); then calls VGA8_SetDrawPage (000701f5), VGA8_SetSourcePage (000701d4) or VGA8_ShowPage (00070216) with the page when it equals 0008448e, 0008448a or 00084486.",
+      "description": "(page, point), C convention: the VGA_8 driver's slot 15: stores the row table VGA8_RowOffsets (00088852)'s word for point.y plus point.x >> 2 at 00088e92 + 4*page, and (point.x & 3) * 2 at the byte 00088eba + page while 00084476 is set (else 0); then calls VGA8_SetDrawPage (000701f5), VGA8_SetSourcePage (000701d4) or VGA8_ShowPage (00070216) with the page when it equals 0008448e, 0008448a or 00084486.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
       "verified": {
         "bytes": "00070313+117",
@@ -23383,7 +23398,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_SetVirtualWidth",
-      "description": "(width, info), C convention, info being a display's +4: the VGA_8 driver's slot 7 (0008b30c). ES1DBSIM's VGA8_SetVirtualWidth (ES1DBSIM 0008b39c) with info+0x20 and +0x24 for its +0x24 and +0x28, the shell's display layout, and the shell's globals: width >> 2 at 0008884a, that less info+4 >> 2 at 0008884e, and the 800 int16 row offsets at 00088852.",
+      "description": "(width, info), C convention, info being a display's +4: the VGA_8 driver's slot 7 (0008b30c). ES1DBSIM's VGA8_SetVirtualWidth (ES1DBSIM 0008b39c) with info+0x20 and +0x24 for its +0x24 and +0x28, the shell's display layout, and the shell's globals: width >> 2 at VGA8_RowBytes (0008884a), that less info+4 >> 2 at 0008884e, and the 800 int16 row offsets at VGA8_RowOffsets (00088852).",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-video-memory",
       "verified": {
         "bytes": "00072ff4+108",
@@ -23428,7 +23443,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_CopyRectBetweenPages",
-      "description": "(rect, offset), C convention: the VGA_8 driver's slot 20: copies the inclusive rect of the source page (00088ec4, pan 00088ed0) moved back by offset onto the rect of the draw page (00088ec8, pan 00088ed4). When (offset.x + 00088ed4 - 00088ed0) & 3 is non-zero it copies row by row through raster slots 21 (00086604, the source row into a stack buffer) and 22 (00086608, the buffer to the draw row). Otherwise it uses VGA write mode 1 (port 3CE, register 5 to 0x41, back to 0x40 after) a byte per four columns, stride 0008884a: a rect whose x0 and x1 share a group of four with the plane mask from 00088ee0, reading source row y + offset.y; any other as its left partial group (mask 00088ef0), whole groups on all planes, and right partial group (00088ef4), reading source row y - offset.y.",
+      "description": "(rect, offset), C convention: the VGA_8 driver's slot 20: copies the inclusive rect of the source page (00088ec4, pan 00088ed0) moved back by offset onto the rect of the draw page (00088ec8, pan 00088ed4). When (offset.x + 00088ed4 - 00088ed0) & 3 is non-zero it copies row by row through raster slots 21 (00086604, the source row into a stack buffer) and 22 (00086608, the buffer to the draw row). Otherwise it uses VGA write mode 1 (port 3CE, register 5 to 0x41, back to 0x40 after) a byte per four columns, stride VGA8_RowBytes (0008884a): a rect whose x0 and x1 share a group of four with the plane mask from 00088ee0, reading source row y + offset.y; any other as its left partial group (mask 00088ef0), whole groups on all planes, and right partial group (00088ef4), reading source row y - offset.y.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#copying-between-pages",
       "verified": {
         "bytes": "000733bc+749",
@@ -23443,7 +23458,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_WriteRowTransparent",
-      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 23. The code of ES1DBSIM's VGA8_WriteRowTransparent (00051f1c) but for the row's offset, which it reads from the row table 00088852 where ES1DBSIM's multiplies the row by 0xa0.",
+      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 23. The code of ES1DBSIM's VGA8_WriteRowTransparent (00051f1c) but for the row's offset, which it reads from the row table VGA8_RowOffsets (00088852) where ES1DBSIM's multiplies the row by 0xa0.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; es2_naming.py diff ES1DBSIM ES1GO 00051f1c:000736ac",
       "verified": {
         "bytes": "000736ac+542",
@@ -23458,7 +23473,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_WriteRow",
-      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 22. The code of ES1DBSIM's VGA8_WriteRow (00052138) but for the row's offset, which it reads from the row table 00088852 where ES1DBSIM's multiplies the row by 0xa0.",
+      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 22. The code of ES1DBSIM's VGA8_WriteRow (00052138) but for the row's offset, which it reads from the row table VGA8_RowOffsets (00088852) where ES1DBSIM's multiplies the row by 0xa0.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; es2_naming.py diff ES1DBSIM ES1GO 00052138:000738ca",
       "verified": {
         "bytes": "000738ca+286",
@@ -23473,7 +23488,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_ReadRow",
-      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 21. The code of ES1DBSIM's VGA8_ReadRow (00052254) but for the row's offset, which it reads from the row table 00088852 where ES1DBSIM's multiplies the row by 0xa0.",
+      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 21. The code of ES1DBSIM's VGA8_ReadRow (00052254) but for the row's offset, which it reads from the row table VGA8_RowOffsets (00088852) where ES1DBSIM's multiplies the row by 0xa0.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; es2_naming.py diff ES1DBSIM ES1GO 00052254:000739e8",
       "verified": {
         "bytes": "000739e8+336",
@@ -23488,7 +23503,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_ReadBitmap",
-      "description": "(header, point, clip, flags), C convention: slot 27 of the VGA_8 driver's table (0008b2f0), the one stored pointer es2_xref finds. The reverse of the blit at slot 26 (00073d7c): with a clip rect, returns when the bitmap's rows (+0) and columns (+2) at the point miss it and otherwise cuts them to it; mirrors by the flags 1 and 2; reads the rect of the source page (offset 00088ec4, pan 00088ed0, the row table 00088852) a plane at a time through the graphics controller's read map select (port 3ce index 4, its value put back after) into the pixels the dword +0xa points at. The code of ES1DBSIM's VGA8_ReadBitmap (0008be88), relocated operands aside.",
+      "description": "(header, point, clip, flags), C convention: slot 27 of the VGA_8 driver's table (0008b2f0), the one stored pointer es2_xref finds. The reverse of the blit at slot 26 (00073d7c): with a clip rect, returns when the bitmap's rows (+0) and columns (+2) at the point miss it and otherwise cuts them to it; mirrors by the flags 1 and 2; reads the rect of the source page (offset 00088ec4, pan 00088ed0, the row table VGA8_RowOffsets (00088852)) a plane at a time through the graphics controller's read map select (port 3ce index 4, its value put back after) into the pixels the dword +0xa points at. The code of ES1DBSIM's VGA8_ReadBitmap (0008be88), relocated operands aside.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-cursor",
       "verified": {
         "bytes": "0007425c+1010",
@@ -23548,7 +23563,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_BlitScaledRow",
-      "description": "A block of VGA8_BlitBitmapScaled (00074b18), near-called with its frame per destination row ([EBP-0x34]). In clip mode +0x204 2 draws the row once per region of the clip block 0008441c's list, first to last, that holds it, trimmed to a rect region's x0..x1 or a span region's span on that row, passing over other types; otherwise once. A = (L + left trim) * column step + the column fraction; the fraction becomes A's low 16 bits; pixel j of the run takes the source byte at floor((A + offset * 65536 + j * step) / 65536), written plane by plane (sequencer map mask) on the draw page (row table 00088852, 00088ec8) unless it is 0.",
+      "description": "A block of VGA8_BlitBitmapScaled (00074b18), near-called with its frame per destination row ([EBP-0x34]). In clip mode +0x204 2 draws the row once per region of the clip block 0008441c's list, first to last, that holds it, trimmed to a rect region's x0..x1 or a span region's span on that row, passing over other types; otherwise once. A = (L + left trim) * column step + the column fraction; the fraction becomes A's low 16 bits; pixel j of the run takes the source byte at floor((A + offset * 65536 + j * step) / 65536), written plane by plane (sequencer map mask) on the draw page (row table VGA8_RowOffsets (00088852), 00088ec8) unless it is 0.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
       "verified": {
         "bytes": "00074cbd+698",
@@ -23683,7 +23698,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VGA8_DrawLine",
-      "description": "(colour, a, b), C convention: the VGA_8 driver's line, slot 34 of its table 0008b2f0 (+0x88), which Raster_DrawLine (00001b6c) calls through 00086638 for a flat colour. Draws on the draw page (offset 00088ec8, pan 00088ed4 added to each x, row table 00088852, row bytes 0008884a, selector 00088848 in FS) through the sequencer's map mask (port 3C4 index 2). It starts from the point with the smaller x, a when the two are equal; dx is the x distance and dy the absolute y distance, the row step negated when the line rises. dy 0: the dx + 1 pixels of the row, in one write with the mask 00088ee0[4 * (x & 3) + ((dx + 1) & 3)] when they stay in one group of four columns, else the first group's mask 00088ef0[x & 3], the whole groups with mask 0xf (REP STOSW), and the last group's 00088ef4[the remaining count & 3]. dx 0: dy + 1 pixels of the column. dx <= dy: on row i from 0 to dy the pixel at column x + floor(i * (dx + 1) / (dy + 1)). dx > dy: on column j from 0 to dx the pixel floor(j * (dy + 1) / (dx + 1)) rows on, the pixels of one group of four on one row written together. So both end points are drawn, and the pixels do not depend on the order of a and b. es2_xref finds one reference, the table's slot. The code of ES1DBSIM's VGA8_DrawLine (0008cb90), relocated operands aside.",
+      "description": "(colour, a, b), C convention: the VGA_8 driver's line, slot 34 of its table 0008b2f0 (+0x88), which Raster_DrawLine (00001b6c) calls through 00086638 for a flat colour. Draws on the draw page (offset 00088ec8, pan 00088ed4 added to each x, row table VGA8_RowOffsets (00088852), row bytes VGA8_RowBytes (0008884a), selector 00088848 in FS) through the sequencer's map mask (port 3C4 index 2). It starts from the point with the smaller x, a when the two are equal; dx is the x distance and dy the absolute y distance, the row step negated when the line rises. dy 0: the dx + 1 pixels of the row, in one write with the mask 00088ee0[4 * (x & 3) + ((dx + 1) & 3)] when they stay in one group of four columns, else the first group's mask 00088ef0[x & 3], the whole groups with mask 0xf (REP STOSW), and the last group's 00088ef4[the remaining count & 3]. dx 0: dy + 1 pixels of the column. dx <= dy: on row i from 0 to dy the pixel at column x + floor(i * (dx + 1) / (dy + 1)). dx > dy: on column j from 0 to dx the pixel floor(j * (dy + 1) / (dx + 1)) rows on, the pixels of one group of four on one row written together. So both end points are drawn, and the pixels do not depend on the order of a and b. es2_xref finds one reference, the table's slot. The code of ES1DBSIM's VGA8_DrawLine (0008cb90), relocated operands aside.",
       "source": "ES1GO decompile at 00075950",
       "verified": {
         "bytes": "00075950+426",
@@ -23835,6 +23850,36 @@
       "name": "ldexp",
       "description": "Symantec C++ runtime `ldexp`, from `ldexp.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 195 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007c3f8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSNullObj_Render",
+      "description": "Frameless: RET 4. Slot +0x20 of the vtable 00099e52. The code of ES1DBSIM's TSNullObj_Render (00054034).",
+      "source": "ES1GO bytes at 0007c3f8; ES1DBSIM bytes at 00054034",
+      "verified": {
+        "bytes": "0007c3f8+3",
+        "sha1": "6d2a7422bc83",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0007c3fc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPoly_Render",
+      "description": "Frameless: RET 4. Slot +0x20 of the vtable 00099eaa. The code of ES1DBSIM's TSPoly_Render (00054038).",
+      "source": "ES1GO bytes at 0007c3fc; ES1DBSIM bytes at 00054038",
+      "verified": {
+        "bytes": "0007c3fc+3",
+        "sha1": "6d2a7422bc83",
+        "scope": "body",
+        "via": "raw"
+      }
     },
     {
       "address": "0007c400",
@@ -24014,6 +24059,21 @@
         "sha1": "232712d62fa6",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "0007d314",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSAliasGouraudPoly_Render",
+      "description": "(poly), callee-cleaned: the draw slot (+0x20) of the vtable 0009a036. The code of ES1DBSIM's TSAliasGouraudPoly_Render (00054f00), relocated operands aside.",
+      "source": "ES1GO decompile at 0007d314; es2_naming.py diff ES1GO 0007d314 ES1DBSIM 00054f00",
+      "verified": {
+        "bytes": "0007d314+570",
+        "sha1": "0333868aeb75",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -25329,6 +25389,24 @@
       "name": "Timer_DelayedMask",
       "description": "dword, 16 slots used: the delayed callbacks Timer_AddDelayedCallback has taken; cleared by Pit_InstallHandler, a slot freed by Timer_RemoveDelayedCallback or by Pit_TimerInterrupt when its repeats run out. Per slot: callback 000882f4, counter 00088374, period 000883f4, delay 00088434, repeats 00088474. ES1DBSIM's Timer_DelayedMask is at 0009cd68.",
       "source": "Herculan/docs/es1/simulation/timer.md#callbacks; ES1DBSIM disassembly"
+    },
+    {
+      "address": "0008884a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "VGA8_RowBytes",
+      "description": "dword: the bytes a row of video memory takes in each of the four planes, as ES1DBSIM's VGA8_RowBytes (0009df86). VGA8_DrawLine (00075950) reads it.",
+      "source": "ES1GO disassembly of VGA8_DrawLine (00075950); ES1DBSIM's VGA8_DrawLine (0008cb90) reads 0009df86 at the same place"
+    },
+    {
+      "address": "00088852",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "VGA8_RowOffsets",
+      "description": "int16 array: row y's offset in a plane at entry y, as ES1DBSIM's VGA8_RowOffsets (0009df8e). VGA8_DrawLine (00075950) reads it.",
+      "source": "ES1GO disassembly of VGA8_DrawLine (00075950); ES1DBSIM's VGA8_DrawLine (0008cb90) reads 0009df8e at the same place"
     },
     {
       "address": "00089f9c",
