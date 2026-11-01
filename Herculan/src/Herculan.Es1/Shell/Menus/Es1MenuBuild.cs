@@ -31,8 +31,8 @@ public static class Es1MenuBuild {
 	/// <summary>The options menu and its RETURN button, whose text <c>Shell_ReturnScreen</c> picks (docs/es1/shell/main-menu.md#the-return-screen).</summary>
 	private const short OptionsMenu = 1300, ReturnButton = 100;
 
-	/// <summary>The menu whose kind-1 text holding <c>#</c> goes to <c>0002a1aa</c> first.</summary>
-	private const short ScrapMenu = 4444;
+	/// <summary>The menu whose kind-1 text holding <c>#</c> goes to <c>Hangar_FormatScrapValue</c> (<see cref="Es1ScrapAlert.FormatValue"/>) first.</summary>
+	private const short ScrapMenu = Es1ScrapAlert.Screen;
 
 	/// <summary>
 	/// The 17 kind-14 ids at <c>00081b08</c>, each of whose cases at <c>00081b4c</c> adds a hotspot with
@@ -135,8 +135,7 @@ public static class Es1MenuBuild {
 					break;
 				case LeftLabelKind or RightLabelKind or CenteredLabelKind:
 					if (number == ScrapMenu && record.Kind == LeftLabelKind && text != null && text.Contains('#', StringComparison.Ordinal)) {
-						// PLACEHOLDER: 0002a1aa, which menu 4444's kind-1 text holding '#' passes through first, is unread; the
-						// scrap alert is a later module's.
+						text = Es1ScrapAlert.FormatValue(text, context.Mission.Hangar, context.Data.RepairCosts);
 					}
 
 					int mode = record.Kind switch { LeftLabelKind => 0, RightLabelKind => 1, _ => 2 };

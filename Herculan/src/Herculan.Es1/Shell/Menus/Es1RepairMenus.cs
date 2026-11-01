@@ -1,3 +1,4 @@
+using System.Globalization;
 using HercWorks.Core.Data.File.Dat.Shell;
 using Herculan.Es1.Shell.Hangar;
 
@@ -18,9 +19,6 @@ public sealed class Es1RepairMenu : Es1Menu {
 
 	/// <summary>The five ids of <c>RepairMenu_CaseTable</c> (<c>00080e20</c>): HERCS' two arrows, REPAIR ALL, SCRAP and PROCEED.</summary>
 	private const short NextHerc = 2004, PrevHerc = 2003, RepairAll = 1902, Scrap = 1901, Proceed = 1710;
-
-	/// <summary>The screen SCRAP's case makes the target, the scrap alert.</summary>
-	private const short ScrapScreen = 4444;
 
 	/// <summary>The target and the condition a full repair reaches.</summary>
 	private const short FullRepair = 100;
@@ -78,7 +76,7 @@ public sealed class Es1RepairMenu : Es1Menu {
 				RepairAllSelected();
 				break;
 			case Scrap:
-				message = message with { Target = ScrapScreen };
+				message = message with { Target = Es1ScrapAlert.Screen };
 				break;
 			case Proceed:
 				Context.Mission.SaveCurrentRecord();
@@ -215,6 +213,120 @@ public sealed class Es1RepairPrefsAlert : Es1Menu {
 	}
 
 	/// <summary>Slot <c>+4</c>, <c>RepairPrefsAlert_Dtor</c> (<c>0004075e</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
+	public override void Dtor() {
+	}
+}
+
+/// <summary>
+/// SCRAP's screen object, class <c>ScrapAlert</c> (vtable <c>00081e06</c>, <c>0x26</c> bytes)
+/// (docs/es1/shell/repair-and-build.md#scrap--screen-4444): screen 4444, the warning that gives the salvage the selected
+/// HERC will yield, whose SCRAP scraps it and whose CANCEL goes back to REPAIR.
+/// </summary>
+public sealed class Es1ScrapAlert : Es1Menu {
+	/// <summary>The screen and the menu, <c>dlg\menu4444.dlg</c>.</summary>
+	public const short Screen = 4444;
+
+	/// <summary>The SCRAP button's target; CANCEL's 1900 passes to <see cref="Es1ShellScreens.HandleMessage"/> as a screen.</summary>
+	private const short ScrapButton = 100;
+
+	/// <summary>The characters of the formatted value copied over the text's <c>#</c>.</summary>
+	private const int ValueWidth = 3;
+
+	public Es1ScrapAlert(Es1MenuContext context) : base(context) {
+	}
+
+	private Es1HangarBay? Bay => Context.Screens.Bay;
+
+	/// <summary>
+	/// <c>Hangar_FormatScrapValue</c> (<c>0002a1aa</c>)(<paramref name="text"/>), which <c>Menu_BuildFromDlg</c> applies to
+	/// menu 4444's kind-1 text holding <c>#</c>: <see cref="Es1RepairCosts.ScrapValue"/> (<c>Herc_FrameValue</c>,
+	/// <c>00038d6c</c>) of the selected slot's HERC, divided unsigned by 1000, formatted with <c>%3d</c> (<c>00080940</c>),
+	/// and its first three characters copied over the first <c>#</c> and the two characters after it. Retail reads the
+	/// selected slot's HERC with no test and writes past a text that ends sooner; with no HERC the text is kept here, and a
+	/// shorter text keeps its length, engine guards.
+	/// </summary>
+	public static string FormatValue(string text, Es1Hangar? hangar, Es1RepairCosts costs) {
+		int at = text.IndexOf('#', StringComparison.Ordinal);
+		if (at < 0 || hangar?.HercIn(hangar.SelectedSlot) is not { } herc) {
+			return text;
+		}
+
+		string value = ((uint)costs.ScrapValue(herc) / 1000).ToString(CultureInfo.InvariantCulture).PadLeft(ValueWidth);
+		var chars = text.ToCharArray();
+		for (int i = 0; i < ValueWidth && at + i < chars.Length; i++) {
+			chars[at + i] = value[i];
+		}
+
+		return new string(chars);
+	}
+
+	/// <summary>
+	/// Slot <c>+8</c>, <c>ScrapAlert_OnMessage</c> (<c>0002f111</c>), for 100 only: the selected HERC scrapped
+	/// (<see cref="Es1HangarBay.ScrapSelectedHerc"/>); the slot then selected kept and the pilot
+	/// <see cref="Es1CareerRecord.FindPilotBySlot"/> finds for it; the scripts given their bays
+	/// (<see cref="Es1HangarBay.AssignScripts"/>); the draw page wiped onto the visible one
+	/// (<see cref="Es1ScreenBlinds.Copy"/>(8, the visible page, the draw page)); that pilot made the current pilot
+	/// (<see cref="Es1CareerRecord.SelectPilot"/>), and the kept slot selected again when it is −1; and the target 1900,
+	/// back to REPAIR. A handler is no iterator: the steps' wipes, whose waits are the frame's, are passed over, as
+	/// <see cref="Es1RepairMenu"/>'s HERCS are. With no bay nothing is scrapped, given its bay or wiped, and with no record
+	/// or hangar no pilot is selected, engine guards.
+	/// </summary>
+	public override void OnMessage(ref Es1MenuMessage message) {
+		if (message.Target != ScrapButton) {
+			return;
+		}
+
+		var mission = Context.Mission;
+		var bay = Bay;
+		if (bay != null) {
+			foreach (var _ in bay.ScrapSelectedHerc()) {
+			}
+		}
+
+		var hangar = mission.Hangar;
+		short slot = hangar?.SelectedSlot ?? -1;
+		short entry = mission.CurrentRecord?.FindPilotBySlot(slot) ?? -1;
+		if (bay != null) {
+			var display = bay.Surface.Display;
+			foreach (var _ in bay.AssignScripts().Concat(bay.Blinds.Copy(8, display.VisiblePage, display.DrawPage))) {
+			}
+		}
+
+		if (hangar != null) {
+			mission.CurrentRecord?.SelectPilot(entry, hangar);
+			if (entry == -1) {
+				hangar.SelectedSlot = slot;
+			}
+		}
+
+		message = message with { Target = Es1RepairMenu.Screen };
+	}
+
+	/// <summary>Slot <c>+4</c>, <c>ScrapAlert_Dtor</c> (<c>0003fbac</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
+	public override void Dtor() {
+	}
+}
+
+/// <summary>
+/// SALVAGE's screen object, class <c>SalvageAllocAlert</c> (vtable <c>00082050</c>, <c>0x26</c> bytes)
+/// (docs/es1/shell/repair-and-build.md#salvage--screen-2010): screen 2010, a window with ACCEPT and CANCEL. What opens it
+/// is repair-and-build.md's Open; this engine adds no way in.
+/// </summary>
+public sealed class Es1SalvageAllocAlert : Es1Menu {
+	/// <summary>The screen and the menu, <c>dlg\menu2010.dlg</c>.</summary>
+	public const short Screen = 2010;
+
+	public Es1SalvageAllocAlert(Es1MenuContext context) : base(context) {
+	}
+
+	/// <summary>
+	/// Slot <c>+8</c>, <c>SalvageAllocAlert_OnMessage</c> (<c>00030ed3</c>): it answers the message's target and changes
+	/// nothing, so ACCEPT's 100 and CANCEL's 2000 pass to <see cref="Es1ShellScreens.HandleMessage"/> as they are.
+	/// </summary>
+	public override void OnMessage(ref Es1MenuMessage message) {
+	}
+
+	/// <summary>Slot <c>+4</c>, <c>SalvageAllocAlert_Dtor</c> (<c>00040815</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
 	public override void Dtor() {
 	}
 }

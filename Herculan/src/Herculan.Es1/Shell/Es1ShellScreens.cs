@@ -1129,11 +1129,17 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
+			case Es1ScrapAlert.Screen:
+			case Es1SalvageAllocAlert.Screen:
+				// 0003d215 and SALVAGE's 0003f71a: a ScrapAlert or a SalvageAllocAlert made the current menu, nothing else set.
+				if (_menuContext != null) {
+					CurrentMenu = target == Es1ScrapAlert.Screen ? new Es1ScrapAlert(_menuContext) : new Es1SalvageAllocAlert(_menuContext);
+				}
+
+				break;
 			case 2000:
-			case 2010:
-			case 4444:
-				// PLACEHOLDER: the hangar's other screens, P16's: 0002986f(3) with 000307c9 (which sets the hangar test's dword
-				// 0007fce4), SalvageAllocAlert and ScrapAlert.
+				// PLACEHOLDER: BUILD, P16b's: 0003f6f8's Hangar_SelectNext(3), FabricationMenu_Ctor (000307c9)(0) made the current
+				// menu, and the dword 0007fce4 set to the HERC diagrams' areas 0008003c.
 				break;
 			case 1310:
 			case 1320:

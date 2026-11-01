@@ -372,6 +372,53 @@ public sealed class Es1HangarBay {
 	}
 
 	/// <summary>
+	/// <c>Hangar_ScrapSelectedHerc</c> (<c>0002a046</c>) (docs/es1/shell/between-missions.md#lost-squadmates): nothing
+	/// unless the selected slot holds a HERC. The marked slot's HERC is scrapped
+	/// (<see cref="Es1CareerAfterMission.ScrapToSalvage"/>) with <see cref="Es1Hangar.Dword"/> × 1000 and any other with
+	/// 0, its frame's value; the HERC is taken out of the bay (<see cref="LeaveSelectedHerc"/>); for any other slot the slot
+	/// of the pilot <see cref="Es1CareerRecord.FindPilotBySlot"/> finds for it is set to −1; the HERC is destroyed
+	/// (<c>Herc_Dtor</c> (<c>000232a4</c>)(HERC, 3), which frees its diagram, <see cref="Es1HercDiagrams.Destroy"/>), the
+	/// slot emptied and the HERC count down 1. Then, for the marked slot, <see cref="Es1Hangar.MarkedSlotWord"/> and
+	/// <see cref="Es1Hangar.Dword"/> are set to 0 and the slot given its scripts (<see cref="AssignSlotScripts"/>(slot, 1)),
+	/// the marked slot keeping its number and the selection staying on it; for any other the selection steps on
+	/// (<see cref="Es1Hangar.NextHercSlot"/>). Both close with the screen wiped to color 0
+	/// (<see cref="Es1ScreenBlinds.Clear"/>(8, 0)) and the selection shown (<see cref="ShowSelectedHerc"/>). Retail reads
+	/// <c>CareerRecord_Current</c> with no test; with no record no pilot is changed here, an engine guard.
+	/// </summary>
+	public IEnumerable<Es1ShellWait> ScrapSelectedHerc() {
+		if (Hangar is not { } hangar || hangar.HercIn(hangar.SelectedSlot) is not { } herc) {
+			yield break;
+		}
+
+		short slot = hangar.SelectedSlot;
+		bool marked = slot == hangar.MarkedSlot;
+		new Es1CareerAfterMission(_mission, _data).ScrapToSalvage(herc, marked ? hangar.Dword * 1000 : 0);
+		LeaveSelectedHerc();
+		if (!marked && _mission.CurrentRecord is { } record && record.FindPilotBySlot(slot) is var entry and not -1) {
+			record.Pilots[entry].Slot = -1;
+		}
+
+		_data.HercDiagrams.Destroy(herc);
+		hangar.Slots[slot] = null;
+		hangar.HercCount--;
+		if (marked) {
+			hangar.MarkedSlotWord = 0;
+			hangar.Dword = 0;
+			AssignSlotScripts(slot, 1);
+		} else {
+			hangar.NextHercSlot();
+		}
+
+		foreach (var wait in _blinds.Clear(8, 0)) {
+			yield return wait;
+		}
+
+		foreach (var wait in ShowSelectedHerc()) {
+			yield return wait;
+		}
+	}
+
+	/// <summary>
 	/// <c>Hangar_ShowSlot</c> (<c>00029651</c>)(<paramref name="slot"/>) (docs/es1/shell/hangar.md#showing-a-bay): the
 	/// selected HERC taken out (<see cref="LeaveSelectedHerc"/>); the marked slot −1 when it is the selected slot and that
 	/// holds no HERC; for slot −1 the first empty slot (<see cref="Es1Hangar.FindFreeSlot"/>), and with none the selection

@@ -230,7 +230,7 @@ public sealed class Es1RepairCosts {
 	/// <c>00038d6c</c>(<paramref name="herc"/>), what the HERC's frame is worth: over the six external areas, the row's word ×
 	/// the area's average (<see cref="Es1HercRecord.ExternalAverage"/>) / 100, and over internal words 0 to 8, the row's word
 	/// from 13 × the internal word / 100, each term truncated; the mounts are not counted. <c>Herc_ScrapToSalvage</c> adds it
-	/// to <c>Career_Salvage</c> when it is given no value, and <c>0002a1aa</c> prints it in tons.
+	/// to <c>Career_Salvage</c> when it is given no value, and <c>Hangar_FormatScrapValue</c> (<see cref="Menus.Es1ScrapAlert.FormatValue"/>) prints it in tons.
 	/// </summary>
 	public int ScrapValue(Es1HercRecord herc) {
 		int sum = 0;
