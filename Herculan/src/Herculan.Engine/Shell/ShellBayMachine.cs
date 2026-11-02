@@ -382,8 +382,7 @@ public sealed class ShellBayMachine {
 		var mounts = new ShellWeaponUnit?[entry.HardpointConditions.Length];
 		for (int slot = 0; slot < hardpoint.Length; slot++) {
 			hardpoint[slot] = entry.HardpointConditions[slot]?.Health ?? (short)Complete;
-			mounts[slot] = entry.Mounts.TryGetValue((short)slot, out var weapon) && weapon.Id != null
-				? ShellWeaponUnit.From(weapon) : null;
+			mounts[slot] = entry.Mounts.TryGetValue((short)slot, out var weapon) ? ShellWeaponUnit.From(weapon) : null;
 		}
 
 		short overall = entry.InternalConditions != null

@@ -35,11 +35,11 @@ public class PlayerSaveTransform : ByteTransformer<PlayerSave> {
 			var items = new ShellWeaponEntry[quant];
 			for (int q = 0; q < quant; q++) {
 				var weapon = new ShellWeaponEntry {
-					Id = WeaponLUT.GetById(IndexShortLE()),
+					WeaponId = IndexShortLE(),
 					ClassIndex = IndexShortLE(),
 					FitCondition = IndexShortLE(),
 					Condition = IndexShortLE(),
-					Guidance = MissileType.GetById(IndexShortLE())
+					GuidanceId = IndexShortLE()
 				};
 				items[q] = weapon;
 			}
@@ -182,11 +182,11 @@ public class PlayerSaveTransform : ByteTransformer<PlayerSave> {
 		for (int h = 0; h < herc.MountsOccupied; h++) {
 			short socketId = IndexShortLE();
 			var weapon = new ShellWeaponEntry {
-				Id = WeaponLUT.GetById(IndexShortLE()),
+				WeaponId = IndexShortLE(),
 				ClassIndex = IndexShortLE(),
 				FitCondition = IndexShortLE(),
 				Condition = IndexShortLE(),
-				Guidance = MissileType.GetById(IndexShortLE())
+				GuidanceId = IndexShortLE()
 			};
 			herc.Mounts[socketId] = weapon;
 		}
@@ -205,11 +205,11 @@ public class PlayerSaveTransform : ByteTransformer<PlayerSave> {
 			WriteAndCount(outStream, WriteShortLE(item.Quantity));
 
 			foreach (var entry in item.Units!) {
-				WriteAndCount(outStream, WriteShortLE((short)entry.Id!.Id));
+				WriteAndCount(outStream, WriteShortLE(entry.WeaponId));
 				WriteAndCount(outStream, WriteShortLE(entry.ClassIndex));
 				WriteAndCount(outStream, WriteShortLE(entry.FitCondition));
 				WriteAndCount(outStream, WriteShortLE(entry.Condition));
-				WriteAndCount(outStream, WriteShortLE((short)entry.Guidance!.Id));
+				WriteAndCount(outStream, WriteShortLE(entry.GuidanceId));
 			}
 		}
 
@@ -329,11 +329,11 @@ public class PlayerSaveTransform : ByteTransformer<PlayerSave> {
 		foreach (var kv in herc.Mounts) {
 			WriteAndCount(outArr, WriteShortLE(kv.Key));
 			var weapon = kv.Value;
-			WriteAndCount(outArr, WriteShortLE((short)weapon.Id!.Id));
+			WriteAndCount(outArr, WriteShortLE(weapon.WeaponId));
 			WriteAndCount(outArr, WriteShortLE(weapon.ClassIndex));
 			WriteAndCount(outArr, WriteShortLE(weapon.FitCondition));
 			WriteAndCount(outArr, WriteShortLE(weapon.Condition));
-			WriteAndCount(outArr, WriteShortLE((short)weapon.Guidance!.Id));
+			WriteAndCount(outArr, WriteShortLE(weapon.GuidanceId));
 		}
 	}
 

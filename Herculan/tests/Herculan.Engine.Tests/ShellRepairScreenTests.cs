@@ -627,7 +627,7 @@ public class ShellRepairScreenTests {
 		for (short slot = 0; slot < entry.HardpointConditions.Length; slot++) {
 			entry.HardpointConditions[slot] = new ShellHercPart(slot, "hardpoint_" + slot, 100);
 			if (slot < weapons.Length && weapons[slot] != 0) {
-				entry.Mounts[slot] = new ShellWeaponEntry { Id = WeaponLUT.GetById(weapons[slot]) };
+				entry.Mounts[slot] = new ShellWeaponEntry { WeaponId = (short)weapons[slot], GuidanceId = (short)MissileType.None.Id };
 			}
 		}
 

@@ -4,10 +4,17 @@ namespace HercWorks.Core.Data.Struct.Vshell.Sav;
 /// The save form of a weapon unit, all five shorts of the ten-byte in-memory record, in on-disk
 /// order. <see cref="Hercs.UiWeaponEntry"/> is the six-byte <c>gam\*.dat</c> form of the same
 /// record. See <c>docs/retail/formats/herc-catalogs.md#the-weapon-unit-record</c>.
+///
+/// <para>The id and the ammo type are kept as the shorts the file holds, because a machine built from a
+/// mission record can carry ids no catalog entry names: a <c>-1</c> in the record's weapon or ammunition
+/// slot is fitted as it stands (docs/retail/shell/main-menu.md#starting-a-practice-mission).</para>
 /// </summary>
 public class ShellWeaponEntry {
 	/// <summary><c>+0x00</c>, the weapon catalog id.</summary>
-	public WeaponLUT? Id { get; set; }
+	public short WeaponId { get; set; }
+
+	/// <summary>The catalog entry <see cref="WeaponId"/> names, or null when there is none.</summary>
+	public WeaponLUT? Id => WeaponLUT.GetById(WeaponId);
 
 	/// <summary>
 	/// <c>+0x02</c>, the armory class index, derived from the id by <c>Weapon_ClassIndexForId</c>
@@ -22,5 +29,8 @@ public class ShellWeaponEntry {
 	public short Condition { get; set; }
 
 	/// <summary><c>+0x08</c>, the ammo type — the guidance kind, or 5 for none.</summary>
-	public MissileType? Guidance { get; set; }
+	public short GuidanceId { get; set; }
+
+	/// <summary>The guidance kind <see cref="GuidanceId"/> names, or null when there is none.</summary>
+	public MissileType? Guidance => MissileType.GetById(GuidanceId);
 }
