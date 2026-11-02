@@ -46,24 +46,53 @@ The war map's map's constants ([the map](../shell/map.md#the-tuning-files)). `MA
 | 0 | `uint32` | the [first dword](#the-first-dword) | |
 | 4 | `int32` | 100000 | `Map_PanStepFor` (`0000911c`), the step's top |
 | 8 | `int32` | 5000 | `Map_PanStepFor`, the step's bottom |
-| 12 | `int32` | 5,000,000 | |
-| 16 | `int32` | 50000 | |
-| 20 | `int32` | 50000 | `Map_PanStepFor`, the altitude's bottom |
-| 24 | `int32` | 1,000,000 | `Map_PanStepFor`, the altitude's top |
+| 12 | `int32` | 5,000,000 | `MapBnd_PanLimit` (`0009a42c`): `Map_PanNorth` (`000090be`), `Map_PanSouth`, `Map_PanWest` and `Map_PanEast`, the position's bound |
+| 16 | `int32` | 50000 | `MapBnd_ZoomStep` (`0009a430`): `Map_ZoomIn` (`00009043`) and `Map_ZoomOut` (`00009010`), the altitude's step |
+| 20 | `int32` | 50000 | `Map_PanStepFor`, the altitude's bottom; `Map_ZoomIn`, the least altitude |
+| 24 | `int32` | 1,000,000 | `Map_PanStepFor`, the altitude's top; `Map_ZoomOut`, the greatest altitude |
 | 28 | `int32` | 200000 | `Map_Ctor` (`00008cfd`), the starting altitude |
 
-`SHELLMAP.BND`, at `0009a44c`, 142 bytes; the offsets the shell's map reads in its build:
+`SHELLMAP.BND`, at `0009a44c`, 142 bytes; the offsets the shell's map reads, the ticks being [the map's clock's](../shell/map.md#the-tick), 60 a second:
 
 | Offset | Type | Value | Global | Read by |
 |---|---|---|---|---|
 | 0 | `uint32` | the [first dword](#the-first-dword) | | |
-| `0x24` | `int16` | 7 | `ShellMapBnd_SquadGadgetSize` (`0009a470`) | `ShellMap_BuildGadgets` (`0000d1bb`), a squad member's gadget size |
-| `0x2a` | `int16` | 13 | `ShellMapBnd_BaseGadgetSize` (`0009a476`) | the same, a base's |
+| 4 | `int32` | 200000 | `ShellMapBnd_GridSpacing` (`0009a450`) | `ShellMap_PaintGrid` (`0000ab58`), the grid's world spacing |
+| `0xc` | `int16` | 0 | `ShellMapBnd_FirstMarkerFrame` (`0009a458`) | `ShellMap_PaintNavMarkers` (`0000bb1c`), the first marker's `dba\icons` frame |
+| `0xe` | `int16` | 8 | `ShellMapBnd_LastMarkerFrame` (`0009a45a`) | the same, the last |
+| `0x12` | `int16` | 18 | `ShellMapBnd_PlayerFrame` (`0009a45e`) | `ShellMap_PaintSquad` (`0000bc47`), the frame for member ref 0 |
+| `0x14` | `int16` | 27 | `ShellMapBnd_SquadmateFrame` (`0009a460`) | the same, for any other |
+| `0x1c` | `int16` | 72 | `ShellMapBnd_Side1BaseFrame` (`0009a468`) | `ShellMap_PaintBases` (`0000b840`), a side-1 base's frame |
+| `0x1e` | `int16` | 73 | `ShellMapBnd_Side1SmallBaseFrame` (`0009a46a`) | the same, of type 5, 6 or 8 |
+| `0x20` | `int16` | 74 | `ShellMapBnd_BaseFrame` (`0009a46c`) | the same, another side's |
+| `0x22` | `int16` | 75 | `ShellMapBnd_SmallBaseFrame` (`0009a46e`) | the same, of type 5, 6 or 8 |
+| `0x24` | `int16` | 7 | `ShellMapBnd_SquadGadgetSize` (`0009a470`) | `ShellMap_BuildGadgets` (`0000d1bb`), a squad member's gadget size; `ShellMap_PaintSquad`, the icon's size |
+| `0x28` | `int16` | 9 | `ShellMapBnd_MarkerSize` (`0009a474`) | `ShellMap_PaintNavMarkers`, a marker's size |
+| `0x2a` | `int16` | 13 | `ShellMapBnd_BaseGadgetSize` (`0009a476`) | `ShellMap_BuildGadgets`, a base's gadget size; `ShellMap_PaintBases`, the icon's size |
 | `0x2c` | `int16` | 7 | `ShellMapBnd_SmallBaseGadgetSize` (`0009a478`) | the same, a base of type 5, 6 or 8 |
+| `0x30` | `int16` | 14 | `ShellMapBnd_ShapeRamp` (`0009a47c`) | `ShellMap_PaintShapes` (`0000aff0`), the colour ramp it sets |
 | `0x32` | byte | 1 | `ShellMapBnd_DrawShapes` (`0009a47e`) | `ShellMap_Constructor` (`000094d9`): non-zero draws the zone's shapes, 0 the 2D icons |
 | `0x34` | `int16` | 10 | `ShellMapBnd_LineSpacing` (`0009a480`) | the constructor, a text label's height |
 | `0x36` | `int32` | 1000 | `ShellMapBnd_FullViewMargin` (`0009a482`) | `ShellMap_FitFullView` (`0000ce8a`), the margin |
 | `0x3a` | `int32` | 20000 | `ShellMapBnd_SquadViewMargin` (`0009a486`) | `ShellMap_FitSquad` (`0000d0a9`), the margin |
+| `0x3e` | `int16` | 3 | `ShellMapBnd_PenRadius` (`0009a48a`) | `ShellMap_PaintPath` (`0000b4ec`), the pen's half size |
+| `0x40` | `int32` | 100000 | `ShellMapBnd_SquadWorldSize` (`0009a48c`) | `ShellMap_PaintSquad`, the icon's world size |
+| `0x44` | `int16` | 1 | `ShellMapBnd_SquadPixelBelow` (`0009a490`) | the same, the size below which it is one pixel |
+| `0x46` | `int32` | 25000 | `ShellMapBnd_BaseWorldSize` (`0009a492`) | `ShellMap_PaintBases`, a base's world size |
+| `0x4a` | `int32` | 25000 | `ShellMapBnd_SmallBaseWorldSize` (`0009a496`) | the same, of type 5, 6 or 8 |
+| `0x4e` | `int16` | 0 | `ShellMapBnd_BasePixelBelow` (`0009a49a`) | the same, the size below which it is one pixel |
+| `0x50` | `int16` | 0 | `ShellMapBnd_SmallBasePixelBelow` (`0009a49c`) | the same, of type 5, 6 or 8 |
+| `0x52` | `int32` | 10 | `ShellMapBnd_ClearWait` (`0009a49e`) | `ShellMap_Clear` (`0000aa3c`), the slow paint's wait |
+| `0x56` | `int32` | 10 | `ShellMapBnd_ShapesWait` (`0009a4a2`) | `ShellMap_PaintShapes`, the same |
+| `0x5a` | `int32` | 1 | `ShellMapBnd_GridLineWait` (`0009a4a6`) | `ShellMap_PaintGrid`, the same after each line |
+| `0x5e` | `int32` | 60 | `ShellMapBnd_FullViewHold` (`0009a4aa`) | `ShellMap_IntroStep` (`00009cfb`), the full view's hold |
+| `0x62` | `int32` | 120 | `ShellMapBnd_ZoomTicks` (`0009a4ae`) | the same, each zoom's ticks |
+| `0x66` | `int32` | 30 | `ShellMapBnd_MemberTicks` (`0009a4b2`) | the same, between squad members |
+| `0x6a` | `int32` | 50000 | `ShellMapBnd_LegDistanceUnit` (`0009a4b6`) | the same, a leg's distance unit |
+| `0x6e` | `int32` | 30 | `ShellMapBnd_LegTicksPerUnit` (`0009a4ba`) | the same, a leg's ticks per unit |
+| `0x72` | `int32` | 30 | `ShellMapBnd_SectionPause` (`0009a4be`) | the same, after the squad and after a stop's lines |
+| `0x76` | `int32` | 30 | `ShellMapBnd_StepPause` (`0009a4c2`) | the same, between lines and before a leg |
+| `0x7a` | `int32` | 3 | `ShellMapBnd_TicksPerChar` (`0009a4c6`) | the same, a line's ticks per character |
 | `0x7e` | `int16` | 3 | `ShellMapBnd_GadgetTextMargin` (`0009a4ca`) | `MapGadget_Ctor` (`0000da8d`), the text's margin on each side |
 | `0x80` | `int16` | 10 | `ShellMapBnd_CalloutHeight` (`0009a4cc`) | `ShellMap_PlaceCallout` (`0000d72b`), the box's height |
 | `0x82` | `int16` | 5 | `ShellMapBnd_CalloutGap` (`0009a4ce`) | the same, the gap |
@@ -95,5 +124,5 @@ The war map's map's constants ([the map](../shell/map.md#the-tuning-files)). `MA
 ## Open
 
 - **Open:** whether `ES1DBSIM` reads any `bnd\` file. `es2_xref` finds no reference to its `bnd` pointer `000980c0`, where the same sweep finds both pushes of `dmg`'s pointer `000980e0`; a case-insensitive search of the image's bytes finds no `cam` or `.bnd` string, where it finds `dmg` and `damage.cpp`.
-- **Open:** what the shell reads of `ALERT`, `CTL_ALRT`, `CAL_ALRT`, `CTL_MGR` and `IMDEVICE`, of `MAIN.BND`'s offsets 0, 4 and 16, and of `MAP.BND`'s and `SHELLMAP.BND`'s offsets the tables leave unread, which the map's running may read ([the map's Open](../shell/map.md#open)); what the byte `Shell_LowMemory` (`0007fd09`) changes.
+- **Open:** what the shell reads of `ALERT`, `CTL_ALRT`, `CAL_ALRT`, `CTL_MGR` and `IMDEVICE`, of `MAIN.BND`'s offsets 0, 4 and 16, and of `SHELLMAP.BND`'s 8 to `0xb`, `0x10`, `0x16` to `0x1b`, `0x26`, `0x2e` and `0x33`, whose globals (`0009a454` to `0009a47f`) `es2_xref.py --decode` finds no reference to; what the byte `Shell_LowMemory` (`0007fd09`) changes.
 - **Open:** whether anything reads the first dword, and what wrote it.
