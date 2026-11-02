@@ -17408,8 +17408,8 @@
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "SpriteCode_IsLiteralRun",
-      "description": "(code): whether bit 6 is clear. The VSHELL copy of DBSIM's SpriteCode_IsLiteralRun.",
+      "name": "SpriteCode_IsSolidRun",
+      "description": "(code): whether bit 6 is clear. The VSHELL copy of DBSIM's SpriteCode_IsSolidRun (004891a8).",
       "source": "VSHELL decompile at 00459661"
     },
     {

@@ -35959,7 +35959,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Bitmap_BlitTransparent",
-      "description": "The transparent/RLE sprite blitter. Rejects against the context's clip rect (ctx+0x210..+0x21c), then sets a per-call flag from whether the clip mode is 2 and sends every pixel run it emits either to the plain span writer (g_RasterRoutines_SpanCopy/g_RasterRoutines_SpanFill) or to the region-clipped one (g_RasterRoutines_SpanCopyRegion/g_RasterRoutines_SpanFillRegion). That flag is why a sprite drawn through a mode-2 context is cut to the canopy cutout scanline by scanline rather than to a rectangle. (bitmap, position, flags): the bitmap's int16 height +0 and width +2, and its data +0xa: a 0x10-byte colour table, then the code stream (SpriteCode_*): a code with bit 7 set is a run of code & 0x3f pixels, packed 4-bit indices into the colour table when bit 6 is clear (Raster_SpanCopy), one colour from the following byte when it is set (Raster_SpanFill); a code with the top two bits clear ends the row; 0x40 ends the sprite; any other 0x4x code skips transparent pixels. flags bit 0 flips the sprite vertically, bit 1 horizontally.",
+      "description": "The transparent/RLE sprite blitter. Rejects against the context's clip rect (ctx+0x210..+0x21c), then sets a per-call flag from whether the clip mode is 2 and sends every pixel run it emits either to the plain span writer (g_RasterRoutines_SpanCopy/g_RasterRoutines_SpanFill) or to the region-clipped one (g_RasterRoutines_SpanCopyRegion/g_RasterRoutines_SpanFillRegion). That flag is why a sprite drawn through a mode-2 context is cut to the canopy cutout scanline by scanline rather than to a rectangle. (bitmap, position, flags): the bitmap's int16 height +0 and width +2, and its data +0xa: a 0x10-byte colour table, then the code stream (SpriteCode_*): a code with bit 7 set is a run of code & 0x3f pixels, one colour, the colour-table entry the following byte names, when bit 6 is clear (Raster_SpanFill), packed 4-bit indices into the colour table when it is set (Raster_SpanCopy); a code with the top two bits clear ends the row; 0x40 ends the sprite; any other 0x4x code skips transparent pixels. flags bit 0 flips the sprite vertically, bit 1 horizontally.",
       "source": "docs/retail/simulation/hud-target-indicator.md"
     },
     {
@@ -35985,9 +35985,15 @@
       "binary": "DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "SpriteCode_IsLiteralRun",
-      "description": "(code): whether bit 6 (0x40) of a run code is clear. Bitmap_BlitTransparent then reads the run's pixels as packed 4-bit indices, (count + 1) / 2 bytes; with bit 6 set the run is one colour from the single byte that follows.",
-      "source": "DBSIM decompile at 004891a8 and 00488cec"
+      "name": "SpriteCode_IsSolidRun",
+      "description": "(code): whether bit 6 (0x40) of a run code is clear. Bitmap_BlitTransparent then draws the run in one colour, the colour-table entry the single following byte names; with bit 6 set it reads the run's pixels as packed 4-bit indices, (count + 1) / 2 bytes.",
+      "source": "DBSIM decompile at 004891a8 and 00488cec",
+      "verified": {
+        "bytes": "004891a8+15",
+        "sha1": "d29c6c431253",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "004891b7",

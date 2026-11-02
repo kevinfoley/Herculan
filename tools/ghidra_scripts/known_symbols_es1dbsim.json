@@ -31165,7 +31165,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_FillRect",
-      "description": "(rect), C convention: fills the inclusive rect {x0, y0, x1, y1} with the brush at the installed clip block's +0x228 (the block 00098d64 points at). Brush mode 0 fills through g_RasterRoutines slot 2 (0009dedc), mode 6 remaps through slot 3 (0009dee0), and mode 4 draws the rect's outline with Raster_DrawLine under a temporary pen at +0x224; a colour whose top byte is 4 is read from the colour-ramp records at 0009a6f5. The rect moves by the block's translation when +0x208 is set and is clipped by its mode +0x204: 0 none, 1 the rect at +0x20c (00073dc4), otherwise each region of the list at +0, a rect region through 00073dc4 and a span region through 00073d8c and SpanRegion_Intersect (00073b7c). ES2's Raster_FillRect (DBSIM 004865f8), statement for statement.",
+      "description": "(rect), C convention: fills the inclusive rect {x0, y0, x1, y1} with the brush at the installed clip block's +0x228 (the block 00098d64 points at). Brush mode 0 fills through g_RasterRoutines slot 2 (0009dedc), mode 6 remaps through slot 3 (0009dee0), and mode 4 draws the rect's outline with Raster_DrawLine under a temporary pen at +0x224; a colour whose top byte is 4 is read from the colour-ramp records at 0009a6f5. The rect moves by the block's translation when +0x208 is set and is clipped by its mode +0x204: 0 none, 1 the rect at +0x20c (Rect_Intersect (00073dc4)), otherwise each region of the list at +0, a rect region through Rect_Intersect (00073dc4) and a span region through SpanList_FromRect (00073d8c) and SpanRegion_Intersect (00073b7c). ES2's Raster_FillRect (DBSIM 004865f8), statement for statement.",
       "source": "ES1DBSIM decompile at 00053d9c, against ES2's Raster_FillRect",
       "verified": {
         "bytes": "00053d9c+664",
@@ -37606,7 +37606,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_CosBam",
-      "description": "(int16 angle), C convention: cosine of a binary angle in Q14 from the quarter-turn table 000981cc: the angle rounded to a step of 16 ((a >> 4) plus bit 3), its magnitude i, then table[i] below 0x400 and -table[0x800 - i] from there. ES2's Math_CosBam (DBSIM 0047dee4) but for the table's address.",
+      "description": "(int16 angle), C convention: cosine of a binary angle in Q14 from the quarter-turn table Math_CosTableQ14 (000981cc): the angle rounded to a step of 16 ((a >> 4) plus bit 3), its magnitude i, then table[i] below 0x400 and -table[0x800 - i] from there. ES2's Math_CosBam (DBSIM 0047dee4) but for the table's address.",
       "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
       "verified": {
         "bytes": "0006477c+55",
@@ -38743,7 +38743,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Bitmap_Blit",
-      "description": "(bitmap, flags, point) in stack order, callee-cleaned: draws a bitmap object's data (+4) at point with Raster_BlitDispatch (0006a8e0)(data, point, flags). A packed bitmap (+0x12 non-zero) is first unpacked by 000672cc into Bitmap_UnpackScratch (000bdbe2), which stands in for the data pointer +0xe, with the unpacked size in +0xa, during the draw; afterwards both fields are put back and the scratch buffer is deleted unless Bitmap_UseCallerScratch (000bdbde) is set. ES2's Bitmap_Blit (DBSIM 0048159c), which reaches the clip dispatcher through GL_Blit.",
+      "description": "(bitmap, flags, point) in stack order, callee-cleaned: draws a bitmap object's data (+4) at point with Raster_BlitDispatch (0006a8e0)(data, point, flags). A packed bitmap (+0x12 non-zero) is first unpacked by Bitmap_UnpackToScratch (000672cc) into Bitmap_UnpackScratch (000bdbe2), which stands in for the data pointer +0xe, with the unpacked size in +0xa, during the draw; afterwards both fields are put back and the scratch buffer is deleted unless Bitmap_UseCallerScratch (000bdbde) is set. ES2's Bitmap_Blit (DBSIM 0048159c), which reaches the clip dispatcher through GL_Blit.",
       "source": "ES1DBSIM decompile at 00067048, against ES2's Bitmap_Blit",
       "verified": {
         "bytes": "00067048+147",
@@ -38758,7 +38758,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Bitmap_BlitScaled",
-      "description": "(bitmap, size, flags, point) in stack order, callee-cleaned: the same statements as ES1GO's Bitmap_BlitScaled (000503f0): Bitmap_BlitScaledClipDispatch (00076884)(header +4, point, flags, size), a packed bitmap (+0x12 non-zero) first unpacked by 000672cc into Bitmap_UnpackScratch for the call. ES2's Bitmap_BlitScaled (DBSIM 004816bc) reaches the same dispatch through GL_BlitScaled.",
+      "description": "(bitmap, size, flags, point) in stack order, callee-cleaned: the same statements as ES1GO's Bitmap_BlitScaled (000503f0): Bitmap_BlitScaledClipDispatch (00076884)(header +4, point, flags, size), a packed bitmap (+0x12 non-zero) first unpacked by Bitmap_UnpackToScratch (000672cc) into Bitmap_UnpackScratch for the call. ES2's Bitmap_BlitScaled (DBSIM 004816bc) reaches the same dispatch through GL_BlitScaled.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
       "verified": {
         "bytes": "00067178+153",
@@ -38773,11 +38773,26 @@
       "type": "function",
       "confidence": "high",
       "name": "Bitmap_BlitRotatedUnpacked",
-      "description": "(bitmap, angle, size, flip, position) in stack order, callee-cleaned: ES2's Bitmap_BlitRotatedUnpacked (DBSIM 00481750): a packed bitmap (+0x12) is unpacked by 000672cc into Bitmap_UnpackScratch, standing in for +0xe and +0xa for the call and freed after unless Bitmap_UseCallerScratch; then Bitmap_BlitRotatedScaled (00076630)(bitmap + 4, position, flip, size, angle) directly where ES2 goes through a thunk.",
+      "description": "(bitmap, angle, size, flip, position) in stack order, callee-cleaned: ES2's Bitmap_BlitRotatedUnpacked (DBSIM 00481750): a packed bitmap (+0x12) is unpacked by Bitmap_UnpackToScratch (000672cc) into Bitmap_UnpackScratch, standing in for +0xe and +0xa for the call and freed after unless Bitmap_UseCallerScratch; then Bitmap_BlitRotatedScaled (00076630)(bitmap + 4, position, flip, size, angle) directly where ES2 goes through a thunk.",
       "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground",
       "verified": {
         "bytes": "00067214+159",
         "sha1": "aea2537c4b8d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000672cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_UnpackToScratch",
+      "description": "(bitmap), callee-cleaned, entered also at its padding 000672c9-000672cb, which es2_xref finds called from Bitmap_Blit, Bitmap_BlitScaled, Bitmap_BlitRotatedUnpacked and 000670dc: returns 0 at once while Bitmap_UseCallerScratch is set; otherwise allocates Bitmap_UnpackScratch the size the packed data's (+0xe) first dword gives, opens a MemRWStream over the data past that dword (length +0xa less 4), a decoder over it by the packing +0x12 (1 RLERStream_CtorOnSource, 3 LZHRStream_CtorOnSource; any other returns 0), reads the size into the scratch through the decoder's slot +0x1c, deletes the decoder, and returns the size. ES2's Bitmap_UnpackToScratch (DBSIM 00481804).",
+      "source": "ES1DBSIM decompile at 000672cc",
+      "verified": {
+        "bytes": "000672cc+208",
+        "sha1": "c66c5b92f3e2",
         "scope": "body",
         "via": "decompile"
       }
@@ -38812,7 +38827,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawPolygonDispatch",
-      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (00098d64) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through Gfx_PlotPixel (00069058), two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 0009a6f5 for top byte 4, nothing otherwise), mode 1 goes to 0007965c, modes 5 and 7 to the routine at 0009df58, mode 6 fills through slot 1 (0009ded8) with the brush's second field. The fills scan-convert with Poly_ScanConvertToSpanRegion (00076f54) and clip per the clip mode +0x204: 0 none, 1 through Poly_ClipToRect (000788e4) against the rect at +0x20c, otherwise against each region of the block's list (rects through Poly_ClipToRect (000788e4), span regions through SpanRegion_Intersect (00073b7c)). es2_naming.py diff finds it identical to ES2's Raster_DrawPolygonDispatch (DBSIM 00483dac) but for labels.",
+      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (00098d64) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through Gfx_PlotPixel (00069058), two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 0009a6f5 for top byte 4, nothing otherwise), mode 1 goes to Raster_FillContourPolygon (0007965c), modes 5 and 7 to the routine at 0009df58, mode 6 fills through slot 1 (0009ded8) with the brush's second field. The fills scan-convert with Poly_ScanConvertToSpanRegion (00076f54) and clip per the clip mode +0x204: 0 none, 1 through Poly_ClipToRect (000788e4) against the rect at +0x20c, otherwise against each region of the block's list (rects through Poly_ClipToRect (000788e4), span regions through SpanRegion_Intersect (00073b7c)). es2_naming.py diff finds it identical to ES2's Raster_DrawPolygonDispatch (DBSIM 00483dac) but for labels.",
       "source": "ES1DBSIM decompile at 00068be0, against ES2's Raster_DrawPolygonDispatch",
       "verified": {
         "bytes": "00068be0+867",
@@ -38947,7 +38962,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_BuildRotation2D",
-      "description": "(angle, out), C convention: out = {cos a, sin a, -sin a, cos a} in Q14 from the cosine table 000981cc, the angle rounded to 1/4096 turn, sin a = cos(a - 0x4000). ES2's Math_BuildRotation2D (DBSIM 0047ea24).",
+      "description": "(angle, out), C convention: out = {cos a, sin a, -sin a, cos a} in Q14 from the cosine table Math_CosTableQ14 (000981cc), the angle rounded to 1/4096 turn, sin a = cos(a - 0x4000). ES2's Math_BuildRotation2D (DBSIM 0047ea24).",
       "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
       "verified": {
         "bytes": "000694b8+136",
@@ -39466,7 +39481,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_BlitDispatch",
-      "description": "(header, point, flags) in stack order: draws a bitmap at point on the canvas 00098d64, the point moved by the canvas's +0x20c/+0x210 less +0x21c/+0x220 when its +0x208 is 1. A bitmap of type 1 (low four bits of header byte +5) goes to 0007d66c; otherwise, by the canvas's +0x204: 0 the driver blit at 0009df3c(header, point, 0, flags), 1, or 2 with a positive canvas +0, the driver's clipped blit at 0009df44(header, point, canvas + 0x20c, flags). The point Bitmap_Blit (00067048) draws through.",
+      "description": "(header, point, flags) in stack order: draws a bitmap at point on the canvas 00098d64, the point moved by the canvas's +0x20c/+0x210 less +0x21c/+0x220 when its +0x208 is 1. A bitmap of type 1 (low four bits of header byte +5) goes to Bitmap_BlitTransparent (0007d66c); otherwise, by the canvas's +0x204: 0 the driver blit at 0009df3c(header, point, 0, flags), 1, or 2 with a positive canvas +0, the driver's clipped blit at 0009df44(header, point, canvas + 0x20c, flags). The point Bitmap_Blit (00067048) draws through.",
       "source": "ES1DBSIM decompile at 0006a8e0",
       "verified": {
         "bytes": "0006a8e0+246",
@@ -41273,6 +41288,51 @@
       }
     },
     {
+      "address": "00073c91",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SpanList_ClipToRect",
+      "description": "(rect, spans, out), callee-cleaned: clips a span list {int16 top row, int16 row count, {x0, x1} per row} to the rect {x0, y0, x1, y1} into out and returns out, or 0 when nothing is left: rows outside the rect's rows and the leading rows that miss its columns are dropped, each x range is clamped to the columns, a row that misses after the first hit becomes {1, 0}, and the count ends at the last row that hits. es2_xref finds calls from Region_CopyRectBetweenPages, Region_CopySpansBetweenPages and Raster_FillSpanList. ES2's SpanList_ClipToRect (DBSIM 00486c09).",
+      "source": "ES1DBSIM decompile at 00073c91",
+      "verified": {
+        "bytes": "00073c91+248",
+        "sha1": "3ef08dab2f1c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00073d8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SpanList_FromRect",
+      "description": "(rect, out), callee-cleaned: writes the span list of the inclusive rect {x0, y0, x1, y1} to out, the int16 y0, the row count y1 - y0 + 1, then {x0, x1} for each row, and returns out. es2_xref finds one call, from Raster_FillRect. ES2's SpanList_FromRect (DBSIM 004868f0).",
+      "source": "ES1DBSIM decompile at 00073d8c",
+      "verified": {
+        "bytes": "00073d8c+53",
+        "sha1": "7603f1b79b98",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00073dc4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_Intersect",
+      "description": "(a, b, out), callee-cleaned: intersects two inclusive rects {x0, y0, x1, y1} into out and returns out, or 0 when they do not overlap. es2_xref finds calls from Raster_FillRect and Region_CopyRectBetweenPages. ES2's Rect_Intersect (DBSIM 00486890).",
+      "source": "ES1DBSIM decompile at 00073dc4",
+      "verified": {
+        "bytes": "00073dc4+95",
+        "sha1": "e51bfbec500d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00073e24",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -42254,6 +42314,36 @@
       }
     },
     {
+      "address": "00078ccc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FillContourTriangle",
+      "description": "(indices, points), callee-cleaned: fills the triangle of three int32 {x, y} points whose corners carry the three uint16 palette indices in contour bands. Two equal points draw nothing; with the highest and lowest index equal it fills the triangle with it (Raster_DrawPolygonDispatch(3), the index in the brush colour +4 at the clip block's (00098d64) +0x228). Otherwise it cuts the edge from the highest corner to the lowest at each whole index between them, and the two edges through the middle corner likewise, and fills each band between two cuts as a quadrilateral (Raster_DrawPolygonDispatch(4)) in the band's upper index, so a point takes the ceiling of its interpolated index; the corner order sets the quads' winding. ES2's Raster_FillContourTriangle (DBSIM 00486ddc).",
+      "source": "ES1DBSIM decompile at 00078ccc",
+      "verified": {
+        "bytes": "00078ccc+2446",
+        "sha1": "e580caadccb6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007965c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FillContourPolygon",
+      "description": "(count, points), callee-cleaned, entered also at its padding 0007965a-0007965b: brush mode 1 of Raster_DrawPolygonDispatch (00068be0), a polygon shaded per vertex. Sets the brush at the clip block's (00098d64) +0x228 to mode 0, maps each vertex's uint16 shade from the brush's list +0xc to a palette index through the ramp the brush colour's low word names (the 8-byte records at 0009a6f5: +0 the entry array, +4 the int16 length; entry (shade * length) >> 8), fans triangles from vertex 0 and fills each with Raster_FillContourTriangle (00078ccc); then puts back the brush colour +4 and mode 1. ES2's Raster_FillContourPolygon (DBSIM 004879c0).",
+      "source": "ES1DBSIM decompile at 0007965c; es2_naming.py diff ES1DBSIM 0007965c DBSIM 004879c0",
+      "verified": {
+        "bytes": "0007965c+336",
+        "sha1": "a07e109853bf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000797ac",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -42792,6 +42882,21 @@
       "verified": {
         "bytes": "0007d628+66",
         "sha1": "90d65518aa97",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007d66c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_BlitTransparent",
+      "description": "(bitmap, point, flags), callee-cleaned: the draw of a type-1 bitmap for Raster_BlitDispatch (0006a8e0), its int16 rows +0 and columns +2 and its data +0xa, a 16-byte colour table followed by a code stream. Returns when the bitmap misses the clip block's (00098d64) rect +0x20c to +0x218; flags bit 0 draws it upside down (rows from the bottom up) and bit 1 mirrored (columns from the right). Codes: bit 7 set is a run of code & 0x3f pixels, cut to the rect's columns and drawn only while its row is within the rect's rows: with bit 6 clear one colour, the colour-table entry the following byte names, through slot 24 (0009df34) or, in clip mode +0x204 2, slot 25 (0009df38); with bit 6 set (count + 1) / 2 bytes of 4-bit colour-table indices, high nibble first, through slot 22 (0009df2c) or 23 (0009df30). 0x40 ends the bitmap; 0x41 to 0x7f skip that many transparent pixels; 0x01 to 0x3f end a row, taking x back by the code, or by 64 times the following byte plus the code when that byte is 0x01 to 0x3f. Saves the pen's +4 (+0x224) and puts it back. ES2's Bitmap_BlitTransparent (DBSIM 00488cec).",
+      "source": "ES1DBSIM decompile at 0007d66c",
+      "verified": {
+        "bytes": "0007d66c+1529",
+        "sha1": "7638cb59919e",
         "scope": "body",
         "via": "decompile"
       }
@@ -43682,6 +43787,96 @@
       }
     },
     {
+      "address": "0008aef8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_FillSpans",
+      "description": "(spans, colour), C convention: slot 0 of the VGA_8 driver's table 000a7b70, which Raster_DrawPolygonDispatch, Raster_DrawLine and Raster_FillSpanList call through g_RasterRoutines (0009ded4). Fills a span list {int16 top row, int16 row count, {x0, x1} per row} on the draw page (offset 0009e604, pan 0009e610 added to each x, row table VGA8_RowOffsets, row bytes VGA8_RowBytes) with the colour byte through the sequencer's map mask (port 3C4 index 2), skipping a row whose x0 is past its x1: a row within one group of four columns in one write with the mask 0009e61c[4 * (x0 & 3) + ((x1 - x0 + 1) & 3)], otherwise the first group's mask 0009e62c[x0 & 3], the whole groups with 0xf, and the last group's 0009e630[the remaining count & 3]. A count below 1 still draws the first row.",
+      "source": "ES1DBSIM decompile at 0008aef8",
+      "verified": {
+        "bytes": "0008aef8+217",
+        "sha1": "873355d49f69",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0008afd4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_RemapSpans",
+      "description": "(spans, table), C convention: slot 1 of the VGA_8 driver's table 000a7b70 (g_RasterRoutines 0009ded8), brush mode 6's fill: rewrites each pixel from x0 to x1 of each row of the span list as table[pixel], a pixel at a time, reading its plane through the graphics controller (port 3CE index 4) and writing it under the map mask 000ad76c[plane] (1, 2, 4, 8). A row whose x0 is past its x1 is skipped; a count below 1 still does the first row.",
+      "source": "ES1DBSIM decompile at 0008afd4",
+      "verified": {
+        "bytes": "0008afd4+155",
+        "sha1": "e3ecc8162185",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0008b070",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_FillRect",
+      "description": "(rect, colour), C convention: slot 2 of the VGA_8 driver's table 000a7b70 (g_RasterRoutines 0009dedc), which Raster_FillRect, VGA8_ClearPage and 0008aeb0 call: fills the inclusive rect {x0, y0, x1, y1} on the draw page with the colour, each row as VGA8_FillSpans (0008aef8) fills one, with the same masks; reads the map mask register at the start and writes it back at the end.",
+      "source": "ES1DBSIM decompile at 0008b070",
+      "verified": {
+        "bytes": "0008b070+428",
+        "sha1": "cc5586ada98d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0008b21c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_RemapRect",
+      "description": "(rect, table), C convention: slot 3 of the VGA_8 driver's table 000a7b70 (g_RasterRoutines 0009dee0), Raster_FillRect's for brush mode 6: rewrites each pixel of the inclusive rect as table[pixel], as VGA8_RemapSpans (0008afd4) does a row, the write mask from 000ad770 (1, 2, 4, 8).",
+      "source": "ES1DBSIM decompile at 0008b21c",
+      "verified": {
+        "bytes": "0008b21c+164",
+        "sha1": "f1940cb1411e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0008b2fb",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_PutPixel",
+      "description": "(point, colour), C convention, frameless: slot 5 of the VGA_8 driver's table 000a7b70 (g_RasterRoutines 0009dee8), which Gfx_PlotPixel, the object list's corner probes and the paper doll's recolouring call: writes the colour byte at {x, y} of the draw page (offset 0009e604, pan 0009e610, row table VGA8_RowOffsets, selector 0009df84 in FS) under the map mask 1 << ((x + pan) & 3).",
+      "source": "ES1DBSIM disassembly at 0008b2fb",
+      "verified": {
+        "bytes": "0008b2fb+70",
+        "sha1": "20f3a9ff5722",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0008b341",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_RemapPixel",
+      "description": "(point, table), C convention: slot 6 of the VGA_8 driver's table 000a7b70 (g_RasterRoutines 0009deec), Gfx_PlotPixel's for pen mode 2: rewrites the pixel at {x, y} of the draw page as table[pixel], its plane read through the graphics controller (port 3CE index 4) and written under the map mask 1 << ((x + pan) & 3).",
+      "source": "ES1DBSIM decompile and disassembly at 0008b341",
+      "verified": {
+        "bytes": "0008b341+91",
+        "sha1": "d8fc2d6c5f0d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0008b39c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -43724,6 +43919,36 @@
         "sha1": "c5ab2a4a03b7",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "0008b764",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SpanFill",
+      "description": "(colour, y, x0, x1), C convention: slot 24 of the VGA_8 driver's table 000a7b70 (g_RasterRoutines 0009df34), which Bitmap_BlitTransparent (0007d66c) calls: fills x0 to x1 of row y of the draw page with the colour, the end groups under their masks as VGA8_FillSpans (0008aef8) does and the whole groups between with all planes; reads the map mask register at the start and writes it back at the end.",
+      "source": "ES1DBSIM decompile at 0008b764",
+      "verified": {
+        "bytes": "0008b764+189",
+        "sha1": "65f0c1a54131",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0008b821",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SpanFillRegion",
+      "description": "(colour, y, x0, x1), C convention: slot 25 of the VGA_8 driver's table 000a7b70 (g_RasterRoutines 0009df38), which Bitmap_BlitTransparent (0007d66c) calls in clip mode 2. With the clip block's (00098d64) mode +0x204 2 it fills the row as VGA8_SpanFill (0008b764) does once for each region of the block's list (count +0, pointers from +4), first to last, that holds row y and overlaps x0 to x1, cut to it: a rect region {type 0, x0 +4, y0 +8, x1 +0xc, y1 +0x10} to its columns, a span region (type 2, its span list at +4) to that row's pair; other types are skipped. In any other mode it fills x0 to x1 once.",
+      "source": "ES1DBSIM decompile at 0008b821",
+      "verified": {
+        "bytes": "0008b821+388",
+        "sha1": "e60b9f9c0b72",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -46878,6 +47103,15 @@
       "name": "FrameRate_Worst",
       "description": "Two int16, whole then hundredths: the lowest rate FrameRate_Update has measured, from 999.99.",
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter"
+    },
+    {
+      "address": "000981cc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Math_CosTableQ14",
+      "description": "int16[1025]: entry i is 16384 cos(i / 4096 turn), 0x4000 to 0, rounded to the nearest in 1021 entries and one off in the other 4; BuildEulerRotationMatrixQ14 (0005f0ac) and Math_BuildRotation2D (000694b8) read it, among the 38 instructions es2_xref finds holding its address. ES1GO's Math_CosTableQ14 (0008b648) truncates instead.",
+      "source": "es2_peek.py ES1DBSIM 000981cc 1026 --words against cos"
     },
     {
       "address": "00098d68",
