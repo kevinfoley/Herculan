@@ -103,11 +103,16 @@ address operands by different rules (insn_streams).
   fixrefs batch.json [--write]
       Rewrite `FUN_a` to `Name` (`a`) in docs and <c>FUN_a</c> / bare FUN_a in C#, and a bare
       backticked `a` to `Name` (`a`) in the docs of its binary's family (docs/es1/ for ES1DBSIM,
-      ES1GO and ES1ESCD, docs/retail/ for DBSIM and VSHELL): the first mention in each paragraph, list item or
-      table row, never one after a name or a binary's name, in a link, in an address column or in
-      a code fence. Lists each rewrite per file, and the mentions it cannot rewrite safely (after
-      another name, after a binary's name, an address another binary of the family also has, other
-      shapes) for a manual edit.
+      ES1GO and ES1ESCD, docs/retail/ for DBSIM and VSHELL): the first mention in each paragraph,
+      list item or table row, never one after a name, in a link, in an address column or in a code
+      fence. A doc's binary is the one its title line names (DBSIM.EXE, GO.EXE, ESCD.EXE,
+      VSHELL.EXE); with none named, a docs/retail/ doc's is its folder's (simulation/ and
+      rendering/ DBSIM, shell/ VSHELL). A mention is rewritten when its address is named in the
+      doc's binary, or when the binary's name comes right before it ("ES1DBSIM `a`", "`ES1GO` `a`";
+      a bare DBSIM or VSHELL is ES2's). Lists each rewrite per file, and for a manual edit the
+      mentions it cannot rewrite safely: one named in another binary than the doc's, any in a doc
+      whose title names several binaries or none (outside those folders), one after another
+      binary's name or another name, an address another binary of the family also has, other shapes.
   repl spec.json [--write]
       [[relpath, old, new, count]]: exact replacements asserting the count; BOM and newlines kept.
       In a file whose every line ends in CRLF, old and new match and write in either newline style.
@@ -1124,6 +1129,24 @@ def batch_names(path):
 
 
 DOC_FAMILY = {"ES1DBSIM": "es1", "ES1GO": "es1", "ES1ESCD": "es1", "DBSIM": "retail", "VSHELL": "retail"}
+# A doc's binary: the .EXE its title names, in its family; else, in docs/retail/, its folder (CLAUDE.md's split).
+EXE_NAME = re.compile(r"\b(DBSIM|GO|ESCD|VSHELL)\.EXE\b")
+EXE_BINARY = {"es1": {"DBSIM": "ES1DBSIM", "GO": "ES1GO", "ESCD": "ES1ESCD", "VSHELL": "VSHELL"},
+              "retail": {"DBSIM": "DBSIM", "VSHELL": "VSHELL", "GO": "ES1GO", "ESCD": "ES1ESCD"}}
+FOLDER_BINARY = {"retail": {"simulation": "DBSIM", "rendering": "DBSIM", "shell": "VSHELL"}}
+# A binary named right before a mention: "ES1DBSIM `a`", "`ES1GO` `a`", "`GO.EXE`'s `a`". A bare DBSIM
+# or VSHELL is ES2's in either family.
+TEXT_BINARY = re.compile(r"\b(?:(ES1DBSIM|ES1GO|ES1ESCD|DBSIM|VSHELL)|(DBSIM|GO|ESCD|VSHELL)\.EXE)`?(?:'s)? $")
+
+
+def doc_binary(rel, text, fam):
+    """The binary a doc of family `fam` describes: the one its title line names, or with none named,
+    its docs/retail/ folder's; None when the title names several, or names none outside those folders."""
+    named = {EXE_BINARY[fam][e] for e in EXE_NAME.findall(text.split("\n", 1)[0])}
+    if named:
+        return named.pop() if len(named) == 1 else None
+    parts = rel.replace("\\", "/").split("/")
+    return FOLDER_BINARY.get(fam, {}).get(parts[3]) if len(parts) > 4 else None
 ADDR_COLUMN = re.compile(r"(?i)^(?:address|es1|es2|dbsim|vshell|es1dbsim|es1go|es1escd)$")
 LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s")
 TABLE_SEP = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)*\|?\s*$")
@@ -1137,16 +1160,20 @@ def table_cells(line):
     return starts[1:] if line.lstrip().startswith("|") else starts
 
 
-def fix_bare_doc(text, named, binaries, ambiguous):
+def fix_bare_doc(text, named, binaries, ambiguous, fam, binary):
     """Rewrite a bare `a` of one of `named` ({address: name}) in a markdown doc to `Name` (`a`): the
     first in each paragraph, list item or table row, unless the name already came before it there.
     Left alone: an address the doc names somewhere already (`Name` (`a`), `Name`(`a`) or `Name`,
     `a`), since the doc then introduces it and the bare mentions are deliberate, an address after
-    another backticked name or another binary's name ('ES1GO `a`'), a location ('the run at `a`':
-    'at `Name` (`a`)' misreads), either end of a range (`a`–`b`), and one inside a link, in a table column headed Address, ES1, ES2 or a binary, or in a
-    code fence. `binaries` gives each address's binary; `ambiguous` holds the
-    addresses another binary of the doc's family also has a function or entry at. Returns the text,
-    the rewrites and the mentions to edit by hand, each as (line number, address, context)."""
+    another backticked name, a location ('the run at `a`': 'at `Name` (`a`)' misreads), either end
+    of a range (`a`–`b`), and one inside a link, in a table column headed Address, ES1, ES2 or a
+    binary, or in a code fence. Listed for a hand edit: an address after another binary's name
+    ('ES1GO `a`' when `a` is named in ES1DBSIM), and one with no binary's name before it that is
+    named in a binary other than `binary`, the doc's (doc_binary), or when the doc has none, or
+    that another binary of the doc's family (`fam`) also has a function or entry at (`ambiguous`).
+    A mention after its own binary's name is rewritten. `binaries` gives each address's binary.
+    Returns the text, the rewrites and the mentions to edit by hand, each as (line number, address,
+    context)."""
     rx = re.compile(r"`(" + "|".join(named) + r")`")
     introduced = {a for a, n in named.items()
                   if re.search(r"`" + re.escape(n) + r"`(?: ?\(|, )`" + a + "`", text)}
@@ -1197,13 +1224,18 @@ def fix_bare_doc(text, named, binaries, ambiguous):
             if (a in introduced or re.search(r"(?:\bat |`[–-])$", before)
                     or re.match(r"[–-]`", line[m.end():])):
                 continue
-            tag = BINARY_TAG.search(before)
-            if tag:
-                manual.append((i + 1, a, f"after a binary's name: {ctx}"))
+            tag = TEXT_BINARY.search(before)
+            tagged = tag and (EXE_BINARY[fam][tag.group(2)] if tag.group(2) else tag.group(1))
+            if tagged and tagged != binaries[a]:
+                manual.append((i + 1, a, f"after {tagged}'s name, named in {binaries[a]}: {ctx}"))
                 continue
             if f"`{name}`" in unit + before:
                 continue
-            if a in ambiguous:
+            if not tagged and binary != binaries[a]:
+                why = f"the doc is {binary}'s" if binary else "the title names no single binary"
+                manual.append((i + 1, a, f"{why}, named in {binaries[a]}: {ctx}"))
+                continue
+            if not tagged and a in ambiguous:
                 manual.append((i + 1, a, f"another {DOC_FAMILY[binaries[a]]} binary has {a} too: {ctx}"))
                 continue
             new.append(line[last:m.start()] + f"`{name}` (`{a}`)")
@@ -1253,7 +1285,8 @@ def cmd_fixrefs(args):
         if p.endswith(".md"):
             t2 = md.sub(lambda m: f"`{named[m.group(1)]}` (`{m.group(1)}`)", t)
             if fam:
-                t2, done, manual = fix_bare_doc(t2, family_named[fam], binaries, ambiguous)
+                t2, done, manual = fix_bare_doc(t2, family_named[fam], binaries, ambiguous,
+                                                fam, doc_binary(rel, t, fam))
                 rewrites += len(done)
                 notes = [f"  bare {rel}:{n}: [{a} -> {named[a]}] {ctx}" for n, a, ctx in done]
                 notes += [f"  manual {rel}:{n}: [{a} -> {named[a]}] {why}" for n, a, why in manual]
