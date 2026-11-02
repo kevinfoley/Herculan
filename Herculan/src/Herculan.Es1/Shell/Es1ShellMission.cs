@@ -6,6 +6,7 @@ using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Es1.Panels;
+using Herculan.Es1.Shell.Map;
 using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.Shell;
@@ -377,15 +378,14 @@ public sealed class Es1ShellMission {
 	/// <summary>
 	/// <c>Shell_PrepareMission</c> (<c>0002a523</c>) (docs/es1/shell/main-menu.md#the-buttons), after every mission load
 	/// the shell's menus make: the mission map deleted (<see cref="Es1ShellScreens.DeleteMissionMap"/>), the objectives
-	/// written (<see cref="WriteObjectives"/>), and the mission map made again.
+	/// written (<see cref="WriteObjectives"/>), and the mission map made again with <c>ShellMap_Constructor</c>
+	/// (<see cref="Es1ShellMap.Build"/>) on <see cref="SquadMemberCount"/>.
 	/// </summary>
 	public void Prepare(Es1ShellScreens screens) {
 		screens.DeleteMissionMap();
 		WriteObjectives();
-		// PLACEHOLDER: maybe_MouseEventQueue_Start (00010559), the byte 0007e5df cleared and Shell_MissionMap (000809a4) made
-		// with 000094d9(0, 000a02d4): the briefing's mission map, S5's. Until it lands an object with no behaviour stands for
-		// it, so that what tests the map set (a back to the war map, Es1ShellScreens.HandleMessage's step 3) sees it set.
-		screens.MissionMap = new object();
+		// PLACEHOLDER: maybe_MouseEventQueue_Start (00010559), the gadgets' mouse queue, and the byte 0007e5df cleared, S5's.
+		screens.MissionMap = Es1ShellMap.Build(_installRoot, _content, _data, (short)SquadMemberCount);
 	}
 
 	/// <summary>

@@ -1,4 +1,5 @@
 using System.Text;
+using HercWorks.Core.Data.File.Bnd;
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Dyn;
@@ -39,6 +40,15 @@ public sealed class Es1ShellData {
 
 	/// <summary><c>cfg\filename.bin</c>, the table <c>FileNames_Load</c> (<c>0002094d</c>) loads into <c>0009afb8</c>; none when it does not read.</summary>
 	public string[]? FileNames { get; private init; }
+
+	/// <summary>
+	/// <c>BND\MAP.BND</c> at <c>0009a420</c>, the war map's base class's constants (<see cref="LoadMapTuning"/>); 0, the
+	/// global's value in the image, before.
+	/// </summary>
+	public Es1MapBnd MapBnd { get; private set; } = new(null);
+
+	/// <summary><c>BND\SHELLMAP.BND</c> at <c>0009a44c</c>, the war map's map's constants (<see cref="LoadMapTuning"/>); 0 before.</summary>
+	public Es1ShellMapBnd ShellMapBnd { get; private set; } = new(null);
 
 	/// <summary>
 	/// The mission parameters' five <c>int16</c>, <c>MissionParams_Ammo</c> (<c>000aacbc</c>), <c>MissionParams_Damage</c>,
@@ -110,6 +120,26 @@ public sealed class Es1ShellData {
 		}
 
 		return new Es1ShellData { FileNames = names };
+	}
+
+	/// <summary>
+	/// <c>Map_LoadBnd</c> (<c>00008cd4</c>) and <c>ShellMap_LoadBnd</c> (<c>00009210</c>), two of the phase-1 loaders
+	/// (docs/es1/formats/bnd-notes.md#the-shells-files): <see cref="MapBnd"/> and <see cref="ShellMapBnd"/> read whole from
+	/// <paramref name="content"/>'s <c>bnd\</c>. Retail's <c>Ovl_ReadFile</c> asserts when a file does not open; here that
+	/// is reported and the global stays 0, an engine guard.
+	/// </summary>
+	public void LoadMapTuning(GameContent content) {
+		MapBnd = new Es1MapBnd(ReadTuning(content, "MAP.BND"));
+		ShellMapBnd = new Es1ShellMapBnd(ReadTuning(content, "SHELLMAP.BND"));
+	}
+
+	private static byte[]? ReadTuning(GameContent content, string name) {
+		byte[]? bytes = content.Read("bnd", name);
+		if (bytes == null) {
+			Console.Error.WriteLine($"bnd\\{name} does not open: its constants stay 0.");
+		}
+
+		return bytes;
 	}
 
 	/// <summary>

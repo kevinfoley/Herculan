@@ -138,9 +138,11 @@ public sealed class Es1WarMapMenu : Es1Menu {
 				// (Es1ShellHost's step 6), so the target stays 1800.
 				break;
 			case ServiceBay:
-				// 0002c382: PLACEHOLDER: 0000a9c8(Shell_MissionMap), with no test that the map is set, the mission map's,
-				// S5's. Then in Shell_Mode 1 the byte +1 of the roster's record its word +7 names set to 1, the briefing seen,
-				// which makes the bay's BEGIN MISSION > active (Es1ServiceBayMenu.SetButtons). The target stays 1700.
+				// 0002c382: ShellMap_SkipIntro (Es1ShellMap.SkipIntro) of Shell_MissionMap, with no test that the map is set,
+				// where retail writes through a null map and this engine skips nothing, an engine guard. Then in Shell_Mode 1
+				// the byte +1 of the roster's record its word +7 names set to 1, the briefing seen, which makes the bay's
+				// BEGIN MISSION > active (Es1ServiceBayMenu.SetButtons). The target stays 1700.
+				screens.MissionMap?.SkipIntro();
 				if (mission.Mode == 1) {
 					mission.Roster.CurrentRecord.Byte1 = 1;
 				}

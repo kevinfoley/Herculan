@@ -4,6 +4,7 @@ using Herculan.Engine.Content;
 using Herculan.Es1.Input;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Shell.Hangar;
+using Herculan.Es1.Shell.Map;
 using Herculan.Es1.Shell.Menus;
 using Herculan.Es1.Shell.MessageBox;
 using Herculan.Es1.Ttm;
@@ -109,19 +110,20 @@ public sealed class Es1ShellScreens {
 	public short ResumeScreen { get; set; } = -1;
 
 	/// <summary>
-	/// The object <c>Shell_MissionMap</c> (<c>000809a4</c>), the briefing's mission map, none in the image.
-	/// PLACEHOLDER: its class is S5's; <see cref="Es1ShellMission.Prepare"/> makes an object with no behaviour in its place
-	/// and <see cref="DeleteMissionMap"/> clears it, so <see cref="HandleMessage"/> tests it as retail does.
+	/// <c>Shell_MissionMap</c> (<c>000809a4</c>), the war map's map, none in the image: <see cref="Es1ShellMission.Prepare"/>
+	/// makes it and <see cref="DeleteMissionMap"/> clears it.
 	/// </summary>
-	public object? MissionMap { get; set; }
+	public Es1ShellMap? MissionMap { get; set; }
 
 	/// <summary>
-	/// <c>Shell_DeleteMissionMap</c> (<c>0002a4ec</c>) (docs/es1/shell/main-menu.md#the-buttons): with
-	/// <see cref="MissionMap"/> set, the map deleted and cleared.
+	/// <c>Shell_DeleteMissionMap</c> (<c>0002a4ec</c>) (docs/es1/shell/war-map.md#leaving-it): with
+	/// <see cref="MissionMap"/> set, its intro skipped (<see cref="Es1ShellMap.SkipIntro"/>), then <c>ShellMap_Dtor</c>
+	/// (<c>00009a73</c>)(map, 3), and the map cleared.
 	/// </summary>
 	public void DeleteMissionMap() {
-		if (MissionMap != null) {
-			// PLACEHOLDER: maybe_MouseEventQueue_Stop (000106af), 0000a9c8(map) and 00009a73(map, 3), the mission map's, S5's.
+		if (MissionMap is { } map) {
+			// PLACEHOLDER: maybe_MouseEventQueue_Stop (000106af), the gadgets' mouse queue, S5's.
+			map.SkipIntro();
 			MissionMap = null;
 		}
 	}

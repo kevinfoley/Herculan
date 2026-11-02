@@ -69,8 +69,8 @@ public static class Es1ShellHost {
 		// Shell_StartupNoOp.
 
 		// 5. The archives, mask 0x100 and the .vol extension (VolumeGroup_SetBufferSize, VolRStream_SetGroup).
-		// PLACEHOLDER: subsystem phase 1, the eight bnd\ files Main_LoadBnd reads (docs/es1/formats/bnd-notes.md#the-shells-files),
-		// whose readers are later parts'.
+		// PLACEHOLDER: subsystem phase 1, the bnd\ files its loaders read (docs/es1/formats/bnd-notes.md#the-shells-files) but
+		// MAP and SHELLMAP, which Session.Main loads (Es1ShellData.LoadMapTuning): their readers are later parts'.
 		var content = Es1SingleMission.MountShell(installRoot);
 
 		// 6. The heap against BND\MAIN.BND's +0xc and +8: this engine's memory is never that short, so Shell_LowMemory stays clear.
@@ -169,6 +169,9 @@ public static class Es1ShellHost {
 			// 7. FileNames_Load.
 			var data = Es1ShellData.LoadFileNames(_content);
 			_data = data;
+
+			// Step 5's Map_LoadBnd and ShellMap_LoadBnd, here once the shared data exists; nothing between reads them.
+			data.LoadMapTuning(_content);
 
 			// 8. The devices; 9. the frame-time scale; 10. a frame shown.
 			_devices.Init(_content, _installRoot, _switches.DebugMode, biosShiftFlags, _globals);
