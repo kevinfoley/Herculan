@@ -385,7 +385,7 @@ public sealed class Es1ShellMission {
 		screens.DeleteMissionMap();
 		WriteObjectives();
 		// PLACEHOLDER: maybe_MouseEventQueue_Start (00010559), the gadgets' mouse queue, and the byte 0007e5df cleared, S5's.
-		screens.MissionMap = Es1ShellMap.Build(_installRoot, _content, _data, (short)SquadMemberCount);
+		screens.MissionMap = Es1ShellMap.Build(_installRoot, _content, _data, (short)SquadMemberCount, screens.Globals.Widgets);
 	}
 
 	/// <summary>

@@ -10,6 +10,8 @@ using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Content;
 using Herculan.Es1.Input;
 using Herculan.Es1.Shell.Hangar;
+using Herculan.Es1.Shell.Map;
+using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.Shell;
 
@@ -49,6 +51,9 @@ public sealed class Es1ShellData {
 
 	/// <summary><c>BND\SHELLMAP.BND</c> at <c>0009a44c</c>, the war map's map's constants (<see cref="LoadMapTuning"/>); 0 before.</summary>
 	public Es1ShellMapBnd ShellMapBnd { get; private set; } = new(null);
+
+	/// <summary>The war map's clock, bitmaps and font, which the start-up's step 13 loads (<see cref="LoadMapResources"/>); none before.</summary>
+	public Es1ShellMapResources? MapResources { get; private set; }
 
 	/// <summary>
 	/// The mission parameters' five <c>int16</c>, <c>MissionParams_Ammo</c> (<c>000aacbc</c>), <c>MissionParams_Damage</c>,
@@ -132,6 +137,9 @@ public sealed class Es1ShellData {
 		MapBnd = new Es1MapBnd(ReadTuning(content, "MAP.BND"));
 		ShellMapBnd = new Es1ShellMapBnd(ReadTuning(content, "SHELLMAP.BND"));
 	}
+
+	/// <summary><c>ShellMap_LoadResources</c> (<c>000093b3</c>) into <see cref="MapResources"/> (<see cref="Es1ShellMapResources.Load"/>).</summary>
+	public void LoadMapResources(GameContent content, Es1SimClock timer) => MapResources = Es1ShellMapResources.Load(content, timer);
 
 	private static byte[]? ReadTuning(GameContent content, string name) {
 		byte[]? bytes = content.Read("bnd", name);

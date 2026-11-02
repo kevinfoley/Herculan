@@ -185,9 +185,10 @@ public static class Es1ShellHost {
 			data.Load(_content, _devices.Preferences!, _installRoot, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 			_screens.GetFullScreen();
 
-			// 13. maybe_SncList_Init, the talking heads' player. PLACEHOLDER: ShellMap_LoadResources (the briefing map's bitmaps
-			// and its timer callback), S5's. Then ShellMouse_AddCallbacks, the mouse's three callbacks into the active window.
+			// 13. maybe_SncList_Init, the talking heads' player; ShellMap_LoadResources, the war map's clock, bitmaps and font;
+			// ShellMouse_AddCallbacks, the mouse's three callbacks into the active window.
 			_lipSync.Init(_devices.Timer);
+			data.LoadMapResources(_content, _devices.Timer);
 			_shellMouse.AddCallbacks(_devices.Mouse);
 
 			// 14. The fonts and styles.
@@ -230,8 +231,9 @@ public static class Es1ShellHost {
 				return AssertExitStatus;
 			}
 
-			// 3. Shell_CloseScreens. 4. ShellMap_ReleaseResources and Shell_FreeData, which hold nothing the collector does not
-			// free, and ShellMouse_RemoveCallbacks. 5. Shell_ShutdownDevices.
+			// 3. Shell_CloseScreens. 4. ShellMap_ReleaseResources, whose timer callback ends with the session's clock, and
+			// Shell_FreeData, which hold nothing else the collector does not free, and ShellMouse_RemoveCallbacks.
+			// 5. Shell_ShutdownDevices.
 			_screens.CloseScreens();
 			_shellMouse.RemoveCallbacks(_devices.Mouse);
 			_devices.Shutdown();

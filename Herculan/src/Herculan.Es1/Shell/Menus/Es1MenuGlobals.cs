@@ -1,5 +1,6 @@
 using Herculan.Es1.Input;
 using Herculan.Es1.Shell.MessageBox;
+using Herculan.Es1.View;
 
 namespace Herculan.Es1.Shell.Menus;
 
@@ -109,6 +110,12 @@ public sealed class Es1MenuGlobals {
 	/// the screens and the mouse's press and release test.
 	/// </summary>
 	public Es1MessageBoxRecord MessageBox { get; } = new();
+
+	/// <summary>
+	/// The shell's copy of the UI library's globals, the war map's gadgets' (docs/es1/shell/map.md#picking-a-gadget):
+	/// <c>Widget_ActiveRoot</c> (<c>0007e5d8</c>) and <c>Widget_ClickButtons</c> (<c>0007e66c</c>) among them.
+	/// </summary>
+	public Es1WidgetGlobals Widgets { get; } = new();
 
 	/// <summary>
 	/// The dword <c>0007fce4</c>, 0 in the image: while set, the per-chassis area lists a left press outside the active

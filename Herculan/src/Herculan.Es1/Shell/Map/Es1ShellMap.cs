@@ -7,6 +7,8 @@ using HercWorks.Core.Data.File.Msn.Es1;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
+using Herculan.Engine.Numerics;
+using Herculan.Es1.Panels;
 using Herculan.Es1.View;
 
 namespace Herculan.Es1.Shell.Map;
@@ -42,9 +44,8 @@ public readonly record struct Es1MapObject(short ShapeIndex, Es1MapPoint Positio
 /// camera, altitude and pan (docs/es1/shell/map.md#the-base-class), and what <c>ShellMap_Constructor</c>
 /// (<c>000094d9</c>) loads and fits (docs/es1/shell/map.md#building-it). Each member names its retail field.
 ///
-/// <para>PLACEHOLDER: the constructor's labels (step 4), its gadget window, gadgets and callout (steps 7 and 8), the
-/// sun's registration with <c>Light_Register</c>, the viewport and camera objects, the paint, the tick and the intro are
-/// the map's later parts', S5's; until they land the map draws nothing.</para>
+/// <para>PLACEHOLDER: the sun's registration with <c>Light_Register</c>, the paint, the tick and the intro are the map's
+/// later parts', S5's; until they land the map draws nothing.</para>
 /// </summary>
 public sealed class Es1ShellMap {
 	/// <summary>
@@ -58,6 +59,18 @@ public sealed class Es1ShellMap {
 
 	/// <summary>The squad slots <c>+0xa8</c> and the positions <c>+0xd4</c>.</summary>
 	public const int SquadSlots = 8;
+
+	/// <summary>The labels at <c>+0x366</c>, one a row down the map.</summary>
+	public const int ObjectiveLabelCount = 20;
+
+	/// <summary>The room in the gadget array <c>+0x3b6</c>.</summary>
+	public const int GadgetCapacity = 50;
+
+	/// <summary>
+	/// <c>Map_CameraOrientation</c> (<c>0009a444</c>), {<c>0xc000</c>, 0, 0}, which <c>Map_StaticInit</c> sets and
+	/// <c>Map_Ctor</c> gives the camera: it looks straight down.
+	/// </summary>
+	public const short CameraPitch = unchecked((short)0xc000);
 
 	/// <summary><c>maybe_TSLight_SetIntensity</c>'s value for the sun, slot <c>+8</c> of its table.</summary>
 	public const int SunIntensity = 100;
@@ -76,14 +89,19 @@ public sealed class Es1ShellMap {
 
 	private readonly Es1MapBnd _mapBnd;
 	private readonly Es1ShellMapBnd _bnd;
+	private readonly List<Es1MapGadget> _gadgets = new(GadgetCapacity);
+
+	/// <summary><c>Raster_WorldToView</c> as <see cref="InstallCamera"/> last left it; every caller of <see cref="Project"/> installs the camera first.</summary>
+	private Transform3 _worldToView;
 
 	/// <summary>
 	/// <c>Map_Ctor</c> (<c>00008cfd</c>)(map, <paramref name="rect"/>): the size, the viewport's centre, the camera at
 	/// (0, 0) and <see cref="Es1MapBnd.StartAltitude"/>, no pan, and the pan step for that altitude.
 	/// </summary>
-	private Es1ShellMap(Es1MapBnd mapBnd, Es1ShellMapBnd bnd, Es1Rect rect) {
+	private Es1ShellMap(Es1MapBnd mapBnd, Es1ShellMapBnd bnd, HudFont? labelFont, Es1Rect rect) {
 		_mapBnd = mapBnd;
 		_bnd = bnd;
+		LabelFont = labelFont;
 		Rect = rect;
 		Width = rect.X1 - rect.X0;
 		Height = rect.Y1 - rect.Y0;
@@ -94,6 +112,30 @@ public sealed class Es1ShellMap {
 
 	/// <summary>The viewport's rect, the <c>GLViewport</c>'s <c>+0x210</c>–<c>+0x21c</c>.</summary>
 	public Es1Rect Rect { get; }
+
+	/// <summary><see cref="Es1ShellMapResources.LabelFont"/>, which the labels draw in and the gadgets measure in.</summary>
+	public HudFont? LabelFont { get; }
+
+	/// <summary>The top label <c>+0x362</c>, centred over the map's top row, which the intro's lines go into.</summary>
+	public Es1Label TopLabel { get; private set; } = null!;
+
+	/// <summary>The labels <c>+0x366</c>, one a row from the map's top, which the objective lines go into after the intro.</summary>
+	public IReadOnlyList<Es1Label> ObjectiveLabels { get; private set; } = [];
+
+	/// <summary>The callout label <c>+0x482</c>, its fill color <c>0x3f</c>, which <see cref="PlaceCallout"/> places.</summary>
+	public Es1Label CalloutLabel { get; private set; } = null!;
+
+	/// <summary>
+	/// The gadget window <c>+0x134</c>, <c>CTLWindow_Ctor</c> (<c>0001144a</c>)(0, the map's rect), into whose clickables
+	/// the gadgets go; ES1DBSIM's constructor in other code (docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac).
+	/// </summary>
+	public Es1WidgetRoot Window { get; private set; } = null!;
+
+	/// <summary>The gadgets <c>+0x3b6</c>, counted at <c>+0x47e</c> (<see cref="BuildGadgets"/>).</summary>
+	public IReadOnlyList<Es1MapGadget> Gadgets => _gadgets;
+
+	/// <summary>The callout's pointer <c>+0x486</c>, three points in screen pixels (<see cref="PlaceCallout"/>).</summary>
+	public (int X, int Y)[] CalloutPointer { get; } = new (int X, int Y)[3];
 
 	/// <summary>The width <c>+0x42</c> and height <c>+0x46</c>, right less left and bottom less top.</summary>
 	public int Width { get; }
@@ -240,13 +282,16 @@ public sealed class Es1ShellMap {
 
 	/// <summary>
 	/// <c>ShellMap_Constructor</c> (<c>000094d9</c>)(0, <see cref="Area"/>) (docs/es1/shell/map.md#building-it), with
-	/// <paramref name="squadMemberCount"/> <c>Squad_MemberCount</c>: the base class (<see cref="Es1ShellMap(Es1MapBnd, Es1ShellMapBnd, Es1Rect)"/>);
-	/// the intro's bytes; <see cref="DrawShapes"/>; the objective lines and <c>str\maplabel</c>'s two groups; the load
-	/// (<see cref="LoadScriptDat"/>) and the two views; the intro's state, the selected gadget, the closing paints and the
-	/// end byte. Retail's allocation failing returns no map; here it cannot.
+	/// <paramref name="squadMemberCount"/> <c>Squad_MemberCount</c>: the base class (<see cref="Es1ShellMap(Es1MapBnd, Es1ShellMapBnd, HudFont, Es1Rect)"/>);
+	/// the intro's bytes; <see cref="DrawShapes"/>; the objective lines and <c>str\maplabel</c>'s two groups; the labels
+	/// (<see cref="BuildLabels"/>); the load (<see cref="LoadScriptDat"/>) and the two views; the intro's state; the gadget
+	/// window made <paramref name="widgets"/>' active root with <c>Widget_SetActiveRoot</c> (<c>0001070d</c>), which leaves
+	/// the pressed index alone; the gadgets (<see cref="BuildGadgets"/>); the selected gadget −1 and
+	/// <see cref="PlaceCallout"/>; the closing paints and the end byte. Retail's allocation failing returns no map; here it
+	/// cannot.
 	/// </summary>
-	public static Es1ShellMap Build(string installRoot, GameContent content, Es1ShellData data, short squadMemberCount) {
-		var map = new Es1ShellMap(data.MapBnd, data.ShellMapBnd, Area) {
+	public static Es1ShellMap Build(string installRoot, GameContent content, Es1ShellData data, short squadMemberCount, Es1WidgetGlobals widgets) {
+		var map = new Es1ShellMap(data.MapBnd, data.ShellMapBnd, data.MapResources?.LabelFont, Area) {
 			DrawShapes = data.ShellMapBnd.DrawShapes != 0,
 		};
 
@@ -259,15 +304,180 @@ public sealed class Es1ShellMap {
 		map.SquadLabels = labels[0];
 		map.BaseTypeNames = labels[1];
 
-		// PLACEHOLDER: the 22 labels (step 4), the sun's light object and Light_Register (step 5), S5's.
+		map.BuildLabels();
+
+		// PLACEHOLDER: the sun's light object and Light_Register (step 5), S5's P18.
 		map.LoadScriptDat(installRoot, content, data, squadMemberCount);
 		map.FitFullView();
 		map.FitSquad();
 
-		// PLACEHOLDER: CTLWindow_Ctor's gadget window made the active root, ShellMap_BuildGadgets and
-		// ShellMap_PlaceCallout (steps 7 and 8), S5's; the gadget count +0x47e and the dword +0x4bc stay 0.
+		// The intro's state and deadline are 0 from the object's initializers, and so is the dword +0x4bc, the kept line.
+		map.Window = new Es1WidgetRoot(Area);
+		widgets.ActiveRoot = map.Window;
+		map.BuildGadgets();
+		map.SelectedGadget = -1;
+		map.PlaceCallout();
 		map.ClosingPaints = 2;
 		return map;
+	}
+
+	/// <summary>
+	/// The constructor's step 4 (docs/es1/shell/map.md#building-it): <c>Label_Ctor</c> (<c>0000fd20</c>) in
+	/// <see cref="LabelFont"/> for each, placed with <c>Label_SetRect</c> (<c>0000fe8e</c>) and a zero margin over a row of
+	/// the map's width and <see cref="Es1ShellMapBnd.LineSpacing"/> high: <see cref="TopLabel"/> over the top row, centred;
+	/// the <see cref="ObjectiveLabels"/> with flags 1, the first over the top row and each next a row lower; then
+	/// <see cref="CalloutLabel"/>, unplaced, its fill color <c>0x3f</c>. Both functions are ES1DBSIM's statements in other
+	/// code (docs/es1/simulation/cockpit-widgets.md#labels).
+	/// </summary>
+	private void BuildLabels() {
+		int spacing = _bnd.LineSpacing;
+		var row = new Es1Rect(Rect.X0, Rect.Y0, Rect.X1, unchecked(Rect.Y0 + spacing));
+		TopLabel = new Es1Label(LabelFont);
+		TopLabel.SetRect(Es1Label.Centered, row);
+
+		var labels = new Es1Label[ObjectiveLabelCount];
+		for (int i = 0; i < labels.Length; i++) {
+			labels[i] = new Es1Label(LabelFont);
+			labels[i].SetRect(1, row);
+			row = unchecked(row with { Y0 = row.Y0 + spacing, Y1 = row.Y1 + spacing });
+		}
+
+		ObjectiveLabels = labels;
+		CalloutLabel = new Es1Label(LabelFont) { FillColor = 0x3f };
+	}
+
+	/// <summary>
+	/// <c>ShellMap_InstallCamera</c> (<c>00008fa2</c>) (docs/es1/shell/map.md#a-paint): the camera at the position plus the
+	/// pan, at the altitude, installed with <c>Raster_InstallViewProjection</c> (<c>00053ce4</c>), and
+	/// <c>Raster_SetModelTransform</c>(0): the world-to-view transform the inverse of the camera's frame,
+	/// <c>BuildEulerRotationMatrixQ14</c>(<see cref="CameraPitch"/>, 0, 0) at that point. The shell's rotation
+	/// (<c>000589c4</c>) differs from the simulator's in its index rounding and its cosine table
+	/// (docs/es1/shell/map.md#the-shapes); at this camera's angles each index is exact and each entry read is 0 or ±16384
+	/// in both, so the simulator's rotation (<see cref="Transform3.FromEuler"/>) gives the same matrix.
+	/// </summary>
+	public void InstallCamera() {
+		var frame = Transform3.FromEuler(CameraPitch, 0, 0);
+		frame.X = unchecked(CameraX + PanX);
+		frame.Y = unchecked(CameraY + PanY);
+		frame.Z = Altitude;
+		_worldToView = frame.Inverted();
+	}
+
+	/// <summary>
+	/// <c>Map_Project</c> (<c>00008ee6</c>)(map, out, <paramref name="point"/>) (docs/es1/shell/map.md#a-paint), ES2's, the
+	/// screen point under the camera <see cref="InstallCamera"/> installed: <c>Raster_ModelToView</c> through the
+	/// world-to-view transform, <c>Raster_PerspectiveDivide</c> by the camera's <see cref="FocalShift"/>, {(<i>x</i>
+	/// &lt;&lt; 7) / <i>y</i>, (<i>z</i> &lt;&lt; 7) / <i>y</i>}, and <c>Raster_ProjectToScreen</c>, {<i>x</i> +
+	/// <i>cx</i>, <i>cy</i> − <i>y</i>}, the centre the viewport's rect's top-left less <see cref="ViewportCentre"/>. A
+	/// point at the camera's depth, where retail divides by 0, is taken at depth 1, an engine guard.
+	/// </summary>
+	public (int X, int Y) Project(Es1MapPoint point) {
+		var view = _worldToView.TransformPoint(point.X, point.Y, point.Z);
+		int depth = view.Y == 0 ? 1 : view.Y;
+		int x = unchecked(view.X << FocalShift) / depth, y = unchecked(view.Z << FocalShift) / depth;
+		return unchecked((x + Rect.X0 - ViewportCentre.X, Rect.Y0 - ViewportCentre.Y - y));
+	}
+
+	/// <summary>
+	/// <c>ShellMap_BuildGadgets</c> (<c>0000d1bb</c>) (docs/es1/shell/map.md#the-gadgets): the camera at the full view; the
+	/// viewport and the camera installed (<c>Map_PushContext</c> (<c>00008f65</c>), <see cref="InstallCamera"/>); a gadget
+	/// for each squad slot whose member ref is not −1, <see cref="SquadLabels"/>' line 0 for slot 0 and line 1 for the rest,
+	/// of <see cref="Es1ShellMapBnd.SquadGadgetSize"/>, at the slot's position; then one for each base whose side is not
+	/// −1, its type's name in <see cref="BaseTypeNames"/>, of <see cref="Es1ShellMapBnd.SmallBaseGadgetSize"/> for the
+	/// types 5, 6 and 8 and <see cref="Es1ShellMapBnd.BaseGadgetSize"/> for the others, at its point; each appended and
+	/// registered in <see cref="Window"/> with <c>Widget_RegisterClickable</c> (<c>0001084f</c>), ES1DBSIM's; then
+	/// <c>Map_PopContext</c> (<c>00008f86</c>). Retail reads the lines, the type's name and the point unchecked, a base's
+	/// point ref of −1 among them, and writes a 51st gadget over the count; here a line past its group has no text, a point
+	/// ref past the block is (0, 0, 0) and a gadget past <see cref="GadgetCapacity"/> is reported and dropped, engine
+	/// guards.
+	/// </summary>
+	private void BuildGadgets() {
+		(CameraX, CameraY, Altitude) = FullView;
+		InstallCamera();
+		if (Squad is { } squad) {
+			for (int slot = 0; slot < SquadSlots; slot++) {
+				if (squad.MemberRefs[slot] != -1) {
+					AddGadget(Line(SquadLabels, slot == 0 ? 0 : 1), _bnd.SquadGadgetSize, SquadPositions[slot]);
+				}
+			}
+		}
+
+		foreach (var structure in Bases) {
+			if (structure.Side != -1) {
+				short size = structure.Type is 5 or 6 or 8 ? _bnd.SmallBaseGadgetSize : _bnd.BaseGadgetSize;
+				AddGadget(Line(BaseTypeNames, structure.Type), size, Point(structure.PointRef));
+			}
+		}
+
+		static string? Line(IReadOnlyList<string> lines, int index) => index >= 0 && index < lines.Count ? lines[index] : null;
+	}
+
+	private void AddGadget(string? text, short size, Es1MapPoint position) {
+		var gadget = new Es1MapGadget(text, size, this, position, _bnd.GadgetTextMargin);
+		if (_gadgets.Count >= GadgetCapacity) {
+			Console.Error.WriteLine($"The map's gadget array holds {GadgetCapacity}: gadget {_gadgets.Count} ({text}) is dropped.");
+			return;
+		}
+
+		_gadgets.Add(gadget);
+		Window.RegisterClickable(gadget);
+	}
+
+	/// <summary>
+	/// <c>ShellMap_PlaceGadgets</c> (<c>0000da37</c>) (docs/es1/shell/map.md#picking-a-gadget), after a camera move: the
+	/// viewport and the camera installed, then each gadget's <see cref="Es1MapGadget.Place"/>.
+	/// </summary>
+	public void PlaceGadgets() {
+		InstallCamera();
+		foreach (var gadget in _gadgets) {
+			gadget.Place();
+		}
+	}
+
+	/// <summary>
+	/// <c>ShellMap_PlaceCallout</c> (<c>0000d72b</c>) (docs/es1/shell/map.md#the-callout): nothing for the selected gadget
+	/// −1; otherwise the box <see cref="Es1ShellMapBnd.CalloutHeight"/> high beside it and the pointer
+	/// <see cref="CalloutPointer"/>, in screen pixels, and <see cref="CalloutLabel"/> placed over the box, centred with a
+	/// zero margin. The side test sets the gadget's viewport-relative left against the viewport's centre in screen pixels.
+	/// A selected index past the gadgets, which retail reads past its array, places nothing here, an engine guard.
+	/// </summary>
+	public void PlaceCallout() {
+		if (SelectedGadget == -1) {
+			return;
+		}
+
+		if (SelectedGadget < 0 || SelectedGadget >= _gadgets.Count) {
+			Console.Error.WriteLine($"The map's selected gadget {SelectedGadget} is past its {_gadgets.Count}: no callout.");
+			return;
+		}
+
+		var gadget = _gadgets[SelectedGadget];
+		int gap = _bnd.CalloutGap, pointer = _bnd.PointerWidth, height = _bnd.CalloutHeight, halfHeight = (short)(height >> 1);
+		int centreX = (Rect.X1 - Rect.X0 >> 1) + Rect.X0;
+		int boxLeft, boxRight;
+		unchecked {
+			if (centreX < gadget.Rect.X0) {
+				int edge = gadget.Rect.X0 - gap;
+				boxRight = edge - 1;
+				boxLeft = boxRight - gadget.Width;
+				CalloutPointer[0] = (boxRight + pointer + 1, halfHeight);
+				CalloutPointer[1] = (edge, halfHeight + (pointer >> 1));
+				CalloutPointer[2] = (edge, halfHeight - (pointer >> 1));
+			} else {
+				boxLeft = gadget.Rect.X0 + gadget.Size + gap;
+				boxRight = boxLeft + gadget.Width;
+				CalloutPointer[0] = (boxLeft - pointer - 1, halfHeight);
+				CalloutPointer[1] = (boxLeft - 1, halfHeight - (pointer >> 1));
+				CalloutPointer[2] = (boxLeft - 1, halfHeight + (pointer >> 1));
+			}
+
+			int top = (gadget.Size >> 1) + gadget.Rect.Y0 - (height >> 1);
+			for (int i = 0; i < CalloutPointer.Length; i++) {
+				CalloutPointer[i] = (CalloutPointer[i].X + Rect.X0, CalloutPointer[i].Y + top + Rect.Y0);
+			}
+
+			CalloutLabel.SetRect(Es1Label.Centered, new Es1Rect(boxLeft + Rect.X0, top + Rect.Y0, boxRight + Rect.X0, top + height + Rect.Y0));
+		}
 	}
 
 	/// <summary>
