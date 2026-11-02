@@ -44,8 +44,8 @@ public readonly record struct Es1MapObject(short ShapeIndex, Es1MapPoint Positio
 /// camera, altitude and pan (docs/es1/shell/map.md#the-base-class), and what <c>ShellMap_Constructor</c>
 /// (<c>000094d9</c>) loads and fits (docs/es1/shell/map.md#building-it). Each member names its retail field.
 ///
-/// <para>PLACEHOLDER: the sun's registration with <c>Light_Register</c>, the paint, the tick and the intro are the map's
-/// later parts', S5's; until they land the map draws nothing.</para>
+/// <para>The paint is <see cref="Es1ShellMapPaint"/>'s and the intro <see cref="Es1ShellMapIntro"/>'s. PLACEHOLDER: the
+/// sun's registration with <c>Light_Register</c> and the zone's shapes are S5's P18b.</para>
 /// </summary>
 public sealed class Es1ShellMap {
 	/// <summary>
@@ -112,6 +112,15 @@ public sealed class Es1ShellMap {
 
 	/// <summary>The viewport's rect, the <c>GLViewport</c>'s <c>+0x210</c>–<c>+0x21c</c>.</summary>
 	public Es1Rect Rect { get; }
+
+	/// <summary>The tuning <c>SHELLMAP.BND</c> the map reads its sizes, frames and waits from.</summary>
+	public Es1ShellMapBnd Bnd => _bnd;
+
+	/// <summary>
+	/// What <c>ShellMap_LoadResources</c> loaded: the clock <c>ShellMap_Ticks</c> the intro and the slow paint wait on and
+	/// the icons; none when the start-up did not load them, and then nothing waits and no icon is drawn.
+	/// </summary>
+	public Es1ShellMapResources? Resources { get; private set; }
 
 	/// <summary><see cref="Es1ShellMapResources.LabelFont"/>, which the labels draw in and the gadgets measure in.</summary>
 	public HudFont? LabelFont { get; }
@@ -193,6 +202,24 @@ public sealed class Es1ShellMap {
 
 	/// <inheritdoc cref="ClosingPaints"/>
 	public bool IntroEnded { get; set; }
+
+	/// <summary>
+	/// The redraw byte <c>+0x4c2</c>, which <c>ShellMap_ResetViewAndClear</c> sets and every intro step clears once the
+	/// intro has ended (docs/es1/shell/map.md#the-tick).
+	/// </summary>
+	public bool RedrawDue { get; set; }
+
+	/// <summary>The intro's line <c>+0x344</c> of <see cref="ObjectiveLines"/>.</summary>
+	public short IntroLine { get; set; }
+
+	/// <summary>The state a wait of the intro goes on to, <c>+0x49e</c>.</summary>
+	public short IntroResumeState { get; set; }
+
+	/// <summary>The line <c>+0x4bc</c> the top label last took, which an empty line shows again; none at the build.</summary>
+	public string? KeptLine { get; set; }
+
+	/// <summary>The grid's spacing in pixels <c>+0x22</c>, which each paint's grid measures again.</summary>
+	public int GridStep { get; set; }
 
 	/// <summary>The selected gadget <c>+0x480</c>, −1 at the build.</summary>
 	public short SelectedGadget { get; set; } = -1;
@@ -293,6 +320,7 @@ public sealed class Es1ShellMap {
 	public static Es1ShellMap Build(string installRoot, GameContent content, Es1ShellData data, short squadMemberCount, Es1WidgetGlobals widgets) {
 		var map = new Es1ShellMap(data.MapBnd, data.ShellMapBnd, data.MapResources?.LabelFont, Area) {
 			DrawShapes = data.ShellMapBnd.DrawShapes != 0,
+			Resources = data.MapResources,
 		};
 
 		// StringTable_LoadFromFile and StringTable_LoadGroup read the groups in turn from the file's start.
@@ -365,17 +393,25 @@ public sealed class Es1ShellMap {
 
 	/// <summary>
 	/// <c>Map_Project</c> (<c>00008ee6</c>)(map, out, <paramref name="point"/>) (docs/es1/shell/map.md#a-paint), ES2's, the
-	/// screen point under the camera <see cref="InstallCamera"/> installed: <c>Raster_ModelToView</c> through the
-	/// world-to-view transform, <c>Raster_PerspectiveDivide</c> by the camera's <see cref="FocalShift"/>, {(<i>x</i>
-	/// &lt;&lt; 7) / <i>y</i>, (<i>z</i> &lt;&lt; 7) / <i>y</i>}, and <c>Raster_ProjectToScreen</c>, {<i>x</i> +
-	/// <i>cx</i>, <i>cy</i> − <i>y</i>}, the centre the viewport's rect's top-left less <see cref="ViewportCentre"/>. A
-	/// point at the camera's depth, where retail divides by 0, is taken at depth 1, an engine guard.
+	/// screen point under the camera <see cref="InstallCamera"/> installed: the <see cref="ViewPoint"/> and
+	/// <c>Raster_ProjectToScreen</c>, which adds the centre, the viewport's rect's top-left less
+	/// <see cref="ViewportCentre"/>.
 	/// </summary>
 	public (int X, int Y) Project(Es1MapPoint point) {
+		var view = ViewPoint(point);
+		return unchecked((view.X + Rect.X0 - ViewportCentre.X, view.Y + Rect.Y0 - ViewportCentre.Y));
+	}
+
+	/// <summary>
+	/// The view point the clear and the grid draw at (docs/es1/shell/map.md#a-paint): <c>Raster_ModelToView</c> through
+	/// the world-to-view transform <see cref="InstallCamera"/> installed and <c>Raster_PerspectiveDivide</c> by the
+	/// camera's <see cref="FocalShift"/>, {(<i>x</i> &lt;&lt; 7) / <i>y</i>, (<i>z</i> &lt;&lt; 7) / <i>y</i>}, its
+	/// <i>y</i> negated. A point at the camera's depth, where retail divides by 0, is taken at depth 1, an engine guard.
+	/// </summary>
+	public (int X, int Y) ViewPoint(Es1MapPoint point) {
 		var view = _worldToView.TransformPoint(point.X, point.Y, point.Z);
 		int depth = view.Y == 0 ? 1 : view.Y;
-		int x = unchecked(view.X << FocalShift) / depth, y = unchecked(view.Z << FocalShift) / depth;
-		return unchecked((x + Rect.X0 - ViewportCentre.X, Rect.Y0 - ViewportCentre.Y - y));
+		return unchecked(((view.X << FocalShift) / depth, -((view.Z << FocalShift) / depth)));
 	}
 
 	/// <summary>
@@ -405,7 +441,7 @@ public sealed class Es1ShellMap {
 		foreach (var structure in Bases) {
 			if (structure.Side != -1) {
 				short size = structure.Type is 5 or 6 or 8 ? _bnd.SmallBaseGadgetSize : _bnd.BaseGadgetSize;
-				AddGadget(Line(BaseTypeNames, structure.Type), size, Point(structure.PointRef));
+				AddGadget(Line(BaseTypeNames, structure.Type), size, PointAt(structure.PointRef));
 			}
 		}
 
@@ -634,8 +670,8 @@ public sealed class Es1ShellMap {
 		if (squad.HeadingRef < 0) {
 			heading = 0;
 			if (NavPath is { Length: >= 2 } path) {
-				var from = Point(path[0]);
-				var to = Point(path[1]);
+				var from = PointAt(path[0]);
+				var to = PointAt(path[1]);
 				heading = unchecked((short)(Es1ShellTrig.Atan2(to.X - from.X, to.Y - from.Y) - 0x4000));
 			}
 		} else {
@@ -643,7 +679,7 @@ public sealed class Es1ShellMap {
 		}
 
 		var rotation = Es1ShellTrig.Rotation2D(heading);
-		var start = squad.PointRef == -1 ? NavPath is { Length: > 0 } route ? Point(route[0]) : default : Point(squad.PointRef);
+		var start = squad.PointRef == -1 ? NavPath is { Length: > 0 } route ? PointAt(route[0]) : default : PointAt(squad.PointRef);
 		for (int slot = 0; slot < SquadSlots; slot++) {
 			short member = squad.MemberRefs[slot];
 			if (member == -1 || member >= SquadSize) {
@@ -678,7 +714,7 @@ public sealed class Es1ShellMap {
 
 		foreach (var structure in Bases) {
 			if (structure.PointRef != -1) {
-				Widen(Point(structure.PointRef));
+				Widen(PointAt(structure.PointRef));
 			}
 		}
 
@@ -686,7 +722,7 @@ public sealed class Es1ShellMap {
 		if (NavPath != null) {
 			foreach (short waypoint in NavPath) {
 				if (waypoint != -1) {
-					Widen(Point(waypoint));
+					Widen(PointAt(waypoint));
 				}
 			}
 		}
@@ -741,7 +777,7 @@ public sealed class Es1ShellMap {
 	}
 
 	/// <summary>The point <paramref name="index"/> of <see cref="Points"/>; one past the block, which retail reads past its array, is (0, 0, 0) here, an engine guard.</summary>
-	private Es1MapPoint Point(int index) => index >= 0 && index < Points.Count ? Points[index] : default;
+	public Es1MapPoint PointAt(int index) => index >= 0 && index < Points.Count ? Points[index] : default;
 
 	/// <summary>Entry <paramref name="entry"/> of <c>cfg\filename.bin</c>, or none without the table, reported.</summary>
 	private static string? FileEntry(Es1ShellData data, int entry) {

@@ -240,7 +240,10 @@ public sealed class Es1ShellFrame {
 			}
 		}
 
-		_screens.TickScreen();
+		foreach (var wait in _screens.TickScreen()) {
+			yield return wait;
+		}
+
 		// 0001098e, the widget root's mouse queue (Shell_PollInput's), does nothing until its queue is started.
 		if (_screens.MessageBox is { } messageBox) {
 			foreach (var wait in messageBox.Run(InputBlock, PresentFrame, PollDeviceBlock)) {

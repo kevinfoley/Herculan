@@ -650,7 +650,9 @@ public sealed class Es1ShellScreens {
 		}
 
 		if (CurrentMenu is { } menu) {
-			DrawMenu(menu, keptDraw);
+			foreach (var wait in DrawMenu(menu, keptDraw)) {
+				yield return wait;
+			}
 		} else {
 			display.DrawPage = keptDraw;
 		}
@@ -684,10 +686,11 @@ public sealed class Es1ShellScreens {
 	/// briefing while <see cref="MapDrawCount"/> is not 0 (<see cref="DrawBriefingUnder"/>) and the window drawn on page
 	/// 2; the draw page put back; and unless the message box is up, the whole screen dirty with delay 1 on backdrop 1000
 	/// (screen 9999 aside) or the window drawn again on the draw page and, while <see cref="MapRefresh"/> is set,
-	/// <see cref="MapDrawCount"/> cleared, or with it 0 the mission map's <c>00009c64</c>, and <see cref="MapRefresh"/> set
-	/// to 3; and <see cref="WaitAfterDraw"/> set.
+	/// <see cref="MapDrawCount"/> cleared, or with it 0 the mission map's view reset and cleared
+	/// (<see cref="Es1ShellMapPaint.ResetViewAndClear"/>), and <see cref="MapRefresh"/> set to 3; and
+	/// <see cref="WaitAfterDraw"/> set. The waits are the mission map's slow paint's.
 	/// </summary>
-	private void DrawMenu(Es1Menu menu, int keptDraw) {
+	private IEnumerable<Es1ShellWait> DrawMenu(Es1Menu menu, int keptDraw) {
 		var display = _devices.Display;
 		_windowContextRect = menu.Region;
 		var around = GetFullScreenAround(menu.Region);
@@ -697,7 +700,9 @@ public sealed class Es1ShellScreens {
 		menu.SaveBackground();
 		if (!Globals.MessageBox.Up) {
 			if (MapDrawCount != 0) {
-				DrawBriefingUnder(keptDraw);
+				foreach (var wait in DrawBriefingUnder(keptDraw)) {
+					yield return wait;
+				}
 			}
 
 			menu.Window?.Draw();
@@ -705,7 +710,7 @@ public sealed class Es1ShellScreens {
 
 		display.DrawPage = keptDraw;
 		if (Globals.MessageBox.Up) {
-			return;
+			yield break;
 		}
 
 		if (BackdropId == MainMenuScreen && CurrentScreen != LoadingScreen) {
@@ -714,8 +719,10 @@ public sealed class Es1ShellScreens {
 			menu.Window?.Draw();
 			if (MapRefresh != 0) {
 				if (MapDrawCount == 0) {
-					if (MissionMap != null) {
-						// PLACEHOLDER: 00009c64(Shell_MissionMap), the mission map's, S5's.
+					if (MissionMap is { } map) {
+						foreach (var wait in Es1ShellMapPaint.ResetViewAndClear(map, display)) {
+							yield return wait;
+						}
 					}
 				} else {
 					MapDrawCount = 0;
@@ -732,18 +739,29 @@ public sealed class Es1ShellScreens {
 	/// <c>Shell_DrawScreen</c>'s step 4 while <see cref="MapDrawCount"/> is not 0 (docs/es1/shell/menus.md#drawing-a-screen):
 	/// the war map's briefing kept behind the next screen. With page 2 the draw page, the mission map's slot <c>+4</c> and
 	/// the text box drawn (<see cref="Es1ShellDialog.Draw"/>); then the same on <paramref name="keptDraw"/>, the draw page
-	/// the screen's draw found; the draw page set back to page 2 and the count lowered by 1.
+	/// the screen's draw found; the draw page set back to page 2 and the count lowered by 1. Retail calls the slot with no
+	/// test that the map is set; with none here the map draws nothing, an engine guard.
 	/// </summary>
-	private void DrawBriefingUnder(int keptDraw) {
+	private IEnumerable<Es1ShellWait> DrawBriefingUnder(int keptDraw) {
 		var display = _devices.Display;
-		// PLACEHOLDER: Shell_MissionMap's slot +4 of its table +0x4a, called with no test that the map is set; S5's.
+		foreach (var wait in PaintMissionMap()) {
+			yield return wait;
+		}
+
 		Dialog?.Draw();
 		display.DrawPage = keptDraw;
-		// PLACEHOLDER: Shell_MissionMap's slot +4 again, S5's.
+		foreach (var wait in PaintMissionMap()) {
+			yield return wait;
+		}
+
 		Dialog?.Draw();
 		display.DrawPage = Es1ShellBackdrop.BackgroundPage;
 		MapDrawCount--;
 	}
+
+	/// <summary><see cref="MissionMap"/>'s slot <c>+4</c>, <c>ShellMap_Paint</c> (<see cref="Es1ShellMapPaint.Paint"/>); nothing without a map.</summary>
+	private IEnumerable<Es1ShellWait> PaintMissionMap() =>
+		MissionMap is { } map ? Es1ShellMapPaint.Paint(map, _devices.Display) : [];
 
 	/// <summary>
 	/// <c>RenderContext_GetFullScreenAround</c> (<c>0004c53c</c>)(<paramref name="rect"/>): the context <c>00083bc4</c> set to
@@ -1177,17 +1195,40 @@ public sealed class Es1ShellScreens {
 	public bool Kind4Shown { get; private set; }
 
 	/// <summary>
-	/// <c>Shell_TickScreen</c> (<c>0003c115</c>), the frame loop's step 5 (docs/es1/shell/menus.md#drawing-a-screen):
-	/// unless the message box is up, the current menu's window updated (<see cref="Es1DUIWindow.Update"/>).
+	/// <c>Shell_TickScreen</c> (<c>0003c115</c>), the frame loop's step 5 (docs/es1/shell/menus.md#drawing-a-screen,
+	/// docs/es1/shell/map.md#the-tick): unless the message box is up, the current menu's window updated
+	/// (<see cref="Es1DUIWindow.Update"/>); then with a mission map, <see cref="MapRefresh"/> above 1 and no palette due
+	/// (<see cref="Es1ShellBackdrop.PaletteDue"/>, the byte <c>0007fcd4</c>), one intro step (<see cref="Es1ShellMapIntro.Step"/>)
+	/// and the count lowered; at 1 it goes back to 2 while the intro has not ended and to 3 while the map's redraw byte is
+	/// set. Retail reads the map's two bytes at 1 with no test that the map is set; with none here the count stays, an
+	/// engine guard. The waits are the map's slow paint's.
 	/// </summary>
-	public void TickScreen() {
+	public IEnumerable<Es1ShellWait> TickScreen() {
 		if (CurrentMenu?.Window is { } window && !Globals.MessageBox.Up) {
 			window.Update(Globals, _dirty);
 		}
 
-		// PLACEHOLDER: while Shell_MissionMap (000809a4) is set, 00009cfb and the byte 000809a8's countdown (menus.md's Open);
-		// the mission map's, S5's, so MapRefresh stays as the war map sets it.
+		if (MissionMap is { } stepped && MapRefresh > 1 && !_backdrop.PaletteDue) {
+			foreach (var wait in _mapIntro.Step(stepped, _devices.Display)) {
+				yield return wait;
+			}
+
+			MapRefresh--;
+		}
+
+		if (MissionMap is { } map) {
+			if (MapRefresh == 1 && !map.IntroEnded) {
+				MapRefresh = 2;
+			}
+
+			if (MapRefresh == 1 && map.RedrawDue) {
+				MapRefresh = 3;
+			}
+		}
 	}
+
+	/// <summary>The intro's globals, which outlive each mission map (<see cref="Es1ShellMapIntro"/>).</summary>
+	private readonly Es1ShellMapIntro _mapIntro = new();
 
 	/// <summary>The menu the quit question opens as on backdrop 1000, whose window is the main menu's rect.</summary>
 	private const short QuitAlertMainMenu = 888;
