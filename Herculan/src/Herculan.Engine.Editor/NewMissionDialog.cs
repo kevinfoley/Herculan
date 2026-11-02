@@ -153,7 +153,7 @@ internal sealed class NewMissionDialog {
 		Spacer();
 
 		ImGui.TextUnformatted("Terrain:");
-		if (ImGui.RadioButton("A zone the install has", !_fromImage)) {
+		if (ImGui.RadioButton("Vanilla zone", !_fromImage)) {
 			_fromImage = false;
 		}
 
