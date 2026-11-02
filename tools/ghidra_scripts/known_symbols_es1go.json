@@ -3001,13 +3001,28 @@
       "type": "function",
       "confidence": "high",
       "name": "WidgetRoot_Delete",
-      "description": "(window), callee-cleaned: ES1DBSIM's WidgetRoot_Delete (00044350): with window non-null, stores 0007e5f8 at +0x352 and the viewport classes' tables 0007e612 and 0007e642 at +0x17, then Mem_Delete of window.",
+      "description": "(window), callee-cleaned: ES1DBSIM's WidgetRoot_Delete (00044350): with window non-null, stores CTLWindowVtableCockpitMouseCopy (0007e5f8) at +0x352 and the viewport classes' tables 0007e612 and 0007e642 at +0x17, then Mem_Delete of window.",
       "source": "ES1GO decompile at 0001074d; es2_naming.py diff ES1GO 0001074d ES1DBSIM 00044350",
       "verified": {
         "bytes": "0001074d+131",
         "sha1": "2f0d271e1539",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000107d0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLWindow_Slot00NoOpCockpitMouseCopy",
+      "description": "(window), callee-cleaned: a frame around MOV EAX,[EBP+8] and RET 4, returning window, the code of CTLWindow_Slot00NoOp (00011551). Slot +4 of CTLWindowVtableCockpitMouseCopy (0007e5f8).",
+      "source": "ES1GO disassembly at 000107d0",
+      "verified": {
+        "bytes": "000107d0+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -3046,8 +3061,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_CtorRect",
-      "description": "(widget, rect) in stack order, callee-cleaned: ES1DBSIM's Widget_CtorRect (000438fc) in different code, by es2_naming.py diff.",
-      "source": "es2_naming.py diff ES1GO 00011011 ES1DBSIM 000438fc"
+      "description": "(widget, rect) in stack order, callee-cleaned: ES1DBSIM's Widget_CtorRect (000438fc) in different code, by es2_naming.py diff: allocates 0x20 bytes when widget is null (0 when that fails); clears the hit-shape byte +0x10; stores 0007e67e at +0x1c; copies the rect to +0..+0xc; clears the paint counter +0x1b. It leaves the state +0x17 as the allocation left it.",
+      "source": "es2_naming.py diff ES1GO 00011011 ES1DBSIM 000438fc",
+      "verified": {
+        "bytes": "00011011+207",
+        "sha1": "ba86a5495643",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0001144a",
@@ -3055,8 +3076,29 @@
       "type": "function",
       "confidence": "high",
       "name": "CTLWindow_Ctor",
-      "description": "(window, rect) in stack order, callee-cleaned: ES1DBSIM's CTLWindow_Ctor (00043cac) in different code, by es2_naming.py diff: 0x356 bytes, GLViewport_Ctor on +0x17, the window's vtable 0007e5f8 at +0x352.",
-      "source": "es2_naming.py diff ES1GO 0001144a ES1DBSIM 00043cac"
+      "description": "(window, rect) in stack order, callee-cleaned: ES1DBSIM's CTLWindow_Ctor (00043cac) in different code, by es2_naming.py diff: allocates 0x356 bytes when window is null (0 when that fails); GLViewport_Ctor on +0x17; CTLWindowVtable (0007e6ec) at +0x352; the rect copied to +0 and to the viewport's rect +0x227; the viewport's clip mode +0x21f 1 and the clickables' count +0x250 0. ShellMap_Constructor (000094d9) makes the war map's gadget window with it.",
+      "source": "es2_naming.py diff ES1GO 0001144a ES1DBSIM 00043cac",
+      "verified": {
+        "bytes": "0001144a+263",
+        "sha1": "11ff302c527b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00011551",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLWindow_Slot00NoOp",
+      "description": "(window), callee-cleaned: a frame around MOV EAX,[EBP+8] and RET 4, returning window. Slot +4 of CTLWindowVtable (0007e6ec).",
+      "source": "ES1GO disassembly at 00011551",
+      "verified": {
+        "bytes": "00011551+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000119e0",
@@ -25763,6 +25805,15 @@
       "source": "Herculan/docs/es1/shell/map.md#building-it; ES1GO decompile at 0001070d"
     },
     {
+      "address": "0007e5f8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CTLWindowVtableCockpitMouseCopy",
+      "description": "The shell's mouse file's copy of CTLWindowVtable (0007e6ec), which WidgetRoot_Delete (0001074d) stores at +0x352: 0 at +0, CTLWindow_Slot00NoOpCockpitMouseCopy (000107d0) at +4, 0 at +8. ES1DBSIM's CTLWindowVtableCockpitMouseCopy (00094c6a).",
+      "source": "es2_xref.py --binary ES1GO 0007e5f8; es2_peek.py ES1GO 0007e5f8"
+    },
+    {
       "address": "0007e66c",
       "binary": "ES1GO",
       "type": "data",
@@ -25770,6 +25821,15 @@
       "name": "Widget_ClickButtons",
       "description": "int16: the mouse buttons of the event CockpitMouse_ProcessQueue (0001098e) is handling, with bit 0 or 1 or'd in on a left or right release; ES1DBSIM's Widget_ClickButtons (00094b84). Widget_GetButtonValueShellMapCopy (0000db9e) returns it.",
       "source": "Herculan/docs/es1/shell/map.md#picking-a-gadget"
+    },
+    {
+      "address": "0007e6ec",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CTLWindowVtable",
+      "description": "The shell's root widget's vtable, which CTLWindow_Ctor (0001144a) stores at +0x352: 0 at +0, CTLWindow_Slot00NoOp (00011551) at +4, 0 at +8. ES1DBSIM's CTLWindowVtable (00094bde).",
+      "source": "ES1GO disassembly at 000114fa; es2_peek.py ES1GO 0007e6ec"
     },
     {
       "address": "0007e716",
