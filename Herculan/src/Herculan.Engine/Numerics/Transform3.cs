@@ -71,7 +71,13 @@ public struct Transform3 {
 	/// written: it evaluates product-to-sum identities against the cosine table rather than
 	/// composing three matrices, so it reaches the same Q14 values including their rounding.
 	/// </summary>
-	public static Transform3 FromEuler(short angleX, short angleY, short angleZ) {
+	public static Transform3 FromEuler(short angleX, short angleY, short angleZ) => FromEuler(angleX, angleY, angleZ, SimTrig.Cos);
+
+	/// <summary>
+	/// <see cref="FromEuler(short, short, short)"/> reading its cosines through <paramref name="cos"/>: a binary
+	/// program whose rotation differs only in its cosine lookup passes its own.
+	/// </summary>
+	public static Transform3 FromEuler(short angleX, short angleY, short angleZ, Func<short, short> cos) {
 		var result = default(Transform3);
 
 		if (angleX == 0 && angleY == 0) {
@@ -83,12 +89,12 @@ public struct Transform3 {
 				return result;
 			}
 
-			short cos = SimTrig.Cos(angleZ);
-			short sin = SimTrig.Cos(Quarter(angleZ, -1));
-			result.M[0] = cos;
-			result.M[3] = cos;
-			result.M[1] = sin;
-			result.M[2] = (short)-sin;
+			short cosZ = cos(angleZ);
+			short sinZ = cos(Quarter(angleZ, -1));
+			result.M[0] = cosZ;
+			result.M[3] = cosZ;
+			result.M[1] = sinZ;
+			result.M[2] = (short)-sinZ;
 			result.M[8] = SimTrig.One;
 			result.Kind = KindZOnly;
 			return result;
@@ -96,34 +102,34 @@ public struct Transform3 {
 
 		result.Kind = angleX == 0 ? KindFull : KindFullTilted;
 
-		int sinX = SimTrig.Cos(Quarter(angleX, -1));
+		int sinX = cos(Quarter(angleX, -1));
 		result.M[5] = (short)sinX;
 
 		// Each of the four cross terms is the half-sum and half-difference of two cosines of summed
 		// angles -- the product-to-sum form of the cos*sin products the entries would otherwise be.
-		int cosPair = SimTrig.Cos(Sum(angleY, (short)-angleZ));
-		int cosPair2 = SimTrig.Cos(Sum(angleZ, angleY));
+		int cosPair = cos(Sum(angleY, (short)-angleZ));
+		int cosPair2 = cos(Sum(angleZ, angleY));
 		int sum = (cosPair + cosPair2) >> 1;
 		int difference = (cosPair - cosPair2) >> 1;
 		result.M[0] = (short)-((short)((sinX * difference + 0x2000) >> 14) - (short)sum);
 		result.M[7] = (short)-((short)((sinX * sum + 0x2000) >> 14) - (short)difference);
 
-		cosPair = SimTrig.Cos(Quarter(Sum(angleY, angleZ), -1));
-		cosPair2 = SimTrig.Cos(Quarter(Sum(angleZ, (short)-angleY), -1));
+		cosPair = cos(Quarter(Sum(angleY, angleZ), -1));
+		cosPair2 = cos(Quarter(Sum(angleZ, (short)-angleY), -1));
 		sum = (cosPair + cosPair2) >> 1;
 		difference = (cosPair - cosPair2) >> 1;
 		result.M[1] = (short)((short)((sinX * difference + 0x2000) >> 14) + (short)sum);
 		result.M[6] = (short)((short)((sinX * sum + 0x2000) >> 14) + (short)difference);
 
-		result.M[3] = (short)((SimTrig.Cos(Sum(angleZ, angleX)) + SimTrig.Cos(Sum(angleX, (short)-angleZ))) >> 1);
-		result.M[8] = (short)((SimTrig.Cos(Sum(angleY, angleX)) + SimTrig.Cos(Sum(angleX, (short)-angleY))) >> 1);
+		result.M[3] = (short)((cos(Sum(angleZ, angleX)) + cos(Sum(angleX, (short)-angleZ))) >> 1);
+		result.M[8] = (short)((cos(Sum(angleY, angleX)) + cos(Sum(angleX, (short)-angleY))) >> 1);
 
 		// Note these two differ in where the negation falls relative to the shift, and the original
 		// really does spell them differently -- they round apart by one unit at odd sums.
-		result.M[4] = (short)(-(SimTrig.Cos(Quarter(Sum(angleY, angleX), -1))
-			+ SimTrig.Cos(Quarter(Sum(angleY, (short)-angleX), -1))) >> 1);
-		result.M[2] = (short)-(short)((SimTrig.Cos(Quarter(Sum(angleZ, angleX), -1))
-			+ SimTrig.Cos(Quarter(Sum(angleZ, (short)-angleX), -1))) >> 1);
+		result.M[4] = (short)(-(cos(Quarter(Sum(angleY, angleX), -1))
+			+ cos(Quarter(Sum(angleY, (short)-angleX), -1))) >> 1);
+		result.M[2] = (short)-(short)((cos(Quarter(Sum(angleZ, angleX), -1))
+			+ cos(Quarter(Sum(angleZ, (short)-angleX), -1))) >> 1);
 
 		return result;
 	}

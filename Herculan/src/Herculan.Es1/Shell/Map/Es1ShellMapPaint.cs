@@ -35,6 +35,9 @@ public static class Es1ShellMapPaint {
 	/// <summary>The callout's frame and pointer, <c>0x3b</c>.</summary>
 	public const byte CalloutColor = 0x3b;
 
+	/// <summary>The one entry of the zone's shapes' ramp, the <c>int16</c> <c>0x38</c> at <c>0007e330</c>.</summary>
+	public const short ShapeRampColor = 0x38;
+
 	/// <summary>The intro's last state, in which the lines fill the left side and the callout is drawn.</summary>
 	private const short LastState = 0x13;
 
@@ -50,7 +53,10 @@ public static class Es1ShellMapPaint {
 			yield return wait;
 		}
 
-		// PLACEHOLDER: ShellMap_PaintShapes (0000aff0), the zone's shapes with the slow paint's wait after them, S5's P18b.
+		foreach (var wait in PaintShapes(map, display)) {
+			yield return wait;
+		}
+
 		foreach (var wait in PaintGrid(map, centred)) {
 			yield return wait;
 		}
@@ -94,6 +100,47 @@ public static class Es1ShellMapPaint {
 		canvas.FillRect(left, top, unchecked(left + map.Width), unchecked(top + map.Height), ClearColor);
 		if (map.SlowPaint) {
 			foreach (var wait in WaitTicks(map, map.Bnd.ClearWait)) {
+				yield return wait;
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>ShellMap_PaintShapes</c> (<c>0000aff0</c>) (docs/es1/shell/map.md#the-shapes): with
+	/// <see cref="Es1ShellMap.DrawShapes"/>, ramp <see cref="Es1ShellMapBnd.ShapeRamp"/> made the one entry
+	/// <see cref="ShapeRampColor"/>; then each zone object drawn through <see cref="Es1ShellShapes.RenderObject"/>, its
+	/// instance's sequence-0 frame 1 for the draw when its shape's sequence 0 has frames and every frame 0 otherwise; in the
+	/// slow paint, then <see cref="Es1ShellMapBnd.ShapesWait"/> ticks. An object whose shape index is past the theater's
+	/// shapes, which retail reads past its array, is passed over, an engine guard.
+	/// </summary>
+	private static IEnumerable<Es1ShellWait> PaintShapes(Es1ShellMap map, Es1VideoMemory display) {
+		var renderer = new Es1ShellShapes(map, display);
+		if (map.DrawShapes) {
+			renderer.SetColourRamp(map.Bnd.ShapeRamp, [ShapeRampColor]);
+		}
+
+		foreach (var obj in map.Objects) {
+			if (!map.DrawShapes) {
+				// PLACEHOLDER: the 2D map's object, dba\mapshp's first bitmap through Bitmap_BlitRotatedUnpacked (0005048c),
+				// turned by the object's yaw; retail's SHELLMAP.BND never takes this branch.
+				continue;
+			}
+
+			if (map.Shapes is not { } shapes || obj.ShapeIndex < 0 || obj.ShapeIndex >= shapes.Count) {
+				continue;
+			}
+
+			var shape = shapes[obj.ShapeIndex];
+			var frames = new short[shape.SequenceList?.Length ?? 0];
+			if (frames.Length > 0 && shape.SequenceList![0] != 0) {
+				frames[0] = 1;
+			}
+
+			renderer.RenderObject(shape, obj, frames);
+		}
+
+		if (map.SlowPaint) {
+			foreach (var wait in WaitTicks(map, map.Bnd.ShapesWait)) {
 				yield return wait;
 			}
 		}

@@ -44,8 +44,8 @@ public readonly record struct Es1MapObject(short ShapeIndex, Es1MapPoint Positio
 /// camera, altitude and pan (docs/es1/shell/map.md#the-base-class), and what <c>ShellMap_Constructor</c>
 /// (<c>000094d9</c>) loads and fits (docs/es1/shell/map.md#building-it). Each member names its retail field.
 ///
-/// <para>The paint is <see cref="Es1ShellMapPaint"/>'s and the intro <see cref="Es1ShellMapIntro"/>'s. PLACEHOLDER: the
-/// sun's registration with <c>Light_Register</c> and the zone's shapes are S5's P18b.</para>
+/// <para>The paint is <see cref="Es1ShellMapPaint"/>'s, the zone's shapes <see cref="Es1ShellShapes"/>' and the intro
+/// <see cref="Es1ShellMapIntro"/>'s.</para>
 /// </summary>
 public sealed class Es1ShellMap {
 	/// <summary>
@@ -94,6 +94,9 @@ public sealed class Es1ShellMap {
 	/// <summary><c>Raster_WorldToView</c> as <see cref="InstallCamera"/> last left it; every caller of <see cref="Project"/> installs the camera first.</summary>
 	private Transform3 _worldToView;
 
+	/// <inheritdoc cref="_worldToView"/>
+	public Transform3 WorldToView => _worldToView;
+
 	/// <summary>
 	/// <c>Map_Ctor</c> (<c>00008cfd</c>)(map, <paramref name="rect"/>): the size, the viewport's centre, the camera at
 	/// (0, 0) and <see cref="Es1MapBnd.StartAltitude"/>, no pan, and the pan step for that altitude.
@@ -112,6 +115,12 @@ public sealed class Es1ShellMap {
 
 	/// <summary>The viewport's rect, the <c>GLViewport</c>'s <c>+0x210</c>–<c>+0x21c</c>.</summary>
 	public Es1Rect Rect { get; }
+
+	/// <summary>The shell's light list (<see cref="Es1ShellData.Lights"/>), which the sun is registered in and the shapes are lit by.</summary>
+	public Es1ShellLights Lights { get; private set; } = new();
+
+	/// <summary>The sun <c>+0x4e</c>, a <c>TSSunLight</c> of <see cref="SunIntensity"/> along <see cref="SunDirection"/>.</summary>
+	public Es1ShellLight Sun { get; } = new(SunIntensity, SunDirection);
 
 	/// <summary>The tuning <c>SHELLMAP.BND</c> the map reads its sizes, frames and waits from.</summary>
 	public Es1ShellMapBnd Bnd => _bnd;
@@ -321,6 +330,7 @@ public sealed class Es1ShellMap {
 		var map = new Es1ShellMap(data.MapBnd, data.ShellMapBnd, data.MapResources?.LabelFont, Area) {
 			DrawShapes = data.ShellMapBnd.DrawShapes != 0,
 			Resources = data.MapResources,
+			Lights = data.Lights,
 		};
 
 		// StringTable_LoadFromFile and StringTable_LoadGroup read the groups in turn from the file's start.
@@ -334,7 +344,7 @@ public sealed class Es1ShellMap {
 
 		map.BuildLabels();
 
-		// PLACEHOLDER: the sun's light object and Light_Register (step 5), S5's P18.
+		map.Lights.Register(map.Sun);
 		map.LoadScriptDat(installRoot, content, data, squadMemberCount);
 		map.FitFullView();
 		map.FitSquad();
@@ -378,13 +388,11 @@ public sealed class Es1ShellMap {
 	/// <c>ShellMap_InstallCamera</c> (<c>00008fa2</c>) (docs/es1/shell/map.md#a-paint): the camera at the position plus the
 	/// pan, at the altitude, installed with <c>Raster_InstallViewProjection</c> (<c>00053ce4</c>), and
 	/// <c>Raster_SetModelTransform</c>(0): the world-to-view transform the inverse of the camera's frame,
-	/// <c>BuildEulerRotationMatrixQ14</c>(<see cref="CameraPitch"/>, 0, 0) at that point. The shell's rotation
-	/// (<c>000589c4</c>) differs from the simulator's in its index rounding and its cosine table
-	/// (docs/es1/shell/map.md#the-shapes); at this camera's angles each index is exact and each entry read is 0 or ±16384
-	/// in both, so the simulator's rotation (<see cref="Transform3.FromEuler"/>) gives the same matrix.
+	/// <c>BuildEulerRotationMatrixQ14</c>(<see cref="CameraPitch"/>, 0, 0) (<see cref="Es1ShellTrig.Rotation"/>) at that
+	/// point.
 	/// </summary>
 	public void InstallCamera() {
-		var frame = Transform3.FromEuler(CameraPitch, 0, 0);
+		var frame = Es1ShellTrig.Rotation(CameraPitch, 0, 0);
 		frame.X = unchecked(CameraX + PanX);
 		frame.Y = unchecked(CameraY + PanY);
 		frame.Z = Altitude;
@@ -527,6 +535,12 @@ public sealed class Es1ShellMap {
 			? _mapBnd.PanStepLow
 			: ((altitude - _mapBnd.AltitudeLow >> 3) * (_mapBnd.PanStepHigh - _mapBnd.PanStepLow >> 3)) / range * 8 + _mapBnd.PanStepLow);
 	}
+
+	/// <summary>
+	/// <c>ShellMap_Dtor</c> (<c>00009a73</c>)'s step that reaches past the map (docs/es1/shell/map.md#destroying-it): the
+	/// sun unregistered with <c>Light_Unregister</c> (<c>00053850</c>). The rest frees the map's own memory.
+	/// </summary>
+	public void Destroy() => Lights.Unregister(Sun);
 
 	/// <summary><c>ShellMap_SkipIntro</c> (<c>0000a9c8</c>): an intro state below <c>0x12</c> becomes <c>0x11</c>.</summary>
 	public void SkipIntro() {

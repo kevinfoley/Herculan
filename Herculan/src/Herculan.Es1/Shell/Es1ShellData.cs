@@ -55,6 +55,9 @@ public sealed class Es1ShellData {
 	/// <summary>The war map's clock, bitmaps and font, which the start-up's step 13 loads (<see cref="LoadMapResources"/>); none before.</summary>
 	public Es1ShellMapResources? MapResources { get; private set; }
 
+	/// <summary>The shell's light list, empty from the start-up's <c>Light_ResetSystem</c> (<c>000641ec</c>); the war map registers its sun in it.</summary>
+	public Map.Es1ShellLights Lights { get; } = new();
+
 	/// <summary>
 	/// The mission parameters' five <c>int16</c>, <c>MissionParams_Ammo</c> (<c>000aacbc</c>), <c>MissionParams_Damage</c>,
 	/// <c>MissionParams_Difficulty</c>, <c>MissionParams_Visibility</c> and <c>MissionParams_TimeOfDay</c>

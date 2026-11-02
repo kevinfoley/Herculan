@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Dgs;
 using HercWorks.Core.Data.File.Dts;
+using HercWorks.Core.Data.Struct;
 
 namespace HercWorks.Core.Io.Transform.Dbsim;
 
@@ -22,8 +23,8 @@ namespace HercWorks.Core.Io.Transform.Dbsim;
 /// (<c>GridShape_ReadFromStream</c> (<c>0042762c</c>) → <c>TSShape_ReadFromStream</c> (<c>00490d5c</c>) → <c>TSPartList_ReadFromStream</c> (<c>0048fd94</c>) → <c>TSPartBase_ReadFromStream</c> (<c>0048f894</c>)) and
 /// verified byte-exact against the retail file (see below):</para>
 /// <list type="bullet">
-/// <item>3 <c>int16</c> id/name fields, then 6 raw bytes (base class header, unmodelled beyond
-/// <see cref="GridShape.BoundingRadius"/>, the third field).</item>
+/// <item>the base part's head: 3 <c>int16</c> (<c>+4</c> and <c>+6</c> unmodelled, then
+/// <see cref="GridShape.BoundingRadius"/>) and <see cref="GridShape.Center"/>.</item>
 /// <item>an <c>int16</c> child count, then that many recursively-loaded <c>ClassItem</c> objects.
 /// <b>Every retail record's one child is an ordinary TSObjectHeader-family chunk</b> (observed tag
 /// <c>0x0014000c</c> = <c>TSDetailPart</c>) — byte-identical to a plain <c>.DTS</c> file's own
@@ -123,7 +124,7 @@ public class BasesDgsTransformer : ByteTransformer<GridShapeLibrary> {
 		IndexShortLE(); // +4 -- unmodelled
 		IndexShortLE(); // +6 -- unmodelled
 		short boundingRadius = IndexShortLE(); // +8 -- see GridShape.BoundingRadius
-		Index += 6; // unmodelled base-class raw fields
+		var center = new Vec3Short(IndexShortLE(), IndexShortLE(), IndexShortLE()); // +0xa
 
 		short childCount = IndexShortLE();
 		TSObject? geometry = null;
@@ -147,7 +148,7 @@ public class BasesDgsTransformer : ByteTransformer<GridShapeLibrary> {
 				"-- the record shape does not match this file.");
 		}
 
-		return new GridShape(boundingRadius, geometry, sequences, transforms, collision);
+		return new GridShape(boundingRadius, center, geometry, sequences, transforms, collision);
 	}
 
 	/// <summary>

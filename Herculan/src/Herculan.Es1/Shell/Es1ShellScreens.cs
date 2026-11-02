@@ -118,12 +118,13 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_DeleteMissionMap</c> (<c>0002a4ec</c>) (docs/es1/shell/war-map.md#leaving-it): with
 	/// <see cref="MissionMap"/> set, its intro skipped (<see cref="Es1ShellMap.SkipIntro"/>), then <c>ShellMap_Dtor</c>
-	/// (<c>00009a73</c>)(map, 3), and the map cleared.
+	/// (<c>00009a73</c>)(map, 3) (<see cref="Es1ShellMap.Destroy"/>), and the map cleared.
 	/// </summary>
 	public void DeleteMissionMap() {
 		if (MissionMap is { } map) {
 			// PLACEHOLDER: maybe_MouseEventQueue_Stop (000106af), the gadgets' mouse queue, S5's.
 			map.SkipIntro();
+			map.Destroy();
 			MissionMap = null;
 		}
 	}

@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Dts;
+using HercWorks.Core.Data.Struct;
 
 namespace HercWorks.Core.Data.File.Dgs;
 
@@ -61,6 +62,10 @@ public readonly record struct GridShapeCollision(
 /// shape's size on screen, and the structure hit test (<c>Sim_RaycastShapeVolume</c>, <c>00427da8</c>) adds it to the ray
 /// length before rejecting a candidate.
 /// </param>
+/// <param name="Center">
+/// The centre of the shape's bounds (<c>shape+0xa</c>), the base part's <see cref="TSBasePart.Center"/>: a shape
+/// renderer's bounds test projects the bounding radius about it.
+/// </param>
 /// <param name="Geometry">
 /// The shape's drawable geometry, or null for the rare record with no child object.
 /// </param>
@@ -73,7 +78,7 @@ public readonly record struct GridShapeCollision(
 /// <param name="NodeTransforms">The shape's own node transforms (<c>shape+0x18</c>); empty in every retail record.</param>
 /// <param name="Collision">The shape's collision volume — see <see cref="GridShapeCollision"/>.</param>
 public readonly record struct GridShape(
-	short BoundingRadius, TSObject? Geometry, short[]? SequenceList, TSShapeNodeTransform[]? NodeTransforms,
+	short BoundingRadius, Vec3Short Center, TSObject? Geometry, short[]? SequenceList, TSShapeNodeTransform[]? NodeTransforms,
 	GridShapeCollision Collision);
 
 /// <summary>
