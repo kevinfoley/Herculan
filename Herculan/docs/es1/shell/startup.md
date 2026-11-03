@@ -80,12 +80,28 @@ The keyboard's reads go through `Input_ReadDeviceEvent` (`00025b30`), `ES1DBSIM`
 
 ### The shared data
 
+**Before `Shell_Main` runs**, `ShellData_StaticInit` (`00020b68`, the static constructor table's entry `0009a250`) builds the shared globals, in order:
+
+- seeds `Shell_RandomState` and `Shell_RandomState2` ([the shell's generator](../formats/msn-mission-file.md#the-shells-generator));
+- constructs the text tables `Shell_WaText` (`0009afa8`) and `Shell_FileNames` (`0009afb8`) with `TextTable_Ctor` (`0001865c`), empty until `Shell_LoadData` and `FileNames_Load` fill them;
+- zeroes `Shell_Dialog` and sets up `Shell_LipSyncPlayer` ([the player](message-box.md#the-player));
+- sets `Shell_PointerX` and `Shell_PointerY` (`0009aff0`, `0009aff4`) to (1, 1);
+- builds `Shell_FullScreenRegion` (`0009aff8`), a `GLRectangleRegion` of `0x18` bytes, its vtable `0007feb0` this file's copy, `+4` 0, and its rect `+8`–`+0x14` left as the image's zero-filled bytes until `Shell_LoadData` sets it; `Screen_BlindsClear` (`0004c053`) copies it ([the hangar's selection](repair-and-build.md#the-hangars-selection));
+- sets `Shell_MessageBox`'s kind to −1 ([the record](message-box.md#the-record));
+- constructs `SingleMission_Record` (`0009b014`) as `CareerRecord_Ctor` does, inline;
+- sets `Career_Log` (`0009b20c`) to no entries, count 0, current entry −1 and the added byte 0 ([the careers log](../formats/career-log-and-player-mec.md));
+- constructs the 41 records of `Career_Roster` (`0009b218`) at `+0x23` with `CareerRecord_Ctor` and zeroes its `+1`, `+5`, `+7` and `+9`, leaving its byte `+0` as the image has it;
+- clears `g_BattleSet` (`000a02cc`), its count word and its pointer ([battle sets](../formats/bst-battle-sets.md#battle-sets));
+- builds `ShellMap_Rect` (`000a02d4`), the war map's rect, from the points (282, 142) and (14, 11), the smaller *x* and *y* first: (14, 11)–(282, 142) ([building it](map.md#building-it)).
+
+`CareerRecord_Ctor` (`000212ab`) builds a `0x1f7`-byte [career record](../formats/bst-battle-sets.md#the-career-record), allocating it when given none: its four pilot entries at `+0x14` with `PilotEntry_Ctor` (`00021204`), which zeroes an entry's gains `+0x11`–`+0x15` and its kills `+0x17`–`+0x1b`, and the equipment state's 8 chassis entries at `+0xac` and 17 weapon entries at `+0xd4` with `TechEntry_Ctor` (`00021279`), which sets an entry's *first* and *second* to −1 and its available byte to 0 ([equipment availability](../formats/bst-battle-sets.md#equipment-availability)). It writes nothing else; each element constructor also allocates its element when given none.
+
 `Shell_LoadData` (`00020630`):
 
 - copies `prefs.cfg` options 12 to 16 into the mission parameters' words ([the options](single-mission.md#the-options)), options 0 and 1 into the bytes `0007fcb8` and `0007fcb9`, option 2 into the word `Shell_RadioOption` (`0007fcbc`), and into the word `0007fcba` (the word `0007fd10`, `0x3f` in the image, or `0007fd18`, `0xbf`, with option 3 set, plus options 4, 5 and 6) / 256;
 - loads 13 fonts ([the loads](../formats/styles-dat.md#the-loads));
-- seeds `Shell_RandomState` ([the shell's generator](../formats/msn-mission-file.md)) and loads `eng\watext.bin` into `0009afa8` ([string tables](../formats/bin-string-tables.md));
-- sets the rect `0009b000`–`0009b00c` to (0, 0, the display's attribute 2 − 1, attribute 3 − 1);
+- seeds `Shell_RandomState` ([the shell's generator](../formats/msn-mission-file.md)) and loads `eng\watext.bin` into `Shell_WaText` ([string tables](../formats/bin-string-tables.md));
+- sets `Shell_FullScreenRegion`'s rect, `0009b000`–`0009b00c`, to (0, 0, the display's attribute 2 − 1, attribute 3 − 1);
 - loads the HERC diagrams' tables and, unless `Shell_LowMemory` is set, their art ([the load](../formats/herc-diagrams.md)), the careers log ([loading](../formats/career-log-and-player-mec.md#loading)) and the battle set ([which battle set](../formats/bst-battle-sets.md#which-battle-set)), and calls `Inventory_AllocAll` (`00027c4c`).
 
 ## The frame loop
@@ -191,6 +207,7 @@ After the loop, in order:
 | `Shell_BlinkTick`, `Shell_WaitTick`, `Shell_WaitTicks` | `00012933`, `0004bbdd`, `0004bbe9` | | |
 | `ShellTime_Init`, `ShellTime_Tick`, `ShellTime_UpdateFrameScale`, `ShellTime_ScaleQ8` | `000119fc`, `000119e0`, `00011b16`, `00011ac7` | | |
 | `Shell_LoadData`, `Shell_FreeData` | `00020630`, `00020ae3` | | |
+| `ShellData_StaticInit`, `CareerRecord_Ctor`, `PilotEntry_Ctor`, `TechEntry_Ctor` | `00020b68`, `000212ab`, `00021204`, `00021279` | | |
 | `ShellMap_LoadResources`, `ShellMap_ReleaseResources` | `000093b3`, `00009453` | | |
 | `ShellMouse_AddCallbacks`, `ShellMouse_RemoveCallbacks` | `0001c460`, `0001c4de` | | |
 | `RenderContext_GetFullScreen`, `X32_TotalFreeBytes` | `0004c716`, `0004f77a` | | |
@@ -211,6 +228,7 @@ After the loop, in order:
 | `Shell_BlinkOn`, its counter (0 in the image) | `0007fce0`, `0007e7e8` |
 | `Shell_WaitCount`, `int16` | `000a0a90` |
 | `Assert_LogDir`, the log path | `0009a2b0`, `0009a2b4` |
+| `Shell_WaText`, `Shell_FileNames`, `Shell_FullScreenRegion` | `0009afa8`, `0009afb8`, `0009aff8` |
 
 ## Open
 

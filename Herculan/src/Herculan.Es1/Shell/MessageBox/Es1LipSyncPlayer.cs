@@ -12,7 +12,7 @@ namespace Herculan.Es1.Shell.MessageBox;
 /// The shell's lip-sync player <c>Shell_LipSyncPlayer</c> (<c>0009afd4</c>), <c>0x1b</c> bytes, which holds one talking head
 /// and one line (docs/es1/shell/message-box.md#the-talking-head): the face's <c>.TTM</c> script, the line's lip-sync
 /// records and its sound, the lip-sync list's lines, and the line's clock <c>ShellSnc_Clock</c> (<c>00082658</c>) on the
-/// shell's timer. Each member starts as the static initializer <c>00020b68</c> leaves it: the handle <c>0xff</c>, the rest
+/// shell's timer. Each member starts as <c>ShellData_StaticInit</c> (<c>00020b68</c>) leaves it: the handle <c>0xff</c>, the rest
 /// 0.
 ///
 /// <para>The line's voice plays nothing: the shell's sound is not ported (<see cref="Es1ShellDevices.Init"/>'s

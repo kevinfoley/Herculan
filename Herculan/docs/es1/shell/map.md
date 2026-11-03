@@ -36,7 +36,7 @@ The camera is `TSCamera_Ctor`(0, `Map_CameraOrientation` (`0009a444`), the posit
 
 ## Building it
 
-`Shell_PrepareMission` (`0002a523`) builds the map after loading a mission, with `ShellMap_Constructor` (`000094d9`)(0, the rect `000a02d4`), (14, 11)–(282, 142), which the static initialiser `00020b68` builds from the points (`0x11a`, `0x8e`) and (`0xe`, `0xb`), the lesser of each coordinate first ([Open](#open)). It allocates `0x4c8` bytes, runs `Map_Ctor`, constructs the member arrays, stores `ShellMapVtable`, and:
+`Shell_PrepareMission` (`0002a523`) builds the map after loading a mission, with `ShellMap_Constructor` (`000094d9`)(0, `ShellMap_Rect` (`000a02d4`)), (14, 11)–(282, 142), which `ShellData_StaticInit` builds before the shell runs ([the shared data](startup.md#the-shared-data)). It allocates `0x4c8` bytes, runs `Map_Ctor`, constructs the member arrays, stores `ShellMapVtable`, and:
 
 1. sets the intro's slow-paint byte `+0x346` to 1 and its squad, path and marker counts `+0x347`–`+0x349` to 0 ([the intro](#the-intro)), and copies `ShellMapBnd_DrawShapes` to `ShellMap_DrawShapes`;
 2. loads `data\object.str` (line 6 of `cfg\filename.bin`, `Text_GetString`(`0009afb8`, 6), through `Path_ApplyAltDrive`) into the string table `+0x138` with `StringTable_LoadFromFile` (`0001026a`), and its group 0, the objective lines `Mission_WriteObjectives` wrote, into `+0x148` with `StringTable_LoadGroup` (`000103b8`), the count to `+0x198`. ES2's map reads `data\mission.str` there;
@@ -271,7 +271,6 @@ The gadget draws nothing. Its table `MapGadgetVtable` (`0007e3f8`) holds the but
 ## Open
 
 - **Open:** what state 5 reads when it lowers line 0 to −1, with a nav path of one waypoint or none and objective lines left: state `0x10` then takes the dword before the lines' array, `+0x144`, as a string pointer and measures it. What `+0x144` holds then, and whether any retail mission has a one-waypoint path.
-- **Open:** the static initialiser `00020b68`, which builds the rect `000a02d4` and also clears the 6 bytes at `000a02cc` (`g_BattleSet`, word 0 and dword 2), has not been read whole.
 - **Open:** what `Raster_DrawLine`'s pen does with a colour whose top byte is 4, which a two-point solid face of a shape would hand it; the theater shapes' two-point faces carry plain indices.
 - **Unported:** what the theater shapes do not reach: `TSBitmapPart_Render` (`00059590`), `TSBSPGroup`, `TSGouraudPoly`, the shell's `TSTexture4Poly_Render` (`0007c4d0`), a part or BSP node with a node transform (`ShapeNode_InstallTransform`, `Transform_LocalPointDotNormal`), and the light types 0 and 2.
 - **Open:** `es2_xref.py` finds no reference to `TSDetailPart_SetSizeScale` (`00059a88`) or `TSDetailPart_SetSizeCap` (`00059a98`), the writers of the detail parts' scale and cap; a table filled at run time has not been looked for.

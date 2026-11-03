@@ -49,7 +49,7 @@ public readonly record struct Es1MapObject(short ShapeIndex, Es1MapPoint Positio
 /// </summary>
 public sealed class Es1ShellMap {
 	/// <summary>
-	/// The rect <c>000a02d4</c> the shell builds the map with, (14, 11)–(282, 142): the static initialiser <c>00020b68</c>
+	/// <c>ShellMap_Rect</c> (<c>000a02d4</c>), the rect the shell builds the map with, (14, 11)–(282, 142): <c>ShellData_StaticInit</c> (<c>00020b68</c>)
 	/// makes it from the points (282, 142) and (14, 11), the lesser of each coordinate first.
 	/// </summary>
 	public static readonly Es1Rect Area = new(14, 11, 282, 142);

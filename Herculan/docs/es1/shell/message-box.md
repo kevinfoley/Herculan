@@ -21,7 +21,7 @@ Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-exec
 
 ### The record
 
-`Shell_MessageBox` (`0009b010`) holds the kind, an `int16` at `+0`, and two bytes: `+2`, *to show*, and `+3`, *up*. `MessageBox_SetKind` (`00037eac`)(box, kind) stores the kind and, for −1, clears both bytes; for any other kind it sets both to 1. The static initializer `00020b68` sets kind −1.
+`Shell_MessageBox` (`0009b010`) holds the kind, an `int16` at `+0`, and two bytes: `+2`, *to show*, and `+3`, *up*. `MessageBox_SetKind` (`00037eac`)(box, kind) stores the kind and, for −1, clears both bytes; for any other kind it sets both to 1. `ShellData_StaticInit` (`00020b68`) sets kind −1.
 
 - *To show* makes `DigitalDialog_ShowMessage` load the kind's line ([showing a message](#showing-a-message)) and `MessageBox_Run` run the loop ([the loop](#the-loop)).
 - *Up* holds the loop. While it is set `Shell_DrawScreen` does not draw the window ([drawing a screen](menus.md#drawing-a-screen), step 4), `Shell_TickScreen` does not update it, and `ShellMouse_OnLeftPress` and `ShellMouse_OnLeftRelease` test it. `maybe_SncList_Stop` clears it when the face's line ends ([playing it](#playing-it)).
@@ -115,7 +115,7 @@ The shell's lip-sync player is `Shell_LipSyncPlayer` (`0009afd4`), `0x1b` bytes,
 | `+0x19` | byte, set while a line plays; the byte `0009afed` |
 | `+0x1a` | byte, a request to stop; the byte `0009afee` |
 
-The static initializer `00020b68` sets the handle `+2` (`0009afd6`) to `0xff` and zeroes `+3`, `+7`, `+0xb`, `+0xd`, `+0xf`, `+0x11`, `+0x15`, `+0x19` and `+0x1a`; it also zeroes `Shell_Dialog`'s `+0`, `+4` and `+6` (`0009afc8`, `0009afcc`, `0009afce`) and sets the message box's kind to −1.
+`ShellData_StaticInit` (`00020b68`, [the shared data](startup.md#the-shared-data)) sets the handle `+2` (`0009afd6`) to `0xff` and zeroes `+3`, `+7`, `+0xb`, `+0xd`, `+0xf`, `+0x11`, `+0x15`, `+0x19` and `+0x1a`, leaving the slot `+0`; it also zeroes `Shell_Dialog`'s `+0`, `+4` and `+6` (`0009afc8`, `0009afcc`, `0009afce`).
 
 `maybe_SncList_Init` (`00045337`)(player), which `Shell_Main` calls after `Shell_InitDevices` and `Shell_LoadData` ([the start-up](startup.md#the-start-up)), makes the `+0x15` context with `GLViewport_Ctor` (`000512a0`)(0) and sets its dwords `+0x210`, `+0x214`, `+0x218` and `+0x21c` to 0, 0, 319 and 199, `+0x208` to 1 and `+0x20c` to 0: the whole screen. It then registers `maybe_SncList_TimerTick` (`00045320`) with `Timer_AddCallback` (`00056509`) at count 2 and keeps the slot. **The line's clock** is the word `ShellSnc_Clock` (`00082658`): the tick adds 1 to it while `+0x19` is set. `Timer_AddCallback` registers on the PC timer `Shell_InitDevices` has built by then at 120.05 interrupts a second, so a count of 2 is every second interrupt and the clock counts 60.02 a second, as `Shell_FrameTick` does ([the devices](startup.md#the-devices)).
 

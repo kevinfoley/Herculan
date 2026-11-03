@@ -119,11 +119,13 @@ The record a zone shape points at is its shape's [dividing line](#dattheater-the
 `ShellMap_LoadZoneShapes` (`ES1GO 0000c7e3`, `src\shellmap.cpp`), with the map screen's object, the theater and the zone in stack order, reads the file as the simulator does and builds the objects differently:
 
 - A negative zone sets the map's count (`+0xc8`) to 0 and its root array (`+0xca`) and object array (`+0xd0`) to null.
-- A zone file that does not open asserts at severity 5 (line `0x565`). The count goes to `+0xc8`.
+- A zone file that does not open asserts at severity 5 (line `0x565`). The count goes to `+0xc8`. The two loads below come only after the file opens.
 - `ShellMap_LoadShapeRoots` (`ES1GO 000092b9`) loads `dgs\<name>`'s root shapes into an array at `+0xca` and their number to `+0xce`. It is `Shape_LoadAllRoots` with no skip, its arena based at the pointer in `ES1GO 0007e20c` and limited by `ShellMapBnd_ShapeArenaSize` (`ES1GO 0009a4d6`), 75000 ([`SHELLMAP.BND`](bnd-notes.md#bndmapbnd-and-bndshellmapbnd)), a chunk with another tag asserting at line `0x61`. The shell's archive is `SHELL0.VOL`, whose four `.DGS` are of other sizes than `SIMVOL0`'s.
 - `ShellMap_LoadResource` (`ES1GO 0000923c`) loads `dba\tex1`, `SHELL0`'s `TEX1.DBA`, to `+0x4c3`.
 - It reads no `dat\<name>`.
-- For each record it first stores the `TEX1` bitmap array in the root shape's `+0x26`, where a `TSShape` keeps its bound bitmap array ([`TSShape`](../../retail/formats/dts-shape.md#part-chunks)), then builds the object with the shell's `TSObj_Ctor` (`ES1GO 0000e518`) and the root shape. The shell's `TS_OBJ` has its vptr at `+0` and its orientation block at `+4`, two bytes lower than the simulator's, so the angles go to `+4`, the position to `+0x1e` and the 0 to `+0x2a`. The object has no record pointer.
+- For each record it reads the shape index (2 bytes), the position (12) and the angles (6), stores the `TEX1` bitmap array in the root shape's `+0x26`, where a `TSShape` keeps its bound bitmap array ([`TSShape`](../../retail/formats/dts-shape.md#part-chunks)), then builds the object with the shell's `TSObj_Ctor` (`ES1GO 0000e518`) and the root shape. The shell's `TS_OBJ` has its vptr at `+0` and its orientation block at `+4`, two bytes lower than the simulator's, so the angles go to `+4`–`+9`, copied as a dword and a word, the position to `+0x1e` and the 0 to `+0x2a`. Neither the shape index nor the object is checked: the index against the root count, the object against null. The object has no record pointer.
+
+The shell's `TSObj_Ctor`, (object, shape), allocates `0x32` bytes when given no object, installs `DRAWABLE`'s vtable `ES1GO 0007e428` at `+0` and zeroes the orientation block, then installs `MatObjVtable` (`ES1GO 0007e512`) and `TSObjVtable` (`ES1GO 0007e536`) at `+0` in turn. It stores `TSShapeInstance_Ctor`(0, shape) at `+0x2c`, or 0 for a null shape, and clears the byte at `+0x30`. The simulator's builds a `0x3b`-byte object with the vptr at `+2`, the shape instance at `+0x2e` and 8 bytes cleared at `+0x32` ([the 3Space object classes](../simulation/object-classes.md)).
 
 ## Rejected readings
 

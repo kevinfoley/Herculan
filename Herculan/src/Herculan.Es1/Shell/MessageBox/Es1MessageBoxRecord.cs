@@ -2,7 +2,7 @@ namespace Herculan.Es1.Shell.MessageBox;
 
 /// <summary>
 /// The message box's record <c>Shell_MessageBox</c> (<c>0009b010</c>) (docs/es1/shell/message-box.md#the-record): the kind,
-/// <i>to show</i> and <i>up</i>, kind −1 from the static initializer <c>00020b68</c>. The shell's window globals hold it
+/// <i>to show</i> and <i>up</i>, kind −1 from <c>ShellData_StaticInit</c> (<c>00020b68</c>). The shell's window globals hold it
 /// (<see cref="Menus.Es1MenuGlobals.MessageBox"/>), so the mouse's callbacks, the screens and the lip-sync player share it;
 /// what the message box does is <see cref="Es1MessageBox"/>'s.
 /// </summary>

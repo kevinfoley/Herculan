@@ -10,7 +10,7 @@ namespace Herculan.Es1.Shell.MessageBox;
 /// <summary>
 /// The shell's dialog record <c>Shell_Dialog</c> (<c>0009afc8</c>), which holds the one text box the shell shows at a time
 /// (docs/es1/shell/message-box.md#the-dialog-record): the file's version word <c>+4</c> and the box <c>+6</c>, both 0 from
-/// the static initializer <c>00020b68</c>. Its stream <c>+0</c>, which a loader keeps open only while the box is built, is
+/// <c>ShellData_StaticInit</c> (<c>00020b68</c>). Its stream <c>+0</c>, which a loader keeps open only while the box is built, is
 /// not kept here. The record also holds what every box shares: the frame bitmaps <c>DialogBox_FrameBitmaps</c>
 /// (<c>0007ee64</c>), and the shell's globals a box reads, each handed in as its reader. The war map's briefing and the
 /// debriefing load their <c>.ENG</c> blocks into it with <c>Dialog_LoadConditional</c>.
