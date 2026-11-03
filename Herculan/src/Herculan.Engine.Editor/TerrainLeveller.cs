@@ -16,7 +16,7 @@ namespace Herculan.Engine.Editor;
 /// reaches is what mission start would make of it. Running the passes again is the editor's own; retail never does.
 ///
 /// <para>What stands on the ground is settled again where it changed: a structure on the ground under it, as the
-/// spawn pass re-settles them, and a walking mech where the editor draws it (<see cref="GroundStanding.Settled"/>).
+/// spawn pass re-settles them, and a walking mech or a flyer where the editor draws it (<see cref="GroundStanding.Settled"/>).
 /// The terrain mesh is rebuilt over the cells that changed (<see cref="Changed"/>) and the overlays laid on it again.</para>
 ///
 /// <para>While <see cref="Flattening"/> is off, as it is while the terrain is sculpted (<see cref="TerrainSculptor"/>), a pass
@@ -174,13 +174,15 @@ internal sealed class TerrainLeveller {
 		Changed?.Invoke(first, count);
 	}
 
-	// Stands each structure and walking mech on the ground as it now is.
+	// Stands each structure and walking mech on the ground as it now is, and each flyer clear of it from its spawn height.
 	private void Settle() {
 		foreach (var sceneObject in _index.Objects) {
 			var position = sceneObject.Object.Position;
 			var settled = sceneObject.Object switch {
 				BaseObject => new Vec3i(position.X, position.Y, _terrain.HeightAtWorld(position.X, position.Y)),
 				MechObject mech => GroundStanding.Settled(_terrain, mech, position),
+				FlyerObject flyer => GroundStanding.Settled(_terrain, flyer,
+					MissionScene.SpawnPosition(_terrain, flyer, sceneObject.Placement), _index.Asleep(sceneObject)),
 				_ => position
 			};
 

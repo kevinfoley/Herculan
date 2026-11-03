@@ -261,13 +261,13 @@ internal sealed class PointMover {
 
 	/// <summary>
 	/// Where <paramref name="target"/> stands now, in world units, a drag's preview included. A group's is its authored
-	/// point, before a paints-ground snap; a flyer group's height is where its first member flies, 5000 for a point at Z 0
-	/// (rule 5).
+	/// point, before a paints-ground snap; a flyer group's height is where its first member is drawn, 5000 for a point at Z 0 (rule 5)
+	/// or clear of the ground (<see cref="GroundStanding.Settled"/>).
 	/// </summary>
 	public Vec3i PositionOf(MoveTarget target) => target switch {
 		ObjectTarget { Key: var key } when _index.ObjectOf(key) is { } placed => placed.Object.Position,
 		GroupTarget { Guid: var guid } when _index.Group(guid) is { Setup.AuthoredPoint: var point } group =>
-			group.Kind == MissionUnitKind.Flyer ? new Vec3i(point.X, point.Y, FlyerHeight(point.Z)) : point,
+			group.Kind == MissionUnitKind.Flyer ? new Vec3i(point.X, point.Y, FlyerHeight(guid, point)) : point,
 		_ when FeatureMoves.Moves(target) => _features.PositionOf(target),
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
@@ -477,14 +477,14 @@ internal sealed class PointMover {
 
 	// How a group moves, as the layout has it: the point it stands on, its own or its route's first waypoint's, unless the
 	// move detaches it or it stands on neither; else a point of its own. The Z written is the point's own unless a flyer
-	// group's height moved: a flyer group at the point's Z 0 flies at 5000, and writing 5000 would lift every member whose
-	// slot adds a height of its own.
+	// group's height moved from where its first member is drawn: a flyer group at the point's Z 0 flies at 5000 or clear of
+	// the ground, and writing that would lift every member whose slot adds a height of its own.
 	private (GroupMove Move, short Own, IReadOnlyList<short> Start, int Z) PlanGroup(GroupTarget target, Vec3i position) {
 		var group = _index.Group(target.Guid) ?? throw new InvalidOperationException(EditorToolbox.GroupGone);
 		short own = group.OwnPoint;
 		var start = group.StartPoints;
-		int pointZ = Point(own)?.Z ?? (start.Count > 0 ? Point(start[0])?.Z ?? 0 : 0);
-		int z = HasOwnHeight(target) && position.Z != FlyerHeight(pointZ) ? position.Z : pointZ;
+		var point = Point(own) ?? (start.Count > 0 ? Point(start[0]) : null) ?? Vec3i.Zero;
+		int z = HasOwnHeight(target) && position.Z != FlyerHeight(target.Guid, point) ? position.Z : point.Z;
 		var move = !target.Detach && own != -1 ? GroupMove.OwnPoint
 			: !target.Detach && start.Count > 0 ? GroupMove.RouteStart
 			: GroupMove.NewPoint;
@@ -574,8 +574,12 @@ internal sealed class PointMover {
 		key.Row == BaseRow && _source.Layout.Entry<BaseRosterEntry62>(key.Guid)?.Fields.PositionRef is { } point
 			&& Point(point) != null ? point : null;
 
-	// Where a flyer group's first member flies for a point at height z (rule 5).
-	private static int FlyerHeight(int z) => z == 0 ? FlyerObject.DefaultHoverHeight : z;
+	// Where flyer group <group>'s first member is drawn for a point at <point>: the point's height, 5000 for Z 0 (rule 5),
+	// lifted clear of the ground as GroundStanding.Settled lifts it unless the group starts asleep.
+	private int FlyerHeight(short group, Vec3i point) {
+		var spawn = new Vec3i(point.X, point.Y, point.Z == 0 ? FlyerObject.DefaultHoverHeight : point.Z);
+		return _index.Plan.Asleep(group) ? spawn.Z : GroundStanding.Flown(_terrain, spawn);
+	}
 
 	private string Describe(MoveTarget target) => target switch {
 		ObjectTarget { Key: var key } => _index.Plan.Object(key)?.TypeName ?? "the object",

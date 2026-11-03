@@ -155,6 +155,10 @@ internal sealed class LayoutPlan {
 
 	public PlannedGroup? Group(short guid) => _groups.GetValueOrDefault(guid);
 
+	/// <summary>Whether group <paramref name="guid"/>'s first order slot names a sleep order, so it starts the mission asleep.</summary>
+	public bool Asleep(short guid) => Group(guid)?.Orders is [var first, ..] && first != -1
+		&& Layout.Entry<MissionOrder22>(first)?.Fields.Verb == MissionOrder.VerbSleep;
+
 	public PlannedObject? Object(ObjectKey key) => _objects.GetValueOrDefault(key);
 
 	public PlannedRoute? Route(short guid) => _routes.GetValueOrDefault(guid);

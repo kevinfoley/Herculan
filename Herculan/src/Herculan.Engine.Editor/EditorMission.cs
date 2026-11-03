@@ -300,7 +300,8 @@ internal sealed class EditorMission {
 		var sceneIndex = new MissionIndex(plan, objects);
 		scene.Settle(sceneIndex.Objects, sceneIndex.BasePads);
 		foreach (var sceneObject in sceneIndex.Objects) {
-			sceneObject.Object.Position = GroundStanding.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
+			sceneObject.Object.Position = GroundStanding.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position,
+				sceneIndex.Asleep(sceneObject));
 		}
 
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.

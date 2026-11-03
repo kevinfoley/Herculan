@@ -148,7 +148,7 @@ internal sealed class SceneSync {
 			objects[planned.Key] = placed;
 			placed.Placement = placement;
 			placed.Object.Side = placement.Side;
-			Stand(placed);
+			Stand(placed, plan.Asleep(planned.Group));
 		}
 
 		foreach (var gone in _index.Objects.Where(placed => !placedNow.Contains(placed))) {
@@ -184,7 +184,7 @@ internal sealed class SceneSync {
 				Position = place.Position, Heading = place.Heading, FormationOffset = place.FormationOffset,
 				FlyerFormationOffset = place.FlyerFormationOffset, GroundPoint = place.GroundPoint
 			};
-			Stand(placed);
+			Stand(placed, plan.Asleep(planned.Group));
 		}
 
 		_index.Replan(plan);
@@ -200,10 +200,11 @@ internal sealed class SceneSync {
 	}
 
 	// Stands an object where its placement puts it, as the spawn pass does and the editor draws it (GroundStanding.Settled);
-	// touched only when that moved it.
-	private void Stand(SceneObject placed) {
+	// touched only when that moved it. <asleep> is whether its group starts the mission asleep.
+	private void Stand(SceneObject placed, bool asleep) {
 		var placement = placed.Placement;
-		var position = GroundStanding.Settled(_terrain, placed.Object, MissionScene.SpawnPosition(_terrain, placed.Object, placement));
+		var position = GroundStanding.Settled(_terrain, placed.Object, MissionScene.SpawnPosition(_terrain, placed.Object, placement),
+			asleep);
 		if (position != placed.Object.Position || placement.Heading != placed.Object.Heading) {
 			Place(placed, position, placement.Heading);
 		}
