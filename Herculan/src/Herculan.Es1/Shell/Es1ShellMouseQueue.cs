@@ -51,14 +51,14 @@ public sealed class Es1ShellMouseQueue {
 	}
 
 	/// <summary>
-	/// <c>maybe_MouseEventQueue_Start</c> (<c>00010559</c>), <c>CockpitMouse_Init</c>'s statements (<see cref="Es1CockpitMouse.Init"/>):
+	/// <c>MouseEventQueue_Start</c> (<c>00010559</c>), <c>CockpitMouse_Init</c>'s statements (<see cref="Es1CockpitMouse.Init"/>):
 	/// the callback <c>00010900</c> registered with the shell's mouse, its slot kept at <c>0007e5d4</c>; the queues of
 	/// <c>CTL_MGR.BND</c>'s offset 4, 100 records, one less taken; no active root and nothing pressed.
 	/// </summary>
 	public void Start() => _queue.Init(_driver);
 
 	/// <summary>
-	/// <c>maybe_MouseEventQueue_Stop</c> (<c>000106af</c>): the callback taken off the driver, the slot <c>0007e5d4</c>
+	/// <c>MouseEventQueue_Stop</c> (<c>000106af</c>): the callback taken off the driver, the slot <c>0007e5d4</c>
 	/// cleared and both queues freed (<see cref="Es1CockpitMouse.RemoveCallback"/>).
 	/// </summary>
 	public void Stop() => _queue.RemoveCallback();

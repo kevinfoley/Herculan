@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dgs;
 using HercWorks.Core.Data.File.Dyn;
 using Herculan.Es1.Panels;
 using Herculan.Es1.View;
@@ -109,9 +110,10 @@ public static class Es1ShellMapPaint {
 	/// <c>ShellMap_PaintShapes</c> (<c>0000aff0</c>) (docs/es1/shell/map.md#the-shapes): with
 	/// <see cref="Es1ShellMap.DrawShapes"/>, ramp <see cref="Es1ShellMapBnd.ShapeRamp"/> made the one entry
 	/// <see cref="ShapeRampColor"/>; then each zone object drawn through <see cref="Es1ShellShapes.RenderObject"/>, its
-	/// instance's sequence-0 frame 1 for the draw when its shape's sequence 0 has frames and every frame 0 otherwise; in the
-	/// slow paint, then <see cref="Es1ShellMapBnd.ShapesWait"/> ticks. An object whose shape index is past the theater's
-	/// shapes, which retail reads past its array, is passed over, an engine guard.
+	/// instance's sequence-0 frame 1 for the draw when its shape's sequence 0 has frames and every frame 0 otherwise; without
+	/// it, each object as <see cref="PaintObjectBitmap"/>; in the slow paint, then <see cref="Es1ShellMapBnd.ShapesWait"/>
+	/// ticks. An object whose shape index is past the theater's shapes, which retail reads past its array, is passed over,
+	/// an engine guard.
 	/// </summary>
 	private static IEnumerable<Es1ShellWait> PaintShapes(Es1ShellMap map, Es1VideoMemory display) {
 		var renderer = new Es1ShellShapes(map, display);
@@ -119,18 +121,18 @@ public static class Es1ShellMapPaint {
 			renderer.SetColourRamp(map.Bnd.ShapeRamp, [ShapeRampColor]);
 		}
 
+		var screen = OnScreen(map, display);
 		foreach (var obj in map.Objects) {
-			if (!map.DrawShapes) {
-				// PLACEHOLDER: the 2D map's object, dba\mapshp's first bitmap through Bitmap_BlitRotatedUnpacked (0005048c),
-				// turned by the object's yaw; retail's SHELLMAP.BND never takes this branch.
-				continue;
-			}
-
 			if (map.Shapes is not { } shapes || obj.ShapeIndex < 0 || obj.ShapeIndex >= shapes.Count) {
 				continue;
 			}
 
 			var shape = shapes[obj.ShapeIndex];
+			if (!map.DrawShapes) {
+				PaintObjectBitmap(map, screen, obj, shape);
+				continue;
+			}
+
 			var frames = new short[shape.SequenceList?.Length ?? 0];
 			if (frames.Length > 0 && shape.SequenceList![0] != 0) {
 				frames[0] = 1;
@@ -144,6 +146,27 @@ public static class Es1ShellMapPaint {
 				yield return wait;
 			}
 		}
+	}
+
+	/// <summary>
+	/// <c>ShellMap_PaintShapes</c>' branch for <see cref="Es1ShellMap.DrawShapes"/> clear, which retail's
+	/// <c>SHELLMAP.BND</c> never takes (docs/es1/shell/map.md#the-shapes): <c>dba\mapshp</c>'s first bitmap centred on the
+	/// object and turned by its third angle, the yaw <c>+8</c>. With <i>c</i> the object's projected position, <i>r</i> its
+	/// shape's radius × <c>0x5a82</c> &gt;&gt; 14 and <i>d</i> = <i>c</i> less the projection of (<i>x</i> − <i>r</i>,
+	/// <i>y</i> + <i>r</i>, <i>z</i>), <see cref="Es1BitmapFill.BlitRotatedScaled"/> of the shell's code with the size
+	/// 2<i>d</i> at <i>c</i> less <i>d</i> turned. A missing bitmap, which retail reads through, draws nothing, an engine
+	/// guard.
+	/// </summary>
+	private static void PaintObjectBitmap(Es1ShellMap map, Es1PanelCanvas canvas, Es1MapObject obj, GridShape shape) {
+		var images = map.Resources?.ObjectBitmaps?.Images;
+		var centre = map.Project(obj.Position);
+		int radius = shape.BoundingRadius * 0x5a82 >> 14;
+		var corner = map.Project(unchecked(new Es1MapPoint(obj.Position.X - radius, obj.Position.Y + radius, obj.Position.Z)));
+		var half = unchecked((X: centre.X - corner.X, Y: centre.Y - corner.Y));
+		short yaw = obj.Angles.C;
+		var turned = Es1BitmapFill.Rotate2DPoint(half, Es1BitmapFill.Rotation2D(yaw, shell: true));
+		Es1BitmapFill.BlitRotatedScaled(canvas, images is { Length: > 0 } ? images[0] : null, yaw,
+			unchecked((half.X << 1, half.Y << 1)), 0, unchecked((centre.X - turned.X, centre.Y - turned.Y)), shell: true);
 	}
 
 	/// <summary>

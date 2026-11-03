@@ -817,7 +817,6 @@ public sealed class Es1TtmPlayer {
 	/// list at a delay of 1 (<see cref="AddDrawnBox"/>), and <c>0xa601</c> its rect.
 	/// </summary>
 	private void RunDrawCommand(ushort opcode, short a1, short a2, short a3, short a4, short a5, short a6, short a7) {
-		_ = a7;
 		var canvas = _canvas;
 		switch (opcode) {
 			case 0xa0a4:
@@ -867,7 +866,7 @@ public sealed class Es1TtmPlayer {
 				break;
 			case >= 0xa504 and <= 0xa536 when (opcode & 0xf) is 4 or 5 or 6 && ((opcode >> 4) & 0xf) <= 3:
 			case 0xa5a7:
-				DrawBitmap(opcode, a1, a2, a3, a4, a5, a6);
+				DrawBitmap(opcode, a1, a2, a3, a4, a5, a6, a7);
 				break;
 			case 0xa601:
 				if (Wait < 1 && _saved[RegionSlot % RegionCount] is { } cells) {
@@ -897,9 +896,9 @@ public sealed class Es1TtmPlayer {
 	/// opcode, 3 for any other value; when slot <paramref name="slot"/> holds an array of more than
 	/// <paramref name="frame"/> bitmaps, by the low four bits: 4 <c>Bitmap_Blit</c> at (<i>x</i>, <i>y</i>) plus the
 	/// simulator's origin, its box the bitmap's size; 6 <c>Bitmap_BlitScaled</c> to <paramref name="width"/> ×
-	/// <paramref name="height"/> there, its box that size; 5 nothing; and 7 the turned draw.
+	/// <paramref name="height"/> there, its box that size; 5 nothing; and 7 <see cref="DrawRotated"/>.
 	/// </summary>
-	private void DrawBitmap(ushort opcode, short x, short y, short frame, short slot, short width, short height) {
+	private void DrawBitmap(ushort opcode, short x, short y, short frame, short slot, short width, short height, short angle) {
 		int bits = (opcode & 0xf0) >> 4;
 		int flags = bits <= 2 ? bits : 3;
 		if (slot < 0 || slot >= SlotCount || _bitmaps[slot] is not { } array || frame < 0 || frame >= array.Count) {
@@ -909,8 +908,7 @@ public sealed class Es1TtmPlayer {
 		var bitmap = array[frame];
 		switch (opcode & 0xf) {
 			case 7:
-				// PLACEHOLDER: TOKEN_DRAW_ROT_BRUSH's Bitmap_BlitRotatedUnpacked (00067214), which fills through brush mode 5
-				// (docs/es1/rendering/ground-and-sky.md); no 2D bitmap fill is ported, and no retail script uses the opcode.
+				DrawRotated(bitmap, x, y, width, height, angle);
 				break;
 			case 6:
 				_canvas?.BlitScaled(bitmap, width, height, flags, x + Origin.X, y + Origin.Y);
@@ -923,6 +921,27 @@ public sealed class Es1TtmPlayer {
 				AddDrawnBox(x, y, bitmap.Cols, bitmap.Rows);
 				break;
 		}
+	}
+
+	/// <summary>
+	/// <c>TOKEN_DRAW_ROT_BRUSH</c>'s draw (docs/es1/formats/ttm-scripts.md#the-commands): with <i>p</i> = (−<i>w</i>
+	/// &gt;&gt; 1, −<i>h</i> &gt;&gt; 1), <c>Transform2D_ApplyToPoint</c> of <i>p</i> through
+	/// <c>Math_BuildRotation2D</c>(<paramref name="angle"/>) with the translation <i>p</i>, added to (<i>x</i>, <i>y</i>)
+	/// less <i>p</i>, and the script's origin, gives the corner, so the turned bitmap is centred on (<i>x</i>, <i>y</i>);
+	/// there <c>Bitmap_BlitRotatedUnpacked</c>(bitmap, <paramref name="angle"/>, (<i>w</i>, <i>h</i>), 0, corner), the
+	/// shell's or the simulator's (<see cref="Es1BitmapFill.BlitRotatedScaled"/>). Its box is the square of twice the
+	/// larger of <i>w</i> and <i>h</i> about the corner, in words.
+	/// </summary>
+	private void DrawRotated(DynamixBitmap bitmap, short x, short y, short width, short height, short angle) {
+		var half = (X: -(width >> 1), Y: -(height >> 1));
+		var turned = Es1BitmapFill.Rotate2DPoint(half, Es1BitmapFill.Rotation2D(angle, _shell));
+		var corner = unchecked((X: x - half.X + turned.X + half.X + Origin.X, Y: y - half.Y + turned.Y + half.Y + Origin.Y));
+		if (_canvas is { } canvas) {
+			Es1BitmapFill.BlitRotatedScaled(canvas, bitmap, angle, (width, height), 0, corner, _shell);
+		}
+
+		short larger = Math.Max(width, height);
+		AddDrawnBox((short)(corner.X - larger), (short)(corner.Y - larger), (short)(larger * 2), (short)(larger * 2));
 	}
 
 	/// <summary>

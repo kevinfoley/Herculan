@@ -187,7 +187,7 @@ Some commands act only on a page's first run, while `+0x42` is 0 ("first run"), 
 | `0xa504`, `0xa514`, `0xa524`, `0xa534` | `TOKEN_DRAWBRUSH0` to `3` | x, y, frame, slot | `0xa504`, `0xa524` | `0004ad68` | When bitmap-array slot *slot*, a signed word indexing `+0x47` with no range test, holds an array of more than *frame* bitmaps, compared signed with its `+4`: `Bitmap_Blit` of bitmap *frame* at (*x*, *y*) with flags 0 to 2 from bits 4 to 7 of the opcode, 3 for any other value. |
 | `0xa505`, `0xa515`, `0xa525`, `0xa535` | `TOKEN_RLEDRAWBRUSH0` to `3` | five words | no | `0004ad68` | Nothing past the slot test. |
 | `0xa506`, `0xa516`, `0xa526`, `0xa536` | `TOKEN_SIZEDRAWBRUSH0` to `3` | x, y, frame, slot, w, h | no | `0004ad66`, `0004ad68` | After the same test: `Bitmap_BlitScaled` (`000503f0`)(bitmap, (*w*, *h*), flags, (*x*, *y*)), the bitmap [stretched](../rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps) to *w* by *h*. |
-| `0xa5a7` | `TOKEN_DRAW_ROT_BRUSH` | x, y, frame, slot, w, h, angle | no | `0004ad64` | After the same test: `Bitmap_BlitRotatedUnpacked` of the bitmap with *angle*, the size (*w*, *h*) and flags 0, placed at (*x* + *w*/2, *y* + *h*/2) plus (−*w*/2, −*h*/2) turned through `Math_BuildRotation2D`(*angle*) and `Transform2D_ApplyToPoint`. |
+| `0xa5a7` | `TOKEN_DRAW_ROT_BRUSH` | x, y, frame, slot, w, h, angle | no | `0004ad64` | After the same test: `Bitmap_BlitRotatedUnpacked` (`0005048c`) of the bitmap with *angle*, the size (*w*, *h*) and flags 0, its corner at (*x*, *y*) plus *p* turned, *p* = (−(*w* >> 1), −(*h* >> 1)): `Transform2D_ApplyToPoint` (`000643f0`) turns *p* through `Math_BuildRotation2D`(*angle*) and adds the transform's translation, set to *p*, and the case adds that to (*x*, *y*) less *p*. So the turned bitmap is centred on (*x*, *y*), filled through brush mode 5 ([the map's 2D branch](../shell/map.md#the-shapes)). Its box is the square 2*m* on a side from the corner less *m*, *m* the larger of *w* and *h*, in words. |
 | `0xa601` | `TOKEN_NEW_PUT` | one word, unread | yes | `0004b298` | No wait: puts the selected region's saved pixels back at its rect with `Region_Restore`, `TtmScript_FixRect`s the rect, and adds it with `DirtyBox_AddRect` (`00041062`) at a delay of 1. |
 | `0xaf1f` | `TOKEN_POLY` | n, *n* x, *n* y | no | `0004aaaf` | Builds *n* points, the x values then the y values; fill `+0x1e3`; `Raster_DrawPolygonEitherWinding`. |
 | `0xaf2f` | `TOKEN_POLYFILL` | as `0xaf1f` | no | `0004aaaf` | As `0xaf1f`, drawing first with fill `+0x1db`. |
@@ -346,6 +346,7 @@ The name at `000925f8` comes from the command line: the option `-C` passes the t
 | `0x0110` purges the script | The shell's `0x0110`, `TOKEN_ENDLABEL`, sets the mode to 3, finished. |
 | `0xa601` puts back the saved region its argument names | It puts back the region `0x1121` selected; its argument is unread. |
 | `0xa5a7` draws a bitmap at *x*, *y* and ignores its other arguments | It draws bitmap *frame* of slot *slot* turned by *angle* and sized *w* by *h*. |
+| `0xa5a7` centres the turned bitmap on (*x* + *w*/2, *y* + *h*/2), (−*w*/2, −*h*/2) turned being added there | `Transform2D_ApplyToPoint` also adds its translation, which the case sets to (−*w*/2, −*h*/2), so the bitmap is centred on (*x*, *y*). |
 
 ## Open
 
