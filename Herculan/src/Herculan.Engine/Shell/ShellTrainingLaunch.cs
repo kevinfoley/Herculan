@@ -63,7 +63,7 @@ public static class ShellTrainingLaunch {
 	/// </summary>
 	private const int AmmoOption = 0x25;
 	private const int DamageOption = 0x26;
-	private const int DifficultyOption = 0x27;
+	private const int DifficultyOption = ShellPracticeScreen.DifficultyOption;
 	private const int TimeOfDayOption = 0x29;
 
 	/// <summary>The first practice row whose player takes the Herc Type option's chassis rather than the mission's own.</summary>
@@ -145,11 +145,13 @@ public static class ShellTrainingLaunch {
 	/// ShellHangar, out string?, MissionGenerating?)"/> for a mission already read: the <c>.MSN</c> <paramref name="msn"/>
 	/// and its text <paramref name="text"/>, or null, named <paramref name="missionPath"/>. The original reads every mission
 	/// from its archives; this engine's mission editor hands one it holds in memory (<see cref="MissionFileLaunch.OpenNew"/>).
-	/// <paramref name="ownWorld"/> keeps the mission's own theater and time of day (<see cref="PracticeHeader"/>).
+	/// <paramref name="ownWorld"/> keeps the mission's own theater and time of day (<see cref="PracticeHeader"/>), and
+	/// <paramref name="wholeSquad"/> fields every squadmate (<see cref="BuildSquad"/>).
 	/// </summary>
 	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
 			string missionPath, byte[] msn, byte[]? text, bool instantAction, Func<short, int> roll, short[] clearList,
-			PlayerSave game, ShellHangar hangar, out string? failure, MissionGenerating? generating = null, bool ownWorld = false) {
+			PlayerSave game, ShellHangar hangar, out string? failure, MissionGenerating? generating = null, bool ownWorld = false,
+			bool wholeSquad = false) {
 		// MsnGen_SeedCampaignFlags: a training load clears the flag array first.
 		var flags = new short[MissionGenerator.CampaignFlagCount];
 		SeedDrawnFlags(flags, roll);
@@ -168,7 +170,7 @@ public static class ShellTrainingLaunch {
 			return null;
 		}
 
-		int positions = BuildSquad(content, options, row, instantAction, mission, hangar);
+		int positions = BuildSquad(content, options, row, instantAction, mission, hangar, wholeSquad);
 
 		// The flag array as the load left it is the career's.
 		for (int i = 0; i < flags.Length; i++) {
@@ -192,9 +194,13 @@ public static class ShellTrainingLaunch {
 	/// <paramref name="mission"/>'s group 0, the player's machine into bay 0, and a machine, a bay and a position for each
 	/// wingman, into <paramref name="hangar"/>, which <see cref="NewCareer"/> left. Returns the positions in play. See
 	/// docs/retail/shell/main-menu.md#starting-a-practice-mission.
+	///
+	/// <para><paramref name="wholeSquad"/> puts the last squadmate on strength too, which retail's build never does: this
+	/// engine's departure for a mission <c>gam\career.dat</c> does not list, which retail has no path for (the user's
+	/// choice, <c>KNOWN_ISSUES.md</c>). The practice missions and the demos keep the retail build.</para>
 	/// </summary>
 	internal static int BuildSquad(GameContent content, SimulatorPreferences options, int row, bool instantAction,
-			MissionGenerator mission, ShellHangar hangar) {
+			MissionGenerator mission, ShellHangar hangar, bool wholeSquad) {
 		int positions = mission.SquadPositions;
 		hangar.SetPositionsInPlay(positions);
 
@@ -217,6 +223,12 @@ public static class ShellTrainingLaunch {
 			ShellHangar.SetBay(squad[member], member + 1);
 			hangar.UpdateOnStrength(member);
 			hangar.SetSquadPosition(member, member + 1);
+		}
+
+		// The update the loop owes the last member, on the position it was given.
+		int lastPosition = Math.Min(positions - 1, squad.Count);
+		if (wholeSquad && lastPosition > 0) {
+			hangar.UpdateOnStrength(lastPosition);
 		}
 
 		return positions;

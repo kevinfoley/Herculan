@@ -217,10 +217,10 @@ public class ShellWeaponFittingTests {
 				Id = WeaponLUT.GetById(entry.Weapon),
 				UnlockFlag = 1,
 				Units = entry.Conditions.Select(condition => new ShellWeaponEntry {
-					Id = WeaponLUT.GetById(entry.Weapon),
+					WeaponId = (short)entry.Weapon,
 					FitCondition = (short)condition,
 					Condition = 100,
-					Guidance = stockGuidance,
+					GuidanceId = (short)stockGuidance.Id,
 				}).ToArray(),
 			}).ToArray(),
 		};
@@ -239,8 +239,8 @@ public class ShellWeaponFittingTests {
 			entry.HardpointConditions[slot] = new ShellHercPart(slot, "hardpoint_" + slot, 100);
 			if (slot < mounts.Length && mounts[slot] != 0) {
 				entry.Mounts[slot] = new ShellWeaponEntry {
-					Id = WeaponLUT.GetById(mounts[slot]), FitCondition = 100, Condition = 100,
-					Guidance = MissileType.None,
+					WeaponId = (short)mounts[slot], FitCondition = 100, Condition = 100,
+					GuidanceId = (short)MissileType.None.Id,
 				};
 			}
 		}

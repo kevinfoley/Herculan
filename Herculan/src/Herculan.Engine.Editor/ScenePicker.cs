@@ -3,6 +3,7 @@ using Herculan.Engine.Gl;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
+using Herculan.Engine.Sim;
 using Herculan.Engine.Terrain;
 
 namespace Herculan.Engine.Editor;
@@ -28,13 +29,16 @@ internal sealed class ScenePicker {
 	private List<Pickable> _pickables;
 	private readonly Dictionary<string, (Vector3 LocalCenter, float Radius)> _modelBounds = new();
 	private readonly MissionOverlay _overlay;
-	private readonly HeightGrid _terrain;
+	private readonly SimWorld _world;
 	private readonly MissionIndex _index;
+
+	// The terrain as it now stands, which replacing the mission's terrain swaps (TerrainChanger).
+	private HeightGrid _terrain => _world.Terrain;
 
 	public ScenePicker(MissionScene scene, MissionIndex index, MissionOverlay overlay) {
 		_index = index;
 		_overlay = overlay;
-		_terrain = scene.World.Terrain;
+		_world = scene.World;
 		_pickables = PickablesOf(index.Objects);
 	}
 

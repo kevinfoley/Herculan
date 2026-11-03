@@ -37,7 +37,7 @@ public sealed class Es1GridShape(GridShapeCollision grid) {
 		int offsetX = OriginOffsetX, offsetY = OriginOffsetY;
 		int x = start.X + offsetX, y = start.Y + offsetY, z = start.Z;
 		int endX = end.X + offsetX, endY = end.Y + offsetY;
-		short step = (short)((1 << grid.CellShift) + clearance);
+		short step = (short)((1 << grid.CellSizeShift) + clearance);
 		if (step == 0) {
 			return false;
 		}
@@ -77,10 +77,10 @@ public sealed class Es1GridShape(GridShapeCollision grid) {
 	}
 
 	/// <summary>The grid's origin in world units, <c>origin &lt;&lt; shift</c> cut to 16 bits, which both queries add.</summary>
-	private int OriginOffsetX => (short)(grid.OriginColumn << grid.CellShift);
+	private int OriginOffsetX => (short)(grid.OriginColumn << grid.CellSizeShift);
 
 	/// <inheritdoc cref="OriginOffsetX"/>
-	private int OriginOffsetY => (short)(grid.OriginRow << grid.CellShift);
+	private int OriginOffsetY => (short)(grid.OriginRow << grid.CellSizeShift);
 
 	/// <summary>
 	/// <c>GridShape_HeightAround</c> (<c>0001fa9c</c>), ES2's: the tallest cell within <paramref name="radius"/> of a point
@@ -88,7 +88,7 @@ public sealed class Es1GridShape(GridShapeCollision grid) {
 	/// grid (docs/retail/simulation/hit-detection.md#the-collision-volume--the-dgs-records-height-field).
 	/// </summary>
 	private int HeightAround(int x, int y, int radius) {
-		int shift = grid.CellShift;
+		int shift = grid.CellSizeShift;
 		if (shift < 1 || (1 << (shift - 1)) >= radius) {
 			return Cell((short)(x >> shift), (short)(y >> shift));
 		}

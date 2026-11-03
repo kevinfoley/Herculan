@@ -1,9 +1,12 @@
+using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
+using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
 
 namespace Herculan.Engine.Shell;
@@ -19,7 +22,7 @@ namespace Herculan.Engine.Shell;
 /// row past the practice list, with the practice options <c>data\prefs.cfg</c> holds.</item>
 /// <item>A mission <c>gam\career.dat</c> does not list (<c>DEMO2.MSN</c>) takes the same half as
 /// <c>INSTANT ACTION</c>, through the typed path the DEBUG dialog loads, so its player pilots the mission's own
-/// group-0 machine.</item>
+/// group-0 machine; its squad build fields every squadmate (<see cref="ShellTrainingLaunch.BuildSquad"/>).</item>
 /// <item>Any other takes the campaign half, <see cref="ShellCampaignLaunch"/>, with a career that has no
 /// history: an empty campaign flag array, which the load then seeds with the position, and the player's
 /// squad and skill taken from the install's <c>DATA\player.mec</c> — the last handoff written — in
@@ -57,7 +60,7 @@ public static class MissionFileLaunch {
 	/// <c>script.dat</c>, or null with the reason. <paramref name="ownWorld"/> plays a mission that takes the training load
 	/// on its own theater and time of day, as the mission editor shows it (<see cref="ShellTrainingLaunch.Load(string,
 	/// GameContent, SimulatorPreferences, int, string, byte[], byte[], bool, Func{short, int}, short[],
-	/// HercWorks.Core.Data.File.Sav.PlayerSave, ShellHangar, out string?, MissionGenerating?, bool)"/>); a campaign mission
+	/// HercWorks.Core.Data.File.Sav.PlayerSave, ShellHangar, out string?, MissionGenerating?, bool, bool)"/>); a campaign mission
 	/// plays its stage's theater and its own time of day either way.
 	/// </summary>
 	public static string? Write(string installRoot, string name, bool ownWorld, out string? failure) =>
@@ -96,28 +99,30 @@ public static class MissionFileLaunch {
 	/// <see cref="Open"/> for a mission held in memory rather than read from the archives or the install: the <c>.MSN</c>
 	/// <paramref name="msn"/> and its text <paramref name="text"/>, under the name <paramref name="name"/>
 	/// (no extension), loaded as <c>INSTANT ACTION</c> loads a mission <c>gam\career.dat</c> does not list, the way
-	/// <see cref="Open"/> loads such a mission from a file. The mission editor's File &gt; New mission opens its new
-	/// mission this way until it is saved, after which <see cref="Open"/> reads the saved file.
+	/// <see cref="Open"/> loads such a mission from a file, with its own zone <paramref name="zone"/>, or null. The mission
+	/// editor's File &gt; New mission opens its new mission this way until it is saved, after which <see cref="Open"/> reads
+	/// the saved files.
 	/// </summary>
 	public static string? OpenNew(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
-			string directory, SimRandom random, out MissionDocument? document, out MissionSquad? squad, out string? failure) =>
+			ZoneFiles? zone, string directory, SimRandom random, out MissionDocument? document, out MissionSquad? squad,
+			out string? failure) =>
 		Hold(name, random, (SimRandom drawing, MissionGenerating generating, out MissionSquad? piloted, out string? why) =>
-				LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), $"{MissionFolder}\\{name}{MissionExtension}",
-					msn, text, directory, drawing, new short[MissionGenerator.ClearListLength], generating, ownWorld: false, out piloted,
-					out why),
+				WithZone(LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot),
+					$"{MissionFolder}\\{name}{MissionExtension}", msn, text, directory, drawing,
+					new short[MissionGenerator.ClearListLength], generating, ownWorld: false, out piloted, out why), zone, ref why),
 			out document, out squad, out failure);
 
 	/// <summary>
 	/// <see cref="Write(GameContent, string, string, string, bool, out string?)"/> for a mission held in memory, the
 	/// <c>.MSN</c> <paramref name="msn"/> and its text <paramref name="text"/> under the name <paramref name="name"/> (no
 	/// extension), loaded as <c>INSTANT ACTION</c> loads a mission <c>gam\career.dat</c> does not list whatever its name:
-	/// a custom mission's bundle (<see cref="CustomMissions"/>).
+	/// a custom mission's bundle (<see cref="CustomMissions"/>), with its own zone <paramref name="zone"/>, or null.
 	/// </summary>
 	public static string? WriteHeld(GameContent shellContent, string installRoot, string name, byte[] msn, byte[]? text,
-			string directory, bool ownWorld, out string? failure) =>
-		LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), $"{MissionFolder}\\{name}{MissionExtension}", msn,
-			text, directory, ShellTrainingLaunch.StartupRandom(), new short[MissionGenerator.ClearListLength], generating: null,
-			ownWorld, out _, out failure);
+			ZoneFiles? zone, string directory, bool ownWorld, out string? failure) =>
+		WithZone(LoadUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), $"{MissionFolder}\\{name}{MissionExtension}",
+			msn, text, directory, ShellTrainingLaunch.StartupRandom(), new short[MissionGenerator.ClearListLength], generating: null,
+			ownWorld, out _, out failure), zone, ref failure);
 
 	/// <summary>
 	/// Removes the handoff a load wrote into <paramref name="directory"/>, since the shell's writer does not truncate
@@ -156,12 +161,62 @@ public static class MissionFileLaunch {
 		return script;
 	}
 
+	// The load of the mission named <name>, with its own zone (CustomMissions.Zone) when it has one; a zone that does not read
+	// fails it before anything is written.
 	private static string? Write(GameContent shellContent, string installRoot, string name, string directory, SimRandom random,
-			MissionGenerating? generating, bool ownWorld, out MissionSquad? squad, out string? failure) =>
-		ShellCampaignLaunch.Find(shellContent, name) is var (stage, mission)
+			MissionGenerating? generating, bool ownWorld, out MissionSquad? squad, out string? failure) {
+		var zone = CustomMissions.Zone(installRoot, Path.GetFileNameWithoutExtension(name), out failure);
+		if (failure != null) {
+			squad = null;
+			return null;
+		}
+
+		string? script = ShellCampaignLaunch.Find(shellContent, name) is var (stage, mission)
 			? WriteAt(shellContent, installRoot, stage, mission, directory, random, generating, ownWorld, out squad, out failure)
 			: WriteUnlisted(shellContent, ShellWorkingFiles.DataDirectory(installRoot), name, directory, random,
 				new short[MissionGenerator.ClearListLength], generating, ownWorld, out squad, out failure);
+		return WithZone(script, zone, ref failure);
+	}
+
+	/// <summary>
+	/// <paramref name="script"/>, a handoff's <c>script.dat</c> or null, once its mission's own zone <paramref name="zone"/> is
+	/// written beside it (<see cref="WriteZone"/>); a null <paramref name="zone"/> removes such a pair, a stale one from an
+	/// earlier handoff. Null, with the reason in <paramref name="failure"/>, when the files cannot be written. Each launch of
+	/// a mission with a zone of its own writes the pair, so missions sharing a zone number never share a zone; a handoff
+	/// written elsewhere (a career's) leaves a pair alone, and a custom zone's number is one no archive zone has
+	/// (docs/herculan/plan-zone-editing.md#decisions).
+	/// </summary>
+	private static string? WithZone(string? script, ZoneFiles? zone, ref string? failure) {
+		if (script == null) {
+			return null;
+		}
+
+		return ShellWorkingFiles.TryWrite(() => WriteZone(Path.GetDirectoryName(script)!, File.ReadAllBytes(script), zone), out failure)
+			? script
+			: null;
+	}
+
+	/// <summary>
+	/// Writes <paramref name="zone"/> into the handoff folder <paramref name="directory"/> as the zone the header of
+	/// <paramref name="script"/>, its <c>script.dat</c>, names (<see cref="TerrainZoneLoader.HeaderFile"/>,
+	/// <see cref="TerrainZoneLoader.HeightmapFile"/>), which the simulator reads ahead of the archives'
+	/// (<see cref="TerrainZoneLoader.Load"/>); a null <paramref name="zone"/> removes such a pair. Returns the paths written,
+	/// none for a null <paramref name="zone"/>. Throws what writing or deleting a file throws.
+	/// </summary>
+	public static IReadOnlyList<string> WriteZone(string directory, byte[] script, ZoneFiles? zone) {
+		int zoneIndex = new ScriptDat { HeaderBytes = script[..ScriptDat.HeaderSize] }.ZoneIndex;
+		string headerPath = CaseInsensitivePath.Combine(directory, TerrainZoneLoader.HeaderFile(zoneIndex));
+		string heightmapPath = CaseInsensitivePath.Combine(directory, TerrainZoneLoader.HeightmapFile(zoneIndex));
+		if (zone == null) {
+			File.Delete(headerPath);
+			File.Delete(heightmapPath);
+			return [];
+		}
+
+		File.WriteAllBytes(headerPath, zone.WriteHeader());
+		File.WriteAllBytes(heightmapPath, zone.WriteHeightmap());
+		return [headerPath, heightmapPath];
+	}
 
 	/// <summary>
 	/// The load of the mission at career position (<paramref name="stage"/>, <paramref name="mission"/>), read from the archives;
@@ -174,7 +229,7 @@ public static class MissionFileLaunch {
 		if (stage == 0) {
 			var options = PracticeOptions(installData);
 			bool instantAction = mission >= ShellPracticeScreen.RowCount;
-			squad = MissionSquad.Training(shellContent, options, mission, instantAction, random);
+			squad = MissionSquad.Training(shellContent, options, mission, instantAction, random, wholeSquad: false);
 			var training = ShellTrainingLaunch.Write(directory, shellContent, options, mission, instantAction, random, clearList,
 				held: null, out failure, generating, ownWorld);
 			if (training != null) {
@@ -249,13 +304,16 @@ public static class MissionFileLaunch {
 			out squad, out failure);
 	}
 
-	/// <summary>The load <see cref="WriteUnlisted"/> makes, of the mission <paramref name="msn"/> and its text, read.</summary>
+	/// <summary>
+	/// The load <see cref="WriteUnlisted"/> makes, of the mission <paramref name="msn"/> and its text, read, with every
+	/// squadmate fielded.
+	/// </summary>
 	private static string? LoadUnlisted(GameContent shellContent, string installData, string missionPath, byte[] msn, byte[]? text,
 			string directory, SimRandom random, short[] clearList, MissionGenerating? generating, bool ownWorld,
 			out MissionSquad? squad, out string? failure) {
 		var options = PracticeOptions(installData);
 		const int row = ShellPracticeScreen.RowCount;
-		squad = MissionSquad.Training(shellContent, options, row, instantAction: true, random);
+		squad = MissionSquad.Training(shellContent, options, row, instantAction: true, random, wholeSquad: true);
 		var training = LoadTraining(shellContent, options, row, instantAction: true, missionPath, msn, text, directory, random,
 			clearList, generating, ownWorld, out failure);
 		if (training != null) {
@@ -268,7 +326,8 @@ public static class MissionFileLaunch {
 
 	/// <summary>
 	/// <see cref="ShellTrainingLaunch.Write"/> for the mission <paramref name="msn"/> and its text, read, named
-	/// <paramref name="missionPath"/>: the new career on <paramref name="row"/>, then the training load of that mission.
+	/// <paramref name="missionPath"/>: the new career on <paramref name="row"/>, then the training load of that mission, with
+	/// every squadmate fielded.
 	/// </summary>
 	private static ShellTrainingHandoff? LoadTraining(GameContent shellContent, SimulatorPreferences options, int row,
 			bool instantAction, string missionPath, byte[] msn, byte[]? text, string directory, SimRandom random, short[] clearList,
@@ -276,7 +335,7 @@ public static class MissionFileLaunch {
 		int Roll(short bound) => random.NextBelow(bound);
 		return ShellTrainingLaunch.NewCareer(shellContent, options, row, Roll, held: null, out failure) is var (game, hangar)
 			? ShellTrainingLaunch.Load(directory, shellContent, options, row, missionPath, msn, text, instantAction, Roll, clearList,
-				game, hangar, out failure, generating, ownWorld)
+				game, hangar, out failure, generating, ownWorld, wholeSquad: true)
 			: null;
 	}
 

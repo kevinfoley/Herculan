@@ -1,6 +1,7 @@
 using System.Numerics;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
+using Herculan.Engine.Sim;
 using Herculan.Engine.Terrain;
 
 namespace Herculan.Engine.Editor;
@@ -20,12 +21,15 @@ internal sealed class DrapedLines {
 
 	private const int CircleSegments = 96;
 
-	private readonly HeightGrid _terrain;
-	private readonly int _maxPiece;
+	private readonly SimWorld _world;
 
-	public DrapedLines(HeightGrid terrain) {
-		_terrain = terrain;
-		_maxPiece = Math.Max(terrain.CellSize / 2, 1);
+	// The terrain as it now stands, which replacing the mission's terrain swaps (TerrainChanger).
+	private HeightGrid _terrain => _world.Terrain;
+
+	private int MaxPiece => Math.Max(_terrain.CellSize / 2, 1);
+
+	public DrapedLines(SimWorld world) {
+		_world = world;
 	}
 
 	/// <summary>Appends one edge from <paramref name="from"/> to <paramref name="to"/>, by their X and Y.</summary>
@@ -33,7 +37,7 @@ internal sealed class DrapedLines {
 		long dx = to.X - from.X;
 		long dy = to.Y - from.Y;
 		double length = Math.Sqrt(dx * dx + dy * dy);
-		int pieces = Math.Max(1, (int)Math.Ceiling(length / _maxPiece));
+		int pieces = Math.Max(1, (int)Math.Ceiling(length / MaxPiece));
 
 		var previous = OnGround(from.X, from.Y);
 		for (int i = 1; i <= pieces; i++) {

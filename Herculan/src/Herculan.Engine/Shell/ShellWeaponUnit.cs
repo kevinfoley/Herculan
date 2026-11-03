@@ -50,14 +50,14 @@ public sealed class ShellWeaponUnit {
 	public int Guidance { get; internal set; }
 
 	internal static ShellWeaponUnit From(ShellWeaponEntry entry) =>
-		new(entry.Id?.Id ?? 0, entry.FitCondition, entry.Condition, entry.Guidance?.Id ?? NoGuidance, entry.ClassIndex);
+		new(entry.WeaponId, entry.FitCondition, entry.Condition, entry.GuidanceId, entry.ClassIndex);
 
 	/// <summary><c>WeaponUnit_WriteSaveForm</c> (<c>00411aff</c>)'s five shorts, as the save model holds them.</summary>
 	internal ShellWeaponEntry ToEntry() => new() {
-		Id = WeaponLUT.GetById(WeaponId),
+		WeaponId = (short)WeaponId,
 		ClassIndex = (short)ClassIndex,
 		FitCondition = (short)FitCondition,
 		Condition = (short)Condition,
-		Guidance = MissileType.GetById(Guidance),
+		GuidanceId = (short)Guidance,
 	};
 }

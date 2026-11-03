@@ -357,11 +357,11 @@ public partial class CampaignResourcesForm : Form {
 				newData[q] = oldData[q];
 			} else {
 				newData[q] = new ShellWeaponEntry {
-					Id = row.WeaponId ?? item.Id,
+					WeaponId = (short)((row.WeaponId ?? item.Id)?.Id ?? 0),
 					ClassIndex = oldData.Length > 0 ? oldData[0].ClassIndex : (short)0,
 					FitCondition = 100,
 					Condition = 100,
-					Guidance = MissileType.None
+					GuidanceId = (short)MissileType.None.Id
 				};
 			}
 		}

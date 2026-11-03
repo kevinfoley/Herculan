@@ -18,7 +18,8 @@ internal sealed record ZoneChoice(short Zone, int Width, int Height) {
 		$"Zone {Zone} ({Kilometres(Width)} by {Kilometres(Height)} km): "
 		+ (UsedBy.Count > 0 ? $"used by {string.Join(", ", UsedBy)}" : "used by no retail mission");
 
-	private static string Kilometres(int worldUnits) =>
+	/// <summary><paramref name="worldUnits"/> in kilometers, to one decimal place.</summary>
+	public static string Kilometres(int worldUnits) =>
 		(worldUnits / Render.WorldScale.WorldUnitsPerMeter / 1000f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
 }
 
@@ -44,7 +45,7 @@ internal static class MissionZones {
 					&& Heightmap(simulator, zone) is { } heightmap) {
 				// The grid's size is the heightmap's own, as the game takes it; the header's copies are not read.
 				var (widthShift, heightShift) = TerrainZoneLoader.GridShifts(heightmap);
-				zones.Add(new ZoneChoice(zone, 1 << (widthShift + header.CellShift), 1 << (heightShift + header.CellShift)));
+				zones.Add(new ZoneChoice(zone, 1 << (widthShift + header.CellSizeShift), 1 << (heightShift + header.CellSizeShift)));
 			}
 		}
 

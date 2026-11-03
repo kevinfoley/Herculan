@@ -35,8 +35,8 @@ public sealed partial class HeightGrid {
 	/// <paramref name="worldY"/> falls in.
 	///
 	/// <para>The tile, one <c>mat0</c> frame, is <c>1 &lt;&lt; (0x15 - blockShift)</c> world units
-	/// square whatever <see cref="CellShift"/> is, and the layout map spans it, so each cell takes
-	/// <c>1 &lt;&lt; (CellShift - 13)</c> map entries along each axis. Map row 0 is the tile's high-y
+	/// square whatever <see cref="CellSizeShift"/> is, and the layout map spans it, so each cell takes
+	/// <c>1 &lt;&lt; (CellSizeShift - 13)</c> map entries along each axis. Map row 0 is the tile's high-y
 	/// (north) edge. See docs/retail/rendering/terrain-texturing.md#base-formation-pads.</para>
 	///
 	/// <para>Cells outside the grid are skipped, where the original clamps an out-of-range index to
@@ -60,7 +60,7 @@ public sealed partial class HeightGrid {
 
 		// Map entries per cell along one axis, as a shift: the map is expressed at the material's
 		// own block size, the grid at its cell size, and only their ratio matters here.
-		int entryShift = CellShift - 13;
+		int entryShift = CellSizeShift - 13;
 		if (entryShift < 0 || dimension <= 0) {
 			return;
 		}

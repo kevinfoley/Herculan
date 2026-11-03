@@ -12925,7 +12925,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_HeightAround",
-      "description": "(shape, radius, point) in stack order, callee-cleaned: ES2's GridShape_HeightAround (DBSIM 00427238). With s the cell shift +0x32: when 1 << (s - 1) is less than the radius, the greatest height-table (+0x34) entry over the grid cells from (point - radius) >> s to (point + radius) >> s in X and Y; otherwise that of the cell point >> s; cells outside columns +0x2a and rows +0x2c count 0. A cell's byte comes from the row pointers at +0x434. es2_xref finds calls from GridShape_HeightAt (0001fc5c) and GridShape_Raycast (0001fccc).",
+      "description": "(shape, radius, point) in stack order, callee-cleaned: ES2's GridShape_HeightAround (DBSIM 00427238). With s the cell size shift +0x32: when 1 << (s - 1) is less than the radius, the greatest height-table (+0x34) entry over the grid cells from (point - radius) >> s to (point + radius) >> s in X and Y; otherwise that of the cell point >> s; cells outside columns +0x2a and rows +0x2c count 0. A cell's byte comes from the row pointers at +0x434. es2_xref finds calls from GridShape_HeightAt (0001fc5c) and GridShape_Raycast (0001fccc).",
       "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
       "verified": {
         "bytes": "0001fa9c+448",
@@ -12940,7 +12940,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_HeightAt",
-      "description": "(shape, radius, point) in stack order, callee-cleaned: 0 for a shape with no columns (+0x2a); otherwise GridShape_HeightAround (0001fa9c) of the point plus (origin column +0x2e, origin row +0x30) shifted left by the cell shift +0x32, each taken as an int16. ES2's GridShape_HeightAt (DBSIM 00427360). es2_xref finds one call, from Structure_WalkCollisionTest (0002075c).",
+      "description": "(shape, radius, point) in stack order, callee-cleaned: 0 for a shape with no columns (+0x2a); otherwise GridShape_HeightAround (0001fa9c) of the point plus (origin column +0x2e, origin row +0x30) shifted left by the cell size shift +0x32, each taken as an int16. ES2's GridShape_HeightAt (DBSIM 00427360). es2_xref finds one call, from Structure_WalkCollisionTest (0002075c).",
       "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
       "verified": {
         "bytes": "0001fc5c+109",
@@ -13045,7 +13045,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_ReadFromStream",
-      "description": "(shape, p, stream) in stack order, callee-cleaned, slot +0x10 of GridShape's vtable 000923da: TSShape_ReadFromStream (00065d04)(shape, p, stream), then through the stream's slot +0x1c (its vptr at +4) the int16 columns +0x2a, rows +0x2c, origin column +0x2e, origin row +0x30 and cell shift +0x32 and the 0x400-byte height table +0x34; when rows is not 0, an Arena_Alloc'd array of rows pointers at +0x434 from the arena at 000bd954, each to an Arena_Alloc'd row of columns bytes read from the stream. ES2's GridShape_ReadFromStream (DBSIM 0042762c).",
+      "description": "(shape, p, stream) in stack order, callee-cleaned, slot +0x10 of GridShape's vtable 000923da: TSShape_ReadFromStream (00065d04)(shape, p, stream), then through the stream's slot +0x1c (its vptr at +4) the int16 columns +0x2a, rows +0x2c, origin column +0x2e, origin row +0x30 and cell size shift +0x32 and the 0x400-byte height table +0x34; when rows is not 0, an Arena_Alloc'd array of rows pointers at +0x434 from the arena at 000bd954, each to an Arena_Alloc'd row of columns bytes read from the stream. ES2's GridShape_ReadFromStream (DBSIM 0042762c).",
       "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
       "verified": {
         "bytes": "0001ff48+304",

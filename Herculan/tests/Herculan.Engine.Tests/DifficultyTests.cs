@@ -169,13 +169,13 @@ public class DifficultyTests {
 	/// <summary>A featureless grid, so the ray's terrain leg cannot stop it before an object does.</summary>
 	private static HeightGrid FlatTerrain() {
 		const int widthShift = 8;
-		const int cellShift = 12;
+		const int cellSizeShift = 12;
 		const int cellCount = 1 << (widthShift * 2);
 
 		var heights = new byte[cellCount];
 		System.Array.Fill(heights, (byte)40);
 
-		return new HeightGrid(widthShift, widthShift, cellShift, 16, 10, heights, new byte[cellCount]);
+		return new HeightGrid(widthShift, widthShift, cellSizeShift, 16, 10, heights, new byte[cellCount]);
 	}
 
 	private static SimWorld WorldWith(SimObject? attacker, int difficulty) {

@@ -2,7 +2,7 @@
 
 # The HERCULAN Engine
 
-The HERCULAN Engine is a full reimplementation of _[Earthsiege 2](https://en.wikipedia.org/wiki/Earthsiege_2)_ (developed by Dynamix and published by Sierra in 1996), with support for modern operating systems, powered by .NET.
+The HERCULAN Engine is an unofficial full reimplementation of _[Earthsiege 2](https://en.wikipedia.org/wiki/Earthsiege_2)_ (developed by Dynamix and published by Sierra in 1996), with support for modern operating systems, powered by .NET.
 
 ## HercWorks CSharp
 
@@ -12,13 +12,12 @@ Great thanks to Subject9x (developer of the original herc-works-mdk repository),
 
 ## The engine
 
-The HERCULAN Engine is a modern reimplementation of _Earthsiege 2_. Because the source code for Earthsiege 2 has never been released, HERCULAN Engine was constructed entirely through reverse engineering.
-
-The engine is currently in beta. Not all features have been thoroughly tested, and there may be bugs. **Back up your retail save data before switching to HERCULAN**.
+The HERCULAN Engine is a modern reimplementation of _Earthsiege 2_. Because the source code for _Earthsiege 2_ has never been released, HERCULAN Engine was constructed entirely through reverse engineering.
 
 ### Features
 
 - Play all of _Earthsiege 2_, at any resolution, with support for widescreen and ultra-widescreen monitors (menus render at 4:3).
+- Supports modern joysticks and gamepads, with customizable bindings (the original keyboard bindings are not currently customizable).
 - Hardware-accelerated rendering that almost perfectly matches retail's software renderer.
 - Runs on Windows and Linux, with potential macOS support in the future.
 - Full support for retail's file formats, including saved games.

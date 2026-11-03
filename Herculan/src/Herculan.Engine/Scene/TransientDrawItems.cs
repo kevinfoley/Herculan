@@ -56,6 +56,12 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 	public List<SpriteBatch> Sprites { get; } = new();
 
 	/// <summary>
+	/// Every beam fired on the last tick as the tracer objects the original allocates, each with its own entry: a straight
+	/// beam's spans, a chain whole. Only the painter's-order draw reads these; the per-pixel depth draw takes the tracers.
+	/// </summary>
+	public List<BeamSpanDraw> BeamSpans { get; } = new();
+
+	/// <summary>
 	/// Every transient item. Shots in flight ride on the end of both kept lists: they are never the player's own
 	/// machine, so nothing hides them.
 	/// </summary>
@@ -69,6 +75,7 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 		_camera = camera;
 		_focalPixels = focalPixels;
 		RefreshProjectileItems();
+		RefreshBeamSpans();
 		RefreshDebrisItems(preferences);
 		RefreshDropPodItems();
 		RefreshGroundShapeItems(camera);
@@ -351,6 +358,23 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 			// projected size alone, whatever either detail setting says.
 			AddAtDetail(Projectiles, model, transform, 0,
 				mesh => new SceneItem(mesh, transform, texture, fullbright: true) { Filing = entry });
+		}
+	}
+
+	// One entry per tracer object Bullet_FireBurst (0040bf74) allocates: per 5000-unit span of a straight beam, filed by
+	// the span's start, and one for a chain, filed by its muzzle point. See BeamSpanDraw.
+	private void RefreshBeamSpans() {
+		BeamSpans.Clear();
+
+		foreach (var tracer in scene.World.Tracers) {
+			if (tracer.IsJagged) {
+				BeamSpans.Add(new BeamSpanDraw(tracer, -1, filing.SpanEntry(tracer, tracer.Start)));
+				continue;
+			}
+
+			for (int span = 0; span < tracer.SpanCount; span++) {
+				BeamSpans.Add(new BeamSpanDraw(tracer, span, filing.SpanEntry(tracer, tracer.Span(span).From)));
+			}
 		}
 	}
 

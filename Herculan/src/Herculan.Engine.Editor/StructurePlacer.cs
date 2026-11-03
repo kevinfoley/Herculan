@@ -57,7 +57,7 @@ internal sealed class StructurePlacer {
 
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
-	private readonly HeightGrid _terrain;
+	private readonly SimWorld _world;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly SceneSync _sync;
@@ -65,13 +65,16 @@ internal sealed class StructurePlacer {
 	private readonly BaseFormationTable _formations;
 	private Func<string?>? _requested;
 
+	// The terrain as it now stands, which replacing the mission's terrain swaps (TerrainChanger).
+	private HeightGrid _terrain => _world.Terrain;
+
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="formations">The structure formations, which place a base's members (<see cref="BasePlaces"/>).</param>
 	public StructurePlacer(MissionDocument source, MissionScene scene, MissionIndex index,
 			PointMover mover, SceneSync sync, SelectionState selection, BaseFormationTable formations) {
 		_source = source;
 		_scene = scene;
-		_terrain = scene.World.Terrain;
+		_world = scene.World;
 		_index = index;
 		_mover = mover;
 		_sync = sync;

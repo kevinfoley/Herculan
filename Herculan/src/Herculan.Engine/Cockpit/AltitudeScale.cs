@@ -158,11 +158,11 @@ public readonly struct AltitudeScale {
 
 	/// <summary>
 	/// The row a height maps to: linear from <see cref="AltitudeReading.Floor"/> at <see cref="Foot"/>
-	/// to <see cref="AltitudeReading.Ceiling"/> at <see cref="Top"/>, in the paint's 64-bit product and
+	/// to <see cref="AltitudeReading.Ceiling"/> at <see cref="Top"/>, in the paint's 32-bit product and
 	/// truncating divide, then clamped to the scale.
 	/// </summary>
 	public int RowFor(int height, in AltitudeReading reading) {
-		int row = Foot - (int)((long)(height - reading.Floor) * (Foot - Top) / (reading.Ceiling - reading.Floor));
+		int row = Foot - (height - reading.Floor) * (Foot - Top) / (reading.Ceiling - reading.Floor);
 		return Top > row ? Top : Foot < row ? Foot : row;
 	}
 

@@ -30,7 +30,7 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// original's <c>terrainHeight + 500</c> — three metres, so a flyer driven into a hillside stops
 	/// on it rather than through it.
 	/// </summary>
-	private const int GroundClearance = 500;
+	public const int GroundClearance = 500;
 
 	/// <summary>
 	/// Range inside which the flyby sound plays, and at or beyond which the latch is released so the

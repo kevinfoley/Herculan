@@ -105,16 +105,16 @@ public class SkeletonPoseTests {
 
 	private static SimWorld FlatWorld(MechObject mech) {
 		const int widthShift = 8;
-		const int cellShift = 12;
+		const int cellSizeShift = 12;
 		const int cellCount = 1 << (widthShift * 2);
 
 		var heights = new byte[cellCount];
 		System.Array.Fill(heights, (byte)40);
 
-		var terrain = new HeightGrid(widthShift, widthShift, cellShift, 16, 10, heights, new byte[cellCount]);
+		var terrain = new HeightGrid(widthShift, widthShift, cellSizeShift, 16, 10, heights, new byte[cellCount]);
 		var world = new SimWorld(terrain);
 
-		int middle = (1 << (widthShift + cellShift)) / 2;
+		int middle = (1 << (widthShift + cellSizeShift)) / 2;
 		mech.Position = new Vec3i(middle, middle, terrain.HeightAtWorld(middle, middle));
 		world.Add(mech);
 		MechLocomotionTests.BecomePlayer(world, mech);

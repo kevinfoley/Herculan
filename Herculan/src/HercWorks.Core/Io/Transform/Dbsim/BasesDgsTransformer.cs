@@ -162,7 +162,7 @@ public class BasesDgsTransformer : ByteTransformer<GridShapeLibrary> {
 		short rows = IndexShortLE();        // +0x2c
 		short originColumn = IndexShortLE(); // +0x2e
 		short originRow = IndexShortLE();   // +0x30
-		short cellShift = IndexShortLE();   // +0x32
+		short cellSizeShift = IndexShortLE();   // +0x32
 
 		int[] heights = IndexIntLEArray(HeightTableEntries);
 
@@ -172,7 +172,7 @@ public class BasesDgsTransformer : ByteTransformer<GridShapeLibrary> {
 		}
 
 		return new GridShapeCollision(
-			columns, rows, originColumn, originRow, cellShift, heights, cells);
+			columns, rows, originColumn, originRow, cellSizeShift, heights, cells);
 	}
 
 	public override byte[]? Write(GridShapeLibrary source) =>

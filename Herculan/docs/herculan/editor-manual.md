@@ -8,7 +8,7 @@ The group decides several things for all of its members:
 
 - **Team.** Every member is on the group's team, human or Cybrid. A unit's own view shows its team but cannot change it.
 - **Orders.** Orders belong to the group, not to its members, and every member carries them out together. A group works through up to ten orders in turn. It moves on to the next order when the current one is done, or when that order's "Ends when" trigger fires, and it stays on its last order. The group walks only its first order's route, whatever routes its later orders name.
-- **Arrival.** A group with a trigger under "Waits on" is not in the mission until that trigger fires. It then arrives as the trigger's "Arrives" choice says. A group with nothing under "Waits on" is in the mission from the start.
+- **Arrival.** A group with a trigger under "Waits on" is not in the mission until that trigger fires. It then arrives as the trigger's "Arrives" choice says, for example [by drop pod](#drop-pods). A group with nothing under "Waits on" is in the mission from the start.
 
 A group's **leader** is its first member. Under "Patrol" and "Search and destroy", only the leader walks the route and looks for targets, and the other members keep formation on it ([What each order attacks](#what-each-order-attacks)). No other member takes over when the leader is destroyed. The rest of the group then stops following the route and stops looking for targets, though its members still fight back when shot.
 
@@ -29,6 +29,39 @@ Each member has a **place** in the group, numbered from 1, and each place has it
 A member can instead stand at a **position of its own**, set by moving it. "Return to formation" puts it back in its default place. A structure stays at its own position for the whole mission, but a ground vehicle does not: the first vehicle that is not destroyed or immobilized drives the group's route, and the others drive to their places in the formation around it. For a HERC or flyer other than the leader, its own position only sets where it starts. Some orders make the members follow the leader in formation: "Patrol" and "Search and destroy" for HERCs, and "Patrol", "Search and destroy" and "Travel" for flyers. Under those orders, a member with its own position leaves it as soon as the mission starts and moves to its place in the formation around the leader.
 
 A structure group can also lay a **base pad**: a concrete pad painted over the ground tile under the group, with the ground under it levelled. Its structures then stand at a fixed spot in that tile. Only some structure formations have a base pad, and picking one without a pad stops the group laying one.
+
+## Drop pods
+
+Drop pods are used for Cybrids to dynamically deploy in a mission zone when a trigger is activated.
+
+### One unit per pod
+
+**A pod carries only a group's first member.** Any other members of the group appear where the mission placed them, with no pod, at the moment the pod opens. In other words, you normally shouldn't put more than one Cybrid in a group that will be spawned in a drop pod. The retail missions only ever bring in one unit per pod, though one trigger often spawns multiple pods. To bring in several units by pod, put each one in a group of its own and set every group's "Waits on" to the same trigger.
+
+### Setting one up
+
+1. Add a new Cybrid HERC to the scene. It starts out in a group by itself.
+2. Create a new Trigger, or select an existing Trigger. Next to "Then:", click "Add", then choose **Bring in a group**. You can add additional groups if you want the trigger to bring in multiple drop pods.
+3. Still in the trigger, make sure you set "Arrives" to one of the two drop pod choices.
+
+"Arrives" belongs to the trigger, not to the group, so every group the trigger brings in arrives the same way.
+
+### Where the pod lands
+
+**A drop pod always lands relative to the player, wherever the player happens to be when the trigger fires.** The group's own position on the map is never used, which is why the editor does not show a group arriving by drop pod in the 3D view. **There is no way to make a pod drop at a specific position or within a specific area.** This is not a limitation of the Mission Editor, it is how drop pods are coded in _Earthsiege 2_.
+
+The pod aims 900 m from the player, in a direction based on which way the player's HERC is facing:
+
+| "Arrives"                                   | Where the pod aims                                                          |
+| ------------------------------------------- | --------------------------------------------------------------------------- |
+| "By drop pod, in front of the player"       | Anywhere in the half-circle ahead of the player, up to 90° to either side   |
+| "By drop pod, straight ahead of the player" | Within 22.5° of straight ahead, a stretch about 700 m wide at that distance |
+
+The exact direction is randomized. If the spot it picks is too steep to stand on, or too close to a structure, the pod moves further away from the player along the same line, 12 m at a time, until it finds clear ground. It does not avoid other units.
+### When a pod never releases its units
+
+- **The pod lands on something.** A pod's landing blast damages whatever is close to where it comes down. If the blast catches anything, even a unit whose shields absorb it, the pod opens empty and that group never arrives for the rest of the mission.
+- **The player is near the edge of the map.** Nothing stops a pod from aiming past the edge of the terrain. Past the east or west edge, the pod lands off the map, where no terrain is drawn, and its unit is stranded there: it can shoot but never move. Past the north or south edge, the original game freezes, while HERCULAN drops the pod off the map instead. Keep each drop pod trigger to places where the player is more than 900 m from every edge of the terrain.
 
 ## Budgets
 
@@ -64,7 +97,7 @@ In retail, a mission that needs more markers than the limit crashes as it starts
 
 ### Playable in HERCULAN only
 
-Edit > Mission Settings > "Playable in" chooses between "Vanilla and HERCULAN", the default, and "HERCULAN only". A mission playable only in HERCULAN is held to none of the limits above. Retail ignores the setting and still loads the mission, but if any vanilla limits are exceeded, the game will crash.
+Mission Settings > General > "Playable in" chooses between "Vanilla and HERCULAN", the default, and "HERCULAN only". A mission playable only in HERCULAN is held to none of the limits above. Retail ignores the setting and still loads the mission, but if any vanilla limits are exceeded, the game will crash.
 
 Switching back to "Retail and HERCULAN" deletes nothing. Problems lists each limit the mission is over, and the editor adds no more units of a kind that is over its limit.
 
@@ -213,10 +246,24 @@ The Mission Editor does *not* take conditionals into account when calculating wh
 
 Limits do not apply in HERCULAN Engine.
 
+## Terrain
+
+A mission is played on a terrain: one of the original game's "zones", or a custom terrain made using the Mission Editor. **File > New mission** offers both under "Terrain". **Mission Settings > Terrain** shows the zone the mission is played in, and can be used to import or export heightmap. The terrain's texture is determined by the selected theater (each Sector in the vanilla campaign has its own theater).
+
+A **heightmap image** is a grayscale picture of the ground seen from above, north at the top: a PNG, or a raw 8-bit file (one byte per pixel, no header). It is 128×128 or 256×256 pixels, and each pixel is one patch of ground. Black is the lowest ground and white the highest. An image of another size, or with any colored pixel, is refused: resize or convert it in an image editor first.
+
+- **Cell size** is how wide the patch of ground under each pixel of the heightmap is, from 24.6 m to 196.6 m. A 256-pixel image with 49.2 m cells makes a terrain 12.6 km across.
+- **Highest point** is how far above black ground white ground stands. This depends on cell size.
+
+When the terrain is replaced by one of another size, everything in the mission moves with the terrain's center. Everything in the mission zone will be vertically aligned to the new terrain (with flyers keeping their relative height from the terrain). A custom mission's custom terrain is saved alongside the `.MSN` with two files, a `.DAT` and a `.DBA`.
+
+**Sculpting.** Terrain can be manually shaped in the Mission Editor using the Toolbox's "Sculpt Terrain" tab. While this tab is active, clicking and dragging in the 3D view manipulates ("sculpts") the terrain in a circle around the cursor (the "brush"). There are several sculpting modes. While sculpting, the terrain's original shape is shown, without the flattening that is applied by buildings in the mission zone.
 ## Sharing a mission
 
-Edit > Mission Settings > "About" says who made the mission and what it is: its author, version, date and description. The game's Custom Missions window (`Shift+Esc` in the front end) shows them. They are saved with the mission, in a file beside its `.MSN` with the same name and the extension `.ABT`, and an edit to them undoes like any other.
+Mission metadata (author name, version, date and description) can be filled out in **Mission Settings > General > About** .
 
-File > "Export Mission Bundle..." writes the mission as one `.hcm` (**H**ERCULAN **C**ustom **M**ission) file to share: the mission, its text and its About. It shows the About fields for a last look, with today's date filled in when the mission has none, and saves the mission first when it has unsaved changes, so the bundle holds what the game plays. The bundle carries the mission's text in the language the game runs in. You can share the HCM file with other players. They can download the HCM file and then import it from the Custom Missions window.
+Use File > "Export Mission Bundle..." to export the mission as one `.hcm` (**H**ERCULAN **C**ustom **M**ission) file. You can share the HCM file with other players.
 
-Some missions come with HERCULAN. File > "Load custom mission" lists them, marked "(included)", and so does the Custom Missions window. Open one in the editor to see how it is built. Saving it writes your own copy into the install, which the game then plays in its place; delete that copy to go back to the one that came with HERCULAN. The Custom Missions window cannot delete a mission that comes with HERCULAN.
+### Importing and playing custom missions
+
+After downloading a custom mission, you can import it using HERCULAN Engine's Custom Missions window, which can be accessed in the shell through the HERCULAN menu bar.

@@ -156,7 +156,7 @@ Both `Gunsight_Paint` and `Gunsight_UpdateAndPaint` test the console button pane
 3. Frame 17, a marker, is centred on the column at the machine's own height (`mech+0x2e`).
 4. Frame 18, a strip of ticks, is blitted twice at `x + (2 << XCoordShift)`: once with its top at `height / 50 % (0x24 << YCoordShift)` below the top, and once a frame height above that. **Neither blit reaches the screen** — see [The tick tape is never drawn](#the-tick-tape-is-never-drawn).
 
-Both heights map linearly from the zone's height range, `grid+0x110` at the foot to `grid+0x114` + 5000 at the top, as `foot - (h - floor) * (foot - top) / (ceiling - floor)` with a 64-bit product and a truncating divide, and are clamped to the scale. The pen and brush are plain palette indices the paint states as immediates, not `COLORS.DAT` ids.
+Both heights map linearly from the zone's height range, `grid+0x110` at the foot to `grid+0x114` + 5000 at the top, as `foot - (h - floor) * (foot - top) / (ceiling - floor)` with a 32-bit product (the `CDQ` after each `IMUL`, `0043dea6` and `0043df5a`, drops its high half) and a truncating divide, and are clamped to the scale. The pen and brush are plain palette indices the paint states as immediates, not `COLORS.DAT` ids.
 
 #### The tick tape is never drawn
 

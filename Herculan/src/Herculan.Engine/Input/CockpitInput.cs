@@ -148,6 +148,13 @@ public sealed class CockpitInput {
 	public bool RightPressedLast { get; private set; }
 
 	/// <summary>
+	/// Whether a left press arms no widget, set by the caller before each drain: the left button is the trigger while
+	/// the gunsight drag is armed under its tweak, so a shot does not also press whatever the pointer is over. A press
+	/// armed before it was set completes as usual. This engine's; see <see cref="GunsightDrag.Firing"/>.
+	/// </summary>
+	public bool LeftPressesNothing { get; set; }
+
+	/// <summary>
 	/// Every position a captured pointer reported during the last drain, oldest first — empty when
 	/// nothing is being dragged. The capture opens on the press that starts it, because the original
 	/// dispatches its drag handler straight from <c>Widget_OnMouseDown</c>: clicking anywhere on a
@@ -255,7 +262,7 @@ public sealed class CockpitInput {
 			// Only the left button presses. CockpitMouse_ProcessQueue calls Widget_OnMouseDown for a left
 			// press and not a right one, so a right press arms nothing and lights nothing, and a right
 			// click works entirely off its own release below.
-			if (pressedNow.HasFlag(CockpitMouseButtons.Left)) {
+			if (pressedNow.HasFlag(CockpitMouseButtons.Left) && !LeftPressesNothing) {
 				OnPress(hit);
 			}
 

@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io;
 using Herculan.Engine.Content;
@@ -10,15 +11,17 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, its objects placed from the
-/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings window and the move, add, delete, fit, type, starting condition, heading, base pad, route, trigger area, trigger, countdown, condition, presence, random table, order, objective, text and theater tools, all sharing one
+/// <c>.MSN</c>'s layout (<see cref="Index"/>), the overlays, the picker, the two side panels, the Mission Settings and Terrain windows and the move, add, delete, fit, type, starting condition, heading, base pad, route, trigger area, trigger, countdown, condition, presence, random table, order, objective, text, theater, terrain and sculpting tools, all sharing one
 /// selection. Every edit, undo and redo syncs the scene and the indices with the document in place (<see cref="Sync"/>), and a
-/// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
+/// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>), and a
+/// replaced terrain is swapped into it in place (<see cref="Terrain"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
 	private EditorMission(GameContent content, string name, MissionDocument source, MissionScene scene,
 			PlacementTables tables, MissionIndex sceneIndex, TerrainMaterialTable materials,
-			MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones, LoadoutPresets presets) {
+			MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones, LoadoutPresets presets,
+			int detailLevel, TerrainPictures? pictures) {
 		Name = name;
 		Source = source;
 		Scene = scene;
@@ -26,7 +29,7 @@ internal sealed class EditorMission {
 		PlayerSquad = squad;
 		Names = new MissionNames(sceneIndex, RosterTypeNames.Load(content));
 
-		var drape = new DrapedLines(scene.World.Terrain);
+		var drape = new DrapedLines(scene.World);
 		Overlay = new MissionOverlay(sceneIndex, drape);
 		Picker = new ScenePicker(scene, sceneIndex, Overlay);
 		GroupOverlay = new GroupOverlay(sceneIndex, drape, Picker);
@@ -43,12 +46,14 @@ internal sealed class EditorMission {
 		Presets = new LoadoutPresetView(Fitter, presets);
 		Squad = new SquadEditor(source, Mover, Sync, Fitter, Deleter);
 		Theater = new TheaterChanger(source, scene, sceneIndex, Mover, Sync);
+		Terrain = new TerrainChanger(content, source, scene, sceneIndex, Mover, Sync, Overlay, materials, detailLevel, zones.FreeZone);
 		Routes = new RouteEditor(source, sceneIndex, Mover, Sync, Selection, Deleter);
 		Placing = new RoutePlacing(Routes, sceneIndex, drape);
 		Areas = new AreaEditor(source, sceneIndex, Mover, Sync, Selection, Deleter);
 		AreaPlacing = new AreaPlacing(Areas, drape);
 		Placing.Blocked = () => AreaPlacing.Active;
 		AreaPlacing.Blocked = () => Placing.Active;
+		Sculptor = new TerrainSculptor(source, scene.World, sceneIndex, Mover, Sync, Terrain, drape) { Blocked = () => PlacingAny };
 		Hercs = new HercPlacer(source, scene, sceneIndex, Mover, Sync, Selection, Fitter, UnitTypeNames.LoadMechs(content));
 		Flyers = new FlyerPlacer(source, scene, sceneIndex, Mover, Sync, Selection, UnitTypeNames.LoadFlyers(content));
 		Vehicles = new VehiclePlacer(source, sceneIndex, Mover, Sync, Selection, Placer);
@@ -79,8 +84,11 @@ internal sealed class EditorMission {
 		Outliner.Tables = randomTables;
 		PlayableIn = new PlayableInEditor(source, Mover, Sync);
 		About = new MissionAboutEditor(Mover);
-		Settings = new MissionSettingsWindow(() => Name, () => zones.Describe(Zone), Theater, TheaterNames.Labels(content),
-			PlayableIn, About, new MissionTextView(Texts), new DebriefView(Debrief));
+		Settings = new MissionSettingsWindow(() => Name, Theater, TheaterNames.Labels(content), PlayableIn, About,
+			new MissionTextView(Texts), new DebriefView(Debrief));
+		TerrainWindow = new MissionTerrainWindow(
+			() => Terrain.OwnZone is { } own ? ZoneCatalog.DescribeOwn(Zone, own) : zones.Describe(Zone),
+			new TerrainView(Terrain, new TerrainImageForm("Replace terrain from", pictures), () => Name));
 		var catalog = new UnitTypeCatalog(content);
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
 			new SquadMachinePanel(Fitter, Squad, squad, Presets), new RosterFitView(Fitter, Types, TableEditor, catalog, Presets),
@@ -108,6 +116,9 @@ internal sealed class EditorMission {
 	/// <summary>The zone the mission is played in: the launch's header word (<see cref="MissionDocument.LaunchHeader"/>).</summary>
 	public short Zone => Source.LaunchHeader[ZoneCatalog.ZoneWord];
 
+	/// <inheritdoc cref="TerrainChanger.OwnZone"/>
+	public ZoneFiles? OwnZone => Terrain.OwnZone;
+
 	/// <summary>The scene's objects and the mission's groups, routes and trigger areas, as the <c>.MSN</c>'s layout places them, by GUID.</summary>
 	public MissionIndex Index { get; }
 
@@ -126,8 +137,11 @@ internal sealed class EditorMission {
 
 	public PropertiesPanel Properties { get; }
 
-	/// <summary>The Mission Settings window, which Edit &gt; Mission Settings opens.</summary>
+	/// <summary>The Mission Settings window, which Mission Settings &gt; General opens.</summary>
 	public MissionSettingsWindow Settings { get; }
+
+	/// <summary>The Terrain window, which Mission Settings &gt; Terrain opens.</summary>
+	public MissionTerrainWindow TerrainWindow { get; }
 
 	/// <summary>The edits made to <see cref="Source"/>, and their undo history.</summary>
 	public PointMover Mover { get; }
@@ -229,6 +243,9 @@ internal sealed class EditorMission {
 	/// <summary>Changes the mission's theater and time of day in <see cref="Source"/>, reloading the scene's world, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public TheaterChanger Theater { get; }
 
+	/// <summary>Holds the mission's own terrain and replaces it, swapping the scene's terrain, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public TerrainChanger Terrain { get; }
+
 	/// <summary>Creates, edits and deletes routes in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public RouteEditor Routes { get; }
 
@@ -243,6 +260,12 @@ internal sealed class EditorMission {
 
 	/// <summary>Whether a route or a trigger area is being placed, while which the view picks and moves nothing.</summary>
 	public bool PlacingAny => Placing.Active || AreaPlacing.Active;
+
+	/// <summary>The sculpting brushes, which take the view's left-drag while the Toolbox's "Sculpt Terrain" tab is shown.</summary>
+	public TerrainSculptor Sculptor { get; }
+
+	/// <summary>Whether a drag is under way, of the move handles or a sculpting stroke, while which no other edit is made.</summary>
+	public bool Dragging => Gizmo.Dragging || Sculptor.Stroking;
 
 	/// <summary>The window title, the name marked <c>*</c> when <paramref name="unsaved"/> changes are held.</summary>
 	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Zone}";
@@ -259,12 +282,13 @@ internal sealed class EditorMission {
 	/// writes, <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables,
 	/// <paramref name="cybrid"/> what a Cybrid's hardpoints offer and <paramref name="zones"/> the install's zones with the
 	/// retail missions that use each, both built once per editor run, and <paramref name="presets"/> the loadout presets, read once
-	/// per editor run, or with none an empty set kept in memory only. Throws
+	/// per editor run, or with none an empty set kept in memory only; <paramref name="pictures"/> pictures a terrain image in
+	/// the Terrain window, or with none it shows no picture. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
 	/// </summary>
 	public static EditorMission Open(GameContent content, string scriptPath, string name, string dataDirectory,
 			MissionDocument source, MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones,
-			LoadoutPresets? presets = null) {
+			LoadoutPresets? presets = null, TerrainPictures? pictures = null) {
 		File.WriteAllBytes(scriptPath, source.ScriptBytes);
 		File.WriteAllBytes(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", MissionLoader.TextFileName),
 			source.MissionText);
@@ -276,11 +300,13 @@ internal sealed class EditorMission {
 		var sceneIndex = new MissionIndex(plan, objects);
 		scene.Settle(sceneIndex.Objects, sceneIndex.BasePads);
 		foreach (var sceneObject in sceneIndex.Objects) {
-			sceneObject.Object.Position = GroundStanding.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
+			sceneObject.Object.Position = GroundStanding.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position,
+				sceneIndex.Asleep(sceneObject));
 		}
 
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
 		return new EditorMission(content, name, source, scene, tables, sceneIndex,
-			TerrainMaterialTable.Load(content), squad, shellContent, cybrid, zones, presets ?? new LoadoutPresets());
+			TerrainMaterialTable.Load(content), squad, shellContent, cybrid, zones, presets ?? new LoadoutPresets(),
+			TerrainDetail.LevelFrom(dataDirectory), pictures);
 	}
 }

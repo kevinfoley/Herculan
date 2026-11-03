@@ -25,9 +25,10 @@ public enum PlayerMachineSource {
 public sealed class MissionSquad {
 	private readonly Func<MissionGenerator, byte[]?>? _export;
 
-	private MissionSquad(PlayerMachineSource player, int chassis, Func<MissionGenerator, byte[]?>? export) {
+	private MissionSquad(PlayerMachineSource player, int chassis, bool leavesLast, Func<MissionGenerator, byte[]?>? export) {
 		PlayerMachine = player;
 		HercTypeChassis = chassis;
+		LeavesLastSquadmate = leavesLast;
 		_export = export;
 	}
 
@@ -36,6 +37,12 @@ public sealed class MissionSquad {
 
 	/// <summary>The Herc Type option's chassis, which the player pilots under <see cref="PlayerMachineSource.HercType"/>; <c>-1</c> otherwise.</summary>
 	public int HercTypeChassis { get; }
+
+	/// <summary>
+	/// Whether the last squadmate the mission lists stays behind, retail's training squad build: a practice mission or a demo,
+	/// whose build is retail's (<see cref="ShellTrainingLaunch.BuildSquad"/>).
+	/// </summary>
+	public bool LeavesLastSquadmate { get; }
 
 	/// <summary>
 	/// The <c>player.mec</c> the launch would write for <paramref name="mission"/>, a generation of the mission opened; null
@@ -47,14 +54,16 @@ public sealed class MissionSquad {
 	/// <summary>
 	/// A training-mode load on <paramref name="row"/> (<see cref="ShellTrainingLaunch.NewCareer"/>, then
 	/// <see cref="ShellTrainingLaunch.BuildSquad"/> and <see cref="ShellMissionLaunch.ExportPlayerMec"/>), whose
-	/// <see cref="ShellTrainingLaunch.NewCareer"/> drew from <paramref name="start"/>, copied.
+	/// <see cref="ShellTrainingLaunch.NewCareer"/> drew from <paramref name="start"/>, copied, and whose build fields every
+	/// squadmate when <paramref name="wholeSquad"/> is set.
 	/// </summary>
 	internal static MissionSquad Training(GameContent content, SimulatorPreferences options, int row, bool instantAction,
-			SimRandom start) {
+			SimRandom start, bool wholeSquad) {
 		var begun = start.Copy();
 		return new MissionSquad(
 			ShellTrainingLaunch.PilotsMissionMachine(row, instantAction) ? PlayerMachineSource.Mission : PlayerMachineSource.HercType,
 			ShellTrainingLaunch.PilotsMissionMachine(row, instantAction) ? -1 : options[ShellPracticeScreen.HercTypeOption],
+			!wholeSquad,
 			mission => {
 				var random = begun.Copy();
 				int Roll(short bound) => random.NextBelow(bound);
@@ -62,11 +71,11 @@ public sealed class MissionSquad {
 					return null;
 				}
 
-				ShellTrainingLaunch.BuildSquad(content, options, row, instantAction, mission, hangar);
+				ShellTrainingLaunch.BuildSquad(content, options, row, instantAction, mission, hangar, wholeSquad);
 				return ShellMissionLaunch.ExportPlayerMec(hangar);
 			});
 	}
 
 	/// <summary>A campaign-mode load, whose squad is the career's.</summary>
-	internal static MissionSquad Campaign() => new(PlayerMachineSource.CareerSquad, -1, null);
+	internal static MissionSquad Campaign() => new(PlayerMachineSource.CareerSquad, -1, false, null);
 }

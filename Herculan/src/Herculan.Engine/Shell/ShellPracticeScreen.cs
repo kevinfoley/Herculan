@@ -98,10 +98,22 @@ public sealed class ShellPracticeScreen {
 	private static readonly (int Option, int Modulus, int FirstText)[] Parameters = {
 		(0x26, 2, 0x128),
 		(0x25, 2, 0x12a),
-		(0x27, 4, 0x35),
+		(DifficultyOption, DifficultyCount, DifficultyText),
 		(0x29, 2, 0x12c),
 		(HercTypeOption, HercTypeCount, 0x6e),
 	};
+
+	/// <summary><c>prefs.cfg</c> option 39, the Mission Difficulty a training load writes into the header.</summary>
+	public const int DifficultyOption = 0x27;
+
+	/// <summary>Mission Difficulty's modulus: the four levels <c>ROOKIE</c> to <c>ELITE</c>.</summary>
+	public const int DifficultyCount = 4;
+
+	/// <summary>The <c>estext.bin</c> entry naming level 0, <c>ROOKIE</c>; each level's name is this plus the level.</summary>
+	public const int DifficultyText = 0x35;
+
+	/// <summary>The <c>estext.bin</c> entry of Mission Difficulty's label, <c>0xfd</c>, which the screen draws a colon beside.</summary>
+	public const int DifficultyLabelText = FirstParameterText + (int)ShellPracticeButton.Difficulty;
 
 	/// <summary><c>prefs.cfg</c> option 40, the chassis the player takes on a practice row from 4 down.</summary>
 	public const int HercTypeOption = 0x28;

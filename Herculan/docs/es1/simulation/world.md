@@ -109,7 +109,7 @@ The three queries are ES2's, the arguments after the shape in reverse order:
 
 - `GridShape_HeightAround` (`0001fa9c`), (shape, radius, point) in stack order: ES2's. `es2_xref.py` finds calls from the other two.
 - `GridShape_HeightAt` (`0001fc5c`), (shape, radius, point): ES2's. `es2_xref.py` finds one call, from `Structure_WalkCollisionTest` (`0002075c`, [a point against the shapes](terrain.md#a-point--zone_walkcollisiontest-00020860)).
-- `GridShape_Raycast` (`0001fccc`), (shape, clearance, segment, out), the segment two `int32` triples: ES2's march but for three things. It also rejects a segment whose two ends both have a negative Z; the step count is the length divided by the step, without ES2's 1 added; and a step hits when the sampled height is greater than its Z, where ES2's also wants the height non-zero. With *s* the cell shift `+0x32`:
+- `GridShape_Raycast` (`0001fccc`), (shape, clearance, segment, out), the segment two `int32` triples: ES2's march but for three things. It also rejects a segment whose two ends both have a negative Z; the step count is the length divided by the step, without ES2's 1 added; and a step hits when the sampled height is greater than its Z, where ES2's also wants the height non-zero. With *s* the cell size shift `+0x32`:
 
   1. It returns 0 for a shape with no columns (`+0x2a`), when both ends' Z are at or above the ceiling `+0x430`, or when both are negative.
   2. The origin shift (*ox*, *oy*) = (`int16`)(`+0x2e` << *s*), (`int16`)(`+0x30` << *s*) is added to both ends' X and Y. The step is the `int16` (1 << *s*) + the clearance, the clearance read as a word, as `GridShape_HeightAround` reads its radius (`0001faba`).

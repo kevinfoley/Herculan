@@ -17,7 +17,7 @@ Herculan.Engine.Host [<install>] [<mission>] [flags]
 
 A Metaltech: Earthsiege install, one whose folder holds `GO.EXE`, runs [its shell or a mission](#metaltech-earthsiege) instead, and is not remembered.
 
-A named mission is loaded as the shell loads that career position ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#loading-the-careers-mission)) and flown from a handoff written into the install's `DATA`, as a launch from the front end is. A practice or demo mission takes the training load, with the practice options `DATA\prefs.cfg` holds, as `Begin Mission` or `INSTANT ACTION` on its row would. A campaign mission is loaded for a career with no history: every campaign flag 0 until the load seeds its own, and the player's squad and skill from `DATA\player.mec`, which it needs.
+A named mission is loaded as the shell loads that career position ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#loading-the-careers-mission)) and flown from a handoff written into the install's `DATA`, as a launch from the front end is. A practice or demo mission takes the training load, with the practice options `DATA\prefs.cfg` holds, as `Begin Mission` or `INSTANT ACTION` on its row would. A campaign mission is loaded for a career with no history: every campaign flag 0 until the load seeds its own, and the player's squad and skill from `DATA\player.mec`, which it needs. A mission saved with terrain of its own ([`plan-zone-editing.md`](plan-zone-editing.md)) has that zone written beside the handoff's `script.dat` under the zone's file names, `zoneNNNN.dat` and `zoneNNNN.dba`, and any `script.dat` is flown on such a pair beside it ahead of the archive's zone of that number.
 
 ## What runs
 

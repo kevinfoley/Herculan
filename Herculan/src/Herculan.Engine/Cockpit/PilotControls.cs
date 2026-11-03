@@ -84,6 +84,14 @@ public sealed class PilotControls {
 
 	public JoystickBindings Bindings { get; }
 
+	/// <summary>
+	/// Whether the left button is the trigger this frame rather than a click: the gunsight drag is armed, so a left
+	/// press fires (<see cref="GunsightDrag.Firing"/>) and presses no cockpit widget. Only under the tweak, so a drag
+	/// retail's own record arms leaves the clicks as retail has them.
+	/// </summary>
+	public bool LeftButtonFires => _gunsightDrag.Armed
+		&& TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FixGunsightDrag);
+
 	/// <summary>What the stick in use can do: the recording machine's during a replay, the attached one otherwise.</summary>
 	public JoystickCapabilities StickCapabilities =>
 		_tape.Playing ? _tape.Capabilities : Joystick?.Capabilities ?? JoystickCapabilities.None;
@@ -118,6 +126,21 @@ public sealed class PilotControls {
 		// A replay pilots whether or not the live player has gone to the free camera: the machine is the
 		// tape's to drive, and the camera is only a way to watch it.
 		bool pilotInput = _view.Piloting || _tape.Playing;
+
+		// The gunsight drag reads the pointer here, ahead of the branches, so that the left button it lets fire reaches
+		// the trigger the tape records; its terms are added below. A replay's block has no pointer or buttons, so it
+		// never arms there.
+		var gunsightComplex = pilotInput && pilotMech != null && controls != null && !modalPanelOpen
+			? _displays.Art?.Gau.GunsightComplex
+			: null;
+		if (gunsightComplex is { } complex) {
+			const float shift = CockpitArt.GauToPixelScale;
+			_gunsightDrag.Update(_tape.Playing ? GunsightPointer.Released : gunsightPointer,
+				(int)(complex.Origin.X * shift), (int)(complex.Origin.Y * shift),
+				(int)((complex.Origin.X + complex.Size.Width) * shift),
+				(int)((complex.Origin.Y + complex.Size.Height) * shift));
+		}
+
 		if (pilotInput && pilotMech != null && controls != null && modalPanelOpen) {
 			pilotMech.Controls = MechControls.Neutral;
 			_view.TakeCameraAxes(MechControls.Neutral);
@@ -227,16 +250,10 @@ public sealed class PilotControls {
 			};
 		}
 
-		// The gunsight drag, added after either branch to what the machine is handed, and not to the input block the
-		// missile and the tape read. A replay's block has no pointer or buttons, so it never arms there.
-		if (pilotInput && pilotMech != null && controls != null && !modalPanelOpen
-				&& _displays.Art?.Gau.GunsightComplex is { } complex) {
-			const float shift = CockpitArt.GauToPixelScale;
-			_gunsightDrag.Update(_tape.Playing ? GunsightPointer.Released : gunsightPointer,
-				(int)(complex.Origin.X * shift), (int)(complex.Origin.Y * shift),
-				(int)((complex.Origin.X + complex.Size.Width) * shift),
-				(int)((complex.Origin.Y + complex.Size.Height) * shift));
-			pilotMech.Controls = _gunsightDrag.AddTo(pilotMech.Controls);
+		// The gunsight drag's terms, added after either branch to what the machine is handed, and not to the input block
+		// the missile and the tape read.
+		if (gunsightComplex != null) {
+			pilotMech!.Controls = _gunsightDrag.AddTo(pilotMech.Controls);
 		}
 
 		// The free camera during a replay, which the live keyboard flies while the tape pilots.
@@ -319,7 +336,9 @@ public sealed class PilotControls {
 			_fireRowLatched = true;
 		}
 
-		if (_fireRowLatched && !keys.IsKeyPressed(_keyMap.KeyOf(KeyAction.Fire)) && !stickReading.Button(0)) {
+		// The left button the gunsight drag lets fire is [Space] in every respect: held, it keeps the latch up too.
+		bool fireKey = keys.IsKeyPressed(_keyMap.KeyOf(KeyAction.Fire)) || _gunsightDrag.Firing;
+		if (_fireRowLatched && !fireKey && !stickReading.Button(0)) {
 			_fireRowLatched = false;
 		}
 
@@ -400,7 +419,7 @@ public sealed class PilotControls {
 			// firing as fast as its refire delay and its capacitor allow. So is the joystick trigger,
 			// for the same reason and through the same byte.
 			Fire: _staging.HeldFire || (_joystickInput.Fire && !(_fireRowLatched && fireRowIsTrigger))
-				|| (keys.IsKeyPressed(_keyMap.KeyOf(KeyAction.Fire)) && !_fireRowLatched),
+				|| (fireKey && !_fireRowLatched),
 			// The flight model's own pair of conditions, which differ from the walker's above.
 			FlightThrottleLever: JoystickBindings.FlightThrottleIsLever(StickCapabilities, _preferences));
 		_view.TakeCameraAxes(mech.Controls);

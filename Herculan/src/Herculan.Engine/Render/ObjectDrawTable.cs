@@ -25,7 +25,7 @@ public enum ObjectTypeTag : short {
 	/// <summary>A smoke ball or a fire.</summary>
 	Fire = 4,
 
-	/// <summary>A structure, ground vehicles included.</summary>
+	/// <summary>A structure other than a ground vehicle.</summary>
 	Structure = 5,
 
 	/// <summary>A flyer.</summary>
@@ -39,6 +39,9 @@ public enum ObjectTypeTag : short {
 
 	/// <summary>A ground shape.</summary>
 	GroundShape = 9,
+
+	/// <summary>A GroundVehicle: <c>Base_Construct</c> (<c>00405314</c>) writes 5 and then 10 over it in that arm.</summary>
+	GroundVehicle = 10,
 }
 
 /// <summary>
@@ -93,16 +96,41 @@ public sealed class DrawEntry {
 	/// </summary>
 	public object? HiddenWhenRidden { get; set; }
 
+	/// <summary>Its distance from <paramref name="viewer"/> as the original's render entry carries it — see <see cref="ObjectDrawTable.EntryDistance"/>.</summary>
+	public int DistanceFrom(Vec3i viewer) => ObjectDrawTable.EntryDistance(Tag, Position, EntryHeight, viewer);
+
 	/// <summary>Whether this pass draws it. True until a pass has filed it.</summary>
 	public bool Drawn { get; internal set; } = true;
 
 	/// <summary>The cell this pass filed it under, null for the no-cell bucket.</summary>
 	internal (int X, int Y)? Cell { get; set; }
+
+	/// <summary>
+	/// Its place in <see cref="ObjectDrawTable.Entries"/> when last filed, the original's submit order, which decides
+	/// ties in the painter's-order draw (<see cref="WorldDrawPass"/>). Past every filed entry until it is first filed.
+	/// </summary>
+	internal int FilingIndex { get; set; } = int.MaxValue - 1;
+}
+
+/// <summary>Where in a pass's paint what is filed under a cell is drawn — see <see cref="ObjectDrawTable.PhaseOf"/>.</summary>
+internal enum PaintPhase {
+	/// <summary>In the terrain walk, straight after its cell's ground.</summary>
+	Walk = 0,
+
+	/// <summary>After the walk, in the no-cell bucket.</summary>
+	NoCell = 1,
+
+	/// <summary>After the no-cell bucket, with the flying player's cell when the walk did not reach it.</summary>
+	PlayerCell = 2,
+
+	/// <summary>Nowhere: the pass's draw does not reach the cell.</summary>
+	NotDrawn = 3,
 }
 
 /// <summary>
-/// The original's per-cell object filing and the terrain walk's culling, reduced to what they decide
-/// here: <b>whether</b> each object is drawn. The depth buffer still decides what covers what.
+/// The original's per-cell object filing and the terrain walk's culling: <b>whether</b> each object is drawn, and where
+/// in the paint (<see cref="PhaseOf"/>), which the painter's-order draw (<see cref="WorldDrawPass"/>) orders the entries
+/// by. The per-pixel depth draw reads only whether; there the depth buffer decides what covers what.
 ///
 /// <para>Each pass, <see cref="File"/> files every entry under a cell as <c>Scene_SubmitFrameObjects</c>
 /// (<c>0042841c</c>) does — by <c>HeightGrid_PickDrawCell</c>, or under another object's cell for a
@@ -141,6 +169,7 @@ public sealed class ObjectDrawTable {
 	private bool _walked;
 	private (int X, int Y) _viewerCell;
 	private (int X, int Y)? _playerCell;
+	private ViewSphereTest? _reachesView;
 
 	/// <summary>
 	/// Every object to file this frame, in the order the original submits them. A structure, a HERC
@@ -161,16 +190,27 @@ public sealed class ObjectDrawTable {
 	/// Files every entry for a view at <paramref name="viewer"/> and settles each one's
 	/// <see cref="DrawEntry.Drawn"/>. <paramref name="region"/> must already be this view's, as
 	/// <c>Terrain_SetupVisibleRegion</c> builds it before the submit.
+	///
+	/// <para>With <paramref name="reachesView"/>, a structure filed under a cell the draw does not reach is drawn anyway
+	/// when its shape radius about its position reaches into the view, and is then held to the same ridden-camera and
+	/// draw-distance tests as one the walk reached. This is the widescreen tweak's, not the original's: retail draws
+	/// nothing filed under a cell its walk misses, so a large building whose centre lies past the walk's margin vanishes
+	/// whole while part of it is on screen (docs/retail/rendering/terrain-drawing.md, "The visible region" and "What is
+	/// filed where"). Null is retail.</para>
 	/// </summary>
-	public void File(HeightGrid grid, TerrainVisibleRegion region, Vec3i viewer, TerrainPaintOrder order) {
+	public void File(HeightGrid grid, TerrainVisibleRegion region, Vec3i viewer, TerrainPaintOrder order,
+			ViewSphereTest? reachesView = null) {
 		_grid = grid;
 		_region = region;
 		_viewer = viewer;
+		_reachesView = reachesView;
 		_viewerCell = (order.CentreX, order.CentreY);
 		SetDrawDistances(grid);
 		Walk(grid, region, order);
 
-		foreach (var entry in Entries) {
+		for (int index = 0; index < Entries.Count; index++) {
+			var entry = Entries[index];
+			entry.FilingIndex = index;
 			var cell = entry.FileWith is { } with
 				? _cells.TryGetValue(with, out var cached) ? cached : null
 				: grid.PickDrawCell(entry.Position, entry.FilingRadius, viewer, region);
@@ -178,8 +218,10 @@ public sealed class ObjectDrawTable {
 			entry.Cell = cell;
 
 			// Only the structure, machine and flyer walks store the cell back on the object (+0x1e8),
-			// and those are the only objects anything is filed with.
-			if (entry.Tag is ObjectTypeTag.Structure or ObjectTypeTag.Herc or ObjectTypeTag.Flyer) {
+			// and those are the only objects anything is filed with. The structure walk files ground
+			// vehicles too.
+			if (entry.Tag is ObjectTypeTag.Structure or ObjectTypeTag.GroundVehicle or ObjectTypeTag.Herc
+					or ObjectTypeTag.Flyer) {
 				_cells[entry.Subject] = cell;
 			}
 		}
@@ -220,26 +262,42 @@ public sealed class ObjectDrawTable {
 			return true;
 		}
 
-		if (cell == _playerCell) {
-			return true;
-		}
-
-		// Terrain_DrawVisibleCells draws the viewer's cell after the walk when the walk missed it, but
-		// only when it walks at all.
-		if (!_walked) {
-			return false;
-		}
-
-		return cell == _viewerCell
-			|| (cell.X >= 0 && cell.X < grid.Width && cell.Y >= 0 && cell.Y < grid.Height
-				&& _walkedStamp[cell.Y * grid.Width + cell.X] == _pass);
+		return cell == _playerCell || Walked(grid, cell);
 	}
+
+	/// <summary>
+	/// Where this pass paints what is filed under <paramref name="cell"/>: in the walk when the walk draws that cell's
+	/// objects (<see cref="TerrainPaintOrder.Rank"/> orders them), in the no-cell bucket for a null cell, after it for a
+	/// flying player's cell the walk did not reach (<c>ObjList_DrawAfterTerrain</c>, <c>0042883c</c>), and nowhere
+	/// otherwise. Before the first <see cref="File"/>, every cell is in the walk.
+	/// </summary>
+	internal PaintPhase PhaseOf((int X, int Y)? cell) {
+		if (cell is not { } filed) {
+			return PaintPhase.NoCell;
+		}
+
+		if (_grid is not { } grid || Walked(grid, filed)) {
+			return PaintPhase.Walk;
+		}
+
+		return filed == _playerCell ? PaintPhase.PlayerCell : PaintPhase.NotDrawn;
+	}
+
+	// Whether the walk draws the objects filed under `cell`: it visits the cell, or the cell is the viewer's, which
+	// Terrain_DrawVisibleCells draws after the walk when the walk missed it, but only when it walks at all.
+	private bool Walked(HeightGrid grid, (int X, int Y) cell) =>
+		_walked
+		&& (cell == _viewerCell
+			|| (cell.X >= 0 && cell.X < grid.Width && cell.Y >= 0 && cell.Y < grid.Height
+				&& _walkedStamp[cell.Y * grid.Width + cell.X] == _pass));
 
 	/// <summary>
 	/// The draw rule: the no-cell bucket is drawn with no test at all (<c>ObjList_DrawAfterTerrain</c>
 	/// calls each one's draw slot directly); a cell the draw does not reach draws nothing; within one it
 	/// does, a ground shape is drawn on the spot, and anything else is skipped when the camera rides it
-	/// or when it lies beyond its class's draw distance (<c>ObjList_DrawCellObjects</c>, <c>00428c60</c>).
+	/// or when it lies beyond its class's draw distance (<c>ObjList_DrawCellObjects</c>, <c>00428c60</c>). A structure
+	/// in a cell the draw does not reach is treated as reached when the pass's view test says it is on screen — see
+	/// <see cref="File"/>.
 	/// </summary>
 	private bool Decide((int X, int Y)? cell, ObjectTypeTag tag, object? subject, Vec3i position,
 			int entryHeight, int shapeRadius) {
@@ -247,7 +305,8 @@ public sealed class ObjectDrawTable {
 			return true;
 		}
 
-		if (!CellDrawn(filed)) {
+		if (!CellDrawn(filed)
+				&& !(tag == ObjectTypeTag.Structure && _reachesView is { } view && view.Overlaps(position, shapeRadius))) {
 			return false;
 		}
 
@@ -259,11 +318,20 @@ public sealed class ObjectDrawTable {
 			return false;
 		}
 
+		return !IsBeyondDrawDistance(tag, shapeRadius, EntryDistance(tag, position, entryHeight, _viewer));
+	}
+
+	/// <summary>
+	/// The distance <c>ObjList_DrawCellObjects</c> (<c>00428c60</c>) stores at a render entry's <c>+0x12</c>, which the
+	/// draw-distance test, the distance colour bands and the fade all take: <c>Math_DistanceBetweenPoints</c> from the
+	/// viewer to the object's position, raised by <paramref name="entryHeight"/> for a structure or a HERC.
+	/// </summary>
+	internal static int EntryDistance(ObjectTypeTag tag, Vec3i position, int entryHeight, Vec3i viewer) {
 		var measured = tag is ObjectTypeTag.Structure or ObjectTypeTag.Herc
 			? new Vec3i(position.X, position.Y, position.Z + entryHeight)
 			: position;
 
-		return !IsBeyondDrawDistance(tag, shapeRadius, measured.ApproxDistanceTo(_viewer));
+		return measured.ApproxDistanceTo(viewer);
 	}
 
 	/// <summary>

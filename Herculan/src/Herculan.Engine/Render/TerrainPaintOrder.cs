@@ -53,7 +53,7 @@ public readonly struct TerrainPaintOrder : IEquatable<TerrainPaintOrder> {
 	/// </summary>
 	public static TerrainPaintOrder For(HeightGrid grid, Vec3i viewer, short heading) {
 		int magnitude = heading == short.MinValue ? short.MaxValue : System.Math.Abs((int)heading);
-		return new TerrainPaintOrder(viewer.X >> grid.CellShift, viewer.Y >> grid.CellShift,
+		return new TerrainPaintOrder(viewer.X >> grid.CellSizeShift, viewer.Y >> grid.CellSizeShift,
 			magnitude >= 0x2001 && magnitude <= 0x5fff);
 	}
 

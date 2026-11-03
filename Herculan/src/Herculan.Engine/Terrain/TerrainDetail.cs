@@ -8,9 +8,9 @@ namespace Herculan.Engine.Terrain;
 ///
 /// <para><c>Terrain_SetupVisibleRegion</c> (<c>0046ca98</c>) sets the grid's draw radius every frame
 /// as <c>grid[+0x10c] = (short)DAT_004a0bcc[DAT_004d1fc3]</c> — a three-entry table indexed by the
-/// setting — and then <c>&gt;&gt;= (cellShift - 14)</c> when the cell shift is above 14, which only
+/// setting — and then <c>&gt;&gt;= (cellSizeShift - 14)</c> when the cell size shift is above 14, which only
 /// ever applies to the two shift-15 zones. Everything downstream is that one number:
-/// <c>Terrain_BuildDrawRegionQuad</c> draws a square of <c>radius &lt;&lt; cellShift</c> world units
+/// <c>Terrain_BuildDrawRegionQuad</c> draws a square of <c>radius &lt;&lt; cellSizeShift</c> world units
 /// around the viewer, and <c>Terrain_DrawCellQuad</c> installs the same distance as the visibility
 /// range the fog is measured against (<see cref="HeightGrid.VisibilityRange"/>). So the setting moves
 /// the far edge of the world and the fog together, as one.</para>
@@ -37,9 +37,9 @@ public static class TerrainDetail {
 	/// The draw radius one setting selects, in cells, with the shift-15 correction applied — the
 	/// whole of <c>Terrain_SetupVisibleRegion</c>'s write.
 	/// </summary>
-	public static int RadiusFor(int level, int cellShift) {
+	public static int RadiusFor(int level, int cellSizeShift) {
 		int radius = RadiusInCells[Math.Clamp(level, 0, RadiusInCells.Length - 1)];
-		return cellShift > 14 ? radius >> (cellShift - 14) : radius;
+		return cellSizeShift > 14 ? radius >> (cellSizeShift - 14) : radius;
 	}
 
 	/// <summary>

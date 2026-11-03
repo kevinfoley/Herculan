@@ -10,8 +10,8 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// File &gt; Save, Save As, Export script.dat and Export Mission Bundle, and the prompt that asks to save unsaved changes
-/// before the mission is left or played, each an ImGui modal. A Save writes the open mission's <c>.MSN</c>, text and about
-/// file as loose files in the install (<see cref="SavedMissions"/>) under its own name, which the game then loads in place
+/// before the mission is left or played, each an ImGui modal. A Save writes the open mission's <c>.MSN</c>, text, about
+/// file and own zone (<see cref="EditorMission.OwnZone"/>) as loose files in the install (<see cref="SavedMissions"/>) under its own name, which the game then loads in place
 /// of an archive's copy; a Save As
 /// writes them under a name typed in, which the mission then has. Either runs the mission check over the <c>.MSN</c> first
 /// (<see cref="MissionLint"/>) and, when it finds anything, lists it as the Problems list words it (<see cref="ProblemText"/>)
@@ -23,7 +23,7 @@ namespace Herculan.Engine.Editor;
 /// <para>Export Mission Bundle shows the about file's fields for a last look, the date filled in with today's when it has
 /// none, and writes <c>&lt;name&gt;.hcm</c> (<see cref="MissionBundle"/>) into a folder, saving the mission first when it
 /// has unsaved changes, a change made in those fields included, so that the bundle holds what the install holds. The bundle
-/// takes the mission's text in the shell's language alone, the one text the editor edits.</para>
+/// takes the mission's text in the shell's language alone, the one text the editor edits, and its own zone when it has one.</para>
 ///
 /// <para>The folder is typed in or chosen with the system's folder picker (<see cref="NativePathPicker"/>). It starts as the
 /// install's mission folder (<see cref="CustomMissions.Folder"/>), whose bundles the game's Custom Missions window lists,
@@ -502,7 +502,7 @@ internal sealed class MissionSaving {
 				[Path.GetExtension(TextPath(mission.Name))] = new MissionStringFileTransformer().Write(document.Text!)
 					?? throw new InvalidOperationException("The mission's text does not write."),
 			};
-			File.WriteAllBytes(path, MissionBundle.Write(mission.Name, msn, texts, mission.About.About));
+			File.WriteAllBytes(path, MissionBundle.Write(mission.Name, msn, texts, mission.About.About, mission.OwnZone));
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException
 				or ArgumentException or NotSupportedException) {
 			Console.Error.WriteLine($"Cannot export {mission.Name}: {ex.Message}");
@@ -583,7 +583,8 @@ internal sealed class MissionSaving {
 			byte[] msn = new MissionFileTransformer().Write(document.Mission)
 				?? throw new InvalidOperationException("The mission file does not write.");
 			byte[]? text = document.Text == null ? null : new MissionStringFileTransformer().Write(document.Text);
-			var written = SavedMissions.Write(_installRoot, request.Name, _shellContent().Language, msn, text, mission.About.About);
+			var written = SavedMissions.Write(_installRoot, request.Name, _shellContent().Language, msn, text, mission.About.About,
+				mission.OwnZone);
 			Console.WriteLine($"Saved {mission.Name} as {string.Join(" and ", written)}.");
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException
 				or ArgumentException) {
@@ -603,7 +604,7 @@ internal sealed class MissionSaving {
 		var document = _mission!.Source;
 		try {
 			var written = HandoffExport.Write(folder, _installRoot, _handoffDirectory, document.ScriptBytes, document.MissionText,
-				_mission.PlayerSquad.PlayerMec(document.Generator));
+				_mission.PlayerSquad.PlayerMec(document.Generator), _mission.OwnZone);
 			Console.WriteLine($"Exported {_mission.Name} as {string.Join(", ", written)}.");
 			ShowMessage($"Exported {_mission.Name} into {folder}: {string.Join(", ", written.Select(Path.GetFileName))}.");
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException

@@ -43,7 +43,7 @@ Step 4 of the record, read by `GridShape_ReadFromStream` (`0042762c`):
 | `+0x430` | — | the table's last entry, addressed directly as the grid's ceiling |
 | `+0x434` | rows × columns bytes | height codes, row-major with Y outermost |
 
-**Verified against retail data:** all 45 `BASES.DGS` records have a cell shift of 9 (512 world units, ~3 m), the origin at the grid centre, and a height table that is **ascending** — which is what makes `+0x430` the true ceiling rather than just the last entry. Footprints run 2560×4096 to 19456×19456 world units (15 m to 117 m), and ceilings 511 to 29537.
+**Verified against retail data:** all 45 `BASES.DGS` records have a cell size shift of 9 (512 world units, ~3 m), the origin at the grid centre, and a height table that is **ascending** — which is what makes `+0x430` the true ceiling rather than just the last entry. Footprints run 2560×4096 to 19456×19456 world units (15 m to 117 m), and ceilings 511 to 29537.
 
 How a shot and a walking machine sample the grid is [`../simulation/hit-detection.md`](../simulation/hit-detection.md#the-collision-volume--the-dgs-records-height-field).
 

@@ -89,6 +89,11 @@ uniform vec3 uLightDirection;
 // The 256 in the sun's 128 + 256 * facing below, MissionSun.FaceShadeSlope; set per game.
 uniform float uSunShadeSlope;
 
+// What places the vertex: uProjection itself, or in WorldDrawPass's painter's order the same frustum with its depth
+// range fitted to the one entry being drawn. uProjection's near and far planes are kept as the two clip distances, which
+// only that draw turns on, together with depth clamping; a culled corner sets both negative.
+uniform mat4 uEntryProjection;
+
 // The impact effects' dynamic lights, as they apply to the object being drawn — FUN_00407098 picks
 // them per render entry and the renderer uploads its answer here. See EffectLightSelection, and
 // docs/retail/formats/effect-lights.md for the two shade terms below.
@@ -102,6 +107,12 @@ uniform int uEffectLightCount;
 uniform vec4 uEffectLights[MAX_EFFECT_LIGHTS];
 uniform float uEffectLightIntensity[MAX_EFFECT_LIGHTS];
 uniform float uEffectLightFalloff;
+
+// The shade ramps the distance colour bands have re-pointed for the object being drawn, in list order: .x the ramp, .y
+// the first palette index of its run and .z the run's length. See DistanceColorBands.
+#define MAX_BAND_RAMPS 8
+uniform int uBandRampCount;
+uniform vec3 uBandRamps[MAX_BAND_RAMPS];
 
 void main() {
 	vec4 worldPosition = uModel * vec4(aPosition, 1.0);
@@ -134,6 +145,8 @@ void main() {
 	// on one spot past the far plane and rasterizes nothing.
 	if (aSide != 0.0 && aSide != sideSign) {
 		gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+		gl_ClipDistance[0] = -1.0;
+		gl_ClipDistance[1] = -1.0;
 		return;
 	}
 
@@ -151,6 +164,8 @@ void main() {
 		float dependSign = dot(viewDependNormal, viewOnPlane) >= 0.0 ? -1.0 : 1.0;
 		if (dependSign != aDependSide) {
 			gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+			gl_ClipDistance[0] = -1.0;
+			gl_ClipDistance[1] = -1.0;
 			return;
 		}
 	}
@@ -208,12 +223,26 @@ void main() {
 
 	// A TSGouraudPoly corner's palette index, Raster_FillContourPolygon's per-vertex lookup: entry
 	// (shade * length) >> 8 of the ramp the surface names, which is the Gouraud block's alpha at
-	// this shade (SurfaceRampTable). The shade is the byte the light function returns, so it is
+	// this shade (SurfaceRampTable), or the run the distance colour bands have re-pointed that ramp at,
+	// the last one naming it. The shade is the byte the light function returns, so it is
 	// truncated, not rounded. The fragment stage bands what this interpolates to.
 	vGouraudIndex = 0.0;
 	if (uShadeRampEnabled && aShadeRamp >= 256.0) {
-		ivec2 cell = ivec2(int(min(shade, 255.0)), int(uShadeRampGouraudRow + (aShadeRamp - 256.0) + 0.5));
-		vGouraudIndex = floor(texelFetch(uShadeRampTable, cell, 0).a * 255.0 + 0.5);
+		float shadeByte = floor(min(shade, 255.0));
+		float ramp = floor(aShadeRamp - 256.0 + 0.5);
+		float banded = -1.0;
+		for (int i = 0; i < uBandRampCount; i++) {
+			if (uBandRamps[i].x == ramp) {
+				banded = uBandRamps[i].y + floor(shadeByte * uBandRamps[i].z / 256.0);
+			}
+		}
+
+		if (banded >= 0.0) {
+			vGouraudIndex = banded;
+		} else {
+			ivec2 cell = ivec2(int(shadeByte), int(uShadeRampGouraudRow + ramp + 0.5));
+			vGouraudIndex = floor(texelFetch(uShadeRampTable, cell, 0).a * 255.0 + 0.5);
+		}
 	}
 
 	vColor = aColor;
@@ -234,7 +263,10 @@ void main() {
 	// which reaches 18% at the corner of the view and fogs the edges of the screen too hard.
 	vViewDistance = -viewPosition.z;
 
-	gl_Position = uProjection * viewPosition;
+	vec4 clipPosition = uProjection * viewPosition;
+	gl_ClipDistance[0] = clipPosition.z + clipPosition.w;
+	gl_ClipDistance[1] = clipPosition.w - clipPosition.z;
+	gl_Position = uEntryProjection * viewPosition;
 }
 
 #endif
@@ -295,13 +327,13 @@ uniform float uFogDepthBias;
 uniform float uRampBlock;
 uniform bool uFullbright;
 
-// A ground shape is painted in the original straight after its own terrain cell, so the ground of
-// every cell painted later covers it. uPaintRank holds, per pixel, the paint rank of the ground
-// showing there (TerrainPaintRankBuffer); uGroundShapeRank is the rank of the shape's own cell. See
-// SceneRenderer.Render.
+// Whatever is filed under a terrain cell is painted in the original straight after that cell's ground, so the ground
+// of every cell painted later covers it. uPaintRank holds, per pixel, the paint rank of the ground showing there
+// (TerrainPaintRankBuffer); uEntryRank is the rank of the cell what is being drawn is filed under. See
+// SceneRenderer.Render for the ground shapes and WorldDrawPass for every entry.
 uniform usampler2D uPaintRank;
 uniform bool uPaintRankTest;
-uniform uint uGroundShapeRank;
+uniform uint uEntryRank;
 
 out vec4 FragColor;
 
@@ -575,7 +607,7 @@ int walkTexel(out ivec2 at) {
 }
 
 void main() {
-	if (uPaintRankTest && texelFetch(uPaintRank, ivec2(gl_FragCoord.xy), 0).r > uGroundShapeRank) {
+	if (uPaintRankTest && texelFetch(uPaintRank, ivec2(gl_FragCoord.xy), 0).r > uEntryRank) {
 		discard;
 	}
 
@@ -671,7 +703,8 @@ void main() {
 		// index between its corners' and fills each band flat with the band's UPPER index, so a pixel
 		// takes the ceiling of its interpolated index and the lowest corner's index shows only where
 		// every corner has it. The band is a plain palette index: no .RMP row and no depth slice is
-		// applied, so the face is not fogged. docs/retail/rendering/dts-texture-binding.md,
+		// applied. What fades the face with distance is the run its corners were looked up in, which the
+		// distance colour bands pick in the vertex stage. docs/retail/rendering/dts-texture-binding.md,
 		// "TSGouraudPoly — same ramp number, per-vertex light, no .RMP row".
 		//
 		// The cuts are straight lines through points spaced evenly along the triangle's edges, which

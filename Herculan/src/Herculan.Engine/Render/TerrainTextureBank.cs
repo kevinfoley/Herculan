@@ -87,7 +87,7 @@ public sealed class TerrainTextureBank {
 			return frame;
 		}
 
-		int shift = grid.CellShift + record.BlockShift - 13;
+		int shift = grid.CellSizeShift + record.BlockShift - 13;
 		if (shift < 0 || shift > 8) {
 			// Outside this range the "one rect per cell inside one frame" reading stops holding: a
 			// negative shift is not expressible as an integer texel step and a shift past 8 makes a

@@ -27,6 +27,7 @@ All behavior matches the original game exactly by default. The only exceptions a
 
 - Start with **OpenGL**, with an eventual goal of also supporting **Vulkan** (user-selectable backend).
 - Bindings: **Silk.NET**
+- **The 3D view is painted in the original's order by default.** Retail has no depth buffer: it paints the terrain a cell at a time and each cell's objects whole after its ground ([`terrain-drawing.md`](../retail/rendering/terrain-drawing.md)), and a per-pixel depth test visibly differs from that (an impact effect half inside the building it struck, objects cutting through each other). `Render.WorldDrawPass` reproduces the order on the GPU; the per-pixel depth draw stays for the mission editor, whose overlays test against the scene's depth, and for the simulator as the "Per-pixel depth sorting" tweak.
 - Don't over-build the GL/Vulkan abstraction layer up front. An abstraction designed against a single backend tends to bake in assumptions (implicit state, no explicit sync) that don't map cleanly to Vulkan. Get OpenGL working concretely first; generalize the render interface when Vulkan support is actually being added and its real requirements are visible.
 
 ### Repo & project structure

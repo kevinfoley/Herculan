@@ -53,6 +53,7 @@ internal sealed class MissionDrawables : IDisposable {
 		// SurfaceRampTable.
 		renderer.SetShadeRamps(scene.Models.ShadeRamps);
 		renderer.SetPaletteRamp(scene.Models.PaletteRamp);
+		renderer.DistanceBands = scene.Models.DistanceBands;
 
 		_terrainVertices = scene.Models.TerrainMesh;
 		var terrainMesh = _terrainMesh = Keep(new GpuMesh(gl, _terrainVertices));
@@ -147,6 +148,14 @@ internal sealed class MissionDrawables : IDisposable {
 				sceneObject.Object.HitRadius));
 		}
 
+		// What the renderer bands the object's Gouraud faces by (SceneRenderer.DistanceBands). Nothing files it, so it
+		// never stops the object being drawn.
+		DrawFiling.Place(draw.Entry = new DrawEntry(sceneObject.Object) { Tag = DrawFiling.TagOf(sceneObject.Object) },
+			sceneObject.Object);
+		foreach (var item in draw.Items) {
+			item.Filing = draw.Entry;
+		}
+
 		_objects[sceneObject] = draw;
 		_items.AddRange(draw.Items);
 		FileItems(sceneObject, draw);
@@ -225,6 +234,10 @@ internal sealed class MissionDrawables : IDisposable {
 			item.Transform = draw.Transform;
 		}
 
+		if (draw.Entry != null) {
+			DrawFiling.Place(draw.Entry, sceneObject.Object);
+		}
+
 		if (draw.GroundShape >= 0) {
 			var shape = GroundLayer.Shapes[draw.GroundShape];
 			GroundLayer.Shapes[draw.GroundShape] = shape with { Position = sceneObject.Object.Position };
@@ -264,6 +277,7 @@ internal sealed class MissionDrawables : IDisposable {
 	// One object's items, and the transform its BSP draw groups read each frame.
 	private sealed class ObjectDraw {
 		public Matrix4x4 Transform;
+		public DrawEntry? Entry;
 		public readonly List<SceneItem> Items = new();
 		public int GroundShape = -1;
 	}

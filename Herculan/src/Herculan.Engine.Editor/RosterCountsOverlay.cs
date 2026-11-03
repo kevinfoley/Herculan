@@ -28,7 +28,7 @@ internal static class RosterCountsOverlay {
 	// What passing a roster's slots does, retail's slot arrays against HERCULAN's loader, which has none
 	// (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps).
 	private const string PastRosterLimit = "In retail, past the limit the mission's load overwrites other data. HERCULAN has "
-		+ "no limit, but the editor adds none past it, so the mission stays playable in retail, unless Edit > Mission Settings "
+		+ "no limit, but the editor adds none past it, so the mission stays playable in retail, unless Mission Settings > General "
 		+ "has it playable in HERCULAN only.";
 
 	// Where a tooltip's text wraps, in pixels at 100% scale.

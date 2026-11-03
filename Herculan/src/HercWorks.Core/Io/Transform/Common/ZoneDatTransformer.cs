@@ -16,7 +16,7 @@ public class ZoneDatTransformer : ByteTransformer<ZoneDat> {
 		return new ZoneDat {
 			WidthShift = BitConverter.ToInt32(bytes, 0),
 			HeightShift = BitConverter.ToInt32(bytes, 4),
-			CellShift = BitConverter.ToInt32(bytes, 8),
+			CellSizeShift = BitConverter.ToInt32(bytes, 8),
 			HeightScale = BitConverter.ToInt32(bytes, 12),
 		};
 	}
@@ -25,7 +25,7 @@ public class ZoneDatTransformer : ByteTransformer<ZoneDat> {
 		var bytes = new byte[Size];
 		BitConverter.GetBytes(source.WidthShift).CopyTo(bytes, 0);
 		BitConverter.GetBytes(source.HeightShift).CopyTo(bytes, 4);
-		BitConverter.GetBytes(source.CellShift).CopyTo(bytes, 8);
+		BitConverter.GetBytes(source.CellSizeShift).CopyTo(bytes, 8);
 		BitConverter.GetBytes(source.HeightScale).CopyTo(bytes, 12);
 		return bytes;
 	}

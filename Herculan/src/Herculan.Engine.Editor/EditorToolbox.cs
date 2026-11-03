@@ -20,7 +20,7 @@ internal enum ToolboxKind {
 	Base,
 }
 
-/// <summary>One of the Toolbox's tabs, by what it adds.</summary>
+/// <summary>One of the Toolbox's tabs, by what it adds, or for "Sculpt Terrain" the sculpting brushes.</summary>
 internal enum ToolboxTab {
 	Routes,
 	TriggerAreas,
@@ -29,6 +29,7 @@ internal enum ToolboxTab {
 	GroundVehicles,
 	Structures,
 	Bases,
+	SculptTerrain,
 }
 
 /// <summary>What the toolbox asks the editor to add: a herc, flyer, ground vehicle or structure type, or a base, its side, where, and to which group.</summary>
@@ -49,7 +50,8 @@ internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, Mis
 /// open mission, one tab each for Routes (the route tool's New route, <see cref="RoutePlacing"/>), Trigger Areas (the
 /// trigger-area tool's New box and New circle, <see cref="AreaPlacing"/>), the herc, flyer, ground vehicle and structure
 /// types of <see cref="UnitTypeCatalog"/>, with the types it leaves out named in a note, and the ready-made bases of
-/// <see cref="BaseTemplates"/>, each listing its structures on hover. A placing mode started elsewhere
+/// <see cref="BaseTemplates"/>, each listing its structures on hover, and Sculpt Terrain, the sculpting brushes' controls
+/// (<see cref="TerrainSculptor"/>), which sculpt while that tab is shown. A placing mode started elsewhere
 /// brings its tab up. An entry dragged out and let go over the view asks for it on the ground under
 /// the pointer, a flyer above it; a double-click, or Add with an entry of the tab shown chosen, asks for it at the middle of
 /// the view, which a gamepad's pointer reaches as easily. The side it fights on is chosen above the list, and a new herc's or flyer's group
@@ -92,7 +94,7 @@ internal sealed class EditorToolbox {
 	private static readonly (ToolboxTab Tab, string Label)[] TabLabels = [
 		(ToolboxTab.Routes, "Routes"), (ToolboxTab.TriggerAreas, "Trigger Areas"), (ToolboxTab.Hercs, "Hercs"),
 		(ToolboxTab.Flyers, "Flyers"), (ToolboxTab.GroundVehicles, "Ground Vehicles"), (ToolboxTab.Structures, "Structures"),
-		(ToolboxTab.Bases, "Bases"),
+		(ToolboxTab.Bases, "Bases"), (ToolboxTab.SculptTerrain, "Sculpt Terrain"),
 	];
 
 	// The tab shown.
@@ -134,6 +136,9 @@ internal sealed class EditorToolbox {
 	/// </summary>
 	public string? Status { get; set; }
 
+	/// <summary>Whether the "Sculpt Terrain" tab is shown, while which the view's left-drag sculpts (<see cref="TerrainSculptor"/>).</summary>
+	public bool SculptShown => _tab == ToolboxTab.SculptTerrain;
+
 	/// <summary>Whether an entry is being dragged toward the view.</summary>
 	public bool Dragging => _dragging != null;
 
@@ -164,9 +169,11 @@ internal sealed class EditorToolbox {
 	/// <param name="whyNoBase">Why a base cannot be added (<see cref="StructurePlacer.WhyNoBase"/>), shown on its entry in the Bases tab, or null when it can.</param>
 	/// <param name="routes">The route-placing mode, whose entry (<see cref="RoutePlacing.DrawToolboxEntry"/>) the Routes tab holds.</param>
 	/// <param name="areas">The area-placing mode, whose entry (<see cref="AreaPlacing.DrawToolboxEntry"/>) the Trigger Areas tab holds.</param>
+	/// <param name="sculptor">The sculpting brushes, whose controls (<see cref="TerrainSculptor.DrawToolboxEntry"/>) the Sculpt Terrain tab holds.</param>
 	public void Draw(Vector2 display, float menuBarHeight, bool enabled, short? selectedGroup, string? selectedGroupName,
 			Func<ToolboxKind, string?>? whyNotJoin, string? whyNoHerc, string? whyNoFlyer, string? whyNoVehicle,
-			string? whyNoStructure, Func<BaseTemplate, string?> whyNoBase, RoutePlacing routes, AreaPlacing areas) {
+			string? whyNoStructure, Func<BaseTemplate, string?> whyNoBase, RoutePlacing routes, AreaPlacing areas,
+			TerrainSculptor sculptor) {
 		_whyNoHerc = whyNoHerc;
 		_whyNoFlyer = whyNoFlyer;
 		_whyNoVehicle = whyNoVehicle;
@@ -209,6 +216,9 @@ internal sealed class EditorToolbox {
 					break;
 				case ToolboxTab.Bases:
 					DrawBases(enabled);
+					break;
+				case ToolboxTab.SculptTerrain:
+					sculptor.DrawToolboxEntry();
 					break;
 				default:
 					DrawKind(ToolboxKind.Structure, enabled, selectedGroupName);

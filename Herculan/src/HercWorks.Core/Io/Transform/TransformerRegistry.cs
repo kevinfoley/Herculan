@@ -89,6 +89,7 @@ public static class TransformerRegistry {
 		// One layout in both games (docs/es1/rendering/polygon-shading.md#the-shades-file).
 		new("Distance Band Ramps", e => NameIs(e, "SHADES.DAT"), () => new Dbsim.WorldShadesTransformer()),
 		new("Explosion Types", e => NameIs(e, "EXPLOS.DAT"), () => new Dbsim.ExplosionDataTransformer()),
+		new("Distance Colour Bands", e => NameIs(e, "SHADES.DAT"), () => new Dbsim.ShadesDatTransformer()),
 		new("Zone Header", e => NameStartsWith(e, "ZONE") && ExtIs(e, FileType.Dat), () => new Common.ZoneDatTransformer()),
 		// Structure shape libraries. Matched by name: the .DGS container is documented for these two
 		// files only (docs/retail/formats/dgs-hd0-notes.md).

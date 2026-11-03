@@ -84,17 +84,20 @@ public partial class HercBayEditorForm : Form {
 			_entry.HardpointConditions[row.Id] = new ShellHercPart(row.Id, row.Label, row.Health);
 		}
 
+		// A unit whose id or ammo type names no catalog entry (a mission machine's -1) shows blank and keeps the file's.
+		var read = new Dictionary<short, ShellWeaponEntry>(_entry.Mounts);
 		_entry.Mounts.Clear();
 		foreach (var row in _weaponsRows) {
-			if (row.WeaponId == null || row.MissileType == null) {
+			var was = read.GetValueOrDefault(row.SocketId);
+			if ((row.WeaponId == null || row.MissileType == null) && was == null) {
 				continue;
 			}
 			_entry.Mounts[row.SocketId] = new ShellWeaponEntry {
-				Id = row.WeaponId,
+				WeaponId = (short)(row.WeaponId?.Id ?? was!.WeaponId),
 				ClassIndex = row.NameId,
 				FitCondition = row.HealthArmor,
 				Condition = row.HealthInternal,
-				Guidance = row.MissileType
+				GuidanceId = (short)(row.MissileType?.Id ?? was!.GuidanceId)
 			};
 		}
 

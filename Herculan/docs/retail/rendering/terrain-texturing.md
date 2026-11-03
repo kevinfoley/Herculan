@@ -38,7 +38,7 @@ Field 1, the block shift, selects between two placement modes:
 - **`blockShift != 0`** — tiled:
 
   ```
-  shift = cellShift + blockShift - 13
+  shift = cellSizeShift + blockShift - 13
   u0    = (cellX << shift) & 0xff        u1 = u0 + (1 << shift)
   v0    = (cellY << shift) & 0xff        v1 = v0 + (1 << shift)      (V is negated)
   ```
@@ -62,7 +62,7 @@ So `u` rises with `cellX` and, because of the negation, `v` **falls** with `cell
 
 ### Retail numbers
 
-Materials 0 and 1's block shift ([`MAT0.DAT`](../formats/zone-terrain.md#datmat0--the-material-table)) gives `shift = cellShift - 7`: **128 texels per cell at `cellShift` 14, repeating every 2 cells; 64 at 13, repeating every 4.** Either way a texel spans 128 world units, the cell size cancelling out.
+Materials 0 and 1's block shift ([`MAT0.DAT`](../formats/zone-terrain.md#datmat0--the-material-table)) gives `shift = cellSizeShift - 7`: **128 texels per cell at `cellSizeShift` 14, repeating every 2 cells; 64 at 13, repeating every 4.** Either way a texel spans 128 world units, the cell size cancelling out.
 
 Materials **0 and 1 are the only ones a zone rolls**: `TerrainZone_PopulateFromBitmap`'s roll bound is the hard literal 2 (`CMP EBX,0x2` at `0046c5ca`), not the `mat0` count, and every shipped zone is a `.dba` that comes through it. Frame 0 is the plain tiling ground, frame 1 its variant. The roll takes the head of the simulation's random stream, so a zone scatters its variant cells the same way on every load ([`../simulation/random-generator.md`](../simulation/random-generator.md#the-simulations-draws)).
 
@@ -76,10 +76,10 @@ This section is the canonical account of `+0x10c`; [`../simulation/terrain-heigh
 
 One function **writes** the field; four read it:
 
-- `Terrain_SetupVisibleRegion` (`0046ca98`) sets `grid[+0x10c] = (short)DAT_004a0bcc[DAT_004d1fc3]` — the terrain-detail setting's own table, below — then `>>= (cellShift - 14)` when `cellShift > 14`. The `>>` only ever fires on the two shift-15 zones; nothing compensates in the other direction, so a zone with small cells is simply seen less far across. The original re-reads the setting every frame.
-- `Terrain_BuildDrawRegionQuad` (`0046d220`) builds the draw region as a square of radius `grid[+0x10c] << cellShift` world units around the viewer, clamped to the grid extent. So the LOD field is literally **a terrain draw radius in cells**.
+- `Terrain_SetupVisibleRegion` (`0046ca98`) sets `grid[+0x10c] = (short)DAT_004a0bcc[DAT_004d1fc3]` — the terrain-detail setting's own table, below — then `>>= (cellSizeShift - 14)` when `cellSizeShift > 14`. The `>>` only ever fires on the two shift-15 zones; nothing compensates in the other direction, so a zone with small cells is simply seen less far across. The original re-reads the setting every frame.
+- `Terrain_BuildDrawRegionQuad` (`0046d220`) builds the draw region as a square of radius `grid[+0x10c] << cellSizeShift` world units around the viewer, clamped to the grid extent. So the LOD field is literally **a terrain draw radius in cells**.
 - `ObjList_SetDrawDistances` (`00428bc0`) scales that same distance by five Q10 factors into the per-class object draw distances ([`terrain-drawing.md`](terrain-drawing.md#objects-in-the-walk)). **Not** the distance fog, which is 12-slice and computed per drawn thing.
-- `Terrain_DrawCellQuad` (`0046d344`) installs `grid[+0x10c] << grid[+0x108]` per cell as the visibility range the distance fade is measured against — see [`distance-fog-and-sky.md`](distance-fog-and-sky.md), which tabulates the resulting range per cell shift.
+- `Terrain_DrawCellQuad` (`0046d344`) installs `grid[+0x10c] << grid[+0x108]` per cell as the visibility range the distance fade is measured against — see [`distance-fog-and-sky.md`](distance-fog-and-sky.md), which tabulates the resulting range per cell size shift.
 
 `Terrain_ProjectFarEdgeAhead` (`00470910`) reads the same field once a frame, from `Scene_DrawTerrainPass`: it projects to the screen the point that radius straight ahead of the viewer along its heading, at the grid's lowest height (`+0x110`), and writes the screen point to `+0x72`/`+0x76` of the theater's `hzline`. When the viewer's cell is within the radius of a grid edge the distance is a literal 1000 world units instead. The point never reaches the frame: [`distance-fog-and-sky.md`](distance-fog-and-sky.md#below-the-line).
 
@@ -113,12 +113,12 @@ A base group whose `script.dat` block-11 record sets its paints-ground flag (`0x
 The record supplies the material index and a square `dim`×`dim` map of `0`/`1` bytes — see [`../formats/script-dat.md`](../formats/script-dat.md#the-per-formation-trailer), which owns the file layout, how many formations carry one, and the anchor placement that goes with it. A formation whose material index is `-1` paints nothing.
 
 ```
-tile      = 1 << (0x15 - mat0[material].blockShift)     world units square, cellShift-independent
+tile      = 1 << (0x15 - mat0[material].blockShift)     world units square, cellSizeShift-independent
 map entry = tile / dim                                  so dim spans the tile exactly
-per cell  = 1 << (cellShift - 13)                       map entries along each axis
+per cell  = 1 << (cellSizeShift - 13)                       map entries along each axis
 ```
 
-Two things fall out of that. The tile is the same 65,536 or 131,072 world units whatever the zone's cell size, the map simply resolving finer or coarser against it; and `dim` is not free data — it is `2 ^ (8 - blockShift)` at cell shift 13, which holds for all eleven retail formations with no exceptions.
+Two things fall out of that. The tile is the same 65,536 or 131,072 world units whatever the zone's cell size, the map simply resolving finer or coarser against it; and `dim` is not free data — it is `2 ^ (8 - blockShift)` at cell size shift 13, which holds for all eleven retail formations with no exceptions.
 
 **The map is a levelling mask, not the pad's shape.** Every cell of the tile takes the material unconditionally; only cells whose map byte is nonzero also get `Terrain_SetCellScratch(1)`, feeding the flattening pass in [`../simulation/terrain-heightmap.md`](../simulation/terrain-heightmap.md#structure-footprints--the-flattening-pass) as its second input. The pad's outline is drawn into the frame art itself — overlay a formation's map on its frame and the marked entries land on that frame's concrete and nowhere else. **Map row 0 indexes the tile's high-y edge and counts down**, the same inversion the anchor placement uses.
 

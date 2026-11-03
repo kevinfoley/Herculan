@@ -7,6 +7,7 @@ using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using Herculan.Engine.Shell;
+using Herculan.Engine.Terrain;
 using Herculan.Engine.View;
 using Herculan.Engine.World;
 using ImGuiNET;
@@ -125,6 +126,9 @@ public sealed class EditorHost {
 	private readonly ZoneCatalog _zones;
 	private ZoneHeightmaps? _heightmaps;
 
+	// How a terrain image is pictured, once there is a GL context to upload it with.
+	private readonly TerrainPictures _pictures;
+
 	// The loadout presets, read once per run and written on every change, which each opened mission's HERC views offer.
 	private readonly LoadoutPresets _presets = LoadoutPresets.Load();
 
@@ -167,6 +171,9 @@ public sealed class EditorHost {
 	private MissionDrawables? _drawables;
 	private DropPreview? _dropPreview;
 	private IKeyboard? _keyboard;
+
+	// The keyboard's auto-repeat, which repeats [ and ] while sculpting (Sculpt).
+	private readonly KeyRepeat _keyRepeat = new(KeyRepeat.SystemTypematic());
 	private IMouse? _mouse;
 	private IInputContext? _input;
 
@@ -223,15 +230,16 @@ public sealed class EditorHost {
 		_saving.Saved += _volBrowser.Refresh;
 		_saving.Saved += _customBrowser.Refresh;
 		_saving.Saved += () => Remember(_saving.Mission?.Name);
+		_pictures = new TerrainPictures((heights, side) => _heightmaps?.Picture(heights, side), heights => _heightmaps?.Forget(heights));
 		_newMission = new NewMissionDialog(_saving, () => _zones.Zones, () => TheaterNames.Labels(launch.SimulatorContent),
-			zone => _heightmaps?.For(zone));
+			zone => _heightmaps?.For(zone), new TerrainImageForm("New mission's terrain from", _pictures));
 		_toolbox = new EditorToolbox(launch.SimulatorContent);
 
 		Console.WriteLine($"HERCULAN Mission Editor on {launch.InstallRoot}");
 		OpenFirst(launch.Mission);
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's, group's or trigger area's arrows to move it (Alt detaches a waypoint, group or area corner from what shares its point), drag a HERC, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), New box or New circle then a drag on the ground places a trigger area (Esc cancels), Delete deletes the selected object, route, trigger area, trigger, countdown, objective or condition or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's, group's or trigger area's arrows to move it (Alt detaches a waypoint, group or area corner from what shares its point), drag a HERC, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), New box or New circle then a drag on the ground places a trigger area (Esc cancels), while the Toolbox's Sculpt Terrain tab is shown a drag on the ground raises, lowers, smooths or sets its height (Shift raises or lowers the other way, or with Set height takes the elevation clicked, the mouse wheel or [ and ] set the brush's radius), Delete deletes the selected object, route, trigger area, trigger, countdown, objective or condition or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -372,6 +380,10 @@ public sealed class EditorHost {
 			if (_leftDownOverViewport && _mission != null && _mission.AreaPlacing.Active) {
 				// While an area is placed, a press on the ground starts its drag, and picks and moves nothing.
 				_mission.AreaPlacing.Press(_mission.Picker.GroundAt(_camera, _leftDownPos, Viewport));
+			} else if (_leftDownOverViewport && _mission != null && _mission.Sculptor.Active) {
+				// While sculpting is on, a press on the ground starts a stroke, and picks and moves nothing.
+				_mission.Sculptor.Press(_mission.Picker.GroundAt(_camera, _leftDownPos, Viewport),
+					_keyboard != null && (_keyboard.IsKeyPressed(Key.ShiftLeft) || _keyboard.IsKeyPressed(Key.ShiftRight)));
 			} else if (_leftDownOverViewport && _mission != null && !_mission.Placing.Active) {
 				bool alt = _keyboard != null && (_keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight));
 				_mission.Gizmo.TryBegin(_camera, _leftDownPos, Viewport, detach: alt,
@@ -399,6 +411,9 @@ public sealed class EditorHost {
 				_mission.AreaPlacing.Release(ImGui.GetIO().WantCaptureMouse
 					? null
 					: _mission.Picker.GroundAt(_camera, at, Viewport));
+			} else if (_mission.Sculptor.Active || _mission.Sculptor.Stroking) {
+				// While sculpting is on, a release ends the stroke, and a click picks nothing.
+				_mission.Sculptor.Release();
 			} else if (_mission.Gizmo.Dragging) {
 				// A press on a handle that moved nothing still counts toward a double-click, whose second press often
 				// lands on the handles drawn over what the first selected; it leaves the selection as it is.
@@ -459,7 +474,7 @@ public sealed class EditorHost {
 		bool escapePressed = escape && !_escapeHeld && !control;
 		_escapeHeld = escape;
 		bool escapeFree = escapePressed && !_saving.IsOpen && !_newMission.IsOpen && _mission?.Presets.IsOpen != true
-			&& !_playInGame.Running;
+			&& _mission?.Sculptor.Asking != true && !_playInGame.Running;
 		if (escapeFree && _mission?.Placing.Active == true) {
 			// Esc cancels the route being placed, and goes no further.
 			_mission.Placing.Cancel();
@@ -494,6 +509,37 @@ public sealed class EditorHost {
 		if (_mission?.Gizmo.Dragging == true && _mouse != null) {
 			_mission.Gizmo.Drag(_camera, _padPointer.PositionOf(_mouse), Viewport);
 		}
+
+		if (_mission != null && _imgui != null) {
+			Sculpt(_mission, deltaSeconds, _keyboard != null && (_keyboard.IsKeyPressed(Key.ShiftLeft)
+				|| _keyboard.IsKeyPressed(Key.ShiftRight)));
+		}
+	}
+
+	// Sculpting, on while the Toolbox's "Sculpt Terrain" tab is shown: the mouse wheel over the view sets the brush's radius,
+	// and a stroke held works the ground under the pointer, Shift held swapping raising for lowering. After the camera, so the
+	// brush stays under the pointer while the view moves too.
+	private void Sculpt(EditorMission mission, double deltaSeconds, bool shift) {
+		var sculptor = mission.Sculptor;
+		sculptor.Update(_toolbox.SculptShown);
+		var io = ImGui.GetIO();
+		if (sculptor.Active && !io.WantCaptureMouse && io.MouseWheel != 0f) {
+			sculptor.Wheel(io.MouseWheel);
+		}
+
+		// [ and ] repeat while held, at the system's keyboard delay and rate; the press itself is OnKeyDown's.
+		if (_keyboard != null) {
+			var keyboard = _keyboard;
+			_keyRepeat.Advance(key => keyboard.IsKeyPressed(key), deltaSeconds);
+			if (sculptor.Active && _keyRepeat.Repeated is Key.LeftBracket or Key.RightBracket && !io.WantCaptureKeyboard
+					&& !_saving.IsOpen && !_newMission.IsOpen && !mission.Presets.IsOpen) {
+				sculptor.Grow(_keyRepeat.Repeated == Key.RightBracket ? 1 : -1);
+			}
+		}
+
+		if (sculptor.Stroking && _mouse != null) {
+			sculptor.Hold(mission.Picker.GroundAt(_camera, _padPointer.PositionOf(_mouse), Viewport), deltaSeconds, shift);
+		}
 	}
 
 	// The viewport in the pointer's coordinates, as ScenePicker and MoveGizmo take it.
@@ -519,15 +565,29 @@ public sealed class EditorHost {
 		mission.Sync.Rebuilt -= drawables.RefreshWaiting;
 	}
 
-	// Listens to <mission> for what the host does for it: framing a double-clicked selection, and uploading its scene again
-	// when its world changes.
+	// Listens to <mission> for what the host does for it: framing a double-clicked selection, uploading its scene again
+	// when its world changes, and moving the camera with it when its terrain is replaced.
 	private void Follow(EditorMission mission) {
 		mission.Selection.FocusRequested += Frame;
 		mission.Theater.WorldChanged += () => ReloadWorld(mission);
+		mission.Terrain.WorldChanged += () => ReloadWorld(mission);
+		mission.Terrain.Replaced += (east, north, before) => FollowTerrain(mission, east, north, before);
+	}
+
+	// Moves the camera as a replacement of <mission>'s terrain moved every position, <east> and <north>, and by as much as the
+	// ground under it rose from <before>, so the view keeps its place over the mission and its height above the ground.
+	private void FollowTerrain(EditorMission mission, int east, int north, HeightGrid before) {
+		if (!ReferenceEquals(mission, _mission)) {
+			return;
+		}
+
+		int x = (int)_editorCamera.WorldPosition.X, y = (int)_editorCamera.WorldPosition.Y;
+		int rise = mission.Scene.World.Terrain.HeightAtWorld(x + east, y + north) - before.HeightAtWorld(x, y);
+		_editorCamera.Shift(new Vector3(east, north, rise));
 	}
 
 	// Uploads <mission>'s scene again once its theater or time of day has dressed it in another world
-	// (TheaterChanger), freeing the uploads it replaces. The camera, the selection and the view settings stay.
+	// (TheaterChanger) or its terrain is replaced (TerrainChanger), freeing the uploads it replaces. The camera, the selection and the view settings stay.
 	private void ReloadWorld(EditorMission mission) {
 		if (_gl == null || _renderer == null || _drawables == null || !ReferenceEquals(mission, _mission)) {
 			return;
@@ -544,9 +604,16 @@ public sealed class EditorHost {
 	// V toggles the top-down view, Delete deletes the selected object, route, trigger area, trigger, countdown, objective or condition or removes the selected
 	// waypoint, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes, Ctrl+S saves, unless a text field or a prompt has the keyboard.
 	// None of them while a drag is under way. While a route is placed, Enter finishes it; while a route or an area is placed,
-	// Delete, Undo and Redo do nothing. V, Delete and Enter do nothing while Ctrl is held.
+	// Delete, Undo and Redo do nothing. V, Delete and Enter do nothing while Ctrl is held. While sculpting is on, [ and ]
+	// shrink and grow the brush, during a stroke too.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
-		if (_mission?.Gizmo.Dragging == true || _saving.IsOpen || _newMission.IsOpen || _mission?.Presets.IsOpen == true
+		if (_mission?.Sculptor.Active == true && key is Key.LeftBracket or Key.RightBracket && !_saving.IsOpen
+				&& !_newMission.IsOpen && _mission.Presets.IsOpen != true && (_imgui == null || !ImGui.GetIO().WantCaptureKeyboard)) {
+			_mission.Sculptor.Grow(key == Key.RightBracket ? 1 : -1);
+			return;
+		}
+
+		if (_mission?.Dragging == true || _saving.IsOpen || _newMission.IsOpen || _mission?.Presets.IsOpen == true
 				|| (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
 			return;
 		}
@@ -709,12 +776,14 @@ public sealed class EditorHost {
 			var mission = _mission;
 			string? joinName = joinable is { } joining ? mission.Names.GroupBrief(joining).Full : null;
 			_toolbox.Draw(display, menuBarHeight,
-				enabled: !mission.Gizmo.Dragging && !mission.PlacingAny, joinable, joinName,
+				enabled: !mission.Dragging && !mission.PlacingAny, joinable, joinName,
 				joinable is { } group ? kind => WhyNotJoin(mission, group, kind) : null,
 				mission.Hercs.WhyNoAdd, mission.Flyers.WhyNoAdd, mission.Vehicles.WhyNoAdd, mission.Placer.WhyNoAdd,
-				mission.Placer.WhyNoBase, mission.Placing, mission.AreaPlacing);
+				mission.Placer.WhyNoBase, mission.Placing, mission.AreaPlacing, mission.Sculptor);
 			mission.Settings.Draw();
+			mission.TerrainWindow.Draw(_window.View.Native?.Win32?.Hwnd ?? 0);
 			mission.UnusedPoints.Draw();
+			mission.Sculptor.DrawPrompt();
 		}
 
 		_settingsPanel.Draw();
@@ -736,7 +805,7 @@ public sealed class EditorHost {
 		_volBrowser.Draw();
 		_customBrowser.Draw();
 		_saving.Draw(_window.View.Native?.Win32?.Hwnd ?? 0);
-		_newMission.Draw();
+		_newMission.Draw(_window.View.Native?.Win32?.Hwnd ?? 0);
 		_playInGame.Draw();
 		_imgui?.Render();
 		if (_window.Title != WindowTitle) {
@@ -794,6 +863,10 @@ public sealed class EditorHost {
 
 		mission.Overlay.Highlight(renderer.Highlight, mission.Selection);
 		TeamDiscs.Fill(renderer.Discs, _settings.ShowTeamCircles ? drawables.Shown : []);
+		var pointer = _mouse != null && !ImGui.GetIO().WantCaptureMouse && (mission.PlacingAny || mission.Sculptor.Active)
+			? mission.Picker.GroundAt(_camera, _padPointer.PositionOf(_mouse), Viewport)
+			: null;
+		mission.Sculptor.Paint(renderer.Discs, pointer);
 
 		// Full-window viewport: the editor draws one 3D view, unlike the simulator host's three cockpit
 		// panels, which is what SceneRenderer.Render's x/y origin exists for.
@@ -804,12 +877,12 @@ public sealed class EditorHost {
 		mission.GroupOverlay.DrawObjects(wireframe, _camera, aspect, _settings, selection);
 		mission.GroupOverlay.DrawSelectedGroup(wireframe, _camera, aspect, selection);
 		if (mission.PlacingAny) {
-			var pointer = _mouse != null && !ImGui.GetIO().WantCaptureMouse
-				? mission.Picker.GroundAt(_camera, _padPointer.PositionOf(_mouse), Viewport)
-				: null;
 			mission.Placing.Draw(wireframe, _camera, aspect, pointer);
 			mission.AreaPlacing.Hover(pointer);
 			mission.AreaPlacing.Draw(wireframe, _camera, aspect);
+		} else if (mission.Sculptor.Active) {
+			// The brush's ring in place of the move handles, which a drag does not reach while sculpting is on.
+			mission.Sculptor.Draw(wireframe, _camera, aspect, pointer);
 		} else {
 			mission.Gizmo.Draw(wireframe, _camera, aspect, _mouse?.Position ?? new Vector2(-1f), Viewport);
 		}
@@ -833,7 +906,7 @@ public sealed class EditorHost {
 		_mission == null ? "No mission is open."
 		: _playInGame.Running ? $"{_playInGame.Mission} is being played."
 		: !_launch.FromGame && PlayInGame.GamePath == null ? "The game is not beside the editor, so there is nothing to play the mission in."
-		: _mission.Gizmo.Dragging || _mission.PlacingAny || _pendingLoad != null || _pendingNew != null ? "Finish what is under way first."
+		: _mission.Dragging || _mission.PlacingAny || _pendingLoad != null || _pendingNew != null ? "Finish what is under way first."
 		: null;
 
 	// Play, once the mission's saved files hold what is to be played, on the mission's own theater and time of day as the
@@ -932,7 +1005,7 @@ public sealed class EditorHost {
 		var deleting = mission.Deleter.TakeRequest();
 		var step = _pendingStep;
 		_pendingStep = null;
-		if (mission.Gizmo.Dragging) {
+		if (mission.Dragging) {
 			return;
 		}
 
@@ -954,6 +1027,8 @@ public sealed class EditorHost {
 		mission.Flyers.RunRequest();
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
+		mission.Terrain.RunRequest();
+		mission.Sculptor.RunRequest();
 		mission.PlayableIn.RunRequest();
 		mission.About.RunRequest();
 		mission.Routes.RunRequest();
@@ -991,7 +1066,7 @@ public sealed class EditorHost {
 	// Adds what the toolbox asked for on the ground under the pointer, or at the middle of the view, else under the
 	// camera when the middle of the view is sky.
 	private void AddFromToolbox(ToolboxRequest request) {
-		if (_mission == null || _mission.Gizmo.Dragging) {
+		if (_mission == null || _mission.Dragging) {
 			return;
 		}
 
@@ -1025,7 +1100,8 @@ public sealed class EditorHost {
 	// Generates the handoff for the mission the request names, an archive's, one saved into the install or one HERCULAN comes
 	// with (CustomMissions.FindIncluded), into the scratch
 	// directory, holds the mission as its .MSN, swaps the editor over to it and remembers it for the next run. On failure
-	// the open mission stays, and the browser that asked says why.
+	// the open mission stays, and the browser that asked says why. A saved mission's own zone that does not read is such a
+	// failure, so a Save never replaces its files.
 	private void LoadMission(LoadRequest request) {
 		if (_gl == null || _renderer == null) {
 			return;
@@ -1034,6 +1110,13 @@ public sealed class EditorHost {
 		string name = request.File;
 		EditorMission opened;
 		try {
+			var ownZone = CustomMissions.Zone(_launch.InstallRoot, Path.GetFileNameWithoutExtension(name), out string? zoneFailure);
+			if (zoneFailure != null) {
+				request.From.Failure = zoneFailure;
+				Console.Error.WriteLine($"Cannot load {name}: {zoneFailure}");
+				return;
+			}
+
 			ClearMissionCache();
 			if (MissionOpener.Open(_launch.ShellContent(), _launch.InstallRoot, name, _missionCache, out var source,
 					out var squad, out string? failure) is not { } generated) {
@@ -1043,8 +1126,9 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
-				source!, squad!, _launch.ShellContent, _cybridWeapons, _zones, _presets);
+				source!, squad!, _launch.ShellContent, _cybridWeapons, _zones, _presets, _pictures);
 			opened.About.Load(CustomMissions.About(_launch.InstallRoot, opened.Name) ?? MissionAbout.Blank);
+			opened.Terrain.Load(ownZone);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			request.From.Failure = ex.Message;
@@ -1066,21 +1150,25 @@ public sealed class EditorHost {
 			return;
 		}
 
-		var zone = request.Zone;
+		var own = request.OwnZone;
+		var zone = own != null
+			? new ZoneChoice(_zones.FreeZone(), own.Side << own.CellSizeShift, own.Side << own.CellSizeShift)
+			: request.Zone!;
 		var (msn, text) = NewMission.Build(request.Theater, zone.Zone, request.Night, zone.Width, zone.Height);
 		EditorMission opened;
 		try {
 			ClearMissionCache();
 			if (MissionOpener.OpenNew(_launch.ShellContent(), _launch.InstallRoot, request.Name,
 					new MissionFileTransformer().Write(msn) ?? throw new InvalidDataException("The new mission does not write."),
-					new MissionStringFileTransformer().Write(text), _missionCache, out var source, out var squad,
+					new MissionStringFileTransformer().Write(text), own, _missionCache, out var source, out var squad,
 					out string? failure) is not { } generated) {
 				Fail(failure);
 				return;
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source!, squad!,
-				_launch.ShellContent, _cybridWeapons, _zones, _presets);
+				_launch.ShellContent, _cybridWeapons, _zones, _presets, _pictures);
+			opened.Terrain.Load(own);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			Fail(ex.Message);
@@ -1126,7 +1214,7 @@ public sealed class EditorHost {
 		}
 
 		if (ImGui.BeginMenu("File")) {
-			bool idle = _pendingLoad == null && _pendingNew == null && _mission?.Gizmo.Dragging != true;
+			bool idle = _pendingLoad == null && _pendingNew == null && _mission?.Dragging != true;
 			if (ImGui.MenuItem("New mission...", null, false, idle)) {
 				_saving.Leave("starting a new mission", _newMission.Open);
 			}
@@ -1140,7 +1228,7 @@ public sealed class EditorHost {
 			}
 
 			ImGui.Separator();
-			bool saveable = _saving.WhyNoSave == null && _mission?.Gizmo.Dragging != true;
+			bool saveable = _saving.WhyNoSave == null && _mission?.Dragging != true;
 			if (ImGui.MenuItem("Save", "Ctrl+S", false, saveable)) {
 				_saving.Save();
 			}
@@ -1172,7 +1260,7 @@ public sealed class EditorHost {
 		}
 
 		if (ImGui.BeginMenu("Edit", _mission != null)) {
-			bool idle = !_mission!.Gizmo.Dragging && !_mission.PlacingAny;
+			bool idle = !_mission!.Dragging && !_mission.PlacingAny;
 			if (ImGui.MenuItem("Undo", "Ctrl+Z", false, _mission.Mover.CanUndo && idle)) {
 				_pendingStep = true;
 			}
@@ -1182,10 +1270,6 @@ public sealed class EditorHost {
 			}
 
 			ImGui.Separator();
-			if (ImGui.MenuItem("Mission Settings")) {
-				_mission.Settings.Open();
-			}
-
 			int unused = _mission.UnusedPoints.Count;
 			if (ImGui.MenuItem($"Remove unused positions ({unused})", null, false, unused > 0 && idle)) {
 				_mission.UnusedPoints.Request();
@@ -1266,6 +1350,18 @@ public sealed class EditorHost {
 
 			if (changed) {
 				_settings.Save();
+			}
+
+			ImGui.EndMenu();
+		}
+
+		if (ImGui.BeginMenu("Mission Settings", _mission != null)) {
+			if (ImGui.MenuItem("General")) {
+				_mission!.Settings.Open();
+			}
+
+			if (ImGui.MenuItem("Terrain")) {
+				_mission!.TerrainWindow.Open();
 			}
 
 			ImGui.EndMenu();

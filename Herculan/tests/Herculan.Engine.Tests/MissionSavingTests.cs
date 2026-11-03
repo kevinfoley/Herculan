@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Content;
 using Herculan.Engine.Editor;
@@ -25,8 +26,8 @@ public sealed class MissionSavingTests : IDisposable {
 	/// </summary>
 	[Fact]
 	public void SaveWritesIntoTheMissionFolderAndBacksUpWhatItReplaces() {
-		SavedMissions.Write(_root, "C1_01", GameLanguage.English, [1, 1], [10], MissionAbout.Blank);
-		var written = SavedMissions.Write(_root, "C1_01", GameLanguage.English, [2, 2], [20], MissionAbout.Blank);
+		SavedMissions.Write(_root, "C1_01", GameLanguage.English, [1, 1], [10], MissionAbout.Blank, null);
+		var written = SavedMissions.Write(_root, "C1_01", GameLanguage.English, [2, 2], [20], MissionAbout.Blank, null);
 
 		string folder = Path.Combine(_root, MissionFileLaunch.MissionFolder);
 		Assert.Equal([Path.Combine(folder, "C1_01.MSN"), Path.Combine(folder, "C1_01.ENG")], written);
@@ -39,11 +40,63 @@ public sealed class MissionSavingTests : IDisposable {
 	/// <summary>Catches a text file always written as <c>.ENG</c>, which a French or German shell would not read.</summary>
 	[Fact]
 	public void TextFileTakesTheShellLanguagesExtension() {
-		SavedMissions.Write(_root, "MINE", GameLanguage.French, [1], [2], MissionAbout.Blank);
+		SavedMissions.Write(_root, "MINE", GameLanguage.French, [1], [2], MissionAbout.Blank, null);
 
 		string folder = Path.Combine(_root, MissionFileLaunch.MissionFolder);
 		Assert.True(File.Exists(Path.Combine(folder, "MINE.FRE")));
 		Assert.False(File.Exists(Path.Combine(folder, "MINE.ENG")));
+	}
+
+	/// <summary>
+	/// Catches a save that leaves out the mission's own zone or writes it under names the read does not look for, and one
+	/// without a zone that leaves a replaced zone's files behind, or removes them with no backup.
+	/// </summary>
+	[Fact]
+	public void SaveWritesTheOwnZoneAndASaveWithoutOneRemovesIt() {
+		var zone = ZoneFiles.Create(Heights(128), 14, 149);
+		SavedMissions.Write(_root, "MINE", GameLanguage.English, [1], null, MissionAbout.Blank, zone);
+
+		var read = SavedMissions.ReadZone(_root, "mine", out string? failure);
+		Assert.Null(failure);
+		Assert.Equal(zone.Heights.ToArray(), read!.Heights.ToArray());
+		Assert.Equal(zone.CellSizeShift, read.CellSizeShift);
+		Assert.Equal(zone.HeightScale, read.HeightScale);
+
+		SavedMissions.Write(_root, "MINE", GameLanguage.English, [1], null, MissionAbout.Blank, null);
+		Assert.Null(SavedMissions.ReadZone(_root, "MINE", out failure));
+		Assert.Null(failure);
+		Assert.True(File.Exists(SavedMissions.ZoneHeaderPath(_root, "MINE") + SavedMissions.BackupExtension));
+		Assert.True(File.Exists(SavedMissions.ZoneHeightmapPath(_root, "MINE") + SavedMissions.BackupExtension));
+	}
+
+	/// <summary>
+	/// Catches half a zone read as no zone, which would open the mission without one and let its next save remove the
+	/// half that is there, and a failure that does not name the missing file.
+	/// </summary>
+	[Fact]
+	public void AZoneHeaderWithoutItsHeightmapIsAFailureNamingIt() {
+		var zone = ZoneFiles.Create(Heights(128), 14, 149);
+		SavedMissions.Write(_root, "MINE", GameLanguage.English, [1], null, MissionAbout.Blank, zone);
+		File.Delete(SavedMissions.ZoneHeightmapPath(_root, "MINE"));
+
+		Assert.Null(SavedMissions.ReadZone(_root, "MINE", out string? failure));
+		Assert.StartsWith(Path.GetFileName(SavedMissions.ZoneHeightmapPath(_root, "MINE")), failure);
+	}
+
+	/// <summary>Catches deleting a loose mission that leaves its own zone's files, or their backups, in the mission folder.</summary>
+	[Fact]
+	public void DeletingALooseMissionDeletesItsOwnZone() {
+		var zone = ZoneFiles.Create(Heights(128), 14, 149);
+		SavedMissions.Write(_root, "MINE", GameLanguage.English, [1], null, MissionAbout.Blank, zone);
+		SavedMissions.Write(_root, "MINE", GameLanguage.English, [1], null, MissionAbout.Blank, zone);
+		var mission = new CustomMission("MINE", SavedMissions.MissionPath(_root, "MINE"), CustomMissionForm.Loose, null, null);
+
+		var files = CustomMissions.Files(_root, mission);
+
+		foreach (string path in new[] { SavedMissions.ZoneHeaderPath(_root, "MINE"), SavedMissions.ZoneHeightmapPath(_root, "MINE") }) {
+			Assert.Contains(path, files);
+			Assert.Contains(path + SavedMissions.BackupExtension, files);
+		}
 	}
 
 	/// <summary>
@@ -133,15 +186,21 @@ public sealed class MissionSavingTests : IDisposable {
 
 		string dataAgain = Path.Combine(_root, "data") + Path.DirectorySeparatorChar;
 		Assert.NotNull(HandoffExport.WhyNotFolder(dataAgain, _root, scratch));
-		Assert.Throws<ArgumentException>(() => HandoffExport.Write(dataAgain, _root, scratch, [1], [2], null));
+		Assert.Throws<ArgumentException>(() => HandoffExport.Write(dataAgain, _root, scratch, [1], [2], null, null));
 		Assert.Empty(Directory.GetFiles(data));
 
 		string target = Path.Combine(_root, "export");
-		HandoffExport.Write(target, _root, scratch, [1], [2], null);
+		HandoffExport.Write(target, _root, scratch, [1], [2], null, null);
 		Assert.Equal([1], File.ReadAllBytes(Path.Combine(target, "script.dat")));
 		Assert.Equal([2], File.ReadAllBytes(Path.Combine(target, "mission.str")));
 		Assert.Equal([7], File.ReadAllBytes(Path.Combine(target, "player.mec")));
 		Assert.False(File.Exists(Path.Combine(target, "mission.var")));
+	}
+
+	private static byte[] Heights(int side) {
+		var heights = new byte[side * side];
+		new Random(side).NextBytes(heights);
+		return heights;
 	}
 
 	private sealed class Step : IEditorEdit {

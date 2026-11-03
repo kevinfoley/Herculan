@@ -17,9 +17,12 @@ public class ZoneDat : DataFile {
 	/// <inheritdoc cref="WidthShift"/>
 	public int HeightShift { get; set; }
 
-	/// <summary>World units per cell as a shift: 13, 14 or 15.</summary>
-	public int CellShift { get; set; }
+	/// <summary>The cell size as a power of two: a cell is <c>1 &lt;&lt; CellSizeShift</c> world units across. 12 to 15 in the retail zones.</summary>
+	public int CellSizeShift { get; set; }
 
-	/// <summary>Multiplicative height scale applied to each cell's raw byte. Nonzero.</summary>
+	/// <summary>
+	/// Multiplicative height scale applied to each cell's raw byte: 90 to 256 in the retail zones. What a value outside
+	/// that does: docs/retail/simulation/terrain-heightmap.md#the-height-scales-range.
+	/// </summary>
 	public int HeightScale { get; set; }
 }

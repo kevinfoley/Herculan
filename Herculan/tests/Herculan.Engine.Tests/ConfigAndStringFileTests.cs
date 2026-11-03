@@ -140,7 +140,7 @@ public class ConfigAndStringFileTests {
 
 		ZoneDat parsed = Assert.IsType<ZoneDat>(transformer.Parse(bytes));
 
-		Assert.Equal((8, 7, 14, 120), (parsed.WidthShift, parsed.HeightShift, parsed.CellShift, parsed.HeightScale));
+		Assert.Equal((8, 7, 14, 120), (parsed.WidthShift, parsed.HeightShift, parsed.CellSizeShift, parsed.HeightScale));
 		Assert.Equal(bytes, transformer.Write(parsed));
 		Assert.Null(transformer.Parse(bytes[..^1]));
 	}

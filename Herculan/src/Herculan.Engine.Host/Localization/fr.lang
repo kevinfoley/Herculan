@@ -39,6 +39,8 @@ tweak.shuffle_mission_music.display_name  Musique de mission aléatoire
 tweak.shuffle_mission_music.description   Chaque mission joue une piste musicale choisie au hasard, jamais la même deux fois de suite. Le jeu original joue les pistes dans un ordre fixe, une par mission.
 tweak.change_pbw_beam_hue.display_name  Changer la teinte PBW
 tweak.change_pbw_beam_hue.description   Dans le jeu original, les rayons du PBW et du PBW2 utilisent la même texture que les lasers, ce qui les rend impossibles à distinguer. Cet ajustement modifie la teinte du PBW et du PBW2 pour plus de clarté, d'après les couleurs de Metaltech: Earthsiege.
+tweak.per_pixel_depth_sorting.display_name  Profondeur par pixel
+tweak.per_pixel_depth_sorting.description   Dessine la vue 3D avec un test de profondeur à chaque pixel, de sorte que là où deux éléments se chevauchent, le plus proche est visible. Le jeu original peint le sol morceau par morceau, du plus lointain au plus proche, et chaque objet en entier par-dessus tout ce qui a été peint avant, si bien qu'un impact sur un bâtiment apparaît entier devant le bâtiment ou pas du tout, jamais à moitié dedans.
 tweak.high_resolution_widescreen.display_name  Rendu haute résolution panoramique
 tweak.high_resolution_widescreen.description   Activé, le jeu est rendu à la résolution et aux proportions de la fenêtre. Désactivé, le jeu est rendu en 640x480. L'interface hors mission est toujours en 640x480.
 tweak.smoother_turret_movement.display_name   Mouvement de tourelle plus fluide
@@ -62,7 +64,7 @@ tweak.c5_10_guards_hold.description   Dans la dernière mission, les Cybrids qui
 tweak.faster_keyboard_aiming.display_name  Visée au clavier plus rapide
 tweak.faster_keyboard_aiming.description   Maintenir une touche enfoncée fait pivoter et incliner la tourelle de votre HERC aussi vite qu'un joystick poussé à fond. Dans le jeu original, une touche vise à la moitié de cette vitesse, et le chapeau chinois du joystick aux trois quarts.
 tweak.fix_gunsight_drag.display_name  Corriger la visée souris
-tweak.fix_gunsight_drag.description   Maintenez le bouton droit de la souris n'importe où dans la vitre avant et déplacez la souris pour orienter la tourelle de votre HERC : plus le pointeur est loin de l'endroit où vous avez appuyé, plus la tourelle tourne vite, jusqu'à la vitesse d'un joystick poussé à fond. Le jeu original possède cette commande, mais oublie le bouton droit dès que la souris bouge, si bien qu'elle ne fonctionne jamais.
+tweak.fix_gunsight_drag.description   Maintenez le bouton droit de la souris n'importe où dans la vitre avant et déplacez la souris pour orienter la tourelle de votre HERC : plus le pointeur est loin de l'endroit où vous avez appuyé, plus la tourelle tourne vite, jusqu'à la vitesse d'un joystick poussé à fond. Pendant que vous visez ainsi, le bouton gauche de la souris fait feu, comme la barre d'espace. Le jeu original possède cette commande, mais oublie le bouton droit dès que la souris bouge, si bien qu'elle ne fonctionne jamais.
 tweak.fix_raptor2_perspective.display_name  Corriger la perspective du Raptor II
 tweak.fix_raptor2_perspective.description   Place la vue cockpit du Raptor II dans son cockpit. Dans le jeu original, la vue se trouve au-dessus du sommet du HERC. Le suivi de la tourelle et la convergence des armes suivent ce changement.
 tweak.reset_counters_on_replay.display_name  Corriger les indicateurs de « Rejouer la mission »

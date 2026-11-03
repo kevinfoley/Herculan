@@ -14,9 +14,10 @@ public readonly record struct GroundShapeDraw(SceneItem Item, Vec3i Position, in
 /// <summary>
 /// The ground and what is painted with it: the terrain item, its grid, the ground shapes to draw in
 /// the terrain's paint order, and the table every other object is filed in by terrain cell — see
-/// <see cref="SceneRenderer.Render(Camera, IEnumerable{SceneItem}, GroundShapeLayer?, int, int, int, int)"/>.
-/// One per loaded zone, holding the zone's <see cref="TerrainVisibleRegion"/> between frames as the
-/// original's grid holds its own.
+/// <see cref="SceneRenderer.Render(Camera, IEnumerable{SceneItem}, GroundShapeLayer?, int, int, int, int)"/> for the
+/// per-pixel depth draw and <see cref="WorldDrawPass"/> for the painter's-order one, where each ground shape is an
+/// entry at the head of its cell. One per loaded zone, holding the zone's <see cref="TerrainVisibleRegion"/> between
+/// frames as the original's grid holds its own.
 /// </summary>
 public sealed class GroundShapeLayer {
 	public GroundShapeLayer(SceneItem terrain, HeightGrid grid) {
@@ -45,10 +46,11 @@ public sealed class GroundShapeLayer {
 	public bool ShapesFollowWalk { get; init; } = true;
 
 	/// <summary>
-	/// The structures' ground-plane pieces (<see cref="MeshCell.Ground"/>), drawn with the shapes rather
-	/// than depth-tested against the terrain they lie in. Each is ranked by the cell its
-	/// <see cref="SceneItem.Filing"/> entry was filed under this pass, which is where the original paints
-	/// the whole structure: after that cell's ground and its ground shapes, before every later cell. Kept
+	/// The structures' ground-plane pieces (<see cref="MeshCell.Ground"/>), painted rather than depth-tested
+	/// against the terrain they lie in. The per-pixel depth draw paints them with the shapes, each ranked by the
+	/// cell its <see cref="SceneItem.Filing"/> entry was filed under this pass, which is where the original paints
+	/// the whole structure: after that cell's ground and its ground shapes, before every later cell. The
+	/// painter's-order draw paints each in its structure's own turn, ahead of the structure's other pieces. Kept
 	/// for the mission; whether each is drawn is its item's own answer.
 	/// </summary>
 	public List<SceneItem> ObjectGround { get; } = new();
