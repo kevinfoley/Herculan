@@ -207,9 +207,9 @@ ES2's `TexPoly_DrawAtPoints` (`0042fa18`) also sets the depth fade to 0 and hold
 
 ## The pitch gradient (palette entries 64–79)
 
-`Palette_BlendRangeByPitch` (`00025fe4`), given the camera, rewrites palette entries 64 to 79 each frame while the byte `000928ec` is set. The first time, it reads from the active palette the colours of entry `000bc5ce` (64, as the load stores it), of entries short 10 (`000bc5d0`) and short 11 (`000bc5d2`), and of entry `000bc5d4` (98), and builds 16 colours from short 10's colour to short 11's with `Palette_InterpolateColours` (`000283b0`) at `000afde4`. Then every frame:
+`Palette_BlendRangeByPitch` (`00025fe4`), given the camera, rewrites palette entries 64 to 79 each frame while the byte `PitchGradient_Enabled` (`000928ec`) is set: 1 in the image, cleared by the lift start for its ride and set again at its end ([the lift start](../simulation/lift-start.md)). The first time, it reads from the active palette the colours of entry `000bc5ce` (64, as the load stores it), of entries short 10 (`000bc5d0`) and short 11 (`000bc5d2`), and of entry `000bc5d4` (98), and builds 16 colours from short 10's colour to short 11's with `Palette_InterpolateColours` (`000283b0`) at `000afde4`. Then every frame:
 
-1. the step: when the `int16` at `000928ee` is negative, ((*p* + `0x2000`) & `0xffff`) >> 10, at most 15; otherwise `000928ee` itself, after which `000928ee` becomes −1;
+1. the step: when the `int16` `PitchGradient_ForcedStep` (`000928ee`) is negative, ((*p* + `0x2000`) & `0xffff`) >> 10, at most 15; otherwise `PitchGradient_ForcedStep` itself, after which it becomes −1. `Sim_StartMission` sets it to 8 before the first frame, and so does the lift start in its place ([the darkening](../simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4));
 2. the end colour: entry 98's colour while `000928eb` is set, otherwise colour number *step* of the 16. `Palette_ActivateImpact` (`00025ed0`) sets `000928eb`, `Palette_ToggleImpact` (`00025ef8`) flips it and `Palette_RestoreFromImpact` (`00025f1c`) clears it, each only while `ImpactPaletteObject` is loaded and each switching palettes through `Palette_SetActive` (`00027e7c`), as ES2's do;
 3. 16 colours from entry 64's original colour to the end colour, through `Palette_InterpolateColours`, installed at entries 64–79 with `Palette_InstallRange`.
 
@@ -265,6 +265,6 @@ ES2's `TexPoly_DrawAtPoints` (`0042fa18`) also sets the depth fade to 0 and hold
 
 - **Open:** what `000b5b96` does, which `0005b48a` sets to whether option 5 exceeds 240.
 - **Open:** what reads `TexPoly`'s ring tables (`+0x7d`, `+0x9b`, `+0xd7`, count `+0xf5`) and the angle triples at `+0x12`; of the functions this page describes, the set-up writes them and none of the others reads them. What `dba\clouds2`'s frames 0 to 2 show, and what writes the surface entry `+0x5d`, the frame seen from below, which the constructor zeroes.
-- **Open:** what draws with palette entries 64–79, which the pitch gradient rewrites, and what sets `000928ec` (`00057f89`, `00058407`) and `000928ee` (`00057e15`, `0005b3a3`).
+- **Open:** what draws with palette entries 64–79, which the pitch gradient rewrites.
 - **Open:** what `00092c4c`, which `GndTex_Load` sets to 1, is read for; `es2_xref.py` finds no reference to it besides that store.
 - **Open:** what `00066e34` and `00066f20` do with the ground bitmap object `000b0d88`, which `GndTexBitmap_StaticInit` and `GndTexBitmap_StaticDtor` pass them; both lie in the library region, unread.

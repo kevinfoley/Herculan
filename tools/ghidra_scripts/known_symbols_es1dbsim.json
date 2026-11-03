@@ -14230,7 +14230,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_SetShakeBand",
-      "description": "(amplitude), callee-cleaned: returns at once when CockpitViewManager_Published (00021f98)'s manager is in view 4 (+0x10) or has +0x18 set. CockpitShakeRestOffset (000afb54) and CockpitShakeOffset (000afb5c) take CockpitViewCanvasOrigin (000afa9c); CockpitShakeBand (000afb64) becomes {y - amplitude, y} in view 1 and {y, y + amplitude} in views 0, 2 and 3. In views 2 and 3 it zeroes both offsets' x and, with the installed render context's (000bdbda) +0x208/+0x20c at 0, saves CockpitShakeStripRegion (000afb78) into CockpitShakeStripPixels (000afb90) with Region_Save (000665d6) and fills the region's rect with Raster_FillRect (00053d9c) in colour 0x3f on the draw page as it is and then on the display's +0x88, leaving +0x8c the draw page. Zeroes CockpitShakeTotal (000afb6c) and sets CockpitViewShakeArmed (000925ec). ES2's CockpitView_SetShakeBand (DBSIM 0042d2f8), which fills once with COLORS.DAT id 19. es2_xref finds calls from CockpitView_StepViewTransition (00022904) by the padding entry 000243d2, Cockpit_StartHitShake (0002e17c), 00057ffc and Sim_DeathFlash (00058414).",
+      "description": "(amplitude), callee-cleaned: returns at once when CockpitViewManager_Published (00021f98)'s manager is in view 4 (+0x10) or has +0x18 set. CockpitShakeRestOffset (000afb54) and CockpitShakeOffset (000afb5c) take CockpitViewCanvasOrigin (000afa9c); CockpitShakeBand (000afb64) becomes {y - amplitude, y} in view 1 and {y, y + amplitude} in views 0, 2 and 3. In views 2 and 3 it zeroes both offsets' x and, with the installed render context's (000bdbda) +0x208/+0x20c at 0, saves CockpitShakeStripRegion (000afb78) into CockpitShakeStripPixels (000afb90) with Region_Save (000665d6) and fills the region's rect with Raster_FillRect (00053d9c) in colour 0x3f on the draw page as it is and then on the display's +0x88, leaving +0x8c the draw page. Zeroes CockpitShakeTotal (000afb6c) and sets CockpitViewShakeArmed (000925ec). ES2's CockpitView_SetShakeBand (DBSIM 0042d2f8), which fills once with COLORS.DAT id 19. es2_xref finds calls from CockpitView_StepViewTransition (00022904) by the padding entry 000243d2, Cockpit_StartHitShake (0002e17c), LiftStart_Rise (00057ffc) and Sim_DeathFlash (00058414).",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
       "verified": {
         "bytes": "000243d4+400",
@@ -14245,7 +14245,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_StepShake",
-      "description": "(step), callee-cleaned: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, moves CockpitShakeOffset (000afb5c)'s y by up to step toward the farther limit of CockpitShakeBand (000afb64), the room to each taken as int16 and the low limit when the two are equal; sets the origin of the display's page +0x8c and then of +0x88 to that page's origin plus CockpitShakeOffset through the driver's routine 0009df10; subtracts the move from the rows of every region of the current view's clip block (a rect region's rows +0xc and +0x14, a span region's first row through its +8 when not null); adds the move to CockpitShakeTotal (000afb6c) and moves the cockpit's widgets by (0, -move) with CockpitWidgets_TranslateForView (0002ced0). ES2's CockpitView_StepShake (DBSIM 0042d4a8), which moves one page, a rect's last row, the span table and the context's rect. es2_xref finds calls from Cockpit_HitShakeTick (0002e1d8), 00057ffc and Sim_DeathFlash (00058414).",
+      "description": "(step), callee-cleaned: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, moves CockpitShakeOffset (000afb5c)'s y by up to step toward the farther limit of CockpitShakeBand (000afb64), the room to each taken as int16 and the low limit when the two are equal; sets the origin of the display's page +0x8c and then of +0x88 to that page's origin plus CockpitShakeOffset through the driver's routine 0009df10; subtracts the move from the rows of every region of the current view's clip block (a rect region's rows +0xc and +0x14, a span region's first row through its +8 when not null); adds the move to CockpitShakeTotal (000afb6c) and moves the cockpit's widgets by (0, -move) with CockpitWidgets_TranslateForView (0002ced0). ES2's CockpitView_StepShake (DBSIM 0042d4a8), which moves one page, a rect's last row, the span table and the context's rect. es2_xref finds calls from Cockpit_HitShakeTick (0002e1d8), LiftStart_Rise (00057ffc) and Sim_DeathFlash (00058414).",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
       "verified": {
         "bytes": "00024564+491",
@@ -14260,7 +14260,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_ClearShake",
-      "description": "No arguments: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, sets the origins of the display's pages +0x8c and +0x88 to their page origins plus CockpitShakeRestOffset (000afb54), moves the current view's clip regions back by CockpitShakeTotal (000afb6c), in views 2 and 3 puts CockpitShakeStripRegion (000afb78) back with Region_Restore (0006641f) on the draw page and on +0x88 (leaving +0x8c the draw page), moves the widgets by (0, total) with CockpitWidgets_TranslateForView (0002ced0), and clears the total and the armed byte. ES2's CockpitView_ClearShake (DBSIM 0042d624). es2_xref finds calls from CockpitView_ApplyViewState (000222c0) by the padding entry 0002474f, Cockpit_HitShakeTick (0002e1d8) and 00057ffc.",
+      "description": "No arguments: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, sets the origins of the display's pages +0x8c and +0x88 to their page origins plus CockpitShakeRestOffset (000afb54), moves the current view's clip regions back by CockpitShakeTotal (000afb6c), in views 2 and 3 puts CockpitShakeStripRegion (000afb78) back with Region_Restore (0006641f) on the draw page and on +0x88 (leaving +0x8c the draw page), moves the widgets by (0, total) with CockpitWidgets_TranslateForView (0002ced0), and clears the total and the armed byte. ES2's CockpitView_ClearShake (DBSIM 0042d624). es2_xref finds calls from CockpitView_ApplyViewState (000222c0) by the padding entry 0002474f, Cockpit_HitShakeTick (0002e1d8) and LiftStart_Rise (00057ffc).",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
       "verified": {
         "bytes": "00024750+643",
@@ -14800,7 +14800,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_BlendRangeByPitch",
-      "description": "(camera), callee-cleaned: while 000928ec is set, rewrites palette entries 64-79. Once (flag 00092a3e): reads the colours of entries 000bc5ce, 000bc5d0, 000bc5d2 and 000bc5d4 with Palette_GetEntry (00027f54) and builds 16 colours from 000bc5d0's to 000bc5d2's at 000afde4 with Palette_InterpolateColours (000283b0). Each call: step = 000928ee when it is not negative (then 000928ee = -1), otherwise ((pitch +0xc + 0x2000) & 0xffff) >> 10 capped at 15; end = entry 000bc5d4's colour while 000928eb is set, otherwise colour[step]; 16 colours from entry 000bc5ce's to end installed at entry 0x40 with Palette_InstallRange. Sits where ES2's Scene_DrawTerrainPass calls Palette_NoOp.",
+      "description": "(camera), callee-cleaned: while PitchGradient_Enabled (000928ec) is set, rewrites palette entries 64-79. Once (flag 00092a3e): reads the colours of entries 000bc5ce, 000bc5d0, 000bc5d2 and 000bc5d4 with Palette_GetEntry (00027f54) and builds 16 colours from 000bc5d0's to 000bc5d2's at 000afde4 with Palette_InterpolateColours (000283b0). Each call: step = PitchGradient_ForcedStep (000928ee) when it is not negative (then PitchGradient_ForcedStep (000928ee) = -1), otherwise ((pitch +0xc + 0x2000) & 0xffff) >> 10 capped at 15; end = entry 000bc5d4's colour while 000928eb is set, otherwise colour[step]; 16 colours from entry 000bc5ce's to end installed at entry 0x40 with Palette_InstallRange. Sits where ES2's Scene_DrawTerrainPass calls Palette_NoOp.",
       "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
       "verified": {
         "bytes": "00025fe4+256",
@@ -15595,7 +15595,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_BeginCrossFade",
-      "description": "(duration, to, from) in stack order, callee-cleaned: ES2's Palette_BeginCrossFade (DBSIM 004308fc): stores from at PaletteFade_From (000bc608) and duration at PaletteFade_Duration (000bc610), clears PaletteFade_Armed (00092c3c), and over the palette's int16 entry count (+4) fills PaletteFade_DeltaRed (000bc614), PaletteFade_DeltaGreen (000bc814) and PaletteFade_DeltaBlue (000bca14): with a null from, to's channel * 256 / duration, PaletteFade_Mode (000bcc14) 0; with a null to, from's channel * 256 / -duration, mode 1; with both, (to - from) * 256 / duration, mode 2. Stores the count at PaletteFade_EntryCount (000bc60e). es2_xref finds calls from 00057cf4 and two from Sim_DeathFlash (00058414).",
+      "description": "(duration, to, from) in stack order, callee-cleaned: ES2's Palette_BeginCrossFade (DBSIM 004308fc): stores from at PaletteFade_From (000bc608) and duration at PaletteFade_Duration (000bc610), clears PaletteFade_Armed (00092c3c), and over the palette's int16 entry count (+4) fills PaletteFade_DeltaRed (000bc614), PaletteFade_DeltaGreen (000bc814) and PaletteFade_DeltaBlue (000bca14): with a null from, to's channel * 256 / duration, PaletteFade_Mode (000bcc14) 0; with a null to, from's channel * 256 / -duration, mode 1; with both, (to - from) * 256 / duration, mode 2. Stores the count at PaletteFade_EntryCount (000bc60e). es2_xref finds calls from LiftStart_DarkenPalette (00057cf4) and two from Sim_DeathFlash (00058414).",
       "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
       "verified": {
         "bytes": "00028528+640",
@@ -15610,7 +15610,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_StepCrossFade",
-      "description": "No arguments: ES2's Palette_StepCrossFade (DBSIM 00430b34) with the dword 000981c4 as now: the first call after Palette_BeginCrossFade sets PaletteFade_EndTime (00092c38) to now + duration and sets PaletteFade_Armed; once now passes the end it clears the flag and returns 0 without writing. Otherwise, with e = duration - (end - now), writes the entry count of colors into the live palette from PaletteFade_FirstEntry (000bc60c): mode 0 delta * e >> 8 per channel, modes 1 and 2 from's entry plus delta * e >> 8 per channel byte; widens the dirty range over them and returns end - now. es2_xref finds calls from 00057ffc and four from Sim_DeathFlash (00058414).",
+      "description": "No arguments: ES2's Palette_StepCrossFade (DBSIM 00430b34) with the dword 000981c4 as now: the first call after Palette_BeginCrossFade sets PaletteFade_EndTime (00092c38) to now + duration and sets PaletteFade_Armed; once now passes the end it clears the flag and returns 0 without writing. Otherwise, with e = duration - (end - now), writes the entry count of colors into the live palette from PaletteFade_FirstEntry (000bc60c): mode 0 delta * e >> 8 per channel, modes 1 and 2 from's entry plus delta * e >> 8 per channel byte; widens the dirty range over them and returns end - now. es2_xref finds calls from LiftStart_Rise (00057ffc) and four from Sim_DeathFlash (00058414).",
       "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
       "verified": {
         "bytes": "000287a8+566",
@@ -32870,6 +32870,51 @@
       }
     },
     {
+      "address": "00057cf4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LiftStart_DarkenPalette",
+      "description": "No arguments: ES2's LiftStart_DarkenPalette (DBSIM 0045d52c), which es2_xref finds called once, from Sim_StartMission (0005a9dc) at 0005b3c0 when LiftStart_Pending (000b5bb0) is set. Builds LiftStart_DarkPalette (000b5d24) and LiftStart_BrightPalette (000b5d28) inline (Mem_New 0x14, the vtables 00096c7a, 00096c9e and 00096cc6 in turn, +4 and +0xc zeroed), copies ActivePaletteObject's header into each with GLPalette_CopyHeader (00057fbc) and points their colors at LiftStart_DarkEntries (000b5d2c) and LiftStart_BrightEntries (000b5d30), 0x400 bytes each; sets PitchGradient_ForcedStep (000928ee) to 8 and runs Palette_BlendRangeByPitch (00025fe4)(ViewObjectPtr) where ES2's calls Palette_NoOp; copies the 256 live colors into both buffers; rewrites entries 32-47 and 64-79 of the dark buffer from the bright one as (G>>1, R>>1, R>>1) with top byte 1, reading each entry's first byte twice where ES2's reads blue; installs both spans live with Palette_InstallRange (00027e98); Palette_BeginCrossFade (00028528)(0x78, bright, dark); PitchGradient_Enabled (000928ec) = 0.",
+      "source": "Herculan/docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4; ES1DBSIM decompile and disassembly, diffed against ES2's",
+      "verified": {
+        "bytes": "00057cf4+673",
+        "sha1": "0501d2b082ec",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00057fbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLPalette_CopyHeader",
+      "description": "(to, from), its arguments removed by this function, entered by LiftStart_DarkenPalette (00057cf4)'s two calls through its padding 00057fba: copies a GLPalette's words +4, +6, +0xc and +0xe and dwords +8 and +0x10 from from to to. ES2's LiftStart_DarkenPalette copies the same fields inline.",
+      "source": "Herculan/docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4; ES1DBSIM decompile and disassembly",
+      "verified": {
+        "bytes": "00057fbc+63",
+        "sha1": "87c35f2bf2f2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00057ffc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LiftStart_Rise",
+      "description": "No arguments: ES2's LiftStart_Rise (DBSIM 0045d840), which es2_xref finds called once, from Sim_StartMission (0005a9dc) at 0005b4b0 when LiftStart_Pending (000b5bb0) is set. Loads dba\\intro (the folder 000980f8 names) with ClassItem_LoadFromFile (0005760c) and takes its frame 0 unchecked. Raises LocalPlayerMech's height +0x28 from 4000 below its own in steps of 0x23 while below it, 115 passes, each: x and y +0x20/+0x24 put back and the height set, Cam_Update(ViewObjectPtr), the row of the view point (0, 1000, -ViewObjectPtr's +8) projected, the render context 000bdbda's bottom +0x21c cut to it (its top +0x214 for a row below 1), Sim_RenderFrame (00059c08), the bottom put back and the origin +0x220/+0x224 zeroed, then by the row plus the frame's rows (+4, unshifted): the whole rect +0x210 filled, or the frame blitted at (0, row) with Bitmap_Blit (00067048) and the rest down to the bottom filled, or the frame alone, each fill with Raster_FillRect (00053d9c) under the brush {0, 0x3f} at +0x22c (ES2's COLORS.DAT id 19); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1, the gunsight; the origin put back; Palette_StepCrossFade (000287a8) into LiftStart_FadeRemaining (00096cec) while that is set and the row is greater than -200; Sim_EndFrame (00059b40). Then the height put back, Sound_Stop(0x21), CockpitView_SetShakeBand (000243d4)(5), Sound_Play(0x29), and until 000981c4 reaches its value + 0x1e CockpitView_StepShake (00024564)((Math_RandomNext (00063af4)(000b5c48) & 0xffff) % 5) and Sim_RenderFrame; CockpitView_ClearShake (00024750); Mem_Delete of both entry buffers; each palette's +4 and +0xc zeroed and slot +0x1c called with 3; PitchGradient_Enabled (000928ec) = 1. ES2's also pumps messages each pass.",
+      "source": "Herculan/docs/es1/simulation/lift-start.md#the-ride--liftstart_rise-00057ffc; ES1DBSIM decompile and disassembly, diffed against ES2's",
+      "verified": {
+        "bytes": "00057ffc+1047",
+        "sha1": "d41b1c307e7e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00058414",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -33295,7 +33340,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_EndFrame",
-      "description": "No arguments: sets Display_FlipWithoutPan (000bda96) to 1 when Sim_Frozen (000b5b92) is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); Palette_CycleAnimatedRanges (00028260); Palette_FlushDirtyRange (00027f74); on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); Mem_TrackPeakUse (00059288). Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, PreferencesPanel_Raise (00057820), four, 00057ffc, one, and Sim_DeathFlash (00058414), three.",
+      "description": "No arguments: sets Display_FlipWithoutPan (000bda96) to 1 when Sim_Frozen (000b5b92) is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); Palette_CycleAnimatedRanges (00028260); Palette_FlushDirtyRange (00027f74); on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); Mem_TrackPeakUse (00059288). Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, PreferencesPanel_Raise (00057820), four, LiftStart_Rise (00057ffc), one, and Sim_DeathFlash (00058414), three.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904",
       "verified": {
         "bytes": "00059b40+200",
@@ -33625,7 +33670,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_StartMission",
-      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; Snc_MissionInit (0004e498); with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks AlertPanel_EnterHook (00094d80) and AlertPanel_LeaveHook (00094d84) = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from Cursor_LoadCursorResource (00057640); DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; CockpitMouse_Init (000441cc); CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of g_DebrisPool (000aeef8); Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), GLDisplay_SetAttribute (0006a824)(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with CmdLine_SinglePage (000b5b67) set), +0x34 = +0x88, +0x3c = 3 without CmdLine_SinglePage (000b5b67); ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
+      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; Snc_MissionInit (0004e498); with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks AlertPanel_EnterHook (00094d80) and AlertPanel_LeaveHook (00094d84) = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from Cursor_LoadCursorResource (00057640); DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; CockpitMouse_Init (000441cc); CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of g_DebrisPool (000aeef8); Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), GLDisplay_SetAttribute (0006a824)(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with CmdLine_SinglePage (000b5b67) set), +0x34 = +0x88, +0x3c = 3 without CmdLine_SinglePage (000b5b67); ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then LiftStart_DarkenPalette (00057cf4), otherwise PitchGradient_ForcedStep (000928ee) = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift LiftStart_Rise (00057ffc); unless TapePlayback, CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
       "source": "ES1DBSIM decompile at 0005a9dc",
       "verified": {
         "bytes": "0005a9dc+2808",
@@ -45080,6 +45125,24 @@
       "source": "Herculan/docs/es1/formats/wld-world.md#the-header-shorts"
     },
     {
+      "address": "000928ec",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PitchGradient_Enabled",
+      "description": "Byte, 1 in the image: Palette_BlendRangeByPitch (00025fe4) rewrites palette entries 64-79 only while it is set. es2_xref --decode finds its writes in LiftStart_DarkenPalette (00057cf4), 0 at 00057f89, and LiftStart_Rise (00057ffc), 1 at 00058407.",
+      "source": "Herculan/docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000928ee",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PitchGradient_ForcedStep",
+      "description": "int16: when not negative, Palette_BlendRangeByPitch (00025fe4) takes it as the gradient's step and sets it to -1. es2_xref --decode finds it set to 8 by Sim_StartMission (0005b3a3), the branch without the lift, and by LiftStart_DarkenPalette (00057e15).",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479; ES1DBSIM disassembly"
+    },
+    {
       "address": "000928f0",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -47015,6 +47078,15 @@
       "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-demo-tape; ES1DBSIM disassembly"
     },
     {
+      "address": "00096cec",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LiftStart_FadeRemaining",
+      "description": "1 in the image: LiftStart_Rise (00057ffc) steps the lift's cross fade while it is set and stores Palette_StepCrossFade's answer in it. es2_xref --decode finds one read and one write, both in LiftStart_Rise. ES2's LiftStart_FadeRemaining (DBSIM 0049f160).",
+      "source": "Herculan/docs/es1/simulation/lift-start.md#the-ride--liftstart_rise-00057ffc; ES1DBSIM disassembly"
+    },
+    {
       "address": "00096d0c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -48847,7 +48919,7 @@
       "type": "data",
       "confidence": "high",
       "name": "LiftStart_Pending",
-      "description": "int16: Sim_StartMission sets it when a structure on side 0 lies within 40000 of the player, and then calls 00057cf4 and 00057ffc.",
+      "description": "int16: Sim_StartMission sets it when a structure on side 0 lies within 40000 of the player, and then calls LiftStart_DarkenPalette (00057cf4) and LiftStart_Rise (00057ffc).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -48975,6 +49047,42 @@
       "name": "DemoTape_Names",
       "description": "The demo tapes' names, string pointers from tapes\\demolist.str's first group, room for 0x14 by the capacity DemoTape_PickRandom passes.",
       "source": "Herculan/docs/es1/formats/tap-input-tape.md#the-demo-tape; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5d24",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LiftStart_DarkPalette",
+      "description": "The GLPalette LiftStart_DarkenPalette (00057cf4) builds over LiftStart_DarkEntries (000b5d2c) and darkens, the lift's cross fade's start; LiftStart_Rise (00057ffc) destroys it.",
+      "source": "Herculan/docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4"
+    },
+    {
+      "address": "000b5d28",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LiftStart_BrightPalette",
+      "description": "The GLPalette LiftStart_DarkenPalette (00057cf4) builds over LiftStart_BrightEntries (000b5d30), a copy of the live colors, the lift's cross fade's end; LiftStart_Rise (00057ffc) destroys it.",
+      "source": "Herculan/docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4"
+    },
+    {
+      "address": "000b5d2c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LiftStart_DarkEntries",
+      "description": "LiftStart_DarkPalette's 256 colors, 0x400 bytes from Mem_New: the live colors with entries 32-47 and 64-79 darkened by LiftStart_DarkenPalette (00057cf4); LiftStart_Rise (00057ffc) frees them.",
+      "source": "Herculan/docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4"
+    },
+    {
+      "address": "000b5d30",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LiftStart_BrightEntries",
+      "description": "LiftStart_BrightPalette's 256 colors, 0x400 bytes from Mem_New: the live colors as LiftStart_DarkenPalette (00057cf4) found them; LiftStart_Rise (00057ffc) frees them.",
+      "source": "Herculan/docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4"
     },
     {
       "address": "000b5d38",
