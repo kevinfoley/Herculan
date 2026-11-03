@@ -119,7 +119,7 @@ So a theater shape's lit faces all shade along ramp 14, a single entry in every 
 2. it stores at `+0xc`, three `int16`, the direction `RotateVectorByMatrixQ14((0, 0x800, 0), BuildEulerRotationMatrixQ14(−8000, 0, 24000))`, where ES2's rotates (0, `0x1000`, 0) by (−6000, 0, 21000);
 3. it calls `Light_Register` and `Light_AddPersistent` (`00005608`), which appends the light to the list at `000bc1a0`, its `int16` count at `000907f2`, with no bound.
 
-Rotating (0, *L*, 0) takes the matrix's middle column alone: (*L* · *m* + `0x2000`) >> 14 of each of *m*₂ = −cos X · sin Z, *m*₃ = cos X · cos Z and *m*₅ = sin X, the matrix's entries in Q14 from the quarter-wave table at `000981cc`. X = −8000 is −43.9° and Z = 24000 is 131.8°, so the entries are −8789, −7869 and −11370 and the direction is (−1099, −984, −1421): (−0.537, −0.480, −0.694) at length 2048 in the Z-up world, the way the light travels. It falls at 44° from the vertical, where ES2's falls at 57°. No mission, world or palette file enters it.
+Rotating (0, *L*, 0) takes the matrix's middle column alone: (*L* · *m* + `0x2000`) >> 14 of each of *m*₂ = −cos X · sin Z, *m*₃ = cos X · cos Z and *m*₅ = sin X, the matrix's entries in Q14 from the quarter-wave table `Math_CosTableQ14` (`000981cc`). X = −8000 is −43.9° and Z = 24000 is 131.8°, so the entries are −8789, −7869 and −11370 and the direction is (−1099, −984, −1421): (−0.537, −0.480, −0.694) at length 2048 in the Z-up world, the way the light travels. It falls at 44° from the vertical, where ES2's falls at 57°. No mission, world or palette file enters it.
 
 ### A face's light
 
@@ -235,7 +235,7 @@ In `WORLD0`, for one, a near shape's lit faces shade across palette entries 240 
 In the missile camera's view, which `MfdMissileViewScreen_Paint` (`000364f8`) draws through `ObjList_DrawFrameObjects` with `000928ea` set, ramp 14 takes `WorldShades_ResetRamps`' range {16, 16} instead, and the cull still applies ([above](#the-distance-bands)). Two other views draw the zone's shapes straight through each object's slot `+4`, outside the object list, with no band and no cull:
 
 - **`MfdMapScreen_Paint` (`00036c2c`)**, the MFD's NAV MAP, fills its view with colour `0x17`, puts its camera 200000 above the active view object, calls `WorldShades_ResetRamps`, draws every zone shape, then plots a cross with `Gfx_PlotPixel` ([the NAV MAP](../simulation/mfd-nav-map.md#the-paint)).
-- **`HddCommandScreen_DrawMap` (`00040d4c`)**, the map of the Heads-Down Display's command screen ([drawing the map](../simulation/hdd-command-screen.md#drawing-the-map)), points ramp 14 at the one-entry range {56, 1} with `Palette_SetRampsToRange`, so every lit face is palette entry 56, and draws every zone shape, of `Zone_ShapeCount` in `Zone_ShapeObjects`' order and stopping at a null pointer, with the word its shape instance's `+8` points at set to 1 for the draw and 0 after.
+- **`HddCommandScreen_DrawMap` (`00040d4c`)**, the map of the Heads-Down Display's command screen ([drawing the map](../simulation/hdd-command-screen.md#drawing-the-map)), points ramp 14 at the one-entry range {56, 1} with `Palette_SetRampsToRange`, so every lit face is palette entry 56, and draws every zone shape, of `Zone_ShapeCount` in `Zone_ShapeObjects`' order and stopping at a null pointer, with the word its shape instance's `+8` points at set to 1 for the draw and 0 after. That word is entry 0 of the instance's frame array, the frame of sequence 0, from which each `TSCellAnimPart` on sequence 0 draws part (frame mod its part count `+0x10`), unsigned; every theater shape's sequence list is [2] but one of `URBAN.DGS`'s, [3], its cells two plain groups, so frame 1 draws each cell's second group (the shell's map does the same, [the shapes](../shell/map.md#the-shapes)).
 
 ## Functions
 
@@ -290,6 +290,9 @@ In the missile camera's view, which `MfdMissileViewScreen_Paint` (`000364f8`) dr
 | `VGA8_BlitBitmap`, `BMP8_BlitBitmap` | `0008b9a8`, `0008d700` | |
 | `VGA8_BlitBitmapClipped`, `VGA8_BlitClippedRow` | `0008c27c`, `0008c41a` | `VGA8_BlitClippedRow` is a near-called block sharing the clipped blit's frame |
 | `RotateVectorByMatrixQ14` | `0007586c` | |
+| `Raster_FillContourTriangle`, `Raster_FillContourPolygon` | `00078ccc`, `0007965c` | brush mode 1's fill; `ES1GO` `000696cc`, `0006a05c` |
+| `VGA8_FillSpans`, `VGA8_RemapSpans` | `0008aef8`, `0008afd4` | `VGA_8`'s slots 0 and 1; `ES1GO` `00072b50`, `00072c2c` |
+| `VGA8_SpanFill`, `VGA8_SpanFillRegion` | `0008b764`, `0008b821` | slots 24 and 25, which `Bitmap_BlitTransparent` calls; `ES1GO` `00073b38`, `00073bf5` |
 
 ## Open
 
@@ -300,7 +303,6 @@ In the missile camera's view, which `MfdMissileViewScreen_Paint` (`000364f8`) dr
 - **Open:** which entries carry kind 1.
 - **Open:** what the blend byte `000b5b65` is set to.
 - **Open:** which classes carry type tags 1 to 9 in ES1: what the array at `000bc416` and `g_ProjectilePool` (`000af0b4`) hold, and what each one's constructor stores at `+0`. The effects store 2 or 8 ([the effect](../simulation/impact-effects.md#the-effect)), a debris piece 1 and a smoke ball 4 ([the wreckage and smoke](../simulation/destruction-effects.md)).
-- **Open:** what the word at a shape instance's `+8` selects.
 - **Open:** no reference to `Light_RemovePersistent` or `Light_UnregisterPersistent` found by `es2_xref.py`, and none to `LightManager_SetSlotFalloff` but the dword at `0002116c`.
 - **Open:** whether a textured face is outlined. `PolyFill_FillThenOutline` draws the ring again in `PolyFill_LineColour` for any brush mode but 5 when that colour differs from the brush's `+4`, which for `TSTexture4Poly_Render`'s brush is the point count, and `TSTexture4Poly_Render` does not set the line colour, so it is what the poly drawn before it left. A retail check: a HERC's textured panel seen close, for a one-pixel edge in another colour.
 - **Open:** no reference to `Raster_GetColourRamps` found by `es2_xref.py`.

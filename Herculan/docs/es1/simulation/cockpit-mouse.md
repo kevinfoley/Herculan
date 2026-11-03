@@ -66,6 +66,8 @@ A button's value slot returns `Widget_ClickButtons` ([the gadget bases](cockpit-
 
 ## The callback and the queue
 
+The shell has a copy of this queue, the same statements on its own globals, for the war map's gadgets ([the shell's mouse queue](../shell/startup.md#the-mouse-queue)).
+
 **`CockpitMouse_Init` (`000441cc`)**, no arguments, from `Sim_StartMission` ([the mission start](main-loop.md#the-mission-start--sim_startmission-0005a9dc)), ES2's (`00452abc`):
 
 1. `Input_GetMouseDevice_Thunk`, whose answer it drops; `Mouse_AddCallback`(`CockpitMouse_OnEvent` by its padding `00044461`, `0x1f`), keeping the slot in `CockpitMouse_CallbackSlot` (`00094c52`) ([the mouse driver](input.md#the-mouse-driver)). The mask's bits are the driver's events: 0 the pointer moved, 1 and 2 the left button pressed and released, 3 and 4 the right's. ES2's listener mask is `0x1e`, without the move.

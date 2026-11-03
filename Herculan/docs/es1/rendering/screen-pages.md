@@ -281,6 +281,10 @@ The two routines are one object file, `00088728`–`0008886f`, between zero fill
 | `VGA8_WriteRowTransparent`, `VGA8_WriteRow`, `VGA8_ReadRow` | `000736ac`, `000738ca`, `000739e8` | slots 23, 22 and 21 ([the simulator's](#the-simulators-own-page-routines), but for the row table) |
 | `VGA8_ClearPage`, `Raster_GetDrawPage` | `00075afc`, `0007b9ba` | slot 35 and its getter, the simulator's ([lines and clipped bitmaps](#lines-and-clipped-bitmaps)) |
 | `VGA8_BlitBitmapScaled`, `VGA8_BlitScaledRow`, `VGA8_ScaleStepSetup` | `00074b18`, `00074cbd`, `00074f77` | the last two take their arguments in registers and the caller's frame |
+| `SpanList_ClipToRect`, `SpanList_FromRect`, `Rect_Intersect` | `0004fd65`, `000665fc`, `0006659c` | the simulator's code (`ES1DBSIM` `00073c91`, `00073d8c`, `00073dc4`) |
+| `Bitmap_UnpackToScratch`, `Bitmap_BlitTransparent` | `00050544`, `0006b664` | the simulator's code (`ES1DBSIM` `000672cc`, `0007d66c`); the second draws a type-1 bitmap for `Raster_BlitDispatch` |
+| `VGA8_FillRect`, `VGA8_RemapRect`, `VGA8_PutPixel`, `VGA8_RemapPixel` | `00072cc8`, `00072e74`, `00072f53`, `00072f99` | slots 2, 3, 5 and 6, the simulator's code (`ES1DBSIM` `0008b070`, `0008b21c`, `0008b2fb`, `0008b341`) |
+| `VGA8_BlitBitmap` | `00073d7c` | slot 26, the simulator's code (`ES1DBSIM` `0008b9a8`) |
 
 ## Open
 

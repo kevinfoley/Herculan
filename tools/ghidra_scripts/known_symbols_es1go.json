@@ -1687,7 +1687,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_LoadBnd",
-      "description": "No arguments: Ovl_ReadFile(bnd\\shellmap, 1, 0x8e, 0009a44c) in stack order, the whole of BND\\SHELLMAP.BND. The static initialiser 0000dcbd registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "description": "No arguments: Ovl_ReadFile(bnd\\shellmap, 1, 0x8e, 0009a44c) in stack order, the whole of BND\\SHELLMAP.BND. The static initialiser ShellMap_StaticInit (0000dcbd) registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
       "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
       "verified": {
         "bytes": "00009210+44",
@@ -1709,6 +1709,21 @@
         "sha1": "0499d1eb77a9",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00009275",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_LoadFont",
+      "description": "(path), callee-cleaned: the body of ShellMap_LoadResource (0000923c): VolRStream_CtorFromPath, ClassItem_LoadResource(0, stream), VolRStream_Dtor(stream, 2), returning the item. ShellMap_LoadResources (000093b3) loads dfn\\map into ShellMap_LabelFont (000aa2c0) through it.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-start-up; P17b details (session e21324f7), ES1GO decompile at 00009275",
+      "verified": {
+        "bytes": "00009275+57",
+        "sha1": "53a9183e0c00",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -1747,7 +1762,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_LoadResources",
-      "description": "(): registers ShellMap_TimerTick (000092ae) with Timer_AddCallback (00056509) at a count of 2, keeping the slot in the word 0007e20a; loads the folder names icons and mapshp under the dword 00086840 with ShellMap_LoadResource into 000aa2b8 and 000aa2bc, and the name 0007e256 under 00086850 with 00009275 into ShellMap_LabelFont (000aa2c0); and Mem_New's a block of the word ShellMapBnd_ShapeArenaSize (0009a4d6)'s size into 0007e20c. es2_xref finds one call, from Shell_Main (00012ec7); ShellMap_ReleaseResources (00009453) undoes it.",
+      "description": "(): registers ShellMap_TimerTick (000092ae) with Timer_AddCallback (00056509) at a count of 2, keeping the slot in the word 0007e20a; loads the folder names icons and mapshp under the dword 00086840 with ShellMap_LoadResource into 000aa2b8 and 000aa2bc, and the name 0007e256 under 00086850 with ShellMap_LoadFont (00009275) into ShellMap_LabelFont (000aa2c0); and Mem_New's a block of the word ShellMapBnd_ShapeArenaSize (0009a4d6)'s size into 0007e20c. es2_xref finds one call, from Shell_Main (00012ec7); ShellMap_ReleaseResources (00009453) undoes it.",
       "source": "Herculan/docs/es1/shell/startup.md#the-start-up; ES1GO decompile at 000093b3",
       "verified": {
         "bytes": "000093b3+160",
@@ -1948,7 +1963,7 @@
         "bytes": "0000aa3c+284",
         "sha1": "d60a0b3ddcc9",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -1978,7 +1993,7 @@
         "bytes": "0000aff0+1276",
         "sha1": "018cdc5a80c5",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -2008,7 +2023,7 @@
         "bytes": "0000b840+395",
         "sha1": "f1286cfb86eb",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -2023,7 +2038,7 @@
         "bytes": "0000b9cb+337",
         "sha1": "e5153c365ced",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -2068,7 +2083,7 @@
         "bytes": "0000bd83+408",
         "sha1": "3c9fa485a113",
         "scope": "body",
-        "via": "disasm"
+        "via": "both"
       }
     },
     {
@@ -2122,7 +2137,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_PlaceSquad",
-      "description": "(map), callee-cleaned, src\\shellmap.cpp: sets the squad size +0xc6 from the word Squad_MemberCount (0007ebc8); opens dat\\mforms (severity-5 assert, line 0x59e, when the stream status is set), reads the count into a local and then formation + 1 records of 0x1c bytes into one buffer, the formation being +0x9e; heading: +0xa4, when not negative, indexes the int16 table +0x58, else with a path +0x6a of two points or more 000553bc of its first leg less 0x4000, else 0, made a rotation by Math_BuildRotation2D; anchor: point +0xa2 of the 12-byte points +0x52, or the path's first point when +0xa2 is -1. Each of the eight member refs at +0xa8 that is not -1 and is below +0xc6 gets the anchor at +0xd4 + 12 * k, plus for k above 0 the record's int16 slot k with z 0 turned by 000552e0. The second half of VSHELL's ShellMap_ReadSquadHeader (00424db0), without its player.mec read. Caller found by es2_xref: ShellMap_LoadScriptDat (0000c068).",
+      "description": "(map), callee-cleaned, src\\shellmap.cpp: sets the squad size +0xc6 from the word Squad_MemberCount (0007ebc8); opens dat\\mforms (severity-5 assert, line 0x59e, when the stream status is set), reads the count into a local and then formation + 1 records of 0x1c bytes into one buffer, the formation being +0x9e; heading: +0xa4, when not negative, indexes the int16 table +0x58, else with a path +0x6a of two points or more Math_Atan2Truncated (000553bc) of its first leg less 0x4000, else 0, made a rotation by Math_BuildRotation2D; anchor: point +0xa2 of the 12-byte points +0x52, or the path's first point when +0xa2 is -1. Each of the eight member refs at +0xa8 that is not -1 and is below +0xc6 gets the anchor at +0xd4 + 12 * k, plus for k above 0 the record's int16 slot k with z 0 turned by Math_Rotate2DPoint16 (000552e0). The second half of VSHELL's ShellMap_ReadSquadHeader (00424db0), without its player.mec read. Caller found by es2_xref: ShellMap_LoadScriptDat (0000c068).",
       "source": "Herculan/docs/es1/formats/formations-dat.md#the-shells-squad",
       "verified": {
         "bytes": "0000cab1+958",
@@ -2518,7 +2533,7 @@
         "bytes": "0000dbd3+30",
         "sha1": "6172b7cbea16",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -2547,6 +2562,21 @@
       "verified": {
         "bytes": "0000dbfb+194",
         "sha1": "235aa151ac23",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000dcbd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_StaticInit",
+      "description": "No arguments: src\\shellmap.cpp's static initialiser, static constructor table entry 0009a22c: RegisterSubsystemLoader(1, ShellMap_LoadBnd (00009210)), then zeroes the dwords 0009a51c to 0009a530; 0009a524-0009a533 is the zero rect MapGadget_Ctor (0000da8d) passes to Widget_CtorRect.",
+      "source": "Herculan/docs/es1/shell/map.md#where-the-object-files-start-and-end; P17b details (session e21324f7), ES1GO decompile at 0000dcbd",
+      "verified": {
+        "bytes": "0000dcbd+267",
+        "sha1": "55d97533ff1e",
         "scope": "body",
         "via": "decompile"
       }
@@ -2954,10 +2984,10 @@
       "address": "00010559",
       "binary": "ES1GO",
       "type": "function",
-      "confidence": "medium",
-      "name": "maybe_MouseEventQueue_Start",
-      "description": "(): calls Input_GetMouseDevice_Thunk (00027bc9); registers 00010900 with Mouse_AddCallback (0005116b) for the events 0x1f into the word 0007e5d4; clears 0009adf8, 0009adf4, 000aa776, 000aa774 and 000aa79e; allocates with __vec_new (0005542c) two arrays of the word 0009adf0's count of 14-byte entries (element constructor 00010666) into 000aa78a and 000aa792; clears 000aa78e and 000aa786 and stores their addresses at 000aa79a and 000aa796; sets 000aa77e to 1000000 / Math_Q14Multiply (0005a2b8)(the word +4 of 000ab784, 0x35a1) / 2, Widget_ActiveRoot (0007e5d8) to 0 and 0007e5dc to -1. Shell_PrepareMission (0002a523) calls it.",
-      "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons; ES1GO decompile at 00010559",
+      "confidence": "high",
+      "name": "MouseEventQueue_Start",
+      "description": "(): calls Input_GetMouseDevice_Thunk (00027bc9); registers CockpitMouse_OnEvent (00010900) with Mouse_AddCallback (0005116b) for the events 0x1f into the word CockpitMouse_CallbackSlot (0007e5d4); clears 0009adf8, CockpitMouse_LastPoint (0009adf4), CockpitMouse_RightHeld (000aa776), CockpitMouse_LeftHeld (000aa774) and CockpitMouse_LastButtons (000aa79e); allocates with __vec_new (0005542c) two arrays of the word CtlMgr_QueueSize (0009adf0)'s count of 14-byte entries (element constructor CockpitMouseEvent_ElementCtor (00010666)) into 000aa78a and 000aa792; clears CockpitMouseQueueB (000aa78e) and CockpitMouseQueueA (000aa786) and stores their addresses at CockpitMouseQueue_Front (000aa79a) and CockpitMouseQueue_Back (000aa796); sets CockpitMouse_DoubleClickTicks (000aa77e) to 1000000 / Math_Q14Multiply (0005a2b8)(the word +4 of 000ab784, 0x35a1) / 2, Widget_ActiveRoot (0007e5d8) to 0 and Widget_PressedIndex (0007e5dc) to -1. Shell_PrepareMission (0002a523) calls it.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue; P19 details (session 81c6d185), ES1GO decompile at 00010559",
       "verified": {
         "bytes": "00010559+269",
         "sha1": "b856c3463d56",
@@ -2966,13 +2996,28 @@
       }
     },
     {
+      "address": "00010666",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitMouseEvent_ElementCtor",
+      "description": "(record), callee-cleaned: the element constructor MouseEventQueue_Start (00010559) passes __vec_new for the queues' 0xe-byte records: Mem_New(0xe) when given none, then the null tests of its nested 10- and 8-byte parts' inlined constructors; returns the record. ES1DBSIM's CockpitMouseEvent_ElementCtor (000442b4), compiled without its optimisation.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue; P19 details (session 81c6d185), ES1GO decompile at 00010666",
+      "verified": {
+        "bytes": "00010666+73",
+        "sha1": "a16bd2ca176d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000106af",
       "binary": "ES1GO",
       "type": "function",
-      "confidence": "medium",
-      "name": "maybe_MouseEventQueue_Stop",
-      "description": "(): calls Input_GetMouseDevice_Thunk (00027bc9); Mouse_RemoveCallback (000511b4) of the word 0007e5d4, which it clears; __vec_delete (0005547c) of the two 14-byte arrays 000aa78a and 000aa792. Shell_DeleteMissionMap (0002a4ec) calls it.",
-      "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons; ES1GO decompile at 000106af",
+      "confidence": "high",
+      "name": "MouseEventQueue_Stop",
+      "description": "(): calls Input_GetMouseDevice_Thunk (00027bc9); Mouse_RemoveCallback (000511b4) of the word CockpitMouse_CallbackSlot (0007e5d4), which it clears; __vec_delete (0005547c) of the two 14-byte arrays 000aa78a and 000aa792. Shell_DeleteMissionMap (0002a4ec) calls it.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue; P19 details (session 81c6d185), ES1GO decompile at 000106af",
       "verified": {
         "bytes": "000106af+94",
         "sha1": "d330b77d4e12",
@@ -3041,12 +3086,27 @@
       }
     },
     {
+      "address": "00010900",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitMouse_OnEvent",
+      "description": "(record), callee-cleaned: the mouse driver's callback MouseEventQueue_Start (00010559) registers for the events 0x1f. ES1DBSIM's CockpitMouse_OnEvent (00044464)'s statements on the shell's globals: does nothing while CockpitMouseLive (000aa778) is clear, the clock is ShellTime_Ticks (0007e6fc), the follow byte Cursor_FollowsMouse (0007e5df), and it pushes through CockpitMouseQueue_Push (00010d71).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue; P19 details (session 81c6d185), ES1GO decompile at 00010900",
+      "verified": {
+        "bytes": "00010900+142",
+        "sha1": "0f0359bec42e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0001098e",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "CockpitMouse_ProcessQueue",
-      "description": "No arguments: ES1DBSIM's CockpitMouse_ProcessQueue (000444d0) for the shell, with no Cursor_SyncPosition call. Returns 0 at once unless the word 0007e5d4 (the queue's mouse callback slot) and the dword Widget_ActiveRoot (0007e5d8) (the widget root r) are set; otherwise swaps the queue pointers 000aa796 and 000aa79a, zeroes the count of the queue 000aa796 now holds and, for each 14-byte record {x, y, buttons, time} of the one 000aa79a holds: the buttons into the word Widget_ClickButtons (0007e66c); when the point differs from 0009adf4/0009adf8, stores it there and the point less r's +0x227/+0x22b at 0009ae08/0009ae0c and, with the byte 0007e5de clear, calls 000117ba(r, point) when 00010eb0(r, point) answers non-zero, or with it set calls slot +0x1c of the captured entry (index 0007e5dc of r's list +0x252) with the point less r's +0/+4 and 0001199a; clears 0007e5e0; a left press (bit 0, the byte 000aa774 clear) sets 000aa774 and calls 000115d2(r, point); a right press sets 000aa776; a left release clears 000aa774, sets 0007e5e0 when time less the dword 0007e5e4 is below 000aa77e, stores time there and the buttons | 1 in Widget_ClickButtons (0007e66c); a right release the same with 000aa776, 0007e5e8 and | 2; after a release calls 000116c2(r, point) with 0007e5de clear, or else sets the captured entry's +0x17 to 0, calls 0001199a, clears 0007e5de, calls the entry's slot +0xc with what its slot +0x14 returns and sets 0007e5dc to -1. Returns the queue 000aa79a holds. Shell_PollInput (0004de3a) and Shell_Main (00012ec7) call it.",
+      "description": "No arguments: ES1DBSIM's CockpitMouse_ProcessQueue (000444d0) for the shell, with no Cursor_SyncPosition call. Returns 0 at once unless the word CockpitMouse_CallbackSlot (0007e5d4) (the queue's mouse callback slot) and the dword Widget_ActiveRoot (0007e5d8) (the widget root r) are set; otherwise swaps the queue pointers CockpitMouseQueue_Back (000aa796) and CockpitMouseQueue_Front (000aa79a), zeroes the count of the queue CockpitMouseQueue_Back (000aa796) now holds and, for each 14-byte record {x, y, buttons, time} of the one CockpitMouseQueue_Front (000aa79a) holds: the buttons into the word Widget_ClickButtons (0007e66c); when the point differs from CockpitMouse_LastPoint (0009adf4)/0009adf8, stores it there and the point less r's +0x227/+0x22b at CockpitMouse_CanvasPoint (0009ae08)/0009ae0c and, with the byte Widget_DragCapture (0007e5de) clear, calls Widget_TrackPressedWidget (000117ba)(r, point) when Widget_HitTest (00010eb0)(r, point) answers non-zero, or with it set calls slot +0x1c of the captured entry (index Widget_PressedIndex (0007e5dc) of r's list +0x252) with the point less r's +0/+4 and Widget_Repaint (0001199a); clears CockpitMouse_DoubleClick (0007e5e0); a left press (bit 0, the byte CockpitMouse_LeftHeld (000aa774) clear) sets CockpitMouse_LeftHeld (000aa774) and calls Widget_OnMouseDown (000115d2)(r, point); a right press sets CockpitMouse_RightHeld (000aa776); a left release clears CockpitMouse_LeftHeld (000aa774), sets CockpitMouse_DoubleClick (0007e5e0) when time less the dword CockpitMouse_LastLeftRelease (0007e5e4) is below CockpitMouse_DoubleClickTicks (000aa77e), stores time there and the buttons | 1 in Widget_ClickButtons (0007e66c); a right release the same with CockpitMouse_RightHeld (000aa776), CockpitMouse_LastRightRelease (0007e5e8) and | 2; after a release calls Widget_OnMouseUp (000116c2)(r, point) with Widget_DragCapture (0007e5de) clear, or else sets the captured entry's +0x17 to 0, calls Widget_Repaint (0001199a), clears Widget_DragCapture (0007e5de), calls the entry's slot +0xc with what its slot +0x14 returns and sets Widget_PressedIndex (0007e5dc) to -1. Returns the queue CockpitMouseQueue_Front (000aa79a) holds. Shell_PollInput (0004de3a) and Shell_Main (00012ec7) call it.",
       "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile at 0001098e",
       "verified": {
         "bytes": "0001098e+995",
@@ -3054,6 +3114,30 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "00010d71",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitMouseQueue_Push",
+      "description": "(time, record), callee-cleaned: ES1DBSIM's CockpitMouseQueue_Push (00044830)'s statements on the shell's queues: returns 0 when the back queue CockpitMouseQueue_Back (000aa796) holds CtlMgr_QueueSize (0009adf0) less 1 records, 99, otherwise appends the 0xe-byte record and returns 1.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue; P19 details (session 81c6d185), ES1GO decompile at 00010d71",
+      "verified": {
+        "bytes": "00010d71+93",
+        "sha1": "a8fc5073aaf1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00010eb0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_HitTest",
+      "description": "(root, point), callee-cleaned: ES1DBSIM's Widget_HitTest (000437d0)'s statements, compiled without its optimisation, on the shell's globals; CockpitMouse_ProcessQueue (0001098e) calls it.",
+      "source": "es2_naming.py diff ES1GO 00010eb0 ES1DBSIM 000437d0 (P19 details, session 81c6d185)"
     },
     {
       "address": "00011011",
@@ -3101,12 +3185,75 @@
       }
     },
     {
+      "address": "000115d2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_OnMouseDown",
+      "description": "(root), callee-cleaned: ES1DBSIM's Widget_OnMouseDown's statements, compiled without its optimisation, on the shell's globals (Widget_PressedIndex Widget_PressedIndex (0007e5dc), Widget_DragCapture Widget_DragCapture (0007e5de), CockpitMouse_CanvasPoint CockpitMouse_CanvasPoint (0009ae08)).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue; P19 details (session 81c6d185), ES1GO decompile at 000115d2",
+      "verified": {
+        "bytes": "000115d2+240",
+        "sha1": "3ad6fc39dc80",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000116c2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_OnMouseUp",
+      "description": "(root), callee-cleaned: ES1DBSIM's Widget_OnMouseUp's statements, compiled without its optimisation, on the shell's globals: calls the hit widget's click slot +0xc with its value slot +0x14's answer when the release's hit index is the press's, or when bit 1 of Widget_ClickButtons (0007e66c) is set.",
+      "source": "Herculan/docs/es1/shell/map.md#picking-a-gadget; P19 details (session 81c6d185), ES1GO decompile at 000116c2",
+      "verified": {
+        "bytes": "000116c2+248",
+        "sha1": "75fb0c2255f1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000117ba",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_TrackPressedWidget",
+      "description": "(root, point), callee-cleaned: ES1DBSIM's Widget_TrackPressedWidget (00043f68)'s statements, compiled without its optimisation, on the shell's globals.",
+      "source": "es2_naming.py diff ES1GO 000117ba ES1DBSIM 00043f68 (P19 details, session 81c6d185)"
+    },
+    {
+      "address": "000118b5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_HitTestChildren",
+      "description": "(root, point), callee-cleaned: ES1DBSIM's Widget_HitTestChildren (0004401c)'s statements, compiled without its optimisation, on the shell's globals.",
+      "source": "es2_naming.py diff ES1GO 000118b5 ES1DBSIM 0004401c (P19 details, session 81c6d185)"
+    },
+    {
+      "address": "0001199a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_Repaint",
+      "description": "(widget), callee-cleaned: ES1DBSIM's Widget_Repaint's statements, compiled without its optimisation.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue; P19 details (session 81c6d185), ES1GO decompile at 0001199a",
+      "verified": {
+        "bytes": "0001199a+67",
+        "sha1": "d43d673721ec",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000119e0",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "ShellTime_Tick",
-      "description": "(): a timer callback: takes 1 off the word 0009ae16 while it is not 0 and adds 1 to the dword 0007e6fc, which Anm_Play reads. ShellTime_Init (000119fc) registers it at a count of 2; es2_xref finds its address stored there only.",
+      "description": "(): a timer callback: takes 1 off the word 0009ae16 while it is not 0 and adds 1 to the dword ShellTime_Ticks (0007e6fc), which Anm_Play reads. ShellTime_Init (000119fc) registers it at a count of 2; es2_xref finds its address stored there only.",
       "source": "Herculan/docs/es1/shell/startup.md#the-frame-time-scale; ES1GO decompile at 000119e0",
       "verified": {
         "bytes": "000119e0+28",
@@ -3547,7 +3694,7 @@
         "bytes": "00012be8+735",
         "sha1": "3aa983642a07",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -3631,7 +3778,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Anm_Play",
-      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls Bitmap_GrabClipDispatch (0005afa8)(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte 0007fcb9 is set and it was made, calls 000209e0(0007fcfc) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock 0007e6fc; Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls Region_CopyBetweenPages (00051c40) with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in Shell_DrawScreen (0003c1b7), passing mode 1 with sound 10 and with sound 11.",
+      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls Bitmap_GrabClipDispatch (0005afa8)(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte 0007fcb9 is set and it was made, calls 000209e0(0007fcfc) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock ShellTime_Ticks (0007e6fc); Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls Region_CopyBetweenPages (00051c40) with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in Shell_DrawScreen (0003c1b7), passing mode 1 with sound 10 and with sound 11.",
       "source": "Herculan/docs/es1/formats/anm-animation.md#playing",
       "verified": {
         "bytes": "000132d8+1667",
@@ -10711,13 +10858,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_DeleteMissionMap",
-      "description": "(): with Shell_MissionMap (000809a4) set, maybe_MouseEventQueue_Stop (000106af), ShellMap_SkipIntro (0000a9c8)(map) and ShellMap_Dtor (00009a73)(map, 3), and clears Shell_MissionMap. es2_xref finds seven calls, from Shell_PrepareMission (0002a523), UnArmedAlert_OnMessage (0002a650), WarMapMenu_OnMessage (0002c057) and ServiceBayMenu_OnMessage (0002d327). It opens the menu handlers' object file.",
+      "description": "(): with Shell_MissionMap (000809a4) set, MouseEventQueue_Stop (000106af), ShellMap_SkipIntro (0000a9c8)(map) and ShellMap_Dtor (00009a73)(map, 3), and clears Shell_MissionMap. es2_xref finds seven calls, from Shell_PrepareMission (0002a523), UnArmedAlert_OnMessage (0002a650), WarMapMenu_OnMessage (0002c057) and ServiceBayMenu_OnMessage (0002d327). It opens the menu handlers' object file.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons; ES1GO decompile and disassembly at 0002a4ec",
       "verified": {
         "bytes": "0002a4ec+55",
         "sha1": "4b26a59b548c",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -10726,13 +10873,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_PrepareMission",
-      "description": "(): Shell_DeleteMissionMap (0002a4ec); Mission_WriteObjectives (00018824)(000aad2a, the mission's .eng path); maybe_MouseEventQueue_Start (00010559); clears the byte 0007e5df; Shell_MissionMap (000809a4) = ShellMap_Constructor (000094d9)(0, 000a02d4). es2_xref finds eight calls, from MainMenu_OnMessage (0002a70a), MissionMenu_OnMessage (0002b375), AnyDisabledAlert_OnMessage (0002a581), CareerMenu_OnMessage (0002aa0e), NewCareerAlert_OnMessage (0002aeec), CareerRecordsMenu_OnMessage (0002af94) and ServiceBayMenu_OnMessage (0002d327).",
+      "description": "(): Shell_DeleteMissionMap (0002a4ec); Mission_WriteObjectives (00018824)(000aad2a, the mission's .eng path); MouseEventQueue_Start (00010559); clears the byte Cursor_FollowsMouse (0007e5df); Shell_MissionMap (000809a4) = ShellMap_Constructor (000094d9)(0, 000a02d4). es2_xref finds eight calls, from MainMenu_OnMessage (0002a70a), MissionMenu_OnMessage (0002b375), AnyDisabledAlert_OnMessage (0002a581), CareerMenu_OnMessage (0002aa0e), NewCareerAlert_OnMessage (0002aeec), CareerRecordsMenu_OnMessage (0002af94) and ServiceBayMenu_OnMessage (0002d327).",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-buttons; ES1GO decompile and disassembly at 0002a523",
       "verified": {
         "bytes": "0002a523+49",
         "sha1": "fec2c4e5985a",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -11002,7 +11149,7 @@
         "bytes": "0002bbaf+14",
         "sha1": "1550088044a9",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -11011,7 +11158,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WarMapMenu_Ctor",
-      "description": "(this): the war map screen (vtable 00080bc6, class name WarMapMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the briefing, block 0 of BRF: from the .eng path 000aad2a, into the dialog Shell_Dialog (0009afc8) with Dialog_LoadConditional (00018cdb) and calls Dialog_NextPage (00018e18) as many times as WarMap_BriefingPage (000809b2), compared signed; sets 000809a8 to 3; when the byte Shell_DebugMode (0007fd08) is 0 calls Input_GetKeyboardDevice_Thunk (00027bbf) and, with a device r, keeps KeyboardInputDevice_GetMode (00025d19)(r) in WarMap_SavedKeyboardMode (000a04d8) and calls KeyboardInputDevice_SetMode (00025ce6)(r, 0x20000) and Keyboard_AddSubscriberCodes (0001ffdc)(KeyQueue_Subscriber (0005d6a0), WarMap_MapKeys (000809ac)); sets the byte 000aa778 to 1. es2_xref finds one call, from Shell_HandleMessage (0003c7d8)'s case for screens 1500 and 1501 at 0003ef9b.",
+      "description": "(this): the war map screen (vtable 00080bc6, class name WarMapMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the briefing, block 0 of BRF: from the .eng path 000aad2a, into the dialog Shell_Dialog (0009afc8) with Dialog_LoadConditional (00018cdb) and calls Dialog_NextPage (00018e18) as many times as WarMap_BriefingPage (000809b2), compared signed; sets 000809a8 to 3; when the byte Shell_DebugMode (0007fd08) is 0 calls Input_GetKeyboardDevice_Thunk (00027bbf) and, with a device r, keeps KeyboardInputDevice_GetMode (00025d19)(r) in WarMap_SavedKeyboardMode (000a04d8) and calls KeyboardInputDevice_SetMode (00025ce6)(r, 0x20000) and Keyboard_AddSubscriberCodes (0001ffdc)(KeyQueue_Subscriber (0005d6a0), WarMap_MapKeys (000809ac)); sets the byte CockpitMouseLive (000aa778) to 1. es2_xref finds one call, from Shell_HandleMessage (0003c7d8)'s case for screens 1500 and 1501 at 0003ef9b.",
       "source": "Herculan/docs/es1/shell/war-map.md#opening-it",
       "verified": {
         "bytes": "0002bbbd+472",
@@ -11101,7 +11248,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WarMapMenu_Dtor",
-      "description": "(menu, flags) in stack order, its arguments removed by this function: slot +4 of WarMapMenu's vtable (00080bc6). With menu set: stores 00080bc6 at +0x22; while the byte 000817bd is 0, Dialog_DeleteBox (00018d93)(Shell_Dialog (0009afc8)) and WarMap_BriefingPage (000809b2) set to 0; clears the byte 000809a8; unless Shell_DebugMode (0007fd08) is set, with the device Input_GetKeyboardDevice_Thunk (00027bbf) answers, Keyboard_RemoveSubscriberCodes (00020030)(KeyQueue_Subscriber (0005d6a0), WarMap_MapKeys (000809ac)) and KeyboardInputDevice_SetMode (00025ce6)(device, WarMap_SavedKeyboardMode (000a04d8)); clears the byte 000aa778; stores Menu's vtable 00080ba8 at +0x22 and 00080b7c, 00080b44 and 00080b12 in turn at +0xa; frees menu with Mem_Delete when bit 0 of flags is set.",
+      "description": "(menu, flags) in stack order, its arguments removed by this function: slot +4 of WarMapMenu's vtable (00080bc6). With menu set: stores 00080bc6 at +0x22; while the byte 000817bd is 0, Dialog_DeleteBox (00018d93)(Shell_Dialog (0009afc8)) and WarMap_BriefingPage (000809b2) set to 0; clears the byte 000809a8; unless Shell_DebugMode (0007fd08) is set, with the device Input_GetKeyboardDevice_Thunk (00027bbf) answers, Keyboard_RemoveSubscriberCodes (00020030)(KeyQueue_Subscriber (0005d6a0), WarMap_MapKeys (000809ac)) and KeyboardInputDevice_SetMode (00025ce6)(device, WarMap_SavedKeyboardMode (000a04d8)); clears the byte CockpitMouseLive (000aa778); stores Menu's vtable 00080ba8 at +0x22 and 00080b7c, 00080b44 and 00080b12 in turn at +0xa; frees menu with Mem_Delete when bit 0 of flags is set.",
       "source": "Herculan/docs/es1/shell/war-map.md#leaving-it; ES1GO disassembly at 0002bf15",
       "verified": {
         "bytes": "0002bf15+322",
@@ -18754,7 +18901,7 @@
         "bytes": "00055014+85",
         "sha1": "0752cdde8d42",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -18848,6 +18995,21 @@
       }
     },
     {
+      "address": "000552e0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Rotate2DPoint16",
+      "description": "(point, matrix, out), callee-cleaned: rotates an int16 point into an int16 out: x' = (x m0 + y m2 + 0x2000) >> 14, y' = (x m1 + y m3 + 0x2000) >> 14, in 32 bits. ES1DBSIM's Math_Rotate2DPoint (00064f7c) takes an int32 point and sums in 64 bits. ShellMap_PlaceSquad (0000cab1) turns the formation's slots with it.",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#the-shells-squad; P17a details (session c6151d5b), ES1GO decompile at 000552e0",
+      "verified": {
+        "bytes": "000552e0+89",
+        "sha1": "eba5138b9014",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005533c",
       "binary": "ES1GO",
       "type": "function",
@@ -18858,6 +19020,21 @@
       "verified": {
         "bytes": "0005533c+128",
         "sha1": "e2c5cfb17725",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000553bc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Atan2Truncated",
+      "description": "(x, y), callee-cleaned: 0 for y 0; otherwise q = the smaller magnitude << 9 over the larger (a 64-bit divide), the angle q + Math_AtanCorrectionTable (0008708c)[q] (a signed byte), or 0x400 less that when |x| < |y|; x < 0 makes it 0x800 less the angle, then y < 0 0x1000 less it; returns it << 4, unmasked. ES1DBSIM's Math_Atan2Bam (000734a0) rounds the index with half the larger, works in 1/16384 turn and masks & 0x3fff before << 2. ShellMap_PlaceSquad (0000cab1) takes a path leg's heading with it.",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#the-shells-squad; P17a details (session c6151d5b), ES1GO decompile at 000553bc; es2_naming.py diff against ES1DBSIM 000734a0",
+      "verified": {
+        "bytes": "000553bc+111",
+        "sha1": "9a06dc9dc923",
         "scope": "body",
         "via": "decompile"
       }
@@ -19078,7 +19255,7 @@
         "bytes": "0005637a+72",
         "sha1": "72c0349bcd11",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -19993,7 +20170,7 @@
         "bytes": "000589c4+1121",
         "sha1": "a23239a3abbc",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -20143,7 +20320,7 @@
         "bytes": "000592d8+64",
         "sha1": "92b03ae90205",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -20158,7 +20335,7 @@
         "bytes": "00059318+27",
         "sha1": "ce35458caa73",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -20173,7 +20350,7 @@
         "bytes": "00059334+221",
         "sha1": "42118560d35e",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -20188,7 +20365,7 @@
         "bytes": "00059414+3",
         "sha1": "a4f5248d9b7d",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -20308,7 +20485,7 @@
         "bytes": "0005980c+112",
         "sha1": "880e341084e1",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -20353,7 +20530,7 @@
         "bytes": "000599c4+88",
         "sha1": "7f6b4c1e1379",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -20473,7 +20650,7 @@
         "bytes": "00059c44+289",
         "sha1": "683a84d06cfe",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -20488,7 +20665,7 @@
         "bytes": "00059d68+66",
         "sha1": "2ac1b53dd019",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -20533,7 +20710,7 @@
         "bytes": "0005a298+32",
         "sha1": "ef9e679e1e21",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -25498,7 +25675,7 @@
         "bytes": "0007cd3c+265",
         "sha1": "6ad95b358f0a",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -25796,6 +25973,15 @@
       "source": "es2_peek.py ES1GO 0007e512"
     },
     {
+      "address": "0007e5d4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_CallbackSlot",
+      "description": "int16: the mouse driver's slot of CockpitMouse_OnEvent (00010900), which MouseEventQueue_Start (00010559) writes and MouseEventQueue_Stop (000106af) clears; CockpitMouse_ProcessQueue (0001098e) returns at once while it is 0. ES1DBSIM's CockpitMouse_CallbackSlot (00094c52).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
       "address": "0007e5d8",
       "binary": "ES1GO",
       "type": "data",
@@ -25805,6 +25991,60 @@
       "source": "Herculan/docs/es1/shell/map.md#building-it; ES1GO decompile at 0001070d"
     },
     {
+      "address": "0007e5dc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Widget_PressedIndex",
+      "description": "int16: the shell's copy of ES1DBSIM's Widget_PressedIndex (00094c58).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "0007e5de",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Widget_DragCapture",
+      "description": "byte: the shell's copy of ES1DBSIM's Widget_DragCapture (00094c5a).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "0007e5df",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cursor_FollowsMouse",
+      "description": "byte, 1 in the image: the shell's copy of ES1DBSIM's Cursor_FollowsMouse (00094c5b); Shell_PrepareMission (0002a523) clears it after starting the mouse queue, and 0000290b keeps it at its panel's +0x2de and sets it to 1.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "0007e5e0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_DoubleClick",
+      "description": "byte: the shell's copy of ES1DBSIM's CockpitMouse_DoubleClick (00094c5c).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "0007e5e4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LastLeftRelease",
+      "description": "dword: the shell's copy of ES1DBSIM's CockpitMouse_LastLeftRelease (00094c60).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "0007e5e8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LastRightRelease",
+      "description": "dword: the shell's copy of ES1DBSIM's CockpitMouse_LastRightRelease (00094c64).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
       "address": "0007e5f8",
       "binary": "ES1GO",
       "type": "data",
@@ -25812,6 +26052,15 @@
       "name": "CTLWindowVtableCockpitMouseCopy",
       "description": "The shell's mouse file's copy of CTLWindowVtable (0007e6ec), which WidgetRoot_Delete (0001074d) stores at +0x352: 0 at +0, CTLWindow_Slot00NoOpCockpitMouseCopy (000107d0) at +4, 0 at +8. ES1DBSIM's CTLWindowVtableCockpitMouseCopy (00094c6a).",
       "source": "es2_xref.py --binary ES1GO 0007e5f8; es2_peek.py ES1GO 0007e5f8"
+    },
+    {
+      "address": "0007e668",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LastEventTime",
+      "description": "dword: the shell's copy of ES1DBSIM's CockpitMouse_LastEventTime (00094cc8), in counts of ShellTime_Ticks (0007e6fc).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
     },
     {
       "address": "0007e66c",
@@ -25830,6 +26079,15 @@
       "name": "CTLWindowVtable",
       "description": "The shell's root widget's vtable, which CTLWindow_Ctor (0001144a) stores at +0x352: 0 at +0, CTLWindow_Slot00NoOp (00011551) at +4, 0 at +8. ES1DBSIM's CTLWindowVtable (00094bde).",
       "source": "ES1GO disassembly at 000114fa; es2_peek.py ES1GO 0007e6ec"
+    },
+    {
+      "address": "0007e6fc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellTime_Ticks",
+      "description": "dword: the shell's clock, to which ShellTime_Tick (000119e0) adds 1, 60 times a second; Anm_Play and CockpitMouse_OnEvent (00010900) read it.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
     },
     {
       "address": "0007e716",
@@ -27011,6 +27269,15 @@
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
     },
     {
+      "address": "0008708c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Math_AtanCorrectionTable",
+      "description": "int8[513]: entry i is floor(atan(i / 512) 2048 / pi) - i, entry 512 being 0; Math_Atan2Truncated (000553bc) adds entry q to q.",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#the-shells-squad; es2_peek.py --bytes against the formula (P17a details, session c6151d5b)"
+    },
+    {
       "address": "0008728c",
       "binary": "ES1GO",
       "type": "data",
@@ -27659,6 +27926,33 @@
       "source": "Herculan/docs/es1/shell/map.md#the-intro"
     },
     {
+      "address": "0009adf0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CtlMgr_QueueSize",
+      "description": "int16: CTL_MGR.BND offset 4, 100 in the retail file, read with the file into 0009adec by CtlMgr_LoadBnd (00010530): the size of the shell's two mouse queues, which MouseEventQueue_Start (00010559) allocates and CockpitMouseQueue_Push (00010d71) bounds.",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files"
+    },
+    {
+      "address": "0009adf4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LastPoint",
+      "description": "two int32: the shell's copy of ES1DBSIM's CockpitMouse_LastPoint (000b16c0).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "0009ae08",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_CanvasPoint",
+      "description": "two int32: the shell's copy of ES1DBSIM's CockpitMouse_CanvasPoint (000b16d4), the point less the root's +0x227/+0x22b.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
       "address": "0009ae64",
       "binary": "ES1GO",
       "type": "data",
@@ -28141,8 +28435,89 @@
       "type": "data",
       "confidence": "high",
       "name": "ShellMap_LabelFont",
-      "description": "The map's font, which ShellMap_LoadResources (000093b3) loads from the name 0007e256 (map) with 00009275: ShellMap_Constructor (000094d9) builds its labels in it and MapGadget_Ctor (0000da8d) measures in it.",
+      "description": "The map's font, which ShellMap_LoadResources (000093b3) loads from the name 0007e256 (map) with ShellMap_LoadFont (00009275): ShellMap_Constructor (000094d9) builds its labels in it and MapGadget_Ctor (0000da8d) measures in it.",
       "source": "Herculan/docs/es1/shell/map.md#building-it"
+    },
+    {
+      "address": "000aa774",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LeftHeld",
+      "description": "byte: the shell's copy of ES1DBSIM's CockpitMouse_LeftHeld (000bd50e).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "000aa776",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_RightHeld",
+      "description": "byte: the shell's copy of ES1DBSIM's CockpitMouse_RightHeld (000bd510).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "000aa778",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouseLive",
+      "description": "byte: CockpitMouse_OnEvent (00010900) queues nothing while it is clear. WarMapMenu_Ctor sets it and WarMapMenu_Dtor clears it; es2_xref --decode finds two more writers in Shell_HandleMessage, a 1 after its MouseEventQueue_Start call (0003ea5a) and a 0 after its MouseEventQueue_Stop call (0003eb9b). ES1DBSIM's CockpitMouseLive (000bd512).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue; ES1GO disassembly at 0003ea5a, 0003eb9b"
+    },
+    {
+      "address": "000aa77e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_DoubleClickTicks",
+      "description": "dword: the shell's copy of ES1DBSIM's CockpitMouse_DoubleClickTicks (000bd518): 1000000 / Math_Q14Multiply(the timer's +4, 0x35a1) / 2, 60.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "000aa786",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouseQueueA",
+      "description": "a count dword and a buffer pointer (000aa78a): the shell's copy of ES1DBSIM's CockpitMouseQueueA (000bd520).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "000aa78e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouseQueueB",
+      "description": "a count dword and a buffer pointer (000aa792): the shell's copy of ES1DBSIM's CockpitMouseQueueB (000bd528).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "000aa796",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouseQueue_Back",
+      "description": "pointer: the shell's copy of ES1DBSIM's CockpitMouseQueue_Back (000bd530).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "000aa79a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouseQueue_Front",
+      "description": "pointer: the shell's copy of ES1DBSIM's CockpitMouseQueue_Front (000bd534).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
+    },
+    {
+      "address": "000aa79e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitMouse_LastButtons",
+      "description": "the shell's copy of ES1DBSIM's CockpitMouse_LastButtons (000bd538).",
+      "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
     },
     {
       "address": "000aa7ac",

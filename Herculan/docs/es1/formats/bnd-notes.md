@@ -21,7 +21,7 @@ Eight functions each read one whole file into a global with `Ovl_ReadFile` (`ES1
 | `CAL_ALRT.BND` | 70 | `0009a3d4` | `CalAlert_LoadBnd` (`00006eec`) |
 | `MAP.BND` | 32 | `0009a420` | `Map_LoadBnd` (`00008cd4`) |
 | `SHELLMAP.BND` | 142 | `0009a44c` | `ShellMap_LoadBnd` (`00009210`) |
-| `CTL_MGR.BND` | 6 | `0009adec` | `CtlMgr_LoadBnd` (`00010530`) |
+| `CTL_MGR.BND` | 6 | `0009adec` | `CtlMgr_LoadBnd` (`00010530`); offset 4, the word `CtlMgr_QueueSize` (`0009adf0`), 100 (the bytes `6f e6 8e 2e 64 00`), is the size of the shell's mouse queues ([the mouse queue](../shell/startup.md#the-mouse-queue)) |
 | `MAIN.BND` | 20 | `0009ae18` | `Main_LoadBnd` (`00012704`) |
 | `IMDEVICE.BND` | 10 | `000a0458` | `ImDevice_LoadBnd` (`0002562c`) |
 
@@ -124,5 +124,5 @@ The war map's map's constants ([the map](../shell/map.md#the-tuning-files)). `MA
 ## Open
 
 - **Open:** whether `ES1DBSIM` reads any `bnd\` file. `es2_xref` finds no reference to its `bnd` pointer `000980c0`, where the same sweep finds both pushes of `dmg`'s pointer `000980e0`; a case-insensitive search of the image's bytes finds no `cam` or `.bnd` string, where it finds `dmg` and `damage.cpp`.
-- **Open:** what the shell reads of `ALERT`, `CTL_ALRT`, `CAL_ALRT`, `CTL_MGR` and `IMDEVICE`, of `MAIN.BND`'s offsets 0, 4 and 16, and of `SHELLMAP.BND`'s 8 to `0xb`, `0x10`, `0x16` to `0x1b`, `0x26`, `0x2e` and `0x33`, whose globals (`0009a454` to `0009a47f`) `es2_xref.py --decode` finds no reference to; what the byte `Shell_LowMemory` (`0007fd09`) changes.
+- **Open:** what the shell reads of `ALERT`, `CTL_ALRT`, `CAL_ALRT`, `CTL_MGR` but its offset 4, and `IMDEVICE`, of `MAIN.BND`'s offsets 0, 4 and 16, and of `SHELLMAP.BND`'s 8 to `0xb`, `0x10`, `0x16` to `0x1b`, `0x26`, `0x2e` and `0x33`, whose globals (`0009a454` to `0009a47f`) `es2_xref.py --decode` finds no reference to; what the byte `Shell_LowMemory` (`0007fd09`) changes.
 - **Open:** whether anything reads the first dword, and what wrote it.

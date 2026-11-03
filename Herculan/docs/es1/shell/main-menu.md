@@ -37,7 +37,7 @@ Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-exec
 
 The mode decides how a mission loads ([the mode](../formats/msn-mission-file.md#the-mode-and-the-mission-parameters)). INSTANT ACTION's `Mission_Kind` (`000aad5a`) of −1 makes `SingleMission_Start` draw the list and the mission at random ([starting the mission](single-mission.md#starting-the-mission)), and its load writes `data\script.dat` before the button's message has changed the screen ([loading a mission](../formats/msn-mission-file.md#loading-a-mission)). The `.ANM` set with `0007fcd7` 1 plays when the next screen is drawn, after its palette is uploaded ([drawing a screen](menus.md#drawing-a-screen)).
 
-**`Shell_PrepareMission` (`0002a523`)** runs after every mission load the shell's menus make, the main menu's, the SINGLE MISSION menu's, the career screens' and the service bay's. It deletes the mission map with `Shell_DeleteMissionMap` (`0002a4ec`), writes the mission's objectives from its `.eng` path `000aad2a` to `data\object.str` with `Mission_WriteObjectives` ([the objectives](../formats/eng-mission-text.md#the-objectives)), starts `maybe_MouseEventQueue_Start` (`00010559`), clears the byte `0007e5df`, and builds a new mission map, `Shell_MissionMap` (`000809a4`), with `ShellMap_Constructor` (`000094d9`)(0, `000a02d4`), a `0x4c8`-byte object that reads `data\object.str` and the `maplabel` resources. `Shell_DeleteMissionMap`, with a map, calls `maybe_MouseEventQueue_Stop` (`000106af`), `ShellMap_SkipIntro` (`0000a9c8`)(map), destroys it with `ShellMap_Dtor` (`00009a73`)(map, 3) and clears `Shell_MissionMap`. The war map and its alerts delete it when they leave for the mission or back.
+**`Shell_PrepareMission` (`0002a523`)** runs after every mission load the shell's menus make, the main menu's, the SINGLE MISSION menu's, the career screens' and the service bay's. It deletes the mission map with `Shell_DeleteMissionMap` (`0002a4ec`), writes the mission's objectives from its `.eng` path `000aad2a` to `data\object.str` with `Mission_WriteObjectives` ([the objectives](../formats/eng-mission-text.md#the-objectives)), starts the mouse queue with `MouseEventQueue_Start` (`00010559`), clears `Cursor_FollowsMouse` (`0007e5df`) ([the mouse queue](startup.md#the-mouse-queue)), and builds a new mission map, `Shell_MissionMap` (`000809a4`), with `ShellMap_Constructor` (`000094d9`)(0, `000a02d4`), a `0x4c8`-byte object that reads `data\object.str` and the `maplabel` resources. `Shell_DeleteMissionMap`, with a map, calls `MouseEventQueue_Stop` (`000106af`), `ShellMap_SkipIntro` (`0000a9c8`)(map), destroys it with `ShellMap_Dtor` (`00009a73`)(map, 3) and clears `Shell_MissionMap`. The war map and its alerts delete it when they leave for the mission or back.
 
 ### RESUME
 
@@ -115,7 +115,6 @@ The answers:
 | `Disk_HasFreeBytes`, `KIAWarningAlert_OnMessage`, `OptionsMenu_OnMessage`, `BattleSetDialog_OnMessage` | `0002a9ad`, `0002b34c`, `0002b79d`, `0002bb29` |
 | `GLBase_DtorMenuHandlersCopy`, `GLRegion_DtorMenuHandlersCopy`, `GLRectangleRegion_DtorMenuHandlersCopy`, `Menu_DtorMenuHandlersCopy`, `Menu_OnMessageMenuHandlersCopy` | `0002bd95`, `0002bdc1`, `0002be0a`, `0002be75`, `0002bf08` |
 | `Career_LoadCurrent`, `Roster_CountUsedRecords` | `00016c1e`, `00017026` |
-| `maybe_MouseEventQueue_Start`, `maybe_MouseEventQueue_Stop` | `00010559`, `000106af` |
 | `WaText_LinesFromList`, `Menu_ListLines` | `000373fa`, `0003750d` |
 | `Shell_OpenQuitAlert` | `000408cc` |
 
@@ -132,6 +131,5 @@ The answers:
 ## Open
 
 - **Open:** what calls `Shell_ShowDrawPage` and the memory log's five functions: `es2_xref.py` finds no branch, stored pointer or vtable slot holding their addresses. A retail check: a breakpoint on `MemLog_Open` (`0002a41a`) under DOSBox-X's debugger, or a look for `MEMORY.LOG` beside `GO.EXE` after a session.
-- **Open:** what `maybe_MouseEventQueue_Start` (`00010559`) queues for the war map's map ([the map](map.md)) (it registers `00010900` with the mouse driver for the events `0x1f` and allocates two arrays of `0009adf0` 14-byte entries), and what the byte `0007e5df` is.
 - **Open:** the accesses to `Shell_ReturnScreen` in code Ghidra left undefined at `0002a96f`, `0002a983` and `0002a98e` (`es2_xref.py --decode`).
 - **Open:** a retail check under DOSBox-X: with no career saved, RESUME is drawn greyed and a click on it does nothing; `Ctrl+Q` on the main menu shows EXIT TO DOS? with the pointer on PROCEED, CANCEL brings the main menu back, and PROCEED returns to the DOS prompt; INSTANT ACTION > shows a talking head over a new picture, and a key opens the war map; OPTIONS then LOAD BATTLESET shows the one line METALTECH: EARTH SIEGE, selected.
