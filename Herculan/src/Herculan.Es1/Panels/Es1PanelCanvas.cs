@@ -421,14 +421,14 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Bitmap_BlitScaled</c> (<c>00067178</c>)(<paramref name="bitmap"/>, size, <paramref name="flags"/>, point) in clip
-	/// mode 1: the point translated and the bitmap stretched over <paramref name="width"/> × <paramref name="height"/>
-	/// pixels from it, cut to <see cref="Rect"/>, as <c>VGA8_BlitBitmapScaled</c> walks it
-	/// (docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps): the steps
-	/// ((<i>columns</i> − 1) · 65536) / (<i>w</i> − 1) and ((<i>rows</i> − 1) · 65536) / (<i>h</i> − 1), each walk from
-	/// its fraction, the column fraction carried from row to row after a cut at the left, and a 0 byte not written.
+	/// <c>Bitmap_BlitScaled</c>(<paramref name="bitmap"/>, size, <paramref name="flags"/>, point) in clip mode 1: the point
+	/// translated and the bitmap stretched over <paramref name="width"/> × <paramref name="height"/> pixels from it, cut to
+	/// <see cref="Rect"/>, a 0 byte not written. Retail's two programs share the dispatch but not <c>VGA_8</c>'s slot 29:
+	/// with <paramref name="shell"/> the bitmap is walked as the shell's <c>VGA8_BlitBitmapScaled</c> (<c>00074b18</c>)
+	/// walks it (<see cref="WalkShell"/>), otherwise as <c>ES1DBSIM</c>'s (<c>0008c744</c>) does
+	/// (<see cref="WalkSimulator"/>).
 	/// </summary>
-	public void BlitScaled(DynamixBitmap? bitmap, int width, int height, int flags, int x, int y) {
+	public void BlitScaled(DynamixBitmap? bitmap, int width, int height, int flags, int x, int y, bool shell) {
 		if (bitmap?.ImageData is not { } pixels || bitmap.Cols <= 0 || bitmap.Rows <= 0 || width <= 0 || height <= 0) {
 			return;
 		}
@@ -446,7 +446,22 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 			return;
 		}
 
-		int columns = bitmap.Cols, rows = bitmap.Rows;
+		var box = (x, y, width, height, left, right, top, bottom);
+		if (shell) {
+			WalkShell(pixels, bitmap.Cols, bitmap.Rows, box, flags);
+		} else {
+			WalkSimulator(pixels, bitmap.Cols, bitmap.Rows, box, flags);
+		}
+	}
+
+	/// <summary>
+	/// The shell's walk (docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps): the steps
+	/// ((<i>columns</i> − 1) · 65536) / (<i>w</i> − 1) and ((<i>rows</i> − 1) · 65536) / (<i>h</i> − 1), each walk from
+	/// its fraction, the column fraction carried from row to row after a cut at the left.
+	/// </summary>
+	private void WalkShell(byte[] pixels, int columns, int rows,
+			(int X, int Y, int Width, int Height, int Left, int Right, int Top, int Bottom) box, int flags) {
+		var (x, y, width, height, left, right, top, bottom) = box;
 		long stepX = width == 1 ? 0 : (long)(columns - 1) * 65536 / (width - 1);
 		long stepY = height == 1 ? 0 : (long)(rows - 1) * 65536 / (height - 1);
 		if ((flags & 2) != 0) {
@@ -489,6 +504,55 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 
 			long magnitude = Math.Abs(step);
 			return magnitude >= 0x8000 ? magnitude % 65536 : 0x8000;
+		}
+	}
+
+	/// <summary>
+	/// The simulator's walk (docs/es1/rendering/screen-pages.md#the-simulator): <c>VGA8_ScaleStepSetup</c>'s steps,
+	/// each row's walk from <i>A</i> = <i>L</i> · <i>sx</i> with no fraction, and row <i>k</i> after the first at the first
+	/// row's offset plus ((<i>f</i> + <i>k</i> · <i>sy</i>) / 65535) rows, the sum never reduced.
+	/// </summary>
+	private void WalkSimulator(byte[] pixels, int columns, int rows,
+			(int X, int Y, int Width, int Height, int Left, int Right, int Top, int Bottom) box, int flags) {
+		var (x, y, width, height, left, right, top, bottom) = box;
+		int stepX = Step((flags & 2) != 0 ? -columns : columns, width);
+		int stepY = Step((flags & 1) != 0 ? -rows : rows, height);
+		long first = 0;
+		int fraction = 0;
+		if (top != 0) {
+			first = (long)(unchecked(top * stepY) >> 16) * columns;
+			fraction = unchecked((top + bottom) * stepY) & 0xffff;
+		}
+
+		if ((flags & 1) != 0) {
+			first += (long)columns * rows - columns;
+		}
+
+		if ((flags & 2) != 0) {
+			first += columns;
+		}
+
+		long offset = first;
+		long a = (long)left * stepX;
+		for (int row = top; row < height - bottom; row++) {
+			for (int column = left; column < width - right; column++) {
+				long source = offset + ((a + (long)(column - left) * stepX) >> 16);
+				if (source >= 0 && source < pixels.Length && pixels[source] != 0) {
+					Display.Plot(x + column, y + row, pixels[source]);
+				}
+			}
+
+			fraction = unchecked(fraction + stepY);
+			offset = first + (long)(fraction / 65535) * columns;
+		}
+
+		static int Step(int count, int size) {
+			if (size == 0) {
+				return 0;
+			}
+
+			int quotient = unchecked(count << 16) / size;
+			return quotient >= 0 ? quotient + 1 : quotient - 1;
 		}
 	}
 

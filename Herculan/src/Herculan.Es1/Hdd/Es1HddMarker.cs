@@ -149,7 +149,7 @@ public sealed class Es1HddMarker : Es1ButtonWidget {
 			DrawnHalfSize = 0;
 		} else if (frame != null && apparent < frame.Rows) {
 			int half = apparent >> 1;
-			map.BlitScaled(frame, apparent, apparent, 0, x + HalfSize.X - half, y + HalfSize.Y - half);
+			map.BlitScaled(frame, apparent, apparent, 0, x + HalfSize.X - half, y + HalfSize.Y - half, shell: false);
 			DrawnHalfSize = (short)half;
 		} else {
 			map.Blit(frame, x, y);

@@ -297,7 +297,7 @@ public static class Es1ShellMapPaint {
 			return;
 		} else if (z < bitmap.Rows) {
 			int half = z >> 1;
-			canvas.BlitScaled(bitmap, z, z, 0, at.X - half, at.Y - half);
+			canvas.BlitScaled(bitmap, z, z, 0, at.X - half, at.Y - half, shell: true);
 		} else {
 			canvas.Blit(bitmap, at.X - (size >> 1), at.Y - (size >> 1));
 		}

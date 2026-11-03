@@ -896,7 +896,8 @@ public sealed class Es1TtmPlayer {
 	/// opcode, 3 for any other value; when slot <paramref name="slot"/> holds an array of more than
 	/// <paramref name="frame"/> bitmaps, by the low four bits: 4 <c>Bitmap_Blit</c> at (<i>x</i>, <i>y</i>) plus the
 	/// simulator's origin, its box the bitmap's size; 6 <c>Bitmap_BlitScaled</c> to <paramref name="width"/> ×
-	/// <paramref name="height"/> there, its box that size; 5 nothing; and 7 <see cref="DrawRotated"/>.
+	/// <paramref name="height"/> there, walked as the program's own slot 29 walks it, its box that size; 5 nothing; and 7
+	/// <see cref="DrawRotated"/>.
 	/// </summary>
 	private void DrawBitmap(ushort opcode, short x, short y, short frame, short slot, short width, short height, short angle) {
 		int bits = (opcode & 0xf0) >> 4;
@@ -911,7 +912,7 @@ public sealed class Es1TtmPlayer {
 				DrawRotated(bitmap, x, y, width, height, angle);
 				break;
 			case 6:
-				_canvas?.BlitScaled(bitmap, width, height, flags, x + Origin.X, y + Origin.Y);
+				_canvas?.BlitScaled(bitmap, width, height, flags, x + Origin.X, y + Origin.Y, _shell);
 				AddDrawnBox(x, y, width, height);
 				break;
 			case 5:
