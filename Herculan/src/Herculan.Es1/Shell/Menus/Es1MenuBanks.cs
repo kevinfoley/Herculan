@@ -82,9 +82,10 @@ public sealed class Es1MenuBanks {
 			return Mechs ??= Load("MECHS.DBA");
 		}
 
-		// PLACEHOLDER: the two other ids at 0008144c, 1321 (00037890, res32\controls.dba) and 1316 (000378b3,
-		// res32\bluebar.dba), PREFERENCES', each loading its file into 000813d4 as 1611's case does; their menu is the
-		// preferences and controls module's, after S5, and they get none here.
+		// The two other ids at 0008144c, 1321 (00037890, res32\controls.dba) and 1316 (000378b3, res32\bluebar.dba), each
+		// load their file into 000813d4 as 1611's case does. Of the 39 .DLG files of SHELL0.VOL none has a kind-16 record
+		// of either (1316 is PREFERENCES' list box, docs/es1/shell/options.md#opening-it), so those cases are not ported and
+		// the ids get none here.
 		return null;
 	}
 

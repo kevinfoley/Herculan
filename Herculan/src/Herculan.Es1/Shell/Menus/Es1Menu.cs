@@ -74,7 +74,7 @@ public class Es1Menu {
 	/// <c>Menu_Open</c> (<c>0003969e</c>)(menu, <paramref name="number"/>)
 	/// (docs/es1/shell/menus.md#opening-a-menu--menu_open-0003969e): the number kept, <see cref="Es1MenuGlobals.SyncPointer"/>
 	/// set and the window built (<see cref="Es1MenuBuild.BuildFromDlg"/>); the window made the active one; the number's
-	/// control changes (1100's, 1000's, 1200's, 1610's <see cref="Es1CrewAssignMenu.SetOpeningControls"/>, 1800's and 1820's <see cref="Es1ArmingMenu.SetOpeningControls"/>, in <c>Shell_Mode</c> 1, 1700's <see cref="Es1ServiceBayMenu.SetButtons"/>, and 1920's <see cref="Es1SystemRepairMenu.SetPlusState"/> of <c>Repair_StepCost</c> against <c>Career_Salvage</c>, and 2000's <see cref="Es1FabricationMenu.SetOpeningControls"/>); unless the number is 9999, the focus and the pointer on the first control whose key is <c>Space</c>,
+	/// control changes (1310's <see cref="Es1PrefsMenu.SetOpeningControls"/>, 1100's, 1000's, 1200's, 1610's <see cref="Es1CrewAssignMenu.SetOpeningControls"/>, 1800's and 1820's <see cref="Es1ArmingMenu.SetOpeningControls"/>, in <c>Shell_Mode</c> 1, 1700's <see cref="Es1ServiceBayMenu.SetButtons"/>, and 1920's <see cref="Es1SystemRepairMenu.SetPlusState"/> of <c>Repair_StepCost</c> against <c>Career_Salvage</c>, and 2000's <see cref="Es1FabricationMenu.SetOpeningControls"/>); unless the number is 9999, the focus and the pointer on the first control whose key is <c>Space</c>,
 	/// or on control 0; 1900's change after the focus (<see cref="Es1RepairMenu.SetOpeningControls"/>); the saved
 	/// background allocated, zeroed; and <see cref="Es1MenuGlobals.InputReady"/> set.
 	/// </summary>
@@ -90,6 +90,10 @@ public class Es1Menu {
 		}
 
 		window.SetActive(globals);
+		if (number == Es1PrefsMenu.Screen) {
+			Es1PrefsMenu.SetOpeningControls(window, MakeInactive);
+		}
+
 		if (number == Es1MissionMenu.Screen) {
 			// The list selects Mission_Kind's line with its slot +0x24 (docs/es1/shell/single-mission.md#the-single-mission-menu).
 			FindList(Es1MissionMenu.KindList)?.SelectLine(Context.Mission.MissionKind);
@@ -123,9 +127,6 @@ public class Es1Menu {
 			Es1FabricationMenu.SetOpeningControls(window, Context.Mission.Hangar, Context.Mission.Roster.Salvage,
 				globals.FabricationChassis, MakeInactive);
 		}
-
-		// PLACEHOLDER: Menu_Open's control changes for menu 1310 are the preferences and controls module's, after S5. No
-		// ported screen opens it.
 
 		// Retail points at control 0 of a window with none, reading an empty slot; here such a window keeps the pointer, an
 		// engine guard.

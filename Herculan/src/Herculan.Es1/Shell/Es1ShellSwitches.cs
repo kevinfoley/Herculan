@@ -25,8 +25,9 @@ public sealed class Es1ShellSwitches {
 	public bool MSwitchGiven { get; private set; }
 
 	/// <summary>
-	/// <c>-S</c>: the bytes <c>0007fcb8</c> and <c>0007fcb9</c> set to 1, which <c>Shell_LoadData</c> then overwrites with
-	/// options 0 and 1 (<see cref="Es1ShellData"/>).
+	/// <c>-S</c>: <c>Shell_MusicOption</c> (<c>0007fcb8</c>) and <c>Shell_SoundOption</c> (<c>0007fcb9</c>) set to 1,
+	/// which <c>Shell_LoadData</c> then overwrites with options 0 and 1 (<see cref="Es1ShellData.MusicOption"/>,
+	/// <see cref="Es1ShellData.SoundOption"/>).
 	/// </summary>
 	public bool SoundSwitch { get; private set; }
 

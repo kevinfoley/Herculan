@@ -44,20 +44,8 @@ public static class Es1MenuBuild {
 		1612, 1613, 1614, 1619, 1620, 1621, 1622, 1615, 1616, 1617, 1618, 1231, 1522, 1502, 2005, 1803, 1811,
 	];
 
-	/// <summary>The 23 kind-15 ids at <c>00081a00</c> that set their list's selection by their own code.</summary>
-	private static readonly short[] OwnSelectionLists = [
-		1314, 1315, 1316, 1318, 1116, 1117, 1118, 1119, 1120, 1325, 1326, 1327, 1903, 1904, 1905, 1907, 1923, 1906, 1927,
-		1202, 1922, 1808, 1223,
-	];
-
 	/// <summary>The main menu's list, which shows the current career's name.</summary>
 	public const short CareerNameList = 1002;
-
-	/// <summary>
-	/// The 4 ids that <c>Menu_ListLines</c> gives lines of their own and that are not ported, of the 28 at
-	/// <c>000812f4</c>: PREFERENCES' 1314, 1315, 1316 and 1318.
-	/// </summary>
-	private static readonly short[] OwnLinesLists = [1314, 1315, 1316, 1318];
 
 	/// <summary>SYSTEM REPAIR's lists: the items, the status, whose lines are <see cref="Es1RepairMenu.LevelLines"/> as CONDITION's are, and the number lists of the cost of one level up and the salvage allocated in the window.</summary>
 	private const short ItemList = Es1SystemRepairMenu.ItemList, StatusList = Es1SystemRepairMenu.StatusList,
@@ -71,10 +59,17 @@ public static class Es1MenuBuild {
 	/// MISSION menu's mission types (<c>000376f5</c>, the list at <c>00081264</c>), and 1116 to 1120, the MISSION PARAMS
 	/// menu's values (<c>0003765c</c>, <c>0003766d</c>, <c>000376a0</c>, <c>0003767e</c>, <c>0003768f</c>, the lists at
 	/// <c>000811c4</c>, <c>000811cc</c>, <c>00081244</c>, <c>000811d4</c> and <c>000811dc</c>)
-	/// (docs/es1/shell/single-mission.md); and 1331, the battle-set picker's list (<c>000376e4</c>, the list at
-	/// <c>000811e4</c>), the one line <c>0x13</c>, which names the retail battle set.
+	/// (docs/es1/shell/single-mission.md); 1331, the battle-set picker's list (<c>000376e4</c>, the list at
+	/// <c>000811e4</c>), the one line <c>0x13</c>, which names the retail battle set; and PREFERENCES' boxes
+	/// (docs/es1/shell/options.md#opening-it), 1314 and 1315 (<c>000376b1</c>) <see cref="Es1PrefsMenu.OffOnLines"/>,
+	/// 1316 (<c>000376c2</c>) <see cref="Es1PrefsMenu.DetailLines"/> and 1318 (<c>000376d3</c>)
+	/// <see cref="Es1PrefsMenu.SpeechLines"/>.
 	/// </summary>
 	private static readonly Dictionary<short, short[]> WaTextLists = new() {
+		[Es1PrefsMenu.MusicList] = Es1PrefsMenu.OffOnLines,
+		[Es1PrefsMenu.SoundList] = Es1PrefsMenu.OffOnLines,
+		[Es1PrefsMenu.DetailList] = Es1PrefsMenu.DetailLines,
+		[Es1PrefsMenu.SpeechList] = Es1PrefsMenu.SpeechLines,
 		[Es1MissionMenu.KindList] = [0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, -1],
 		[1116] = [8, 9, -1],
 		[1117] = [10, 11, -1],
@@ -265,7 +260,10 @@ public static class Es1MenuBuild {
 	/// <summary>
 	/// Kind 15: the lines (<see cref="ListLines"/>), then a list box, <c>MTStrListBox_Ctor</c>(0, <c>0x100</c>, 0,
 	/// alignment, selection, style, id, lines, rect), added to the window: the alignment 0 and the selection 0, or for the
-	/// 23 ids at <c>00081a00</c> what their case sets: MISSION PARAMS' lists 1116 to 1120 their word of
+	/// 23 ids at <c>00081a00</c> what their case sets: PREFERENCES' boxes their setting, 1314 (<c>0003a973</c>)
+	/// <see cref="Es1ShellData.MusicOption"/>, 1315 (<c>0003a986</c>) <see cref="Es1ShellData.SoundOption"/>, 1316
+	/// (<c>0003a999</c>) <see cref="Es1ShellData.DetailOption"/> with the alignment 2, and 1318 (<c>0003a9b5</c>)
+	/// <see cref="Es1ShellData.RadioOption"/>; MISSION PARAMS' lists 1116 to 1120 their word of
 	/// <see cref="Es1ShellData.MissionParams"/>; the career list 1202 <see cref="Es1ShellData.SelectedEntry"/>
 	/// (<c>0003ab5f</c>); the backup list 1223 <c>Career_BackupLine</c> (<see cref="Es1CareerRoster.BackupLine"/>,
 	/// <c>0003abf0</c>); HERC's readout 1903 (<c>0003aa57</c>) the chassis of <c>Hangar_SelectedSlot</c>'s HERC, −1 for
@@ -276,7 +274,9 @@ public static class Es1MenuBuild {
 	/// on) the selection 0, each with the alignment 2; SYSTEM REPAIR's STATUS 1922 (<c>0003ab71</c>)
 	/// <see cref="Es1RepairCosts.LevelForCondition"/> of internal 0's condition (<see cref="Es1HercDiagrams.GetStatus"/>),
 	/// of 0 for no HERC, with the alignment 2; and the weapon list 1808 (<c>0003abdd</c>) its counts written
-	/// (<see cref="Es1ArmingGlobals.FormatCounts"/>).
+	/// (<see cref="Es1ArmingGlobals.FormatCounts"/>). The other three of the 23, 1325 to 1327, are in none of the 39
+	/// <c>.DLG</c> files of <c>SHELL0.VOL</c> (docs/es1/shell/options.md#opening-it), so their cases are not ported and
+	/// such a list takes the selection 0 here.
 	/// </summary>
 	private static void BuildList(Es1Menu menu, short number, Es1MenuControl record, Es1Rect rect) {
 		var context = menu.Context;
@@ -284,7 +284,16 @@ public static class Es1MenuBuild {
 		short selected = 0;
 		int alignment = 0;
 		bool arming = number is Es1ArmingMenu.Screen or Es1ArmingMenu.LowMemoryScreen;
-		if (record.Id is >= FirstParamsList and <= LastParamsList) {
+		if (record.Id == Es1PrefsMenu.MusicList) {
+			selected = context.Data.MusicOption;
+		} else if (record.Id == Es1PrefsMenu.SoundList) {
+			selected = context.Data.SoundOption;
+		} else if (record.Id == Es1PrefsMenu.DetailList) {
+			selected = context.Data.DetailOption;
+			alignment = CenteredReadout;
+		} else if (record.Id == Es1PrefsMenu.SpeechList) {
+			selected = context.Data.RadioOption;
+		} else if (record.Id is >= FirstParamsList and <= LastParamsList) {
 			selected = context.Data.MissionParams[record.Id - FirstParamsList];
 		} else if (record.Id == Es1CareerMenu.CareerList) {
 			selected = context.Data.SelectedEntry;
@@ -312,11 +321,6 @@ public static class Es1MenuBuild {
 			alignment = CenteredReadout;
 		} else if (record.Id == Es1ArmingMenu.WeaponList) {
 			context.Arming.FormatCounts(context, lines);
-		} else if (Array.IndexOf(OwnSelectionLists, record.Id) >= 0) {
-			// PLACEHOLDER: the other 7 ids at 00081a00, PREFERENCES' 1314, 1315, 1316 and 1318 and CONTROLS' 1325 to 1327
-			// (the preferences and controls module's, after S5), build their list with a selection set by their own code
-			// (dlg-menu-dialogs.md's Open); no list is built until they land.
-			return;
 		}
 
 		menu.Window?.AddControl(new Es1MTStrListBox(context.Data, 0x100, 0, alignment, selected, record.Style, record.Id, lines, rect));
@@ -338,9 +342,9 @@ public static class Es1MenuBuild {
 	private static void BuildPictureTile(Es1Menu menu, Es1MenuControl record, Es1Rect rect) {
 		var context = menu.Context;
 		if (!Es1MenuBanks.HasBankFor(record.Id)) {
-			// PLACEHOLDER: the other kind-16 ids, 1316 and 1321 (PREFERENCES, the words 0007fcba and 0, 0003ac86 and
-			// 0003ac78), take banks from cases of 00037827 not ported, and any id outside the eleven at 0008144c none; their
-			// menu is the preferences and controls module's, after S5, and no tile is built.
+			// The other two of the ten, 1316 (0003ac86, the word Shell_DetailOption) and 1321 (0003ac78, the word 0), take
+			// banks from cases of 00037827 that are not ported (Es1MenuBanks.ForControl), since no retail .DLG has a kind-16
+			// record of either; any id outside the eleven at 0008144c gets no bank. No tile is built for them here.
 			return;
 		}
 
@@ -432,12 +436,6 @@ public static class Es1MenuBuild {
 				return NumberLine(context.Data, cost, CostNumberLine);
 			case AllocatedList:
 				return NumberLine(context.Data, 0, AllocatedNumberLine);
-		}
-
-		if (Array.IndexOf(OwnLinesLists, id) >= 0) {
-			// PLACEHOLDER: PREFERENCES' lines 1314 to 1318 (000376b1, 000376c2, 000376d3), the preferences and controls
-			// module's, after S5. Each list is empty until its part lands.
-			return [null];
 		}
 
 		return LinesFromList(context.Data.Text, DefaultLineNumbers);

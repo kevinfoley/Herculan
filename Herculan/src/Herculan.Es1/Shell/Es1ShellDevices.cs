@@ -75,6 +75,12 @@ public sealed class Es1ShellDevices {
 	/// <summary>The host's keys into <see cref="Keyboard"/>; none before <see cref="Init"/>.</summary>
 	public Es1HostKeyboard? HostKeyboard { get; private set; }
 
+	/// <summary>
+	/// The dword <c>00082768</c>, the shell's sound manager, which counts as present (the user's choice in P4,
+	/// plan-es1-first-mission.md decision 15): <c>ShellSound_Init</c> is not ported (<see cref="Init"/>).
+	/// </summary>
+	public static bool SoundManagerPresent => true;
+
 	/// <summary>The options <c>Prefs_Options</c> (<c>000aa24e</c>), which <c>000081a4</c> loads; none before <see cref="Init"/>.</summary>
 	public Es1Preferences? Preferences { get; private set; }
 
@@ -140,8 +146,9 @@ public sealed class Es1ShellDevices {
 		// INT 16h function 2, which Keyboard_SetMode reads when the war map sets the mode again.
 		Keyboard.BiosShiftFlags = HostKeyboard.ReadBiosShiftFlags;
 
-		// 000081a4: every option's handler cleared, then 00008920: option 11's handler 0000868c, Prefs_Load of
-		// data\prefs.cfg, option 2 set to 0 without the speech archive, and 000087ff.
+		// 000081a4: every option's handler cleared, then Prefs_Init (00008920): option 11's handler 0000868c, Prefs_Load of
+		// data\prefs.cfg, Speech_ArchiveFound (0007e09c) from Speech_ArchivePresent and, when that is 0, option 2 set to 0
+		// with Prefs_SetOption(1, 0, 2), and 000087ff.
 		// PLACEHOLDER: 0000868c and 000087ff are unread; the shell registers no other handler here.
 		string prefsPath = Es1MissionFiles.DataPath(installRoot, "prefs.cfg");
 		var preferences = Es1Preferences.FromFile(File.Exists(prefsPath) ? File.ReadAllBytes(prefsPath) : null, prefsPath);
@@ -149,8 +156,10 @@ public sealed class Es1ShellDevices {
 			preferences.SetHandler(option, null);
 		}
 
-		// PLACEHOLDER: the byte 0007e09c from Speech_ArchivePresent (000087ce), whose path is unread, and with it 0 option 2
-		// set to 0 with Prefs_SetOption(1, 0, 2); option 2 stays as the file holds it.
+		preferences.ShellSpeechArchiveFound = Es1Preferences.SpeechArchiveExists(installRoot);
+		if (!preferences.ShellSpeechArchiveFound) {
+			preferences.ShellSetOption(true, 0, Es1Preferences.RadioOption);
+		}
 
 		// With no sound manager (00082768 0) options 0, 1 and 2 would be set to 0 here; the manager counts as present (above).
 		Preferences = preferences;

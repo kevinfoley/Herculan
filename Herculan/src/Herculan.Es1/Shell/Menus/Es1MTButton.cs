@@ -115,7 +115,7 @@ public class Es1MTButton : Es1DUIButtonControl {
 	}
 
 	/// <summary>
-	/// A pushed button's click: while the byte <c>0007fcb9</c> (<c>prefs.cfg</c> option 1) and the sound object
+	/// A pushed button's click: while <c>Shell_SoundOption</c> (<see cref="Es1ShellData.SoundOption"/>) and the sound object
 	/// <c>0007fd00</c> are set, the object stopped when its slot <c>+0x30</c> answers non-zero (slot <c>+0x14</c>) and
 	/// played (slot <c>+0x10</c>).
 	/// </summary>

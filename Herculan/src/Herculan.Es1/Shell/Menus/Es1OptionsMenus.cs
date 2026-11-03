@@ -58,6 +58,159 @@ public sealed class Es1OptionsMenu : Es1Menu {
 }
 
 /// <summary>
+/// PREFERENCES' screen object, class <c>PrefsMenu</c> (vtable <c>00081f60</c>, <c>0x2c</c> bytes)
+/// (docs/es1/shell/options.md#preferences--screen-1310): screen 1310, MUSIC, SOUND, DETAIL and SPEECH, each with the box
+/// that shows its setting, CANCEL and ACCEPT. Screen 1310's case (<c>0003e7eb</c>) makes it and copies the four
+/// settings into it, which CANCEL puts back.
+/// </summary>
+public sealed class Es1PrefsMenu : Es1Menu {
+	/// <summary>The screen and the menu, <c>dlg\menu1310.dlg</c>.</summary>
+	public const short Screen = 1310;
+
+	/// <summary>The four settings' buttons.</summary>
+	private const short MusicButton = 1311, SoundButton = 1312, DetailButton = 1313, SpeechButton = 1317;
+
+	/// <summary>The boxes that show the settings, list boxes of style 1.</summary>
+	public const short MusicList = 1314, SoundList = 1315, DetailList = 1316, SpeechList = 1318;
+
+	/// <summary>CANCEL's and ACCEPT's ids.</summary>
+	private const short Cancel = 99, Accept = 100;
+
+	/// <summary>
+	/// <c>PrefsMenu_OffOnLines</c> (<c>000811a8</c>), MUSIC's and SOUND's lines: OFF and ON, <c>eng\watext.bin</c>'s lines
+	/// 2 and 3.
+	/// </summary>
+	public static readonly short[] OffOnLines = [2, 3, -1];
+
+	/// <summary><c>PrefsMenu_DetailLines</c> (<c>000811b0</c>), DETAIL's lines: LOW, MEDIUM, HIGH and MAX, lines 4 to 7.</summary>
+	public static readonly short[] DetailLines = [4, 5, 6, 7, -1];
+
+	/// <summary>
+	/// <c>PrefsMenu_SpeechLines</c> (<c>000811bc</c>), SPEECH's lines: TEXT ONLY, VOICE ONLY and TEXT AND VOICE, lines
+	/// <c>0x10</c> to <c>0x12</c>.
+	/// </summary>
+	public static readonly short[] SpeechLines = [0x10, 0x11, 0x12, -1];
+
+	/// <summary>The settings as the menu opened, <c>+0x26</c> to <c>+0x2a</c>.</summary>
+	private readonly byte _music, _sound;
+
+	/// <inheritdoc cref="_music"/>
+	private readonly short _detail, _radio;
+
+	/// <summary>
+	/// Screen 1310's case: the menu, with <see cref="Es1ShellData.MusicOption"/> at <c>+0x26</c>,
+	/// <see cref="Es1ShellData.SoundOption"/> at <c>+0x27</c>, <see cref="Es1ShellData.DetailOption"/> at <c>+0x28</c>
+	/// and <see cref="Es1ShellData.RadioOption"/> at <c>+0x2a</c>.
+	/// </summary>
+	public Es1PrefsMenu(Es1MenuContext context) : base(context) {
+		var data = context.Data;
+		_music = data.MusicOption;
+		_sound = data.SoundOption;
+		_detail = data.DetailOption;
+		_radio = data.RadioOption;
+	}
+
+	/// <summary>
+	/// <c>Menu_Open</c>'s change for menu 1310: with no sound manager (<see cref="Es1ShellDevices.SoundManagerPresent"/>,
+	/// the dword <c>00082768</c>), MUSIC, SOUND and SPEECH, each found in any state with <c>DUIWindow_FindControlById</c>,
+	/// made inactive.
+	/// </summary>
+	public static void SetOpeningControls(Es1DUIWindow window, Action<Es1DUIWindow, short> makeInactive) {
+		if (Es1ShellDevices.SoundManagerPresent) {
+			return;
+		}
+
+		makeInactive(window, window.FindControlById(MusicButton));
+		makeInactive(window, window.FindControlById(SoundButton));
+		makeInactive(window, window.FindControlById(SpeechButton));
+	}
+
+	/// <summary>
+	/// Slot <c>+8</c>, <c>PrefsMenu_OnMessage</c> (<c>0002b82b</c>) (docs/es1/shell/options.md#the-buttons--prefsmenu_onmessage-0002b82b):
+	/// by the message's target, the six ids at <c>00080aac</c>; nothing for any other. A setting's button steps the
+	/// setting, selects its line in its box (<see cref="Es1Menu.FindList"/>, slot <c>+0x24</c>) and stores it as its
+	/// option with the shell's <c>Prefs_SetOption</c>(1, value, option) (<see cref="Es1Preferences.ShellSetOption"/>);
+	/// the window stays. CANCEL puts the four settings back, plays or stops the music as MUSIC does, and runs
+	/// <c>Prefs_RevertAll</c>(1) (<see cref="Es1Preferences.ShellRevertAll"/>), then ACCEPT's code: <c>Prefs_CommitAll</c>(1)
+	/// (<see cref="Es1Preferences.ShellCommitAll"/>), <c>Prefs_Save</c> (<see cref="Es1Preferences.ShellSave"/>) and the
+	/// target 1300, OPTIONS.
+	/// </summary>
+	public override void OnMessage(ref Es1MenuMessage message) {
+		var data = Context.Data;
+		var preferences = Context.Preferences;
+		switch (message.Target) {
+			case SoundButton:
+				// 0002b854.
+				data.SoundOption ^= 1;
+				FindList(SoundList)?.SelectLine(data.SoundOption);
+				preferences.ShellSetOption(true, data.SoundOption, Es1Preferences.SoundsOption);
+				break;
+			case MusicButton:
+				// 0002b8b3.
+				data.MusicOption ^= 1;
+				FindList(MusicList)?.SelectLine(data.MusicOption);
+				PlayOrStopMusic(data.MusicOption);
+				preferences.ShellSetOption(true, data.MusicOption, Es1Preferences.MusicOption);
+				break;
+			case DetailButton:
+				// 0002b961: options 4 to 6 the setting × 64 + 0x3f, then option 3 0 for LOW and 1 otherwise.
+				data.DetailOption = (short)((data.DetailOption + 1) % 4);
+				FindList(DetailList)?.SelectLine(data.DetailOption);
+				byte level = (byte)(data.DetailOption * 64 + 0x3f);
+				preferences.ShellSetOption(true, level, Es1Preferences.SkyOption);
+				preferences.ShellSetOption(true, level, Es1Preferences.GroundOption);
+				preferences.ShellSetOption(true, level, Es1Preferences.DetailOption);
+				preferences.ShellSetOption(true, data.DetailOption == 0 ? (byte)0 : (byte)1, Es1Preferences.HorizonOption);
+				break;
+			case SpeechButton:
+				// 0002ba18.
+				if (preferences.ShellSpeechArchiveFound) {
+					data.RadioOption = (short)((data.RadioOption + 1) % 3);
+					FindList(SpeechList)?.SelectLine(data.RadioOption);
+					preferences.ShellSetOption(true, (byte)data.RadioOption, Es1Preferences.RadioOption);
+				}
+
+				break;
+			case Cancel:
+				// 0002ba91, which runs on into ACCEPT's code.
+				data.SoundOption = _sound;
+				data.MusicOption = _music;
+				data.DetailOption = _detail;
+				data.RadioOption = _radio;
+				PlayOrStopMusic(data.MusicOption);
+				preferences.ShellRevertAll(true);
+				Save(ref message);
+				break;
+			case Accept:
+				// 0002bb0d.
+				Save(ref message);
+				break;
+		}
+	}
+
+	/// <summary>ACCEPT's code: every option committed and the 17 written to <c>data\prefs.cfg</c>, and the target 1300.</summary>
+	private void Save(ref Es1MenuMessage message) {
+		Context.Preferences.ShellCommitAll(true);
+		Context.Preferences.ShellSave();
+		message = message with { Target = Es1OptionsMenu.Screen };
+	}
+
+	/// <summary>
+	/// With the backdrop's music <c>ShellMusic_Object</c> (<c>0007fcfc</c>) set, its slot <c>+0x10</c> (play) for a
+	/// setting of 1 and <c>+0x14</c> (stop) for 0, through its vtable at <c>+0x3b</c>. PLACEHOLDER: the object is the
+	/// shell's sound manager's, which is not ported (<see cref="Es1ShellDevices.Init"/>'s <c>ShellSound_Init</c>), so
+	/// there is none and nothing plays or stops, as in retail with the object not set.
+	/// </summary>
+	private static void PlayOrStopMusic(byte setting) {
+		_ = setting;
+	}
+
+	/// <summary>Slot <c>+4</c>, <c>PrefsMenu_Dtor</c> (<c>000402d2</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
+	public override void Dtor() {
+	}
+}
+
+/// <summary>
 /// The battle-set picker's screen object, class <c>BattlesetAlert</c> (vtable <c>00081fa2</c>)
 /// (docs/es1/formats/bst-battle-sets.md#which-battle-set): screen 1330, BATTLESET, the list 1331 of the battle sets,
 /// CANCEL (1300) and ACCEPT. The list's arrows, 101 and 102, reach a handler that does nothing for them.

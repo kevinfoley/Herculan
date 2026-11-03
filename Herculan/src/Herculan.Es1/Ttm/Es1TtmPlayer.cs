@@ -568,10 +568,10 @@ public sealed class Es1TtmPlayer {
 
 			switch (opcode & 0xf000) {
 				case 0xc000:
-					// The shell's TtmScript_RunSoundCommand (0004a0e0) acts while the byte 0007fcb9 is set: 0xc21f makes the sound
-					// object +0x1a8 through the sound manager and 0xc220 plays it, setting +0x41. PLACEHOLDER: ES1's sound is not
-					// ported (Es1ShellDevices.Init's ShellSound_Init), so no sound object is made and a script plays nothing. The
-					// simulator steps over these opcodes.
+					// The shell's TtmScript_RunSoundCommand (0004a0e0) acts while Shell_SoundOption (0007fcb9) is set: 0xc21f
+					// makes the sound object +0x1a8 through the sound manager and 0xc220 plays it, setting +0x41. PLACEHOLDER:
+					// ES1's sound is not ported (Es1ShellDevices.Init's ShellSound_Init), so no sound object is made and a script
+					// plays nothing. The simulator steps over these opcodes.
 					continue;
 				case 0xa000:
 					RunDrawCommand(opcode, a1, a2, a3, a4, a5, a6, a7);

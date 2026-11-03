@@ -152,6 +152,23 @@ public sealed class Es1Preferences {
 	/// </summary>
 	public bool VoiceArchivePresent { get; internal set; }
 
+	/// <summary>The speech archive the shell's <c>Speech_ArchivePresent</c> (<c>ES1GO 000087ce</c>) opens, a fixed path from the current directory.</summary>
+	public static readonly string[] SpeechArchivePath = ["vol", "speech.vol"];
+
+	/// <summary>
+	/// The shell's <c>Speech_ArchivePresent</c> (<c>ES1GO 000087ce</c>): whether <c>vol\speech.vol</c> opens with
+	/// <c>fopen</c>(<c>rb</c>), from the directory the shell runs in, <paramref name="installRoot"/>
+	/// (docs/es1/shell/options.md#the-buttons--prefsmenu_onmessage-0002b82b).
+	/// </summary>
+	public static bool SpeechArchiveExists(string installRoot) =>
+		File.Exists(CaseInsensitivePath.Combine(installRoot, SpeechArchivePath));
+
+	/// <summary>
+	/// The shell's <c>Speech_ArchiveFound</c> (<c>ES1GO 0007e09c</c>), which its <c>Prefs_Init</c> sets from
+	/// <see cref="SpeechArchiveExists"/> and PREFERENCES' SPEECH reads. Clear until the shell's devices set it.
+	/// </summary>
+	public bool ShellSpeechArchiveFound { get; internal set; }
+
 	/// <summary><c>PrefsInitInProgress</c> (<c>000b1734</c>): set while <see cref="Load"/> runs.</summary>
 	public bool InitInProgress { get; private set; }
 

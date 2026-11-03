@@ -290,7 +290,7 @@ public sealed class Es1ShellScreens {
 		_lipSync.Scripts = scripts;
 		// The message box and its text box, statics in retail, made here once what they read exists.
 		var dialog = new Es1ShellDialog(_devices.Display, _dirty, _content.Read, _lipSync, () => data.Fonts[DialogFontSlot],
-			() => data.Option2Word, () => BackdropId, () => mission.MessageBoxLine);
+			() => data.RadioOption, () => BackdropId, () => mission.MessageBoxLine);
 		Dialog = dialog;
 		MessageBox = new Es1MessageBox(Globals, dialog, mission, data, _backdrop, () => Scripts, GetFullScreen);
 		scripts.Configure(Es1ShellBackdrop.BackgroundPage, FullScreenContext, ScriptHandles);
@@ -1179,10 +1179,16 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 1310:
+			case Es1PrefsMenu.Screen:
+				// 0003e7eb: a PrefsMenu, PREFERENCES, with the four settings it opens with.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1PrefsMenu(_menuContext);
+				}
+
+				break;
 			case 1320:
-				// PLACEHOLDER: PrefsMenu and screen 1320's code at 0003e9ae (the keyboard's subscribers and mode), PREFERENCES
-				// and CONTROLS, the preferences and controls module's, after S5.
+				// PLACEHOLDER: screen 1320's code at 0003e9ae (the keyboard's subscribers and mode, the controls panel), CONTROLS,
+				// P20b's.
 				break;
 		}
 	}

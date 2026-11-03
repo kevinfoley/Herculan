@@ -34,7 +34,7 @@ public sealed class Es1ShellData {
 		"NM_WHITE", "NM_BLUE", "NM_YLW", "BIG_RED",
 	];
 
-	/// <summary>The words <c>0007fd10</c> and <c>0007fd18</c>, the two bases of <see cref="DetailWord"/>.</summary>
+	/// <summary>The words <c>0007fd10</c> and <c>0007fd18</c>, the two bases of <see cref="DetailOption"/>.</summary>
 	private const short DetailBase = 0x3f, DetailBaseOption3 = 0xbf;
 
 	private Es1ShellData() {
@@ -66,17 +66,23 @@ public sealed class Es1ShellData {
 	/// </summary>
 	public short[] MissionParams { get; } = new short[5];
 
-	/// <summary>The byte <c>0007fcb8</c>, option 0, which lets <c>ShellMusic_Play</c> start a track.</summary>
-	public byte MusicByte { get; private set; }
+	/// <summary>
+	/// <c>Shell_MusicOption</c> (<c>0007fcb8</c>), option 0, which lets <c>ShellMusic_Play</c> start a track and
+	/// PREFERENCES' MUSIC toggles (docs/es1/shell/options.md#preferences--screen-1310).
+	/// </summary>
+	public byte MusicOption { get; set; }
 
-	/// <summary>The byte <c>0007fcb9</c>, option 1, which lets a text button click.</summary>
-	public byte ClickByte { get; private set; }
+	/// <summary><c>Shell_SoundOption</c> (<c>0007fcb9</c>), option 1, which lets a text button click and PREFERENCES' SOUND toggles.</summary>
+	public byte SoundOption { get; set; }
 
-	/// <summary>The word <c>0007fcbc</c>, option 2.</summary>
-	public short Option2Word { get; private set; }
+	/// <summary><c>Shell_RadioOption</c> (<c>0007fcbc</c>), option 2, which PREFERENCES' SPEECH steps.</summary>
+	public short RadioOption { get; set; }
 
-	/// <summary>The word <c>0007fcba</c>: (<see cref="DetailBase"/>, or <see cref="DetailBaseOption3"/> with option 3 set, plus options 4, 5 and 6) / 256.</summary>
-	public short DetailWord { get; private set; }
+	/// <summary>
+	/// <c>Shell_DetailOption</c> (<c>0007fcba</c>), which PREFERENCES' DETAIL steps: at the load (<see cref="DetailBase"/>,
+	/// or <see cref="DetailBaseOption3"/> with option 3 set, plus options 4, 5 and 6) / 256.
+	/// </summary>
+	public short DetailOption { get; set; }
 
 	/// <summary>The 14 font slots; a font whose file is missing is null.</summary>
 	public HudFont?[] Fonts { get; } = new HudFont?[FontNames.Length];
@@ -155,8 +161,8 @@ public sealed class Es1ShellData {
 
 	/// <summary>
 	/// <c>Shell_LoadData</c> (<c>00020630</c>), the start-up's step 11, on <paramref name="preferences"/>, the options as the
-	/// devices left them: options 12–16 into <see cref="MissionParams"/>, 0 and 1 into the two bytes, 2 into
-	/// <see cref="Option2Word"/>, <see cref="DetailWord"/>; the 14 font slots; the generator seeded with <c>time()</c>
+	/// devices left them: options 12–16 into <see cref="MissionParams"/>, 0 and 1 into <see cref="MusicOption"/> and
+	/// <see cref="SoundOption"/>, 2 into <see cref="RadioOption"/>, <see cref="DetailOption"/>; the 14 font slots; the generator seeded with <c>time()</c>
 	/// % 128 draws; <c>eng\watext.bin</c>; the value tables (<see cref="Es1RepairCosts.Load"/>); the careers log, with <see cref="SelectedEntry"/> from it; and
 	/// <c>BattleSet_Load</c> of the roster's battle set (<see cref="LoadBattleSet"/>), the roster's word <c>+5</c>, which is
 	/// 0 in the image and set by nothing before this load. <c>00027c4c</c>, which makes the 41 weapon stocks, follows; they
@@ -167,11 +173,11 @@ public sealed class Es1ShellData {
 			MissionParams[i] = preferences[12 + i];
 		}
 
-		MusicByte = preferences[0];
-		ClickByte = preferences[1];
-		Option2Word = preferences[2];
+		MusicOption = preferences[0];
+		SoundOption = preferences[1];
+		RadioOption = preferences[2];
 		short detailBase = preferences[3] != 0 ? DetailBaseOption3 : DetailBase;
-		DetailWord = (short)((short)(detailBase + preferences[4] + preferences[5] + preferences[6]) / 0x100);
+		DetailOption = (short)((short)(detailBase + preferences[4] + preferences[5] + preferences[6]) / 0x100);
 
 		for (int i = 0; i < FontNames.Length; i++) {
 			Fonts[i] = HudFont.Load(content, FontNames[i], "dfn");
