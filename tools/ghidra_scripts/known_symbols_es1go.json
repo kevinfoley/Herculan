@@ -697,11 +697,116 @@
       "type": "function",
       "confidence": "high",
       "name": "Alert_LoadBnd",
-      "description": "No arguments: Ovl_ReadFile(bnd\\alert, 1, 6, 0009a318) in stack order, the whole of BND\\ALERT.BND. The static initialiser 00003c22 registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "description": "No arguments: Ovl_ReadFile(bnd\\alert, 1, 6, 0009a318) in stack order, the whole of BND\\ALERT.BND. The static initialiser Alert_StaticInit (00003c22) registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
       "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
       "verified": {
         "bytes": "00002204+41",
         "sha1": "16e6bad343ab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000222d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_CtorBase",
+      "description": "(panel, rect, keepsScreen), its arguments removed by this function: ES1DBSIM's AlertPanel_CtorBase (00045988) with the copy of the input block 0x29 bytes long at +0x2e8, AlertVtable (0007d920) at +0x311, the region's vtable chain 0007d860, 0007d88a, 0007d8bc, 0007d8f4, the brush Alert_FillBrush (0009a330), the draw page from the display 000ab616's +0x38, the assert naming src\\alert.cpp line 0x3a, and no store to +0x313; the same statements in different code. es2_xref finds calls from ControlsPanel_Ctor (00006050) and 00006f15.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 0000222d, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "0000222d+846",
+        "sha1": "354fce7c1abb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000257b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorAlertCopy",
+      "description": "(object, flags), its arguments removed by this function: slot +0x1c of this file's GLBase vtable copy 0007d88a; the same statements as ES1DBSIM's GLBase_DtorAlertCopy (00045c8c) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c; ES1GO decompile at 0000257b, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "0000257b+44",
+        "sha1": "d9e5d62ca83a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000025a7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorAlertCopy",
+      "description": "(object, flags), its arguments removed by this function: slot +0x1c of this file's GLRegion vtable copy 0007d8bc, which it stores before 0007d88a; the same statements as ES1DBSIM's GLRegion_DtorAlertCopy (00045cb0) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c; ES1GO decompile at 000025a7, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000025a7+73",
+        "sha1": "480f99dbad9f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000025f0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorAlertCopy",
+      "description": "(object, flags), its arguments removed by this function: slot +0x1c of this file's GLRectangleRegion vtable copy 0007d8f4, which it stores before 0007d8bc and 0007d88a; the same statements as ES1DBSIM's GLRectangleRegion_DtorAlertCopy (00045cd8) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c; ES1GO decompile at 000025f0, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000025f0+107",
+        "sha1": "6788703296bd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000265b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_OnChildClickNoOp",
+      "description": "(panel, a, b), its arguments removed by this function: loads them into EAX, ECX and EDX and returns. Slot +0x10 of AlertVtable (0007d920). ES1DBSIM's AlertPanel_OnChildClickNoOp (00045d06) is two NOPs and RET 0xc.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile and disassembly at 0000265b, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "0000265b+16",
+        "sha1": "ee80f82af3c9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000266b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Alert_Dtor",
+      "description": "(panel, flags), its arguments removed by this function: ES1DBSIM's Alert_Dtor (00045d0c) with AlertVtable (0007d920) stored at +0x311; the same statements in different code. es2_xref finds calls from ControlsPanel_Dtor (00006455) and 00007561.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 0000266b, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "0000266b+356",
+        "sha1": "d5ea6fdcddba",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000027cf",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLViewport_DtorAlertCopy",
+      "description": "(object, flags), its arguments removed by this function: slot +0x1c of this file's GLViewport vtable copy 0007d97a, which it stores before 0007d88a; the same statements as ES1DBSIM's GLViewport_DtorAlertCopy (00045de8) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c; ES1GO decompile at 000027cf, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000027cf+73",
+        "sha1": "35433d711eea",
         "scope": "body",
         "via": "decompile"
       }
@@ -722,6 +827,51 @@
       }
     },
     {
+      "address": "0000290b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_Enter",
+      "description": "(panel), its argument removed by this function: ES1DBSIM's AlertPanel_Enter (00045f00) on the shell's globals, copying the 0x29 bytes at 000a0ba4 to +0x2e8, with no button latched, the source and draw pages (the display 000ab616's +0x34 and +0x38) set to its +0x84, the hook 0007d84c, the cursor image 0007d848 loaded once from dci\\alert with 00008cc2, and no open count; the same statements in different code. es2_xref finds calls from ControlsPanel_Run (000064c4) and 00007631.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 0000290b, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "0000290b+511",
+        "sha1": "46b21d202d0a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002b0a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_Leave",
+      "description": "(panel), its argument removed by this function: ES1DBSIM's AlertPanel_Leave (000460b8) on the shell's globals, the hook 0007d850, the draw page put back at the display 000ab616's +0x38, the 0x29 bytes copied back to 000a0ba4, without moving the mouse to the saved pointer and with no open count; the same statements in different code. es2_xref finds calls from ControlsPanel_Run (000064c4) and 00007631.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 00002b0a, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00002b0a+283",
+        "sha1": "cad03d396fcf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002c25",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_SetTitleText",
+      "description": "(panel, text), its arguments removed by this function, slot +8 of AlertVtable (0007d920) and ControlsAlertVtable (0007dddc): ES1DBSIM's AlertPanel_SetTitleText (000461ec), the corner frames taken from the bank the dword 000ab4ee holds; the same statements in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-title-bar--alertpanel_settitletext-000461ec; ES1GO decompile at 00002c25, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00002c25+712",
+        "sha1": "9b8aa7270185",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00002eed",
       "binary": "ES1GO",
       "type": "function",
@@ -732,6 +882,36 @@
       "verified": {
         "bytes": "00002eed+111",
         "sha1": "4208f122fafb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002f5c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_RestoreCursorImage",
+      "description": "(panel), its argument removed by this function: Cursor_SetImage (00050e40)(the kept bitmap +0x2ce plus 4, or 0 when it is 0; +0x2d2). ES1DBSIM's AlertPanel_RestoreCursorImage (00046428) without the test of +0x313, which the shell's panel lacks. es2_xref finds one call, from AlertPanel_Leave (00002b0a).",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 00002f5c, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00002f5c+70",
+        "sha1": "6192adf819b3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002fa2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_SetFocus",
+      "description": "(panel, index), its arguments removed by this function: ES1DBSIM's AlertPanel_SetFocus (00046470) with Shell_PollInput (0004de3a) where that has Input_BuildPlayerDevice; the same statements in different code.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 00002fa2, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00002fa2+347",
+        "sha1": "1c0ccd434fe7",
         "scope": "body",
         "via": "decompile"
       }
@@ -797,6 +977,21 @@
       }
     },
     {
+      "address": "000031fe",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_HandleEvent",
+      "description": "(panel, block), its arguments removed by this function, slot +0x14 of AlertVtable (0007d920) and ControlsAlertVtable (0007dddc): ES1DBSIM's AlertPanel_HandleEvent (00046670) on the shell's block, buttons 0 and 1 at +0x1d and +0x1e, latched with Input_LatchButton (0004de18), the key word at +0; its REPNE SCASD table 0007d9f0 holds six codes, ES1DBSIM's five and 0x42e, Ctrl+C, whose case calls 00014ac7 with the string CAPTURE (0007d9e6). Case bodies 000032a5-000032f6 are code Ghidra left undefined.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile and disassembly at 000031fe, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000031fe+258",
+        "sha1": "298c7ce48f72",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00003309",
       "binary": "ES1GO",
       "type": "function",
@@ -817,11 +1012,326 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_CenterRect",
-      "description": "(height, width) in stack order, its arguments removed by this function: AlertPanel_SetRect (00003309) at x = (0009a328 - width) >> 1 and y = (0009a32c - height) >> 1, the x1 and y1 of the rect at 0009a320; the same statements as ES1DBSIM's AlertPanel_CenterRect (0004679c) in different code.",
+      "description": "(height, width) in stack order, its arguments removed by this function: AlertPanel_SetRect (00003309) at x = (0009a328 - width) >> 1 and y = (0009a32c - height) >> 1, the x1 and y1 of the rect at AlertPanel_ScreenRect (0009a320); the same statements as ES1DBSIM's AlertPanel_CenterRect (0004679c) in different code.",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988",
       "verified": {
         "bytes": "0000339c+53",
         "sha1": "9f7826fb0bb8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000033d1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelButton_Ctor",
+      "description": "(button, index, owner, rect), its arguments removed by this function: ES1DBSIM's PanelButton_Ctor (000467c8) through this file's tables 0007da34, 0007da90, 0007dac2 and AlertSelectGadgetVtable (0007daec), and the shell's fonts; the same statements in different code. es2_xref finds calls from ControlsPanel_Ctor (00006050) and 00006f15.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile at 000033d1, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000033d1+239",
+        "sha1": "9dacc3879e84",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000034c0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLButtonControl_PaintNoOpAlertCopy",
+      "description": "(control), its argument removed by this function: loads it into EAX and returns. Slot +4 of 0007da34 and 0007da90; ES1DBSIM's CTLButtonControl_PaintNoOpAlertCopy (00046893) is a NOP and RET 4.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile and disassembly at 000034c0, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000034c0+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000034ca",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_InvalidateNoOpAlertCopy",
+      "description": "(control), its argument removed by this function: loads it into EAX and returns. Slot +8 of 0007da34; ES1DBSIM's CTLControl_InvalidateNoOpAlertCopy (00046897) is a NOP and RET 4.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile and disassembly at 000034ca, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000034ca+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000034d4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_OnClickNoOpAlertCopy",
+      "description": "(control), its argument removed by this function: loads it into EAX and returns. Slot +0xc of 0007da34 and of the slider's 0007db22; ES1DBSIM's CTLControl_OnClickNoOpAlertCopy (0004689b) is a NOP and RET 4.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile at 000034d4, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000034d4+13",
+        "sha1": "029e49697cf2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000034e1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_FlushDeferredPaintNoOpAlertCopy",
+      "description": "(control), its argument removed by this function: loads it into EAX and returns. Slot +0x10 of 0007da34, 0007da90, 0007db22 and 0007db8a; ES1DBSIM's CTLControl_FlushDeferredPaintNoOpAlertCopy (0004689f) is a NOP and RET 4.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile at 000034e1, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000034e1+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000034eb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_GetButtonValueAlertCopy",
+      "description": "(control), its argument removed by this function: returns the word at 0007e66c. Slot +0x14 of 0007da34, 0007da90 and AlertSelectGadgetVtable (0007daec); the same statements as ES1DBSIM's Widget_GetButtonValueAlertCopy (000468a3) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile and disassembly at 000034eb, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000034eb+16",
+        "sha1": "de6c85b7a5e9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000034fb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_SetValueNoOpAlertCopy",
+      "description": "(control, value), its arguments removed by this function: loads the control into EAX and returns. Slot +0x18 of 0007da34, 0007da90 and AlertSelectGadgetVtable (0007daec); the same statements as ES1DBSIM's CTLControl_SetValueNoOpAlertCopy (000468ad) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile at 000034fb, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000034fb+14",
+        "sha1": "1550088044a9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003509",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_DragMoveNoOpAlertCopy",
+      "description": "(control, point), its arguments removed by this function: loads the control into EAX and returns. Slot +0x1c of 0007da34, 0007da90 and AlertSelectGadgetVtable (0007daec); the same statements as ES1DBSIM's CTLControl_DragMoveNoOpAlertCopy (000468b3) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile at 00003509, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00003509+13",
+        "sha1": "029e49697cf2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003516",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_InvalidateDeferredAlertCopy",
+      "description": "(widget), its argument removed by this function: sets the byte +0x1b to 2. Slot +8 of 0007da90 and AlertSelectGadgetVtable (0007daec); the same statements as ES1DBSIM's Widget_InvalidateDeferredAlertCopy (000468b8) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile and disassembly at 00003516, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00003516+18",
+        "sha1": "50afbad41787",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000353c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelButton_Paint",
+      "description": "(button), its argument removed by this function, slot +4 of AlertSelectGadgetVtable (0007daec): ES1DBSIM's PanelButton_Paint (000468e0), the owner's caption through its slot +0x18 at +0x311; the same statements in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile at 0000353c, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "0000353c+160",
+        "sha1": "ee2a50525bac",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000035dc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtorAlertCopy",
+      "description": "(copy, rect), its arguments removed by this function: copies the four dwords, allocating 0x10 bytes when given none; es2_xref finds one call, from PanelButton_Paint (0000353c). The same statements as ES1DBSIM's Rect_CopyCtorAlertCopy (0004695c) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile at 000035dc, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000035dc+46",
+        "sha1": "b6099cefdbf9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000360a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelButton_Tick",
+      "description": "(button), its argument removed by this function, slot +0x10 of AlertSelectGadgetVtable (0007daec): when the paint counter byte +0x1b is set, calls the paint slot +4 once and takes 1 from it; the same statements as ES1DBSIM's PanelButton_Tick (0004698c) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile and disassembly at 0000360a, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "0000360a+38",
+        "sha1": "906433760d85",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00003630",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelButton_OnClick",
+      "description": "(button, flags), its arguments removed by this function, slot +0xc of AlertSelectGadgetVtable (0007daec): ES1DBSIM's PanelButton_OnClick (000469ac), the owner's slot +0x10 through its vptr at +0x311; the same statements in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1GO decompile at 00003630, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00003630+84",
+        "sha1": "b1baf069be4a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003684",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSliderGadget_Ctor",
+      "description": "(slider, owner, rect), its arguments removed by this function: ES1DBSIM's AlertSliderGadget_Ctor (000469ec) through this file's tables 0007db22, 0007db8a, 0007dbc8 and 0007dbf0, the knob's length from AlertSlider_KnobLength (0009a31c), ALERT.BND's word, where ES1DBSIM's stores 7; the same statements in different code. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 00003684, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00003684+806",
+        "sha1": "0a150f79cb2b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000039aa",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLSliderControl_PaintNoOpAlertCopy",
+      "description": "(control), its argument removed by this function: loads it into EAX and returns. Slot +4 of 0007db22 and 0007db8a; ES1DBSIM's CTLSliderControl_PaintNoOpAlertCopy (00046c6f) is a NOP and RET 4.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1GO decompile at 000039aa, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000039aa+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000039b4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLSliderControl_InvalidateNoOpAlertCopy",
+      "description": "(control), its argument removed by this function: loads it into EAX and returns. Slot +8 of 0007db22; ES1DBSIM's CTLSliderControl_InvalidateNoOpAlertCopy (00046c73) is a NOP and RET 4.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1GO decompile at 000039b4, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000039b4+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000039be",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HSliderGadget_InvalidateDeferred",
+      "description": "(slider), its argument removed by this function: sets the byte +0x1b to 2. Slot +8 of 0007db8a and 0007dbf0; the same statements as ES1DBSIM's HSliderGadget_InvalidateDeferred (00046c78) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1GO decompile at 000039be, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000039be+18",
+        "sha1": "50afbad41787",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000039e4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSliderGadget_OnClick",
+      "description": "(slider, value), its arguments removed by this function, slot +0xc of 0007dbf0: ES1DBSIM's AlertSliderGadget_OnClick (00046ca0), the owner's slot +0x10 through its vptr at +0x311; the same statements in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1GO decompile at 000039e4, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000039e4+56",
+        "sha1": "18b77486e36f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003a1c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSliderGadget_Paint",
+      "description": "(slider), its argument removed by this function, slot +4 of 0007dbf0: ES1DBSIM's AlertSliderGadget_Paint (00046cc8) with the display 000ab616's source page +0x34 set to its draw page +0x38; the same statements in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1GO decompile at 00003a1c, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00003a1c+508",
+        "sha1": "d3d551e55a2e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003c18",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSliderGadget_FlushDeferredPaintNoOp",
+      "description": "(slider), its argument removed by this function: loads it into EAX and returns. Slot +0x10 of 0007dbf0; ES1DBSIM's AlertSliderGadget_FlushDeferredPaintNoOp (00046e65) is three NOPs and RET 4.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1GO decompile at 00003c18, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00003c18+10",
+        "sha1": "02b04160c7b8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003c22",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Alert_StaticInit",
+      "description": "(): src\\alert.cpp's static initialiser: RegisterSubsystemLoader (0000fca0)(1, Alert_LoadBnd (00002204)), then ES1DBSIM's Alert_StaticInit (00046e6c): AlertPanel_ScreenRect (0009a320) = {0, 0, 319, 199}, ordered from the points (319, 199) and (0, 0), and Alert_FillBrush (0009a330) cleared.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 00003c22, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00003c22+346",
+        "sha1": "5f5f0ff9a44d",
         "scope": "body",
         "via": "decompile"
       }
@@ -1282,11 +1792,161 @@
       "type": "function",
       "confidence": "high",
       "name": "CtlAlert_LoadBnd",
-      "description": "No arguments: Ovl_ReadFile(bnd\\ctl_alrt, 1, 0x86, 0009a34c) in stack order, the whole of BND\\CTL_ALRT.BND. The static initialiser 00006ebe registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "description": "No arguments: Ovl_ReadFile(bnd\\ctl_alrt, 1, 0x86, CtlAlert_Bnd (0009a34c)) in stack order, the whole of BND\\CTL_ALRT.BND. The static initialiser CtlAlert_StaticInit (00006ebe) registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
       "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
       "verified": {
         "bytes": "00006024+44",
         "sha1": "9a9977f3696b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00006050",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_Ctor",
+      "description": "(panel, rect, keepsScreen), its arguments removed by this function: ES1DBSIM's ControlsPanel_Ctor (00048408) with a 0x3a3-byte object, every field from +0x311 on 3 bytes lower (the vptr ControlsAlertVtable (0007dddc) at +0x311, the strings from +0x315, the readouts at +0x381, the action at +0x395), and its numbers read from CtlAlert_Bnd (0009a34c), CTL_ALRT.BND, where ES1DBSIM's are immediates and tables: the size, the title's margin, top, height and label offset, the button and readout counts and rects, the captions' and readouts' margins; the captions in the font Shell_Fonts (000aacc6) entry 1, the title in entry 0, the readouts in entry 5, nm_green, on background 0x1f. es2_xref finds one call, from Shell_HandleMessage (0003c7d8), screen 1320's case.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 00006050, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00006050+1029",
+        "sha1": "6b51f33388c9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00006455",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_Dtor",
+      "description": "(panel, flags), its arguments removed by this function: ES1DBSIM's ControlsPanel_Dtor (000487b4), freeing as many readouts at +0x381 as CTL_ALRT.BND's count and calling Alert_Dtor (0000266b); the same statements in different code. es2_xref finds one call, from Shell_HandleMessage (0003c7d8), with 3.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 00006455, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00006455+111",
+        "sha1": "13337da2a2f9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000064c4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_Run",
+      "description": "(panel), its argument removed by this function, slot +0xc of ControlsAlertVtable (0007dddc): ES1DBSIM's ControlsPanel_Run (00048810) with its copies at +0x399 to +0x3a2, Shell_PollInput (0004de3a) for the input build, the trigger at the block's +0x1d, and Prefs_CommitAll (000082b0) where ES1DBSIM's calls Prefs_CommitOptions; CALIBRATE builds 00006f15 and runs 00007631, destroying it with 00007561; the same statements in different code.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile and disassembly at 000064c4, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000064c4+1179",
+        "sha1": "c93892bc513a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000695f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_Paint",
+      "description": "(panel), its argument removed by this function, slot +4 of ControlsAlertVtable (0007dddc): ES1DBSIM's ControlsPanel_Paint (00048c58), its rows 1 to CTL_ALRT.BND's readout count; the same statements in different code.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 0000695f, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "0000695f+144",
+        "sha1": "363d20d0c174",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000069ef",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_RefreshRow",
+      "description": "(panel, row), its arguments removed by this function: ES1DBSIM's ControlsPanel_RefreshRow (00048ce4) with its fields 3 bytes lower: the readouts +0x381 to +0x391, the bytes +0x399 to +0x39d, the strings +0x335, +0x33d, +0x345 and +0x36d; the same statements in different code.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 000069ef, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000069ef+260",
+        "sha1": "c84d43bc557c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00006af3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_OnClick",
+      "description": "(panel, flags, child), its arguments removed by this function, slot +0x10 of ControlsAlertVtable (0007dddc): ES1DBSIM's ControlsPanel_OnClick (00048db0) with the action at +0x395; the same statements in different code.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 00006af3, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00006af3+219",
+        "sha1": "1785b49c5dcd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00006bce",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_GetButtonCaption",
+      "description": "(panel, index), its arguments removed by this function, slot +0x18 of ControlsAlertVtable (0007dddc): returns the dword +0x319[index]; ES1DBSIM's ControlsPanel_GetButtonCaption (00048e80), whose captions are at +0x31c.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 00006bce, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00006bce+31",
+        "sha1": "ed0cd6382b73",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00006bed",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_ApplyDevices",
+      "description": "(panel), its argument removed by this function: ES1DBSIM's ControlsPanel_ApplyDevices (00048e98) on the panel's +0x399/+0x39c against +0x3a1/+0x3a2 and the shell's Prefs_Options (000aa24e), the devices found with Input_GetJoystickDevice_Thunk (00027bd3) and Input_GetJoystick2Device_Thunk (00027bdd), both calibration files named by Shell_FileNames (0009afb8) lines 1 and 2 through Path_ApplyAltDrive (00020989) and loaded with Joystick_LoadCalibration (000086d6), the mouse disabled with InputDevice_Disable (0002586e), and the five options of ControlsPanel_SaveList (0007de60) saved with Prefs_SaveSelectedOptions (0000855e); the same statements in different code.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile and disassembly at 00006bed, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00006bed+521",
+        "sha1": "70e1d5084923",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00006df6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_Revert",
+      "description": "(panel), its argument removed by this function: ES1DBSIM's ControlsPanel_Revert (0004903c) with its bytes at +0x399 to +0x39d, calling 000084b8 for each of options 7, 8, 10, 9 and 11 and then ControlsPanel_ApplyDevices (00006bed); the same statements in different code. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 00006df6, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00006df6+200",
+        "sha1": "76bc425981fe",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00006ebe",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CtlAlert_StaticInit",
+      "description": "(): the controls panel's static initialiser: RegisterSubsystemLoader (0000fca0)(1, CtlAlert_LoadBnd (00006024)).",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 00006ebe, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00006ebe+43",
+        "sha1": "129ac83517ed",
         "scope": "body",
         "via": "decompile"
       }
@@ -1397,6 +2057,66 @@
       }
     },
     {
+      "address": "000083ac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_ToggleOption",
+      "description": "(apply, index), its arguments removed by this function: Prefs_SetOption (00008378)(apply, the option XOR 1, index), returning the option. ES1DBSIM's Prefs_ToggleOption (0004a94c) without the copy to a previous-value array.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 000083ac, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000083ac+49",
+        "sha1": "50991eb5b45f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000083dd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_StepOption",
+      "description": "(apply, modulus, index), its arguments removed by this function: the option plus 1, 0 when that equals modulus, through Prefs_SetOption (00008378). ES1DBSIM's Prefs_StepOption (0004a988) without the copy to a previous-value array.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 000083dd, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000083dd+59",
+        "sha1": "4216a2e51fe3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00008418",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_StepOptionBack",
+      "description": "(apply, modulus, index), its arguments removed by this function: the option less 1, modulus - 1 from 0, through Prefs_SetOption (00008378). ES1DBSIM's Prefs_StepOptionBack (0004a9d0) without the copy to a previous-value array.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile at 00008418, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00008418+60",
+        "sha1": "ced952ff42cc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000855e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_SaveSelectedOptions",
+      "description": "(indices, count), its arguments removed by this function: ES1DBSIM's Prefs_SaveSelectedOptions (0004ab6c) on the shell's Prefs_Options (000aa24e): reads data\\prefs.cfg's 17 bytes, copies the named options over them and writes them back, or writes all 17 when the file does not open; the same statements in different code.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array; ES1GO decompile at 0000855e, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "0000855e+215",
+        "sha1": "86c70ac3343e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00008659",
       "binary": "ES1GO",
       "type": "function",
@@ -1409,6 +2129,21 @@
         "sha1": "f45eb01ce50b",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "000086d6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Joystick_LoadCalibration",
+      "description": "(path, device), its arguments removed by this function: ES1DBSIM's Joystick_LoadCalibration (0004ae0c): 0x40 bytes of the file into the device, or for each of four axes 0, 0x50, 0x28 and 0x50 when it does not open; the same statements in different code.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-calibration-file; ES1GO decompile at 000086d6, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "000086d6+176",
+        "sha1": "b70f1229f91a",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -2827,7 +3562,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Label_SetText",
-      "description": "(label, text), callee-cleaned: draws text in the label. Sets the pen (0009ade4, 0009ade8) to the anchor (+0x14, +0x16), moving x left by (w - 1) for flags & 4 or by (w - 1) / 2 for flags & 2, w being HudFont_MeasureString(font, text). When the fill colour +0x1c is non-zero it installs the brush {0, colour} at the current render context's +0x22c (the display's (000ab616) +0x40 less 4, where ES1DBSIM's reads +0x44), fills the label's rect with Raster_FillRect and puts the old brush back. Then HudFont_DrawString(font, text, pen). es2_xref finds 17 calls from seven functions, 00002c25 to ShellMap_PaintCallout (0000bf1b), and one each from Label_SetNumber (000100d8) and Label_SetText_Thunk (00010140); the same statements as ES1DBSIM's Label_SetText (0003114c) in different code.",
+      "description": "(label, text), callee-cleaned: draws text in the label. Sets the pen (0009ade4, 0009ade8) to the anchor (+0x14, +0x16), moving x left by (w - 1) for flags & 4 or by (w - 1) / 2 for flags & 2, w being HudFont_MeasureString(font, text). When the fill colour +0x1c is non-zero it installs the brush {0, colour} at the current render context's +0x22c (the display's (000ab616) +0x40 less 4, where ES1DBSIM's reads +0x44), fills the label's rect with Raster_FillRect and puts the old brush back. Then HudFont_DrawString(font, text, pen). es2_xref finds 17 calls from seven functions, AlertPanel_SetTitleText (00002c25) to ShellMap_PaintCallout (0000bf1b), and one each from Label_SetNumber (000100d8) and Label_SetText_Thunk (00010140); the same statements as ES1DBSIM's Label_SetText (0003114c) in different code.",
       "source": "ES1GO decompile at 0000ffc5",
       "verified": {
         "bytes": "0000ffc5+275",
@@ -9323,6 +10058,21 @@
       }
     },
     {
+      "address": "0002586e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "InputDevice_Disable",
+      "description": "(enable flag), its argument removed by this function: ES1DBSIM's InputDevice_Disable (0004b2a4), clearing the flag and the device's byte in the shell's enabled table; the same statements in different code.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#rebuilding-the-joystick-devices--controlspanel_applydevices-00048e98; ES1GO decompile at 0002586e, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "0002586e+27",
+        "sha1": "47138539eacf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00025899",
       "binary": "ES1GO",
       "type": "function",
@@ -9493,7 +10243,7 @@
       "type": "function",
       "confidence": "high",
       "name": "JoystickDevice_Dtor",
-      "description": "(this, flags), its arguments removed by this function: ES1DBSIM's JoystickDevice_Dtor (0004b7a8) in different code, storing IMJoystickVtable (00080752), clearing 000ab1be[kind], 000ab1d4 and 000ab1d8, and releasing the axes from JoystickClaimedAxes (0008070d) and JoystickClaimedAxisCount (0008070e). es2_xref finds two calls, from 00006bed.",
+      "description": "(this, flags), its arguments removed by this function: ES1DBSIM's JoystickDevice_Dtor (0004b7a8) in different code, storing IMJoystickVtable (00080752), clearing 000ab1be[kind], 000ab1d4 and 000ab1d8, and releasing the axes from JoystickClaimedAxes (0008070d) and JoystickClaimedAxisCount (0008070e). es2_xref finds two calls, from ControlsPanel_ApplyDevices (00006bed).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-device-object",
       "verified": {
         "bytes": "00025e57+142",
@@ -9643,7 +10393,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMJoystick1_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMJoystick1_Ctor (0004be30) in different code, storing its own vtable 0008076e, which follows the class name IMJoystick1. es2_xref finds calls from 00006bed and 000087ff.",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMJoystick1_Ctor (0004be30) in different code, storing its own vtable 0008076e, which follows the class name IMJoystick1. es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and 000087ff.",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "00026467+86",
@@ -9673,7 +10423,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMJoystick2_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMJoystick2_Ctor (0004be94) in different code, storing its own vtable 0008078a, which follows the class name IMJoystick2. es2_xref finds calls from 00006bed and 000087ff.",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMJoystick2_Ctor (0004be94) in different code, storing its own vtable 0008078a, which follows the class name IMJoystick2. es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and 000087ff.",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "000264d8+86",
@@ -9703,7 +10453,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMThrustmasterFCS_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMThrustmasterFCS_Ctor (0004bef8) in different code, storing IMThrustmasterFCSVtable (000807ac). es2_xref finds calls from 00006bed and 000087ff.",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMThrustmasterFCS_Ctor (0004bef8) in different code, storing IMThrustmasterFCSVtable (000807ac). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and 000087ff.",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "00026549+102",
@@ -9733,7 +10483,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMThrustmasterRCS_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMThrustmasterRCS_Ctor (0004bfe0) in different code, storing IMThrustmasterRCSVtable (000807cc). es2_xref finds calls from 00006bed and 000087ff.",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMThrustmasterRCS_Ctor (0004bfe0) in different code, storing IMThrustmasterRCSVtable (000807cc). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and 000087ff.",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "00026653+98",
@@ -9763,7 +10513,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMFlightstick_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMFlightstick_Ctor (0004c054) in different code, storing IMFlightstickVtable (000807e8). es2_xref finds calls from 00006bed, 000087ff and IMFlightstickPro_Ctor (000267d1).",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMFlightstick_Ctor (0004c054) in different code, storing IMFlightstickVtable (000807e8). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed), 000087ff and IMFlightstickPro_Ctor (000267d1).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "000266e2+95",
@@ -9793,7 +10543,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMFlightstickPro_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMFlightstickPro_Ctor (0004c114) in different code, calling IMFlightstick_Ctor (000266e2) and storing IMFlightstickProVtable (00080808). es2_xref finds calls from 00006bed and 000087ff.",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMFlightstickPro_Ctor (0004c114) in different code, calling IMFlightstick_Ctor (000266e2) and storing IMFlightstickProVtable (00080808). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and 000087ff.",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "000267d1+93",
@@ -9875,6 +10625,36 @@
         "sha1": "ccf0d57d25dd",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00027bd3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetJoystickDevice_Thunk",
+      "description": "(): calls 00025945 and returns its result; the same statements as ES1DBSIM's Input_GetJoystickDevice_Thunk (0004c63c), which calls Input_GetJoystickDevice, in different code.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#rebuilding-the-joystick-devices--controlspanel_applydevices-00048e98; ES1GO decompile and disassembly at 00027bd3, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00027bd3+10",
+        "sha1": "01cd7233d799",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00027bdd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetJoystick2Device_Thunk",
+      "description": "(): calls 00025978 and returns its result; the same statements as ES1DBSIM's Input_GetJoystick2Device_Thunk (0004c644), which calls Input_GetJoystick2Device, in different code.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#rebuilding-the-joystick-devices--controlspanel_applydevices-00048e98; ES1GO decompile and disassembly at 00027bdd, diffed against ES1DBSIM's twin",
+      "verified": {
+        "bytes": "00027bdd+10",
+        "sha1": "ae68a686b230",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -16126,7 +16906,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_LatchButton",
-      "description": "(value, button) in stack order: sets the byte 00083c83 + button to 1 and 000a0bcf + button to value, button 1 to 4 being the input block's buttons +0x1d to +0x20, which Shell_PollInput (0004de3a) then reads through the latch. es2_xref finds five calls, from 000031fe, 00007ad7 and Shell_HandleInput (00012be8).",
+      "description": "(value, button) in stack order: sets the byte 00083c83 + button to 1 and 000a0bcf + button to value, button 1 to 4 being the input block's buttons +0x1d to +0x20, which Shell_PollInput (0004de3a) then reads through the latch. es2_xref finds five calls, from AlertPanel_HandleEvent (000031fe), 00007ad7 and Shell_HandleInput (00012be8).",
       "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile at 0004de18",
       "verified": {
         "bytes": "0004de18+34",
@@ -16141,7 +16921,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_PollInput",
-      "description": "(): calls CockpitMouse_ProcessQueue (0001098e), then Input_PollDeviceBlock (000277d8); for each of the block's four buttons +0x1d to +0x20 whose latch byte at 00083c84 is set, inverts the button when it equals the latched value at 000a0bd0 and clears the latch otherwise; clears bits 0x30 of the block's +1; returns the block. es2_xref finds four calls: from Shell_Main (00012ec7), 00002fa2, 000064c4 and 00007631.",
+      "description": "(): calls CockpitMouse_ProcessQueue (0001098e), then Input_PollDeviceBlock (000277d8); for each of the block's four buttons +0x1d to +0x20 whose latch byte at 00083c84 is set, inverts the button when it equals the latched value at 000a0bd0 and clears the latch otherwise; clears bits 0x30 of the block's +1; returns the block. es2_xref finds four calls: from Shell_Main (00012ec7), AlertPanel_SetFocus (00002fa2), ControlsPanel_Run (000064c4) and 00007631.",
       "source": "Herculan/docs/es1/shell/startup.md#the-input; ES1GO decompile at 0004de3a",
       "verified": {
         "bytes": "0004de3a+118",
@@ -17764,7 +18544,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DVJoystick_SetRanges",
-      "description": "(this, src), callee-cleaned: when bit 0 of +0 is set and src is non-null, memmove (0004effc)(this + 0x26, src, 0x40), the calibration block. es2_xref finds calls from 00007956, 00007ef0, 000080b8 and 000086d6. The code of ES1DBSIM's DVJoystick_SetRanges (0006b868), relocated operands aside.",
+      "description": "(this, src), callee-cleaned: when bit 0 of +0 is set and src is non-null, memmove (0004effc)(this + 0x26, src, 0x40), the calibration block. es2_xref finds calls from 00007956, 00007ef0, 000080b8 and Joystick_LoadCalibration (000086d6). The code of ES1DBSIM's DVJoystick_SetRanges (0006b868), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/joystick.md#calibrating",
       "verified": {
         "bytes": "000526c8+40",
@@ -25871,6 +26651,15 @@
       "source": "Herculan/docs/es1/shell/debriefing.md#the-results-panel"
     },
     {
+      "address": "0007d920",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertVtable",
+      "description": "The shell's panel base vtable, ES1DBSIM's AlertVtable (00094e26): +4 and +0xc 0, +8 AlertPanel_SetTitleText (00002c25), +0x10 AlertPanel_OnChildClickNoOp (0000265b), +0x14 AlertPanel_HandleEvent (000031fe), +0x18 0. AlertPanel_CtorBase (0000222d) and Alert_Dtor (0000266b) store it at +0x311.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d"
+    },
+    {
       "address": "0007dc30",
       "binary": "ES1GO",
       "type": "data",
@@ -25923,6 +26712,24 @@
       "name": "LEDBMBarGraphVVtable",
       "description": "LEDBMBarGraphV's vtable, which LedBmBarGraphV_Ctor (00005a19) stores at a bar's +0x28: a zero dword, then LedBmBarGraphV_PaintToValue (00005c48), LedBmBarGraphV_RepaintNoOp (00005d70) and BarGraphV_ResetToEmpty. ES1DBSIM's LEDBMBarGraphVVtable (00093576).",
       "source": "es1_naming.py vtables ES1GO"
+    },
+    {
+      "address": "0007dddc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ControlsAlertVtable",
+      "description": "The controls panel's vtable, ES1DBSIM's ControlsAlertVtable (000952c6): +4 ControlsPanel_Paint (0000695f), +8 AlertPanel_SetTitleText (00002c25), +0xc ControlsPanel_Run (000064c4), +0x10 ControlsPanel_OnClick (00006af3), +0x14 AlertPanel_HandleEvent (000031fe), +0x18 ControlsPanel_GetButtonCaption (00006bce).",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050"
+    },
+    {
+      "address": "0007de60",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ControlsPanel_SaveList",
+      "description": "int16[5]: options 7, 8, 10, 9 and 11, which ControlsPanel_ApplyDevices (00006bed) copies to the stack and saves with Prefs_SaveSelectedOptions (0000855e). ES1DBSIM's ControlsPanel_SaveList (00095348).",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050"
     },
     {
       "address": "0007e09c",
@@ -26092,7 +26899,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Cursor_FollowsMouse",
-      "description": "byte, 1 in the image: the shell's copy of ES1DBSIM's Cursor_FollowsMouse (00094c5b); Shell_PrepareMission (0002a523) clears it after starting the mouse queue, and 0000290b keeps it at its panel's +0x2de and sets it to 1.",
+      "description": "byte, 1 in the image: the shell's copy of ES1DBSIM's Cursor_FollowsMouse (00094c5b); Shell_PrepareMission (0002a523) clears it after starting the mouse queue, and AlertPanel_Enter (0000290b) keeps it at its panel's +0x2de and sets it to 1.",
       "source": "Herculan/docs/es1/shell/startup.md#the-mouse-queue"
     },
     {
@@ -27552,6 +28359,42 @@
       "name": "g_ShellPool",
       "description": "The heap, a Memory object as ES2's g_ShellPool (VSHELL 0048239c) without the low mark: the four dwords +0 base, +4 byte size, +8 free-list head and +0xc free bytes. Mem_StaticInit (00001b5c) runs Memory_Ctor on it and Mem_InitHeap (0000195f) gives it its block.",
       "source": "Herculan/docs/es1/simulation/memory.md#the-two-programs"
+    },
+    {
+      "address": "0009a31c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertSlider_KnobLength",
+      "description": "int16: offset 4 of BND\\ALERT.BND, 7, which Alert_LoadBnd (00002204) reads with the file to 0009a318; AlertSliderGadget_Ctor (00003684) reads it as the knob's length.",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files"
+    },
+    {
+      "address": "0009a320",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertPanel_ScreenRect",
+      "description": "Rect {0, 0, 319, 199}, set by Alert_StaticInit (00003c22). ES1DBSIM's AlertPanel_ScreenRect (000b1708).",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d"
+    },
+    {
+      "address": "0009a330",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Alert_FillBrush",
+      "description": "The brush AlertPanel_CtorBase (0000222d) puts in each panel's render context, cleared by Alert_StaticInit (00003c22). ES1DBSIM's Alert_FillBrush (000b1718).",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d"
+    },
+    {
+      "address": "0009a34c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "CtlAlert_Bnd",
+      "description": "134 bytes: BND\\CTL_ALRT.BND, read whole by CtlAlert_LoadBnd (00006024); ControlsPanel_Ctor (00006050) reads its int16 fields from offset 4 on (the field table: Herculan/docs/es1/formats/bnd-notes.md, CTL_ALRT.BND).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files"
     },
     {
       "address": "0009a424",

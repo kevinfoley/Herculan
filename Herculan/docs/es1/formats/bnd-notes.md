@@ -100,6 +100,25 @@ The war map's map's constants ([the map](../shell/map.md#the-tuning-files)). `MA
 | `0x86` | `int32` | 50000 | `ShellMapBnd_BoundsMargin` (`0009a4d2`) | `ShellMap_LoadScriptDat` (`0000c068`), the bounds' margin |
 | `0x8a` | `int32` | 75000 | `ShellMapBnd_ShapeArenaSize` (`0009a4d6`) | `ShellMap_LoadResources` (`000093b3`) and `ShellMap_LoadShapeRoots` (`000092b9`), the shape arena's size |
 
+### `BND\ALERT.BND` and `BND\CTL_ALRT.BND`
+
+The shell's copy of the simulator's panel base and controls panel reads, from these, numbers the simulator's code has as constants ([CONTROLS](../shell/options.md#controls--screen-1320)); every value is the simulator's. `ALERT.BND`'s offset 4, the `int16` `AlertSlider_KnobLength` (`0009a31c`), 7, is the slider's knob length, which `AlertSliderGadget_Ctor` (`00003684`) reads. `CTL_ALRT.BND`, `CtlAlert_Bnd` (`0009a34c`), 134 bytes of `int16`s after the first dword, `ControlsPanel_Ctor` (`00006050`) reads; the arrays are by widget, buttons in widget order and readouts by row:
+
+| Offset | Value | The controls panel's |
+|---|---|---|
+| 4, 6 | 222, 109 | width and height |
+| 8 | 20 | the title bar's margin, added to the title's width |
+| `0xa`, `0xc` | 4, 17 | the title bar's top and height |
+| `0xe` | −11 | the title label's *y* offset |
+| `0x10` | 7 | buttons |
+| `0x12`, `0x20` | 20, 20, 20, 20, 113, 39, 122; 29, 43, 60, 74, 60, 93, 93 | each button's *x* and *y* |
+| `0x2e`, `0x3c` | 60 and 10 for each | each button's width and height |
+| `0x4a` | −2 for each | each caption's *y* offset |
+| `0x58` | 5 | readouts |
+| `0x5a`, `0x64` | 84, 84, 84, 84, 177; 29, 43, 60, 74, 60 | each readout's *x* and *y* |
+| `0x6e`, `0x78` | 116, 116, 22, 22, 23; 10 for each | each readout's width and height |
+| `0x82`, `0x84` | 2, −2 | the readouts' text offset |
+
 ## The simulator's files
 
 `CAM.BND` is [below](#bndcambnd). For the other 62 no loader was found ([Open](#open)). Six share a name with a shell file and hold other bytes: `ALERT`, `CAL_ALRT`, `CTL_ALRT`, `CTL_MGR`, `IMDEVICE` and `MAIN`, the last 30 bytes where the shell's is 20. `GRENADE.BND`, `GUNLIST.BND` and `SMOKE.BND` are byte for byte ES2's files of those names.
@@ -124,5 +143,5 @@ The war map's map's constants ([the map](../shell/map.md#the-tuning-files)). `MA
 ## Open
 
 - **Open:** whether `ES1DBSIM` reads any `bnd\` file. `es2_xref` finds no reference to its `bnd` pointer `000980c0`, where the same sweep finds both pushes of `dmg`'s pointer `000980e0`; a case-insensitive search of the image's bytes finds no `cam` or `.bnd` string, where it finds `dmg` and `damage.cpp`.
-- **Open:** what the shell reads of `ALERT`, `CTL_ALRT`, `CAL_ALRT`, `CTL_MGR` but its offset 4, and `IMDEVICE`, of `MAIN.BND`'s offsets 0, 4 and 16, and of `SHELLMAP.BND`'s 8 to `0xb`, `0x10`, `0x16` to `0x1b`, `0x26`, `0x2e` and `0x33`, whose globals (`0009a454` to `0009a47f`) `es2_xref.py --decode` finds no reference to; what the byte `Shell_LowMemory` (`0007fd09`) changes.
+- **Open:** what the shell reads of `CAL_ALRT`, `CTL_MGR` but its offset 4, and `IMDEVICE`, of `MAIN.BND`'s offsets 0, 4 and 16, and of `SHELLMAP.BND`'s 8 to `0xb`, `0x10`, `0x16` to `0x1b`, `0x26`, `0x2e` and `0x33`, whose globals (`0009a454` to `0009a47f`) `es2_xref.py --decode` finds no reference to; what the byte `Shell_LowMemory` (`0007fd09`) changes.
 - **Open:** whether anything reads the first dword, and what wrote it.

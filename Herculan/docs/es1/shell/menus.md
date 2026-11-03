@@ -44,7 +44,7 @@ The image stores each class's name just before its vtable, and the word before t
 | 1100 | `MissionMenu` (`00081c3a`), [the SINGLE MISSION menu](single-mission.md#the-single-mission-menu) | `0002b375` | 1000 |
 | 1110 | `MissionOptionsAlert` (`00081f42`), [the MISSION PARAMS menu](single-mission.md#the-mission-params-menu): a `0x30`-byte object | `0002b4fe` | |
 | 1310 | `PrefsMenu` (`00081f60`), [PREFERENCES](options.md#preferences--screen-1310): a `0x2c`-byte object | `PrefsMenu_OnMessage` (`0002b82b`) | 1000 |
-| 1320 | none: code of its own at `0003e9ae`, which changes the keyboard's subscribers and mode | | 1000 |
+| 1320 | none: code of its own at `0003e9ae`, which runs the controls panel ([CONTROLS](options.md#controls--screen-1320)) and opens 1300 | | 1000 |
 | 1300 | `OptionsMenu` (`00081f7e`), [the options menu](main-menu.md#the-options-menu) | `OptionsMenu_OnMessage` (`0002b79d`) | |
 | 1330 | `BattlesetAlert` (`00081fa2`), [LOAD BATTLESET](main-menu.md#load-battleset) | `0002bb29` | |
 | 1500, 1501 | `WarMapMenu_Ctor` (`0002bbbd`), [the war map](war-map.md) | `WarMapMenu_OnMessage` (`0002c057`) | 6000 |
@@ -57,7 +57,7 @@ The image stores each class's name just before its vtable, and the word before t
 | 2000 | `Hangar_SelectNext` (`0002986f`)(3), then `FabricationMenu_Ctor` (`000307c9`)(0) makes the menu, [BUILD](repair-and-build.md#build--screen-2000); `0007fce4` set to `0008003c` | `FabricationMenu_OnMessage` (`000309d7`) | 4000 |
 | 2010 | `SalvageAllocAlert` (`00082050`), [SALVAGE](repair-and-build.md#salvage--screen-2010) | `SalvageAllocAlert_OnMessage` (`00030ed3`) | |
 
-Every class derives from `Menu` (`00081bd8`), whose slot `+4` is `Menu_Dtor` (`0003b6d1`) and slot `+8` `Menu_OnMessage` (`0003b764`), which does nothing. Each subclass's slot `+4` is its destructor, `MainMenu_Dtor` (`0003b771`) and the 22 others of the same code ([Functions](#functions)): it stores its vtable, then `Menu`'s, then the region's three, and frees the object when bit 0 of its flags is set. The war map's, `WarMapMenu_Dtor` (`0002bf15`), the debriefing's, `DebriefingMenu_Dtor` (`0002c574`), and ARMING's, `ArmingMenu_Dtor` (`000405ae`), do more first ([leaving the war map](war-map.md#leaving-it), [leaving the debriefing](debriefing.md#leaving-it), [leaving ARMING](arming.md#done)). Screen 1320's code is [Open](#open).
+Every class derives from `Menu` (`00081bd8`), whose slot `+4` is `Menu_Dtor` (`0003b6d1`) and slot `+8` `Menu_OnMessage` (`0003b764`), which does nothing. Each subclass's slot `+4` is its destructor, `MainMenu_Dtor` (`0003b771`) and the 22 others of the same code ([Functions](#functions)): it stores its vtable, then `Menu`'s, then the region's three, and frees the object when bit 0 of its flags is set. The war map's, `WarMapMenu_Dtor` (`0002bf15`), the debriefing's, `DebriefingMenu_Dtor` (`0002c574`), and ARMING's, `ArmingMenu_Dtor` (`000405ae`), do more first ([leaving the war map](war-map.md#leaving-it), [leaving the debriefing](debriefing.md#leaving-it), [leaving ARMING](arming.md#done)). Screen 1320's code is [CONTROLS](options.md#the-case).
 
 ### The screen object
 
@@ -232,4 +232,3 @@ The values in the image are the ones the shell starts with.
 
 - **Open:** whether `00040b94`, a stub returning its first argument, is `shell.cpp`'s last function or the word stacks' file's first: it starts on a 4-byte boundary right after `Shell_StaticDtor`, and `WordStack_Push` follows it with no fill.
 - **Open:** the byte `000809a9` that `Shell_HandleMessage` tests, and whether `Shell_TickScreen` can find `000809a8` at 1 with no `Shell_MissionMap` (`000809a4`), its last two tests reading the object unchecked; [the map](map.md) holds the rest of the object and `000809a8`. The byte `000817bd` keeps the war map's briefing drawn behind an alert ([leaving it](war-map.md#leaving-it)), and `Shell_DrawScreen` reaches the map's slot `+4` through it after the map is deleted ([the loading screen](war-map.md#the-loading-screen-after-the-unarmed-alert)).
-- **Open:** screen 1320's code at `0003e9ae`.
