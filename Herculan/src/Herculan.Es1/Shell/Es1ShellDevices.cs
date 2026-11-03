@@ -20,7 +20,27 @@ public sealed class Es1ShellDevices {
 	private static readonly byte[] QueueCodes = [0x53, 0x01, 0x10, 0x2d, 0x2e, 0x52, 0x3b, 0x3c, 0x3d];
 
 	/// <summary>The codes <c>Shell_NavKeySubscriber</c> is given, the NUL-terminated bytes at <c>0007e7f0</c>: <c>Tab</c>, <c>Enter</c> and <c>Enter</c>'s release.</summary>
-	private static readonly byte[] NavKeyCodes = [0x0f, 0x1c, 0x9c];
+	internal static readonly byte[] NavKeyCodes = [0x0f, 0x1c, 0x9c];
+
+	public Es1ShellDevices() {
+		NavKeySubscriber = OnNavKey;
+	}
+
+	/// <summary><c>Shell_NavKeySubscriber</c> (<c>00012b4e</c>) as the one delegate the keyboard is given and CONTROLS takes off and gives back.</summary>
+	public Es1KeySubscriber NavKeySubscriber { get; }
+
+	/// <summary>
+	/// The byte <c>0007e09d</c>, <c>0xff</c> in the image: option 11 as <see cref="ApplyMouseOption"/> last applied it, so
+	/// the first call always applies.
+	/// </summary>
+	public byte MouseOptionApplied { get; private set; } = 0xff;
+
+	/// <summary>
+	/// The shell's mouse input device's enabled byte (<c>+0x3a</c>), which CONTROLS' <c>ControlsPanel_ApplyDevices</c>
+	/// (<c>00006bed</c>) sets and clears; while it is clear the poll takes no pointer and no buttons, as the simulator's
+	/// does (<see cref="Es1DevicePoll.MouseDeviceEnabled"/>).
+	/// </summary>
+	public bool MouseDeviceEnabled { get; set; } = true;
 
 	/// <summary>The four page origins <c>Shell_CreateDisplay</c> sets at <c>+0x44</c>, one under another.</summary>
 	private static readonly (int X, int Y)[] PageOrigins = [(0, 0), (0, 200), (0, 400), (0, 600)];
@@ -146,23 +166,50 @@ public sealed class Es1ShellDevices {
 		// INT 16h function 2, which Keyboard_SetMode reads when the war map sets the mode again.
 		Keyboard.BiosShiftFlags = HostKeyboard.ReadBiosShiftFlags;
 
-		// 000081a4: every option's handler cleared, then Prefs_Init (00008920): option 11's handler 0000868c, Prefs_Load of
-		// data\prefs.cfg, Speech_ArchiveFound (0007e09c) from Speech_ArchivePresent and, when that is 0, option 2 set to 0
-		// with Prefs_SetOption(1, 0, 2), and 000087ff.
-		// PLACEHOLDER: 0000868c and 000087ff are unread; the shell registers no other handler here.
+		// 000081a4: every option's handler cleared, then Prefs_Init (00008920): option 11's handler 0000868c
+		// (ApplyMouseOption), Prefs_Load of data\prefs.cfg, which runs each registered handler with its option, so option
+		// 11's alone; Speech_ArchiveFound (0007e09c) from Speech_ArchivePresent and, when that is 0, option 2 set to 0 with
+		// Prefs_SetOption(1, 0, 2); and 000087ff.
 		string prefsPath = Es1MissionFiles.DataPath(installRoot, "prefs.cfg");
 		var preferences = Es1Preferences.FromFile(File.Exists(prefsPath) ? File.ReadAllBytes(prefsPath) : null, prefsPath);
 		for (int option = 0; option < Es1Preferences.OptionCount; option++) {
 			preferences.SetHandler(option, null);
 		}
 
+		preferences.SetHandler(Es1Preferences.MouseOption, ApplyMouseOption);
+		ApplyMouseOption(preferences[Es1Preferences.MouseOption]);
 		preferences.ShellSpeechArchiveFound = Es1Preferences.SpeechArchiveExists(installRoot);
 		if (!preferences.ShellSpeechArchiveFound) {
 			preferences.ShellSetOption(true, 0, Es1Preferences.RadioOption);
 		}
 
+		// PLACEHOLDER: 000087ff, the shell's Input_CreateJoystickDevices: the devices option 7 names, and with option 9 the
+		// rudder pedals or option 9 cleared under option 7 = 2, each loaded with Joystick_LoadCalibration (000086d6) from
+		// Shell_FileNames lines 1 and 2 through Path_ApplyAltDrive and enabled, as the simulator's Es1JoystickDevices.Create
+		// builds them. The shell has no game port here (the simulator's waits for the host's controller,
+		// Es1SimulationStart), so it builds no device, Input_PollDeviceBlock reads none (Es1ShellFrame.PollDeviceBlock) and
+		// CONTROLS rebuilds none (Es1ShellAlertInput.RebuildJoysticks). No plan step retires it yet.
 		// With no sound manager (00082768 0) options 0, 1 and 2 would be set to 0 here; the manager counts as present (above).
 		Preferences = preferences;
+	}
+
+	/// <summary>
+	/// <c>0000868c</c>, option 11's handler, <c>Prefs_ApplyMouseOption</c>'s statements (<see cref="Es1InputBuild.ApplyMouseOption"/>):
+	/// when <paramref name="value"/> differs from <see cref="MouseOptionApplied"/>, it is kept there and, with the mouse
+	/// device the shell always builds, the driver turned off for 0 (<c>Mouse_DisableDriver</c>) and on otherwise
+	/// (<c>Mouse_EnableDriver</c>). CONTROLS' MOUSE runs it at each click.
+	/// </summary>
+	public void ApplyMouseOption(byte value) {
+		if (value == MouseOptionApplied) {
+			return;
+		}
+
+		MouseOptionApplied = value;
+		if (value == 0) {
+			Mouse.DisableDriver();
+		} else {
+			Mouse.EnableDriver();
+		}
 	}
 
 	/// <summary>
@@ -221,7 +268,7 @@ public sealed class Es1ShellDevices {
 	/// <c>Shell_NavKeySubscriber</c> (<c>00012b4e</c>): the code, Num Lock's bit cleared, to the dialog's key handler, and
 	/// claimed.
 	/// </summary>
-	private int NavKeySubscriber(ushort code) {
+	private int OnNavKey(ushort code) {
 		if (_globals != null) {
 			Es1DUIWindow.HandleNavKey(_globals, (ushort)(code & ~Es1Keyboard.NumLockBit));
 		}

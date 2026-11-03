@@ -361,6 +361,39 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
+	/// The shell's <c>Prefs_ToggleOption</c> (<c>ES1GO 000083ac</c>)(<paramref name="apply"/>, <paramref name="index"/>)
+	/// (docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050): <see cref="ToggleOption"/> through
+	/// <see cref="ShellSetOption"/>, with no copy into <c>Prefs_PreviousOptions</c>. Returns the value.
+	/// </summary>
+	public byte ShellToggleOption(bool apply, int index) {
+		byte value = (byte)(_options[index] ^ 1);
+		ShellSetOption(apply, value, index);
+		return value;
+	}
+
+	/// <summary>The shell's <c>Prefs_StepOption</c> (<c>ES1GO 000083dd</c>): <see cref="StepOption"/> through <see cref="ShellSetOption"/>.</summary>
+	public byte ShellStepOption(bool apply, int modulus, int index) {
+		byte value = (byte)(_options[index] + 1);
+		if (value == modulus) {
+			value = 0;
+		}
+
+		ShellSetOption(apply, value, index);
+		return value;
+	}
+
+	/// <summary>The shell's <c>Prefs_StepOptionBack</c> (<c>ES1GO 00008418</c>): <see cref="StepOptionBack"/> through <see cref="ShellSetOption"/>.</summary>
+	public byte ShellStepOptionBack(bool apply, int modulus, int index) {
+		byte value = (byte)(_options[index] - 1);
+		if (value == 0xff) {
+			value = (byte)(modulus - 1);
+		}
+
+		ShellSetOption(apply, value, index);
+		return value;
+	}
+
+	/// <summary>
 	/// The shell's <c>Prefs_CommitAll</c> (<c>ES1GO 000082b0</c>)(<paramref name="apply"/>)
 	/// (docs/es1/shell/single-mission.md#the-mission-params-menu): <see cref="CommitOptions"/> without the copy of every
 	/// option into <c>Prefs_PreviousOptions</c>. For each option that differs from its committed copy

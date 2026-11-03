@@ -41,7 +41,19 @@ public sealed class Es1ShellScreens {
 		Globals = globals;
 		_lipSync = lipSync;
 		MapMouse = new Es1ShellMouseQueue(devices.Mouse, devices.Display.Cursor, globals.Widgets);
+		_controls = new Es1ShellControls(devices, this);
 	}
+
+	/// <summary><c>Shell_PollInput</c>, which CONTROLS' panel reads; the host sets it to the frame's (<see cref="Es1ShellFrame.PollInput"/>).</summary>
+	public Func<Es1LiveBlock>? PollInput { get; set; }
+
+	/// <summary><c>Input_LatchButton</c>, which CONTROLS' panel latches with; the host sets it to the frame's (<see cref="Es1ShellFrame.LatchButton"/>).</summary>
+	public Action<byte, int>? LatchButton { get; set; }
+
+	private readonly Es1ShellControls _controls;
+
+	/// <summary>The target the case of <see cref="OpenScreenCase"/> leaves, which the menu opens as and the screens move on to.</summary>
+	private short _caseTarget;
 
 	/// <summary>The shell's mouse queue, which the war map's gadgets take their clicks from.</summary>
 	public Es1ShellMouseQueue MapMouse { get; }
@@ -882,10 +894,12 @@ public sealed class Es1ShellScreens {
 			ScriptsToPlay = 0;
 		}
 
+		_caseTarget = target;
 		foreach (var wait in OpenScreenCase(target)) {
 			yield return wait;
 		}
 
+		target = _caseTarget;
 		CurrentMenu?.Open(target);
 		PreviousScreen = target == MainMenuScreen ? MainMenuScreen : CurrentScreen;
 		CurrentScreen = target;
@@ -903,9 +917,10 @@ public sealed class Es1ShellScreens {
 	/// career menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', TECH RELEASE's, the delete
 	/// warning's, the disk-space warning's, the options menu's and its battle-set picker's, the service bay's, its three
 	/// warnings', CREW's, ARMING's, REPAIR's, PREFERENCES' and SYSTEM REPAIR's, and the quit question's are ported, 1490's, 1499's and 1520's
-	/// message boxes, and screen 9999's exit code; with any other the screen becomes current with no menu, as retail's does
-	/// for the cases that make none, its backdrop shown with no window. The waits are the war map's and the debriefing's,
-	/// whose constructors delete the box the text box held, and ARMING's and REPAIR's step to a HERC.
+	/// message boxes, screen 9999's exit code and CONTROLS' panel (<see cref="Es1ShellControls"/>), which leaves the target
+	/// 1300; with any other the screen becomes current with no menu, as retail's does for the cases that make none, its
+	/// backdrop shown with no window. The waits are the war map's and the debriefing's, whose constructors delete the box
+	/// the text box held, ARMING's and REPAIR's step to a HERC, and CONTROLS' page swap and panel loop.
 	/// </summary>
 	private IEnumerable<Es1ShellWait> OpenScreenCase(short target) {
 		switch (target) {
@@ -1186,10 +1201,18 @@ public sealed class Es1ShellScreens {
 				}
 
 				break;
-			case 1320:
-				// PLACEHOLDER: screen 1320's code at 0003e9ae (the keyboard's subscribers and mode, the controls panel), CONTROLS,
-				// P20b's.
-				break;
+			case Es1ShellControls.Screen:
+				// 0003e9ae: the message's target set to 1300; CONTROLS, the controls panel run to its end; then on into 1300's
+				// case, OPTIONS. The panel's input exists once the host has wired the frame, before the first screen; the test
+				// for it is an engine guard.
+				_caseTarget = Es1OptionsMenu.Screen;
+				if (_menuContext != null && PollInput != null && LatchButton != null) {
+					foreach (var wait in _controls.Run(_menuContext.Data, _menuContext.Preferences, _content)) {
+						yield return wait;
+					}
+				}
+
+				goto case Es1OptionsMenu.Screen;
 		}
 	}
 

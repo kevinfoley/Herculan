@@ -76,7 +76,7 @@ public sealed class Es1MTEditBox : Es1DUIControl {
 	}
 
 	/// <summary>The codes <c>Shell_ScanKeySubscriber</c> is registered for, the NUL-terminated bytes at <c>0007e7f4</c>.</summary>
-	private static readonly byte[] ScanKeyCodes = [0x39, 0x4b, 0x4d, 0x48, 0x50, 0x0e, 0x47, 0x4f, 0x01, 0x53];
+	internal static readonly byte[] ScanKeyCodes =[0x39, 0x4b, 0x4d, 0x48, 0x50, 0x0e, 0x47, 0x4f, 0x01, 0x53];
 
 	/// <summary><c>+0x28</c>, <c>int16</c>: the <i>x</i> of the last press, and the caret's <i>x</i> once placed.</summary>
 	public short TrackX { get; private set; }

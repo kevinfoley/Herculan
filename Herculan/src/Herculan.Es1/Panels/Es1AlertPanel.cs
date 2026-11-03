@@ -35,8 +35,8 @@ public abstract class Es1AlertPanel {
 	/// <summary>The title bar's corners' inset from its right and bottom edges.</summary>
 	private const int TitleCornerInset = 4;
 
-	/// <summary>The commands <c>AlertPanel_HandleEvent</c> takes, the five dwords at <c>00094eec</c>.</summary>
-	private const ushort Esc = 0x01, Tab = 0x0f, AltTab = 0x20f, Return = 0x1c, Keypad0 = 0x52;
+	/// <summary>The commands <c>AlertPanel_HandleEvent</c> takes, the five dwords at <c>00094eec</c>, and the shell's sixth, [Ctrl+C].</summary>
+	private const ushort Esc = 0x01, Tab = 0x0f, AltTab = 0x20f, Return = 0x1c, Keypad0 = 0x52, CtrlC = 0x42e;
 
 	private readonly List<Es1Widget> _widgets = new(MaxWidgets);
 
@@ -117,9 +117,8 @@ public abstract class Es1AlertPanel {
 	public int Cancel { get; protected set; } = -1;
 
 	/// <summary>
-	/// <c>+0x2e8</c>–<c>+0x312</c>: <c>PlayerInputBlock</c> as it was, which <see cref="Leave"/> puts back with its
-	/// pointer. Each input build fills a new block (<see cref="Es1InputBuild.PlayerInputBlock"/>), so the block itself is
-	/// kept rather than a copy of its bytes.
+	/// <c>+0x2e8</c>–<c>+0x312</c>: the input block as it was (<see cref="Es1AlertInput.Keep"/>), which <see cref="Leave"/>
+	/// puts back; none where the binary's block has no reader (the shell's).
 	/// </summary>
 	public Es1PlayerInputBlock? SavedInput { get; private set; }
 
@@ -179,20 +178,22 @@ public abstract class Es1AlertPanel {
 	/// (docs/es1/simulation/alert-panels.md#keys--alertpanel_handleevent-00046670): button 0 presses the focused widget,
 	/// or focuses widget 0 with none, and latches the button; button 1 focuses the next and latches it; then the command
 	/// word: [Esc] presses the cancel widget when there is one, [Tab] focuses the next, [Alt+Tab] the previous, [Return]
-	/// acts as button 0 without the latch, and keypad 0 focuses the next with preferences option 10 on. A press is made
-	/// with the flags 1. Returns 1 for each of these, whether or not it acted, and 0 for any other code.
+	/// acts as button 0 without the latch, keypad 0 focuses the next with preferences option 10 on, and in the shell
+	/// [Ctrl+C] runs <see cref="Es1AlertGlobals.Capture"/>. A press is made with the flags 1. Returns 1 for each of these,
+	/// whether or not it acted, and 0 for any other code. The shell's reads its block's buttons at <c>+0x1d</c> and
+	/// <c>+0x1e</c>, which its input (<see cref="Es1AlertGlobals.Input"/>) hands over as buttons 0 and 1.
 	/// </summary>
 	public virtual int HandleEvent(Es1PlayerInputBlock block) {
-		var latches = Globals.Input.Controls.Latches;
+		var input = Globals.Input;
 		if (block.Buttons[0] != 0) {
 			PressFocused();
-			latches.Latch(1, 1);
+			input.LatchButton(1);
 			return 1;
 		}
 
 		if (block.Buttons[1] != 0) {
 			FocusNext();
-			latches.Latch(1, 2);
+			input.LatchButton(2);
 			return 1;
 		}
 
@@ -213,10 +214,13 @@ public abstract class Es1AlertPanel {
 				PressFocused();
 				return 1;
 			case Keypad0:
-				if (Globals.Input.Preferences.ThrottleKeys) {
+				if (input.Preferences.ThrottleKeys) {
 					FocusNext();
 				}
 
+				return 1;
+			case CtrlC when Globals.Capture is { } capture:
+				capture();
 				return 1;
 			default:
 				return 0;
@@ -237,24 +241,23 @@ public abstract class Es1AlertPanel {
 
 	/// <summary>
 	/// <c>AlertPanel_Enter</c> (<c>00045f00</c>), puts the panel up
-	/// (docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down): <c>PlayerInputBlock</c> kept; buttons
-	/// 0–3 latched with state 1; the focus from the pointer (<see cref="SetFocus"/>(−1)); the mouse handed to the panel's
-	/// root; the display's source and draw pages made the page on the screen, <c>+0x88</c>; <c>Cursor_FollowsMouse</c>
-	/// kept and set; the enter hook; <c>dci\alert</c> loaded the first time; the cursor hidden; the screen under the
-	/// panel saved when it keeps it; the paint; the alert cursor made the drawn one and shown; and the open count up by 1.
+	/// (docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down): the input's step
+	/// (<see cref="Es1AlertInput.Keep"/>: in the simulator <c>PlayerInputBlock</c> kept and buttons 0–3 latched with state
+	/// 1); the focus from the pointer (<see cref="SetFocus"/>(−1)); the mouse handed to the panel's root; the display's
+	/// source and draw pages made the page on the screen (<see cref="Es1AlertGlobals.PageOnScreen"/>);
+	/// <c>Cursor_FollowsMouse</c> kept and set; the enter hook; <c>dci\alert</c> loaded the first time; the cursor hidden;
+	/// the screen under the panel saved when it keeps it; the paint; the alert cursor made the drawn one and shown; and the
+	/// open count up by 1 where it is counted (<see cref="Es1AlertGlobals.CountsOpen"/>).
 	/// </summary>
 	public void Enter() {
 		var globals = Globals;
 		var display = globals.Display;
-		SavedInput = globals.Input.PlayerInputBlock;
-		for (int button = 1; button <= Es1ButtonLatches.Count; button++) {
-			globals.Input.Controls.Latches.Latch(1, button);
-		}
-
+		SavedInput = globals.Input.Keep();
 		SetFocus(-1);
 		globals.Mouse.Widgets.ClearPressed(Root);
-		display.SourcePage = display.PairVisible;
-		display.DrawPage = display.PairVisible;
+		int page = globals.PageOnScreen();
+		display.SourcePage = page;
+		display.DrawPage = page;
 		SavedFollowsMouse = globals.Mouse.FollowsMouse;
 		globals.Mouse.FollowsMouse = true;
 		globals.EnterHook?.Invoke();
@@ -269,15 +272,18 @@ public abstract class Es1AlertPanel {
 		Paint();
 		LoadCursor(alert);
 		display.Cursor.Show();
-		globals.OpenCount++;
+		if (globals.CountsOpen) {
+			globals.OpenCount++;
+		}
 	}
 
 	/// <summary>
 	/// <c>AlertPanel_Leave</c> (<c>000460b8</c>), takes the panel down: <c>Cursor_FollowsMouse</c> cleared and the cursor
 	/// hidden; the saved screen put back; the cursor that was up put back (<see cref="RestoreCursorImage"/>);
 	/// <c>Cursor_FollowsMouse</c> as it was, and the cursor shown when it is set; the leave hook; the draw page of the
-	/// panel's construction; the mouse handed back to the root it worked on; <c>PlayerInputBlock</c> put back, and with a
-	/// mouse device the pointer and the drawn cursor moved to its pointer; and the open count down by 1.
+	/// panel's construction; the mouse handed back to the root it worked on; the input's step
+	/// (<see cref="Es1AlertInput.PutBack"/>: in the simulator <c>PlayerInputBlock</c> put back, and with a mouse device the
+	/// pointer and the drawn cursor moved to its pointer); and the open count down by 1 where it is counted.
 	/// </summary>
 	public void Leave() {
 		var globals = Globals;
@@ -301,14 +307,10 @@ public abstract class Es1AlertPanel {
 			globals.Mouse.Widgets.ClearPressed(PreviousRoot);
 		}
 
-		globals.Input.PlayerInputBlock = SavedInput;
-		if (globals.MouseDevice is { } mouse) {
-			int x = SavedInput?.PointerX ?? 0, y = SavedInput?.PointerY ?? 0;
-			mouse.SetPosition(x, y);
-			display.Cursor.SyncPosition(x, y);
+		globals.Input.PutBack(globals, SavedInput);
+		if (globals.CountsOpen) {
+			globals.OpenCount--;
 		}
-
-		globals.OpenCount--;
 	}
 
 	/// <summary>

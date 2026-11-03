@@ -14,6 +14,10 @@ namespace Herculan.Es1.Panels;
 ///
 /// <para>In this engine the files a panel loads as it is built come through <see cref="Content"/>; none, as in a test,
 /// loads nothing, and what would draw with them draws nothing.</para>
+///
+/// <para>The shell links its own copy of <c>alert.cpp</c> (docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d),
+/// the same statements on its own globals: its globals are another instance, with the shell's input
+/// (<see cref="Input"/>), <see cref="PageOnScreen"/>, <see cref="CountsOpen"/> and <see cref="Capture"/> set for it.</para>
 /// </summary>
 public sealed class Es1AlertGlobals {
 	/// <param name="display">The display the panels draw on, <c>000bdd28</c>.</param>
@@ -22,19 +26,42 @@ public sealed class Es1AlertGlobals {
 	/// <param name="widgets">What <c>Widget_LoadStylesAndFonts</c> loaded; none draws no frame and no text.</param>
 	/// <param name="content">The volumes the panels' own files are read from; none reads nothing.</param>
 	public Es1AlertGlobals(Es1VideoMemory display, Es1CockpitMouse mouse, Es1InputBuild input, Es1WidgetResources? widgets,
+			GameContent? content)
+		: this(display, mouse, new Es1SimAlertInput(input), widgets, content) {
+	}
+
+	/// <param name="input">The binary's input and options.</param>
+	/// <inheritdoc cref="Es1AlertGlobals(Es1VideoMemory, Es1CockpitMouse, Es1InputBuild, Es1WidgetResources, GameContent)"/>
+	public Es1AlertGlobals(Es1VideoMemory display, Es1CockpitMouse mouse, Es1AlertInput input, Es1WidgetResources? widgets,
 			GameContent? content) {
 		Display = display;
 		Mouse = mouse;
 		Input = input;
 		Widgets = widgets ?? new Es1WidgetResources();
 		Content = content;
+		PageOnScreen = () => display.PairVisible;
 	}
 
 	public Es1VideoMemory Display { get; }
 
 	public Es1CockpitMouse Mouse { get; }
 
-	public Es1InputBuild Input { get; }
+	public Es1AlertInput Input { get; }
+
+	/// <summary>
+	/// The page <c>AlertPanel_Enter</c> makes the display's source and draw page, the one on the screen: the simulator's
+	/// <c>+0x88</c> (<see cref="Es1VideoMemory.PairVisible"/>), the shell's <c>+0x84</c> after its case's swap.
+	/// </summary>
+	public Func<int> PageOnScreen { get; init; }
+
+	/// <summary>Whether <c>AlertPanel_Enter</c> and <c>AlertPanel_Leave</c> count <see cref="OpenCount"/>: the simulator's do, the shell's keep no count.</summary>
+	public bool CountsOpen { get; init; } = true;
+
+	/// <summary>
+	/// The case of <c>AlertPanel_HandleEvent</c>'s sixth code, <c>0x42e</c> [Ctrl+C], which the shell's table
+	/// <c>0007d9f0</c> holds and the simulator's five do not; none for no such code.
+	/// </summary>
+	public Action? Capture { get; init; }
 
 	public Es1WidgetResources Widgets { get; }
 

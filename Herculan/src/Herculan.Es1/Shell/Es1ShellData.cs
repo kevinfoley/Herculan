@@ -44,13 +44,16 @@ public sealed class Es1ShellData {
 	public string[]? FileNames { get; private init; }
 
 	/// <summary>
-	/// <c>BND\MAP.BND</c> at <c>0009a420</c>, the war map's base class's constants (<see cref="LoadMapTuning"/>); 0, the
+	/// <c>BND\MAP.BND</c> at <c>0009a420</c>, the war map's base class's constants (<see cref="LoadTuning"/>); 0, the
 	/// global's value in the image, before.
 	/// </summary>
 	public Es1MapBnd MapBnd { get; private set; } = new(null);
 
-	/// <summary><c>BND\SHELLMAP.BND</c> at <c>0009a44c</c>, the war map's map's constants (<see cref="LoadMapTuning"/>); 0 before.</summary>
+	/// <summary><c>BND\SHELLMAP.BND</c> at <c>0009a44c</c>, the war map's map's constants (<see cref="LoadTuning"/>); 0 before.</summary>
 	public Es1ShellMapBnd ShellMapBnd { get; private set; } = new(null);
+
+	/// <summary><c>BND\CTL_ALRT.BND</c> at <c>0009a34c</c>, <c>CtlAlert_Bnd</c>, the controls panel's numbers (<see cref="LoadTuning"/>); 0 before.</summary>
+	public Es1CtlAlertBnd CtlAlertBnd { get; private set; } = new(null);
 
 	/// <summary>The war map's clock, bitmaps and font, which the start-up's step 13 loads (<see cref="LoadMapResources"/>); none before.</summary>
 	public Es1ShellMapResources? MapResources { get; private set; }
@@ -137,14 +140,16 @@ public sealed class Es1ShellData {
 	}
 
 	/// <summary>
-	/// <c>Map_LoadBnd</c> (<c>00008cd4</c>) and <c>ShellMap_LoadBnd</c> (<c>00009210</c>), two of the phase-1 loaders
-	/// (docs/es1/formats/bnd-notes.md#the-shells-files): <see cref="MapBnd"/> and <see cref="ShellMapBnd"/> read whole from
+	/// <c>Map_LoadBnd</c> (<c>00008cd4</c>), <c>ShellMap_LoadBnd</c> (<c>00009210</c>) and <c>CtlAlert_LoadBnd</c>
+	/// (<c>00006024</c>), three of the phase-1 loaders (docs/es1/formats/bnd-notes.md#the-shells-files):
+	/// <see cref="MapBnd"/>, <see cref="ShellMapBnd"/> and <see cref="CtlAlertBnd"/> read whole from
 	/// <paramref name="content"/>'s <c>bnd\</c>. Retail's <c>Ovl_ReadFile</c> asserts when a file does not open; here that
 	/// is reported and the global stays 0, an engine guard.
 	/// </summary>
-	public void LoadMapTuning(GameContent content) {
+	public void LoadTuning(GameContent content) {
 		MapBnd = new Es1MapBnd(ReadTuning(content, "MAP.BND"));
 		ShellMapBnd = new Es1ShellMapBnd(ReadTuning(content, "SHELLMAP.BND"));
+		CtlAlertBnd = new Es1CtlAlertBnd(ReadTuning(content, "CTL_ALRT.BND"));
 	}
 
 	/// <summary><c>ShellMap_LoadResources</c> (<c>000093b3</c>) into <see cref="MapResources"/> (<see cref="Es1ShellMapResources.Load"/>).</summary>

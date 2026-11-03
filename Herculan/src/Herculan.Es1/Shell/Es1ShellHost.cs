@@ -70,7 +70,7 @@ public static class Es1ShellHost {
 
 		// 5. The archives, mask 0x100 and the .vol extension (VolumeGroup_SetBufferSize, VolRStream_SetGroup).
 		// PLACEHOLDER: subsystem phase 1, the bnd\ files its loaders read (docs/es1/formats/bnd-notes.md#the-shells-files) but
-		// MAP and SHELLMAP, which Session.Main loads (Es1ShellData.LoadMapTuning): their readers are later parts'.
+		// MAP, SHELLMAP and CTL_ALRT, which Session.Main loads (Es1ShellData.LoadTuning): their readers are later parts'.
 		var content = Es1SingleMission.MountShell(installRoot);
 
 		// 6. The heap against BND\MAIN.BND's +0xc and +8: this engine's memory is never that short, so Shell_LowMemory stays clear.
@@ -105,6 +105,8 @@ public static class Es1ShellHost {
 			_screens = new Es1ShellScreens(_devices, _backdrop, _dirty, content, _globals, _lipSync) { ExitCode = exitCode };
 			_screens.MapMouse.Now = () => unchecked((uint)_time.AnmClock);
 			_frame = new Es1ShellFrame(_devices, _backdrop, _dirty, _screens, _time, switches.DebugMode);
+			_screens.PollInput = _frame.PollInput;
+			_screens.LatchButton = _frame.LatchButton;
 			_shellMouse = new Es1ShellMouse(_globals);
 		}
 
@@ -171,8 +173,9 @@ public static class Es1ShellHost {
 			var data = Es1ShellData.LoadFileNames(_content);
 			_data = data;
 
-			// Step 5's Map_LoadBnd and ShellMap_LoadBnd, here once the shared data exists; nothing between reads them.
-			data.LoadMapTuning(_content);
+			// Step 5's Map_LoadBnd, ShellMap_LoadBnd and CtlAlert_LoadBnd, here once the shared data exists; nothing between
+			// reads them.
+			data.LoadTuning(_content);
 
 			// 8. The devices; 9. the frame-time scale; 10. a frame shown.
 			_devices.Init(_content, _installRoot, _switches.DebugMode, biosShiftFlags, _globals);

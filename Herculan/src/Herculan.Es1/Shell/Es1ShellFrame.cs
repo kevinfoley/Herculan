@@ -7,13 +7,19 @@ using Herculan.Es1.View;
 namespace Herculan.Es1.Shell;
 
 /// <summary>
-/// Where the shell's frame stands waiting: until a timer callback sets a flag (<see cref="Until"/>), or for the
-/// monitor's retrace (<see cref="Retrace"/>).
+/// Where the shell's frame stands waiting: until a timer callback sets a flag (<see cref="Until"/>), for the
+/// monitor's retrace (<see cref="Retrace"/>), or, with neither, for the next host frame (<see cref="NextHostFrame"/>).
 /// </summary>
 public readonly record struct Es1ShellWait(Func<bool>? Until, Es1Retrace? Retrace) {
 	public static Es1ShellWait For(Func<bool> until) => new(until, null);
 
 	public static Es1ShellWait For(Es1Retrace retrace) => new(null, retrace);
+
+	/// <summary>
+	/// The next host frame, which a loop retail runs round with no wait stands at between passes, so that the host's
+	/// input and monitor move on: this engine's, as the simulator's panels' <c>Es1Wait.NextHostFrame</c> (plan decision 11).
+	/// </summary>
+	public static Es1ShellWait NextHostFrame => new(null, null);
 }
 
 /// <summary>
@@ -65,6 +71,9 @@ public sealed class Es1ShellFrame {
 	// The host time the current retrace wait ends at.
 	private long? _retraceEnds;
 
+	// The work stands at a next-host-frame wait, which the next AdvanceHostFrame ends.
+	private bool _nextHostFrame;
+
 	public Es1ShellFrame(Es1ShellDevices devices, Es1ShellBackdrop backdrop, Es1DirtyList dirty, Es1ShellScreens screens,
 			Es1ShellTime time, bool debugMode) {
 		_devices = devices;
@@ -100,13 +109,18 @@ public sealed class Es1ShellFrame {
 	}
 
 	/// <summary>
-	/// One host frame of <paramref name="elapsed"/>: while the work stands at a wait, the PC timer runs on an interrupt at a
-	/// time until a timer wait is met, or to a retrace wait's retrace, and the work goes on from there; at the host frame's
-	/// end the timer runs on to it.
+	/// One host frame of <paramref name="elapsed"/>: a next-host-frame wait the last one ended at is over; while the work
+	/// stands at a wait, the PC timer runs on an interrupt at a time until a timer wait is met, or to a retrace wait's
+	/// retrace, and the work goes on from there, up to a next-host-frame wait; at the host frame's end the timer runs on
+	/// to it.
 	/// </summary>
 	public void AdvanceHostFrame(TimeSpan elapsed) {
 		long end = _hostTime + Math.Max(0, elapsed.Ticks);
 		var timer = _devices.Timer;
+		if (_nextHostFrame && _work != null) {
+			Resume();
+		}
+
 		while (_work != null) {
 			var wait = _work.Current;
 			if (wait.Until is { } until) {
@@ -146,13 +160,16 @@ public sealed class Es1ShellFrame {
 	/// <summary>The work run on to its next wait, a retrace wait's end kept, or to its end.</summary>
 	private void Resume() {
 		if (_work!.MoveNext()) {
-			_retraceEnds = _work.Current.Retrace is { } retrace ? Es1FrameLoop.WaitEnd(_hostTime, retrace) : null;
+			var current = _work.Current;
+			_retraceEnds = current.Retrace is { } retrace ? Es1FrameLoop.WaitEnd(_hostTime, retrace) : null;
+			_nextHostFrame = current is { Until: null, Retrace: null };
 			return;
 		}
 
 		_work.Dispose();
 		_work = null;
 		_retraceEnds = null;
+		_nextHostFrame = false;
 	}
 
 	/// <summary>
@@ -293,22 +310,26 @@ public sealed class Es1ShellFrame {
 	/// <summary>
 	/// <c>Input_PollDeviceBlock</c> (<c>000277d8</c>) on the shell's devices, which <see cref="PollInput"/> calls and
 	/// <c>Shell_PlayTtm</c> calls itself: the keyboard's word, the mouse's position and its three buttons at
-	/// <c>+0xa</c>–<c>+0xc</c>.
+	/// <c>+0xa</c>–<c>+0xc</c>, the pointer and buttons left 0 while the mouse device is disabled
+	/// (<see cref="Es1ShellDevices.MouseDeviceEnabled"/>).
 	/// </summary>
 	public Es1LiveBlock PollDeviceBlock() {
 		var mouse = _devices.Mouse;
+		bool enabled = _devices.MouseDeviceEnabled;
 		var block = new Es1LiveBlock {
 			CommandWord = ReadKeyboardWord(),
 			KeyboardEnabled = _devices.Keyboard != null,
-			PointerX = mouse.X,
-			PointerY = mouse.Y,
-			MouseEnabled = true,
+			PointerX = enabled ? mouse.X : 0,
+			PointerY = enabled ? mouse.Y : 0,
+			MouseEnabled = enabled,
 		};
 
-		// Input_PollJoysticks and the two joystick devices' records: Shell_InitDevices builds no joystick device.
-		block.MouseButtons[0] = (byte)((mouse.Buttons & Es1HostMouse.LeftBit) != 0 ? 1 : 0);
-		block.MouseButtons[1] = (byte)((mouse.Buttons & Es1HostMouse.RightBit) != 0 ? 1 : 0);
-		block.MouseButtons[2] = (byte)((mouse.Buttons & Es1HostMouse.MiddleBit) != 0 ? 1 : 0);
+		// Input_PollJoysticks and the two joystick devices' records: Prefs_Init's 000087ff builds them, which is a
+		// PLACEHOLDER here (Es1ShellDevices.Init), so there is none to read.
+		ushort buttons = enabled ? mouse.Buttons : (ushort)0;
+		block.MouseButtons[0] = (byte)((buttons & Es1HostMouse.LeftBit) != 0 ? 1 : 0);
+		block.MouseButtons[1] = (byte)((buttons & Es1HostMouse.RightBit) != 0 ? 1 : 0);
+		block.MouseButtons[2] = (byte)((buttons & Es1HostMouse.MiddleBit) != 0 ? 1 : 0);
 		return block;
 	}
 
@@ -331,7 +352,7 @@ public sealed class Es1ShellFrame {
 	}
 
 	/// <summary><c>Input_LatchButton</c> (<c>0004de18</c>)(<paramref name="value"/>, <paramref name="button"/>), button 1 to 4.</summary>
-	private void LatchButton(byte value, int button) {
+	public void LatchButton(byte value, int button) {
 		_latched[button - 1] = true;
 		_latchedValue[button - 1] = value;
 	}
