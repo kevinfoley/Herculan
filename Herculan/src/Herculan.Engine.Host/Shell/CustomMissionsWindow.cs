@@ -16,6 +16,8 @@ namespace Herculan.Engine.Host.Shell;
 /// author and About, and Delete, which asks first and is not offered for one HERCULAN comes with; and Import..., which copies a mission bundle the player picks into the install's mission folder,
 /// asking first before it replaces one of the same file name. Play writes the mission's handoff into a scratch directory of
 /// its own, so the install's <c>DATA\</c> keeps the career's, and hands it to the caller, which ends the shell's turn for it.
+/// Above the list, the practice screen's Mission Difficulty as radio buttons, which a custom mission's load reads from
+/// <c>data\prefs.cfg</c> (<see cref="MissionFileLaunch"/>): a pick is saved there at once.
 ///
 /// <para>A mission's name, author and about text are anyone's, so they are drawn as text and never as ImGui format strings or labels.</para>
 /// </summary>
@@ -42,6 +44,8 @@ sealed class CustomMissionsWindow {
 	private readonly LocalizationTable _localization;
 	private readonly string _installRoot;
 	private readonly GameContent _shellContent;
+	private readonly SimulatorPreferences _options;
+	private readonly ShellText? _shellText;
 	private readonly Action<ShellLaunch> _play;
 	private IReadOnlyList<CustomMission> _missions = [];
 
@@ -60,11 +64,15 @@ sealed class CustomMissionsWindow {
 	private bool _aboutRaised;
 
 	/// <param name="shellContent">VSHELL's mount of the install, which a mission's load reads through.</param>
+	/// <param name="options">The shell's <c>prefs.cfg</c> array, which holds the practice screen's Mission Difficulty.</param>
 	/// <param name="play">Takes the handoff Play wrote and ends the shell's turn for it once the frame is drawn.</param>
-	public CustomMissionsWindow(LocalizationTable localization, string installRoot, GameContent shellContent, Action<ShellLaunch> play) {
+	public CustomMissionsWindow(LocalizationTable localization, string installRoot, GameContent shellContent,
+			SimulatorPreferences options, Action<ShellLaunch> play) {
 		_localization = localization;
 		_installRoot = installRoot;
 		_shellContent = shellContent;
+		_options = options;
+		_shellText = ShellText.Load(shellContent);
 		_play = play;
 	}
 
@@ -111,6 +119,9 @@ sealed class CustomMissionsWindow {
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), centre, new Vector2(0.5f, 0.5f));
 		bool stayOpen = true;
 		if (ImGui.Begin(Text("custom_missions.title") + "###custom_missions", ref stayOpen, ImGuiWindowFlags.NoCollapse)) {
+			DrawDifficulty();
+			ImGui.Separator();
+
 			// The list takes what the status line and the button row leave.
 			float footer = ImGui.GetFrameHeightWithSpacing() + ImGui.GetStyle().ItemSpacing.Y
 				+ (_status != null ? ImGui.GetTextLineHeightWithSpacing() * 2 : 0f);
@@ -131,6 +142,27 @@ sealed class CustomMissionsWindow {
 		ImGui.End();
 		if (!stayOpen) {
 			Close();
+		}
+	}
+
+	// The practice screen's label and its colon, then one radio button per level, each named as the practice screen's readout
+	// names it, all in the shell's own text, so in the game's language; none without that text. A pick is written into
+	// prefs.cfg at once, where the next Play reads it.
+	private void DrawDifficulty() {
+		if (_shellText == null) {
+			return;
+		}
+
+		ImGui.AlignTextToFramePadding();
+		ImGui.TextUnformatted(_shellText.Text(ShellPracticeScreen.DifficultyLabelText) + ":");
+		int level = _options[ShellPracticeScreen.DifficultyOption];
+		for (int choice = 0; choice < ShellPracticeScreen.DifficultyCount; choice++) {
+			ImGui.SameLine();
+			string name = _shellText.Text(ShellPracticeScreen.DifficultyText + choice) ?? "";
+			if (ImGui.RadioButton($"{name}##difficulty{choice}", level == choice)) {
+				_options.Set(ShellPracticeScreen.DifficultyOption, (byte)choice);
+				_options.Save([ShellPracticeScreen.DifficultyOption]);
+			}
 		}
 	}
 

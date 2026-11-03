@@ -111,14 +111,14 @@ internal sealed class SquadMachinePanel {
 		_ => null,
 	};
 
-	// The squad build's retail bug, where the squadmates are the mission's: the last squadmate listed never goes on strength
-	// (docs/retail/shell/main-menu.md#starting-a-practice-mission).
+	// The squad build's retail bug, where the launch keeps it (MissionSquad.LeavesLastSquadmate): the last squadmate listed
+	// never goes on strength (docs/retail/shell/main-menu.md#starting-a-practice-mission).
 	private string? LeftBehind(int squadmates) {
-		if (squadmates == 0 || Campaign) {
+		if (squadmates == 0 || !_squad.LeavesLastSquadmate) {
 			return null;
 		}
 
-		const string bug = "In training missions, the last squadmate listed stays behind (a retail bug), so ";
+		const string bug = "In a practice mission or \"INSTANT ACTION\", the last squadmate listed stays behind (a retail bug), so ";
 		return squadmates switch {
 			1 => bug + "this squadmate does not appear in the mission and the player goes alone.",
 			2 => bug + "only the first of these appears in the mission.",

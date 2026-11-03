@@ -22,7 +22,7 @@ namespace Herculan.Engine.Shell;
 /// row past the practice list, with the practice options <c>data\prefs.cfg</c> holds.</item>
 /// <item>A mission <c>gam\career.dat</c> does not list (<c>DEMO2.MSN</c>) takes the same half as
 /// <c>INSTANT ACTION</c>, through the typed path the DEBUG dialog loads, so its player pilots the mission's own
-/// group-0 machine.</item>
+/// group-0 machine; its squad build fields every squadmate (<see cref="ShellTrainingLaunch.BuildSquad"/>).</item>
 /// <item>Any other takes the campaign half, <see cref="ShellCampaignLaunch"/>, with a career that has no
 /// history: an empty campaign flag array, which the load then seeds with the position, and the player's
 /// squad and skill taken from the install's <c>DATA\player.mec</c> — the last handoff written — in
@@ -60,7 +60,7 @@ public static class MissionFileLaunch {
 	/// <c>script.dat</c>, or null with the reason. <paramref name="ownWorld"/> plays a mission that takes the training load
 	/// on its own theater and time of day, as the mission editor shows it (<see cref="ShellTrainingLaunch.Load(string,
 	/// GameContent, SimulatorPreferences, int, string, byte[], byte[], bool, Func{short, int}, short[],
-	/// HercWorks.Core.Data.File.Sav.PlayerSave, ShellHangar, out string?, MissionGenerating?, bool)"/>); a campaign mission
+	/// HercWorks.Core.Data.File.Sav.PlayerSave, ShellHangar, out string?, MissionGenerating?, bool, bool)"/>); a campaign mission
 	/// plays its stage's theater and its own time of day either way.
 	/// </summary>
 	public static string? Write(string installRoot, string name, bool ownWorld, out string? failure) =>
@@ -229,7 +229,7 @@ public static class MissionFileLaunch {
 		if (stage == 0) {
 			var options = PracticeOptions(installData);
 			bool instantAction = mission >= ShellPracticeScreen.RowCount;
-			squad = MissionSquad.Training(shellContent, options, mission, instantAction, random);
+			squad = MissionSquad.Training(shellContent, options, mission, instantAction, random, wholeSquad: false);
 			var training = ShellTrainingLaunch.Write(directory, shellContent, options, mission, instantAction, random, clearList,
 				held: null, out failure, generating, ownWorld);
 			if (training != null) {
@@ -304,13 +304,16 @@ public static class MissionFileLaunch {
 			out squad, out failure);
 	}
 
-	/// <summary>The load <see cref="WriteUnlisted"/> makes, of the mission <paramref name="msn"/> and its text, read.</summary>
+	/// <summary>
+	/// The load <see cref="WriteUnlisted"/> makes, of the mission <paramref name="msn"/> and its text, read, with every
+	/// squadmate fielded.
+	/// </summary>
 	private static string? LoadUnlisted(GameContent shellContent, string installData, string missionPath, byte[] msn, byte[]? text,
 			string directory, SimRandom random, short[] clearList, MissionGenerating? generating, bool ownWorld,
 			out MissionSquad? squad, out string? failure) {
 		var options = PracticeOptions(installData);
 		const int row = ShellPracticeScreen.RowCount;
-		squad = MissionSquad.Training(shellContent, options, row, instantAction: true, random);
+		squad = MissionSquad.Training(shellContent, options, row, instantAction: true, random, wholeSquad: true);
 		var training = LoadTraining(shellContent, options, row, instantAction: true, missionPath, msn, text, directory, random,
 			clearList, generating, ownWorld, out failure);
 		if (training != null) {
@@ -323,7 +326,8 @@ public static class MissionFileLaunch {
 
 	/// <summary>
 	/// <see cref="ShellTrainingLaunch.Write"/> for the mission <paramref name="msn"/> and its text, read, named
-	/// <paramref name="missionPath"/>: the new career on <paramref name="row"/>, then the training load of that mission.
+	/// <paramref name="missionPath"/>: the new career on <paramref name="row"/>, then the training load of that mission, with
+	/// every squadmate fielded.
 	/// </summary>
 	private static ShellTrainingHandoff? LoadTraining(GameContent shellContent, SimulatorPreferences options, int row,
 			bool instantAction, string missionPath, byte[] msn, byte[]? text, string directory, SimRandom random, short[] clearList,
@@ -331,7 +335,7 @@ public static class MissionFileLaunch {
 		int Roll(short bound) => random.NextBelow(bound);
 		return ShellTrainingLaunch.NewCareer(shellContent, options, row, Roll, held: null, out failure) is var (game, hangar)
 			? ShellTrainingLaunch.Load(directory, shellContent, options, row, missionPath, msn, text, instantAction, Roll, clearList,
-				game, hangar, out failure, generating, ownWorld)
+				game, hangar, out failure, generating, ownWorld, wholeSquad: true)
 			: null;
 	}
 

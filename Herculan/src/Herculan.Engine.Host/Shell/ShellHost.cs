@@ -218,7 +218,7 @@ sealed class ShellHost : IDisposable {
 		// The Settings menu's restart: the shell closes with SettingsRestartCode, which the caller answers by
 		// running it again on the session's folders. The Editor item closes it with EditorExitCode, which the caller
 		// answers with the mission editor, and Custom Missions' Play with CustomMissionExitCode and the mission.
-		_customMissions = new CustomMissionsWindow(session.Localization, installRoot, content, launch => {
+		_customMissions = new CustomMissionsWindow(session.Localization, installRoot, content, options, launch => {
 			_outcome.Launch = launch;
 			_outcome.ExitCode = CustomMissionExitCode;
 			// Set on the next line, long before a Play can run.

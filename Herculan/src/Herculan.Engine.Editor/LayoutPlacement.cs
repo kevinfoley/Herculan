@@ -187,7 +187,7 @@ internal sealed class LayoutPlan {
 /// per herc group 0's member slots reference, each spread from group 0 by <see cref="MissionPlacementRules.PlaceSquadMember"/>
 /// at its slot's position, which is the entry the training squad build gives it (<c>ShellTrainingLaunch.BuildSquad</c>:
 /// slot 0 the player, slot <i>i</i> squadmate <i>i</i>). A slot past a gap, which no build reads, spreads by its position
-/// too, and so does the squadmate the practice load leaves behind. A record group 0 and a later group both reference is
+/// too, and so does the squadmate a practice or demo mission's load leaves behind. A record group 0 and a later group both reference is
 /// the squad's alone.</item>
 /// <item>The routes, trigger areas and actions are <see cref="LayoutFeatures"/>'.</item>
 /// </list>

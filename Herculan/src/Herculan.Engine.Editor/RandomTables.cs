@@ -14,7 +14,7 @@ internal enum RandomTableUnused {
 	/// <summary>On practice rows 4 to 7 the player pilots the practice screen's Herc Type.</summary>
 	HercType,
 
-	/// <summary>A training load leaves the last squadmate listed behind (a retail bug).</summary>
+	/// <summary>A practice or demo mission's load leaves the last squadmate listed behind (a retail bug).</summary>
 	LeftBehind,
 
 	/// <summary>A squadmate past a gap in group 0's member slots, which no squad build reads.</summary>
@@ -310,7 +310,7 @@ internal sealed class RandomTables {
 	}
 
 	// Why a squad herc's pick has no effect, by the launch's rule (MissionSquad) and the squad build's list: group 0's members
-	// in the unbroken run from its second slot, the last of which a training load leaves behind.
+	// in the unbroken run from its second slot, the last of which a practice or demo mission's load leaves behind.
 	private RandomTableUnused? SquadUnused(PlannedObject planned) {
 		if (_squad.PlayerMachine == PlayerMachineSource.CareerSquad) {
 			return RandomTableUnused.CareerSquad;
@@ -326,7 +326,9 @@ internal sealed class RandomTables {
 			run++;
 		}
 
-		return planned.MemberIndex > run ? RandomTableUnused.AfterGap : planned.MemberIndex == run ? RandomTableUnused.LeftBehind : null;
+		return planned.MemberIndex > run ? RandomTableUnused.AfterGap
+			: planned.MemberIndex == run && _squad.LeavesLastSquadmate ? RandomTableUnused.LeftBehind
+			: null;
 	}
 
 	private (string Label, EditorSelection? Target) ObjectiveName(int record) =>
