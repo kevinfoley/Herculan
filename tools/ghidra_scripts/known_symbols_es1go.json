@@ -1432,7 +1432,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_Init",
-      "description": "No arguments: Prefs_SetHandler (00008659)(0000868c, 0xb); Prefs_Load (000081ca); the byte 0007e09c = Speech_ArchivePresent (000087ce), and when that is 0 Prefs_SetOption (00008378)(1, 0, 2), option 2 set to 0; then 000087ff. ES1DBSIM's Prefs_Init (0004afe8) in role, with one call of Prefs_SetHandler (00008659), no in-progress flag, one load with no argument, no demo-mode loads and no joystick devices.",
+      "description": "No arguments: Prefs_SetHandler (00008659)(0000868c, 0xb); Prefs_Load (000081ca); the byte Speech_ArchiveFound (0007e09c) = Speech_ArchivePresent (000087ce), and when that is 0 Prefs_SetOption (00008378)(1, 0, 2), option 2 set to 0; then 000087ff. ES1DBSIM's Prefs_Init (0004afe8) in role, with one call of Prefs_SetHandler (00008659), no in-progress flag, one load with no argument, no demo-mode loads and no joystick devices.",
       "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 00008920",
       "verified": {
         "bytes": "00008920+52",
@@ -3508,7 +3508,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_ParseCommandLine",
-      "description": "(argv, argc) in stack order, its arguments removed by this function: walks the arguments from the last down to argv[1]. One that starts with '/' or '-' counts as -eggplant when it equals '-eggplant' exactly (REPE CMPSB through the NUL); its second character, upper-cased with toupper, is looked up in the five dwords at 0007e76c with REPNE SCASD and jumps to the target 0x14 bytes on (bodies 000127aa to 000127e3): A clears Shell_PlayIntro (0007fd0a), C sets Shell_AltDriveAllowed (0007fd0b), M sets Shell_MSwitchGiven (0007fd04), S sets the bytes 0007fcb8 and 0007fcb9, X sets Shell_DebugMode (0007fd08). Without -eggplant it prints 'To play EarthSiege, type ES.' with printf and returns 1; otherwise 0. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "description": "(argv, argc) in stack order, its arguments removed by this function: walks the arguments from the last down to argv[1]. One that starts with '/' or '-' counts as -eggplant when it equals '-eggplant' exactly (REPE CMPSB through the NUL); its second character, upper-cased with toupper, is looked up in the five dwords at 0007e76c with REPNE SCASD and jumps to the target 0x14 bytes on (bodies 000127aa to 000127e3): A clears Shell_PlayIntro (0007fd0a), C sets Shell_AltDriveAllowed (0007fd0b), M sets Shell_MSwitchGiven (0007fd04), S sets the bytes Shell_MusicOption (0007fcb8) and Shell_SoundOption (0007fcb9), X sets Shell_DebugMode (0007fd08). Without -eggplant it prints 'To play EarthSiege, type ES.' with printf and returns 1; otherwise 0. es2_xref finds one call, from Shell_Main (00012ec7).",
       "source": "Herculan/docs/es1/shell/startup.md#the-command-line; ES1GO decompile and disassembly at 0001272d",
       "verified": {
         "bytes": "0001272d+221",
@@ -3778,7 +3778,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Anm_Play",
-      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls Bitmap_GrabClipDispatch (0005afa8)(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte 0007fcb9 is set and it was made, calls 000209e0(0007fcfc) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock ShellTime_Ticks (0007e6fc); Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls Region_CopyBetweenPages (00051c40) with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in Shell_DrawScreen (0003c1b7), passing mode 1 with sound 10 and with sound 11.",
+      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls Bitmap_GrabClipDispatch (0005afa8)(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte Shell_SoundOption (0007fcb9) is set and it was made, calls 000209e0(ShellMusic_Object (0007fcfc)) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock ShellTime_Ticks (0007e6fc); Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls Region_CopyBetweenPages (00051c40) with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in Shell_DrawScreen (0003c1b7), passing mode 1 with sound 10 and with sound 11.",
       "source": "Herculan/docs/es1/formats/anm-animation.md#playing",
       "verified": {
         "bytes": "000132d8+1667",
@@ -6943,7 +6943,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MTButton_Draw",
-      "description": "(button), its argument removed by this function: slot +8 of MTButton's vtable 0007f18c. In state 1 (+0x19), while the byte 0007fcb9 and the sound object 0007fd00 are set, stops it (slot +0x14 of its vtable +0x3b) when its slot +0x30 answers non-zero and plays it (slot +0x10). States 0 and 1: CornerFrame_Draw (00044b86) with the state's STYLES.DAT record (+0x30 + 4 * state) over the rect, and Raster_FrameRectColour (0004b867)(10, rect) while the byte +0x94 is set; state 2: CornerFrame_Draw (00044b86) with record +0x38. Then, with text, the render context 000ab612's +0x231 = 2 and +0x235 = the width, HudFont_DrawString(the state's font +0x24 + 4 * state, the text +0x3c, the state's point +0x7c + 8 * state); clears +0x1f.",
+      "description": "(button), its argument removed by this function: slot +8 of MTButton's vtable 0007f18c. In state 1 (+0x19), while the byte Shell_SoundOption (0007fcb9) and the sound object 0007fd00 are set, stops it (slot +0x14 of its vtable +0x3b) when its slot +0x30 answers non-zero and plays it (slot +0x10). States 0 and 1: CornerFrame_Draw (00044b86) with the state's STYLES.DAT record (+0x30 + 4 * state) over the rect, and Raster_FrameRectColour (0004b867)(10, rect) while the byte +0x94 is set; state 2: CornerFrame_Draw (00044b86) with record +0x38. Then, with text, the render context 000ab612's +0x231 = 2 and +0x235 = the width, HudFont_DrawString(the state's font +0x24 + 4 * state, the text +0x3c, the state's point +0x7c + 8 * state); clears +0x1f.",
       "source": "Herculan/docs/es1/shell/menus.md#drawing-a-control; ES1GO decompile at 0001d200",
       "verified": {
         "bytes": "0001d200+357",
@@ -7033,7 +7033,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MTBmpButton_Draw",
-      "description": "(button): slot +8 of MTBmpButton's vtable 0007f24a: Bitmap_Blit of the state's frame (+0xa5 + 4 x the word +0x19), flags 0, at the point +0x95; in state 1, while the byte 0007fcb9 and the sound object 0007fd00 are set, stops it (slot +0x14 of its vtable +0x3b) when its slot +0x30 answers non-zero and plays it (slot +0x10); then the render context 000ab612's +0x231 = 2 and +0x235 = the frame's int16 +6 and HudFont_DrawString(the state's font +0x24 + 4 x state, the text +0x3c, the state's point +0x7c + 8 x state), the text test being of the buffer's address; clears the byte +0x1f.",
+      "description": "(button): slot +8 of MTBmpButton's vtable 0007f24a: Bitmap_Blit of the state's frame (+0xa5 + 4 x the word +0x19), flags 0, at the point +0x95; in state 1, while the byte Shell_SoundOption (0007fcb9) and the sound object 0007fd00 are set, stops it (slot +0x14 of its vtable +0x3b) when its slot +0x30 answers non-zero and plays it (slot +0x10); then the render context 000ab612's +0x231 = 2 and +0x235 = the frame's int16 +6 and HudFont_DrawString(the state's font +0x24 + 4 x state, the text +0x3c, the state's point +0x7c + 8 x state), the text test being of the buffer's address; clears the byte +0x1f.",
       "source": "Herculan/docs/es1/shell/menus.md#buttons; ES1GO decompile at 0001db87",
       "verified": {
         "bytes": "0001db87+280",
@@ -7963,7 +7963,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_LoadData",
-      "description": "(): copies options 12 to 16 of Prefs_Options into the mission parameters' words, options 0 and 1 into the bytes 0007fcb8 and 0007fcb9, option 2 into the word Shell_RadioOption (0007fcbc), and into the word 0007fcba the word 0007fd10, or 0007fd18 with option 3 set, plus options 4, 5 and 6, over 256; loads 13 fonts through 0004b757 into the 14 dwords Shell_Fonts (000aacc6) to 000aacfa, the nm_green handle stored twice; seeds Shell_RandomState with Math_RandomSeedAndSkip (000386f4)(state, time modulo 128); loads eng\\watext.bin into Shell_WaText (0009afa8) with Text_LoadDataFile; sets 0009b000 and 0009b004 to 0 and 0009b008 and 0009b00c to the display 000ab616's attributes 2 and 3 less 1; HercLayout_Load, HercDamageMarks_Load, LoadDamageDat_Shell, HercHotspots_Load and, unless Shell_LowMemory (0007fd09) is set, HercArt_LoadAllBanks; CareerLog_Load (00017e7f)(Career_Log (0009b20c)) and its current entry into the word Career_SelectedEntry (0007fcea), 0 when negative; BattleSet_Load; and Inventory_AllocAll (00027c4c). es2_xref finds one call, from Shell_Main (00012ec7).",
+      "description": "(): copies options 12 to 16 of Prefs_Options into the mission parameters' words, options 0 and 1 into the bytes Shell_MusicOption (0007fcb8) and Shell_SoundOption (0007fcb9), option 2 into the word Shell_RadioOption (0007fcbc), and into the word Shell_DetailOption (0007fcba) the word 0007fd10, or 0007fd18 with option 3 set, plus options 4, 5 and 6, over 256; loads 13 fonts through 0004b757 into the 14 dwords Shell_Fonts (000aacc6) to 000aacfa, the nm_green handle stored twice; seeds Shell_RandomState with Math_RandomSeedAndSkip (000386f4)(state, time modulo 128); loads eng\\watext.bin into Shell_WaText (0009afa8) with Text_LoadDataFile; sets 0009b000 and 0009b004 to 0 and 0009b008 and 0009b00c to the display 000ab616's attributes 2 and 3 less 1; HercLayout_Load, HercDamageMarks_Load, LoadDamageDat_Shell, HercHotspots_Load and, unless Shell_LowMemory (0007fd09) is set, HercArt_LoadAllBanks; CareerLog_Load (00017e7f)(Career_Log (0009b20c)) and its current entry into the word Career_SelectedEntry (0007fcea), 0 when negative; BattleSet_Load; and Inventory_AllocAll (00027c4c). es2_xref finds one call, from Shell_Main (00012ec7).",
       "source": "Herculan/docs/es1/shell/startup.md#the-shared-data; ES1GO decompile at 00020630",
       "verified": {
         "bytes": "00020630+797",
@@ -8008,7 +8008,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMusic_Play",
-      "description": "(track), its argument removed by this function: with a sound manager (00082768), calls 00020a18, makes the sound object 0007fcfc with SoundManager_CreateObject(manager, 2, 0, track), loads it with SoundObject_LoadSample, calls its slot +0x28 (vtable at +0x3b) with (-1, -1, 0xffff), and its slot +0x10 when the byte 0007fcb8 is set. Shell_PresentFrame (00012980) calls it with Shell_MusicTrack (00081938).",
+      "description": "(track), its argument removed by this function: with a sound manager (00082768), calls 00020a18, makes the sound object ShellMusic_Object (0007fcfc) with SoundManager_CreateObject(manager, 2, 0, track), loads it with SoundObject_LoadSample, calls its slot +0x28 (vtable at +0x3b) with (-1, -1, 0xffff), and its slot +0x10 when the byte Shell_MusicOption (0007fcb8) is set. Shell_PresentFrame (00012980) calls it with Shell_MusicTrack (00081938).",
       "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile at 00020a70",
       "verified": {
         "bytes": "00020a70+115",
@@ -11183,6 +11183,21 @@
       }
     },
     {
+      "address": "0002b82b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PrefsMenu_OnMessage",
+      "description": "(menu, message) in stack order, its arguments removed by this function: slot +8 of PrefsMenu's vtable 00081f60, PREFERENCES' handler. Looks the message's target +6 up among the six int16 at 00080aac (1312, 1311, 1313, 1317, 99, 100) with REPNE SCASD and jumps through the targets at 00080ac4, case bodies Ghidra leaves outside the function; a target outside the six returns at once. 1312 SOUND (0002b854) XORs the byte Shell_SoundOption (0007fcb9) with 1, selects that line in list 1315 through its slot +0x24 (the list found with DUIWindow_FindEnabledControlById (0001bda4)) and calls Prefs_SetOption (00008378)(1, the byte, 1). 1311 MUSIC (0002b8b3) does the same for Shell_MusicOption (0007fcb8), list 1314 and option 0, and before the option, when ShellMusic_Object (0007fcfc) is set, calls its slot +0x10 for a byte of 1 and +0x14 for 0 (vtable at +0x3b). 1313 DETAIL (0002b961) steps Shell_DetailOption (0007fcba) modulo 4 with list 1316, sets options 4, 5 and 6 to the setting x 64 + 0x3f and option 3 to 0 for setting 0 and to 1 otherwise. 1317 SPEECH (0002ba18), while the byte Speech_ArchiveFound (0007e09c) is set, steps Shell_RadioOption (0007fcbc) modulo 3 with list 1318 and option 2. 99 CANCEL (0002ba91) copies the menu's +0x27, +0x26, +0x28 and +0x2a back into Shell_SoundOption (0007fcb9), Shell_MusicOption (0007fcb8), Shell_DetailOption (0007fcba) and 0007fcbc, plays or stops the music as MUSIC does for the byte put back, calls Prefs_RevertAll (00008316)(1) and runs on into 100 ACCEPT (0002bb0d): Prefs_CommitAll (000082b0)(1), Prefs_Save (00008267), and the message's target set to 1300.",
+      "source": "Herculan/docs/es1/shell/options.md#the-buttons--prefsmenu_onmessage-0002b82b; ES1GO disassembly at 0002b82b-0002bb29",
+      "verified": {
+        "bytes": "0002b82b+766",
+        "sha1": "75bc6de81a3e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0002bb29",
       "binary": "ES1GO",
       "type": "function",
@@ -12661,7 +12676,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Menu_ListLines",
-      "description": "(id): the lines of a kind-15 list box. By the id, through the REPNE SCASD table of 28 ids at 000812f4 and their cases at 00081364 in bytes Ghidra left undefined: 1002, the main menu's list, returns CareerLog_CurrentNameArray (000182f8)(Career_Log (0009b20c)); an id not in the table returns WaText_LinesFromList (000373fa)(000811a4). 1101, the SINGLE MISSION menu's list (00081364's case at 000376f5), returns the same of the word list 00081264, eng\\watext.bin lines 0x23 to 0x29; 1116, 1117, 1118, 1119 and 1120, the MISSION PARAMS menu's lists, of 000811c4, 000811cc, 00081244, 000811d4 and 000811dc. The other 21 cases are not read here.",
+      "description": "(id): the lines of a kind-15 list box. By the id, through the REPNE SCASD table of 28 ids at 000812f4 and their cases at 00081364 in bytes Ghidra left undefined: 1002, the main menu's list, returns CareerLog_CurrentNameArray (000182f8)(Career_Log (0009b20c)); an id not in the table returns WaText_LinesFromList (000373fa)(000811a4). 1101, the SINGLE MISSION menu's list (00081364's case at 000376f5), returns the same of the word list 00081264, eng\\watext.bin lines 0x23 to 0x29; 1116, 1117, 1118, 1119 and 1120, the MISSION PARAMS menu's lists, of 000811c4, 000811cc, 00081244, 000811d4 and 000811dc. 1314 and 1315 (000376b1) return the same of PrefsMenu_OffOnLines (000811a8), 1316 (000376c2) of PrefsMenu_DetailLines (000811b0) and 1318 (000376d3) of PrefsMenu_SpeechLines (000811bc), PREFERENCES' boxes. The other 17 cases are not read here.",
       "source": "Herculan/docs/es1/shell/main-menu.md#the-list; read in part"
     },
     {
@@ -13105,7 +13120,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellBackdrop_Ctor",
-      "description": "(backdrop), its argument removed by this function: allocates 0x1c bytes when backdrop is 0; builds a GLRectangleRegion at +4 (vtables 00081896, 000818c8, 00081900), +8 0 and the rect +0xc-+0x18 zero; clears the dword 0007fcfc, the music's sound object. es2_xref finds one call, from Shell_StaticInit (00040b74) with Shell_Backdrop (000a09a0).",
+      "description": "(backdrop), its argument removed by this function: allocates 0x1c bytes when backdrop is 0; builds a GLRectangleRegion at +4 (vtables 00081896, 000818c8, 00081900), +8 0 and the rect +0xc-+0x18 zero; clears the dword ShellMusic_Object (0007fcfc), the music's sound object. es2_xref finds one call, from Shell_StaticInit (00040b74) with Shell_Backdrop (000a09a0).",
       "source": "Herculan/docs/es1/shell/menus.md#the-backdrop; ES1GO decompile at 0003918e",
       "verified": {
         "bytes": "0003918e+436",
@@ -13225,14 +13240,8 @@
       "type": "function",
       "confidence": "high",
       "name": "Menu_BuildFromDlg",
-      "description": "(menu, number) in stack order, callee-cleaned: builds shell menu number's window and controls from dlg\\menu<number>.dlg, their text from eng\\menu<number>.bin (TextTable_Ctor; VolRStream_CtorFromPath, and Text_LoadDataFile when it opens). Reads the int16 count through the stream's slot +0x1c, then per record four int16 rect words (VolRStream_Read) into the low halves of zeroed dwords, the bytes kind, style and key, and the int16 id. Record i's text is line i (Text_GetString), taken before the switch for kinds 0, 1, 4 and 5 unless the id is one of the five at 0008196c, which jump through the table beside them (1211 to the next record). By kind: 0 the window at menu +6, MTWindow_Ctor (00036874)(0, id, text, rect) for style 0 and DUIWindow_Ctor (0001abcf)(0, rect) for style 1, the rect copied to menu +0x12 for any style; 1, 4 and 5 the window's vtable +0x4e9 slot +4 with mode 0, 1 or 2, width right - left, the point (left, top), the text's length + 1 and the text, menu 4444's kind-1 text holding '#' first passed to Hangar_FormatScrapValue (0002a1aa); 2 MTEditBox_Ctor (0001f442)(0, id, rect); 3 MTBmpButton_Ctor (0001d47d) for style 1 (no text when the key is non-zero) and MTButton_Ctor (0001cde8) otherwise, menu 1300's id 100 taking its text from the four values at 000819e0 on the word Shell_ReturnScreen (0007fce8); 14 each of the 17 ids at 00081b08 DUIWindow_AddHotspot (0001b2de)(window, a, id, its handler, rect), 1612 to 1614 with PilotPortraitHotspot_Draw (00017a19) and 1502 with a = ShellMap_Rect (000a02d4); 15 MTStrListBox_Ctor (0001e11a)(0, 0x100, 0, 0, a word, style, id, Menu_ListLines (0003750d)(id), rect), the word set for the 23 ids at 00081a00; 16 MTGfxListBox_Ctor (0001eaef)(0, 0x100, 0, a word, id, Menu_LoadControlBitmaps (00037827)(id), rect), the word -1 or set for the ten ids at 00081ab8; 17 MTAnimListBox_Ctor (0001eff6)(0, 0x13, 0, 0xffff, id, Menu_OpenControlTtms (00037996)(id), rect); 18 0004c83a(rect) for style 1; other kinds nothing. Kinds 2, 3, 15, 16 and 17 add the control with DUIWindow_AddControl (0001b207). Closes and destroys both streams (VolRStream_Close, VolRStream_Dtor) and the table (TextTable_Dtor). es2_xref finds one call, from Menu_Open (0003969e).",
-      "source": "ES1GO decompile and disassembly at 0003a1f7",
-      "verified": {
-        "bytes": "0003a1f7+3905",
-        "sha1": "dfa3f0cfed78",
-        "scope": "body",
-        "via": "both"
-      }
+      "description": "(menu, number) in stack order, callee-cleaned: builds shell menu number's window and controls from dlg\\menu<number>.dlg, their text from eng\\menu<number>.bin (TextTable_Ctor; VolRStream_CtorFromPath, and Text_LoadDataFile when it opens). Reads the int16 count through the stream's slot +0x1c, then per record four int16 rect words (VolRStream_Read) into the low halves of zeroed dwords, the bytes kind, style and key, and the int16 id. Record i's text is line i (Text_GetString), taken before the switch for kinds 0, 1, 4 and 5 unless the id is one of the five at 0008196c, which jump through the table beside them (1211 to the next record). By kind: 0 the window at menu +6, MTWindow_Ctor (00036874)(0, id, text, rect) for style 0 and DUIWindow_Ctor (0001abcf)(0, rect) for style 1, the rect copied to menu +0x12 for any style; 1, 4 and 5 the window's vtable +0x4e9 slot +4 with mode 0, 1 or 2, width right - left, the point (left, top), the text's length + 1 and the text, menu 4444's kind-1 text holding '#' first passed to Hangar_FormatScrapValue (0002a1aa); 2 MTEditBox_Ctor (0001f442)(0, id, rect); 3 MTBmpButton_Ctor (0001d47d) for style 1 (no text when the key is non-zero) and MTButton_Ctor (0001cde8) otherwise, menu 1300's id 100 taking its text from the four values at 000819e0 on the word Shell_ReturnScreen (0007fce8); 14 each of the 17 ids at 00081b08 DUIWindow_AddHotspot (0001b2de)(window, a, id, its handler, rect), 1612 to 1614 with PilotPortraitHotspot_Draw (00017a19) and 1502 with a = ShellMap_Rect (000a02d4); 15 MTStrListBox_Ctor (0001e11a)(0, 0x100, 0, an alignment, a word, style, id, Menu_ListLines (0003750d)(id), rect), the alignment zeroed (0003a94b) and, with the word, set for the 23 ids at 00081a00, the alignment to 2 for 1316 and REPAIR's readouts; 16 MTGfxListBox_Ctor (0001eaef)(0, 0x100, 0, a word, id, Menu_LoadControlBitmaps (00037827)(id), rect), the word -1 or set for the ten ids at 00081ab8; 17 MTAnimListBox_Ctor (0001eff6)(0, 0x13, 0, 0xffff, id, Menu_OpenControlTtms (00037996)(id), rect); 18 0004c83a(rect) for style 1; other kinds nothing. Kinds 2, 3, 15, 16 and 17 add the control with DUIWindow_AddControl (0001b207). Closes and destroys both streams (VolRStream_Close, VolRStream_Dtor) and the table (TextTable_Dtor). es2_xref finds one call, from Menu_Open (0003969e).",
+      "source": "ES1GO decompile and disassembly at 0003a1f7"
     },
     {
       "address": "0003b138",
@@ -15292,7 +15301,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_RunSoundCommand",
-      "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: returns 1 for every opcode. 0xc21f, when the byte 0007fcb9 is non-zero and +0x41 is 0: destroys the sound object +0x1a8 (its +0x3b table's +8 slot with 3), formats TtmScript_BuildPath (00047138)(script, string) with \"%s\" into 000aad40 and, when the sound manager 00082768 exists and SoundManager_SetSampleName(manager, 0xe, that) succeeds, stores SoundManager_CreateObject(manager, 2, 0, 0xe) at +0x1a8. 0xc220, when 0007fcb9 is non-zero, +0x41 is 0 and +0x1a8 holds an object: calls its +0x2c slot with Math_RandomBelow(Shell_RandomState (0009aec0), 25) + 10 and its +0x10 slot, and sets +0x41 to 1. Any other opcode, 0xc102 among them, goes straight to the return.",
+      "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: returns 1 for every opcode. 0xc21f, when the byte Shell_SoundOption (0007fcb9) is non-zero and +0x41 is 0: destroys the sound object +0x1a8 (its +0x3b table's +8 slot with 3), formats TtmScript_BuildPath (00047138)(script, string) with \"%s\" into 000aad40 and, when the sound manager 00082768 exists and SoundManager_SetSampleName(manager, 0xe, that) succeeds, stores SoundManager_CreateObject(manager, 2, 0, 0xe) at +0x1a8. 0xc220, when Shell_SoundOption (0007fcb9) is non-zero, +0x41 is 0 and +0x1a8 holds an object: calls its +0x2c slot with Math_RandomBelow(Shell_RandomState (0009aec0), 25) + 10 and its +0x10 slot, and sets +0x41 to 1. Any other opcode, 0xc102 among them, goes straight to the return.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
       "verified": {
         "bytes": "0004a0e0+307",
@@ -25916,6 +25925,15 @@
       "source": "es1_naming.py vtables ES1GO"
     },
     {
+      "address": "0007e09c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Speech_ArchiveFound",
+      "description": "Byte: Speech_ArchivePresent (000087ce)'s answer, 1 when vol\\speech.vol opens, stored by Prefs_Init (00008920), which sets option 2 to 0 when it is 0. PREFERENCES' SPEECH (PrefsMenu_OnMessage (0002b82b), case 0002ba18) steps the speech setting while it is set and returns at once otherwise.",
+      "source": "Herculan/docs/es1/shell/options.md#the-buttons--prefsmenu_onmessage-0002b82b; ES1GO disassembly at 0002ba18"
+    },
+    {
       "address": "0007e1ce",
       "binary": "ES1GO",
       "type": "data",
@@ -26474,12 +26492,39 @@
       "source": "Herculan/docs/es1/shell/menu-input.md#a-messages-path"
     },
     {
+      "address": "0007fcb8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_MusicOption",
+      "description": "Byte: the shell's copy of data\\prefs.cfg option 0, MUSIC (0 OFF, 1 ON), which Shell_LoadData (00020630) stores and PREFERENCES' MUSIC toggles (PrefsMenu_OnMessage (0002b82b)); -S sets it to 1 before Shell_LoadData's copy. ShellMusic_Play (00020a70) plays the backdrop's music while it is set. PrefsMenu keeps a copy at +0x26.",
+      "source": "Herculan/docs/es1/shell/options.md#opening-it; ES1GO disassembly at 0003e982, 0002b8b3"
+    },
+    {
+      "address": "0007fcb9",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_SoundOption",
+      "description": "Byte: the shell's copy of data\\prefs.cfg option 1, SOUND (0 OFF, 1 ON), which Shell_LoadData (00020630) stores and PREFERENCES' SOUND toggles (PrefsMenu_OnMessage (0002b82b)); -S sets it to 1 before Shell_LoadData's copy. MTButton_Draw (0001d200) plays a text button's click while it is set; es2_xref --decode finds further readers in Anm_Play, MTBmpButton_Draw (0001db87) and TtmScript_RunSoundCommand. PrefsMenu keeps a copy at +0x27.",
+      "source": "Herculan/docs/es1/shell/options.md#opening-it; ES1GO disassembly at 0003e97a, 0002b854"
+    },
+    {
+      "address": "0007fcba",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_DetailOption",
+      "description": "int16 0-3: PREFERENCES' DETAIL, LOW, MEDIUM, HIGH or MAX. Shell_LoadData (00020630) sets it to (the word 0007fd10, 0x3f, or 0007fd18, 0xbf, with option 3 set, plus options 4, 5 and 6) / 256; DETAIL (PrefsMenu_OnMessage (0002b82b)) steps it modulo 4 and sets options 3 to 6 from it. PrefsMenu keeps a copy at +0x28, and kind 16's case for id 1316 (0003ac86) passes it as a tile's word.",
+      "source": "Herculan/docs/es1/shell/options.md#detail-after-a-restart; ES1GO disassembly at 0002b961; es2_xref --decode"
+    },
+    {
       "address": "0007fcbc",
       "binary": "ES1GO",
       "type": "data",
       "confidence": "high",
       "name": "Shell_RadioOption",
-      "description": "int16: the shell's copy of data\\prefs.cfg option 2, RADIO (0 TEXT ONLY, 1 VOICE ONLY, 2 TEXT / VOICE), which Shell_LoadData (00020630) stores. At 1 DialogBox_Draw (00018edd) draws neither the top strip's frame nor a message's lines; above 0 maybe_SncList_StartSound (0004544a) starts a line's sound.",
+      "description": "int16: the shell's copy of data\\prefs.cfg option 2, RADIO (0 TEXT ONLY, 1 VOICE ONLY, 2 TEXT / VOICE), which Shell_LoadData (00020630) stores and PREFERENCES' SPEECH steps modulo 3 (PrefsMenu_OnMessage (0002b82b)); PrefsMenu keeps a copy at +0x2a. At 1 DialogBox_Draw (00018edd) draws neither the top strip's frame nor a message's lines; above 0 maybe_SncList_StartSound (0004544a) starts a line's sound.",
       "source": "Herculan/docs/es1/shell/message-box.md#drawing-a-page"
     },
     {
@@ -26535,6 +26580,15 @@
       "name": "Career_AutoRepairMode",
       "description": "int16: which pilots' HERCs the after-mission repair covers, read by CareerRecord_AutoRepairSquad (0001601b) through the career record's +0x1f5: 0 none, 1 the squadmates', 2 all. Career_New (000163ac) and Career_Save (000168b0) store it at +0x1f5; es2_xref --decode finds it written by Roster_ActivateRecord (00016d45) and three times by RepairPrefsAlert_OnMessage (0003052f), RepairPrefsAlert's handler, and three references in bytes Ghidra left undefined from 0003ad48.",
       "source": "Herculan/docs/es1/shell/between-missions.md#repairs"
+    },
+    {
+      "address": "0007fcfc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMusic_Object",
+      "description": "dword: the backdrop's music, the sound object ShellMusic_Play (00020a70) makes with SoundManager_CreateObject(manager, 2, 0, track); ShellBackdrop_Ctor (0003918e) clears it. PREFERENCES' MUSIC and CANCEL (PrefsMenu_OnMessage (0002b82b)) play it through its slot +0x10 or stop it through +0x14 (vtable at +0x3b) when it is set.",
+      "source": "Herculan/docs/es1/shell/options.md#the-buttons--prefsmenu_onmessage-0002b82b; ES1GO disassembly at 0002b8fd"
     },
     {
       "address": "0007fd04",
@@ -26958,6 +27012,33 @@
       "name": "FabricationMenu_CaseTable",
       "description": "FabricationMenu_OnMessage (000309d7)'s REPNE SCASD table: the ids 2003, 2004, 2001 and 1710, then their four case addresses.",
       "source": "Herculan/docs/es1/shell/repair-and-build.md#build--screen-2000"
+    },
+    {
+      "address": "000811a8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "PrefsMenu_OffOnLines",
+      "description": "int16 eng\\watext.bin lines 2 and 3, OFF and ON, then -1: Menu_ListLines (0003750d)'s lines for PREFERENCES' boxes 1314 and 1315 (case 000376b1), MUSIC's and SOUND's.",
+      "source": "Herculan/docs/es1/shell/options.md#opening-it; es2_peek ES1GO 000811a4 --words"
+    },
+    {
+      "address": "000811b0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "PrefsMenu_DetailLines",
+      "description": "int16 eng\\watext.bin lines 4 to 7, LOW, MEDIUM, HIGH and MAX, then -1: Menu_ListLines (0003750d)'s lines for PREFERENCES' box 1316 (case 000376c2), DETAIL's.",
+      "source": "Herculan/docs/es1/shell/options.md#opening-it; es2_peek ES1GO 000811a4 --words"
+    },
+    {
+      "address": "000811bc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "PrefsMenu_SpeechLines",
+      "description": "int16 eng\\watext.bin lines 0x10 to 0x12, TEXT ONLY, VOICE ONLY and TEXT AND VOICE, then -1: Menu_ListLines (0003750d)'s lines for PREFERENCES' box 1318 (case 000376d3), SPEECH's.",
+      "source": "Herculan/docs/es1/shell/options.md#opening-it; es2_peek ES1GO 000811bc --words"
     },
     {
       "address": "00081274",
