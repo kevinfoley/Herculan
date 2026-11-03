@@ -7,8 +7,8 @@ namespace Herculan.Es1.Shell.Menus;
 /// <summary>
 /// The war map's screen object, class <c>WarMapMenu</c> (vtable <c>00080bc6</c>, <c>0x26</c> bytes)
 /// (docs/es1/shell/war-map.md): screens 1501, a single mission's, and 1500, a career's, the mission's briefing in a box
-/// under the map, its page arrows, CANCEL, ARMING or SERVICE BAY and BEGIN MISSION >. The map, its area 1502 and its six
-/// buttons are the mission map's, S5's.
+/// under the map, its page arrows, CANCEL, ARMING or SERVICE BAY and BEGIN MISSION >, and the map's six buttons. The map
+/// is <see cref="Es1ShellScreens.MissionMap"/>.
 /// </summary>
 public sealed class Es1WarMapMenu : Es1Menu {
 	/// <summary>A single mission's war map, <c>dlg\menu1501.dlg</c>.</summary>
@@ -100,7 +100,30 @@ public sealed class Es1WarMapMenu : Es1Menu {
 			case MapLeft:
 			case MapRight:
 				// 0002c07d to 0002c22b: while Shell_MissionMap is set, the slot of its table +0x4a by the button (108 +8, 109
-				// +0xc, 1503 +0x10, 1504 +0x14, 1505 +0x18, 1506 +0x1c) with the map. PLACEHOLDER: the mission map's, S5's.
+				// +0xc, 1503 +0x10, 1504 +0x14, 1505 +0x18, 1506 +0x1c) with the map.
+				if (screens.MissionMap is { } map) {
+					switch (message.Target) {
+						case ZoomIn:
+							map.ZoomIn();
+							break;
+						case ZoomOut:
+							map.ZoomOut();
+							break;
+						case MapUp:
+							map.PanNorth();
+							break;
+						case MapDown:
+							map.PanSouth();
+							break;
+						case MapLeft:
+							map.PanWest();
+							break;
+						default:
+							map.PanEast();
+							break;
+					}
+				}
+
 				screens.MapRefresh = 3;
 				PressMapArea();
 				break;

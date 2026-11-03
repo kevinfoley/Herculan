@@ -37,7 +37,7 @@ public sealed class Es1ShellTime {
 	/// <summary>The word <c>000aa7a4</c>: <see cref="Scale"/> over <see cref="Unit2"/>.</summary>
 	public short Scale2 { get; private set; }
 
-	/// <summary>The dword <c>0007e6fc</c>, which <see cref="Tick"/> counts up and <c>Anm_Play</c> reads.</summary>
+	/// <summary>The dword <c>0007e6fc</c>, which <see cref="Tick"/> counts up and <c>Anm_Play</c> and the mouse queue's callback (<see cref="Es1ShellMouseQueue.Now"/>) read.</summary>
 	public int AnmClock { get; private set; }
 
 	/// <summary>

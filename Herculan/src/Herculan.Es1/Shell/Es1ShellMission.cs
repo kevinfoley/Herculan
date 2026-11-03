@@ -378,13 +378,15 @@ public sealed class Es1ShellMission {
 	/// <summary>
 	/// <c>Shell_PrepareMission</c> (<c>0002a523</c>) (docs/es1/shell/main-menu.md#the-buttons), after every mission load
 	/// the shell's menus make: the mission map deleted (<see cref="Es1ShellScreens.DeleteMissionMap"/>), the objectives
-	/// written (<see cref="WriteObjectives"/>), and the mission map made again with <c>ShellMap_Constructor</c>
-	/// (<see cref="Es1ShellMap.Build"/>) on <see cref="SquadMemberCount"/>.
+	/// written (<see cref="WriteObjectives"/>), the mouse queue started (<see cref="Es1ShellMouseQueue.Start"/>) and its
+	/// follow byte cleared, and the mission map made again with <c>ShellMap_Constructor</c> (<see cref="Es1ShellMap.Build"/>)
+	/// on <see cref="SquadMemberCount"/>.
 	/// </summary>
 	public void Prepare(Es1ShellScreens screens) {
 		screens.DeleteMissionMap();
 		WriteObjectives();
-		// PLACEHOLDER: maybe_MouseEventQueue_Start (00010559), the gadgets' mouse queue, and the byte 0007e5df cleared, S5's.
+		screens.MapMouse.Start();
+		screens.MapMouse.FollowsMouse = false;
 		screens.MissionMap = Es1ShellMap.Build(_installRoot, _content, _data, (short)SquadMemberCount, screens.Globals.Widgets);
 	}
 

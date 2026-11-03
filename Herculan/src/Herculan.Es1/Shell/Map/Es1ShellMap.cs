@@ -537,6 +537,218 @@ public sealed class Es1ShellMap {
 	}
 
 	/// <summary>
+	/// Slot <c>+8</c> of <c>ShellMapVtable</c>, <c>ShellMap_ZoomIn</c> (<c>0000d43c</c>) (docs/es1/shell/map.md#the-camera-moves):
+	/// once the intro has ended, <c>Map_ZoomIn</c> (<c>00009043</c>), the altitude down <see cref="Es1MapBnd.ZoomStep"/>
+	/// when it stays at or above <see cref="Es1MapBnd.AltitudeLow"/>, with the pan step for it; then the gadgets and the
+	/// callout placed again.
+	/// </summary>
+	public void ZoomIn() {
+		if (!IntroEnded) {
+			return;
+		}
+
+		int altitude = unchecked(Altitude - _mapBnd.ZoomStep);
+		if (_mapBnd.AltitudeLow <= altitude) {
+			Altitude = altitude;
+			PanStep = PanStepFor(Altitude);
+		}
+
+		PlaceAfterMove();
+	}
+
+	/// <summary>
+	/// Slot <c>+0xc</c>, <c>ShellMap_ZoomOut</c> (<c>0000d469</c>): once the intro has ended, <c>Map_ZoomOut</c>
+	/// (<c>00009010</c>), the altitude up <see cref="Es1MapBnd.ZoomStep"/> when it stays at or below
+	/// <see cref="Es1MapBnd.AltitudeHigh"/>, with the pan step for it; an altitude above the full view's then becomes it,
+	/// with the pan step for it again; then the gadgets and the callout placed again.
+	/// </summary>
+	public void ZoomOut() {
+		if (!IntroEnded) {
+			return;
+		}
+
+		int altitude = unchecked(Altitude + _mapBnd.ZoomStep);
+		if (altitude <= _mapBnd.AltitudeHigh) {
+			Altitude = altitude;
+			PanStep = PanStepFor(Altitude);
+		}
+
+		if (FullView.Altitude < Altitude) {
+			Altitude = FullView.Altitude;
+			PanStep = PanStepFor(Altitude);
+		}
+
+		PlaceAfterMove();
+	}
+
+	/// <summary>
+	/// Slot <c>+0x10</c>, <c>ShellMap_PanNorth</c> (<c>0000d4b8</c>): once the intro has ended, <c>Map_PanNorth</c>
+	/// (<c>000090be</c>), the pan's y up <see cref="PanStep"/> when the camera's y plus the step is at most
+	/// <see cref="Es1MapBnd.PanLimit"/>; then the gadgets and the callout placed again.
+	/// </summary>
+	public void PanNorth() {
+		if (!IntroEnded) {
+			return;
+		}
+
+		if (unchecked(CameraY + PanStep) <= _mapBnd.PanLimit) {
+			PanY = unchecked(PanY + PanStep);
+		}
+
+		PlaceAfterMove();
+	}
+
+	/// <summary>
+	/// Slot <c>+0x14</c>, <c>ShellMap_PanSouth</c> (<c>0000d4e5</c>): <c>Map_PanSouth</c> (<c>000090df</c>), the pan's y
+	/// down the step when the camera's y less the step is at least −<see cref="Es1MapBnd.PanLimit"/>, as
+	/// <see cref="PanNorth"/>.
+	/// </summary>
+	public void PanSouth() {
+		if (!IntroEnded) {
+			return;
+		}
+
+		if (-_mapBnd.PanLimit <= unchecked(CameraY - PanStep)) {
+			PanY = unchecked(PanY - PanStep);
+		}
+
+		PlaceAfterMove();
+	}
+
+	/// <summary>
+	/// Slot <c>+0x18</c>, <c>ShellMap_PanWest</c> (<c>0000d512</c>): <c>Map_PanWest</c> (<c>00009076</c>), the pan's x
+	/// down the step when the camera's x less the step is at least −<see cref="Es1MapBnd.PanLimit"/>, as
+	/// <see cref="PanNorth"/>.
+	/// </summary>
+	public void PanWest() {
+		if (!IntroEnded) {
+			return;
+		}
+
+		if (-_mapBnd.PanLimit <= unchecked(CameraX - PanStep)) {
+			PanX = unchecked(PanX - PanStep);
+		}
+
+		PlaceAfterMove();
+	}
+
+	/// <summary>
+	/// Slot <c>+0x1c</c>, <c>ShellMap_PanEast</c> (<c>0000d53f</c>): <c>Map_PanEast</c> (<c>0000909d</c>), the pan's x up
+	/// the step when the camera's x plus the step is at most <see cref="Es1MapBnd.PanLimit"/>, as <see cref="PanNorth"/>.
+	/// </summary>
+	public void PanEast() {
+		if (!IntroEnded) {
+			return;
+		}
+
+		if (unchecked(CameraX + PanStep) <= _mapBnd.PanLimit) {
+			PanX = unchecked(PanX + PanStep);
+		}
+
+		PlaceAfterMove();
+	}
+
+	/// <summary>
+	/// Slot <c>+0x20</c>, <c>ShellMap_ResetPan</c> (<c>0000d56c</c>): once the intro has ended, <c>Map_ResetPan</c>
+	/// (<c>00009106</c>), the pan zeroed; then the gadgets and the callout placed again. Its caller is map.md's Open.
+	/// </summary>
+	public void ResetPan() {
+		if (!IntroEnded) {
+			return;
+		}
+
+		PanX = 0;
+		PanY = 0;
+		PlaceAfterMove();
+	}
+
+	/// <summary>The camera moves' last steps: <see cref="PlaceGadgets"/> and <see cref="PlaceCallout"/>.</summary>
+	private void PlaceAfterMove() {
+		PlaceGadgets();
+		PlaceCallout();
+	}
+
+	/// <summary>
+	/// <c>ShellMap_SelectGadget</c> (<c>0000d3d2</c>)(map, <paramref name="gadget"/>) (docs/es1/shell/map.md#picking-a-gadget),
+	/// which a gadget's click runs: nothing when the gadget is not one of <see cref="Gadgets"/>; otherwise its index
+	/// becomes <see cref="SelectedGadget"/>, <see cref="PlaceCallout"/> runs and <see cref="RedrawDue"/> is set.
+	/// </summary>
+	public void SelectGadget(Es1MapGadget gadget) {
+		int index = _gadgets.IndexOf(gadget);
+		if (index < 0) {
+			return;
+		}
+
+		SelectedGadget = (short)index;
+		PlaceCallout();
+		RedrawDue = true;
+	}
+
+	/// <summary>
+	/// <c>ShellMap_SelectNextGadget</c> (<c>0000d599</c>), the key <c>.</c>: <see cref="SelectedGadget"/> stepped forward,
+	/// the count wrapping to 0, until a gadget passes <see cref="InsideViewport"/>, which <see cref="PlaceCallout"/> then
+	/// places, or the index comes back to where it started. Nothing is set to redraw: the key's handler sets
+	/// <c>000809a8</c> to 3. Retail reads its array's first slot past the count with no gadget, and from −1 with no gadget
+	/// passing never comes back to its start (docs/es1/shell/map.md#open); here no gadget does nothing and a whole round
+	/// with none passing is reported and stops, engine guards.
+	/// </summary>
+	public void SelectNextGadget() => StepSelection(1);
+
+	/// <summary>
+	/// <c>ShellMap_SelectPrevGadget</c> (<c>0000d657</c>), the key <c>,</c>: <see cref="SelectedGadget"/> stepped back,
+	/// −1 becoming 0 and below 0 the count less 1, as <see cref="SelectNextGadget"/> otherwise, with its guards.
+	/// </summary>
+	public void SelectPrevGadget() => StepSelection(-1);
+
+	private void StepSelection(int step) {
+		int count = _gadgets.Count;
+		if (count == 0) {
+			Console.Error.WriteLine("The map has no gadget to step to.");
+			return;
+		}
+
+		short start = SelectedGadget;
+		for (int steps = 0; ; steps++) {
+			if (steps == count) {
+				Console.Error.WriteLine($"No map gadget lies inside the viewport, from gadget {start}: retail's search does not end.");
+				return;
+			}
+
+			short index = SelectedGadget;
+			if (step > 0) {
+				index++;
+				if (index == count) {
+					index = 0;
+				}
+			} else if (index == -1) {
+				index = 0;
+			} else {
+				index--;
+				if (index < 0) {
+					index = (short)(count - 1);
+				}
+			}
+
+			SelectedGadget = index;
+			if (InsideViewport(_gadgets[index].Rect)) {
+				PlaceCallout();
+				return;
+			}
+
+			if (index == start) {
+				return;
+			}
+		}
+	}
+
+	/// <summary>
+	/// The selection steps' test: a gadget's viewport-relative rect strictly inside the viewport's screen rect
+	/// <see cref="Rect"/>, left and top beyond its left and top and right and bottom short of its right and bottom.
+	/// </summary>
+	private bool InsideViewport(Es1Rect rect) =>
+		Rect.X0 < rect.X0 && Rect.Y0 < rect.Y0 && rect.X1 < Rect.X1 && rect.Y1 < Rect.Y1;
+
+	/// <summary>
 	/// <c>ShellMap_Dtor</c> (<c>00009a73</c>)'s step that reaches past the map (docs/es1/shell/map.md#destroying-it): the
 	/// sun unregistered with <c>Light_Unregister</c> (<c>00053850</c>). The rest frees the map's own memory.
 	/// </summary>

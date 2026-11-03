@@ -265,20 +265,14 @@ public sealed class Es1ShellFrame {
 	}
 
 	/// <summary>
-	/// <c>Shell_PollInput</c> (<c>0004de3a</c>): <c>0001098e</c>, then <c>Input_PollDeviceBlock</c> (<c>000277d8</c>) on
-	/// the shell's devices, then each of the four buttons <c>+0x1d</c>–<c>+0x20</c> with its latch set inverted while it
-	/// still equals the latched value and the latch dropped once it differs, and the keyboard word's Num Lock and Scroll
-	/// Lock bits cleared.
-	///
-	/// <para><c>0001098e</c> is the shell's copy of the simulator's <c>CockpitMouse_ProcessQueue</c> for a widget root, not
-	/// the menus' path: the driver calls the menus' callbacks itself (<see cref="Menus.Es1ShellMouse"/>). It returns at once
-	/// until <c>maybe_MouseEventQueue_Start</c> (<c>00010559</c>, which <c>Shell_PrepareMission</c> and screen 1320's case
-	/// call) has registered its queue's callback and <c>0001070d</c> has set its root, so on every ported screen it does
-	/// nothing.</para>
+	/// <c>Shell_PollInput</c> (<c>0004de3a</c>): the shell's mouse queue (<see cref="Es1ShellMouseQueue.Process"/>), then
+	/// <c>Input_PollDeviceBlock</c> (<c>000277d8</c>) on the shell's devices, then each of the four buttons
+	/// <c>+0x1d</c>–<c>+0x20</c> with its latch set inverted while it still equals the latched value and the latch dropped
+	/// once it differs, and the keyboard word's Num Lock and Scroll Lock bits cleared. The queue is not the menus' path:
+	/// the driver calls the menus' callbacks itself (<see cref="Menus.Es1ShellMouse"/>).
 	/// </summary>
 	public Es1LiveBlock PollInput() {
-		// PLACEHOLDER: 0001098e's queue, once Shell_PrepareMission's maybe_MouseEventQueue_Start (the mission map's, S5's) or
-		// screen 1320's case starts it.
+		_screens.MapMouse.Process();
 		var block = PollDeviceBlock();
 		for (int i = 0; i < LatchedButtons; i++) {
 			if (!_latched[i]) {
@@ -362,8 +356,31 @@ public sealed class Es1ShellFrame {
 					// No key, and Ctrl+C, whose entry goes straight to the buttons.
 					break;
 				case 0x0039 or 0x0839 or 0x0033 or 0x0833 or 0x0034 or 0x0834 or 0x000c or 0x080c or 0x000d or 0x080d:
-					// Space, ',', '.', '-' and '=', with or without Shift: Shell_MissionMap (000809a4)'s functions while it is
-					// set and the byte 000809a8 is not 0. PLACEHOLDER: the mission map's, S5's.
+					// Space, ',', '.', '-' and '=', with or without Shift (00012c37 to 00012d59): while Shell_MissionMap
+					// (000809a4) is set and the byte 000809a8 is not 0, ShellMap_SkipIntro, ShellMap_SelectPrevGadget,
+					// ShellMap_SelectNextGadget, or the map table's slot +0xc or +8, then 000809a8 set to 3.
+					if (_screens.MissionMap is { } map && _screens.MapRefresh != 0) {
+						switch (word & 0xff) {
+							case 0x39:
+								map.SkipIntro();
+								break;
+							case 0x33:
+								map.SelectPrevGadget();
+								break;
+							case 0x34:
+								map.SelectNextGadget();
+								break;
+							case 0x0c:
+								map.ZoomOut();
+								break;
+							default:
+								map.ZoomIn();
+								break;
+						}
+
+						_screens.MapRefresh = 3;
+					}
+
 					break;
 				case 0x0052:
 					// Insert (00012cca): Tab to the dialog while prefs.cfg option 10, the simulator's throttle keys, is set.

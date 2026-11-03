@@ -59,11 +59,10 @@ public sealed class Es1MapGadget : Es1Widget {
 	}
 
 	/// <summary>
-	/// Slot <c>+0xc</c>, <c>MapGadget_OnClick</c> (<c>0000dbd3</c>), the value not read. PLACEHOLDER: its
-	/// <c>ShellMap_SelectGadget</c> (<c>0000d3d2</c>)(the map, gadget), S5's P19, with the mouse queue that reaches it.
+	/// Slot <c>+0xc</c>, <c>MapGadget_OnClick</c> (<c>0000dbd3</c>), the value not read: <see cref="Es1ShellMap.SelectGadget"/>
+	/// with this gadget. The shell's mouse queue reaches it (<see cref="Es1ShellMouseQueue"/>).
 	/// </summary>
-	public override void OnClick(short value) {
-	}
+	public override void OnClick(short value) => Map.SelectGadget(this);
 
 	/// <summary>Slot <c>+0x14</c>, <c>Widget_GetButtonValueShellMapCopy</c> (<c>0000db9e</c>): <c>Widget_ClickButtons</c> (<c>0007e66c</c>).</summary>
 	public override short GetValue(Es1WidgetGlobals globals) => (short)globals.ClickButtons;

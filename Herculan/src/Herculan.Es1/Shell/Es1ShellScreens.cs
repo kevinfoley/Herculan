@@ -40,7 +40,11 @@ public sealed class Es1ShellScreens {
 		_content = content;
 		Globals = globals;
 		_lipSync = lipSync;
+		MapMouse = new Es1ShellMouseQueue(devices.Mouse, devices.Display.Cursor, globals.Widgets);
 	}
+
+	/// <summary>The shell's mouse queue, which the war map's gadgets take their clicks from.</summary>
+	public Es1ShellMouseQueue MapMouse { get; }
 
 	/// <summary>The window file's globals the menus share with the input.</summary>
 	public Es1MenuGlobals Globals { get; }
@@ -117,12 +121,13 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>
 	/// <c>Shell_DeleteMissionMap</c> (<c>0002a4ec</c>) (docs/es1/shell/war-map.md#leaving-it): with
-	/// <see cref="MissionMap"/> set, its intro skipped (<see cref="Es1ShellMap.SkipIntro"/>), then <c>ShellMap_Dtor</c>
-	/// (<c>00009a73</c>)(map, 3) (<see cref="Es1ShellMap.Destroy"/>), and the map cleared.
+	/// <see cref="MissionMap"/> set, the mouse queue stopped (<see cref="Es1ShellMouseQueue.Stop"/>), its intro skipped
+	/// (<see cref="Es1ShellMap.SkipIntro"/>), then <c>ShellMap_Dtor</c> (<c>00009a73</c>)(map, 3)
+	/// (<see cref="Es1ShellMap.Destroy"/>), and the map cleared.
 	/// </summary>
 	public void DeleteMissionMap() {
 		if (MissionMap is { } map) {
-			// PLACEHOLDER: maybe_MouseEventQueue_Stop (000106af), the gadgets' mouse queue, S5's.
+			MapMouse.Stop();
 			map.SkipIntro();
 			map.Destroy();
 			MissionMap = null;
@@ -153,11 +158,11 @@ public sealed class Es1ShellScreens {
 	/// <summary><c>WarMap_SavedKeyboardMode</c> (<c>000a04d8</c>): the keyboard's mode while the war map is up.</summary>
 	public int SavedKeyboardMode { get; set; }
 
-	/// <summary>
-	/// The byte <c>000aa778</c>, 0 in the image, which the war map sets and its destructor clears; its reader is the mouse
-	/// callback <c>00010900</c>, the mission map's, S5's (docs/es1/shell/war-map.md#open).
-	/// </summary>
-	public byte MapMouseFlag { get; set; }
+	/// <inheritdoc cref="Es1ShellMouseQueue.Live"/>
+	public byte MapMouseFlag {
+		get => (byte)(MapMouse.Live ? 1 : 0);
+		set => MapMouse.Live = value != 0;
+	}
 
 	/// <summary>
 	/// The byte <c>000809a9</c>, 0 in the image: <see cref="HandleMessage"/> plays the intro's last two scripts on the next

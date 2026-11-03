@@ -103,6 +103,7 @@ public static class Es1ShellHost {
 			_backdrop = new Es1ShellBackdrop(_devices.Display, content, _dirty);
 			_lipSync = new Es1LipSyncPlayer(_devices.Display, content.Read, _globals.MessageBox);
 			_screens = new Es1ShellScreens(_devices, _backdrop, _dirty, content, _globals, _lipSync) { ExitCode = exitCode };
+			_screens.MapMouse.Now = () => unchecked((uint)_time.AnmClock);
 			_frame = new Es1ShellFrame(_devices, _backdrop, _dirty, _screens, _time, switches.DebugMode);
 			_shellMouse = new Es1ShellMouse(_globals);
 		}

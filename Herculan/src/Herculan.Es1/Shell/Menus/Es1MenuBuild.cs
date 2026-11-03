@@ -150,7 +150,6 @@ public static class Es1MenuBuild {
 					break;
 				case HotspotKind:
 					if (Array.IndexOf(HotspotIds, record.Id) >= 0) {
-						// PLACEHOLDER: 1502's a, the rect 000a02d4, is a later module's; no hotspot keeps one until it lands.
 						var handler = record.Id switch {
 							Es1DebriefingMenu.ResultsPanel => Es1DebriefingMenu.ResultsHandler(context),
 							Es1CareerStatsAlert.StatsPanel => Es1CareerStatsAlert.StatsHandler(context),
@@ -160,9 +159,11 @@ public static class Es1MenuBuild {
 							>= Es1CrewAssignMenu.FirstPortrait and <= Es1CrewAssignMenu.LastPortrait => Es1CrewAssignMenu.PortraitHandler(context),
 							>= Es1CrewAssignMenu.FirstLines and <= Es1CrewAssignMenu.LastLines => Es1CrewAssignMenu.LinesHandler(context),
 							>= Es1CrewAssignMenu.FirstTile and <= Es1CrewAssignMenu.LastTile => Es1CrewAssignMenu.BayNumberHandler(context),
-							_ => HotspotPlaceholder,
+							_ => MapAreaNoOp,
 						};
-						menu.Window?.AddHotspot(null, record.Id, handler, rect);
+						// 1502's a is the map's rect 000a02d4 (Es1ShellMap.Area), which holds its own: no point hits it.
+						Es1Rect? excluded = record.Id == MapArea ? Map.Es1ShellMap.Area : null;
+						menu.Window?.AddHotspot(excluded, record.Id, handler, rect);
 					}
 
 					break;
@@ -506,15 +507,18 @@ public static class Es1MenuBuild {
 		return [.. lines];
 	}
 
+	/// <summary>The war map's area, whose hotspot <see cref="MapAreaNoOp"/> handles.</summary>
+	private const short MapArea = 1502;
+
 	/// <summary>
-	/// The handler 1502 is given in place of its own (<see cref="HotspotIds"/>): it draws nothing. The ported handlers are
-	/// 1522's, the debriefing's results panel (<see cref="Es1DebriefingMenu.ResultsHandler"/>), 1231's, the career's stats
+	/// <c>WarMapMenu_MapAreaNoOp</c> (<c>0002bbaf</c>), 1502's handler (docs/es1/shell/war-map.md#where-the-object-file-starts-and-ends):
+	/// it draws nothing. The other handlers of <see cref="HotspotIds"/> are 1522's, the debriefing's results panel
+	/// (<see cref="Es1DebriefingMenu.ResultsHandler"/>), 1231's, the career's stats
 	/// (<see cref="Es1CareerStatsAlert.StatsHandler"/>), CREW's three (<see cref="Es1CrewAssignMenu.PortraitHandler"/>,
 	/// <see cref="Es1CrewAssignMenu.LinesHandler"/>, <see cref="Es1CrewAssignMenu.BayNumberHandler"/>), ARMING's two
 	/// (<see cref="Es1ArmingMenu.WeaponInfoHandler"/>, <see cref="Es1ArmingMenu.MissileInfoHandler"/>) and BUILD's
 	/// (<see cref="Es1FabricationMenu.PanelHandler"/>).
 	/// </summary>
-	private static void HotspotPlaceholder(Es1ShellRenderContext context, Es1Rect rect, short id) {
-		// PLACEHOLDER: the hotspot handler 0002bbaf, the war map's, S5's; the area draws nothing.
+	private static void MapAreaNoOp(Es1ShellRenderContext context, Es1Rect rect, short id) {
 	}
 }

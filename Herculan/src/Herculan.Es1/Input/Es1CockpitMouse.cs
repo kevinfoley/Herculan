@@ -27,12 +27,14 @@ public sealed class Es1CockpitMouse {
 	private List<Es1MouseEvent> _back = new(QueueCapacity);
 	private List<Es1MouseEvent> _front = new(QueueCapacity);
 	/// <param name="cursor">The display library's cursor the pointer moves.</param>
-	public Es1CockpitMouse(Es1Cursor cursor) {
+	/// <param name="widgets">The UI library's globals the queue presses widgets through; new ones when none are given.</param>
+	public Es1CockpitMouse(Es1Cursor cursor, Es1WidgetGlobals? widgets = null) {
 		Cursor = cursor;
+		Widgets = widgets ?? new();
 	}
 
 	/// <summary>The UI library's press, release and drag globals.</summary>
-	public Es1WidgetGlobals Widgets { get; } = new();
+	public Es1WidgetGlobals Widgets { get; }
 
 	/// <summary>The display library's cursor, which <c>Cursor_SyncPosition</c> moves.</summary>
 	public Es1Cursor Cursor { get; }
@@ -149,6 +151,17 @@ public sealed class Es1CockpitMouse {
 		}
 
 		LastEventTime = now;
+	}
+
+	/// <summary>
+	/// The callback taken off the driver <see cref="Init"/> registered it with, <see cref="CallbackSlot"/> cleared and
+	/// both queues emptied: the shell's <see cref="Shell.Es1ShellMouseQueue.Stop"/>.
+	/// </summary>
+	public void RemoveCallback() {
+		Driver?.RemoveCallback(CallbackSlot);
+		CallbackSlot = 0;
+		_back.Clear();
+		_front.Clear();
 	}
 
 	/// <summary><c>CockpitMouseQueue_Push</c> (<c>00044830</c>)(time, record): false when the back queue holds <see cref="QueueLimit"/>; otherwise the record appended.</summary>
