@@ -23,10 +23,10 @@ public class Es1Base : MapObject {
 	/// <summary>0x0C — heading ref (row 4).</summary>
 	public short HeadingRef { get; set; }
 
-	/// <summary>0x0E — a word, exported; unset <c>-1</c>.</summary>
+	/// <summary>0x0E — the out-of-action flag number (docs/es1/formats/msn-mission-file.md#flyers); exported, unset <c>-1</c>.</summary>
 	public short Word0E { get; set; }
 
-	/// <summary>0x10 — a word, exported; unset <c>-1</c>.</summary>
+	/// <summary>0x10 — the out-of-action operation, with <see cref="Word0E"/>; exported, unset <c>-1</c>.</summary>
 	public short Word10 { get; set; }
 
 	/// <summary>0x12 — action ref (row 7).</summary>

@@ -80,7 +80,7 @@ CANCEL on the war map goes to the SINGLE MISSION menu, so an instant action's wa
 - **RETURN**, 100: [the return screen](#the-return-screen);
 - **VIEW DEMO**, 1301: becomes 9999 with `Shell_DemoRequested` (`000817ce`) set ([the ways out](startup.md#the-ways-out));
 - **CREDITS**, 1302: becomes 1300 with the byte `000809a9` 2, which plays the credits ([changing screens](menus.md#changing-screens--shell_handlemessage-0003c7d8), step 7), and `anm\esiege2.anm` into `000aacfe` with `0007fcd7` 2;
-- **PREFERENCES**, **CONTROLS** and **LOAD BATTLESET**, 1310, 1320 and 1330: no case, so `Shell_HandleMessage` opens the screen of that number.
+- **PREFERENCES**, **CONTROLS** and **LOAD BATTLESET**, 1310, 1320 and 1330: no case, so `Shell_HandleMessage` opens the screen of that number ([PREFERENCES](options.md#preferences--screen-1310), [CONTROLS](options.md#controls--screen-1320), [LOAD BATTLESET](#load-battleset)).
 
 ### LOAD BATTLESET
 

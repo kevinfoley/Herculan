@@ -26,10 +26,10 @@ public class Es1Flyer : MapObject {
 	/// <summary>0x34 — the type, which the simulator's first pass keeps.</summary>
 	public short Type { get; set; }
 
-	/// <summary>0x36 — a word, exported; unset <c>-1</c>.</summary>
+	/// <summary>0x36 — the out-of-action flag number (docs/es1/formats/msn-mission-file.md#flyers); exported, unset <c>-1</c>.</summary>
 	public short Word36 { get; set; }
 
-	/// <summary>0x38 — a word, exported; unset <c>-1</c>.</summary>
+	/// <summary>0x38 — the out-of-action operation, with <see cref="Word36"/>; exported, unset <c>-1</c>.</summary>
 	public short Word38 { get; set; }
 
 	/// <summary>0x3A — action ref (row 7).</summary>

@@ -192,7 +192,7 @@ Some commands act only on a page's first run, while `+0x42` is 0 ("first run"), 
 | `0xaf1f` | `TOKEN_POLY` | n, *n* x, *n* y | no | `0004aaaf` | Builds *n* points, the x values then the y values; fill `+0x1e3`; `Raster_DrawPolygonEitherWinding`. |
 | `0xaf2f` | `TOKEN_POLYFILL` | as `0xaf1f` | no | `0004aaaf` | As `0xaf1f`, drawing first with fill `+0x1db`. |
 
-`TtmScript_RunSoundCommand` (`0004a0e0`) returns 1 for every opcode, and acts only while the byte `0007fcb9` is set and the page has not played its sound (`+0x41` is 0):
+`TtmScript_RunSoundCommand` (`0004a0e0`) returns 1 for every opcode, and acts only while the byte `Shell_SoundOption` (`0007fcb9`, PREFERENCES' SOUND, [the buttons](../shell/options.md#the-buttons--prefsmenu_onmessage-0002b82b)) is set and the page has not played its sound (`+0x41` is 0):
 
 | Opcode | Name | Arguments | In the files | What it does |
 |---|---|---|---|---|
@@ -355,6 +355,5 @@ The name at `000925f8` comes from the command line: the option `-C` passes the t
 - **Open:** what writes the simulator's script origin `+0x1b5` and `+0x1b9` but `TtmScript_Ctor`'s zeroes. `es2_fieldscan.py` over `ES1DBSIM 00069540`–`0007cd28` finds that store and no other, where the same scan of the clock's code finds its store of `+0x1bd`.
 - **Open:** whether a cockpit of a chassis without a script, types 8 to 15, is reached, where `CockpitClock_Ctor`'s failed open reads the dword before the handle table.
 - **Open:** in the simulator, `es2_xref.py` finds no call of `Ttm_ManagerDtor`, `Ttm_GetPage`, `Ttm_GetMode`, `Ttm_GetLoop`, `Ttm_SetPage`, `Ttm_SetMode`, `Ttm_SetLoop` or `Ttm_Close`, and no reference to `Ttm_TokenName`; what `0002b4a0`, the other caller of `Cockpit_RunTtmScripts`, is.
-- **Open:** what the byte `0007fcb9` is, which gates the scripts' sounds as it gates [the animations'](anm-animation.md#playing); a menu dialog control's word is taken from it ([the kinds](dlg-menu-dialogs.md#the-kinds)).
 - **Open:** what reads `VER:`, `TTI:` and `TAG:`, and what the tags name. A byte search of both images for `VER:`, `TTI:`, `TAG:` and `4.14` found none, where the same search found `PAG:` and `TT3:` in each.
 - **Open:** what opens `AMBIENC1.TTM` and `CPWINCRK.TTM`. A byte search of both images for `ambienc` found none, where the same search for `cpwincrk` found the one `CockpitClock_Ctor` copies after its open.

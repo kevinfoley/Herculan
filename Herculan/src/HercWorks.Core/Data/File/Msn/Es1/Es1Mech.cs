@@ -31,10 +31,10 @@ public class Es1Mech : MapObject {
 	/// <summary>0x48 — heading ref (row 4).</summary>
 	public short HeadingRef { get; set; }
 
-	/// <summary>0x4A — a word, exported; unset <c>-1</c>.</summary>
+	/// <summary>0x4A — the out-of-action flag number (docs/es1/formats/msn-mission-file.md#flyers); exported, unset <c>-1</c>.</summary>
 	public short Word4A { get; set; }
 
-	/// <summary>0x4C — a word, exported; unset <c>-1</c>.</summary>
+	/// <summary>0x4C — the out-of-action operation, with <see cref="Word4A"/>; exported, unset <c>-1</c>.</summary>
 	public short Word4C { get; set; }
 
 	/// <summary>

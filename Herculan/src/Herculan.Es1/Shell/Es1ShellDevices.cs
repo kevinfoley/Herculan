@@ -30,7 +30,7 @@ public sealed class Es1ShellDevices {
 	public Es1KeySubscriber NavKeySubscriber { get; }
 
 	/// <summary>
-	/// The byte <c>0007e09d</c>, <c>0xff</c> in the image: option 11 as <see cref="ApplyMouseOption"/> last applied it, so
+	/// The byte <c>Prefs_MouseOptionApplied</c> (<c>0007e09d</c>), <c>0xff</c> in the image: option 11 as <see cref="ApplyMouseOption"/> last applied it, so
 	/// the first call always applies.
 	/// </summary>
 	public byte MouseOptionApplied { get; private set; } = 0xff;
@@ -166,10 +166,10 @@ public sealed class Es1ShellDevices {
 		// INT 16h function 2, which Keyboard_SetMode reads when the war map sets the mode again.
 		Keyboard.BiosShiftFlags = HostKeyboard.ReadBiosShiftFlags;
 
-		// 000081a4: every option's handler cleared, then Prefs_Init (00008920): option 11's handler 0000868c
-		// (ApplyMouseOption), Prefs_Load of data\prefs.cfg, which runs each registered handler with its option, so option
+		// 000081a4: every option's handler cleared, then Prefs_Init (00008920): option 11's handler
+		// Prefs_ApplyMouseOption (0000868c, ApplyMouseOption), Prefs_Load of data\prefs.cfg, which runs each registered handler with its option, so option
 		// 11's alone; Speech_ArchiveFound (0007e09c) from Speech_ArchivePresent and, when that is 0, option 2 set to 0 with
-		// Prefs_SetOption(1, 0, 2); and 000087ff.
+		// Prefs_SetOption(1, 0, 2); and Input_CreateJoystickDevices (000087ff).
 		string prefsPath = Es1MissionFiles.DataPath(installRoot, "prefs.cfg");
 		var preferences = Es1Preferences.FromFile(File.Exists(prefsPath) ? File.ReadAllBytes(prefsPath) : null, prefsPath);
 		for (int option = 0; option < Es1Preferences.OptionCount; option++) {
@@ -183,7 +183,7 @@ public sealed class Es1ShellDevices {
 			preferences.ShellSetOption(true, 0, Es1Preferences.RadioOption);
 		}
 
-		// PLACEHOLDER: 000087ff, the shell's Input_CreateJoystickDevices: the devices option 7 names, and with option 9 the
+		// PLACEHOLDER: the shell's Input_CreateJoystickDevices (000087ff): the devices option 7 names, and with option 9 the
 		// rudder pedals or option 9 cleared under option 7 = 2, each loaded with Joystick_LoadCalibration (000086d6) from
 		// Shell_FileNames lines 1 and 2 through Path_ApplyAltDrive and enabled, as the simulator's Es1JoystickDevices.Create
 		// builds them. The shell has no game port here (the simulator's waits for the host's controller,
@@ -194,7 +194,7 @@ public sealed class Es1ShellDevices {
 	}
 
 	/// <summary>
-	/// <c>0000868c</c>, option 11's handler, <c>Prefs_ApplyMouseOption</c>'s statements (<see cref="Es1InputBuild.ApplyMouseOption"/>):
+	/// <c>Prefs_ApplyMouseOption</c> (<c>0000868c</c>), option 11's handler, the simulator's statements (<see cref="Es1InputBuild.ApplyMouseOption"/>):
 	/// when <paramref name="value"/> differs from <see cref="MouseOptionApplied"/>, it is kept there and, with the mouse
 	/// device the shell always builds, the driver turned off for 0 (<c>Mouse_DisableDriver</c>) and on otherwise
 	/// (<c>Mouse_EnableDriver</c>). CONTROLS' MOUSE runs it at each click.

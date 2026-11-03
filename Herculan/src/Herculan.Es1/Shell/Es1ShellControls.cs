@@ -101,7 +101,7 @@ public sealed class Es1ShellControls {
 	/// The shell's <c>alert.cpp</c> globals (docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d): the
 	/// display, the shell's mouse queue, the shell's input (<see cref="Es1ShellAlertInput"/>), the widgets'
 	/// <c>Shell_Fonts</c> entries 0 to 4, the styles table <c>00082654</c> and the corners <c>000ab4ee</c>; the page on the
-	/// screen <c>+0x84</c>, no open count, and the [Ctrl+C] entry. The hooks <c>0007d84c</c> and <c>0007d850</c> are 0 in
+	/// screen <c>+0x84</c>, no open count, and the [Ctrl+C] entry. The hooks <c>AlertPanel_EnterHook</c> (<c>0007d84c</c>) and <c>AlertPanel_LeaveHook</c> (<c>0007d850</c>) are 0 in
 	/// the image, and <c>es2_xref.py --decode</c> finds only <c>AlertPanel_Enter</c>'s and <c>AlertPanel_Leave</c>'s reads.
 	/// </summary>
 	private Es1AlertGlobals MakeAlertGlobals(Es1ShellData data, Es1Preferences preferences, GameContent content) {
@@ -120,8 +120,9 @@ public sealed class Es1ShellControls {
 		return new Es1AlertGlobals(devices.Display, _screens.MapMouse.Queue, input, widgets, content) {
 			PageOnScreen = () => devices.PairA,
 			CountsOpen = false,
-			// PLACEHOLDER: 00014ac7(CAPTURE), which builds CAPTURE paths with Screenshot_BuildPath and writes the screen to
-			// a .SCR and a .PAL (options.md's Open); the panel takes the key and returns 1 here, and nothing is written.
+			// PLACEHOLDER: Screenshot_Save (00014ac7)(CAPTURE), which grabs the screen and hands it to two writers under
+			// numbered CAPTURE paths (docs/es1/shell/options.md#the-capture--screenshot_save-00014ac7); the panel takes the key
+			// and returns 1 here, and nothing is written.
 			Capture = () => { },
 		};
 	}
@@ -171,13 +172,13 @@ public sealed class Es1ShellAlertInput : Es1AlertInput {
 	public override void LatchButton(int button) => _latch(1, button);
 
 	/// <summary>
-	/// The 0x29 bytes at <c>000a0ba4</c> copied to the panel's <c>+0x2e8</c>, with no button latched. The static
-	/// initialiser <c>0004deb0</c> builds that block, and <c>es2_xref.py</c> finds it held there and in
+	/// The 0x29 bytes of <c>PlayerInputBlock</c> (<c>000a0ba4</c>) copied to the panel's <c>+0x2e8</c>, with no button
+	/// latched. <c>PlayerInputBlock_StaticInit</c> (<c>0004deb0</c>) constructs that block, storing nothing, and <c>es2_xref.py</c> finds it held there and in
 	/// <c>AlertPanel_Enter</c> and <c>AlertPanel_Leave</c> alone, so there is nothing to keep it for here.
 	/// </summary>
 	public override Es1PlayerInputBlock? Keep() => null;
 
-	/// <summary>The 0x29 bytes copied back to <c>000a0ba4</c> (<see cref="Keep"/>); the mouse is not moved back.</summary>
+	/// <summary>The 0x29 bytes copied back to <c>PlayerInputBlock</c> (<see cref="Keep"/>); the mouse is not moved back.</summary>
 	public override void PutBack(Es1AlertGlobals globals, Es1PlayerInputBlock? kept) {
 	}
 
@@ -198,9 +199,9 @@ public sealed class Es1ShellAlertInput : Es1AlertInput {
 
 	/// <summary>
 	/// <c>ControlsPanel_ApplyDevices</c>' (<c>00006bed</c>) rebuild: the two joystick devices destroyed
-	/// (<c>JoystickDevice_Dtor</c>(device, 3)) and built again as <c>Prefs_Init</c>'s <c>000087ff</c> builds them.
+	/// (<c>JoystickDevice_Dtor</c>(device, 3)) and built again as <c>Input_CreateJoystickDevices</c> (<c>000087ff</c>) builds them.
 	/// PLACEHOLDER: the shell holds no joystick devices here (<see cref="Es1ShellDevices.Init"/>'s placeholder for
-	/// <c>000087ff</c>), so there is none to destroy or build.
+	/// <c>Input_CreateJoystickDevices</c>), so there is none to destroy or build.
 	/// </summary>
 	public override void RebuildJoysticks() {
 	}

@@ -832,7 +832,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_Enter",
-      "description": "(panel), its argument removed by this function: ES1DBSIM's AlertPanel_Enter (00045f00) on the shell's globals, copying the 0x29 bytes at 000a0ba4 to +0x2e8, with no button latched, the source and draw pages (the display 000ab616's +0x34 and +0x38) set to its +0x84, the hook 0007d84c, the cursor image 0007d848 loaded once from dci\\alert with 00008cc2, and no open count; the same statements in different code. es2_xref finds calls from ControlsPanel_Run (000064c4) and 00007631.",
+      "description": "(panel), its argument removed by this function: ES1DBSIM's AlertPanel_Enter (00045f00) on the shell's globals, copying the 0x29 bytes at PlayerInputBlock (000a0ba4) to +0x2e8, with no button latched, the source and draw pages (the display 000ab616's +0x34 and +0x38) set to its +0x84, the hook AlertPanel_EnterHook (0007d84c), the cursor image AlertPanel_CursorImage (0007d848) loaded once from dci\\alert with 00008cc2, and no open count; the same statements in different code. es2_xref finds calls from ControlsPanel_Run (000064c4) and 00007631.",
       "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 0000290b, diffed against ES1DBSIM's twin",
       "verified": {
         "bytes": "0000290b+511",
@@ -847,7 +847,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_Leave",
-      "description": "(panel), its argument removed by this function: ES1DBSIM's AlertPanel_Leave (000460b8) on the shell's globals, the hook 0007d850, the draw page put back at the display 000ab616's +0x38, the 0x29 bytes copied back to 000a0ba4, without moving the mouse to the saved pointer and with no open count; the same statements in different code. es2_xref finds calls from ControlsPanel_Run (000064c4) and 00007631.",
+      "description": "(panel), its argument removed by this function: ES1DBSIM's AlertPanel_Leave (000460b8) on the shell's globals, the hook AlertPanel_LeaveHook (0007d850), the draw page put back at the display 000ab616's +0x38, the 0x29 bytes copied back to PlayerInputBlock (000a0ba4), without moving the mouse to the saved pointer and with no open count; the same statements in different code. es2_xref finds calls from ControlsPanel_Run (000064c4) and 00007631.",
       "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 00002b0a, diffed against ES1DBSIM's twin",
       "verified": {
         "bytes": "00002b0a+283",
@@ -982,7 +982,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_HandleEvent",
-      "description": "(panel, block), its arguments removed by this function, slot +0x14 of AlertVtable (0007d920) and ControlsAlertVtable (0007dddc): ES1DBSIM's AlertPanel_HandleEvent (00046670) on the shell's block, buttons 0 and 1 at +0x1d and +0x1e, latched with Input_LatchButton (0004de18), the key word at +0; its REPNE SCASD table 0007d9f0 holds six codes, ES1DBSIM's five and 0x42e, Ctrl+C, whose case calls 00014ac7 with the string CAPTURE (0007d9e6). Case bodies 000032a5-000032f6 are code Ghidra left undefined.",
+      "description": "(panel, block), its arguments removed by this function, slot +0x14 of AlertVtable (0007d920) and ControlsAlertVtable (0007dddc): ES1DBSIM's AlertPanel_HandleEvent (00046670) on the shell's block, buttons 0 and 1 at +0x1d and +0x1e, latched with Input_LatchButton (0004de18), the key word at +0; its REPNE SCASD table 0007d9f0 holds six codes, ES1DBSIM's five and 0x42e, Ctrl+C, whose case calls Screenshot_Save (00014ac7) with the string CAPTURE (0007d9e6). Case bodies 000032a5-000032f6 are code Ghidra left undefined.",
       "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile and disassembly at 000031fe, diffed against ES1DBSIM's twin",
       "verified": {
         "bytes": "000031fe+258",
@@ -2132,6 +2132,21 @@
       }
     },
     {
+      "address": "0000868c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_ApplyMouseOption",
+      "description": "(value), its argument removed by this function: the handler Prefs_Init (00008920) registers for option 11. When the value differs from the byte Prefs_MouseOptionApplied (0007e09d), stores it there and, when Input_GetMouseDevice_Thunk answers a device, calls Mouse_DisableDriver for 0 and Mouse_EnableDriver otherwise. ES1DBSIM's Prefs_ApplyMouseOption (0004ad54)'s statements.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 0000868c",
+      "verified": {
+        "bytes": "0000868c+74",
+        "sha1": "a8603f1c5643",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000086d6",
       "binary": "ES1GO",
       "type": "function",
@@ -2162,12 +2177,27 @@
       }
     },
     {
+      "address": "000087ff",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_CreateJoystickDevices",
+      "description": "No arguments: builds the joystick devices option 7 (000aa255) names, each with (0, 1): 1 IMJoystick1_Ctor; 2 that and IMJoystick2_Ctor; 3 IMThrustmasterFCS_Ctor; 4 IMFlightstick_Ctor; 5 IMFlightstickPro_Ctor. With option 9 (000aa257) set it calls Prefs_SetOption(1, 0, 9) when option 7 is 2 and otherwise builds IMThrustmasterRCS_Ctor(0, 1) as the second device. Each device built gets Joystick_LoadCalibration (000086d6)(Path_ApplyAltDrive(Shell_FileNames line 1 for the first, 2 for the second), device) and InputDevice_Enable(device + 0x78). ES1DBSIM's Input_CreateJoystickDevices (0004af0c)'s statements with the shell's file names; the last step of Prefs_Init (00008920).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#building-the-devices; ES1GO decompile at 000087ff",
+      "verified": {
+        "bytes": "000087ff+289",
+        "sha1": "7047773e3760",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00008920",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Prefs_Init",
-      "description": "No arguments: Prefs_SetHandler (00008659)(0000868c, 0xb); Prefs_Load (000081ca); the byte Speech_ArchiveFound (0007e09c) = Speech_ArchivePresent (000087ce), and when that is 0 Prefs_SetOption (00008378)(1, 0, 2), option 2 set to 0; then 000087ff. ES1DBSIM's Prefs_Init (0004afe8) in role, with one call of Prefs_SetHandler (00008659), no in-progress flag, one load with no argument, no demo-mode loads and no joystick devices.",
+      "description": "No arguments: Prefs_SetHandler (00008659)(Prefs_ApplyMouseOption (0000868c), 0xb); Prefs_Load (000081ca); the byte Speech_ArchiveFound (0007e09c) = Speech_ArchivePresent (000087ce), and when that is 0 Prefs_SetOption (00008378)(1, 0, 2), option 2 set to 0; then Input_CreateJoystickDevices (000087ff). ES1DBSIM's Prefs_Init (0004afe8) in role, with one call of Prefs_SetHandler (00008659), no in-progress flag, one load with no argument, no demo-mode loads and no joystick devices.",
       "source": "Herculan/docs/es1/shell/startup.md#the-devices; ES1GO decompile at 00008920",
       "verified": {
         "bytes": "00008920+52",
@@ -4858,13 +4888,28 @@
       "type": "function",
       "confidence": "high",
       "name": "Screenshot_BuildPath",
-      "description": "(ext, base) in stack order, callee-cleaned: DBSIM's Screenshot_BuildPath (00453a40) with its arguments reversed, writing to 0009ae4c and numbering with the dword 0007eaf0 (ltoa): base's characters up to its NUL or first '.', at most 8 less the counter's digit count of them, then the counter's digits, then ext. es2_xref finds its two calls in 00014ac7, with .SCR and .PAL.",
+      "description": "(ext, base) in stack order, callee-cleaned: DBSIM's Screenshot_BuildPath (00453a40) with its arguments reversed, writing to 0009ae4c and numbering with the dword 0007eaf0 (ltoa): base's characters up to its NUL or first '.', at most 8 less the counter's digit count of them, then the counter's digits, then ext. es2_xref finds its two calls in Screenshot_Save (00014ac7), with .SCR and .PAL.",
       "source": "ES1GO decompile at 000143a8; es2_naming.py diff ES1GO 000143a8 DBSIM 00453a40",
       "verified": {
         "bytes": "000143a8+185",
         "sha1": "3b75333a21cf",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00014ac7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Screenshot_Save",
+      "description": "(name), its argument removed by this function: sets the bitmap 0009ae30's width 0009ae36 and height 0009ae34 from GLDisplay_GetAttribute 0 and 1 of the display 000ab616, format 8, and a Mem_New buffer of their product at 0009ae3e; points the display's source page +0x34 at its visible page +0x30 (through 000865f0 while it is the current display); installs a GLViewport over (0, 0)-(width, height), grabs the screen into the bitmap with Bitmap_GrabClipDispatch, and puts back the render context and the source page; then Screenshot_BuildPath (000143a8)(0007eb80, name) and 00014461(0009ae4c), the buffer freed, Screenshot_BuildPath(0007eb85, name) and 000147b9(0009ae4c), and the counter 0007eaf0 up by 1. Named after ES2's Screenshot_Save (DBSIM 00453ee0). es2_xref finds one call, from AlertPanel_HandleEvent (000031fe)'s Ctrl+C case.",
+      "source": "Herculan/docs/es1/shell/options.md#the-capture--screenshot_save-00014ac7; ES1GO decompile at 00014ac7",
+      "verified": {
+        "bytes": "00014ac7+961",
+        "sha1": "045e4724a169",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -10393,7 +10438,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMJoystick1_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMJoystick1_Ctor (0004be30) in different code, storing its own vtable 0008076e, which follows the class name IMJoystick1. es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and 000087ff.",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMJoystick1_Ctor (0004be30) in different code, storing its own vtable 0008076e, which follows the class name IMJoystick1. es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and Input_CreateJoystickDevices (000087ff).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "00026467+86",
@@ -10423,7 +10468,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMJoystick2_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMJoystick2_Ctor (0004be94) in different code, storing its own vtable 0008078a, which follows the class name IMJoystick2. es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and 000087ff.",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMJoystick2_Ctor (0004be94) in different code, storing its own vtable 0008078a, which follows the class name IMJoystick2. es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and Input_CreateJoystickDevices (000087ff).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "000264d8+86",
@@ -10453,7 +10498,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMThrustmasterFCS_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMThrustmasterFCS_Ctor (0004bef8) in different code, storing IMThrustmasterFCSVtable (000807ac). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and 000087ff.",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMThrustmasterFCS_Ctor (0004bef8) in different code, storing IMThrustmasterFCSVtable (000807ac). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and Input_CreateJoystickDevices (000087ff).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "00026549+102",
@@ -10483,7 +10528,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMThrustmasterRCS_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMThrustmasterRCS_Ctor (0004bfe0) in different code, storing IMThrustmasterRCSVtable (000807cc). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and 000087ff.",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMThrustmasterRCS_Ctor (0004bfe0) in different code, storing IMThrustmasterRCSVtable (000807cc). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and Input_CreateJoystickDevices (000087ff).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "00026653+98",
@@ -10513,7 +10558,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMFlightstick_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMFlightstick_Ctor (0004c054) in different code, storing IMFlightstickVtable (000807e8). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed), 000087ff and IMFlightstickPro_Ctor (000267d1).",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMFlightstick_Ctor (0004c054) in different code, storing IMFlightstickVtable (000807e8). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed), Input_CreateJoystickDevices (000087ff) and IMFlightstickPro_Ctor (000267d1).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "000266e2+95",
@@ -10543,7 +10588,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMFlightstickPro_Ctor",
-      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMFlightstickPro_Ctor (0004c114) in different code, calling IMFlightstick_Ctor (000266e2) and storing IMFlightstickProVtable (00080808). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and 000087ff.",
+      "description": "(this, mode), its arguments removed by this function: ES1DBSIM's IMFlightstickPro_Ctor (0004c114) in different code, calling IMFlightstick_Ctor (000266e2) and storing IMFlightstickProVtable (00080808). es2_xref finds calls from ControlsPanel_ApplyDevices (00006bed) and Input_CreateJoystickDevices (000087ff).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "000267d1+93",
@@ -16931,6 +16976,21 @@
       }
     },
     {
+      "address": "0004deb0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PlayerInputBlock_StaticInit",
+      "description": "(): the static constructor table's entry 0009a274: the inline constructor of the 0x29-byte PlayerInputBlock (000a0ba4) and of its 8-byte member at +2, each with a Mem_New fallback on a null address that the fixed address never takes; it stores nothing.",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO disassembly at 0004deb0",
+      "verified": {
+        "bytes": "0004deb0+76",
+        "sha1": "a9d3e3f8e046",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0004defc",
       "binary": "ES1GO",
       "type": "function",
@@ -21916,7 +21976,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Bitmap_GrabClipDispatch",
-      "description": "(header, point, flags), C convention: reads the screen into a bitmap. Clears the low four bits of the header's flags byte +5; sets its format byte +4 to 8 when the display depth 0008446a is 8 or 4 and the byte differs from it; zeroes its pixels (+0xa, size +6) with memset; moves the point by the clip block's (the one 0008441c points at) +0x20c/+0x210 less +0x21c/+0x220 when its +0x208 is 1; and by its clip mode +0x204 calls g_RasterRoutines slot 27 (0008661c, VGA8_ReadBitmap (0007425c)) with (header, point, clip, flags): clip 0 for mode 0, the block's rect +0x20c for mode 1, and for mode 2 once for each entry of the block's list (count +0) whose region type is 0, with that region's rect. ES2's Bitmap_GrabClipDispatch (DBSIM 00488868), the same statements. es2_xref finds three calls, from Region_SaveRect (00050658), Anm_Play (000132d8) and 00014ac7. The code of ES1DBSIM's Bitmap_GrabClipDispatch (0006aa70), relocated operands aside.",
+      "description": "(header, point, flags), C convention: reads the screen into a bitmap. Clears the low four bits of the header's flags byte +5; sets its format byte +4 to 8 when the display depth 0008446a is 8 or 4 and the byte differs from it; zeroes its pixels (+0xa, size +6) with memset; moves the point by the clip block's (the one 0008441c points at) +0x20c/+0x210 less +0x21c/+0x220 when its +0x208 is 1; and by its clip mode +0x204 calls g_RasterRoutines slot 27 (0008661c, VGA8_ReadBitmap (0007425c)) with (header, point, clip, flags): clip 0 for mode 0, the block's rect +0x20c for mode 1, and for mode 2 once for each entry of the block's list (count +0) whose region type is 0, with that region's rect. ES2's Bitmap_GrabClipDispatch (DBSIM 00488868), the same statements. es2_xref finds three calls, from Region_SaveRect (00050658), Anm_Play (000132d8) and Screenshot_Save (00014ac7). The code of ES1DBSIM's Bitmap_GrabClipDispatch (0006aa70), relocated operands aside.",
       "source": "ES1GO decompile at 0005afa8",
       "verified": {
         "bytes": "0005afa8+315",
@@ -26651,6 +26711,33 @@
       "source": "Herculan/docs/es1/shell/debriefing.md#the-results-panel"
     },
     {
+      "address": "0007d848",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertPanel_CursorImage",
+      "description": "The dci\\alert cursor, which AlertPanel_Enter (0000290b) loads with 00008cc2 while this is 0 and passes to AlertPanel_LoadCursor; 0 in the image. ES1DBSIM's AlertPanel_CursorImage (00094d7c).",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d"
+    },
+    {
+      "address": "0007d84c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertPanel_EnterHook",
+      "description": "A function AlertPanel_Enter (0000290b) calls when it is set; 0 in the image, and es2_xref --decode finds only Enter's test and call of it. ES1DBSIM's AlertPanel_EnterHook (00094d80).",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d"
+    },
+    {
+      "address": "0007d850",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertPanel_LeaveHook",
+      "description": "A function AlertPanel_Leave (00002b0a) calls when it is set; 0 in the image, and es2_xref --decode finds only Leave's test and call of it. ES1DBSIM's AlertPanel_LeaveHook (00094d84).",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d"
+    },
+    {
       "address": "0007d920",
       "binary": "ES1GO",
       "type": "data",
@@ -26739,6 +26826,15 @@
       "name": "Speech_ArchiveFound",
       "description": "Byte: Speech_ArchivePresent (000087ce)'s answer, 1 when vol\\speech.vol opens, stored by Prefs_Init (00008920), which sets option 2 to 0 when it is 0. PREFERENCES' SPEECH (PrefsMenu_OnMessage (0002b82b), case 0002ba18) steps the speech setting while it is set and returns at once otherwise.",
       "source": "Herculan/docs/es1/shell/options.md#the-buttons--prefsmenu_onmessage-0002b82b; ES1GO disassembly at 0002ba18"
+    },
+    {
+      "address": "0007e09d",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Prefs_MouseOptionApplied",
+      "description": "Byte, 0xff in the image: the option 11 value Prefs_ApplyMouseOption (0000868c) last acted on. es2_xref --decode finds its read and write there.",
+      "source": "Herculan/docs/es1/shell/startup.md#the-devices"
     },
     {
       "address": "0007e1ce",
@@ -29205,6 +29301,15 @@
       "name": "Shell_WaitCount",
       "description": "int16: raised by Shell_WaitTick (0004bbdd) every 2 interrupts; Shell_WaitTicks (0004bbe9) zeroes it and waits on it.",
       "source": "Herculan/docs/es1/shell/startup.md#the-devices"
+    },
+    {
+      "address": "000a0ba4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "PlayerInputBlock",
+      "description": "The 0x29-byte input block AlertPanel_Enter (0000290b) copies to a panel's +0x2e8 and AlertPanel_Leave (00002b0a) copies back; PlayerInputBlock_StaticInit (0004deb0) constructs it, storing nothing. es2_xref finds its address held by those three alone. The shell's copy of ES1DBSIM's PlayerInputBlock (000b17ac).",
+      "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d"
     },
     {
       "address": "000a0bdc",

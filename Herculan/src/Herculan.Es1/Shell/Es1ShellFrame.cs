@@ -324,7 +324,7 @@ public sealed class Es1ShellFrame {
 			MouseEnabled = enabled,
 		};
 
-		// Input_PollJoysticks and the two joystick devices' records: Prefs_Init's 000087ff builds them, which is a
+		// Input_PollJoysticks and the two joystick devices' records: Input_CreateJoystickDevices (000087ff) builds them, which is a
 		// PLACEHOLDER here (Es1ShellDevices.Init), so there is none to read.
 		ushort buttons = enabled ? mouse.Buttons : (ushort)0;
 		block.MouseButtons[0] = (byte)((buttons & Es1HostMouse.LeftBit) != 0 ? 1 : 0);

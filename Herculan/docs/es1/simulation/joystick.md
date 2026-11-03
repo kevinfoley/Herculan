@@ -199,6 +199,8 @@ The mask is the axes the device asks the joystick object for, so a device is ena
 
 With option 9 (`000bd56b`) set and option 7 at 2, it clears option 9 (`Prefs_SetOption`(1, 0, 9)) instead. Each device built loads its calibration file, `data\joy1.cal` for the first and `data\joy2.cal` for the second, through `Path_ApplyAltDrive` ([the calibration file](#the-calibration-file)), and is then enabled (`InputDevice_Enable` on `+0x78`), which records it for its kind. A device whose axes did not answer is enabled too: its joystick object stays disabled, so its poll and its normalisation do nothing.
 
+`ES1GO`'s `Input_CreateJoystickDevices` (`000087ff`), the last step of the shell's `Prefs_Init` ([the devices](../shell/startup.md#the-devices), step 9), has the same statements, with the two files named by the shell's `Shell_FileNames` lines 1 and 2.
+
 ### The record
 
 **`Joystick_ReadWithResponse` (`0004b828`)**, slot `+4` of `IMJoystickVtable`, (device), fills `JoystickRecord` (`000b1738`, 0x1c bytes) and returns it:
@@ -296,8 +298,8 @@ The input devices' file ([where it starts and ends](#where-the-object-files-star
 | Function | Address | `ES1GO` | ES2 (DBSIM) |
 |---|---|---|---|
 | `HeapPtr_DtorInputDevicesCopy`, `ConfigPart_DtorInputDevicesCopy`, `ConfigPart_GetClassTagInputDevicesCopy`, `TSPartBase_DtorInputDevicesCopy` | `0004ac60`, `0004ac88`, `0004acc7`, `0004acd0` | | |
-| `Joystick_LoadCalibration`, `Joystick_SaveCalibration` | `0004ae0c`, `0004ae90` | | |
-| `Voice_ArchiveExists`, `Input_CreateJoystickDevices`, `Prefs_Init` | `0004aed8`, `0004af0c`, `0004afe8` | | `00459d6c`, —, `0045a19c` |
+| `Joystick_LoadCalibration`, `Joystick_SaveCalibration` | `0004ae0c`, `0004ae90` | `000086d6`, — | |
+| `Voice_ArchiveExists`, `Input_CreateJoystickDevices`, `Prefs_Init` | `0004aed8`, `0004af0c`, `0004afe8` | —, `000087ff`, — | `00459d6c`, —, `0045a19c` |
 | `Input_IsKindEnabled` | `0004b3d0` | | `0045bf74` |
 | `KeyboardInputDevice_SetMode`, `KeyboardInputDevice_GetMode`, `Input_GetKeyboardDeviceUnchecked`, `Input_GetKeyboardDevice2` | `0004b648`, `0004b66c`, `0004b67c`, `0004b698` | `00025ce6`, `00025d19`, `00025d2a`, `00025d43` | `KeyboardInputDevice_SetReadMode` (`0045c148`), `KeyboardInputDevice_GetReadMode` (`0045c16c`), `0045c178`, `0045c190` |
 | `JoystickDevice_Ctor`, `JoystickDevice_Dtor`, `Joystick_ReadWithResponse` | `0004b6c0`, `0004b7a8`, `0004b828` | `00025d6d`, `00025e57`, `00025ee5` | `0045c27c`, `0045c2c4`, `0045c314` |
@@ -315,7 +317,7 @@ Globals: `JoystickClaimedAxes` and `JoystickClaimedAxisCount`, bytes, `0009571c`
 ## Open
 
 - **Open:** `es2_xref.py` finds no reference to `DVJoystick_DetectOnStack`, the four tracking functions, `DVJoystick_WaitForFlag`, `DVJoystick_WaitForFlagClear` or `DVJoystick_ReadFlag`, in `ES1DBSIM` or `ES1GO`, nor to `JoystickDevice_TrackRange` (`0004ba80`, `ES1GO 00026187`).
-- **Open:** the calibration panel ([`preferences.md`'s Open](preferences.md#open)), `00049a7c`, `00049bbc`, `00049f30` and `0004a0e8` by `es2_xref.py`'s callers of the device tracking functions, the save and `DVJoystick_SetRanges`/`GetRanges`. `ES1GO`'s callers of its device functions, `00006bed`, `000087ff` and `00007956`, are the shell's counterpart.
+- **Open:** the calibration panel ([`preferences.md`'s Open](preferences.md#open)), `00049a7c`, `00049bbc`, `00049f30` and `0004a0e8` by `es2_xref.py`'s callers of the device tracking functions, the save and `DVJoystick_SetRanges`/`GetRanges`. `ES1GO`'s callers of its device functions, `ControlsPanel_ApplyDevices` (`00006bed`), `Input_CreateJoystickDevices` (`000087ff`) and `00007956`, are the shell's counterpart.
 - **Open:** a retail check of the default calibration under DOSBox-X with a stick and option 7 at 1: with `data\joy1.cal` renamed away, the HERC turns one way at most, whichever side the stick is pushed to, where with a calibrated `joy1.cal` it turns both ways.
 - **Open:** which hat direction each of the record's bytes `+0x14`–`+0x17` is, and so what buttons 4–7 do in the input build. A retail check under DOSBox-X's `joysticktype=fcs` with option 7 at 3, and `joysticktype=ch` with option 7 at 5: press each hat direction and note what the HERC or the view does.
 - **Open:** under options 4 and 5, [the configurations](input.md#the-joystick-configurations) name no source for the fourth axis, where the Flightstick classes put their throttle. A retail check under `joysticktype=ch` with option 7 at 4: move the throttle wheel and watch the throttle gauge.
