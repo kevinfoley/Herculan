@@ -177,9 +177,9 @@ public static class ShellCampaignLaunch {
 		// (00483b48) and the member cursor (00483b4e) stepped to 1; the player's record at roster id 0 with
 		// a drawn name index, the typed name and the skill, rank 0, bay 0, position 0, on strength; no
 		// positions in play and one machine on strength.
-		game.Squadmates = ShellTrainingLaunch.GenerateRoster(ShellText.Load(content, "ESNAMES.BIN"), roll);
+		game.Squadmates = ShellRoster.GenerateRoster(ShellText.Load(content, "ESNAMES.BIN"), roll);
 		game.SquadTailAndPlayerHead = [0, 0, 0, 1, 1, 1, 0, 1];
-		var player = ShellTrainingLaunch.NewPilot(name, 0, roll(ShellTrainingLaunch.PlayerNameIndexCount), skill, 0);
+		var player = ShellRoster.NewPilot(name, 0, roll(ShellRoster.PlayerNameIndexCount), skill, 0);
 		player.Bay = 0;
 		player.SquadPosition = 0;
 		player.OnStrength = 1;
@@ -209,7 +209,7 @@ public static class ShellCampaignLaunch {
 			held.CareerBlock.AsSpan(2).CopyTo(game.CareerBlock.AsSpan(2));
 		}
 
-		game.SalvageTotal = roll(ShellTrainingLaunch.SalvageDrawCount) * ShellRepairCosts.KilogramsPerTon + StartingSalvage;
+		game.SalvageTotal = roll(SalvageDrawCount) * ShellRepairCosts.KilogramsPerTon + StartingSalvage;
 
 		// The flag array cleared (CampaignFlags_Clear), game state 2, and block 11 as memory holds it.
 		const int heldOffset = PlayerSave.CampaignFlagCount * 2 + 2;
@@ -285,6 +285,9 @@ public static class ShellCampaignLaunch {
 
 	/// <summary>The salvage pool's floor, the <c>100000</c> in <c>Game_NewCareer</c>'s draw.</summary>
 	private const int StartingSalvage = 100000;
+
+	/// <summary><c>Game_NewCareer</c>'s salvage draw, below 11: the pool is <c>draw * 1000 + 100000</c> kilograms.</summary>
+	private const short SalvageDrawCount = 11;
 
 	/// <summary><c>Game_NewCareer</c>'s game state, <c>0048260e = 2</c> — the one a game goes on from.</summary>
 	private const short ContinuingGameState = 2;
