@@ -137,6 +137,8 @@ A failure formats `SoundManager::loadDrivers: %s` with `0006f23d`'s text for the
 
 ES2's loader plays a file that is not RIFF as raw 8-bit unsigned mono at 11,025 Hz ([ES2's sample format](../../retail/formats/sound-samples.md#sample-format)).
 
+`[SoundFX]` `Driver#` holds one of the digital devices the setup program `SOUNDSET.EXE` lists in its `SOUNDSET.INI`, up to four a card in the columns 8-bit mono, 8-bit stereo, 16-bit mono and 16-bit stereo: Sound Blaster `e000` and `e001`, Sound Blaster 16 `e015`–`e018`, and so on for 18 cards; the image's default `0xe000` is the Sound Blaster's 8-bit mono. The drivers are the 95 `.com` images in `SOS\HMIDRV.386`, a name both images hold; the code that loads one is [Open](#open). The MIDI devices are [`hmp-music.md`](hmp-music.md#the-devices)'s.
+
 ### The digital driver's timer
 
 **The HMI code runs its timed work from the game's timer: it hands the game a far callback, which the game registers at a count of a sixtieth of the timer's rate.** What a count means to the timer is [Open](../simulation/debug-monitor.md#open). The functions at `00050d38`–`00050e1f`, after the sound files and before [the profile file](profile-files.md), are what the HMI code calls for it:
@@ -180,6 +182,7 @@ So the key is the voice bank and the five digits of the id and attribute byte ([
 
 ## Open
 
+- **Open:** the code that loads a digital driver out of `SOS\HMIDRV.386`.
 - **Open:** the sample format the driver mixes the data as. The bytes centre on `0x80`, as unsigned 8-bit samples would, and many files open on a run of `0x7f`–`0x81`.
 - **Open:** how device `0xa005`'s driver, reached through the in-image table `HmiMidi_InitDriver` calls, opens the digital driver from the manager's blocks, and so whether 11,025 Hz is the rate the samples play at; and what the block's `0x78`, 8, 1, `0x1000`, 1 and `0x13` are.
 - **Open:** what plays `ROSEY1.SFX` and the eleven `res32\` `.RAW` files the shell's table does not name. `ES1GO`'s resource name builder, the function holding the reference at `ES1GO 00047170`, rewrites a `.RAW` extension, and is a lead.

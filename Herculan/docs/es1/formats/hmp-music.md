@@ -55,7 +55,27 @@ The loader reads only each track's first delta time, with `HmiMidi_ReadDelta` (`
 6. It routes each track whose map entry is `0xff` to a driver. Of the track's device ids, in order up to a 0, the first that one of the open drivers (up to five, their ids at `000a130c`) answers wins, and the map entry becomes that driver's slot: `0xa000` is answered by a driver of id `0xa000`, `0xa001` or `0xa008`, `0xa002` by `0xa002` or `0xa009`, and any other id by itself. A track whose first id is 0 goes to slot 0. A track no open driver answers loses its events pointer, keeps `0xff`, and leaves one fewer track playable.
 7. It returns 0, with the slot through the handle pointer.
 
-`MidiSound_Ctor` sets all 32 map entries to `0xff`, so every track is routed this way. The tracks of the three songs walked list `0xa000`, `0xa002`, `0xa003` and `0xa005`. The simulator opens two MIDI drivers: the MIDI device `Sound_Init` is given, `0xa002` in the image's defaults, with the melodic and drum banks, and `0xa005` with `sos\drum32.dig` ([sound-samples.md](sound-samples.md#the-driver)).
+`MidiSound_Ctor` sets all 32 map entries to `0xff`, so every track is routed this way. The simulator opens two MIDI drivers: the MIDI device `Sound_Init` is given, `0xa002` in the image's defaults, with the melodic and drum banks, and `0xa005` with `sos\drum32.dig` ([sound-samples.md](sound-samples.md#the-driver)).
+
+## The devices
+
+**The songs are written for the FM driver: what a song plays depends on the MIDI device the setup chose.** `resource.cfg`'s `[Music]` `Driver#` ([sound-samples.md](sound-samples.md#the-driver)) holds one of the MIDI devices the setup program `SOUNDSET.EXE` lists in its `SOUNDSET.INI`:
+
+| Id | `SOUNDSET.INI`'s name | Answers a track listing |
+|---|---|---|
+| `0xa000` | Sound Master II | `0xa000` |
+| `0xa001` | MPU 401 | `0xa000` |
+| `0xa002` | FM | `0xa002` |
+| `0xa004` | MT-32 | `0xa004` |
+| `0xa008` | AWE 32 | `0xa000` |
+
+The drivers themselves are `SOS\HMIMDRV.386`'s `.com` images: `fmmidi.com`, `fmmidi3.com`, `awemidi.com`, `smii.com`, `mpu401.com`, `mt32.com`, `gusmidi.com` and `intspkr.com`. `0xa005`, which `SoundManager_LoadDrivers` opens with `sos\drum32.dig` and the digital driver's blocks, is none of them.
+
+Track 0 of each of the 19 songs lists no device and goes to slot 0. Of the others, every melodic track lists `0xa002` first, `0xa000` after it or not at all, except `ICE`'s tracks 13–15, `INTRO1`'s 10–14 and `INTRO2`'s 14–17, which list `0xa000` first (`INTRO2`'s 17 then `0xa00a`, `0xa002` and `0xa007`); the rest list `0xa005` alone, and most songs have one track listing `0xa003` alone. `DESERT`'s eleven tracks and every melodic track of `RUBBLE`, `VOLCANO`, `WIN2` and `LOSING` list `0xa002` alone. No track lists `0xa004`. So by step 6 of `HmiMidi_InitSong`, with `0xa005` always open beside the setup's device:
+
+- the FM setup plays every track but the `0xa003` ones and the ones listing `0xa000` alone;
+- a setup whose device answers `0xa000` drops every track listing `0xa002` alone, so `DESERT` plays nothing and `RUBBLE`, `VOLCANO`, `WIN2` and `LOSING` play only their `0xa005` tracks;
+- the MT-32 setup plays only the `0xa005` tracks.
 
 ## Open
 
@@ -63,4 +83,6 @@ The loader reads only each track's first delta time, with `HmiMidi_ReadDelta` (`
 - **Open:** the branch entries' `+0x00`–`+0x07` and `+0x10`–`+0x17`, and what the data they point to does.
 - **Open:** the event encoding past the first delta, and what reads the events.
 - **Open:** `0006eeae`, `0006ea6b` and `0006ee87`, which `MidiSound_Play` calls after the song is ready, the callbacks `0004e7b4` and `0004e718`, and the `MidiSound` slot `+0x30`.
-- **Open:** which hardware each device id stands for, and which drivers `ES1GO 0004240a` opens for the shell.
+- **Open:** what `0xa003`, `0xa007`, `0xa009` and `0xa00a` stand for, which `SOUNDSET.INI` does not list, and which drivers `ES1GO 0004240a` opens for the shell.
+- **Open:** the code that loads a driver out of `SOS\HMIMDRV.386`; both images hold the file's name.
+- **Open:** [the devices](#the-devices)' routing in the running game. A retail check: with the setup's MIDI device set to MPU 401 under DOSBox-X, `DESERT`'s song is silent and `RUBBLE`'s plays only its `0xa005` track, where FM plays both whole.
