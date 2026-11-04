@@ -68,7 +68,7 @@ It does not set the current view `+0x10`, which ES2's sets to −1. The manager 
 | 6 | `HERCULES` | 192–207 | 208–223 | 205 |
 | 7 | `COLOSSUS` | 224–239 | 240–255 | 232 |
 
-The eight schemes read `dpl\cockpit` entries 0 to 255 between them. For a type above 7 the word read is past the table's end, in `CockpitViewShakeArmed` and the globals after it. ES2's installs one window of 24 colors at entry 42 from entry 32 + 24*s*, its scheme being the type record's file offset 80 ([ES2's palette](../../retail/rendering/cockpit-canopy-palette.md#palette)); ES1's files hold 0 at offset 80 and its scheme is the type number.
+The eight schemes read `dpl\cockpit` entries 0 to 255 between them. The [pitch gradient](../rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479) rewrites entries `0x40`–`0x4f` from step 3's color at `0x40` before the mission's first frame and on every frame after while it runs, so step 2's colors there are replaced before any frame is drawn. For a type above 7 the word read is past the table's end, in `CockpitViewShakeArmed` and the globals after it. ES2's installs one window of 24 colors at entry 42 from entry 32 + 24*s*, its scheme being the type record's file offset 80 ([ES2's palette](../../retail/rendering/cockpit-canopy-palette.md#palette)); ES1's files hold 0 at offset 80 and its scheme is the type number.
 
 ## Loading and freeing the canopy art
 

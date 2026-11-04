@@ -97,7 +97,9 @@ The gauge's rect is the block's first 16 bytes, (0, 0, 0, 0) in five of the eigh
 | 81, 84 | 0 above 150; (150 − *f*) >> 1 from 50 to 150; 50 below 50 |
 | 80, 83 | 0 above 125; 125 − *f* from 25 to 125; 50 below 25 |
 
-The shifts are arithmetic. It installs the six with `Palette_InstallRange`(colors, 6, `0x50`), entries 80 to 85, front first, each facing's in the order 80, 81, 82; they reach the display at the frame's end, in `Sim_EndFrame`'s flush of the palette's changed entries ([installing colors](../rendering/palette.md#installing-colors)). With full shields at an even balance, *f* is 100 on each facing and all six are {0, 34, 0}; an empty facing's are {0, 9, 0}. Entries 80 and 83 are {0, 0, 0} for *f* from 25 to 66, darker than below 25. The base is ES2's base color; ES2's ramp installs from entry 66 and has overcharged colors ([ES2's ring ramp](../../retail/simulation/cockpit-hud-widgets.md#ring-ramp--shieldsgauge_updateringpalette-004438f0)). Which canopy pictures use entries 80 to 85 is [Open](#open).
+The shifts are arithmetic. It installs the six with `Palette_InstallRange`(colors, 6, `0x50`), entries 80 to 85, front first, each facing's in the order 80, 81, 82; they reach the display at the frame's end, in `Sim_EndFrame`'s flush of the palette's changed entries ([installing colors](../rendering/palette.md#installing-colors)). With full shields at an even balance, *f* is 100 on each facing and all six are {0, 34, 0}; an empty facing's are {0, 9, 0}. Entries 80 and 83 are {0, 0, 0} for *f* from 25 to 66, darker than below 25. The base is ES2's base color; ES2's ramp installs from entry 66 and has overcharged colors ([ES2's ring ramp](../../retail/simulation/cockpit-hud-widgets.md#ring-ramp--shieldsgauge_updateringpalette-004438f0)).
+
+**The six rings are painted into the front canopy art as a column of horizontal bands, the front facing's above and the rear's below.** Each of the eight `db0\<chassis>.DB0` pictures holds pixels of entries 80 to 85, 126 to 348 of them, and a census of every bitmap bank's raw frames in `SIMVOL0.VOL` and `ZONES.VOL` found them in no other. From the top the rings run 82, 81, 80, then a gap, then 83, 84, 85: the front facing's three with entry 80 innermost, the rear's mirrored with 83 innermost. `ROADRUNN`'s column is an hourglass at rows 162–179 whose bands narrow toward the gap, 27 pixels wide at each end; `RAPTOR`'s is 7 pixels wide at columns 267–273, three rows a ring; `COLOSSUS`'s sits at the top of the picture, from row 4. So the ring a facing goes black on is the one beside the gap, while its reading is between an eighth and a third of the whole capacity (*f* 25 to 66).
 
 ### The readouts — `ShieldsGauge_UpdateReadouts` (`00039628`)
 
@@ -172,7 +174,7 @@ ES2's paint and update (`00444f20`, `00444fe0`) install a temporary brush {0} at
 
 ## Open
 
-- **Open:** which canopy pictures hold pixels of palette entries 80 to 85, and which ring each entry is; a pass over the `db0\` art through HercWorks.Core settles it. A retail check: with the balance even, let a facing's shields fall below a third and watch one of its rings go black, and below an eighth come back dim green.
+- **Open:** a retail check of the rings: with the balance even, let a facing's shields fall below a third and watch its ring beside the gap go black, and below an eighth come back dim green.
 - **Open:** what reads `ShieldRingBaseEntry` (`000b13ec`): `es2_xref.py --decode` finds the constructor's store and no read (its positive control, `EnergyMeter_ClipContext` beside it, finds its four reads).
 - **Open:** what the state block's byte `+0x8a` (block byte `0xc`) holds; `ShieldsGauge_SetStateBlock` copies it and this file reads it nowhere else.
 - **Open:** what calls `HeapPtr_DtorShieldsGaugeCopy`, `HeapPtr_DtorEnergyGaugeCopy` and `EnergyPoolGauge_ReturnZero`, to none of which `es2_xref.py` finds a branch or stored pointer.
