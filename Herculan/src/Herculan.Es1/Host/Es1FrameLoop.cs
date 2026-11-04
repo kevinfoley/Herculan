@@ -329,6 +329,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		if (_work!.MoveNext()) {
 			if (_work.Current.Retrace is { } retrace) {
 				WaitEnds = WaitEnd(HostTime, retrace);
+			} else if (_work.Current.Duration is { } duration) {
+				WaitEnds = HostTime + duration.Ticks;
 			} else {
 				WaitEnds = null;
 				_untilNextHostFrame = true;

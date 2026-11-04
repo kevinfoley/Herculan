@@ -238,8 +238,10 @@ public static class Es1ZoneViewer {
 		world.Globals.MountDetailBias = () => detail.Setting.MountBias;
 
 		// Sim_StartMission's steps 9 to 13 that build no GL object: the views and their cockpit, and the chain of views
-		// with its cameras, the main one on the player's eye.
+		// with its cameras, the main one on the player's eye. Step 9's LocalPlayerMech is set here, before step 14's lift
+		// search reads it; Es1Simulation sets it again when the simulation is built.
 		var player = world.LocalPlayer;
+		world.Globals.LocalPlayerMech = player;
 		// Step 3's Sound_Init, of which the voice lines' slots are ported, and Snc_MissionInit, which puts the lip-sync
 		// player on the PC timer. PLACEHOLDER: the rest of Sound_Init, the sound manager, its drivers and the catalog;
 		// no plan step ports ES1's sound yet.

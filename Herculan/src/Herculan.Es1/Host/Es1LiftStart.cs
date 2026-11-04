@@ -35,6 +35,17 @@ internal static class Es1LiftStart {
 	/// <summary>The cross fade's length, in clock counts.</summary>
 	public const int FadeLength = 0x78;
 
+	/// <summary>
+	/// <b>This engine's own:</b> the host time a pass's drawing stands for, three PC timer interrupts (about 25 ms), after
+	/// which the frame's end waits for the next retrace. The port draws in no time, so each pass's
+	/// <c>Vga_WaitVerticalRetrace</c>, which ends at once while a retrace is in progress, would otherwise end inside the
+	/// retrace the last pass's wait ended on, and all 115 passes would run in one host frame. Retail's pass took as long as
+	/// the machine drew it; this gives it the play frame's minimum on the hardware of its day, so the ride lasts about
+	/// 3.3 s (115 passes of two 70 Hz retraces). The user's choice, plan decision 24
+	/// (docs/herculan/plan-es1-first-mission.md#decisions); listed in <c>KNOWN_ISSUES.md</c>.
+	/// </summary>
+	public static TimeSpan PassDrawTime => TimeSpan.FromSeconds(Es1SimClock.InterruptsPerTick / (double)Es1SimClock.InterruptsPerSecond);
+
 	/// <summary>The palette's two spans the darkening rewrites, each 16 entries.</summary>
 	public const int FirstSpan = 0x20, SecondSpan = 0x40, SpanLength = 0x10;
 
@@ -100,7 +111,7 @@ internal static class Es1LiftStart {
 	/// projects to; the render context's bottom cut to the row, or to its top while the row is below 1, for
 	/// <c>Sim_RenderFrame</c> and put back; with the context's pair at 0, the art at (0, row) and the
 	/// <see cref="FillColor"/> fills, the whole rect while the art lies above its top, from the art's bottom edge while it
-	/// ends above its bottom; the gunsight's per-frame update; while <c>LiftStart_FadeRemaining</c> is set and the row is
+	/// ends above its bottom; the gunsight's per-frame update; the pass's drawing standing <see cref="PassDrawTime"/>; while <c>LiftStart_FadeRemaining</c> is set and the row is
 	/// greater than <see cref="FadeRow"/> the fade's step, its answer kept there; and <c>Sim_EndFrame</c>. Then the
 	/// machine back at its height and the jolt: <c>CockpitView_SetShakeBand</c>(<see cref="JoltBand"/>), then until the
 	/// clock reaches its value then plus <see cref="JoltLength"/>, <c>CockpitView_StepShake</c> by the presentation
@@ -152,6 +163,7 @@ internal static class Es1LiftStart {
 
 			views.Cockpit.Gunsight.UpdateAndPaint();
 			views.Window = window with { CentreX = entry.CentreX, CentreY = entry.CentreY };
+			yield return Es1Wait.ForTime(PassDrawTime);
 			if (globals.LiftStartFadeRemaining != 0 && row > FadeRow) {
 				globals.LiftStartFadeRemaining = (short)fade.Step(clock.Clock, frame.InstallPalette);
 			}

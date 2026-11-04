@@ -20,6 +20,12 @@ public readonly record struct Es1Wait {
 	/// <summary>The monitor's wait <paramref name="retrace"/>, which ends on the monitor's retraces.</summary>
 	public static Es1Wait For(Es1Retrace retrace) => new() { Retrace = retrace };
 
-	/// <summary>The monitor's wait; null for <see cref="NextHostFrame"/>.</summary>
+	/// <summary>A wait of <paramref name="duration"/> of host time, the PC timer running on.</summary>
+	public static Es1Wait ForTime(TimeSpan duration) => new() { Duration = duration };
+
+	/// <summary>The monitor's wait; null for <see cref="NextHostFrame"/> and a timed wait.</summary>
 	public Es1Retrace? Retrace { get; init; }
+
+	/// <summary>A timed wait's host time; null for <see cref="NextHostFrame"/> and the monitor's wait.</summary>
+	public TimeSpan? Duration { get; init; }
 }
