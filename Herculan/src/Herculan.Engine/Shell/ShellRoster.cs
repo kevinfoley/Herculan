@@ -9,9 +9,9 @@ namespace Herculan.Engine.Shell;
 /// docs/retail/shell/campaign-loop.md#the-pilot-roster-is-generated-not-authored--squad_generateroster-0040fa31.
 /// </summary>
 internal static class ShellRoster {
-	/// <summary>The squad block's shape: three squads of twelve pilot records.</summary>
-	internal const int SquadCount = 3;
-	internal const int PilotsPerSquad = 12;
+	/// <summary>The squad block's shape: three pilot pools of twelve records, one pool per squad member.</summary>
+	internal const int PoolCount = 3;
+	internal const int PilotsPerPool = 12;
 
 	/// <summary><c>Player_Create</c>'s name-index draw, below 11.</summary>
 	internal const short PlayerNameIndexCount = 11;
@@ -23,22 +23,22 @@ internal static class ShellRoster {
 	private static readonly int[] SkillThresholds = { 70, 85, 95, 100 };
 
 	/// <summary>
-	/// <c>Squad_GenerateRoster</c> (<c>0040fa31</c>) — three squads of twelve, each from a shuffle of four
+	/// <c>Squad_GenerateRoster</c> (<c>0040fa31</c>) — three pilot pools of twelve, each from a shuffle of four
 	/// and a shuffle of three and one skill draw per pilot, <see cref="NewPilot"/> writing each
 	/// record with its rank seeded from the skill. The records come back in the save's
-	/// order, squad by squad and row by row.
+	/// order, pool by pool and row by row.
 	/// </summary>
 	internal static PilotEntry[] GenerateRoster(ShellText? names, Func<short, int> roll) {
-		var records = new PilotEntry[SquadCount * PilotsPerSquad];
-		for (int squad = 0; squad < SquadCount; squad++) {
+		var records = new PilotEntry[PoolCount * PilotsPerPool];
+		for (int pool = 0; pool < PoolCount; pool++) {
 			short[] columns = Shuffle(4, roll);
 			short[] rows = Shuffle(3, roll);
 			for (int row = 0; row < 3; row++) {
 				for (int column = 0; column < 4; column++) {
-					int rosterId = columns[column] + squad * 4;
+					int rosterId = columns[column] + pool * 4;
 					int nameIndex = rows[row] + rosterId * 3;
 					int skill = SkillDraw(roll);
-					records[squad * PilotsPerSquad + row * 4 + column] = NewPilot(names?.Text(nameIndex) ?? string.Empty,
+					records[pool * PilotsPerPool + row * 4 + column] = NewPilot(names?.Text(nameIndex) ?? string.Empty,
 						rosterId, nameIndex, skill, RankForSkill[skill]);
 				}
 			}

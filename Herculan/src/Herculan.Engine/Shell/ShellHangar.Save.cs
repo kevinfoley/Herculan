@@ -52,16 +52,16 @@ public sealed partial class ShellHangar {
 		}
 
 		// Player_Read (004101b8) reads the player block's two leading shorts into 00482a78 and 00482a7a, then
-		// points the player structure's three squad pointers at record DAT_00483b48[k] of squad k. The
+		// points the player structure's three squad pointers at record DAT_00483b48[k] of pilot pool k. The
 		// save model keeps all five among the eight shorts between the squad block and the player's
 		// record: DAT_00483b48's three first, the player block's two last.
 		hangar.SquadPositions = save.SquadPositionsInPlay;
 		hangar.MachinesOnStrength = save.MachinesOnStrength;
 		hangar.Player = Pilot(save.PlayerPilot);
-		for (int squad = 0; squad < SquadCount; squad++) {
-			int member = save.SquadTailAndPlayerHead[squad];
-			int record = squad * PilotsPerSquad + member;
-			if (member >= 0 && member < PilotsPerSquad
+		for (int pool = 0; pool < ShellRoster.PoolCount; pool++) {
+			int member = save.SquadTailAndPlayerHead[pool];
+			int record = pool * ShellRoster.PilotsPerPool + member;
+			if (member >= 0 && member < ShellRoster.PilotsPerPool
 				&& Pilot(save.Squadmates?.ElementAtOrDefault(record)) is { } pilot) {
 				hangar._squad.Add(pilot);
 				hangar._squadRecords.Add(record);
@@ -76,7 +76,7 @@ public sealed partial class ShellHangar {
 	/// that <c>Game_SaveSlot</c> (<c>0040e37b</c>) can write the whole of it: the armory stock and build
 	/// queue, the bays, the salvage pool, the chassis flags <see cref="GrantChassis"/> sets, the player's
 	/// bay, the three squad members' bay, position and on-strength byte, and the player block's two
-	/// counts. Everything else the save carries — the career block, the other 33 squad records and the
+	/// counts. Everything else the save carries — the career block, the other 33 pool records and the
 	/// flag array — nothing here changes, and is left as it was read.
 	///
 	/// <para>A weapon's stock is written from the head of its list, as <c>Armory_Write</c>

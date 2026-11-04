@@ -39,14 +39,14 @@ public class PlayerSave {
 	/// </summary>
 	public short[] CareerBlock { get; set; } = new short[76];
 
-	/// <summary>Block 4's 36 pilot records, three squads of twelve.</summary>
+	/// <summary>Block 4's 36 pilot records, three pilot pools of twelve, one pool per squad member.</summary>
 	public PilotEntry[]? Squadmates { get; set; }
 
 	/// <summary>
 	/// The six shorts closing the squad block plus the two opening the player block — eight in all,
 	/// sitting between the last squadmate record and the player's own pilot record. Read through
 	/// <see cref="SquadMemberIndex"/>, <see cref="SquadPositionsInPlay"/> and
-	/// <see cref="MachinesOnStrength"/>; shorts 3-5 are each squad's next member (<c>00483b4e</c>).
+	/// <see cref="MachinesOnStrength"/>; shorts 3-5 are each pool's next record (<c>00483b4e</c>).
 	/// </summary>
 	public short[] SquadTailAndPlayerHead { get; set; } = new short[8];
 
@@ -105,10 +105,10 @@ public class PlayerSave {
 		(CareerBlock[countIndex], CareerBlock.Skip(countIndex + 1).Take(length).ToArray());
 
 	/// <summary>
-	/// The three shorts at <c>00483b48</c>: for each squad, the index of its current member among
-	/// that squad's twelve pilot records.
+	/// The three shorts at <c>00483b48</c>: for each squad member, its record's index among
+	/// the twelve of its pilot pool.
 	/// </summary>
-	public short SquadMemberIndex(int squad) => SquadTailAndPlayerHead[squad];
+	public short SquadMemberIndex(int member) => SquadTailAndPlayerHead[member];
 
 	/// <summary>Squad positions in play, the player's as position 0 (<c>00482a78</c>).</summary>
 	public short SquadPositionsInPlay { get => SquadTailAndPlayerHead[6]; set => SquadTailAndPlayerHead[6] = value; }

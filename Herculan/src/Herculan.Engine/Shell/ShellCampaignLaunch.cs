@@ -173,7 +173,7 @@ public static class ShellCampaignLaunch {
 		game.BuildQueueFreeSlots = ShellHangar.QueueSlots;
 		Array.Fill(game.BuildQueue, WeaponLUT.None);
 
-		// Squad_GenerateRoster, then Player_Create (00410107): each squad's record 0 taken as its member
+		// Squad_GenerateRoster, then Player_Create (00410107): each pilot pool's record 0 taken as its squad member
 		// (00483b48) and the member cursor (00483b4e) stepped to 1; the player's record at roster id 0 with
 		// a drawn name index, the typed name and the skill, rank 0, bay 0, position 0, on strength; no
 		// positions in play and one machine on strength.

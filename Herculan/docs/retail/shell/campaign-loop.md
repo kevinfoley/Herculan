@@ -39,7 +39,7 @@ It is also what the campaign's rewards are keyed on: the debrief tests the flags
 
 ## Starting a campaign — `Game_NewCareer` (`0040e2ed`)
 
-Takes the pilot name and the skill (`DAT_0048260c`'s mode decides the rest: 1 campaign, 0 training, the mode the practice missions and `INSTANT ACTION` run in; both of those pass the literal `TRAINEE` and the practice screen's difficulty; the campaign's is [the registration screen](main-menu.md#the-registration-screen)). It sets the game state (`0048260e`) to 2, clears the briefing and debrief movies' once-per-load flags and the campaign flag array (`CampaignFlags_Clear`, `0040e939`), loads `gam\weapons.dat` (which also empties the build queue), generates the pilot roster, builds the player (`Player_Create`, `00410107`: roster id 0, a name index drawn below 11, the skill, bay 0, squad position 0, on strength, one machine on strength, and the three squad-member pointers, each squad's record 0 through `Squad_TakeMember` (`0040fb4f`) — [`../formats/save-games.md`](../formats/save-games.md#pilot-record--59-bytes-0x3b-in-memory)), loads `gam\hercs.dat` in a campaign and nothing in training, initializes the career position — whose last step starts the mission's load ([`main-menu.md`](main-menu.md#starting-a-practice-mission)) — and seeds the salvage pool:
+Takes the pilot name and the skill (`DAT_0048260c`'s mode decides the rest: 1 campaign, 0 training, the mode the practice missions and `INSTANT ACTION` run in; both of those pass the literal `TRAINEE` and the practice screen's difficulty; the campaign's is [the registration screen](main-menu.md#the-registration-screen)). It sets the game state (`0048260e`) to 2, clears the briefing and debrief movies' once-per-load flags and the campaign flag array (`CampaignFlags_Clear`, `0040e939`), loads `gam\weapons.dat` (which also empties the build queue), generates the pilot roster, builds the player (`Player_Create`, `00410107`: roster id 0, a name index drawn below 11, the skill, bay 0, squad position 0, on strength, one machine on strength, and the three squad-member pointers, each [pilot pool](#the-pilot-roster-is-generated-not-authored--squad_generateroster-0040fa31)'s record 0 through `Squad_TakeMember` (`0040fb4f`) — [`../formats/save-games.md`](../formats/save-games.md#pilot-record--59-bytes-0x3b-in-memory)), loads `gam\hercs.dat` in a campaign and nothing in training, initializes the career position — whose last step starts the mission's load ([`main-menu.md`](main-menu.md#starting-a-practice-mission)) — and seeds the salvage pool:
 
 ```
 DAT_00482af4 = rand(0..10) * 1000 + 100000;
@@ -53,14 +53,18 @@ The two catalog loads also stock the player: `gam\weapons.dat`'s trailing block 
 
 ### The pilot roster is generated, not authored — `Squad_GenerateRoster` (`0040fa31`)
 
-Three squads of twelve. For each squad the routine draws two independent shuffles (`Util_Shuffle` (`0040f95c`), a Fisher-Yates over 4 and over 3), and pilot `[row][col]` takes:
+The roster is three pilot pools of twelve, one pool per squadmate slot. Slot `k`'s squadmate is always a pilot from pool `k`: `Player_Create` takes each pool's record 0, and a squadmate lost in a mission is replaced by the next record of the same pool ([Pilot progression](#pilot-progression)). The 36 pilots are the three squadmates and their replacements.
+
+For each pool the routine draws two independent shuffles (`Util_Shuffle` (`0040f95c`), which places 0, 1, … in turn, each into the still-empty slot a draw counts to), and pilot `[row][col]` takes:
 
 ```
-rosterId = shuffle4[col] + squad*4          // 0-11, stored at pilot +0x00
+rosterId = shuffle4[col] + pool*4           // 0-11, stored at pilot +0x00
 nameIndex = shuffle3[row] + rosterId*3      // 0-35, stored at pilot +0x02
 ```
 
-The name string itself is copied out of `esnames.bin` at that index. That file holds exactly 36 names — `DUGGAN`, `BRUTUS`, `BUTCHER`, `RIGGS` … `HOYLE` — so the index space is used exactly once over, and every pilot's name is unique within a run. Skill tier comes from `Pilot_DrawSkill` (`0040f9dc`), a draw below 100 against the thresholds at `0046f5ec` — 70, 85, 95, 100 — so a pilot draws skill 0 seven times in ten. The draws run squad by squad: the shuffle of four, the shuffle of three, then twelve skill draws, row by row.
+The roster id is also the pilot's portrait ([`squad-and-crew.md`](squad-and-crew.md)). Each pool holds four portraits — pool 0 has 0-3, pool 1 has 4-7, pool 2 has 8-11 — three pilots to a portrait, and each portrait owns three adjacent names (portrait `p` has names `3p` to `3p+2`). So a portrait and its names only ever appear in one squadmate slot. The shuffles only order a pool. Its records are stored row by row, so record 0, the starting squadmate, is a random one of the four portraits; the next three replacements bring the other three; and the four after them, and the four after those, repeat the portraits in the same order, with each one's second and then third name. Past record 11 the pool's cursor wraps to record 0.
+
+The name string itself is copied out of `esnames.bin` at that index. That file holds exactly 36 names — `DUGGAN`, `BRUTUS`, `BUTCHER`, `RIGGS` … `HOYLE` — so the index space is used exactly once over, and every pilot's name is unique within a run. Skill tier comes from `Pilot_DrawSkill` (`0040f9dc`), a draw below 100 against the thresholds at `0046f5ec` — 70, 85, 95, 100 — so a pilot draws skill 0 seven times in ten. The draws run pool by pool: the shuffle of four, the shuffle of three, then twelve skill draws, row by row.
 
 ### The shell's generator
 
@@ -186,7 +190,7 @@ DBSIM's `Mission_WriteResults` writes it, and what fills each field is [`../simu
 
 ### Pilot progression
 
-After the results stream is closed the debrief calls `Squad_ProgressAll(00482a78)` (`004103ba`), the squad-wide progression pass. It runs `Pilot_Progress` (`00410066`) on the player when the player's condition is non-zero, then walks positions 1 up to the positions in play: an on-strength squad member whose condition is non-zero is progressed, and one at zero is replaced. `Squad_TakeMember` (`0040fb4f`) makes the squad's next record by its cursor the member and resets it to the pilot defaults — no bay, off strength, no position, condition 100, every counter 0 — and the machines-on-strength count drops by one. The pass returns how many pilots were lost, the player counted when at zero, for the report.
+After the results stream is closed the debrief calls `Squad_ProgressAll(00482a78)` (`004103ba`), the squad-wide progression pass. It runs `Pilot_Progress` (`00410066`) on the player when the player's condition is non-zero, then walks positions 1 up to the positions in play: an on-strength squad member whose condition is non-zero is progressed, and one at zero is replaced. `Squad_TakeMember` (`0040fb4f`) makes the next record of the slot's pilot pool, by the pool's cursor, the member and resets it to the pilot defaults — no bay, off strength, no position, condition 100, every counter 0 — and the machines-on-strength count drops by one. The pass returns how many pilots were lost, the player counted when at zero, for the report.
 
 `Pilot_Progress(pilot, isPlayer)` does nothing for a pilot whose on-strength byte `+0x24` is clear. Otherwise it advances two independent ladders, both capped at 3 and both keyed on the pilot's counters ([`../formats/save-games.md`](../formats/save-games.md#pilot-record--59-bytes-0x3b-in-memory)):
 

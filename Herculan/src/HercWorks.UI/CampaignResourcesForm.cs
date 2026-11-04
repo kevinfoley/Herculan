@@ -154,7 +154,7 @@ public partial class CampaignResourcesForm : Form {
 		_onStrengthInput.Value = save.MachinesOnStrength;
 
 		_careerTextBox.Text = string.Join(Environment.NewLine,
-			$"Squad members (record index per squad): {save.SquadMemberIndex(0)}, {save.SquadMemberIndex(1)}, {save.SquadMemberIndex(2)}",
+			$"Squad members (record index in each pilot pool): {save.SquadMemberIndex(0)}, {save.SquadMemberIndex(1)}, {save.SquadMemberIndex(2)}",
 			"",
 			"mission.str line indices (count: lines):",
 			"Objectives: " + FormatCareerText(save.CareerObjectives),
