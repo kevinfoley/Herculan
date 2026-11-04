@@ -141,7 +141,7 @@ public sealed class Es1ViewManager {
 	public void ResetExternalViewRect() => SetExternalViewRect(ExternalViewDefaultRect);
 
 	/// <summary>The render context's six values <c>+0x210</c>–<c>+0x224</c> as the last view state installed them.</summary>
-	public Es1ViewWindow Window { get; private set; }
+	public Es1ViewWindow Window { get; internal set; }
 
 	/// <summary>The render context's clip block as the last view state copied it in, clip mode 2.</summary>
 	public Es1ClipBlock Clip { get; private set; } = Es1ClipBlock.Empty;

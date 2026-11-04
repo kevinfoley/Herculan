@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using HercWorks.Core.Data.File.Dyn;
 using Herculan.Es1.Render;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
@@ -67,6 +68,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	private bool _untilNextHostFrame;
 
 	private bool _missionEnded;
+	private IEs1FramePacer? _pacer;
 	private Es1SimulationRunner? _wired;
 
 	/// <param name="views">The view manager, on the display it flips.</param>
@@ -98,6 +100,9 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// </summary>
 	public Action<int, IReadOnlyList<uint>>? InstallPaletteRange { get; set; }
 
+	/// <summary>The live palette (<see cref="Es1Monitor.Palette"/>), which the host sets; none with no monitor.</summary>
+	public Func<DynamixPalette?>? LivePalette { get; set; }
+
 	/// <summary>The host time the loop has been advanced by, in <see cref="TimeSpan"/> ticks, on which the retraces lie.</summary>
 	internal long HostTime { get; private set; }
 
@@ -120,12 +125,14 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// the player's weapon rows built (<c>WeaponMounts_BuildGauges</c>, <see cref="Sim.Es1WeaponMounts.BuildGauges"/>),
 	/// the squadmates and their pilots (<see cref="Es1Cockpit.LoadSquadmatePilots"/>), every machine's weapon icons
 	/// (<see cref="Panels.Es1PaperDoll.BuildWeaponIconsForPool"/>), <paramref name="cursor"/> installed on the display's cursor, <c>Player_PerFrameCockpitUpdate</c>, <c>Cam_Update</c>,
-	/// the draw page 2 again and views 1 and 0 set, so both canopies lie in page 2's half; step 14 without the lift, the
-	/// first frame's 3D pass; and step 15, the flag cleared, the whole of page 2 copied onto page 0, the cursor shown and,
-	/// unless a tape plays, the cockpit's mouse made live.
+	/// the draw page 2 again and views 1 and 0 set, so both canopies lie in page 2's half; step 14, the lift's search and
+	/// with it the darkening (<see cref="Es1LiftStart"/>), without it the first frame's 3D pass; and step 15, the flag
+	/// cleared, the whole of page 2 copied onto page 0, the cursor shown, with the lift its ride, held as the frame's work
+	/// (<see cref="Waiting"/>), and, unless a tape plays, the cockpit's mouse made live.
 	/// </summary>
 	/// <param name="cursor">Step 5's cursor, <c>dci\cursor</c>, which <c>00057640</c> loads.</param>
-	public void StartMission(Es1CursorImage? cursor = null) {
+	/// <param name="liftArt">The load of <c>dba\intro</c>'s first frame, which the lift's ride runs.</param>
+	public void StartMission(Es1CursorImage? cursor = null, Func<DynamixBitmap?>? liftArt = null) {
 		var display = Views.Display;
 		display.SetPageBase(0, 0, 0);
 		display.SetPageBase(1, 0, Es1VideoMemory.PageHeight);
@@ -150,22 +157,54 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		Views.SetView(1);
 		Views.SetView(0);
 
-		// Step 14 without the lift, which a friendly structure within 40000 starts. PLACEHOLDER: the lift's two calls,
-		// 00057cf4 and 00057ffc, are unread (docs/es1/simulation/main-loop.md#open), so no mission opens with it. The
-		// pitch gradient (Palette_BlendRangeByPitch) is not run (Es1Backdrop), and Palette_FlushDirtyRange has nothing
-		// to send; then Sim_RenderFrame.
-		RenderFrame();
+		// Step 14: with a friendly structure near, the lift's darkening in place of the first frame; otherwise
+		// PitchGradient_ForcedStep 8, the pitch gradient (Palette_BlendRangeByPitch), unported (Es1Backdrop), and
+		// Palette_FlushDirtyRange, which has nothing to send; then Sim_RenderFrame.
+		var globals = Views.Cockpit.Globals;
+		globals.LiftStartPending = Es1LiftStart.Gate(globals);
+		if (globals.LiftStartPending) {
+			Es1LiftStart.DarkenPalette(globals, LivePalette?.Invoke(), InstallPaletteRange);
+		} else {
+			globals.PitchGradientForcedStep = 8;
+			RenderFrame();
+		}
 
 		// Step 15: 000b5bca cleared; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1), page +0x8c copied onto +0x88 through
 		// the canvas context and the draw page put back.
 		Views.Cockpit.BringUp = false;
 		Views.Cockpit.DrawToCockpit(new Es1Rect(0, 0, 320, 400));
-		// The driver's slot 30 (0009df4c) shows the cursor; and with no tape playing, CockpitMouseLive is set.
+		// The driver's slot 30 (0009df4c) shows the cursor; with the lift, its ride, which the loop runs as the frame's
+		// work from the first host frame with a pacer; and with no tape playing, CockpitMouseLive is set.
 		display.Cursor.Show();
+		if (globals.LiftStartPending) {
+			_work = RunLift(liftArt).GetEnumerator();
+			_untilNextHostFrame = true;
+		} else {
+			MakeMouseLive();
+		}
+	}
+
+	/// <summary><see cref="Es1LiftStart.RunRise"/> under the pacer's <c>Sim_Frozen</c>, then step 15's rest.</summary>
+	private IEnumerable<Es1Wait> RunLift(Func<DynamixBitmap?>? art) {
+		foreach (var wait in Es1LiftStart.RunRise(this, art?.Invoke(), () => _pacer?.Frozen ?? false)) {
+			yield return wait;
+		}
+
+		MakeMouseLive();
+	}
+
+	/// <summary>Step 15's <c>CockpitMouseLive</c> = 1, unless a tape plays.</summary>
+	private void MakeMouseLive() {
 		if (!Views.Mouse.TapePlayback) {
 			Views.Mouse.Live = true;
 		}
 	}
+
+	/// <summary><c>Cam_Update</c>(<c>ViewObjectPtr</c>).</summary>
+	internal void UpdateCamera() => _camUpdate();
+
+	/// <summary><c>ViewObjectPtr</c>, the current camera; none without one.</summary>
+	internal Es1Camera? ViewCamera => _viewCamera?.Invoke();
 
 	/// <summary>
 	/// One host frame of <paramref name="deltaSeconds"/>: while the frame's work waits, the timer runs on until the wait
@@ -189,6 +228,14 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	internal bool Advance(TimeSpan elapsed, IEs1FramePacer? pacer) {
 		ArgumentOutOfRangeException.ThrowIfLessThan(elapsed, TimeSpan.Zero);
 		long end = HostTime + elapsed.Ticks;
+		_pacer = pacer;
+		// The lift's ride, the only work before a tick, stands until a pacer runs the PC timer under it: an engine guard
+		// for the host frames before the runner is built.
+		if (_work != null && pacer == null) {
+			HostTime = end;
+			return false;
+		}
+
 		if (_untilNextHostFrame) {
 			_untilNextHostFrame = false;
 			WaitEnds = end;

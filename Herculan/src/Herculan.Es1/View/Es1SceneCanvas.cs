@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Dyn;
 using Herculan.Engine.Render;
 using Herculan.Engine.Content;
 using Herculan.Es1.Panels;
@@ -88,6 +89,24 @@ public sealed class Es1SceneCanvas : IEs1LabelSurface {
 			}
 
 			pen += glyph.Cols;
+		}
+	}
+
+	/// <summary>
+	/// <c>Bitmap_Blit</c> of <paramref name="art"/> with flags 0 at (<paramref name="x"/>, <paramref name="y"/>) in clip
+	/// mode 2: its 0 bytes left unless its flags have bit 4 (docs/es1/rendering/screen-pages.md#the-cursor), each row cut
+	/// to each region of the list (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps).
+	/// </summary>
+	public void Blit(DynamixBitmap art, int x, int y) {
+		var pixels = art.ImageData ?? [];
+		bool opaque = (art.Flags & 0x10) != 0;
+		for (int row = 0; row < art.Rows; row++) {
+			for (int column = 0; column < art.Cols; column++) {
+				int source = row * art.Cols + column;
+				if (source < pixels.Length && (opaque || pixels[source] != 0) && Clip.Contains(x + column, y + row)) {
+					Display.Plot(x + column, y + row, pixels[source]);
+				}
+			}
 		}
 	}
 

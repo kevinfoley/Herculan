@@ -130,6 +130,27 @@ public sealed class Es1SimGlobals {
 	/// <summary>The palette module's cross fade (<see cref="View.Es1PaletteFade"/>).</summary>
 	public View.Es1PaletteFade PaletteFade { get; } = new();
 
+	/// <summary><c>LiftStart_Pending</c> (<c>000b5bb0</c>), which <c>Sim_StartMission</c>'s step 14 sets (<see cref="Host.Es1LiftStart"/>).</summary>
+	public bool LiftStartPending { get; set; }
+
+	/// <summary>
+	/// <c>LiftStart_FadeRemaining</c> (<c>00096cec</c>), 1 in the image: while set the ride steps the cross fade and keeps
+	/// its answer here.
+	/// </summary>
+	public short LiftStartFadeRemaining { get; set; } = 1;
+
+	/// <summary>
+	/// <c>PitchGradient_Enabled</c> (<c>000928ec</c>), 1 in the image, which the lift start clears for its ride.
+	/// PLACEHOLDER: nothing reads it, since <c>Palette_BlendRangeByPitch</c> is unported (<see cref="Render.Es1Backdrop"/>).
+	/// </summary>
+	public bool PitchGradientEnabled { get; set; } = true;
+
+	/// <summary>
+	/// <c>PitchGradient_ForcedStep</c> (<c>000928ee</c>), which <c>Sim_StartMission</c> sets to 8 on both of step 14's
+	/// branches. PLACEHOLDER: nothing reads it, as <see cref="PitchGradientEnabled"/>.
+	/// </summary>
+	public short PitchGradientForcedStep { get; set; }
+
 	/// <summary><c>LocalPlayerMech</c> (<c>000b5b86</c>), which the simulation stores; none before it is built.</summary>
 	public Es1Mech? LocalPlayerMech { get; set; }
 

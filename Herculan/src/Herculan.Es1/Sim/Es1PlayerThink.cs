@@ -163,5 +163,5 @@ public static class Es1PlayerThink {
 	internal static int DistanceBetweenPoints2D(Vec3i a, Vec3i b) => SimMath.FastMagnitude2D(b.X - a.X, b.Y - a.Y);
 
 	/// <summary><c>Math_DistanceBetweenPoints</c> (<c>00063c20</c>): <c>Math_FastMagnitude3D</c> of the differences.</summary>
-	private static int DistanceBetweenPoints(Vec3i a, Vec3i b) => SimMath.FastMagnitude3D(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+	internal static int DistanceBetweenPoints(Vec3i a, Vec3i b) => SimMath.FastMagnitude3D(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
 }
