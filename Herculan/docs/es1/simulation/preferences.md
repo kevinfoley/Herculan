@@ -196,8 +196,8 @@ ES1's simulator keeps 17 options, `Prefs_Options` (`000bd562`), byte *n* option 
 
 | Option | Byte | Set by | Handler |
 |---|---|---|---|
-| 0 | `000bd562` | `MUSIC` | `Prefs_ApplyMusicOption` (`0004ad0c`): `0004e294`(value), then `Music_Tick` when the value is not 0 and `PrefsInitInProgress` (`000b1734`) is clear |
-| 1 | `000bd563` | `SOUNDS` | `Prefs_ApplySoundsOption` (`0004acfc`): `0004e2c8`(value) |
+| 0 | `000bd562` | `MUSIC` | `Prefs_ApplyMusicOption` (`0004ad0c`): `Sound_SetMusicEnabled` (`0004e294`)(value), then `Music_Tick` when the value is not 0 and `PrefsInitInProgress` (`000b1734`) is clear |
+| 1 | `000bd563` | `SOUNDS` | `Prefs_ApplySoundsOption` (`0004acfc`): `Sound_SetEffectsEnabled` (`0004e2c8`)(value) |
 | 2 | `000bd564` | `RADIO` | `Prefs_ApplyRadioOption` (`0004ad30`), frameless, with no Ghidra function: `Sound_SpeechEnabled` (`000959e4`) = (value ≠ 0), `MessagePort_ShowEnabled` (`000930d2`) = (value ≠ 1) |
 | 3 to 5 | `000bd565` to `000bd567` | `HORIZON`, `SKY`, `GROUND` | none |
 | 6 | `000bd568` | `SHAPES` | `Prefs_LimitDetailInLowMemory` ([the detail setting](object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08)) |
@@ -260,5 +260,4 @@ Each first copies the option to `Prefs_PreviousOptions` and writes through `Pref
 - **Open:** which instrument copies its rect to the screen first after `PreferencesPanel_Raise` returns to a cockpit view, and so how soon the pointer is drawn again: the slot `+8` that `CockpitView_SetView`'s `CockpitView_InvalidateWidgets` (`0002b4a0`) calls on each instrument, unread here, may make one copy on the next frame, before the clock's next advance.
 - **Open:** whether a change made on the preferences panel before CONTROLS is opened and closed reaches `data\prefs.cfg`. A retail check: set SKY to its lowest, open CONTROLS, press DONE, press DONE on the preferences panel, and see whether the next mission's sky has its clouds back.
 - **Open:** what the freed stick device reads after `NONE` is chosen with a stick fitted. A retail check under DOSBox-X with a stick: choose `NONE` on the controls panel, press DONE twice, and see whether the stick still steers the HERC.
-- **Open:** what `0004e294` and `0004e2c8`, which the MUSIC and SOUNDS handlers call, do to the sound. `es2_xref.py --decode` finds `Sound_SpeechEnabled` (`000959e4`) read in `SpeechLine_Load` and in `Snc_Start` (`0004e518`), which plays a squadmate's voice only while it is set ([the comm boxes' state machine](heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574)).
 - **Open:** a positive control in the running game ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: `F12` in the forward view shows the outside view turning round the HERC above a strip of MUSIC, SOUNDS, RADIO and HORIZON beside SKY, GROUND and SHAPES; [=] on SKY adds clouds behind the panel at once; and `GROUND` at its highest textures the ground.

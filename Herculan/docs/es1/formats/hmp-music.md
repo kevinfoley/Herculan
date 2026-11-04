@@ -43,7 +43,7 @@ The loader reads only each track's first delta time, with `HmiMidi_ReadDelta` (`
 
 ## Loading and playing
 
-`MidiSound_Play` (`000505c8`, `ES1GO 0004423b`), the `MidiSound` vtable's `+0x10`, returns 0 when the object's slot `+0x30` returns non-zero or the song fails to load (`SoundObject_LoadSample`, which reads the file whole). It builds a block at `+0xbf`, the far pointer to the loaded file followed at `+0xc7` by the far callback `0004e7b4`, and calls `HmiMidi_InitSong` (`0006e4c1`, `ES1GO 0005ec79`) with it, the object's track map `+0x3f` and `+0x19` for the song's handle. An error goes to `+0x04` and is formatted into `SoundObject::playMIDI: %s` with `0006f23d`'s text for it; the function then sets `+0x19` to -1 and `+0x1d` to `0xffff`, and returns 0. Otherwise it calls `0006eeae`(handle, `+0x35`, `+0x39`) when the far pointer `+0x35` is set, then `0006ea6b`(handle), copies the handle to `+0x1d` and `+0x21` to `+0x23`, calls `0006ee87`(handle, far `0004e718`), and returns 1.
+`MidiSound_Play` (`000505c8`, `ES1GO 0004423b`), the `MidiSound` vtable's `+0x10`, returns 0 when the object's slot `+0x30` returns non-zero or the song fails to load (`SoundObject_LoadSample`, which reads the file whole). It builds a block at `+0xbf`, the far pointer to the loaded file followed at `+0xc7` by the far callback `MidiSound_EndCallback` (`0004e7b4`), and calls `HmiMidi_InitSong` (`0006e4c1`, `ES1GO 0005ec79`) with it, the object's track map `+0x3f` and `+0x19` for the song's handle. An error goes to `+0x04` and is formatted into `SoundObject::playMIDI: %s` with `0006f23d`'s text for it; the function then sets `+0x19` to -1 and `+0x1d` to `0xffff`, and returns 0. Otherwise it calls `0006eeae`(handle, `+0x35`, `+0x39`) when the far pointer `+0x35` is set, then `0006ea6b`(handle), copies the handle to `+0x1d` and `+0x21` to `+0x23`, calls `0006ee87`(handle, far `MidiSound_LoopCallback` (`0004e718`)), and returns 1. Of the two callbacks ([the driver's calls back](sound-samples.md#the-vtables)), `MidiSound_EndCallback` stops the song, and `MidiSound_LoopCallback` counts down its repeats, 255 for each of the catalog's battle songs.
 
 `HmiMidi_InitSong` works on the loaded copy:
 
@@ -82,7 +82,7 @@ Track 0 of each of the 19 songs lists no device and goes to slot 0. Of the other
 - **Open:** the header's `+0x024`–`+0x02f`, `+0x034`–`+0x07f` and each track chunk's `+0x08`. In the three songs walked, `+0x034` and `+0x038` are 120, and `+0x03c` is 17, 45 and 76; the dwords from `+0x040` are 0 or 9.
 - **Open:** the branch entries' `+0x00`–`+0x07` and `+0x10`–`+0x17`, and what the data they point to does.
 - **Open:** the event encoding past the first delta, and what reads the events.
-- **Open:** `0006eeae`, `0006ea6b` and `0006ee87`, which `MidiSound_Play` calls after the song is ready, the callbacks `0004e7b4` and `0004e718`, and the `MidiSound` slot `+0x30`.
+- **Open:** `0006eeae`, `0006ea6b` and `0006ee87`, which `MidiSound_Play` calls after the song is ready, and when the song player calls the two callbacks.
 - **Open:** what `0xa003`, `0xa007`, `0xa009` and `0xa00a` stand for, which `SOUNDSET.INI` does not list, and which drivers `ES1GO 0004240a` opens for the shell.
 - **Open:** the code that loads a driver out of `SOS\HMIMDRV.386`; both images hold the file's name.
 - **Open:** [the devices](#the-devices)' routing in the running game. A retail check: with the setup's MIDI device set to MPU 401 under DOSBox-X, `DESERT`'s song is silent and `RUBBLE`'s plays only its `0xa005` track, where FM plays both whole.

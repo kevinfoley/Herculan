@@ -14939,6 +14939,21 @@
       }
     },
     {
+      "address": "00042ba0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_ClearSlot",
+      "description": "(manager, slot): clears the object pointer +0x14c[slot]. es2_xref finds no caller; the same statements as ES1DBSIM's SoundManager_ClearSlot (0004f678) in different code.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004f678",
+      "verified": {
+        "bytes": "00042ba0+35",
+        "sha1": "daecc0c0975a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00042bf9",
       "binary": "ES1GO",
       "type": "function",
@@ -14979,6 +14994,21 @@
       "verified": {
         "bytes": "00042f39+404",
         "sha1": "d1d4785f8253",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043141",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_SetDistanceShift",
+      "description": "(manager, shift): stores the byte in +0x240. es2_xref finds no caller; the same statements as ES1DBSIM's SoundManager_SetDistanceShift (0004fb48) in different code.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004fb48",
+      "verified": {
+        "bytes": "00043141+25",
+        "sha1": "dee3f5786fd5",
         "scope": "body",
         "via": "decompile"
       }
