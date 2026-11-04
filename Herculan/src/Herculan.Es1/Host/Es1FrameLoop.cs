@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.File.Dyn;
 using Herculan.Es1.Render;
 using Herculan.Es1.Sim;
@@ -103,6 +104,9 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// <summary>The live palette (<see cref="Es1Monitor.Palette"/>), which the host sets; none with no monitor.</summary>
 	public Func<DynamixPalette?>? LivePalette { get; set; }
 
+	/// <summary>The theater's world file, whose shorts 10 and 11 the pitch gradient reads, which the host sets; none runs no gradient.</summary>
+	public Es1WorldData? World { get; set; }
+
 	/// <summary>The host time the loop has been advanced by, in <see cref="TimeSpan"/> ticks, on which the retraces lie.</summary>
 	internal long HostTime { get; private set; }
 
@@ -126,7 +130,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// the squadmates and their pilots (<see cref="Es1Cockpit.LoadSquadmatePilots"/>), every machine's weapon icons
 	/// (<see cref="Panels.Es1PaperDoll.BuildWeaponIconsForPool"/>), <paramref name="cursor"/> installed on the display's cursor, <c>Player_PerFrameCockpitUpdate</c>, <c>Cam_Update</c>,
 	/// the draw page 2 again and views 1 and 0 set, so both canopies lie in page 2's half; step 14, the lift's search and
-	/// with it the darkening (<see cref="Es1LiftStart"/>), without it the first frame's 3D pass; and step 15, the flag
+	/// with it the darkening (<see cref="Es1LiftStart"/>), without it the pitch gradient at its forced step 8
+	/// (<see cref="BlendPitchGradient"/>) and the first frame's 3D pass; and step 15, the flag
 	/// cleared, the whole of page 2 copied onto page 0, the cursor shown, with the lift its ride, held as the frame's work
 	/// (<see cref="Waiting"/>), and, unless a tape plays, the cockpit's mouse made live.
 	/// </summary>
@@ -158,14 +163,15 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		Views.SetView(0);
 
 		// Step 14: with a friendly structure near, the lift's darkening in place of the first frame; otherwise
-		// PitchGradient_ForcedStep 8, the pitch gradient (Palette_BlendRangeByPitch), unported (Es1Backdrop), and
-		// Palette_FlushDirtyRange, which has nothing to send; then Sim_RenderFrame.
+		// PitchGradient_ForcedStep 8, the pitch gradient and Palette_FlushDirtyRange, whose upload InstallPaletteRange
+		// makes; then Sim_RenderFrame.
 		var globals = Views.Cockpit.Globals;
 		globals.LiftStartPending = Es1LiftStart.Gate(globals);
 		if (globals.LiftStartPending) {
-			Es1LiftStart.DarkenPalette(globals, LivePalette?.Invoke(), InstallPaletteRange);
+			Es1LiftStart.DarkenPalette(this);
 		} else {
 			globals.PitchGradientForcedStep = 8;
+			BlendPitchGradient();
 			RenderFrame();
 		}
 
@@ -205,6 +211,18 @@ public sealed class Es1FrameLoop : IEs1Frame {
 
 	/// <summary><c>ViewObjectPtr</c>, the current camera; none without one.</summary>
 	internal Es1Camera? ViewCamera => _viewCamera?.Invoke();
+
+	/// <summary>
+	/// <c>Palette_BlendRangeByPitch</c>(<c>ViewObjectPtr</c>) (<see cref="Es1PitchGradient.Blend"/>): the current camera's
+	/// pitch, <see cref="World"/>'s two entries and the live palette, installed through <see cref="InstallPaletteRange"/>.
+	/// With no camera or no world file, which retail always has, nothing: an engine guard.
+	/// </summary>
+	internal void BlendPitchGradient() {
+		if (World is { } world && ViewCamera is { } camera) {
+			var globals = Views.Cockpit.Globals;
+			globals.PitchGradient.Blend(globals, camera.View.X, world, LivePalette?.Invoke(), InstallPaletteRange);
+		}
+	}
 
 	/// <summary>
 	/// One host frame of <paramref name="deltaSeconds"/>: while the frame's work waits, the timer runs on until the wait
@@ -420,7 +438,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// shake's offset added to the projection pair (<see cref="Es1ViewManager.MoveProjectionPair"/>), the cockpit's
 	/// frame (<c>Cockpit_DrawFrame</c>), then the 3D pass, which installs the current camera's view and draws the world
 	/// into the draw page in the installed window and clip block when the current view is not 1 or a view change is
-	/// staged, answering a pending pixel pick from what it drew (<see cref="Es1ObjectPick.Resolve"/>),
+	/// staged, with the pitch gradient at the end of <c>Scene_DrawTerrainPass</c> (<see cref="BlendPitchGradient"/>),
+	/// answering a pending pixel pick from what it drew (<see cref="Es1ObjectPick.Resolve"/>),
 	/// <c>Player_PerFrameCockpitUpdate</c>, and the gunsight's per-frame update over it
 	/// (<see cref="Gunsight.Es1Gunsight.UpdateAndPaint"/>), which reads the pick's answer in the same frame, as retail's does;
 	/// and last the pilot channel's slot <c>+0x10</c> (<see cref="Messages.Es1PilotChannel.Update"/>), after which the
@@ -448,6 +467,11 @@ public sealed class Es1FrameLoop : IEs1Frame {
 
 			_beginWorldPass?.Invoke();
 			Views.Display.DrawWorld(Views.Window, Views.Clip);
+			// Scene_DrawTerrainPass's last step, which retail runs between the backdrop and ObjList_DrawFrameObjects; the
+			// pass above draws both, and no shape draws with entries 64–79
+			// (docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479), so running it after both
+			// shows the same frame.
+			BlendPitchGradient();
 			// ObjList_DrawFrameObjects' end, with the pick pending: the object the pass has just drawn at its point.
 			Views.Cockpit.Globals.ObjectPick.Resolve(Views.Display.WorldObjectAt);
 		}

@@ -70,18 +70,21 @@ internal static class Es1LiftStart {
 	}
 
 	/// <summary>
-	/// <c>LiftStart_DarkenPalette</c> (docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4):
-	/// <c>PitchGradient_ForcedStep</c> 8; the live palette's entries copied into a bright and a dark set; the dark set's
-	/// two spans rewritten from the bright one, red = green / 2, green = red / 2, blue = red / 2 and the top byte 1, and
-	/// installed through <paramref name="install"/>; the cross fade from the dark set to the bright over
-	/// <see cref="FadeLength"/>; and <c>PitchGradient_Enabled</c> cleared. The two palette objects retail builds around
-	/// the sets are the sets here. With no live palette, which retail always has, nothing but the two flags.
-	/// <para>PLACEHOLDER: <c>Palette_BlendRangeByPitch</c>, which runs between the forced step and the copy, is unported
-	/// (<see cref="Render.Es1Backdrop"/>), so entries 64–79 are copied as installed rather than at the gradient's step 8.</para>
+	/// <c>LiftStart_DarkenPalette</c> (docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4)
+	/// on <paramref name="loop"/>'s live palette: <c>PitchGradient_ForcedStep</c> 8 and the pitch gradient
+	/// (<see cref="Es1FrameLoop.BlendPitchGradient"/>), so entries 64–79 hold its step 8; the live palette's entries then
+	/// copied into a bright and a dark set; the dark set's two spans rewritten from the bright one, red = green / 2,
+	/// green = red / 2, blue = red / 2 and the top byte 1, and installed through <see cref="Es1FrameLoop.InstallPaletteRange"/>;
+	/// the cross fade from the dark set to the bright over <see cref="FadeLength"/>; and <c>PitchGradient_Enabled</c>
+	/// cleared. The two palette objects retail builds around the sets are the sets here. With no live palette, which
+	/// retail always has, nothing but the two flags and the gradient.
 	/// </summary>
-	public static void DarkenPalette(Es1SimGlobals globals, DynamixPalette? live, Action<int, IReadOnlyList<uint>>? install) {
+	public static void DarkenPalette(Es1FrameLoop loop) {
+		var globals = loop.Views.Cockpit.Globals;
+		var install = loop.InstallPaletteRange;
 		globals.PitchGradientForcedStep = 8;
-		if (live != null) {
+		loop.BlendPitchGradient();
+		if (loop.LivePalette?.Invoke() is { } live) {
 			var bright = Es1PaletteFade.Entries(live);
 			var dark = (uint[])bright.Clone();
 			foreach (int first in (ReadOnlySpan<int>)[FirstSpan, SecondSpan]) {

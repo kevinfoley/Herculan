@@ -12,8 +12,8 @@ public class Es1WorldData {
 
 	/// <summary>
 	/// The 12 leading shorts, in file order (docs/es1/formats/wld-world.md#the-header-shorts): 0-7 the sky backdrop as
-	/// ES2's, 8 <see cref="PointColor"/>, 9 <see cref="FlatSetSelector"/>, 10 and 11 the palette entries the pitch
-	/// gradient runs between.
+	/// ES2's, 8 <see cref="PointColor"/>, 9 <see cref="FlatSetSelector"/>, 10 <see cref="PitchDownEntry"/> and 11
+	/// <see cref="PitchUpEntry"/>.
 	/// </summary>
 	public short[] Header { get; set; } = new short[HeaderShorts];
 
@@ -55,6 +55,15 @@ public class Es1WorldData {
 	/// <c>dts\flat2</c> (docs/es1/formats/wld-world.md#the-ground-shape-set).
 	/// </summary>
 	public short FlatSetSelector => HeaderShort(9);
+
+	/// <summary>
+	/// Header short 10, which the load stores at <c>000bc5d0</c>: the palette entry whose color the pitch gradient ends
+	/// on at its lowest step, looking down (docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479).
+	/// </summary>
+	public short PitchDownEntry => HeaderShort(10);
+
+	/// <summary>Header short 11, which the load stores at <c>000bc5d2</c>: the entry whose color it ends on at its highest step, looking up.</summary>
+	public short PitchUpEntry => HeaderShort(11);
 
 	private short HeaderShort(int index) => Header.Length > index ? Header[index] : (short)0;
 

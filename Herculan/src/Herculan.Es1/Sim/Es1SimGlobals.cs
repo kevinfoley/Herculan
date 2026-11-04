@@ -130,6 +130,9 @@ public sealed class Es1SimGlobals {
 	/// <summary>The palette module's cross fade (<see cref="View.Es1PaletteFade"/>).</summary>
 	public View.Es1PaletteFade PaletteFade { get; } = new();
 
+	/// <summary>The pitch gradient's colors and flags (<see cref="View.Es1PitchGradient"/>).</summary>
+	public View.Es1PitchGradient PitchGradient { get; } = new();
+
 	/// <summary><c>LiftStart_Pending</c> (<c>000b5bb0</c>), which <c>Sim_StartMission</c>'s step 14 sets (<see cref="Host.Es1LiftStart"/>).</summary>
 	public bool LiftStartPending { get; set; }
 
@@ -140,14 +143,15 @@ public sealed class Es1SimGlobals {
 	public short LiftStartFadeRemaining { get; set; } = 1;
 
 	/// <summary>
-	/// <c>PitchGradient_Enabled</c> (<c>000928ec</c>), 1 in the image, which the lift start clears for its ride.
-	/// PLACEHOLDER: nothing reads it, since <c>Palette_BlendRangeByPitch</c> is unported (<see cref="Render.Es1Backdrop"/>).
+	/// <c>PitchGradient_Enabled</c> (<c>000928ec</c>), 1 in the image, which the lift start clears for its ride: the pitch
+	/// gradient runs only while it is set (<see cref="View.Es1PitchGradient.Blend"/>).
 	/// </summary>
 	public bool PitchGradientEnabled { get; set; } = true;
 
 	/// <summary>
 	/// <c>PitchGradient_ForcedStep</c> (<c>000928ee</c>), which <c>Sim_StartMission</c> sets to 8 on both of step 14's
-	/// branches. PLACEHOLDER: nothing reads it, as <see cref="PitchGradientEnabled"/>.
+	/// branches: when not negative, the pitch gradient's next step, after which it is −1
+	/// (<see cref="View.Es1PitchGradient.Blend"/>).
 	/// </summary>
 	public short PitchGradientForcedStep { get; set; }
 

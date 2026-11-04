@@ -14,9 +14,7 @@ namespace Herculan.Es1.Render;
 /// ground below the horizon line, the skyline on it, the clouds and the scattered points
 /// (docs/es1/rendering/ground-and-sky.md). Backdrop.glsl runs each rule per pixel at the window's resolution, the
 /// user's choice, where retail fills the 320-column page; this sets it up from the camera each frame. A speck's pixels are the original's 320-column pixels scaled to the window.
-///
-/// <para>What draws with the palette entries the pitch gradient rewrites is Open
-/// (docs/es1/rendering/ground-and-sky.md#open), so that is not run.</para>
+/// The pass's last step, the pitch gradient, is the frame loop's (<see cref="Host.Es1FrameLoop.BlendPitchGradient"/>).
 /// </summary>
 public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	private const string ShaderFolder = "Herculan.Es1.Render.Shaders.";

@@ -369,6 +369,7 @@ public static class Es1ZoneViewer {
 				// The death flash's palettes and fades are installed into the same live palette.
 				frameLoop.InstallPaletteRange = monitor.InstallRange;
 				frameLoop.LivePalette = () => liveMonitor.Palette;
+				frameLoop.World = scene.World;
 				frameLoop.StartMission(Es1CursorImage.Load(content, "CURSOR"),
 					() => Panels.Es1WidgetResources.LoadFrames(content, "INTRO")?.FirstOrDefault());
 			}
