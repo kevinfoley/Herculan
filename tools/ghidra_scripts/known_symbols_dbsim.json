@@ -8568,7 +8568,13 @@
       "confidence": "high",
       "name": "Flyer_CommandRoll",
       "description": "Fills the command array's aileron element with Q16(desiredRoll - flyer.roll, 2500) + Q16(rollRate, -5000) and runs Flyer_ApplyFlightCommand. The arm Flyer_SteerAndFly takes whenever it is holding or limiting a bank rather than commanding one.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "0042215c+74",
+        "sha1": "c63db4d1fdd4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004221a8",
