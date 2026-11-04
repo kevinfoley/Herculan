@@ -141,7 +141,7 @@ public class MissionFileLaunchTests {
 		Directory.CreateDirectory(directory);
 		MissionFileLaunch.ClearHandoff(directory);
 		var shell = GameContent.MountShell(root);
-		var (msn, text) = ShellTrainingLaunch.ReadMission(shell, $"{MissionFileLaunch.MissionFolder}\\TRAIN5.MSN")!.Value;
+		var (msn, text) = ShellCareerMissions.ReadMission(shell, $"{MissionFileLaunch.MissionFolder}\\TRAIN5.MSN")!.Value;
 		var heights = new byte[128 * 128];
 		new Random(128).NextBytes(heights);
 		var zone = ZoneFiles.Create(heights, 14, 149);

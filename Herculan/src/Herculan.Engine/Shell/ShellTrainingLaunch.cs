@@ -86,7 +86,7 @@ public static class ShellTrainingLaunch {
 			MissionGenerating? generating = null, bool ownWorld = false) {
 		int Roll(short bound) => random.NextBelow(bound);
 		return NewCareer(content, options, row, Roll, held, out failure) is var (game, hangar)
-			? Load(directory, content, options, row, MissionPath(content, 0, row), instantAction, Roll, clearList, game, hangar,
+			? Load(directory, content, options, row, ShellCareerMissions.MissionPath(content, 0, row), instantAction, Roll, clearList, game, hangar,
 				out failure, generating, ownWorld)
 			: null;
 	}
@@ -114,7 +114,7 @@ public static class ShellTrainingLaunch {
 	/// The training half of <c>MsnGen_LoadMission</c> (<c>0041c73d</c>) for <paramref name="game"/>, which
 	/// <see cref="NewCareer"/> started, with the handoff exported (<c>Game_ExportMissionHandoff</c>, <c>0040f0d4</c>) into
 	/// <paramref name="directory"/>. <paramref name="missionPath"/> is the career position's mission
-	/// (<see cref="MissionPath"/>), as <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>) loads it, or the DEBUG
+	/// (<see cref="ShellCareerMissions.MissionPath"/>), as <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>) loads it, or the DEBUG
 	/// dialog's typed one. <paramref name="row"/> is the practice screen's lit row, <c>PracticeScreen_SelectedRow</c>
 	/// (<c>00479bb8</c>), which picks the player's machine. <paramref name="clearList"/> is the row-2 clear list the shell
 	/// keeps across loads (<see cref="MissionGenerator.Load"/>), and <paramref name="instantAction"/> is
@@ -130,7 +130,7 @@ public static class ShellTrainingLaunch {
 			return null;
 		}
 
-		if (ReadMission(content, missionPath) is not (byte[] msn, var text)) {
+		if (ShellCareerMissions.ReadMission(content, missionPath) is not (byte[] msn, var text)) {
 			failure = $"{missionPath} is not in any mounted archive.";
 			return null;
 		}
@@ -153,7 +153,7 @@ public static class ShellTrainingLaunch {
 			bool wholeSquad = false) {
 		// MsnGen_SeedCampaignFlags: a training load clears the flag array first.
 		var flags = new short[MissionGenerator.CampaignFlagCount];
-		SeedDrawnFlags(flags, roll);
+		ShellCareerMissions.SeedDrawnFlags(flags, roll);
 
 		var header = PracticeHeader(options, ownWorld);
 		generating?.Invoke(msn, text, flags, header);
@@ -252,66 +252,6 @@ public static class ShellTrainingLaunch {
 		ownWorld ? null : PracticeTheater, null, null, null, null,
 		options[AmmoOption], options[DamageOption], options[DifficultyOption], 0, ownWorld ? null : options[TimeOfDayOption],
 	];
-
-	/// <summary>
-	/// Flag 3's source, <c>00482606</c>, which the startup memset from <c>MissionScreenView</c> clears.
-	/// Whether anything writes it is open — see docs/retail/shell/campaign-loop.md#open.
-	/// </summary>
-	private const short UnknownFlag3 = 0;
-
-	/// <summary>
-	/// The half of <c>MsnGen_SeedCampaignFlags</c> (<c>0040e94e</c>) both modes run: flag 3 from
-	/// <c>00482606</c>, then flags 4, 5 and 6 a draw below 12 each.
-	/// </summary>
-	internal static void SeedDrawnFlags(short[] flags, Func<short, int> roll) {
-		flags[3] = UnknownFlag3;
-		for (int flag = 4; flag <= 6; flag++) {
-			flags[flag] = (short)roll(12);
-		}
-	}
-
-	/// <summary>
-	/// The career position's mission — <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>) reads the name
-	/// <c>CareerDat_ReadStage</c> resolved through <c>missions.bin</c>, a path such as <c>MSN\TRAIN1.MSN</c>.
-	/// Null for a position <c>gam\career.dat</c> does not have.
-	/// </summary>
-	internal static string? MissionPath(GameContent content, int stage, int mission) =>
-		CareerStages(content) is { } stages && stage >= 0 && stage < stages.Count
-			&& mission >= 0 && mission < stages[stage].Missions.Length
-			? ShellText.Load(content, "MISSIONS.BIN")?.Text(stages[stage].Missions[mission])
-			: null;
-
-	/// <summary><c>gam\career.dat</c>'s stages, as <c>LoadCareerDat</c> (<c>00412906</c>) reads them, or null without one.</summary>
-	internal static List<(short CampaignIndex, int[] Missions)>? CareerStages(GameContent content) =>
-		content.Read(ShellRepairCosts.CatalogFolder, "CAREER.DAT") is { } bytes
-			? new CareerDataTransformer().Parse(bytes)?.Stages
-			: null;
-
-	/// <summary>
-	/// A mission and its text as <c>MsnGen_ParseMsnFile</c> opens them: the <c>.MSN</c> at
-	/// <paramref name="missionPath"/>, and the text <c>Msn_LoadEngText</c> (<c>0041768c</c>) finds by
-	/// swapping everything from the name's first <c>.</c> for the shell language's extension, or null text when
-	/// there is none. Null when the mission itself is not in the archives.
-	/// </summary>
-	internal static (byte[] Msn, byte[]? Text)? ReadMission(GameContent content, string missionPath) {
-		int split = missionPath.LastIndexOf('\\');
-		string folder = split < 0 ? string.Empty : missionPath[..split];
-		string name = missionPath[(split + 1)..];
-		if (content.Read(folder, name) is not { } msn) {
-			return null;
-		}
-
-		int dot = name.IndexOf('.');
-		string stem = dot < 0 ? name : name[..dot];
-		return (msn, content.Read(folder, stem + MissionTextExtension(content.Language)));
-	}
-
-	/// <summary><c>Msn_LoadEngText</c>'s extension for <paramref name="language"/>'s mission text.</summary>
-	internal static string MissionTextExtension(GameLanguage language) => language switch {
-		GameLanguage.French => ".FRE",
-		GameLanguage.German => ".GER",
-		_ => ".ENG",
-	};
 
 	/// <summary>
 	/// A squad machine from a mission's roster record, as <c>MsnGen_LoadMission</c> builds one:

@@ -52,13 +52,13 @@ public static class ShellCampaignLaunch {
 	public static ShellCampaignMission? Write(string directory, GameContent content, int stage, int mission, short skill,
 			short[] flags, short[] clearList, Func<short, int> roll, out string? failure, string? missionPath = null,
 			MissionGenerating? generating = null) {
-		if (ShellTrainingLaunch.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count
-				|| (missionPath ?? ShellTrainingLaunch.MissionPath(content, stage, mission)) is not { } path) {
+		if (ShellCareerMissions.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count
+				|| (missionPath ?? ShellCareerMissions.MissionPath(content, stage, mission)) is not { } path) {
 			failure = $"gam\\career.dat or missions.bin has no stage {stage} mission {mission}.";
 			return null;
 		}
 
-		if (ShellTrainingLaunch.ReadMission(content, path) is not (byte[] msn, var text)) {
+		if (ShellCareerMissions.ReadMission(content, path) is not (byte[] msn, var text)) {
 			failure = $"{path} is not in any mounted archive.";
 			return null;
 		}
@@ -74,7 +74,7 @@ public static class ShellCampaignLaunch {
 	private static ShellCampaignMission? Load(string directory, GameContent content, int stage, int mission, string missionPath,
 			byte[] msn, byte[]? text, short skill, short[] flags, short[] clearList, Func<short, int> roll, out string? failure,
 			MissionGenerating? generating = null) {
-		if (ShellTrainingLaunch.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count) {
+		if (ShellCareerMissions.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count) {
 			failure = $"gam\\career.dat or missions.bin has no stage {stage} mission {mission}.";
 			return null;
 		}
@@ -82,7 +82,7 @@ public static class ShellCampaignLaunch {
 		// MsnGen_SeedCampaignFlags: a campaign load writes the position into flags 1 and 2.
 		flags[1] = (short)stage;
 		flags[2] = (short)mission;
-		ShellTrainingLaunch.SeedDrawnFlags(flags, roll);
+		ShellCareerMissions.SeedDrawnFlags(flags, roll);
 
 		// The theater from the stage's campaign, both training cheats off, and the pilot's skill as the difficulty.
 		short?[] header = [stages[stage].CampaignIndex, null, null, null, null, 0, 0, skill, null, null];
@@ -301,7 +301,7 @@ public static class ShellCampaignLaunch {
 	/// none. The original only ever loads a mission by position; looking one up by name is this engine's.
 	/// </summary>
 	public static (int Stage, int Mission)? Find(GameContent content, string name) {
-		if (ShellTrainingLaunch.CareerStages(content) is not { } stages || ShellText.Load(content, "MISSIONS.BIN") is not { } names) {
+		if (ShellCareerMissions.CareerStages(content) is not { } stages || ShellText.Load(content, "MISSIONS.BIN") is not { } names) {
 			return null;
 		}
 

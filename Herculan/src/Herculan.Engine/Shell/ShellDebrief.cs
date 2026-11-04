@@ -314,13 +314,13 @@ public static class ShellDebrief {
 	/// </summary>
 	private static (short State, MissionDebriefText? Debrief) Advance(PlayerSave game, ShellHangar hangar, GameContent content,
 			short[] flags, short outcome, Func<short, int> roll) {
-		var stages = ShellTrainingLaunch.CareerStages(content);
+		var stages = ShellCareerMissions.CareerStages(content);
 		int stage = game.CampaignStage;
 		int mission = game.MissionInStage;
 		MissionDebriefText? debrief = null;
 		if (stages != null && stage >= 0 && stage < stages.Count && mission < stages[stage].Missions.Length
-				&& ShellTrainingLaunch.MissionPath(content, stage, mission) is { } path
-				&& ShellTrainingLaunch.ReadMission(content, path) is (byte[] msn, var text)) {
+				&& ShellCareerMissions.MissionPath(content, stage, mission) is { } path
+				&& ShellCareerMissions.ReadMission(content, path) is (byte[] msn, var text)) {
 			debrief = MissionGenerator.LoadDebriefText(msn, text, flags, roll);
 		}
 

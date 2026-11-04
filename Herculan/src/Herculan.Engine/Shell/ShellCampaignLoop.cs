@@ -178,7 +178,7 @@ public sealed class ShellCampaignLoop {
 	/// 0044db25), or null past the end of the position's stage.
 	/// </summary>
 	public string? CareerMissionPath() =>
-		ShellTrainingLaunch.MissionPath(_content, _game.CampaignStage, _game.MissionInStage);
+		ShellCareerMissions.MissionPath(_content, _game.CampaignStage, _game.MissionInStage);
 
 	/// <summary>
 	/// Career_LoadCurrentMission (0044d4cc) in training, or MissionNameDialog_OnLoad (0044d5bd) with the typed
