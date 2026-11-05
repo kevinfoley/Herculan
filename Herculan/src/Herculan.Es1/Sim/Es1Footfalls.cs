@@ -20,10 +20,11 @@ public static class Es1Footfalls {
 	/// <summary>
 	/// <c>Mech_PlaceLegsOnGround</c>: for each shadow, its position the translation of its part's node through the
 	/// machine's frame and its heading the machine's; then, for the player's machine (<c>+0x9d</c>), its entry's footfall
-	/// test, each entry taking the next latch. A part the shape lacks takes the identity's translation, where retail reads
-	/// address <c>0x14</c>.
+	/// test, each entry taking the next latch, a planting playing its sound at the machine's position through
+	/// <paramref name="sound"/> (<see cref="Sound.Es1Sound.PlayAt"/>). A part the shape lacks takes the identity's
+	/// translation, where retail reads address <c>0x14</c>.
 	/// </summary>
-	public static void PlaceLegsOnGround(Es1Mech mech) {
+	public static void PlaceLegsOnGround(Es1Mech mech, Sound.Es1Sound sound) {
 		var chassis = mech.Type.Chassis;
 		var frame = mech.Frame;
 		// The locomotion thread's requested sequence, or with none the playing one, read once.
@@ -46,14 +47,14 @@ public static class Es1Footfalls {
 				gait = mech.LocomotionThread?.Sequence ?? -1;
 			}
 
-			short sound = -1;
+			short row = -1;
 			int index = 0, value = 0;
 			bool forward = true;
 			if (gait == chassis.AnimId_Death) {
 				if (shadow.Root == BodyKind) {
 					latch = DeathLatch;
 					index = DeathIndex;
-					sound = DeathArmSound;
+					row = DeathArmSound;
 					value = shadow.Position.Z;
 				}
 			} else if (shadow.Root == FootKind) {
@@ -75,13 +76,13 @@ public static class Es1Footfalls {
 					SetLatch(mech, latch, true);
 				}
 
-				sound = FootfallSound;
+				row = FootfallSound;
 			}
 
 			// Planting: past the record's +0x98 + 2 × index the other way.
 			short plant = Plant(chassis, index);
-			if (sound != -1 && Latch(mech, latch) && (forward ? value < plant : plant < value)) {
-				// PLACEHOLDER: Sound_PlayAt (0004deb8)(the machine's position, sound); no plan step ports sound yet.
+			if (row != -1 && Latch(mech, latch) && (forward ? value < plant : plant < value)) {
+				sound.PlayAt(mech.Position, row);
 				SetLatch(mech, latch, false);
 			}
 

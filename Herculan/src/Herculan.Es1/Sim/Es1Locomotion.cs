@@ -43,6 +43,9 @@ public sealed class Es1Locomotion {
 	/// <summary>The odds and the damage of the landing's <see cref="Es1MechDamage.SpreadImpactDamage"/> as the fall ends.</summary>
 	private const short LandingOdds = 0x78, LandingDamage = 0x96;
 
+	/// <summary>The catalog rows the fall plays at the machine: as it is aimed at the death sequence, and as it lands.</summary>
+	private const short FallSound = 0x1e, LandingSound = 0x29;
+
 	/// <summary>The steer, either way, past which a standing machine turns in place.</summary>
 	private const int TurnInPlaceDeflection = 0x32;
 
@@ -313,8 +316,9 @@ public sealed class Es1Locomotion {
 	/// <summary>
 	/// The fall of an immobilized machine that is not turning in place
 	/// (docs/retail/simulation/mech-locomotion.md#going-down): aimed at the death sequence at rate 100, a machine in the
-	/// reverse stop sequence first cut to the forward one; then rate <c>0x78</c>; and once it has played out,
-	/// <see cref="Es1Mech.Collapsed"/> latched and the landing's damage spread.
+	/// reverse stop sequence first cut to the forward one, and <see cref="FallSound"/> at its position unless it has
+	/// collapsed; then rate <c>0x78</c>; and once it has played out, <see cref="Es1Mech.Collapsed"/> latched, the landing's
+	/// damage spread and <see cref="LandingSound"/> played at its position (<see cref="Sound.Es1Sound.PlayAt"/>).
 	/// </summary>
 	private void Fall(AnimationThread thread, short death, short stopForward, short stopReverse, Es1SimGlobals globals) {
 		var mech = _mech;
@@ -323,7 +327,7 @@ public sealed class Es1Locomotion {
 			if (!mech.Collapsed && thread.Frame == thread.NextFrame) {
 				mech.Collapsed = true;
 				Es1MechDamage.SpreadImpactDamage(mech, LandingOdds, LandingDamage, globals);
-				// PLACEHOLDER: sound 0x29 at the machine's position, which no plan step ports yet.
+				globals.Sound.PlayAt(mech.Position, LandingSound);
 			}
 
 			return;
@@ -335,7 +339,9 @@ public sealed class Es1Locomotion {
 			}
 
 			thread.SetTarget(death, -1, 0);
-			// PLACEHOLDER: sound 0x1e at the machine's position when it is not collapsed, which no plan step ports yet.
+			if (!mech.Collapsed) {
+				globals.Sound.PlayAt(mech.Position, FallSound);
+			}
 		}
 
 		mech.PlaybackRate = StopRate;

@@ -1,3 +1,5 @@
+using Herculan.Engine.Numerics;
+
 namespace Herculan.Es1.Sound;
 
 /// <summary>
@@ -271,6 +273,69 @@ public sealed class Es1SoundManager {
 
 	/// <summary><c>SoundManager_SetMemoryLimit</c> (<c>00050008</c>)(manager, <paramref name="limit"/>).</summary>
 	public void SetMemoryLimit(uint limit) => MemoryLimit = limit;
+
+	/// <summary>
+	/// <c>+0x242</c>: the listener's frame, its rotation and its position, as the last <see cref="UpdateListener"/> gave it;
+	/// zero from the allocation until then.
+	/// </summary>
+	public Transform3 ListenerFrame { get; private set; }
+
+	/// <summary>
+	/// <c>SoundManager_UpdateListener</c> (<c>0004fb60</c>)(manager, <paramref name="frame"/>)
+	/// (docs/es1/formats/sound-samples.md#placed-sounds): the frame kept, then each of the <see cref="ObjectSlots"/> placed
+	/// as <see cref="UpdatePlacement"/> places one, whose steps its loop repeats inline.
+	/// </summary>
+	public void UpdateListener(Transform3 frame) {
+		ListenerFrame = frame;
+		for (int slot = 0; slot < ObjectSlots; slot++) {
+			UpdatePlacement(slot);
+		}
+	}
+
+	/// <summary>
+	/// <c>SoundObject_UpdatePlacement</c> (<c>0004fdd8</c>)(manager, <paramref name="slot"/>)
+	/// (docs/es1/formats/sound-samples.md#placed-sounds): a placed object in the slot faded by its distance from
+	/// <see cref="ListenerFrame"/>'s position, to silence at <see cref="HearingRange"/>, both shifted right by
+	/// <see cref="DistanceShift"/> when the range is above <c>0xffff</c>; and within the range panned by its direction's
+	/// dot product with the frame's rotation of (<c>0xfff</c>, 0, 0), <c>0xffff</c> − 8 × (<i>p</i> + <c>0xfff</c>).
+	/// </summary>
+	internal void UpdatePlacement(int slot) {
+		int range = (int)HearingRange;
+		int shift = 0;
+		if (range > 0xffff) {
+			shift = DistanceShift & 0x1f;
+			range >>= shift;
+		}
+
+		if (_objects[slot] is not { Placed: true } sound) {
+			return;
+		}
+
+		var frame = ListenerFrame;
+		int x = unchecked(sound.Position.X - frame.X) >> shift;
+		int y = unchecked(sound.Position.Y - frame.Y) >> shift;
+		int z = unchecked(sound.Position.Z - frame.Z) >> shift;
+		int distance = SimMath.FastMagnitude3D(x, y, z);
+		if (distance == 0) {
+			distance = 1;
+		}
+
+		if (distance >= range) {
+			sound.SetPlacedVolume(0);
+			return;
+		}
+
+		sound.SetPlacedVolume((sbyte)(sound.Volume - distance * sound.Volume / range));
+		x = unchecked(x * PanAxis) / distance;
+		y = unchecked(y * PanAxis) / distance;
+		z = unchecked(z * PanAxis) / distance;
+		var axis = frame.RotateVector(PanAxis, 0, 0);
+		int dot = unchecked(axis.X * x + axis.Y * y + axis.Z * z);
+		sound.SetPan(unchecked((ushort)(0xffff - (dot / PanAxis + PanAxis) * 8)));
+	}
+
+	/// <summary>The length the placement scales a direction to, and the axis it turns by the listener's rotation.</summary>
+	private const int PanAxis = 0xfff;
 
 	/// <summary>
 	/// The defaults block (<c>000959ec</c>) as <c>Sound_Init</c> leaves it, which <see cref="LoadDrivers"/> fills the

@@ -3,6 +3,8 @@ using HercWorks.Core.Io;
 using HercWorks.Core.Io.Read;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Audio;
+using Herculan.Engine.Numerics;
+using Herculan.Es1.View;
 
 namespace Herculan.Es1.Sound;
 
@@ -11,8 +13,10 @@ namespace Herculan.Es1.Sound;
 /// <c>Sound_Init</c> makes, the catalog of <c>str\SOUNDS.STR</c>'s rows <c>SoundCatalog_Load</c> builds, the switches
 /// preferences' MUSIC and SOUNDS set, and the calls the simulator plays, stops and tests a sound through by its row.
 /// Retail's globals: the manager <c>000959ac</c>, the catalog's objects <c>000bd63c</c> and row count <c>000bd72c</c>,
-/// <c>Sound_MusicEnabled</c> (<c>000959b8</c>), <c>Sound_EffectsEnabled</c> (<c>000959bc</c>) and the listener's
-/// countdown <c>000959b4</c>. The simulation owns one (<see cref="Sim.Es1SimGlobals.Sound"/>), which the preferences'
+/// <c>Sound_MusicEnabled</c> (<c>000959b8</c>), <c>Sound_EffectsEnabled</c> (<c>000959bc</c>), the listener
+/// <c>Sound_Listener</c> (<c>000bd730</c>) with its countdown <c>000959b4</c>, and the points offered for the rows
+/// (<c>000b1a84</c>, <c>SoundCatalog_Positions</c> <c>000b1b74</c>). The simulation owns one
+/// (<see cref="Sim.Es1SimGlobals.Sound"/>), which the preferences'
 /// handlers of options 0 and 1 write from their load on.
 /// </summary>
 public sealed class Es1Sound {
@@ -36,6 +40,12 @@ public sealed class Es1Sound {
 
 	private readonly Es1SoundObject?[] _catalog = new Es1SoundObject?[CatalogCapacity];
 
+	// 000b1a84: per row, the distance of the point offered this frame, 0 for none.
+	private readonly int[] _offered = new int[CatalogCapacity];
+
+	// SoundCatalog_Positions (000b1b74): per row, the point offered this frame.
+	private readonly Vec3i[] _offeredPoints = new Vec3i[CatalogCapacity];
+
 	/// <summary><c>000959ac</c>: the sound manager, none until <see cref="Init"/> makes one, and with a digital device 0.</summary>
 	public Es1SoundManager? Manager { get; private set; }
 
@@ -50,6 +60,9 @@ public sealed class Es1Sound {
 
 	/// <summary><c>000959b4</c>, 0 in the image: the frames until <c>Sound_UpdateListener</c> next places the sounds.</summary>
 	public int ListenerCountdown { get; private set; }
+
+	/// <summary><c>Sound_Listener</c> (<c>000bd730</c>): the camera <see cref="UpdateListener"/> last kept, none until then.</summary>
+	public Es1Camera? Listener { get; private set; }
 
 	/// <summary><c>000bd63c</c>[<paramref name="row"/>]: the row's sound object, none past the catalog or with no manager.</summary>
 	public Es1SoundObject? Catalog(int row) => (uint)row < CatalogCapacity ? _catalog[row] : null;
@@ -125,7 +138,7 @@ public sealed class Es1Sound {
 	/// first empty name the object <see cref="Es1SoundManager.CreateObject"/>(2, attribute byte 3, row), its repeats
 	/// (−1, −1, attribute byte 0), its volume attribute byte 1, and its sample loaded with attribute byte 2 set; then for
 	/// each voice-line slot the next index past the rows and a digital sound on it (<see cref="Es1SpeechSlot.SoundIndex"/>,
-	/// <see cref="Es1SpeechSlot.Sound"/>). The row's word <c>000b1a84</c>, which it also clears, is item 7's A2.
+	/// <see cref="Es1SpeechSlot.Sound"/>). Each row's offered distance (<see cref="OfferPosition"/>) is cleared with it.
 	///
 	/// <para>Engine guards: a table that does not read gives no rows, where retail reads a name through a null pointer; the
 	/// rows stop at the table's end or at <see cref="CatalogCapacity"/>, where retail reads on past the names it stored; and
@@ -150,6 +163,7 @@ public sealed class Es1Sound {
 				}
 			}
 
+			_offered[CatalogCount] = 0;
 			CatalogCount++;
 		}
 
@@ -169,6 +183,75 @@ public sealed class Es1Sound {
 	public void Play(int row) {
 		if (Manager != null && Catalog(row) is { } sound && sound.IsCategoryEnabled(MusicEnabled != 0, EffectsEnabled != 0)) {
 			sound.Play();
+		}
+	}
+
+	/// <summary>
+	/// <c>Sound_PlayAt</c> (<c>0004deb8</c>)(<paramref name="point"/>, <paramref name="row"/>)
+	/// (docs/es1/formats/sound-samples.md#placed-sounds): with a manager, the row's object placed at the point
+	/// (<see cref="Es1SoundObject.SetPosition"/>), then <see cref="Play"/>. A row with no object does nothing, an engine
+	/// guard.
+	/// </summary>
+	public void PlayAt(Vec3i point, int row) {
+		if (Manager != null && Catalog(row) is { } sound) {
+			sound.SetPosition(point);
+			Play(row);
+		}
+	}
+
+	/// <summary>
+	/// <c>Sound_OfferPosition</c> (<c>0004dee4</c>)(<paramref name="point"/>, <paramref name="row"/>)
+	/// (docs/es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574): with a manager, the point's
+	/// distance from <see cref="Listener"/> (<c>Math_FastMagnitude3D</c>) and the point kept for the row while its kept
+	/// distance is 0, which <see cref="UpdateListener"/> places the row's object at. Retail's test of a kept distance
+	/// compares the dword with itself (<c>0004df4d</c>), where the new distance belongs, so the first point offered in a
+	/// frame at a distance other than 0 is the one used.
+	///
+	/// <para>Engine guards: a row past the catalog's object array is not kept, and with no listener yet, where retail
+	/// reads the position through a null pointer, the distance is taken from (0, 0, 0).</para>
+	/// </summary>
+	public void OfferPosition(Vec3i point, int row) {
+		if (Manager == null || (uint)row >= CatalogCapacity) {
+			return;
+		}
+
+		var listener = Listener?.Position ?? default;
+		int distance = SimMath.FastMagnitude3D(unchecked(listener.X - point.X), unchecked(listener.Y - point.Y),
+			unchecked(listener.Z - point.Z));
+		if (_offered[row] == 0) {
+			_offered[row] = distance;
+			_offeredPoints[row] = point;
+		}
+	}
+
+	/// <summary>
+	/// <c>Sound_UpdateListener</c> (<c>0004df98</c>)(<paramref name="camera"/>)
+	/// (docs/es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574): the camera kept as
+	/// <see cref="Listener"/>; then, with a manager, each catalog row with a point offered placed there and its distance
+	/// cleared, and on every <see cref="ListenerFrames"/>th call the manager's listener given the rotation of (0, 0, 0)
+	/// (<c>BuildEulerRotationMatrixQ14</c>) at the camera's position (<see cref="Es1SoundManager.UpdateListener"/>). A row
+	/// with no object is passed over with its distance cleared, an engine guard.
+	/// </summary>
+	public void UpdateListener(Es1Camera camera) {
+		Listener = camera;
+		if (Manager == null) {
+			return;
+		}
+
+		for (int row = 0; row < CatalogCount; row++) {
+			if (_offered[row] != 0) {
+				_catalog[row]?.SetPosition(_offeredPoints[row]);
+				_offered[row] = 0;
+			}
+		}
+
+		if (--ListenerCountdown == 0) {
+			ListenerCountdown = ListenerFrames;
+			var frame = Transform3.FromEuler(0, 0, 0);
+			frame.X = camera.Position.X;
+			frame.Y = camera.Position.Y;
+			frame.Z = camera.Position.Z;
+			Manager.UpdateListener(frame);
 		}
 	}
 

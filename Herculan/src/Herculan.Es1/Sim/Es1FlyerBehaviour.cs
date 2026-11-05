@@ -54,14 +54,26 @@ public static class Es1FlyerBehaviour {
 	}
 
 	/// <summary>
-	/// Slot <c>+0x18</c>, <c>Flyer_DispatchMove</c> (<c>0001afa8</c>): the state's move with the flyer, or 0 for a state
-	/// without one. PLACEHOLDER: before it, catalog row <see cref="SoundRow"/> at the flyer's position while it is not
-	/// destroyed (<c>Sound_PlayAt</c> when the row is not playing, otherwise <c>Sound_OfferPosition</c>), and
-	/// <c>Sound_Stop</c> of the row once it is; ES1's sound has no plan step
-	/// (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out).
+	/// Slot <c>+0x18</c>, <c>Flyer_DispatchMove</c> (<c>0001afa8</c>)
+	/// (docs/es1/simulation/flyers.md#the-move--flyer_movementtick-0001b084): catalog row <see cref="SoundRow"/> at the
+	/// flyer's position while it is not destroyed, <see cref="Sound.Es1Sound.PlayAt"/> when the row is not playing and
+	/// otherwise <see cref="Sound.Es1Sound.OfferPosition"/>, and the row stopped once it is; then the state's move with the
+	/// flyer, or 0 for a state without one.
 	/// </summary>
-	public static short DispatchMove(Es1Flyer flyer, Es1SimGlobals globals) =>
-		flyer.Behaviour.Descriptor?.FlyerMove is { } move ? move(flyer, globals) : (short)0;
+	public static short DispatchMove(Es1Flyer flyer, Es1SimGlobals globals) {
+		var sound = globals.Sound;
+		if (!flyer.Destroyed) {
+			if (!sound.IsPlaying(SoundRow)) {
+				sound.PlayAt(flyer.Position, SoundRow);
+			} else {
+				sound.OfferPosition(flyer.Position, SoundRow);
+			}
+		} else {
+			sound.Stop(SoundRow);
+		}
+
+		return flyer.Behaviour.Descriptor?.FlyerMove is { } move ? move(flyer, globals) : (short)0;
+	}
 
 	/// <summary>Slot <c>+0x1c</c>, <c>Behaviour_DispatchThinkFlyerCopy</c> (<c>0001b034</c>): the state's think, or 0 without one.</summary>
 	public static short DispatchThink(Es1Flyer flyer, Es1SimGlobals globals) =>

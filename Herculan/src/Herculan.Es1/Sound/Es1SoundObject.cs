@@ -1,3 +1,5 @@
+using Herculan.Engine.Numerics;
+
 namespace Herculan.Es1.Sound;
 
 /// <summary>
@@ -65,6 +67,9 @@ public abstract class Es1SoundObject {
 	/// <summary><c>+0x23</c>: the playing sound's repeat count.</summary>
 	public short PlayingRepeatCount { get; internal set; }
 
+	/// <summary><c>+0x25</c>: the placed sound's position.</summary>
+	public Vec3i Position { get; private set; }
+
 	/// <summary><c>+0x31</c>: the volume, 0–100.</summary>
 	public byte Volume { get; internal set; } = 100;
 
@@ -113,6 +118,20 @@ public abstract class Es1SoundObject {
 
 	/// <summary>Slot <c>+0x30</c>: plays. The base's stub answers false.</summary>
 	public virtual bool IsPlaying() => false;
+
+	/// <summary>
+	/// <c>SoundObject_SetPosition</c> (<c>00050120</c>)(object, <paramref name="point"/>)
+	/// (docs/es1/formats/sound-samples.md#placed-sounds): <see cref="Placed"/> set, the point kept, and the object placed
+	/// against the manager's listener (<see cref="Es1SoundManager.UpdatePlacement"/>).
+	/// </summary>
+	public void SetPosition(Vec3i point) {
+		Placed = true;
+		Position = point;
+		Manager.UpdatePlacement(Slot);
+	}
+
+	/// <summary><c>SoundObject_SetPan</c> (<c>00050150</c>)(object, <paramref name="pan"/>): <see cref="Pan"/>.</summary>
+	internal void SetPan(ushort pan) => Pan = pan;
 
 	/// <summary>
 	/// <c>SoundObject_Unload</c> (<c>00050164</c>): the sound stopped when it plays; when loaded, one reference off its

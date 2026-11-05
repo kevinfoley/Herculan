@@ -95,7 +95,7 @@ public static class Es1BaseDamage {
 		// Explosion_Construct (00005af0)(null, point, effect entry 8 + draw & 3).
 		int k = globals.Random.Next() & 3;
 		if (shot.Effects?.ImpactFXArmor[k] is { } effect) {
-			globals.Explosions.Construct(point, effect, globals.Random);
+			globals.Explosions.Construct(point, effect, globals.Random, globals.Sound);
 		}
 
 		// Debris_ThrowGroup (00005fb8)(group of 000bc1c0, point, 000bc1c6).
@@ -167,7 +167,7 @@ public static class Es1BaseDamage {
 			globals.Smoke.Construct(WreckSmokeKind, type.CollapsePoint, WreckSmokePart, structure, globals.PresentationRandom);
 		} else if (structure.CollapseCount == 1) {
 			var at = type.CollapsePoint;
-			globals.Explosions.Construct(structure.Frame.TransformPoint(at.X, at.Y, at.Z), LargeExplosion, globals.Random);
+			globals.Explosions.Construct(structure.Frame.TransformPoint(at.X, at.Y, at.Z), LargeExplosion, globals.Random, globals.Sound);
 			structure.CollapseCountdown = LargeInterval;
 		} else {
 			var random = globals.Random;
@@ -176,7 +176,7 @@ public static class Es1BaseDamage {
 			int x = random.NextBelow((short)(extentX << 1)) - extentX + centerX;
 			int y = random.NextBelow((short)(extentY << 1)) - extentY + centerY;
 			int z = random.NextBelow((short)(extentZ << 1)) - extentZ + centerZ;
-			globals.Explosions.Construct(structure.Frame.TransformPoint(x, y, z), SmallExplosion, random);
+			globals.Explosions.Construct(structure.Frame.TransformPoint(x, y, z), SmallExplosion, random, globals.Sound);
 			structure.CollapseCountdown = SmallInterval;
 		}
 	}

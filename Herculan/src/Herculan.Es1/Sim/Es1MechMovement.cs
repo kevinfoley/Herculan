@@ -54,7 +54,7 @@ public static class Es1MechMovement {
 			}
 		}
 
-		Es1Footfalls.PlaceLegsOnGround(mech);
+		Es1Footfalls.PlaceLegsOnGround(mech, globals.Sound);
 		return 1;
 	}
 

@@ -113,16 +113,17 @@ public sealed class Es1ExplosionPool {
 	/// null with the pool full, the effects queued for delete still holding their places. The type byte is the id's low
 	/// byte, read signed; a type past the table, where retail reads past it, builds none, an engine guard, as does a
 	/// root past the shapes build an effect with no shape. <paramref name="random"/> is the simulation generator
-	/// <c>000b5bd4</c>, which the effect draws its turn from.
+	/// <c>000b5bd4</c>, which the effect draws its turn from, and <paramref name="sound"/> the sound file it plays its row's
+	/// sound through.
 	/// </summary>
-	public Es1Explosion? Construct(Vec3i point, short typeId, SimRandom random) {
+	public Es1Explosion? Construct(Vec3i point, short typeId, SimRandom random, Sound.Es1Sound sound) {
 		sbyte type = unchecked((sbyte)typeId);
 		if (_live.Count + _deleteQueue.Count >= Capacity || type < 0 || type >= Types.Count) {
 			return null;
 		}
 
 		short root = Types[type].ShapeIndex;
-		var effect = new Es1Explosion(this, type, root >= 0 && root < Shapes.Count ? Shapes[root] : null, point, random);
+		var effect = new Es1Explosion(this, type, root >= 0 && root < Shapes.Count ? Shapes[root] : null, point, random, sound);
 		_live.Add(effect);
 		return effect;
 	}

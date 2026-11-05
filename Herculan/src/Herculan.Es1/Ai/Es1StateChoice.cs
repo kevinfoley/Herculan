@@ -33,7 +33,7 @@ public static class Es1StateChoice {
 				// leaves on a HERC group (docs/es1/simulation/mech-ai.md#choosing-a-state--mech_aiselectbehaviour-0001892c);
 				// here the machine stays in deciding, which has no move to run Mech_PlaceLegsOnGround, so the shadows are
 				// placed here in its place, or they would draw at the world's origin from their build depth.
-				Es1Footfalls.PlaceLegsOnGround(mech);
+				Es1Footfalls.PlaceLegsOnGround(mech, globals.Sound);
 			}
 		}
 

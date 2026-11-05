@@ -18,6 +18,9 @@ public sealed class Es1BeamTracer : Es1Projectile {
 	/// <summary><c>Bullet_FireBurst</c>'s ray clearance.</summary>
 	public const short Slack = 200;
 
+	/// <summary>The catalog row <c>Bullet_FireBurst</c> plays at the muzzle, <c>laser1h</c>.</summary>
+	public const short FireSound = 0xb;
+
 	/// <summary>The jagged subtype, the <c>ELF</c>.</summary>
 	public const short JaggedSubtype = 1;
 
@@ -89,8 +92,8 @@ public sealed class Es1BeamTracer : Es1Projectile {
 	/// the ray along <paramref name="shotTransform"/>'s Y for <paramref name="range"/> with <see cref="Slack"/>, the shot
 	/// of <c>Proj_LookupRecord</c>(<paramref name="subtype"/>, 4)'s armor and shield each <c>Math_Q10Multiply</c>'d by the
 	/// power, its splash factor and effects, with <see cref="ShotKind"/>; the sweep, whose answer, or the range for none,
-	/// is how far the beam goes; and one tracer from the transform's translation to there. Answers the tracer, or null
-	/// with the pool full.
+	/// is how far the beam goes; one tracer from the transform's translation to there; and <see cref="FireSound"/> at the
+	/// translation (<see cref="Sound.Es1Sound.PlayAt"/>). Answers the tracer, or null with the pool full.
 	/// </summary>
 	public static Es1BeamTracer? FireBurst(Es1SimGlobals globals, short power, IEs1SimObject machine, int range,
 			Transform3 shotTransform, short subtype) {
@@ -111,7 +114,7 @@ public sealed class Es1BeamTracer : Es1Projectile {
 		var farEnd = shotTransform.TransformPoint(0, travelled, 0);
 		var muzzle = new Vec3i(shotTransform.X, shotTransform.Y, shotTransform.Z);
 		var tracer = Construct(globals, machine, farEnd, muzzle, subtype);
-		// PLACEHOLDER: Sound_PlayAt (0004deb8)(muzzle, 0xb); no plan step ports ES1's sound yet.
+		globals.Sound.PlayAt(muzzle, FireSound);
 		return tracer;
 	}
 

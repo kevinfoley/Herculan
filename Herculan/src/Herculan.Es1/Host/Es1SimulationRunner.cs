@@ -127,10 +127,13 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 		_hostKeyboard.Advance(elapsed.TotalSeconds);
 
 		// Subsystem phase 4 calls no function (docs/es1/simulation/main-loop.md#the-subsystem-phases).
-		// PLACEHOLDER: Sim_FrameSoundTick (00058574), the music, the engine hum and the listener; no plan step ports
-		// ES1's sound yet.
 		if (Simulation.Input.Tape is not { Playing: true } tape) {
-			return Simulation.Globals.Clock.AdvanceHostFrame(elapsed);
+			if (!Simulation.Globals.Clock.AdvanceHostFrame(elapsed)) {
+				return false;
+			}
+
+			FrameSoundTick();
+			return true;
 		}
 
 		Simulation.Globals.Clock.Hold(elapsed);
@@ -141,8 +144,18 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 		}
 
 		_tapeHeld -= due;
+		FrameSoundTick();
 		return true;
 	}
+
+	/// <summary>
+	/// <c>Sim_FrameSoundTick</c> (<c>00058574</c>) (docs/es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574),
+	/// once a pass of <c>Sim_Main</c>'s loop, which here is a host frame that ticks: retail's comes before
+	/// <c>Time_BeginSimTick</c>'s wait, which touches no sound. Its last step, <c>Sound_UpdateListener</c>(<c>ViewObjectPtr</c>)
+	/// (<see cref="Sound.Es1Sound.UpdateListener"/>).
+	/// PLACEHOLDER: its first two steps, <c>Music_Tick</c> (item 7's module D) and sound <c>0x2d</c>'s start and stop (A3).
+	/// </summary>
+	private void FrameSoundTick() => Simulation.Globals.Sound.UpdateListener(Simulation.ViewChain.Camera);
 
 	/// <summary>
 	/// <c>Sim_Main</c>'s loop test, then <see cref="Es1Simulation.MainTick"/>: with <c>DemoAbort</c> set, which the axis

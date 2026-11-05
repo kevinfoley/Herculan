@@ -95,7 +95,7 @@ public static class Es1Ramming {
 	/// </summary>
 	public static short RamTick(Es1Mech mech, Es1SimGlobals globals) {
 		mech.Locomotion.IntegrateMotion(globals.Clock);
-		Es1Footfalls.PlaceLegsOnGround(mech);
+		Es1Footfalls.PlaceLegsOnGround(mech, globals.Sound);
 		if ((short)Es1MechMovement.CollisionTest(mech, globals) != 0 || mech.RanInto) {
 			Es1MechDamage.ExplosiveBlastSweep(BlastDamage, BlastRadius, mech.Position, globals);
 			// Every HERC is built with its damage header; one without is taken as having no component, an engine guard.

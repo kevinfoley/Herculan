@@ -73,8 +73,10 @@ public sealed class Es1Rocket : Es1Projectile {
 	/// <c>Rocket_Construct</c> from the pool; the position, the angles, the frame word 0, the owner, the speed
 	/// <paramref name="speed"/> + <see cref="LaunchSpeed"/> and the age 0; the target, the machine's own, when a machine
 	/// that is not the player's fires subtype 3 or the machine's slot <c>+0x70</c> answers lock, and with one the
-	/// component its slot <c>+0x58</c> names; the player's machine's missile into <see cref="Es1ProjectilePool.TrackedMissile"/>.
-	/// Answers the missile, or null with the pool full, where retail writes its fields through the null pointer.
+	/// component its slot <c>+0x58</c> names; the player's machine's missile into <see cref="Es1ProjectilePool.TrackedMissile"/>;
+	/// then the type record's sound <see cref="RocketType.FireSoundId"/> + 10 at the muzzle
+	/// (<see cref="Sound.Es1Sound.PlayAt"/>). Answers the missile, or null with the pool full, where retail writes its
+	/// fields through the null pointer; with no missile or no type record no sound plays, an engine guard.
 	/// </summary>
 	public static Es1Rocket? Fire(Es1SimGlobals globals, short speed, IEs1SimObject machine,
 			(short Pitch, short Roll, short Heading) angles, Vec3i muzzle, short subtype) {
@@ -98,7 +100,10 @@ public sealed class Es1Rocket : Es1Projectile {
 			pool.TrackedMissile = missile;
 		}
 
-		// PLACEHOLDER: Sound_PlayAt (0004deb8)(muzzle, the type record's +0xc + 10); no plan step ports ES1's sound yet.
+		if (missile?.TypeRecord(pool) is { } type) {
+			globals.Sound.PlayAt(muzzle, type.FireSoundId + 10);
+		}
+
 		return missile;
 	}
 

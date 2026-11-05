@@ -50,8 +50,9 @@ public sealed class Es1Bullet : Es1Projectile {
 	/// <c>Bullet_Fire</c>(<paramref name="machine"/>, <paramref name="angles"/>, <paramref name="muzzle"/>,
 	/// <paramref name="subtype"/>) (docs/es1/simulation/projectiles.md#firing--bullet_fire-00008134): <c>Bullet_Construct</c>
 	/// from the pool; the position, the angles, the frame word 0, the owner, the power and the age 0, and the speed the
-	/// projectile record's <c>+0xa</c>. Answers the round, or null with the pool full, where retail writes its fields through
-	/// the null pointer.
+	/// projectile record's <c>+0xa</c>; then the type record's sound <c>+8</c> + 10 at the muzzle
+	/// (<see cref="Sound.Es1Sound.PlayAt"/>). Answers the round, or null with the pool full, where retail writes its fields
+	/// through the null pointer; with no round or no type record no sound plays, an engine guard.
 	/// </summary>
 	public static Es1Bullet? Fire(Es1SimGlobals globals, IEs1SimObject machine, (short Pitch, short Roll, short Heading) angles,
 			Vec3i muzzle, short subtype) {
@@ -66,7 +67,10 @@ public sealed class Es1Bullet : Es1Projectile {
 			round.Speed = round.Record?.Speed ?? 0;
 		}
 
-		// PLACEHOLDER: Sound_PlayAt (0004deb8)(muzzle, the type record's +8 + 10); no plan step ports ES1's sound yet.
+		if (round?.TypeRecord(globals.Projectiles) is { } type) {
+			globals.Sound.PlayAt(muzzle, type.FireSoundId + 10);
+		}
+
 		return round;
 	}
 

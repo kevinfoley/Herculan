@@ -24,12 +24,14 @@ public sealed class Es1Explosion {
 	/// <c>Explosion_Construct</c> (<c>00005af0</c>)'s fields (docs/es1/simulation/impact-effects.md#construction--explosion_construct-00005af0):
 	/// the root <paramref name="shape"/>, the type byte, the type tag, the frame countdown from the row's <c>+0x06</c>,
 	/// the turn about the second axis (<see cref="Roll"/>), a draw of <paramref name="random"/>, the point, the ground
-	/// shape when the row's <c>+0x08</c> is not 0 and the light when its <c>+0x0a</c> is not 0.
+	/// shape when the row's <c>+0x08</c> is not 0 and the light when its <c>+0x0a</c> is not 0; then the row's sound
+	/// <see cref="Es1ExplosionTypeEntry.SoundId"/> + 10 at the point (<see cref="Sound.Es1Sound.PlayAt"/>).
 	/// A new instance's cell frames are 0, so the row's sequence starts on 0. The ground shape takes a place of
 	/// <see cref="Es1FlatObjPool"/>; with the pool full retail writes the shape's position through the null it gets, and
 	/// here no ground shape is built, an engine guard.
 	/// </summary>
-	internal Es1Explosion(Es1ExplosionPool pool, sbyte typeId, TSObject? shape, Vec3i point, SimRandom random) {
+	internal Es1Explosion(Es1ExplosionPool pool, sbyte typeId, TSObject? shape, Vec3i point, SimRandom random,
+			Sound.Es1Sound sound) {
 		_pool = pool;
 		TypeId = typeId;
 		Shape = shape;
@@ -47,7 +49,7 @@ public sealed class Es1Explosion {
 			LightHandle = pool.Lights.Construct(row.FrameIntensity[0], point);
 		}
 
-		// PLACEHOLDER: Sound_PlayAt (0004deb8)(point, the row's +0x28 + 10); no plan step ports ES1's sound yet.
+		sound.PlayAt(point, row.SoundId + 10);
 	}
 
 	/// <summary><c>+0x00</c>, the type tag, which the distance bands are keyed by.</summary>
