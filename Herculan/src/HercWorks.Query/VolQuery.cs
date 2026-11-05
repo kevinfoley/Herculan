@@ -44,7 +44,8 @@ internal static class VolQuery {
 		}
 	}
 
-	private static Func<string, bool> Matcher(string? pattern) {
+	/// <summary>The test <see cref="Run"/> applies to a name and to a <c>folder\name</c>.</summary>
+	internal static Func<string, bool> Matcher(string? pattern) {
 		if (pattern == null) {
 			return _ => true;
 		}

@@ -44,6 +44,10 @@ internal static class Program {
 		                                   fail or have no reader, then each failure's cursor offset
 		  vol [<archive>...] [--name <p>]  every entry of the install's VOL folder archives, or of those
 		                                   named: its archive, folder, name and size
+		  snc [--name <p>]                 every simulator lip-sync script (.SNC) in the archives, as
+		                                   (frame:delta) pairs: how many open on frame 0, hold a delta of
+		                                   0 or a 0xff byte, and the frame and delta ranges; the entries
+		                                   the reader refuses, as ES1's shell scripts, listed apart
 		  bin <file> [<line>...]           the lines of a .BIN string table, or of ES1's *_TEXT.BIN
 		                                   talking-head text, in any of those archives,
 		                                   named as name or folder\name (.BIN optional): every line, or
@@ -121,7 +125,7 @@ internal static class Program {
 		                    slot 0's
 		  --with-point      orders, ES2: list only groups with an order that names a row #6 point
 		  --generated       lint: check the script.dat each load writes, not the .MSN
-		  --name <p>        vol: only entries whose name or folder\name matches: a * and ? wildcard
+		  --name <p>        vol, snc: only entries whose name or folder\name matches: a * and ? wildcard
 		                    against the whole, else a substring, ignoring case (--name death,
 		                    --name dpl\*.dpl)
 		  --ids LO-HI       text: list only the records whose id is in this range (--ids 200-204);
@@ -280,6 +284,17 @@ internal static class Program {
 				WriteJson(output, rows);
 			} else {
 				VolQuery.Write(output, rows, searched.Count, name);
+			}
+
+			return 0;
+		}
+
+		if (command == "snc") {
+			var report = SncQuery.Run(Census.Archives(install), name);
+			if (json) {
+				WriteJson(output, report);
+			} else {
+				SncQuery.Write(output, report);
 			}
 
 			return 0;
