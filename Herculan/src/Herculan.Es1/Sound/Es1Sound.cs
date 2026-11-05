@@ -61,6 +61,14 @@ public sealed class Es1Sound {
 	/// <summary><c>000959b4</c>, 0 in the image: the frames until <c>Sound_UpdateListener</c> next places the sounds.</summary>
 	public int ListenerCountdown { get; private set; }
 
+	/// <summary>
+	/// Whether <see cref="OfferPosition"/> keeps the nearest point offered in a frame, comparing the new distance where
+	/// retail compares the kept one with itself, so that the flyers' shared sound plays from the nearest flyer; off, the
+	/// first point offered is kept, as retail's is.
+	/// The code path of a tweak that is not built (docs/herculan/plan-es1-first-mission.md#open).
+	/// </summary>
+	public static bool NearestOfferWins { get; set; }
+
 	/// <summary><c>Sound_Listener</c> (<c>000bd730</c>): the camera <see cref="UpdateListener"/> last kept, none until then.</summary>
 	public Es1Camera? Listener { get; private set; }
 
@@ -205,7 +213,7 @@ public sealed class Es1Sound {
 	/// distance from <see cref="Listener"/> (<c>Math_FastMagnitude3D</c>) and the point kept for the row while its kept
 	/// distance is 0, which <see cref="UpdateListener"/> places the row's object at. Retail's test of a kept distance
 	/// compares the dword with itself (<c>0004df4d</c>), where the new distance belongs, so the first point offered in a
-	/// frame at a distance other than 0 is the one used.
+	/// frame at a distance other than 0 is the one used; with <see cref="NearestOfferWins"/> a nearer point replaces it.
 	///
 	/// <para>Engine guards: a row past the catalog's object array is not kept, and with no listener yet, where retail
 	/// reads the position through a null pointer, the distance is taken from (0, 0, 0).</para>
@@ -218,7 +226,7 @@ public sealed class Es1Sound {
 		var listener = Listener?.Position ?? default;
 		int distance = SimMath.FastMagnitude3D(unchecked(listener.X - point.X), unchecked(listener.Y - point.Y),
 			unchecked(listener.Z - point.Z));
-		if (_offered[row] == 0) {
+		if (_offered[row] == 0 || (NearestOfferWins && distance < _offered[row])) {
 			_offered[row] = distance;
 			_offeredPoints[row] = point;
 		}
