@@ -5,14 +5,18 @@ namespace Herculan.Es1.Sound;
 /// (docs/es1/formats/snc-lip-sync.md#the-speech-slot): the face's frame and the script it steps through, and the key
 /// <see cref="Es1VoiceLines.LoadLine"/> finds the line by. <c>VoiceSlot_ElementCtor</c> (<c>ES1DBSIM 0004dc40</c>) and
 /// <c>Snc_Ctor</c> (<c>0004e444</c>) leave the script and the sound object none and the taken byte and the last use 0.
-/// The sound object <c>+0</c> and the voice's path <c>+0x0e</c> are not kept: what loads and plays a line's sample is
-/// item 7's module B (docs/herculan/plan-es1-first-mission.md), so a slot's sound object <c>+0</c> is always none.
 /// </summary>
 public sealed class Es1SpeechSlot {
 	internal Es1SpeechSlot(int index) => Index = index;
 
 	/// <summary>The slot's index among <see cref="Es1VoiceLines.Slots"/>, which picks its 100 bytes of script.</summary>
 	public int Index { get; }
+
+	/// <summary>
+	/// <c>+0x00</c>: the line's sound object, which <c>Snc_Load</c> stores from <see cref="Sound"/> and
+	/// <see cref="Es1VoiceLines.Start"/> plays; none until a script is loaded.
+	/// </summary>
+	public Es1SoundObject? LineSound { get; internal set; }
 
 	/// <summary><c>+0x04</c>, the count of <see cref="Es1VoiceLines.Clock"/> at which the frame on show ends.</summary>
 	public uint DueCount { get; internal set; }
@@ -22,6 +26,12 @@ public sealed class Es1SpeechSlot {
 
 	/// <summary><c>+0x0a</c>, the cursor into <see cref="Script"/>, as an index.</summary>
 	public int Cursor { get; internal set; }
+
+	/// <summary>
+	/// <c>+0x0e</c>: the voice's path, <c>simvoice\&lt;voice name&gt;.sfx</c>, which <see cref="Es1VoiceLines.LoadLine"/>
+	/// builds with a sound manager and speech on; none before.
+	/// </summary>
+	public string? VoicePath { get; internal set; }
 
 	/// <summary><c>+0x27</c>, the script's buffer, the slot's 100 bytes, which <c>Voice_EvictLru</c> points it at; none before.</summary>
 	public byte[]? Script { get; internal set; }

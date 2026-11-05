@@ -39,6 +39,7 @@ public sealed class Es1VoiceLines {
 
 	private Es1SpeechSlot[] _slots = [];
 	private byte[][] _buffers = [];
+	private Es1Sound? _sound;
 	private readonly (uint Due, Es1SpeechSlot? Slot)[] _entries = new (uint, Es1SpeechSlot?)[QueueCapacity];
 
 	/// <summary><c>SncQueue_Order</c>: indices into the entries, −1 for a pointer never written, which is 0 in the image.</summary>
@@ -59,7 +60,9 @@ public sealed class Es1VoiceLines {
 	/// set, each built by <c>VoiceSlot_ElementCtor</c>, and <see cref="ScriptBytes"/> bytes of script for each. Retail
 	/// makes them whether or not it makes the sound manager.
 	/// </summary>
-	public void InitSlots(bool lowMemory) {
+	/// <param name="sound">The sound file whose manager and speech flag the lines read.</param>
+	public void InitSlots(bool lowMemory, Es1Sound sound) {
+		_sound = sound;
 		int count = lowMemory ? LowMemorySlotCount : SlotCount;
 		_slots = Enumerable.Range(0, count).Select(i => new Es1SpeechSlot(i)).ToArray();
 		_buffers = Enumerable.Range(0, count).Select(_ => new byte[ScriptBytes]).ToArray();
@@ -80,10 +83,14 @@ public sealed class Es1VoiceLines {
 	/// <summary>
 	/// <c>SpeechLine_Load</c> (<c>0004e0f0</c>)(<paramref name="scriptName"/>, <paramref name="voiceName"/>)
 	/// (docs/es1/formats/sound-samples.md#voice-lines): the slot whose key is <see cref="VoiceKey"/> of the voice's name;
-	/// with none, a slot from <see cref="EvictLru"/>, none when it gives none, which takes the key, is marked taken and
-	/// has its script loaded (<see cref="Load"/>). Either way the slot's last use becomes <paramref name="now"/>, the
-	/// clock <c>000981c4</c>; answers the slot. A slot found by its key keeps the script it has, so a second squadmate
-	/// of the same voice bank saying the same line moves to the first one's script.
+	/// with none, a slot from <see cref="EvictLru"/>, none when it gives none, which takes the key and is marked taken.
+	/// On that slot, with a sound manager and <see cref="Es1Sound.SpeechEnabled"/> set, the voice's path
+	/// <c>simvoice\&lt;voice name&gt;.sfx</c> is named as the slot's index (<see cref="Es1SoundManager.SetSampleName"/>,
+	/// its answer not read) and the slot's sound loaded (<see cref="Es1SoundObject.LoadSample"/>), answering none when
+	/// that fails, with the key and the taken mark kept and no script loaded; then the script is loaded with the slot's
+	/// sound (<see cref="Load"/>). Either way the slot's last use becomes <paramref name="now"/>, the clock
+	/// <c>000981c4</c>; answers the slot. A slot found by its key keeps the sample and script it has, so a second
+	/// squadmate of the same voice bank saying the same line moves to the first one's script.
 	/// </summary>
 	/// <param name="read">The volumes' reader, (folder, file name) to a file's bytes; none reads no script.</param>
 	public Es1SpeechSlot? LoadLine(string scriptName, string voiceName, uint now, Func<string, string, byte[]?>? read) {
@@ -97,10 +104,17 @@ public sealed class Es1VoiceLines {
 
 			slot.Key = key;
 			slot.Taken = true;
-			// PLACEHOLDER: with the sound manager (000959ac) and Sound_SpeechEnabled (000959e4) set, simvoice\<voice
-			// name>.sfx named as the slot's index (SoundManager_SetSampleName) and loaded (SoundObject_LoadSample),
-			// answering none when that fails; plan item 7's module B ports it, so nothing is named or loaded.
-			Load(slot, scriptName, read);
+			if (_sound is { Manager: { } manager, SpeechEnabled: true }) {
+				// SoundManager_SetSampleName lower-cases the slot's own string in place.
+				slot.VoicePath = ("simvoice\\" + voiceName + ".sfx").ToLowerInvariant();
+				manager.SetSampleName(slot.SoundIndex, slot.VoicePath);
+				// A slot with no sound, which retail loads through as a null object, fails here, an engine guard.
+				if (slot.Sound?.LoadSample() != true) {
+					return null;
+				}
+			}
+
+			Load(slot, slot.Sound, scriptName, read);
 		}
 
 		slot.LastUse = now;
@@ -151,14 +165,20 @@ public sealed class Es1VoiceLines {
 	}
 
 	/// <summary>
-	/// <c>Snc_Load</c> (<c>0004e4a8</c>)(<paramref name="slot"/>, the sound object, <paramref name="name"/>)
+	/// <c>Snc_Load</c> (<c>0004e4a8</c>)(<paramref name="slot"/>, <paramref name="sound"/>, <paramref name="name"/>)
 	/// (docs/es1/formats/snc-lip-sync.md#the-simulators-scripts): <c>snc\&lt;name&gt;</c>'s <c>int32</c> length of bytes,
-	/// read through <see cref="LipSyncScriptTransformer"/>, into the slot's script, then <see cref="Terminator"/>; the
-	/// sound object, none here, stored at <c>+0</c>. A missing or unreadable file, which retail reads from unopened,
-	/// leaves the terminator alone, and a script longer than the buffer is cut to leave room for it, engine guards; ES2's
-	/// 556 scripts hold at most 56 bytes (docs/retail/formats/snc-lip-sync.md#layout).
+	/// read through <see cref="LipSyncScriptTransformer"/>, into the slot's script, then <see cref="Terminator"/>;
+	/// <paramref name="sound"/> stored at <c>+0</c> (<see cref="Es1SpeechSlot.LineSound"/>), its byte <c>+0x16</c>
+	/// cleared when there is one. A missing or unreadable file, which retail reads from unopened, leaves the terminator
+	/// alone, and a script longer than the buffer is cut to leave room for it, engine guards; ES2's 556 scripts hold at
+	/// most 56 bytes (docs/retail/formats/snc-lip-sync.md#layout).
 	/// </summary>
-	private static void Load(Es1SpeechSlot slot, string name, Func<string, string, byte[]?>? read) {
+	private static void Load(Es1SpeechSlot slot, Es1SoundObject? sound, string name, Func<string, string, byte[]?>? read) {
+		slot.LineSound = sound;
+		if (sound != null) {
+			sound.Byte16 = 0;
+		}
+
 		if (slot.Script is not { } buffer) {
 			return;
 		}
@@ -188,16 +208,16 @@ public sealed class Es1VoiceLines {
 	/// <c>Snc_Start</c> (<c>0004e518</c>)(<paramref name="slot"/>), as the face begins to talk
 	/// (docs/es1/formats/snc-lip-sync.md#playing-a-line): the cursor at the script's start, the frame from
 	/// <see cref="ReadFrame"/> and the due count from <see cref="ReadDueTime"/>, and the slot queued at that count
-	/// (<see cref="Enqueue"/>). Answers 1, as retail does for a slot with no sound object.
+	/// (<see cref="Enqueue"/>). Then, with a sound object (<see cref="Es1SpeechSlot.LineSound"/>),
+	/// <see cref="Es1Sound.SpeechEnabled"/> set and a frame other than 0, answers the object's play
+	/// (<see cref="Es1SoundObject.Play"/>), which the effects' switch does not gate; otherwise true.
 	/// </summary>
 	public bool Start(Es1SpeechSlot slot) {
 		slot.Cursor = 0;
 		slot.Frame = ReadFrame(slot);
 		slot.DueCount = ReadDueTime(slot);
 		Enqueue(slot, slot.DueCount);
-		// PLACEHOLDER: with a sound object, Sound_SpeechEnabled set and a frame other than 0, the answer of the object's
-		// play slot +0x10; plan item 7's module B ports it, so the slot's object does not play.
-		return true;
+		return slot.LineSound is not { } sound || _sound?.SpeechEnabled != true || slot.Frame == 0 || sound.Play();
 	}
 
 	/// <summary>

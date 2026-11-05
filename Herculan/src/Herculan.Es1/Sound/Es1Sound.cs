@@ -73,6 +73,13 @@ public sealed class Es1Sound {
 	/// <summary><c>Sound_EffectsEnabled</c> (<c>000959bc</c>), 0 in the image: the digital sounds play while it is not 0.</summary>
 	public byte EffectsEnabled { get; private set; }
 
+	/// <summary>
+	/// <c>Sound_SpeechEnabled</c> (<c>000959e4</c>), 0 in the image, which option 2's handler sets
+	/// (<see cref="Input.Es1Preferences"/>): while it is set a voice line loads its sample and plays it
+	/// (<see cref="Es1VoiceLines.LoadLine"/>, <see cref="Es1VoiceLines.Start"/>).
+	/// </summary>
+	public bool SpeechEnabled { get; internal set; }
+
 	/// <summary><c>000959b4</c>, 0 in the image: the frames until <c>Sound_UpdateListener</c> next places the sounds.</summary>
 	public int ListenerCountdown { get; private set; }
 
@@ -150,7 +157,7 @@ public sealed class Es1Sound {
 	/// <param name="read">The volumes' reader, (folder, file name) to a file's bytes, which the manager and the catalog read through.</param>
 	public void Init(Es1SoundDevices devices, bool lowMemory, Es1VoiceLines voiceLines, Func<string, string, byte[]?> read,
 			IAudioBackend backend) {
-		voiceLines.InitSlots(lowMemory);
+		voiceLines.InitSlots(lowMemory, this);
 		if (devices.DigitalDevice != 0) {
 			var manager = new Es1SoundManager(read, new Es1DigitalDriver(backend)) { Devices = devices };
 			Manager = manager;

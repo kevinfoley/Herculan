@@ -78,7 +78,7 @@ public sealed class Es1Preferences {
 	/// <c>Prefs_Load</c> and its two copies. A file shorter than 17 bytes gives 0 for the bytes it lacks. No handler runs.
 	/// </summary>
 	/// <param name="path">Where <see cref="SaveSelectedOptions"/> and <see cref="ShellSave"/> write, <c>data\prefs.cfg</c> in the install; none saves nothing.</param>
-	/// <param name="sound">The simulator's sound file, which options 0 and 1's handlers switch (<see cref="Sound"/>).</param>
+	/// <param name="sound">The simulator's sound file, which options 0–2's handlers write (<see cref="Sound"/>).</param>
 	public static Es1Preferences FromFile(byte[]? file, string? path = null, Es1Sound? sound = null) {
 		var options = new byte[OptionCount];
 
@@ -106,7 +106,7 @@ public sealed class Es1Preferences {
 	/// <param name="path"><c>data\prefs.cfg</c> in the install, which <see cref="SaveSelectedOptions"/> writes.</param>
 	/// <param name="voiceArchivePresent">What <see cref="VoiceArchiveExists"/> answers for the install.</param>
 	/// <param name="demoMode"><c>DemoMode</c> (<c>000b5bd0</c>), which <c>-D</c> sets.</param>
-	/// <param name="sound">The simulator's sound file, which options 0 and 1's handlers switch (<see cref="Sound"/>).</param>
+	/// <param name="sound">The simulator's sound file, which options 0–2's handlers write (<see cref="Sound"/>).</param>
 	public static Es1Preferences Load(byte[]? file, string path, bool voiceArchivePresent, bool demoMode = false,
 			Es1Sound? sound = null) {
 		var preferences = FromFile(file, path, sound);
@@ -452,8 +452,9 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// The simulator's sound file, which the handlers of options 0 and 1 switch (docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off);
-	/// none for options with no sound, as the shell's and a test's, whose handlers then switch nothing.
+	/// The simulator's sound file, which the handlers of options 0 and 1 switch (docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off)
+	/// and option 2's sets the speech flag of; none for options with no sound, as the shell's and a test's, whose
+	/// handlers then switch nothing.
 	/// </summary>
 	public Es1Sound? Sound { get; }
 
@@ -478,18 +479,15 @@ public sealed class Es1Preferences {
 	public bool MessagePortShowEnabled { get; set; } = true;
 
 	/// <summary>
-	/// The byte <c>000959e4</c>, 0 in the image, which option 2's handler sets beside
-	/// <see cref="MessagePortShowEnabled"/>. PLACEHOLDER: its readers, the voice lines' load and play, are plan item 7's module B
-	/// (docs/es1/simulation/preferences.md#open).
-	/// </summary>
-	public bool VoiceLinesGate { get; private set; }
-
-	/// <summary>
-	/// <c>Prefs_ApplyRadioOption</c> (<c>0004ad30</c>), option 2's handler: <see cref="VoiceLinesGate"/> = (value ≠ 0)
-	/// and <see cref="MessagePortShowEnabled"/> = (value ≠ 1) (docs/es1/simulation/preferences.md#the-option-array).
+	/// <c>Prefs_ApplyRadioOption</c> (<c>0004ad30</c>), option 2's handler: <see cref="Es1Sound.SpeechEnabled"/> =
+	/// (value ≠ 0) and <see cref="MessagePortShowEnabled"/> = (value ≠ 1)
+	/// (docs/es1/simulation/preferences.md#the-option-array). With no <see cref="Sound"/> the first is not kept.
 	/// </summary>
 	private void ApplyRadioOption(byte value) {
-		VoiceLinesGate = value != 0;
+		if (Sound != null) {
+			Sound.SpeechEnabled = value != 0;
+		}
+
 		MessagePortShowEnabled = value != 1;
 	}
 
