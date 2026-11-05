@@ -29693,9 +29693,9 @@
       "address": "0004e578",
       "binary": "ES1DBSIM",
       "type": "function",
-      "confidence": "medium",
-      "name": "maybe_Snc_IsVoicePlaying",
-      "description": "(slot), its argument removed by this function: with the slot's sound object +0 non-null, returns what slot +0x30 of the object's vtable (+0x3b) returns for the object; otherwise 0. The name reads that slot, whose meaning sound-samples.md leaves Open, as the sound's is-playing test. No reference found by es2_xref. It stands where ES2's SfxHandle_IsPlaying (DBSIM 00463360) does.",
+      "confidence": "high",
+      "name": "Snc_IsVoicePlaying",
+      "description": "(slot), its argument removed by this function: with the slot's sound object +0 non-null, returns what slot +0x30 of the object's vtable (+0x3b) returns for the object, for the voice's DigiSound DigiSound_IsPlaying (00050c18), 1 while its voice is busy; otherwise 0. No reference found by es2_xref. ES2's SfxHandle_IsPlaying (DBSIM 00463360).",
       "source": "Herculan/docs/es1/formats/snc-lip-sync.md#playing-a-line; ES1DBSIM disassembly at 0004e578",
       "verified": {
         "bytes": "0004e578+34",
