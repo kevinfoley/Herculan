@@ -338,6 +338,55 @@ public sealed class Es1SoundManager {
 	private const int PanAxis = 0xfff;
 
 	/// <summary>
+	/// <see cref="Es1Sound.Stereo"/>'s listener: the camera's position and its view's rotation, as the last
+	/// <see cref="UpdateStereoListener"/> gave them; not a retail field.
+	/// </summary>
+	public Transform3 StereoListener { get; private set; } = Transform3.Identity;
+
+	/// <summary>
+	/// <see cref="Es1Sound.Stereo"/>'s listener, from the camera every frame: the frame of <paramref name="view"/>'s
+	/// angles at <paramref name="position"/>, then each placed object panned against it (<see cref="PanStereo"/>), a voice
+	/// already playing among them. Not retail's: the stereo tweak's.
+	/// </summary>
+	public void UpdateStereoListener(Vec3i position, (short X, short Y, short Z) view) {
+		var frame = Transform3.FromEuler(view.X, view.Y, view.Z);
+		frame.X = position.X;
+		frame.Y = position.Y;
+		frame.Z = position.Z;
+		StereoListener = frame;
+		foreach (var sound in _objects) {
+			if (sound is { Placed: true }) {
+				PanStereo(sound);
+			}
+		}
+	}
+
+	/// <summary>
+	/// <see cref="Es1Sound.Stereo"/>'s pan of a placed <paramref name="sound"/>: the cosine of the angle between its
+	/// offset from <see cref="StereoListener"/>'s position and the listener's x axis, the view's right, so that a sound
+	/// straight to the right is 1, one straight to the left −1, and one ahead, behind, above, below or at the listener 0;
+	/// given to the sound's voice when it plays (<see cref="Es1DigitalDriver.SetPan"/>). The offset is taken unshifted, so
+	/// that a sound by the camera, the player's own guns and footfalls, keeps its true side where retail's placement rounds
+	/// it to a whole axis. Not retail's: the stereo tweak's.
+	/// </summary>
+	internal void PanStereo(Es1SoundObject sound) {
+		var frame = StereoListener;
+		double x = (double)sound.Position.X - frame.X;
+		double y = (double)sound.Position.Y - frame.Y;
+		double z = (double)sound.Position.Z - frame.Z;
+		double length = Math.Sqrt(x * x + y * y + z * z);
+		var right = frame.RotateVector(0x4000, 0, 0);
+		double rightLength = Math.Sqrt((double)right.X * right.X + (double)right.Y * right.Y + (double)right.Z * right.Z);
+		float pan = length == 0 || rightLength == 0
+			? 0
+			: (float)Math.Clamp((x * right.X + y * right.Y + z * right.Z) / (length * rightLength), -1, 1);
+		sound.StereoPan = pan;
+		if (sound.Kind == 0 && sound.Handle != -1) {
+			Driver.SetPan(sound.Handle, pan);
+		}
+	}
+
+	/// <summary>
 	/// The defaults block (<c>000959ec</c>) as <c>Sound_Init</c> leaves it, which <see cref="LoadDrivers"/> fills the
 	/// driver blocks from; the image's values until then.
 	/// </summary>

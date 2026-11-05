@@ -70,6 +70,12 @@ public abstract class Es1SoundObject {
 	/// <summary><c>+0x25</c>: the placed sound's position.</summary>
 	public Vec3i Position { get; private set; }
 
+	/// <summary>
+	/// The placed sound's pan under <see cref="Es1Sound.Stereo"/>, −1 left to 1 right, from
+	/// <see cref="Es1SoundManager.PanStereo"/>; not a retail field.
+	/// </summary>
+	public float StereoPan { get; internal set; }
+
 	/// <summary><c>+0x31</c>: the volume, 0–100.</summary>
 	public byte Volume { get; internal set; } = 100;
 
@@ -122,12 +128,16 @@ public abstract class Es1SoundObject {
 	/// <summary>
 	/// <c>SoundObject_SetPosition</c> (<c>00050120</c>)(object, <paramref name="point"/>)
 	/// (docs/es1/formats/sound-samples.md#placed-sounds): <see cref="Placed"/> set, the point kept, and the object placed
-	/// against the manager's listener (<see cref="Es1SoundManager.UpdatePlacement"/>).
+	/// against the manager's listener (<see cref="Es1SoundManager.UpdatePlacement"/>); with <see cref="Es1Sound.Stereo"/>,
+	/// then panned against the tweak's listener (<see cref="Es1SoundManager.PanStereo"/>).
 	/// </summary>
 	public void SetPosition(Vec3i point) {
 		Placed = true;
 		Position = point;
 		Manager.UpdatePlacement(Slot);
+		if (Es1Sound.Stereo) {
+			Manager.PanStereo(this);
+		}
 	}
 
 	/// <summary><c>SoundObject_SetPan</c> (<c>00050150</c>)(object, <paramref name="pan"/>): <see cref="Pan"/>.</summary>
@@ -296,7 +306,8 @@ public sealed class Es1DigiSound : Es1SoundObject {
 		}
 
 		var block = new Es1SampleStart(Manager.Data(Index) ?? [], Name ?? "", (int)Manager.Size(Index), (ushort)RepeatCount,
-			Word3F, volume, 0x1000 + Slot, Manager.DigiDoneCallback, flags, loopEnd, loopStart, Placed ? Pan : (ushort)0);
+			Word3F, volume, 0x1000 + Slot, Manager.DigiDoneCallback, flags, loopEnd, loopStart, Placed ? Pan : (ushort)0,
+			Placed && Es1Sound.Stereo ? StereoPan : 0);
 		HandleCopy = Slot;
 		Handle = driver.StartSample(block);
 		if (Handle == -1) {

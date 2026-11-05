@@ -69,6 +69,16 @@ public sealed class Es1Sound {
 	/// </summary>
 	public static bool NearestOfferWins { get; set; }
 
+	/// <summary>
+	/// Whether placed sounds play in stereo, each panned by where it lies across the camera's view, every frame and on a
+	/// voice already playing (<see cref="Es1SoundManager.UpdateStereoListener"/>); off, every voice plays in the center,
+	/// as retail's do on the mono device the user heard (<see cref="Es1DigitalDriver"/>). Retail's own placement, whose pan
+	/// follows the world's x axis and not the camera's heading (docs/es1/formats/sound-samples.md#placed-sounds), still
+	/// runs either way and still sets the volume. This engine's invention, on by default, the user's choice; the code path
+	/// of a tweak that is not built (docs/herculan/plan-es1-first-mission.md#open).
+	/// </summary>
+	public static bool Stereo { get; set; } = true;
+
 	/// <summary><c>Sound_Listener</c> (<c>000bd730</c>): the camera <see cref="UpdateListener"/> last kept, none until then.</summary>
 	public Es1Camera? Listener { get; private set; }
 
@@ -238,12 +248,17 @@ public sealed class Es1Sound {
 	/// <see cref="Listener"/>; then, with a manager, each catalog row with a point offered placed there and its distance
 	/// cleared, and on every <see cref="ListenerFrames"/>th call the manager's listener given the rotation of (0, 0, 0)
 	/// (<c>BuildEulerRotationMatrixQ14</c>) at the camera's position (<see cref="Es1SoundManager.UpdateListener"/>). A row
-	/// with no object is passed over with its distance cleared, an engine guard.
+	/// with no object is passed over with its distance cleared, an engine guard. With <see cref="Stereo"/>, the tweak's
+	/// listener is first given the camera's position and view (<see cref="Es1SoundManager.UpdateStereoListener"/>).
 	/// </summary>
 	public void UpdateListener(Es1Camera camera) {
 		Listener = camera;
 		if (Manager == null) {
 			return;
+		}
+
+		if (Stereo) {
+			Manager.UpdateStereoListener(camera.Position, camera.View);
 		}
 
 		for (int row = 0; row < CatalogCount; row++) {

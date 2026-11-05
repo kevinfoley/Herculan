@@ -19,9 +19,11 @@ namespace Herculan.Es1.Sound;
 /// <param name="LoopEnd"><c>+0x30</c>, with flag <see cref="Es1DigitalDriver.LoopRangeFlag"/>.</param>
 /// <param name="LoopStart"><c>+0x34</c>, with flag <see cref="Es1DigitalDriver.LoopRangeFlag"/>.</param>
 /// <param name="Pan"><c>+0x40</c>, with flag <see cref="Es1DigitalDriver.PanFlag"/>.</param>
+/// <param name="StereoPan">This engine's pan of <see cref="Es1Sound.Stereo"/>, −1 left to 1 right, which the block does not
+/// carry; 0 for the center.</param>
 public readonly record struct Es1SampleStart(
 	byte[] Data, string Name, int Length, ushort Repeats, int Word10, ushort Volume, int Id, Action<int, int>? Done, int Flags,
-	int LoopEnd, int LoopStart, ushort Pan);
+	int LoopEnd, int LoopStart, ushort Pan, float StereoPan);
 
 /// <summary>
 /// <b>This engine's stand-in for HMI's digital driver</b> (docs/es1/formats/sound-samples.md#the-driver), whose mixing is
@@ -31,10 +33,13 @@ public readonly record struct Es1SampleStart(
 /// and write the record.
 ///
 /// <para>PLACEHOLDER (decision 26 of docs/herculan/plan-es1-first-mission.md, module E): the volume reaches the mixer as
-/// its share of <c>0x7fff</c>, the pan as its distance from <c>0x8000</c>, the data as unsigned 8-bit mono at
-/// <see cref="SampleRate"/>, and a repeat count <i>c</i> as <i>c</i> + 1 plays; the start block's <c>+0x10</c>, its loop
-/// range and the voice word <c>+0x30</c>'s bit <c>0x1000</c> are not read. The driver's own curves, format and repeats
-/// replace them in module E.</para>
+/// its share of <c>0x7fff</c>, the data as unsigned 8-bit mono at <see cref="SampleRate"/>, and a repeat count <i>c</i> as
+/// <i>c</i> + 1 plays; the start block's <c>+0x10</c>, its loop range and the voice word <c>+0x30</c>'s bit <c>0x1000</c>
+/// are not read. Every voice plays in the center, as retail's do on the Sound Blaster 16's 8-bit mono device
+/// (<c>e015</c>), where the user heard them: the block's pan <c>+0x40</c> is not read, since which of its ends is left on a
+/// stereo device is not known (docs/es1/formats/sound-samples.md#open). The driver's own curves, format, repeats and pan
+/// replace them in module E. <see cref="Es1Sound.Stereo"/> pans a voice by the block's
+/// <see cref="Es1SampleStart.StereoPan"/> and <see cref="SetPan"/> instead.</para>
 /// </summary>
 public sealed class Es1DigitalDriver {
 	/// <summary>The driver's voices.</summary>
@@ -82,6 +87,7 @@ public sealed class Es1DigitalDriver {
 		v.Busy = true;
 		v.Block = block;
 		v.Volume = block.Volume;
+		v.Pan = block.StereoPan;
 		v.Repeats = (short)block.Repeats;
 		v.Sample = Sample(block);
 		Begin(v);
@@ -131,6 +137,20 @@ public sealed class Es1DigitalDriver {
 	}
 
 	/// <summary>
+	/// A busy voice's pan, −1 left to 1 right, from <see cref="Es1Sound.Stereo"/>'s listener; it holds for the voice's
+	/// repeats. Not retail's: the stereo tweak's. A voice not busy or past the last is left alone.
+	/// </summary>
+	public void SetPan(int voice, float pan) {
+		if ((uint)voice >= Voices || !_voices[voice].Busy) {
+			return;
+		}
+
+		var v = _voices[voice];
+		v.Pan = pan;
+		_backend.SetPan(v.Play, pan);
+	}
+
+	/// <summary>
 	/// The voice record's word <c>+0x38</c>, the playing sample's repeats left, which <c>DigiSound_SetRepeats</c>
 	/// (<c>00050cbc</c>) writes through the record's far pointer, busy or not. A number past the last does nothing, an
 	/// engine guard.
@@ -165,11 +185,9 @@ public sealed class Es1DigitalDriver {
 		}
 	}
 
-	/// <summary>A voice's playback started from its block, at its volume and the block's pan.</summary>
-	private void Begin(Voice v) {
-		float pan = (v.Block.Flags & PanFlag) != 0 ? (v.Block.Pan - 0x8000) / (float)0x8000 : 0;
-		v.Play = v.Sample < 0 ? -1 : _backend.Start(v.Sample, Gain(v.Volume), pan, 1, false);
-	}
+	/// <summary>A voice's playback started from its block, at its volume and pan.</summary>
+	private void Begin(Voice v) =>
+		v.Play = v.Sample < 0 ? -1 : _backend.Start(v.Sample, Gain(v.Volume), v.Pan, 1, false);
 
 	/// <summary>The backend's sample for the block's name, decoded and registered the first time a name plays.</summary>
 	private int Sample(in Es1SampleStart block) {
@@ -195,6 +213,7 @@ public sealed class Es1DigitalDriver {
 		public bool Busy;
 		public Es1SampleStart Block;
 		public ushort Volume;
+		public float Pan;
 		public short Repeats;
 		public int Sample = -1;
 		public int Play = -1;
