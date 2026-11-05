@@ -915,7 +915,7 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 		}
 
 		if (ChosenUnit == null) {
-			// PLACEHOLDER: Sound_Play(0x1b); no plan step ports ES1's sound yet.
+			Cockpit.Globals.Sound.Play(Sound.Es1Sound.DeactivateRow);
 			return;
 		}
 
@@ -927,8 +927,11 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 
 		ReadyToSend = true;
 		ClearMessageRow();
-		// PLACEHOLDER: Sound_Play(0x1a); no plan step ports ES1's sound yet.
+		Cockpit.Globals.Sound.Play(Sound.Es1Sound.ActivateRow);
 	}
+
+	/// <summary>The row of <c>trgslct</c>, a map pick's sound.</summary>
+	private const int PickSound = 0x14;
 
 	/// <summary>
 	/// A map pick taken into the selected squadmate's current pick: <paramref name="unit"/>, or for none
@@ -948,7 +951,7 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 		}
 
 		ReadyToSend = true;
-		// PLACEHOLDER: Sound_Play(0x14); no plan step ports ES1's sound yet.
+		Cockpit.Globals.Sound.Play(PickSound);
 		ClearMessageRow();
 	}
 

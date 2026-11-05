@@ -30,13 +30,16 @@ internal static class Es1DeathFlash {
 	/// <summary>The colors <c>Palette_InstallRange</c> installs from entry 0 of <c>death1</c> and <c>world0</c>.</summary>
 	public const int InstalledColors = 0xff;
 
+	/// <summary>The row of <c>1explo</c>, the sound the shake starts with.</summary>
+	private const int DeathSound = 0x26;
+
 	/// <summary>
 	/// <c>Sim_DeathFlash</c> on <paramref name="simulation"/>, in its order:
 	/// <list type="number">
 	/// <item>the three palettes loaded (<c>Palette_LoadDpl</c>, <c>00063584</c>);</item>
-	/// <item>the digital sounds stopped;</item>
+	/// <item>the digital sounds stopped (<see cref="Sound.Es1Sound.StopDigitalSounds"/>);</item>
 	/// <item>the shake's end at the clock + <see cref="ShakeLength"/>, <c>CockpitView_SetShakeBand</c>(<see cref="ShakeBand"/>)
-	/// (<see cref="Es1ViewManager.SetShakeBand"/>) and sound <c>0x26</c>;</item>
+	/// (<see cref="Es1ViewManager.SetShakeBand"/>) and <see cref="DeathSound"/>;</item>
 	/// <item><c>death1</c>'s first <see cref="InstalledColors"/> colors installed from entry 0 and a fade to <c>death2</c>
 	/// over <see cref="FadeLength"/> (<see cref="Es1PaletteFade"/>), each pass while the fade answers more than
 	/// <see cref="FirstFadeEnd"/>: <c>Sim_EndFrame</c>, while the clock is below the shake's end
@@ -69,11 +72,13 @@ internal static class Es1DeathFlash {
 		var death2 = LoadDpl(panels.Content, "DEATH2");
 		var world0 = LoadDpl(panels.Content, "WORLD0");
 
-		// 2. PLACEHOLDER: Sound_StopDigitalSounds (0004e34c); no plan step ports ES1's sound yet.
+		// 2.
+		globals.Sound.StopDigitalSounds();
+
 		// 3.
 		uint shakeEnd = clock.Clock + ShakeLength;
 		views.SetShakeBand(ShakeBand);
-		// PLACEHOLDER: Sound_Play(0x26); no plan step ports ES1's sound yet.
+		globals.Sound.Play(DeathSound);
 
 		// 4.
 		Install(frame, death1);

@@ -77,8 +77,10 @@ public sealed class Es1MessageTicker : Es1MessagePort {
 			Blink = false;
 		}
 
-		// PLACEHOLDER: Sound_Play (0004de84)(ToneFor(id)), when it gives one; no plan step ports sound yet.
-		_ = ToneFor(id);
+		if (ToneFor(id) is { } tone) {
+			Cockpit.Globals.Sound.Play(tone);
+		}
+
 		return true;
 	}
 

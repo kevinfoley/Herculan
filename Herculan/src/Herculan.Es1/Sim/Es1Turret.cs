@@ -1,5 +1,6 @@
 using Herculan.Engine.Anim;
 using Herculan.Engine.Numerics;
+using Herculan.Es1.Sound;
 
 namespace Herculan.Es1.Sim;
 
@@ -186,11 +187,17 @@ public sealed class Es1Turret {
 /// the simulation owns one of these.
 /// </summary>
 public sealed class Es1TurretServos {
+	/// <param name="sound">The simulator's sound file, read at each call (<see cref="Es1TurretServo(Func{Es1Sound}?)"/>).</param>
+	public Es1TurretServos(Func<Es1Sound>? sound = null) {
+		Twist = new Es1TurretServo(sound);
+		Pitch = new Es1TurretServo(sound);
+	}
+
 	/// <summary>The twist's, which <c>Mech_TorsoTwistServoSound</c> (<c>00014afc</c>) runs.</summary>
-	public Es1TurretServo Twist { get; } = new();
+	public Es1TurretServo Twist { get; }
 
 	/// <summary>The pitch's, which <c>Mech_TorsoPitchServoSound</c> (<c>00014dc4</c>) runs.</summary>
-	public Es1TurretServo Pitch { get; } = new();
+	public Es1TurretServo Pitch { get; }
 }
 
 /// <summary>
@@ -201,6 +208,14 @@ public sealed class Es1TurretServos {
 public sealed class Es1TurretServo {
 	/// <summary>The sound the helpers play and stop.</summary>
 	public const short Sound = 0x21;
+
+	private readonly Func<Es1Sound>? _sound;
+
+	/// <param name="sound">
+	/// The simulator's sound file, read at each call; with none, the helper acts as on a sound file whose
+	/// <c>Sound_IsPlaying</c> answers 0 and plays nothing.
+	/// </param>
+	public Es1TurretServo(Func<Es1Sound>? sound = null) => _sound = sound;
 
 	/// <summary>The axis magnitude the helper must exceed to start the sound.</summary>
 	public const short Deflection = 0xc0;
@@ -220,12 +235,14 @@ public sealed class Es1TurretServo {
 	/// </summary>
 	public void Update(short axis, short angle) {
 		short magnitude = axis < 0 ? (short)-axis : axis;
+		var sound = _sound?.Invoke();
 		if (!Latched && magnitude > Deflection && LastAngle != angle) {
-			// PLACEHOLDER: Sound_IsPlaying(0x21) answers 0 and Sound_Play(0x21) does nothing, until ES1's sound is
-			// ported, which no plan step schedules yet.
-			Latched = true;
+			if (sound?.IsPlaying(Sound) != true) {
+				sound?.Play(Sound);
+				Latched = true;
+			}
 		} else if (Latched && (magnitude == 0 || LastAngle == angle)) {
-			// PLACEHOLDER: Sound_Stop(0x21) does nothing, until ES1's sound is ported, which no plan step schedules yet.
+			sound?.Stop(Sound);
 			Latched = false;
 		}
 

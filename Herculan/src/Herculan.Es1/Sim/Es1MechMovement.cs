@@ -14,6 +14,9 @@ public static class Es1MechMovement {
 	/// <summary>The unstick side's magnitude, drawn either way.</summary>
 	public const short UnstickSideMagnitude = 5000;
 
+	/// <summary>The row of <c>explo2</c>, the thump of the player's refused move.</summary>
+	private const int ThumpSound = 0x29;
+
 	/// <summary>
 	/// <c>Mech_MovementTick</c>: the transform saved, <c>Mech_IntegrateMotion</c>, and on a refusal the transform restored,
 	/// the unstick or the player's thump, the throttle zeroed with <c>+0x8d</c> set, and the bounce outside a transition
@@ -32,7 +35,7 @@ public static class Es1MechMovement {
 				mech.UnstickSide = (globals.Random.Next() & 1) == 0 ? UnstickSideMagnitude : (short)-UnstickSideMagnitude;
 				mech.UnstickReverse = mech.Speed >= 1;
 			} else {
-				// PLACEHOLDER: Sound_Play (0004de84)(0x29), the collision thump; no plan step ports sound yet.
+				globals.Sound.Play(ThumpSound);
 			}
 
 			mech.Throttle = 0;

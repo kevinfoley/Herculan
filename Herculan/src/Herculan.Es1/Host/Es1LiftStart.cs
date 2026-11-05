@@ -26,6 +26,9 @@ internal static class Es1LiftStart {
 	/// <summary>The flat color under the art.</summary>
 	public const byte FillColor = 0x3f;
 
+	/// <summary>The rows the rise plays, <c>tur1b</c>, and the jolt, <c>explo2</c>.</summary>
+	private const int RiseSound = 0x21, JoltSound = 0x29;
+
 	/// <summary>The jolt's length in counts of the clock <c>000981c4</c>, its band and the spread of its steps.</summary>
 	public const uint JoltLength = 0x1e;
 
@@ -136,7 +139,7 @@ internal static class Es1LiftStart {
 		var fade = globals.PaletteFade;
 		var home = machine.Position;
 		var entry = views.Window;
-		// PLACEHOLDER: Sound_Play(0x21); no plan step ports ES1's sound yet.
+		globals.Sound.Play(RiseSound);
 		for (int height = home.Z - Depth; height < home.Z; height += Rise) {
 			machine.Position = new Vec3i(home.X, home.Y, height);
 			loop.UpdateCamera();
@@ -177,9 +180,10 @@ internal static class Es1LiftStart {
 		}
 
 		machine.Position = home;
-		// PLACEHOLDER: Sound_Stop(0x21) and Sound_Play(0x29); no plan step ports ES1's sound yet.
+		globals.Sound.Stop(RiseSound);
 		uint end = clock.Clock + JoltLength;
 		views.SetShakeBand(JoltBand);
+		globals.Sound.Play(JoltSound);
 		do {
 			views.StepShake((ushort)globals.PresentationRandom.Next() % JoltSpread);
 			frame.RenderFrame();

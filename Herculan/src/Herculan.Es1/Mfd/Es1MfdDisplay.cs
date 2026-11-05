@@ -337,7 +337,7 @@ public sealed class Es1MfdDisplay {
 
 		Dropout.Condition = Cockpit.DependentCondition(4);
 		if (Dropout.Condition != 0) {
-			Dropout.Tick(Cockpit.Globals.Clock.Clock, Cockpit.Globals.PresentationRandom);
+			Dropout.Tick(Cockpit.Globals.Clock.Clock, Cockpit.Globals.PresentationRandom, Cockpit.Globals.Sound);
 		}
 
 		if (!Cockpit.RectCornerVisible(ScreenRect)) {
@@ -401,7 +401,7 @@ public sealed class Es1MfdDisplay {
 				return;
 			case ModeButton:
 				if (Mode == Scanner) {
-					Cockpit.Machine?.ToggleRadarMode();
+					Cockpit.Machine?.ToggleRadarMode(Cockpit.Globals.Sound);
 				}
 
 				return;

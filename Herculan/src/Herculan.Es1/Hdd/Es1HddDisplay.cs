@@ -474,7 +474,7 @@ public sealed class Es1HddDisplay {
 
 		Dropout.Condition = Cockpit.DependentCondition(4);
 		if (Dropout.Condition != 0) {
-			Dropout.Tick(Cockpit.Globals.Clock.Clock, Cockpit.Globals.PresentationRandom);
+			Dropout.Tick(Cockpit.Globals.Clock.Clock, Cockpit.Globals.PresentationRandom, Cockpit.Globals.Sound);
 		}
 
 		if (Dropout.Dark != LastDark) {
@@ -917,8 +917,10 @@ public sealed class Es1HddDisplay {
 
 		box.Deadline = Cockpit.Globals.Clock.Clock + Es1HddCommBox.StaticCounts;
 		box.State = Es1HddCommBox.StaticBefore;
-		// PLACEHOLDER: Sound_Play(0x1c) unless Sound_IsPlaying(0x1c), the static's sound; no plan step ports ES1's sound
-		// yet.
+		if (!Cockpit.Globals.Sound.IsPlaying(Sound.Es1Sound.StaticRow)) {
+			Cockpit.Globals.Sound.Play(Sound.Es1Sound.StaticRow);
+		}
+
 		if (Cockpit.RectCornerVisible(display.ScreenRect)) {
 			display.ServiceCommBoxes();
 		}

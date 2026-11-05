@@ -29,6 +29,21 @@ public sealed class Es1Sound {
 	/// <summary>The row <c>Sim_StartMission</c>'s step 15 plays last, <c>start3</c>.</summary>
 	public const int StartRow = 0x13;
 
+	/// <summary>
+	/// The row of <c>gnract</c>, which the radar switched on, a weapon armed by its gauge, the command screen's picks and
+	/// most of the ticker's messages play.
+	/// </summary>
+	public const int ActivateRow = 0x1a;
+
+	/// <summary>The row of <c>gnrdact</c>, which the radar switched off and the command screen's Tab with no unit play.</summary>
+	public const int DeactivateRow = 0x1b;
+
+	/// <summary>The row of <c>whitenz</c>, the static of a comm box and of a gauge's dropout going dark.</summary>
+	public const int StaticRow = 0x1c;
+
+	/// <summary>The row of <c>herceng1</c>, the engine hum <c>Sim_FrameSoundTick</c> starts and stops.</summary>
+	public const int HumRow = 0x2d;
+
 	/// <summary>The frames between the listener's updates, <c>000959b4</c>'s reset.</summary>
 	public const int ListenerFrames = 10;
 

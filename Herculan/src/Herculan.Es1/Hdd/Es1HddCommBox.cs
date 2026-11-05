@@ -440,8 +440,10 @@ public sealed class Es1HddCommBox {
 			} else {
 				State = StaticAfter;
 				Deadline = now + StaticCounts;
-				// PLACEHOLDER: Sound_Play(0x1c) unless Sound_IsPlaying(0x1c), the static's sound; no plan step ports ES1's
-				// sound yet.
+				if (!cockpit.Globals.Sound.IsPlaying(Sound.Es1Sound.StaticRow)) {
+					cockpit.Globals.Sound.Play(Sound.Es1Sound.StaticRow);
+				}
+
 				if (cockpit.SquadmateMachines[Slot] is { Destroyed: true }) {
 					CommsOutLatch = true;
 				}

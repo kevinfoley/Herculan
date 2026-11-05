@@ -705,13 +705,15 @@ public sealed class Es1Mech : IEs1SimObject {
 
 	/// <summary>
 	/// <c>Mech_ToggleRadarMode</c> (<c>000157f4</c>): for the player's machine (<c>+0x9d</c>) the radar flipped
-	/// (docs/es1/simulation/mech.md#the-cockpit). PLACEHOLDER: the sound it then plays, <c>0x1b</c> with the radar off and
-	/// <c>0x1a</c> with it on, for any machine; no plan step ports ES1's sound yet.
+	/// (docs/es1/simulation/mech.md#the-cockpit); then, for any machine, <see cref="Sound.Es1Sound.DeactivateRow"/> with the
+	/// radar off and <see cref="Sound.Es1Sound.ActivateRow"/> with it on.
 	/// </summary>
-	public void ToggleRadarMode() {
+	public void ToggleRadarMode(Sound.Es1Sound sound) {
 		if (IsPlayer) {
 			RadarOn = !RadarOn;
 		}
+
+		sound.Play(RadarOn ? Sound.Es1Sound.ActivateRow : Sound.Es1Sound.DeactivateRow);
 	}
 
 	/// <summary>

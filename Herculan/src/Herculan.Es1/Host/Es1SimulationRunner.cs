@@ -153,9 +153,27 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// once a pass of <c>Sim_Main</c>'s loop, which here is a host frame that ticks: retail's comes before
 	/// <c>Time_BeginSimTick</c>'s wait, which touches no sound. Its last step, <c>Sound_UpdateListener</c>(<c>ViewObjectPtr</c>)
 	/// (<see cref="Sound.Es1Sound.UpdateListener"/>).
-	/// PLACEHOLDER: its first two steps, <c>Music_Tick</c> (item 7's module D) and sound <c>0x2d</c>'s start and stop (A3).
+	/// Before it, the engine hum: in the view manager's outside view (its <c>+0x10</c> 4)
+	/// <see cref="Sound.Es1Sound.HumRow"/> stopped while it plays, in any other view started while neither it nor
+	/// <see cref="Sound.Es1Sound.StartRow"/> plays. With no view manager, where retail always has one, the hum's step is
+	/// skipped, an engine guard.
+	/// PLACEHOLDER: its first step, <c>Music_Tick</c> (item 7's module D).
 	/// </summary>
-	private void FrameSoundTick() => Simulation.Globals.Sound.UpdateListener(Simulation.ViewChain.Camera);
+	private void FrameSoundTick() {
+		var sound = Simulation.Globals.Sound;
+		if (Simulation.ViewChain.Manager is { } views) {
+			bool humming = sound.IsPlaying(Sound.Es1Sound.HumRow);
+			if (views.CurrentView == View.Es1CockpitViews.ExternalView) {
+				if (humming) {
+					sound.Stop(Sound.Es1Sound.HumRow);
+				}
+			} else if (!humming && !sound.IsPlaying(Sound.Es1Sound.StartRow)) {
+				sound.Play(Sound.Es1Sound.HumRow);
+			}
+		}
+
+		sound.UpdateListener(Simulation.ViewChain.Camera);
+	}
 
 	/// <summary>
 	/// <c>Sim_Main</c>'s loop test, then <see cref="Es1Simulation.MainTick"/>: with <c>DemoAbort</c> set, which the axis

@@ -55,15 +55,14 @@ public sealed class Es1LockTone {
 	/// set, the phase's latch cleared while it is clear; with it dark, <see cref="LostSound"/> once when a lock was held,
 	/// otherwise <see cref="TargetChangedSound"/> while the target has just changed.
 	/// </summary>
-	public void Play(Es1Mech machine, Es1SimClock clock) {
+	public void Play(Es1Mech machine, Es1SimClock clock, Sound.Es1Sound sound) {
 		if (!machine.LockLamp) {
 			if (!WasLocked) {
 				if (machine.TargetChanged) {
-					// PLACEHOLDER: Sound_Play (0004de84)(0x14) does nothing, until ES1's sound is ported, which no plan
-					// step schedules yet.
+					sound.Play(TargetChangedSound);
 				}
 			} else {
-				// PLACEHOLDER: Sound_Play(0x16) does nothing, as above.
+				sound.Play(LostSound);
 				WasLocked = false;
 			}
 		} else {
@@ -71,7 +70,7 @@ public sealed class Es1LockTone {
 			if ((clock.Clock & PhaseBit) == 0) {
 				PhaseSounded = false;
 			} else if (!PhaseSounded) {
-				// PLACEHOLDER: Sound_Play(0x15) does nothing, as above.
+				sound.Play(LockedSound);
 				PhaseSounded = true;
 			}
 		}
@@ -248,7 +247,7 @@ public static class Es1MechSystems {
 
 			if (machine.IsPlayer) {
 				machine.LockLamp = LockLampLit(mounts, locks);
-				globals.LockTone.Play(machine, clock);
+				globals.LockTone.Play(machine, clock, globals.Sound);
 			}
 		}
 

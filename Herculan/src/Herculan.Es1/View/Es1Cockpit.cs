@@ -661,7 +661,7 @@ public sealed class Es1Cockpit {
 				answer.Value = 1;
 				break;
 			case R:
-				Machine?.ToggleRadarMode();
+				Machine?.ToggleRadarMode(Globals.Sound);
 				answer.Value = 1;
 				break;
 			default:
@@ -897,14 +897,15 @@ public sealed class Es1Cockpit {
 
 	/// <summary>
 	/// <c>CockpitView_ArmWeaponByGauge</c> (<c>0002d098</c>)(cockpit, <paramref name="gauge"/>):
-	/// <see cref="Es1WeaponMounts.SelectByGauge"/> on the machine's weapon manager; true when that arms a mount.
+	/// <see cref="Es1WeaponMounts.SelectByGauge"/> on the machine's weapon manager; when that arms a mount,
+	/// <see cref="Sound.Es1Sound.ActivateRow"/> played and true.
 	/// </summary>
 	public bool ArmWeaponByGauge(Es1WeaponGauge gauge) {
 		if (Machine?.Mounts?.SelectByGauge(gauge) != true) {
 			return false;
 		}
 
-		// PLACEHOLDER: Sound_Play(0x1a); no plan step ports ES1's sound yet.
+		Globals.Sound.Play(Sound.Es1Sound.ActivateRow);
 		return true;
 	}
 

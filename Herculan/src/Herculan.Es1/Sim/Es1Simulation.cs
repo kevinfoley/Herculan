@@ -322,7 +322,7 @@ public sealed class Es1Simulation {
 				break;
 			case Esc:
 				views?.QueueViewCommand(3);
-				// PLACEHOLDER: Sound_Play(0x2d), the engine hum; no plan step ports ES1's sound yet.
+				Globals.Sound.Play(Sound.Es1Sound.HumRow);
 				chain.PendingView = Es1ViewChain.CockpitView;
 				break;
 			case Backspace:

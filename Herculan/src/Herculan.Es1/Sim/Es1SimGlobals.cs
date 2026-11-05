@@ -54,7 +54,7 @@ public sealed class Es1SimGlobals {
 	public Es1DwellJitter DwellJitter { get; } = new();
 
 	/// <summary>The servo-sound helpers' latches and last angles (<see cref="Es1TurretServos"/>).</summary>
-	public Es1TurretServos TurretServos { get; } = new();
+	public Es1TurretServos TurretServos { get; }
 
 	/// <summary><c>LiveObjectList</c>, the objects <see cref="AddLiveObject"/> has added, in the order added.</summary>
 	public List<IEs1SimObject> LiveObjects { get; } = new();
@@ -296,6 +296,7 @@ public sealed class Es1SimGlobals {
 	public Func<int> MountDetailBias { get; set; } = () => 0;
 
 	public Es1SimGlobals() {
+		TurretServos = new Es1TurretServos(() => Sound);
 		Explosions = new Effects.Es1ExplosionPool(EffectLights, FlatObjects);
 	}
 }

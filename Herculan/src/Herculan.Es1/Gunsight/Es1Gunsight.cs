@@ -209,7 +209,7 @@ public sealed class Es1Gunsight {
 
 		Dropout.Condition = _cockpit.DependentCondition(DropoutDependent);
 		if (Dropout.Condition != 0) {
-			Dropout.Tick(_cockpit.Globals.Clock.Clock, _cockpit.Globals.PresentationRandom);
+			Dropout.Tick(_cockpit.Globals.Clock.Clock, _cockpit.Globals.PresentationRandom, _cockpit.Globals.Sound);
 		}
 
 		if (Dark || !_cockpit.RectCornerVisible(ClickSurface.Rect)) {
