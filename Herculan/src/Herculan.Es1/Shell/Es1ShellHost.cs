@@ -1,4 +1,5 @@
 using HercWorks.Core.Io;
+using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
 using Herculan.Es1.Input;
@@ -46,8 +47,9 @@ public static class Es1ShellHost {
 	/// The window the launcher's turns share (<see cref="Host.Es1Launcher"/>), which stays open after the shell; none for a
 	/// window of the shell's own, closed with it.
 	/// </param>
+	/// <param name="silent">The host's <c>--no-sound</c>: no audio device, so the sound manager plays into nothing.</param>
 	public static int Run(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath, string imguiItalicFontPath,
-			string? screenshotPath, HostWindow? window = null) {
+			string? screenshotPath, HostWindow? window = null, bool silent = false) {
 		// 1. Mem_InitHeap(3,700,000) and its assert: this engine has no fixed heap.
 		// 2. Shell_ParseCommandLine; without -eggplant this engine goes on (Es1ShellSwitches).
 		var switches = Es1ShellSwitches.Parse(arguments);
@@ -75,7 +77,18 @@ public static class Es1ShellHost {
 
 		// 6. The heap against BND\MAIN.BND's +0xc and +8: this engine's memory is never that short, so Shell_LowMemory stays clear.
 
-		return new Session(installRoot, content, switches, exitCode).Run(imguiFontPath, imguiItalicFontPath, screenshotPath, window);
+		// The audio device, opened for this turn as the simulator's turn opens its own, and closed after the shutdown.
+		string? audioFailure = null;
+		var device = silent ? null : OpenAlBackend.TryCreate(out audioFailure);
+		using IAudioBackend audio = device as IAudioBackend ?? new NullAudioBackend();
+		if (audioFailure != null) {
+			Console.Error.WriteLine(device != null
+				? $"Audio: {audioFailure}."
+				: $"Audio unavailable ({audioFailure}) — the front end runs silent.");
+		}
+
+		return new Session(installRoot, content, switches, exitCode, audio).Run(imguiFontPath, imguiItalicFontPath, screenshotPath,
+			window);
 	}
 
 	/// <summary>One run's objects and its window.</summary>
@@ -92,13 +105,18 @@ public static class Es1ShellHost {
 		private readonly Es1ShellFrame _frame;
 		private readonly Es1ShellMouse _shellMouse;
 		private readonly Es1LipSyncPlayer _lipSync;
+		private readonly IAudioBackend _audio;
 		private Es1ShellData? _data;
 		private Es1Monitor? _monitor;
 
-		public Session(string installRoot, GameContent content, Es1ShellSwitches switches, short exitCode) {
+		// A fatal assert was raised: the window closes at the next update, and no shutdown runs.
+		private bool _asserted;
+
+		public Session(string installRoot, GameContent content, Es1ShellSwitches switches, short exitCode, IAudioBackend audio) {
 			_installRoot = installRoot;
 			_content = content;
 			_switches = switches;
+			_audio = audio;
 			_dirty = new Es1DirtyList(_devices.Display);
 			_backdrop = new Es1ShellBackdrop(_devices.Display, content, _dirty);
 			_lipSync = new Es1LipSyncPlayer(_devices.Display, content.Read, _globals.MessageBox);
@@ -116,11 +134,16 @@ public static class Es1ShellHost {
 				string dataDirectory = CaseInsensitivePath.Combine(_installRoot, Es1MissionFiles.DataFolder);
 				using var window = new FrontEndWindow(host, Title, screenshotPath, imguiFontPath, imguiItalicFontPath, dataDirectory,
 					new Es1ShellMenus());
-				window.Load += (gl, input) => OnLoad(window, gl, input);
+				window.Load += (gl, input) => Guard(() => OnLoad(window, gl, input));
 				window.Update += delta => {
-					_devices.HostKeyboard?.Advance(delta);
-					_frame.AdvanceHostFrame(TimeSpan.FromSeconds(delta));
-					if (_frame.Ended) {
+					if (!_asserted) {
+						_devices.Sound.UpdateDriver();
+						_audio.Update();
+						_devices.HostKeyboard?.Advance(delta);
+						Guard(() => _frame.AdvanceHostFrame(TimeSpan.FromSeconds(delta)));
+					}
+
+					if (_asserted || _frame.Ended) {
 						window.Close();
 					}
 				};
@@ -138,9 +161,34 @@ public static class Es1ShellHost {
 				window.Run();
 			}
 
+			if (_asserted) {
+				return AssertExitStatus;
+			}
+
 			// The window's close, the engine guard of the class summary, or the loop's end.
 			_screens.QuitFlag = true;
 			return Shutdown();
+		}
+
+		/// <summary>
+		/// Runs <paramref name="step"/>; a fatal assert it raises (<see cref="Es1FatalAssertException"/>) takes
+		/// <c>Assert_Report</c>'s fatal path (docs/es1/shell/startup.md#a-fatal-assert): the message,
+		/// <c>Shell_AssertCleanupHook</c> (<see cref="Es1ShellDevices.AssertCleanup"/>, and <c>Shell_ExitCode</c> 0 written to
+		/// <c>data\exit.cfg</c>), then <c>__exit</c>(1), here the window's close with <see cref="AssertExitStatus"/>.
+		/// </summary>
+		private void Guard(Action step) {
+			try {
+				step();
+			} catch (Es1FatalAssertException assert) {
+				Console.Error.WriteLine(assert.Message);
+				_devices.AssertCleanup();
+				_screens.ExitCode = 0;
+				if (!Es1Shutdown.WriteExitCode(_installRoot, 0)) {
+					Console.Error.WriteLine($"data\\{Es1Shutdown.ExitName} does not open for writing in {_installRoot} (main.cpp line 0x88 asserts here).");
+				}
+
+				_asserted = true;
+			}
 		}
 
 		/// <summary>
@@ -171,6 +219,7 @@ public static class Es1ShellHost {
 		private IEnumerable<Es1ShellWait> Main(byte biosShiftFlags) {
 			// 7. FileNames_Load.
 			var data = Es1ShellData.LoadFileNames(_content);
+			data.Sound = _devices.Sound;
 			_data = data;
 
 			// Step 5's Map_LoadBnd, ShellMap_LoadBnd and CtlAlert_LoadBnd, here once the shared data exists; nothing between
@@ -178,7 +227,7 @@ public static class Es1ShellHost {
 			data.LoadTuning(_content);
 
 			// 8. The devices; 9. the frame-time scale; 10. a frame shown.
-			_devices.Init(_content, _installRoot, _switches.DebugMode, biosShiftFlags, _globals);
+			_devices.Init(_content, _installRoot, _switches.DebugMode, biosShiftFlags, _globals, _audio);
 			_time.Init(_devices.Timer);
 			foreach (var wait in _frame.PresentFrame()) {
 				yield return wait;

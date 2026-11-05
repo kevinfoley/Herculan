@@ -469,6 +469,19 @@ public sealed class Es1SoundManager {
 	}
 
 	/// <summary>
+	/// <c>SoundManager_Dtor</c> (<c>0004eccc</c>; the shell's copy <c>ES1GO 000420fd</c>)(manager, flags):
+	/// <see cref="UnloadDrivers"/>, then each object of the <see cref="ObjectSlots"/> destroyed through its slot <c>+8</c>
+	/// with 3, and the volume stream closed. Its message of the high-water mark and the limit goes into a stack buffer
+	/// nothing reads.
+	/// </summary>
+	public void Destroy() {
+		UnloadDrivers();
+		for (int slot = 0; slot < ObjectSlots; slot++) {
+			_objects[slot]?.Destroy();
+		}
+	}
+
+	/// <summary>
 	/// <c>DigiSound_DoneCallback</c> (<c>0004e7fc</c>)(<i>a</i>, <i>b</i>, <paramref name="code"/>, <paramref name="voice"/>),
 	/// the start block's callback: with event 2, the first digital object whose voice is <paramref name="voice"/> left
 	/// with none.

@@ -194,7 +194,7 @@ public sealed class Es1ShellFrame {
 		}
 
 		if (_backdrop.MusicDue) {
-			// PLACEHOLDER: ShellMusic_Play(Shell_MusicTrack); ES1's sound is not ported (Es1ShellDevices.Init's ShellSound_Init).
+			// PLACEHOLDER: ShellMusic_Play(Shell_MusicTrack); the songs' cues are item 7's module C, part C3.
 			_backdrop.MusicDue = false;
 		}
 

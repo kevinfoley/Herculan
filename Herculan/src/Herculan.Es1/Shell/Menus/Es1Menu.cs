@@ -91,7 +91,7 @@ public class Es1Menu {
 
 		window.SetActive(globals);
 		if (number == Es1PrefsMenu.Screen) {
-			Es1PrefsMenu.SetOpeningControls(window, MakeInactive);
+			Es1PrefsMenu.SetOpeningControls(window, Context.Data.Sound?.Manager != null, MakeInactive);
 		}
 
 		if (number == Es1MissionMenu.Screen) {

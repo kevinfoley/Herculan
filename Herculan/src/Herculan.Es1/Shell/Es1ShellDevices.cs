@@ -1,4 +1,5 @@
 using HercWorks.Core.Io.Transform.Common;
+using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Es1.Input;
 using Herculan.Es1.Shell.Menus;
@@ -95,11 +96,11 @@ public sealed class Es1ShellDevices {
 	/// <summary>The host's keys into <see cref="Keyboard"/>; none before <see cref="Init"/>.</summary>
 	public Es1HostKeyboard? HostKeyboard { get; private set; }
 
-	/// <summary>
-	/// The dword <c>00082768</c>, the shell's sound manager, which counts as present (the user's choice in P4,
-	/// plan-es1-first-mission.md decision 15): <c>ShellSound_Init</c> is not ported (<see cref="Init"/>).
-	/// </summary>
-	public static bool SoundManagerPresent => true;
+	/// <summary>The shell's sound manager and its click, which <see cref="Init"/> makes and <see cref="Shutdown"/> destroys.</summary>
+	public Es1ShellSound Sound { get; } = new();
+
+	/// <summary>Whether the dword <c>ShellSound_Manager</c> (<c>00082768</c>) is set: <see cref="Init"/> made a sound manager.</summary>
+	public bool SoundManagerPresent => Sound.Manager != null;
 
 	/// <summary>The options <c>Prefs_Options</c> (<c>000aa24e</c>), which <c>000081a4</c> loads; none before <see cref="Init"/>.</summary>
 	public Es1Preferences? Preferences { get; private set; }
@@ -110,7 +111,10 @@ public sealed class Es1ShellDevices {
 	/// <c>Shell_NavKeySubscriber</c> calls.
 	/// </summary>
 	/// <param name="biosShiftFlags">The host's lock and shift state, <see cref="Es1HostKeyboard.ReadBiosShiftFlags"/>.</param>
-	public void Init(GameContent content, string installRoot, bool debugMode, byte biosShiftFlags, Es1MenuGlobals globals) {
+	/// <param name="audio">The host's audio device the sound manager plays through.</param>
+	/// <exception cref="Sim.Es1FatalAssertException"><c>ShellSound_Init</c>'s assert: <c>resource.cfg</c> does not open.</exception>
+	public void Init(GameContent content, string installRoot, bool debugMode, byte biosShiftFlags, Es1MenuGlobals globals,
+			IAudioBackend audio) {
 		_globals = globals;
 		globals.DebugMode = debugMode;
 		globals.BlinkOn = () => BlinkOn;
@@ -125,10 +129,7 @@ public sealed class Es1ShellDevices {
 			Timer.AddCallback(2, BlinkTick);
 		}
 
-		// PLACEHOLDER: ShellSound_Init, the shell's sound manager, plan item 7's module C. The manager counts as
-		// present (00082768 set), as on a retail machine with a sound card and as the simulator's does (the user's choice,
-		// plan-es1-first-mission.md decision 15): the options' load below leaves options 0-2 as data\prefs.cfg holds them,
-		// and what plays through the manager plays nothing.
+		Sound.Init(installRoot, debugMode, content.Read, audio);
 
 		CreateDisplay();
 
@@ -189,8 +190,26 @@ public sealed class Es1ShellDevices {
 		// builds them. The shell has no game port here (the simulator's waits for the host's controller,
 		// Es1SimulationStart), so it builds no device, Input_PollDeviceBlock reads none (Es1ShellFrame.PollDeviceBlock) and
 		// CONTROLS rebuilds none (Es1ShellAlertInput.RebuildJoysticks). No plan step retires it yet.
-		// With no sound manager (00082768 0) options 0, 1 and 2 would be set to 0 here; the manager counts as present (above).
+		// With no sound manager, Prefs_SetOption(1, 0, i) for options 0, 1 and 2.
+		if (!SoundManagerPresent) {
+			for (int option = Es1Preferences.MusicOption; option <= Es1Preferences.RadioOption; option++) {
+				preferences.ShellSetOption(true, 0, option);
+			}
+		}
+
 		Preferences = preferences;
+	}
+
+	/// <summary>
+	/// <c>Shell_AssertCleanupHook</c> (<c>00045a68</c>) (docs/es1/shell/startup.md#a-fatal-assert), as far as this engine
+	/// holds what it releases: the sound manager destroyed (<see cref="Es1ShellSound.DestroyManager"/>) and the host's
+	/// keyboard let go, with the mouse, which the window's close would release. The caller writes <c>Shell_ExitCode</c> 0
+	/// to <c>data\exit.cfg</c>. The display's <c>0005a588</c> and the timer's divisor return DOS what the host does not hold.
+	/// </summary>
+	public void AssertCleanup() {
+		Sound.DestroyManager();
+		HostKeyboard?.Detach();
+		Mouse.Detach();
 	}
 
 	/// <summary>
@@ -231,13 +250,14 @@ public sealed class Es1ShellDevices {
 	}
 
 	/// <summary>
-	/// <c>Shell_ShutdownDevices</c> (<c>00046094</c>), as far as this engine holds them: the host's keyboard and mouse let
-	/// go. The rest returns DOS what the shell took, which the host does not hold: the button sound and the sound
-	/// manager (not ported), <c>Shell_NavKeySubscriber</c> and the keyboard and mouse devices, the PC timer's divisor
-	/// <c>0x4da6</c>, its callbacks and <c>Pit_RemoveHandler</c>, the render context, and the display, which with
-	/// <c>Shell_ExitCode</c> not 0 keeps its mode for the simulator.
+	/// <c>Shell_ShutdownDevices</c> (<c>00046094</c>), as far as this engine holds them: the button sound and the sound
+	/// manager destroyed (<see cref="Es1ShellSound.Shutdown"/>), and the host's keyboard and mouse let go. The rest returns
+	/// DOS what the shell took, which the host does not hold: <c>Shell_NavKeySubscriber</c> and the keyboard and mouse
+	/// devices, the PC timer's divisor <c>0x4da6</c>, its callbacks and <c>Pit_RemoveHandler</c>, the render context, and
+	/// the display, which with <c>Shell_ExitCode</c> not 0 keeps its mode for the simulator.
 	/// </summary>
 	public void Shutdown() {
+		Sound.Shutdown();
 		HostKeyboard?.Detach();
 		Mouse.Detach();
 	}

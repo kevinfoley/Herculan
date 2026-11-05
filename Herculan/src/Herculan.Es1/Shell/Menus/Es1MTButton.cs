@@ -114,15 +114,8 @@ public class Es1MTButton : Es1DUIButtonControl {
 		context.DrawString(Fonts[State], Text, Points[State].X, Points[State].Y);
 	}
 
-	/// <summary>
-	/// A pushed button's click: while <c>Shell_SoundOption</c> (<see cref="Es1ShellData.SoundOption"/>) and the sound object
-	/// <c>0007fd00</c> are set, the object stopped when its slot <c>+0x30</c> answers non-zero (slot <c>+0x14</c>) and
-	/// played (slot <c>+0x10</c>).
-	/// </summary>
-	protected static void Click() {
-		// PLACEHOLDER: the sound object 0007fd00, which the shell's sound manager makes; ES1's sound is not ported
-		// (Es1ShellDevices.Init's ShellSound_Init), so the press is silent.
-	}
+	/// <summary>A pushed button's click, <see cref="Es1ShellSound.ClickButton"/> with <c>Shell_SoundOption</c> (<see cref="Es1ShellData.SoundOption"/>).</summary>
+	protected void Click() => _data.Sound?.ClickButton(_data.SoundOption);
 
 	/// <summary>Slot <c>+0xc</c>, <c>MTButton_Invalidate</c> (<c>0001d17b</c>): <see cref="Es1DUIControl.Changed"/> set.</summary>
 	public override void Invalidate() => Changed = true;

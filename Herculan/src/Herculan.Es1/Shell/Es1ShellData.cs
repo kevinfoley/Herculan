@@ -78,6 +78,13 @@ public sealed class Es1ShellData {
 	/// <summary><c>Shell_SoundOption</c> (<c>0007fcb9</c>), option 1, which lets a text button click and PREFERENCES' SOUND toggles.</summary>
 	public byte SoundOption { get; set; }
 
+	/// <summary>
+	/// The devices' sound manager and click (<see cref="Es1ShellDevices.Sound"/>), which the menus' buttons click through
+	/// and PREFERENCES tests; the host sets it, and none, as in a test, clicks nothing and counts no manager. This engine's
+	/// handle on retail's globals <c>00082768</c> and <c>0007fd00</c>, not shared data the shell loads.
+	/// </summary>
+	public Es1ShellSound? Sound { get; set; }
+
 	/// <summary><c>Shell_RadioOption</c> (<c>0007fcbc</c>), option 2, which PREFERENCES' SPEECH steps.</summary>
 	public short RadioOption { get; set; }
 

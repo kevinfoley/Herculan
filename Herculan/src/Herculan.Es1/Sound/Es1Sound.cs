@@ -110,20 +110,24 @@ public sealed class Es1Sound {
 	/// <summary>
 	/// <c>Sim_StartMission</c>'s step 3 (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc):
 	/// with <paramref name="soundOn"/> (<c>000b5b68</c>, which <c>-s</c> toggles from 1) the six values from the install's
-	/// <c>resource.cfg</c>, read as <c>Profile_GetString</c> and <c>Profile_GetInt</c> read it (<see cref="Es1Profile"/>):
+	/// <c>resource.cfg</c> (<see cref="ReadDevices"/>); without it, digital device 0.
+	/// </summary>
+	public static Es1SoundDevices MissionStartDevices(string installRoot, bool soundOn) =>
+		soundOn ? ReadDevices(installRoot) : default;
+
+	/// <summary>
+	/// The six values from the install's <c>resource.cfg</c> that <c>Sim_StartMission</c>'s step 3 and the shell's
+	/// <c>ShellSound_Init</c> (<c>ES1GO 00046235</c>, docs/es1/formats/sound-samples.md#the-shells-sound-manager) read, the
+	/// same statements, as <c>Profile_GetString</c> and <c>Profile_GetInt</c> read it (<see cref="Es1Profile"/>):
 	/// <c>[SoundFX]</c>'s <c>Driver#</c>, an empty one 0 and any other through <c>sscanf</c>'s <c>%X</c>, <c>IRQ</c> and
 	/// <c>DMA</c> through <c>atol</c> with a default of 0, and its <c>PortAddress</c> and <c>[Music]</c>'s <c>Driver#</c> and
-	/// <c>PortAddress</c> through <c>%X</c>; without it, digital device 0.
+	/// <c>PortAddress</c> through <c>%X</c>. A file that does not open reads as empty.
 	///
 	/// <para>PLACEHOLDER: a key the file lacks, where <c>Profile_GetString</c> copies its default argument 0 as a string,
 	/// reads as empty, and a value <c>%X</c> assigns nothing from, where retail passes on what the stack held, reads 0
 	/// (main-loop.md's Open). The setup writes every key.</para>
 	/// </summary>
-	public static Es1SoundDevices MissionStartDevices(string installRoot, bool soundOn) {
-		if (!soundOn) {
-			return default;
-		}
-
+	public static Es1SoundDevices ReadDevices(string installRoot) {
 		string path = CaseInsensitivePath.Combine(installRoot, Es1ResourceCfg.FileName);
 		byte[]? bytes = null;
 		try {

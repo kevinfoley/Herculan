@@ -111,12 +111,12 @@ public sealed class Es1PrefsMenu : Es1Menu {
 	}
 
 	/// <summary>
-	/// <c>Menu_Open</c>'s change for menu 1310: with no sound manager (<see cref="Es1ShellDevices.SoundManagerPresent"/>,
-	/// the dword <c>00082768</c>), MUSIC, SOUND and SPEECH, each found in any state with <c>DUIWindow_FindControlById</c>,
-	/// made inactive.
+	/// <c>Menu_Open</c>'s change for menu 1310: with no sound manager (<paramref name="soundManagerPresent"/>,
+	/// <see cref="Es1ShellDevices.SoundManagerPresent"/>), MUSIC, SOUND and SPEECH, each found in any state with
+	/// <c>DUIWindow_FindControlById</c>, made inactive.
 	/// </summary>
-	public static void SetOpeningControls(Es1DUIWindow window, Action<Es1DUIWindow, short> makeInactive) {
-		if (Es1ShellDevices.SoundManagerPresent) {
+	public static void SetOpeningControls(Es1DUIWindow window, bool soundManagerPresent, Action<Es1DUIWindow, short> makeInactive) {
+		if (soundManagerPresent) {
 			return;
 		}
 
@@ -197,9 +197,9 @@ public sealed class Es1PrefsMenu : Es1Menu {
 
 	/// <summary>
 	/// With the backdrop's music <c>ShellMusic_Object</c> (<c>0007fcfc</c>) set, its slot <c>+0x10</c> (play) for a
-	/// setting of 1 and <c>+0x14</c> (stop) for 0, through its vtable at <c>+0x3b</c>. PLACEHOLDER: the object is the
-	/// shell's sound manager's, which is not ported (<see cref="Es1ShellDevices.Init"/>'s <c>ShellSound_Init</c>), so
-	/// there is none and nothing plays or stops, as in retail with the object not set.
+	/// setting of 1 and <c>+0x14</c> (stop) for 0, through its vtable at <c>+0x3b</c>. PLACEHOLDER: <c>ShellMusic_Play</c>, which
+	/// makes the object, is item 7's module C, part C3, so there is none and nothing plays or stops, as in retail with the
+	/// object not set.
 	/// </summary>
 	private static void PlayOrStopMusic(byte setting) {
 		_ = setting;

@@ -338,8 +338,7 @@ public sealed class Es1ShellScreens {
 			default:
 				if (playIntro) {
 					scripts.SetPathPrefix(IntroFolder);
-					// PLACEHOLDER: ShellMusic_Play(0xc), and (0xd) before iintro.ttm; ES1's sound is not ported
-					// (Es1ShellDevices.Init's ShellSound_Init).
+					// PLACEHOLDER: ShellMusic_Play(0xc), and (0xd) before iintro.ttm; the songs' cues are item 7's module C, part C3.
 					foreach (var wait in PlayTtm("dynamix.ttm", presentFrame, pollDeviceBlock)) {
 						yield return wait;
 					}
@@ -445,7 +444,7 @@ public sealed class Es1ShellScreens {
 		var roster = mission.Roster;
 		if (Es1CareerRoster.PlayerCondition(roster.CurrentRecord) == 0) {
 			if (playIntro) {
-				// PLACEHOLDER: ShellMusic_Play(7); ES1's sound is not ported (Es1ShellDevices.Init's ShellSound_Init).
+				// PLACEHOLDER: ShellMusic_Play(7); the songs' cues are item 7's module C, part C3.
 				foreach (var wait in PlayTtm(LostScript, presentFrame, pollDeviceBlock)) {
 					yield return wait;
 				}
@@ -455,14 +454,14 @@ public sealed class Es1ShellScreens {
 		} else {
 			switch (roster.PeekNextCampaign(roster.CurrentRecord) & 0xff) {
 				case CareerWon:
-					// PLACEHOLDER: ShellMusic_Play(0xd); ES1's sound is not ported.
+					// PLACEHOLDER: ShellMusic_Play(0xd); the songs' cues are part C3.
 					foreach (var wait in PlayCareerEnding(mission, WonScripts, presentFrame, pollDeviceBlock)) {
 						yield return wait;
 					}
 
 					break;
 				case CareerLost:
-					// PLACEHOLDER: ShellMusic_Play(0x13); ES1's sound is not ported.
+					// PLACEHOLDER: ShellMusic_Play(0x13); the songs' cues are part C3.
 					foreach (var wait in PlayCareerEnding(mission, FailedScripts, presentFrame, pollDeviceBlock)) {
 						yield return wait;
 					}

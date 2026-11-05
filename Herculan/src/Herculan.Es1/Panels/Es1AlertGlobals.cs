@@ -69,10 +69,29 @@ public sealed class Es1AlertGlobals {
 
 	/// <summary>
 	/// The simulator's sound file, which a panel's buttons click through (<c>Widget_ClickSound</c>) and whose sound manager
-	/// the preferences panel tests; none for the shell's copy, whose sound is item 7's module C, and for a test, which
-	/// then counts the manager as present.
+	/// the preferences panel tests; none for the shell's copy, which clicks through <see cref="ClickSound"/>, and for a
+	/// test, which then counts the manager as present.
 	/// </summary>
 	public Sound.Es1Sound? Sound { get; init; }
+
+	/// <summary>
+	/// The shell's click sound, slot <c>+0xc</c> of its buttons' mixin table <c>ES1GO 0007dac2</c>,
+	/// <c>Widget_ClickSoundAlertCopy</c> (<c>00008954</c>); none for the simulator's, whose slot is
+	/// <c>Widget_ClickSound</c> (<see cref="PlayClickSound"/>).
+	/// </summary>
+	public Action? ClickSound { get; init; }
+
+	/// <summary>
+	/// A button's mixin click sound: <see cref="ClickSound"/> when set, else the simulator's <c>Widget_ClickSound</c>
+	/// (<c>000314a0</c>), <c>Sound_Play</c>(<see cref="Sound.Es1Sound.ClickRow"/>) on <see cref="Sound"/>.
+	/// </summary>
+	public void PlayClickSound() {
+		if (ClickSound != null) {
+			ClickSound();
+		} else {
+			Sound?.Play(Herculan.Es1.Sound.Es1Sound.ClickRow);
+		}
+	}
 
 	/// <summary>
 	/// The install the simulator runs in, whose <c>data\</c> a panel reads the shell's files from, as

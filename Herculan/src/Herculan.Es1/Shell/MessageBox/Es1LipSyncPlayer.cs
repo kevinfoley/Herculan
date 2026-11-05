@@ -15,8 +15,8 @@ namespace Herculan.Es1.Shell.MessageBox;
 /// shell's timer. Each member starts as <c>ShellData_StaticInit</c> (<c>00020b68</c>) leaves it: the handle <c>0xff</c>, the rest
 /// 0.
 ///
-/// <para>The line's voice plays nothing: the shell's sound is not ported (<see cref="Es1ShellDevices.Init"/>'s
-/// <c>ShellSound_Init</c>), so <c>ShellSnc_OpenSound</c> opens no sound object and the stop and release have none to stop.
+/// <para>The line's voice plays nothing: the talking heads' lines are item 7's module C, part C2, so
+/// <c>ShellSnc_OpenSound</c> opens no sound object and the stop and release have none to stop.
 /// The line's timing is the lip-sync script's, so a line still ends on its own as retail's does.</para>
 /// </summary>
 public sealed class Es1LipSyncPlayer {
@@ -232,8 +232,7 @@ public sealed class Es1LipSyncPlayer {
 		Playing = true;
 		// PLACEHOLDER: ShellSnc_OpenSound (00045801) of MessageBox_Line's second name, its .RAW, through the sound manager
 		// 00082768, and DigiSound_Play through the sound's slot +0x10 while Shell_RadioOption (0007fcbc) is above 0: the voice.
-		// The shell's sound is not ported (Es1ShellDevices.Init's ShellSound_Init), so no sound is made and the face talks
-		// without one.
+		// The talking heads' lines are item 7's module C, part C2, so no sound is made and the face talks without one.
 		Clock = 0;
 	}
 
