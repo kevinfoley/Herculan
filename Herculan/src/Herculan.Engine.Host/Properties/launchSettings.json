@@ -26,6 +26,22 @@
     "Joystick probe": {
       "commandName": "Project",
       "commandLineArgs": "--mission --joystick-probe"
+    },
+    "ES1 (launcher and shell)": {
+      "commandName": "Project",
+      "commandLineArgs": "E:\\ES2Stuff\\ES1"
+    },
+    "ES1 simulator (install's DATA)": {
+      "commandName": "Project",
+      "commandLineArgs": "E:\\ES2Stuff\\ES1 --sim"
+    },
+    "ES1 mission SM_SCR01": {
+      "commandName": "Project",
+      "commandLineArgs": "E:\\ES2Stuff\\ES1 SM_SCR01"
+    },
+    "ES1 demo tape": {
+      "commandName": "Project",
+      "commandLineArgs": "E:\\ES2Stuff\\ES1 --demo"
     }
   }
 }
