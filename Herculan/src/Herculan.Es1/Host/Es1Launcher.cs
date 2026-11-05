@@ -47,8 +47,9 @@ public static class Es1Launcher {
 	/// </summary>
 	/// <param name="imguiFontPath">The faces the shell's ImGui draws in (<see cref="Es1ShellHost.Run"/>).</param>
 	/// <param name="screenshotPath"><c>--screenshot</c>'s file, which the first shell turn captures; none for a play.</param>
+	/// <param name="silent">The host's <c>--no-sound</c>: the simulator's turns open no audio device.</param>
 	public static int Run(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath, string imguiItalicFontPath,
-			string? screenshotPath) {
+			string? screenshotPath, bool silent = false) {
 		// 1. Mem_New(argc * 4 + 8), its answer not kept: no counterpart.
 		// 2. The memory check, X32_LargestFreeBlock() - 25,000 against 3,435,000: the extender's largest free block has no
 		// counterpart, so the check always passes, an engine choice, and its figure is not computed.
@@ -125,7 +126,7 @@ public static class Es1Launcher {
 				case 2:
 				case 5:
 					flicPlayerFound = FileReadable(flics?.Probe);
-					RunSimulator(installRoot, BuildArgs(arguments, state, flicPlayerFound), window);
+					RunSimulator(installRoot, BuildArgs(arguments, state, flicPlayerFound), window, silent);
 					break;
 				default:
 					// Any other state runs nothing, and the file is read again unchanged, so retail goes on reading it. The
@@ -165,11 +166,12 @@ public static class Es1Launcher {
 	/// case-sensitive, a character not in its table passed over, and handed to <see cref="Es1ZoneViewer.Run"/> as far as
 	/// it takes them. <c>-D</c> is its demo; <c>-p</c> and <c>-r</c> its tape to play and to record, each name taken only
 	/// when none was given before, and <c>-D</c>'s pick replacing any; <c>-c</c> (<c>Sim_PreParseCommandLine</c>) lets it
-	/// honor <c>ALT_DRIVE</c>, which the install's paths stand in for here; and <c>-eggplant</c> is what step 6's refusal
-	/// tests, which <see cref="Es1ZoneViewer"/> does not make.
+	/// honor <c>ALT_DRIVE</c>, which the install's paths stand in for here; <c>-eggplant</c> is what step 6's refusal
+	/// tests, which <see cref="Es1ZoneViewer"/> does not make; and each <c>-s</c> toggles <c>000b5b68</c> from 1, which
+	/// clear makes no sound manager.
 	/// </summary>
-	private static void RunSimulator(string installRoot, IReadOnlyList<string> arguments, HostWindow window) {
-		bool demo = false, nameGiven = false;
+	private static void RunSimulator(string installRoot, IReadOnlyList<string> arguments, HostWindow window, bool silent) {
+		bool demo = false, nameGiven = false, soundOn = true;
 		string? playTape = null, recordTape = null;
 		var notHanded = new List<string>();
 		foreach (string argument in arguments) {
@@ -197,7 +199,10 @@ public static class Es1Launcher {
 					}
 
 					break;
-				case 'B' or 'S' or 'm' or 'C' or 's' or 'P' or 't' or 'V' or 'W' or 'T' or 'd' or 'l':
+				case 's':
+					soundOn = !soundOn;
+					break;
+				case 'B' or 'S' or 'm' or 'C' or 'P' or 't' or 'V' or 'W' or 'T' or 'd' or 'l':
 					notHanded.Add(argument);
 					break;
 			}
@@ -208,7 +213,8 @@ public static class Es1Launcher {
 			Console.Error.WriteLine($"PLACEHOLDER: DBSIM.EXE's {string.Join(" ", notHanded)} not handed to the simulator.");
 		}
 
-		Es1ZoneViewer.Run(installRoot, null, new Es1HeaderOverrides(null, null, null), playTape, demo, recordTape, window);
+		Es1ZoneViewer.Run(installRoot, null, new Es1HeaderOverrides(null, null, null), playTape, demo, recordTape, window,
+			soundOn, silent);
 		window.Hold(null);
 	}
 

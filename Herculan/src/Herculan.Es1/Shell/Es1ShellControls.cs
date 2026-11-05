@@ -120,6 +120,8 @@ public sealed class Es1ShellControls {
 		return new Es1AlertGlobals(devices.Display, _screens.MapMouse.Queue, input, widgets, content) {
 			PageOnScreen = () => devices.PairA,
 			CountsOpen = false,
+			// PLACEHOLDER: no Sound, so the panel's buttons click silently and the shell's sound manager is not tested;
+			// the shell's sound is item 7's module C.
 			// PLACEHOLDER: Screenshot_Save (00014ac7)(CAPTURE), which grabs the screen and hands it to two writers under
 			// numbered CAPTURE paths (docs/es1/shell/options.md#the-capture--screenshot_save-00014ac7); the panel takes the key
 			// and returns 1 here, and nothing is written.

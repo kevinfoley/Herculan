@@ -5,8 +5,8 @@ namespace Herculan.Es1.Sound;
 /// (docs/es1/formats/snc-lip-sync.md#the-speech-slot): the face's frame and the script it steps through, and the key
 /// <see cref="Es1VoiceLines.LoadLine"/> finds the line by. <c>VoiceSlot_ElementCtor</c> (<c>ES1DBSIM 0004dc40</c>) and
 /// <c>Snc_Ctor</c> (<c>0004e444</c>) leave the script and the sound object none and the taken byte and the last use 0.
-/// The sound object <c>+0</c>, the voice's path <c>+0x0e</c> and the sound manager's index and object <c>+0x34</c> and
-/// <c>+0x36</c> are not kept: no plan step ports ES1's sound yet, so a slot's sound object is always none.
+/// The sound object <c>+0</c> and the voice's path <c>+0x0e</c> are not kept: what loads and plays a line's sample is
+/// item 7's module B (docs/herculan/plan-es1-first-mission.md), so a slot's sound object <c>+0</c> is always none.
 /// </summary>
 public sealed class Es1SpeechSlot {
 	internal Es1SpeechSlot(int index) => Index = index;
@@ -37,4 +37,16 @@ public sealed class Es1SpeechSlot {
 
 	/// <summary><c>+0x33</c>, set once the slot is taken for a voice; none of the functions ported here reads it.</summary>
 	public bool Taken { get; internal set; }
+
+	/// <summary>
+	/// <c>+0x34</c>, <c>int16</c>: the sound manager's name index the slot's sample is named as, the next past the
+	/// catalog's rows, which <c>SoundCatalog_Load</c> stores (<see cref="Es1Sound.LoadCatalog"/>).
+	/// </summary>
+	public short SoundIndex { get; internal set; }
+
+	/// <summary>
+	/// <c>+0x36</c>: the digital sound <c>SoundCatalog_Load</c> makes on <see cref="SoundIndex"/>; none with no sound
+	/// manager, where retail's is what the allocation left (docs/es1/formats/sound-samples.md#open).
+	/// </summary>
+	public Es1SoundObject? Sound { get; internal set; }
 }

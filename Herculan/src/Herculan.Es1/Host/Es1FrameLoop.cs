@@ -179,9 +179,11 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		// the canvas context and the draw page put back.
 		Views.Cockpit.BringUp = false;
 		Views.Cockpit.DrawToCockpit(new Es1Rect(0, 0, 320, 400));
-		// The driver's slot 30 (0009df4c) shows the cursor; with the lift, its ride, which the loop runs as the frame's
-		// work from the first host frame with a pacer; and with no tape playing, CockpitMouseLive is set.
+		// The driver's slot 30 (0009df4c) shows the cursor; Sound_SetMusicEnabled(1); with the lift, its ride, which the
+		// loop runs as the frame's work from the first host frame with a pacer; with no tape playing, CockpitMouseLive is
+		// set; and Sound_Play(start3).
 		display.Cursor.Show();
+		globals.Sound.SetMusicEnabled(1);
 		if (globals.LiftStartPending) {
 			_work = RunLift(liftArt).GetEnumerator();
 			_untilNextHostFrame = true;
@@ -199,11 +201,13 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		MakeMouseLive();
 	}
 
-	/// <summary>Step 15's <c>CockpitMouseLive</c> = 1, unless a tape plays.</summary>
+	/// <summary>Step 15's <c>CockpitMouseLive</c> = 1, unless a tape plays; then its last call, <c>Sound_Play</c>(<see cref="Sound.Es1Sound.StartRow"/>).</summary>
 	private void MakeMouseLive() {
 		if (!Views.Mouse.TapePlayback) {
 			Views.Mouse.Live = true;
 		}
+
+		Views.Cockpit.Globals.Sound.Play(Sound.Es1Sound.StartRow);
 	}
 
 	/// <summary><c>Cam_Update</c>(<c>ViewObjectPtr</c>).</summary>

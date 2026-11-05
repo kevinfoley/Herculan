@@ -1,6 +1,21 @@
 namespace Herculan.Es1.Sound;
 
 /// <summary>
+/// The six values <c>Sound_Init</c> (<c>0004db14</c>) stores over the driver defaults block (<c>000959ec</c>), at their
+/// addresses there (docs/es1/formats/sound-samples.md#the-driver); the block's rate and buffer are not among them.
+/// </summary>
+/// <param name="MidiPort"><c>00095a08</c>.</param>
+/// <param name="Port"><c>00095a00</c>, the digital card's.</param>
+/// <param name="Dma"><c>000959f8</c>.</param>
+/// <param name="Irq"><c>000959fc</c>.</param>
+/// <param name="MidiDevice"><c>00095a0c</c>.</param>
+/// <param name="DigitalDevice"><c>00095a04</c>; 0 makes no sound manager.</param>
+public readonly record struct Es1SoundDevices(ushort MidiPort, ushort Port, byte Dma, byte Irq, ushort MidiDevice, ushort DigitalDevice) {
+	/// <summary>The block's values in the image: MIDI port <c>0x388</c>, port <c>0x220</c>, DMA 1, IRQ 7, MIDI device <c>0xa002</c>, digital device <c>0xe000</c>.</summary>
+	public static Es1SoundDevices ImageDefaults => new(0x388, 0x220, 1, 7, 0xa002, 0xe000);
+}
+
+/// <summary>
 /// The sound manager (docs/es1/formats/sound-samples.md#the-sound-manager): the one object that owns every sound, its
 /// names, the sizes the volume stream reports for them, the loaded data and its count against a limit, and
 /// <see cref="ObjectSlots"/> sound objects. The simulator's and the shell's are one code; each program makes one at
@@ -256,6 +271,88 @@ public sealed class Es1SoundManager {
 
 	/// <summary><c>SoundManager_SetMemoryLimit</c> (<c>00050008</c>)(manager, <paramref name="limit"/>).</summary>
 	public void SetMemoryLimit(uint limit) => MemoryLimit = limit;
+
+	/// <summary>
+	/// The defaults block (<c>000959ec</c>) as <c>Sound_Init</c> leaves it, which <see cref="LoadDrivers"/> fills the
+	/// driver blocks from; the image's values until then.
+	/// </summary>
+	public Es1SoundDevices Devices { get; set; } = Es1SoundDevices.ImageDefaults;
+
+	/// <summary><c>+0x13a</c>: <c>sos\melodic.bnk</c>, read whole by <see cref="LoadBanks"/>.</summary>
+	public byte[]? MelodicBank { get; private set; }
+
+	/// <summary><c>+0x140</c>: <c>sos\drum32.dig</c>, read whole by <see cref="LoadBanks"/>.</summary>
+	public byte[]? Drum32Dig { get; private set; }
+
+	/// <summary><c>+0x146</c>: <c>sos\drum.bnk</c>, read whole by <see cref="LoadBanks"/>.</summary>
+	public byte[]? DrumBank { get; private set; }
+
+	/// <summary><c>SoundManager_DriversLoaded</c> (<c>000bd8cc</c>): set by <see cref="LoadDrivers"/> when it succeeds.</summary>
+	public bool DriversLoaded { get; private set; }
+
+	/// <summary>
+	/// <c>SoundManager_LoadDrivers</c> (<c>0004ef8c</c>)(manager) (docs/es1/formats/sound-samples.md#the-driver):
+	/// <see cref="DriversLoaded"/> cleared, false unless <see cref="LoadBanks"/> succeeds, then the drivers opened and
+	/// <see cref="DriversLoaded"/> set, true.
+	///
+	/// <para>PLACEHOLDER: the HMI calls between, which item 7's modules D and E port (docs/herculan/plan-es1-first-mission.md):
+	/// <c>0006d4f5</c>(0, 1); the timer callback <c>0004e710</c> and its slot <c>+0x134</c>; the MIDI device
+	/// <see cref="Es1SoundDevices.MidiDevice"/> opened with <c>HmiMidi_InitDriver</c> and the two banks loaded into it; the
+	/// digital driver, hardware and init blocks filled from <see cref="Devices"/>; device <c>0xa005</c> opened with
+	/// <see cref="Drum32Dig"/>; and <c>0007225a</c>(0). The stand-in <see cref="Driver"/> plays without them, and none of
+	/// their failures, each of which formats its message into a stack buffer and answers false, is reached.</para>
+	/// </summary>
+	public bool LoadDrivers() {
+		DriversLoaded = false;
+		if (!LoadBanks()) {
+			return false;
+		}
+
+		DriversLoaded = true;
+		return true;
+	}
+
+	/// <summary>
+	/// <c>SoundManager_LoadBanks</c> (<c>0004f6d4</c>)(manager) (docs/es1/formats/sound-samples.md#the-banks):
+	/// <c>sos\melodic.bnk</c>, <c>sos\drum.bnk</c> and <c>sos\drum32.dig</c> read whole, in that order, into
+	/// <see cref="MelodicBank"/>, <see cref="DrumBank"/> and <see cref="Drum32Dig"/>; false at the first that does not open.
+	/// </summary>
+	public bool LoadBanks() {
+		if (Open(@"sos\melodic.bnk") is not { } melodic) {
+			return false;
+		}
+
+		MelodicBank = melodic;
+		if (Open(@"sos\drum.bnk") is not { } drum) {
+			return false;
+		}
+
+		DrumBank = drum;
+		if (Open(@"sos\drum32.dig") is not { } dig) {
+			return false;
+		}
+
+		Drum32Dig = dig;
+		return true;
+	}
+
+	/// <summary>
+	/// <c>SoundManager_UnloadDrivers</c> (<c>0004f3d4</c>)(manager): while <see cref="DriversLoaded"/> is set, every object
+	/// of the <see cref="ObjectSlots"/> stopped through its slot <c>+0x14</c>, then <see cref="DriversLoaded"/> cleared.
+	/// PLACEHOLDER: the HMI calls between, <c>00071515</c> and <c>0007144b</c> on both MIDI handles, the timer callback's
+	/// removal, <c>00071064</c>, <c>000705c5</c> and <c>0006fe28</c>, are item 7's modules D and E.
+	/// </summary>
+	public void UnloadDrivers() {
+		if (!DriversLoaded) {
+			return;
+		}
+
+		foreach (var sound in _objects) {
+			sound?.Stop();
+		}
+
+		DriversLoaded = false;
+	}
 
 	/// <summary>
 	/// <c>DigiSound_DoneCallback</c> (<c>0004e7fc</c>)(<i>a</i>, <i>b</i>, <paramref name="code"/>, <paramref name="voice"/>),

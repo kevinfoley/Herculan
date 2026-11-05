@@ -82,6 +82,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 				EnterHook = AxisKeys.PushDisable,
 				LeaveHook = AxisKeys.PopEnable,
 				InstallRoot = installRoot,
+				Sound = world.Globals.Sound,
 			};
 			manager.Cockpit.Panels = Simulation.Panels;
 		}

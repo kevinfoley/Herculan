@@ -186,7 +186,7 @@ public sealed class Es1ConsoleButtons {
 				return 1;
 			case LinkKey:
 				Cockpit.Machine?.Mounts?.ToggleLink();
-				// PLACEHOLDER: Sound_Play(0x11); no plan step ports ES1's sound yet.
+				Cockpit.Globals.Sound.Play(Sound.Es1Sound.ClickRow);
 				return 1;
 			default:
 				return 0;
@@ -285,7 +285,8 @@ public sealed class Es1ConsoleButton : Es1ButtonWidget {
 			Lamp = true;
 		}
 
-		// PLACEHOLDER: Widget_ClickSound, Sound_Play(0x11); no plan step ports ES1's sound yet.
+		// Widget_ClickSound (000314a0).
+		_console.Cockpit.Globals.Sound.Play(Sound.Es1Sound.ClickRow);
 		_console.OnChildClick(this);
 	}
 

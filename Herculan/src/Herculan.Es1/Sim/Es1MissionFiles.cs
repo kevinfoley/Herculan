@@ -48,7 +48,8 @@ public sealed record Es1MissionFiles(short[] Flags, Es1PlayerMec Player, Es1Scri
 	/// that does not read, gives null with the file named in <paramref name="error"/>.
 	/// </summary>
 	/// <param name="demoMode"><c>DemoMode</c>, under which <c>Prefs_Init</c> loads the preferences twice (<see cref="Es1Preferences.Load"/>).</param>
-	public static Es1MissionFiles? Read(string installRoot, out string? error, bool demoMode = false) {
+	/// <param name="sound">The simulator's sound file, which the preferences' handlers of options 0 and 1 switch from their load on.</param>
+	public static Es1MissionFiles? Read(string installRoot, out string? error, bool demoMode = false, Sound.Es1Sound? sound = null) {
 		string varPath = DataPath(installRoot, MissionVarName);
 		if (!File.Exists(varPath)) {
 			error = $"data\\{MissionVarName} is missing from {installRoot} (world.cpp line 0x8d asserts here).";
@@ -98,7 +99,8 @@ public sealed record Es1MissionFiles(short[] Flags, Es1PlayerMec Player, Es1Scri
 
 		error = null;
 		return new Es1MissionFiles(flags, player, script) {
-			Preferences = Es1Preferences.Load(prefs, prefsPath, Es1Preferences.VoiceArchiveExists(installRoot), demoMode),
+			Preferences = Es1Preferences.Load(prefs, prefsPath, Es1Preferences.VoiceArchiveExists(installRoot), demoMode,
+				sound),
 		};
 	}
 }

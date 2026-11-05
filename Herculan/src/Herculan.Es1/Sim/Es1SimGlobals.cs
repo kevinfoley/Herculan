@@ -43,6 +43,13 @@ public sealed class Es1SimGlobals {
 	/// <summary>The speech slots and the lip-sync player (<see cref="Sound.Es1VoiceLines"/>), with no slots until the mission start's <see cref="Sound.Es1VoiceLines.InitSlots"/>.</summary>
 	public Sound.Es1VoiceLines VoiceLines { get; } = new();
 
+	/// <summary>
+	/// The sound file's globals (<see cref="Sound.Es1Sound"/>), with no manager until the mission start's
+	/// <see cref="Sound.Es1Sound.Init"/>. The host puts here the one the preferences' handlers were given at their load
+	/// (<see cref="Input.Es1Preferences.Sound"/>), which comes before the world is built.
+	/// </summary>
+	public Sound.Es1Sound Sound { get; set; } = new();
+
 	/// <summary><c>Behaviour_DwellJitter</c> (<c>000bc426</c>).</summary>
 	public Es1DwellJitter DwellJitter { get; } = new();
 

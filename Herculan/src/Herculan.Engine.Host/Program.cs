@@ -98,7 +98,8 @@ if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
 			return 1;
 		}
 
-		return Es1Launcher.Run(installRoot, es1.ShellArguments, imguiFontPath, imguiItalicFontPath, options.ScreenshotPath);
+		return Es1Launcher.Run(installRoot, es1.ShellArguments, imguiFontPath, imguiItalicFontPath, options.ScreenshotPath,
+			options.SilentAudio);
 	}
 
 	if (es1.ShellArguments.Count > 0) {
@@ -107,7 +108,7 @@ if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
 	}
 
 	return Es1ZoneViewer.Run(installRoot, options.MissionPath, es1.ToOverrides(), options.PlayTape, options.DemoTape,
-		options.RecordTape);
+		options.RecordTape, silent: options.SilentAudio);
 }
 if (options.Es1.Staged || options.Es1.Simulator || options.Es1.ShellArguments.Count > 0) {
 	HostLog.Fail($"--theater, --world, {Es1Options.SimulatorFlag} and GO.EXE's switches are for a Metaltech: Earthsiege install.");

@@ -1,4 +1,5 @@
 using HercWorks.Core.Io;
+using Herculan.Es1.Sound;
 
 namespace Herculan.Es1.Input;
 
@@ -57,11 +58,12 @@ public sealed class Es1Preferences {
 	/// <c>Prefs_Load</c>(1)'s copies: the options as read, and both copies made from them. The handlers this type owns are
 	/// registered, as <c>Prefs_Init</c> (<c>0004afe8</c>) registers them before the load.
 	/// </summary>
-	private Es1Preferences(byte[] options, string? path) {
+	private Es1Preferences(byte[] options, string? path, Es1Sound? sound = null) {
 		_options = options;
 		_loaded = (byte[])options.Clone();
 		_previous = (byte[])options.Clone();
 		FilePath = path;
+		Sound = sound;
 		SetHandler(MusicOption, ApplyMusicOption);
 		SetHandler(SoundsOption, ApplySoundsOption);
 		SetHandler(RadioOption, ApplyRadioOption);
@@ -76,7 +78,8 @@ public sealed class Es1Preferences {
 	/// <c>Prefs_Load</c> and its two copies. A file shorter than 17 bytes gives 0 for the bytes it lacks. No handler runs.
 	/// </summary>
 	/// <param name="path">Where <see cref="SaveSelectedOptions"/> and <see cref="ShellSave"/> write, <c>data\prefs.cfg</c> in the install; none saves nothing.</param>
-	public static Es1Preferences FromFile(byte[]? file, string? path = null) {
+	/// <param name="sound">The simulator's sound file, which options 0 and 1's handlers switch (<see cref="Sound"/>).</param>
+	public static Es1Preferences FromFile(byte[]? file, string? path = null, Es1Sound? sound = null) {
 		var options = new byte[OptionCount];
 
 		// PLACEHOLDER: what FileRStream_Read leaves in the bytes past a short file's end is unread, so they read 0 here;
@@ -85,7 +88,7 @@ public sealed class Es1Preferences {
 			Array.Copy(file, options, Math.Min(file.Length, OptionCount));
 		}
 
-		return new Es1Preferences(options, path);
+		return new Es1Preferences(options, path, sound);
 	}
 
 	/// <summary>
@@ -103,8 +106,10 @@ public sealed class Es1Preferences {
 	/// <param name="path"><c>data\prefs.cfg</c> in the install, which <see cref="SaveSelectedOptions"/> writes.</param>
 	/// <param name="voiceArchivePresent">What <see cref="VoiceArchiveExists"/> answers for the install.</param>
 	/// <param name="demoMode"><c>DemoMode</c> (<c>000b5bd0</c>), which <c>-D</c> sets.</param>
-	public static Es1Preferences Load(byte[]? file, string path, bool voiceArchivePresent, bool demoMode = false) {
-		var preferences = FromFile(file, path);
+	/// <param name="sound">The simulator's sound file, which options 0 and 1's handlers switch (<see cref="Sound"/>).</param>
+	public static Es1Preferences Load(byte[]? file, string path, bool voiceArchivePresent, bool demoMode = false,
+			Es1Sound? sound = null) {
+		var preferences = FromFile(file, path, sound);
 		preferences.InitInProgress = true;
 		preferences.RunHandlers();
 		if (demoMode) {
@@ -447,21 +452,22 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// <c>Prefs_ApplyMusicOption</c> (<c>0004ad0c</c>), option 0's handler. PLACEHOLDER: <c>0004e294</c>(value), then
-	/// <c>Music_Tick</c> (<c>000585dc</c>) when the value is not 0 and <see cref="InitInProgress"/> is clear: ES1's
-	/// sound, which no plan step ports yet (docs/herculan/plan-es1-first-mission.md#open).
+	/// The simulator's sound file, which the handlers of options 0 and 1 switch (docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off);
+	/// none for options with no sound, as the shell's and a test's, whose handlers then switch nothing.
 	/// </summary>
-	private void ApplyMusicOption(byte value) {
-		_ = value;
-	}
+	public Es1Sound? Sound { get; }
 
 	/// <summary>
-	/// <c>Prefs_ApplySoundsOption</c> (<c>0004acfc</c>), option 1's handler. PLACEHOLDER: <c>0004e2c8</c>(value): ES1's
-	/// sound, which no plan step ports yet.
+	/// <c>Prefs_ApplyMusicOption</c> (<c>0004ad0c</c>), option 0's handler: <see cref="Es1Sound.SetMusicEnabled"/>(value).
+	/// PLACEHOLDER: then <c>Music_Tick</c> (<c>000585dc</c>) when the value is not 0 and <see cref="InitInProgress"/> is
+	/// clear, the songs, item 7's module D (docs/herculan/plan-es1-first-mission.md).
 	/// </summary>
-	private void ApplySoundsOption(byte value) {
-		_ = value;
-	}
+	private void ApplyMusicOption(byte value) => Sound?.SetMusicEnabled(value);
+
+	/// <summary>
+	/// <c>Prefs_ApplySoundsOption</c> (<c>0004acfc</c>), option 1's handler: <see cref="Es1Sound.SetEffectsEnabled"/>(value).
+	/// </summary>
+	private void ApplySoundsOption(byte value) => Sound?.SetEffectsEnabled(value);
 
 	/// <summary>
 	/// <c>MessagePort_ShowEnabled</c> (<c>000930d2</c>), the message boxes' file's byte, 1 in the image: while it is

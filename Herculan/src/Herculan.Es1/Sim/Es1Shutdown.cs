@@ -20,7 +20,7 @@ public static class Es1Shutdown {
 	/// <c>.dmp</c> file closed, neither of which this engine holds open; <c>GndTex_Free</c>, which frees the ground
 	/// texture's memory, held here in a GL texture the window's close disposes; <see cref="Es1MissionResults.Write"/> on
 	/// <c>LocalPlayerMech</c>; <see cref="ExitCode"/> written to <c>data\exit.cfg</c> as an <c>int16</c>;
-	/// <c>Sound_Shutdown</c>; and <c>Sim_ShutdownNoOp1</c> and <c>Sim_ShutdownNoOp2</c>, which do nothing. Returns the
+	/// <c>Sound_Shutdown</c> (<see cref="Sound.Es1Sound.Shutdown"/>); and <c>Sim_ShutdownNoOp1</c> and <c>Sim_ShutdownNoOp2</c>, which do nothing. Returns the
 	/// exit code.
 	///
 	/// <para>A file that does not open asserts at severity 5 in retail (<c>world.cpp</c> lines <c>0x58</c> and
@@ -40,18 +40,19 @@ public static class Es1Shutdown {
 		// holds no file open, and -d, which opens DmpFile, is not taken (plan decision 21).
 		// GndTex_Free: nothing to do here; the ground texture is a GL object disposed with the window.
 
+		var sound = simulation.Globals.Sound;
 		if (!Es1MissionResults.Write(simulation.LocalPlayer, simulation.Globals, installRoot, out string? error)) {
 			Console.Error.WriteLine(error);
-			return AssertCleanup(installRoot);
+			return AssertCleanup(installRoot, sound);
 		}
 
 		short code = ExitCode(demoMode, simulation.QuitFlag, simulation.LocalPlayer.Destroyed, simulation.Globals.MissionModeFlag);
 		if (!WriteExitCode(installRoot, code)) {
 			Console.Error.WriteLine($"data\\{ExitName} does not open for writing in {installRoot} (init.cpp line 0x1a4 asserts here).");
-			return AssertCleanup(installRoot);
+			return AssertCleanup(installRoot, sound);
 		}
 
-		// PLACEHOLDER: Sound_Shutdown; the slice leaves ES1's sound out.
+		sound.Shutdown();
 		return code;
 	}
 
@@ -72,12 +73,13 @@ public static class Es1Shutdown {
 		Es1MissionResults.TryWrite(installRoot, ExitName, [(byte)code, (byte)(code >> 8)]);
 
 	/// <summary>
-	/// What follows a fatal assert in <see cref="Run"/>: <c>Sim_AssertCleanupHook</c>'s write of an <c>int16</c> 0 to
-	/// <c>data\exit.cfg</c>, its other steps being the sound, the display, the tape and the ground texture this engine
-	/// releases with the window; then <see cref="AssertExitStatus"/>. The host also runs it for an
-	/// <see cref="Es1FatalAssertException"/> the tick throws.
+	/// What follows a fatal assert in <see cref="Run"/>: <c>Sim_AssertCleanupHook</c>'s <c>Sound_Shutdown</c> on
+	/// <paramref name="sound"/> and its write of an <c>int16</c> 0 to <c>data\exit.cfg</c>, its other steps being the
+	/// display, the tape and the ground texture this engine releases with the window; then <see cref="AssertExitStatus"/>.
+	/// The host also runs it for an <see cref="Es1FatalAssertException"/> the tick throws.
 	/// </summary>
-	public static int AssertCleanup(string installRoot) {
+	public static int AssertCleanup(string installRoot, Sound.Es1Sound? sound = null) {
+		sound?.Shutdown();
 		if (!WriteExitCode(installRoot, 0)) {
 			Console.Error.WriteLine($"data\\{ExitName} does not open for writing in {installRoot} (init.cpp line 100 asserts here).");
 		}

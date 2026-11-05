@@ -126,10 +126,10 @@ public sealed class Es1PreferencesPanel : Es1AlertPanel {
 	}
 
 	/// <summary>
-	/// The sound manager (<c>000959ac</c>), which counts as present (docs/herculan/plan-es1-first-mission.md#decisions,
-	/// decision 15), so <see cref="Run"/> leaves MUSIC, SOUNDS and RADIO pressable.
+	/// Whether the sound manager (<c>000959ac</c>) exists, which <c>resource.cfg</c> decides (plan decision 25); without
+	/// it <see cref="Run"/> greys MUSIC, SOUNDS and RADIO. With no sound file in the globals, a test's, it counts as present.
 	/// </summary>
-	public static bool SoundManagerPresent => true;
+	public bool SoundManagerPresent => Globals.Sound is not { } sound || sound.Manager != null;
 
 	/// <summary><c>+0x348</c>: the title, <c>PREFERENCES</c> in the retail table.</summary>
 	public string? Title { get; }

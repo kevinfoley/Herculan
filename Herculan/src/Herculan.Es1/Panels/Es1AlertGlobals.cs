@@ -68,6 +68,13 @@ public sealed class Es1AlertGlobals {
 	public GameContent? Content { get; }
 
 	/// <summary>
+	/// The simulator's sound file, which a panel's buttons click through (<c>Widget_ClickSound</c>) and whose sound manager
+	/// the preferences panel tests; none for the shell's copy, whose sound is item 7's module C, and for a test, which
+	/// then counts the manager as present.
+	/// </summary>
+	public Sound.Es1Sound? Sound { get; init; }
+
+	/// <summary>
 	/// The install the simulator runs in, whose <c>data\</c> a panel reads the shell's files from, as
 	/// <c>Path_ApplyAltDrive</c> (<c>000592a4</c>) names them with the empty drive prefix the simulator runs with when
 	/// <c>PREFER_ALT</c> is not set (docs/es1/simulation/main-loop.md#starting--sim_main-00059350, step 3); none reads

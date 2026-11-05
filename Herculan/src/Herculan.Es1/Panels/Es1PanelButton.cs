@@ -68,14 +68,15 @@ public sealed class Es1PanelButton : Es1Widget {
 
 	/// <summary>
 	/// Slot <c>+0xc</c>, <c>PanelButton_OnClick</c> (<c>000469ac</c>)(button, <paramref name="value"/>): the owner's
-	/// child click with the flags and the button, the focus moved to the button, and its own invalidate.
-	/// PLACEHOLDER: the mixin's click sound, <c>Widget_ClickSound</c> (<c>000314a0</c>), <c>Sound_Play</c>(<c>0x11</c>),
-	/// is not played; no plan step ports ES1's sound yet.
+	/// child click with the flags and the button, the focus moved to the button, its own invalidate, and the mixin's click
+	/// sound, <c>Widget_ClickSound</c> (<c>000314a0</c>), <c>Sound_Play</c>(<see cref="Sound.Es1Sound.ClickRow"/>).
+	/// PLACEHOLDER: the shell's panels, whose globals carry no sound, click silently until item 7's module C.
 	/// </summary>
 	public override void OnClick(short value) {
 		Owner.OnChildClick(value, this);
 		Owner.FocusChild(this);
 		Invalidate();
+		Owner.Globals.Sound?.Play(Sound.Es1Sound.ClickRow);
 	}
 
 	/// <summary>

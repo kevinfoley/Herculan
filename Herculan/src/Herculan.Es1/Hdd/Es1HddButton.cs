@@ -107,7 +107,8 @@ public sealed class Es1HddButton : Es1ButtonWidget {
 		_ = value;
 		Display.OnChildClick(this);
 		Invalidate();
-		// PLACEHOLDER: Widget_ClickSound, Sound_Play(0x11); no plan step ports ES1's sound yet.
+		// Widget_ClickSound (000314a0).
+		Display.Cockpit.Globals.Sound.Play(Sound.Es1Sound.ClickRow);
 	}
 
 	/// <summary>

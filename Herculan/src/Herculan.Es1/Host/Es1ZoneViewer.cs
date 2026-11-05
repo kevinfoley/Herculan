@@ -1,7 +1,9 @@
 using System.Numerics;
+using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Io.Transform.Dbsim;
 using HercWorks.Vol;
+using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Platform;
@@ -14,6 +16,7 @@ using Herculan.Es1.Render;
 using Herculan.Es1.Scene;
 using Herculan.Es1.Shell;
 using Herculan.Es1.Sim;
+using Herculan.Es1.Sound;
 using Herculan.Es1.View;
 using Herculan.Es1.World;
 using Silk.NET.Input;
@@ -88,8 +91,13 @@ public static class Es1ZoneViewer {
 	/// The window the launcher's turns share (<see cref="Es1Launcher"/>), which stays open after the mission; none for a
 	/// window of the simulator's own, closed with it.
 	/// </param>
+	/// <param name="soundOn">
+	/// <c>000b5b68</c>, 1 in the image, which <c>-s</c> toggles: clear, the mission start makes no sound manager
+	/// (<see cref="Es1Sound.MissionStartDevices"/>).
+	/// </param>
+	/// <param name="silent">The host's <c>--no-sound</c>: no audio device, so the sound manager plays into nothing.</param>
 	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides, string? playTape = null,
-			bool demo = false, string? recordTape = null, HostWindow? window = null) {
+			bool demo = false, string? recordTape = null, HostWindow? window = null, bool soundOn = true, bool silent = false) {
 		// Sim_Main's step 4, before the command line's parse (docs/es1/simulation/main-loop.md#starting--sim_main-00059350):
 		// an int16 0 to data\exit.cfg, so a run that ends before Sim_Shutdown leaves 0, which ends the launcher's loop.
 		// PLACEHOLDER: the heap's size to data\mem.got before it; this engine has no fixed heap to give the size of.
@@ -138,7 +146,10 @@ public static class Es1ZoneViewer {
 			Console.WriteLine($"Recording input to {Path.GetFullPath(recording.FilePath)}, its bundle packed from the install's data\\ files and keyjoy.cfg.");
 		}
 
-		if (Es1MissionFiles.Read(installRoot, out string? error, tape?.DemoMode == true) is not { } files) {
+		// The sound file's globals, which the preferences' handlers switch from Prefs_Init's load on (step 2), before the
+		// world they belong to is built.
+		var sound = new Es1Sound();
+		if (Es1MissionFiles.Read(installRoot, out string? error, tape?.DemoMode == true, sound) is not { } files) {
 			Console.Error.WriteLine(error);
 			return 1;
 		}
@@ -169,7 +180,11 @@ public static class Es1ZoneViewer {
 			// Flyer_LoadResources (0001c558) asserts when datforms does not open.
 			var flyerFormations = new Es1FlyerFormationsTransformer().Parse(content.ReadRequired("dat", "FFORMS.DAT"))
 				?? new Es1FlyerFormations();
+			// PLACEHOLDER: Sim_StartMission's step 6 sets option 1 to 0 around the spawn (Prefs_SetOption(1, 0, 1), then
+			// Prefs_RevertOption(1, 1)), which leaves Prefs_PreviousOptions[1] changed; not ported. The spawn runs before
+			// Sound_Init here, with no sound manager, so it plays nothing, as retail's with the digital sounds off.
 			world = Es1World.Spawn(script, content, formations, flyerFormations);
+			world.Globals.Sound = sound;
 			views = world.LocalPlayer is { } machine ? Es1CockpitViews.Load(content, machine.Type.CockpitName) : null;
 			var scheme = views?.CockpitPalette is { } cockpit
 				? new Es1CockpitScheme(cockpit, world.LocalPlayer!.Type.Type)
@@ -196,7 +211,7 @@ public static class Es1ZoneViewer {
 			"G textured/banded ground; close the window to quit" + (player == null ? " (or Esc)." : "."));
 		string source = tape != null ? Path.GetFileName(tape.FilePath) : missionName ?? "data\\script.dat";
 		return Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {source}, zone {header[1]}",
-			tape, recording, window);
+			tape, recording, window, Es1Sound.MissionStartDevices(installRoot, soundOn), silent);
 	}
 
 	/// <summary>
@@ -208,11 +223,23 @@ public static class Es1ZoneViewer {
 	/// <param name="tape">The tape playing, which the cockpit's mouse and the simulation read; none with no tape.</param>
 	/// <param name="recording">The tape recording, which the simulation's input build appends to; none with no recording.</param>
 	/// <param name="host">The launcher's shared window, or none for one of this turn's own.</param>
+	/// <param name="devices">Step 3's six values from <c>resource.cfg</c>, which <c>Sound_Init</c> takes.</param>
+	/// <param name="silent">No audio device: the sound plays into nothing.</param>
 	private static int Show(string installRoot, Es1Preferences preferences, GameContent content, Es1ZoneScene scene,
 			Es1World world, Es1CockpitViews? views, string title, Es1TapePlayback? tape, Es1TapeRecording? recording,
-			HostWindow? host) {
+			HostWindow? host, Es1SoundDevices devices, bool silent) {
 		using var window = host != null ? new EngineWindow(host, title) : new EngineWindow(title);
 		int exitCode = 0;
+
+		// The audio device, opened for this turn as Earthsiege 2's shell opens its own, and closed with the window.
+		string? audioFailure = null;
+		var device = silent ? null : OpenAlBackend.TryCreate(out audioFailure);
+		IAudioBackend audio = device as IAudioBackend ?? new NullAudioBackend();
+		if (audioFailure != null) {
+			Console.Error.WriteLine(device != null
+				? $"Audio: {audioFailure}."
+				: $"Audio unavailable ({audioFailure}) — the mission runs silent.");
+		}
 
 		Silk.NET.OpenGL.GL? glContext = null;
 		SceneRenderer? renderer = null;
@@ -242,11 +269,20 @@ public static class Es1ZoneViewer {
 		// search reads it; Es1Simulation sets it again when the simulation is built.
 		var player = world.LocalPlayer;
 		world.Globals.LocalPlayerMech = player;
-		// Step 3's Sound_Init, of which the voice lines' slots are ported, and Snc_MissionInit, which puts the lip-sync
-		// player on the PC timer. PLACEHOLDER: the rest of Sound_Init, the sound manager, its drivers and the catalog;
-		// no plan step ports ES1's sound yet.
-		world.Globals.VoiceLines.InitSlots(preferences.LowMemory);
+		// Step 3's Sound_Init, through the volumes the simulator mounts, and Snc_MissionInit, which puts the lip-sync
+		// player on the PC timer; then, with no sound manager, Prefs_SetOption(1, 0, i) for options 0, 1 and 2.
+		var sound = world.Globals.Sound;
+		sound.Init(devices, preferences.LowMemory, world.Globals.VoiceLines, content.Read, audio);
 		world.Globals.VoiceLines.MissionInit(world.Globals.Clock);
+		if (sound.Manager == null) {
+			for (int option = Es1Preferences.MusicOption; option <= Es1Preferences.RadioOption; option++) {
+				preferences.SetOption(true, 0, option);
+			}
+		}
+
+		Console.WriteLine(sound.Manager != null
+			? $"Sound: digital device {devices.DigitalDevice:X4}, {sound.CatalogCount} catalog rows."
+			: $"Sound: no sound manager ({Es1ResourceCfg.FileName}'s [SoundFX] Driver# is empty, missing, or -s was given).");
 		// The mouse driver, which the host's mouse is attached to once the window has one; and step 5's
 		// CockpitMouse_Init on it, which runs before the cockpit is built.
 		var hostMouse = new Es1HostMouse();
@@ -409,6 +445,9 @@ public static class Es1ZoneViewer {
 		};
 
 		window.Update += deltaSeconds => {
+			sound.UpdateDriver();
+			audio.Update();
+
 			// With a simulation running, Esc is the simulator's view key; the window's close quits.
 			if (simulation == null && keyboard?.IsKeyPressed(Key.Escape) == true) {
 				window.Close();
@@ -425,7 +464,7 @@ public static class Es1ZoneViewer {
 				// Assert_Report's fatal path: the hooks, Sim_AssertCleanupHook's int16 0 to data\exit.cfg among them, then
 				// __exit(1); no shutdown runs.
 				Console.Error.WriteLine(assert.Message);
-				exitCode = Es1Shutdown.AssertCleanup(installRoot);
+				exitCode = Es1Shutdown.AssertCleanup(installRoot, sound);
 				window.Close();
 				return;
 			}
@@ -505,6 +544,8 @@ public static class Es1ZoneViewer {
 			foreach (var disposable in disposables) {
 				disposable.Dispose();
 			}
+
+			audio.Dispose();
 		};
 
 		window.Run();
