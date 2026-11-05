@@ -322,15 +322,15 @@ It sets no hearing range. `Shell_ShutdownDevices` destroys the click and then th
 
 | Index | Name | Plays |
 |---|---|---|
-| 0 | `res32\xxxxxxxx.sfx` | a talking head's line: `ShellSnc_OpenSound` renames index 0 `snc\<name>.RAW` for each line and makes a sound on it ([loading a line](../shell/message-box.md#loading-a-line)) |
-| 1–8 | `menu.hmp` twice, `shella.hmp`, `shellb.hmp`, `shellc.hmp`, `shella.hmp`, `death.hmp`, `win2.hmp` | songs, by the track `ShellMusic_Play` is given ([the backdrop](../shell/menus.md#the-backdrop)) |
+| 0 | `res32\xxxxxxxx.sfx` | a talking head's line: `ShellSnc_OpenSound` renames index 0 `snc\` followed by the line's `.RAW` for each line and makes a sound on it ([loading a line](../shell/message-box.md#loading-a-line)) |
+| 1–8 | `res32\menu.hmp` twice, `res32\shella.hmp`, `res32\shellb.hmp`, `res32\shellc.hmp`, `res32\shella.hmp`, `res32\death.hmp`, `res32\win2.hmp` | songs, by the track `ShellMusic_Play` is given ([the backdrop](../shell/menus.md#the-backdrop)) |
 | 9 | `res32\button.sfx` | the buttons' click |
-| 10, 11 | `menuclsa.raw`, `menuopn2.raw` | the animations' sounds ([playing](anm-animation.md#playing)) |
-| 12, 13 | `intro1.hmp`, `intro2.hmp` | songs |
-| 14 | `res32\xxxxxxxx.raw` | a script's sound: `TOKEN_HDS_LOAD` renames index `0xe` ([the interpreter](ttm-scripts.md#the-interpreter)) |
-| 15–19 | `rubble.hmp`, `ice.hmp`, `desert.hmp`, `volcano.hmp`, `losing.hmp` | songs |
+| 10, 11 | `res32\menuclsa.raw`, `res32\menuopn2.raw` | the animations' sounds ([playing](anm-animation.md#playing)) |
+| 12, 13 | `res32\intro1.hmp`, `res32\intro2.hmp` | songs |
+| 14 | `res32\xxxxxxxx.raw` | a script's sound: `TOKEN_HDS_LOAD` renames index `0xe` to the script's path for its name and makes a sound on it ([the commands](ttm-scripts.md#the-commands)) |
+| 15–19 | `res32\rubble.hmp`, `res32\ice.hmp`, `res32\desert.hmp`, `res32\volcano.hmp`, `res32\losing.hmp` | songs |
 
-Every name but the two `xxxxxxxx` placeholders is in `res32\`.
+A 0 dword at `ES1GO 00082910` ends the table. `SHELL0.VOL` holds all 20 files, the placeholders `RES32\XXXXXXXX.SFX` and `RES32\XXXXXXXX.RAW` 804 bytes each, so `SoundManager_SetSampleNames` takes every name, `+0x502` is 19, and the click's index 9 passes `SoundManager_CreateObject`'s test.
 
 ### The click
 

@@ -5,6 +5,7 @@ using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Numerics;
 using Herculan.Es1.Panels;
+using Herculan.Es1.Sound;
 using Herculan.Es1.View;
 
 namespace Herculan.Es1.Ttm;
@@ -13,7 +14,8 @@ namespace Herculan.Es1.Ttm;
 /// One <c>.TTM</c> script and its interpreter, in its manager's <see cref="Es1TtmMode"/>: the shell's
 /// <c>TtmScript_Ctor</c> (<c>ES1GO 00046bb8</c>)'s <c>0x1eb</c> bytes, <c>TtmScript_Load</c> (<c>00047c28</c>),
 /// <c>TtmScript_Run</c> (<c>00046f2c</c>), <c>TtmScript_NextPage</c> (<c>00046e7c</c>), <c>TtmScript_RunPage</c>
-/// (<c>00048218</c>) and <c>TtmScript_RunDrawCommand</c> (<c>0004a213</c>) (docs/es1/formats/ttm-scripts.md#the-shell,
+/// (<c>00048218</c>), <c>TtmScript_RunDrawCommand</c> (<c>0004a213</c>) and <c>TtmScript_RunSoundCommand</c>
+/// (<c>0004a0e0</c>) (docs/es1/formats/ttm-scripts.md#the-shell,
 /// docs/es1/formats/ttm-scripts.md#the-commands); or the simulator's copy, <c>TtmScript_Ctor</c> (<c>ES1DBSIM
 /// 000797ac</c>)'s <c>0x1c1</c> bytes and its <c>0007a54c</c>, <c>00079a14</c>, <c>0007aa58</c> and <c>0007c01c</c>,
 /// which differs where docs/es1/formats/ttm-scripts.md#the-simulator says. The file is read through
@@ -97,6 +99,12 @@ public sealed class Es1TtmPlayer {
 
 	/// <summary>The shell's <c>+0x42</c>, set once the page has run: the commands that load and save act while it is clear.</summary>
 	public bool PageRan { get; private set; }
+
+	/// <summary>The shell's <c>+0x41</c>, set once <c>0xc220</c> has played this page's sound: the sound commands act while it is clear.</summary>
+	public bool SoundPlayed { get; private set; }
+
+	/// <summary>The shell's <c>+0x1a8</c>, the sound object <c>0xc21f</c> makes; none until it does.</summary>
+	public Es1SoundObject? Sound { get; private set; }
 
 	/// <summary><c>+0x13</c> or <c>+0x43</c>, the loop flag, <i>b</i> of the load: with 1 the script starts again when it ends.</summary>
 	public int Loop { get; internal set; }
@@ -352,6 +360,7 @@ public sealed class Es1TtmPlayer {
 		}
 
 		Once = false;
+		SoundPlayed = false;
 		PageRan = false;
 		if (PageCount <= Page) {
 			if (Loop == 1) {
@@ -449,6 +458,7 @@ public sealed class Es1TtmPlayer {
 		if (_shell) {
 			Wait = WaitReload;
 			Once = false;
+			SoundPlayed = false;
 			PageRan = false;
 			Mode = Playing;
 		}
@@ -460,8 +470,8 @@ public sealed class Es1TtmPlayer {
 	/// <c>TtmScript_Reset</c> (<c>0004b3c6</c>, <c>ES1DBSIM 0007ca44</c>): the six palettes, the six bitmap arrays and the
 	/// twelve saved regions destroyed and their slots emptied; the cycling directions 0; the mode <see cref="Hidden"/>;
 	/// the page and palette slot 0; no jump; the call, wait and cycle words 0 and cycling off; the three colours 10. The
-	/// shell's also clears <see cref="Once"/>, which the simulator's leaves; both leave the shell's random choice and
-	/// <see cref="PageRan"/>.
+	/// shell's also clears <see cref="Once"/>, which the simulator's leaves, and <see cref="SoundPlayed"/>; both leave the
+	/// shell's random choice, <see cref="PageRan"/> and <see cref="Sound"/>.
 	/// </summary>
 	public void Reset() {
 		Array.Clear(_palettes);
@@ -474,6 +484,7 @@ public sealed class Es1TtmPlayer {
 		Mode = Hidden;
 		if (_shell) {
 			Once = false;
+			SoundPlayed = false;
 		}
 
 		Page = 0;
@@ -568,9 +579,11 @@ public sealed class Es1TtmPlayer {
 
 			switch (opcode & 0xf000) {
 				case 0xc000:
-					// The shell's TtmScript_RunSoundCommand (0004a0e0) acts while Shell_SoundOption (0007fcb9) is set: 0xc21f
-					// makes the sound object +0x1a8 through the sound manager and 0xc220 plays it, setting +0x41. PLACEHOLDER:
-					// the scripts' sounds are item 7's module C, part C2, so no sound object is made and a script plays nothing. The simulator steps over these opcodes.
+					// The simulator steps over these opcodes.
+					if (_shell) {
+						RunSoundCommand(opcode, text);
+					}
+
 					continue;
 				case 0xa000:
 					RunDrawCommand(opcode, a1, a2, a3, a4, a5, a6, a7);
@@ -788,6 +801,50 @@ public sealed class Es1TtmPlayer {
 				NextPage = FindLabel(a1);
 				break;
 		}
+	}
+
+	/// <summary>
+	/// The shell's <c>TtmScript_RunSoundCommand</c> (<c>0004a0e0</c>) (docs/es1/formats/ttm-scripts.md#the-commands), acting
+	/// while <c>Shell_SoundOption</c> (<see cref="Es1TtmManager.SoundOption"/>) is set and <see cref="SoundPlayed"/> is
+	/// clear: <c>0xc21f</c> destroys <see cref="Sound"/> (<see cref="DestroySound"/>) and, with the shell's manager, puts
+	/// <c>TtmScript_BuildPath</c> of <paramref name="name"/> on name index <c>0xe</c>
+	/// (<see cref="Es1SoundManager.SetSampleName"/>) and when that succeeds makes <see cref="Sound"/> on it
+	/// (<see cref="Es1SoundManager.CreateObject"/>(2, 0, <c>0xe</c>)), loading nothing; <c>0xc220</c>, with a sound, gives
+	/// its slot <c>+0x2c</c> the volume <c>Math_RandomBelow</c>(<c>Shell_RandomState</c>, 25) + 10 as a byte, plays it
+	/// through its slot <c>+0x10</c> and sets <see cref="SoundPlayed"/>. Every other opcode does nothing. A
+	/// <c>0xc21f</c> with no string makes no sound here, an engine guard.
+	/// </summary>
+	private void RunSoundCommand(ushort opcode, string? name) {
+		if ((_manager.SoundOption?.Invoke() ?? 0) == 0 || SoundPlayed) {
+			return;
+		}
+
+		switch (opcode) {
+			case 0xc21f:
+				DestroySound();
+				if (name != null && _manager.Sound?.Manager is { } sounds && sounds.SetSampleName(SoundIndex, _manager.BuildPath(name))) {
+					Sound = sounds.CreateObject(2, 0, SoundIndex);
+				}
+
+				break;
+			case 0xc220 when Sound is { } sound:
+				sound.SetVolume(unchecked((sbyte)(byte)((_manager.RandomBelow?.Invoke(25) ?? 0) + 10)));
+				sound.Play();
+				SoundPlayed = true;
+				break;
+		}
+	}
+
+	/// <summary>The name index <c>0xc21f</c> renames, <c>res32\xxxxxxxx.raw</c> in the shell's names.</summary>
+	private const short SoundIndex = 0xe;
+
+	/// <summary>
+	/// <see cref="Sound"/> destroyed through its slot <c>+8</c> with 3 and cleared: <c>0xc21f</c>'s first step and
+	/// <c>TtmScript_Free</c>'s (<c>000474bd</c>) last, which <see cref="Es1TtmManager.Close"/> runs.
+	/// </summary>
+	internal void DestroySound() {
+		Sound?.Destroy();
+		Sound = null;
 	}
 
 	/// <summary>

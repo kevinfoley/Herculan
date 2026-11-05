@@ -298,8 +298,11 @@ public sealed class Es1ShellScreens {
 			_backdrop.Palette = palette;
 			_backdrop.PaletteDue = true;
 		};
+		scripts.Sound = _devices.Sound;
+		scripts.SoundOption = () => data.SoundOption;
 		Scripts = scripts;
 		_lipSync.Scripts = scripts;
+		_lipSync.Sound = _devices.Sound;
 		// The message box and its text box, statics in retail, made here once what they read exists.
 		var dialog = new Es1ShellDialog(_devices.Display, _dirty, _content.Read, _lipSync, () => data.Fonts[DialogFontSlot],
 			() => data.RadioOption, () => BackdropId, () => mission.MessageBoxLine);

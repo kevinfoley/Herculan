@@ -3,6 +3,7 @@ using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Es1.Panels;
 using Herculan.Es1.Sim;
+using Herculan.Es1.Sound;
 using Herculan.Es1.Ttm;
 using Herculan.Es1.View;
 
@@ -15,11 +16,16 @@ namespace Herculan.Es1.Shell.MessageBox;
 /// shell's timer. Each member starts as <c>ShellData_StaticInit</c> (<c>00020b68</c>) leaves it: the handle <c>0xff</c>, the rest
 /// 0.
 ///
-/// <para>The line's voice plays nothing: the talking heads' lines are item 7's module C, part C2, so
-/// <c>ShellSnc_OpenSound</c> opens no sound object and the stop and release have none to stop.
-/// The line's timing is the lip-sync script's, so a line still ends on its own as retail's does.</para>
+/// <para>The line's voice, its <c>.RAW</c>, is a sound the shell's manager (<see cref="Sound"/>) makes on its name index 0
+/// (<see cref="OpenSound"/>); the line's timing is the lip-sync script's, so a line with no voice still ends on its own.</para>
 /// </summary>
 public sealed class Es1LipSyncPlayer {
+	/// <summary>The name index <c>ShellSnc_OpenSound</c> renames to the line's <c>.RAW</c>, <c>res32\xxxxxxxx.sfx</c> in the shell's names.</summary>
+	private const short LineIndex = 0;
+
+	/// <summary>The folder <c>ShellSnc_OpenSound</c>'s format <c>snc\%s</c> (<c>00082748</c>) puts before the line's sound.</summary>
+	private const string SoundFolder = "snc";
+
 	/// <summary>The folder the lip-sync lists and scripts are read from, <c>SNC\</c> (<c>0008265c</c>).</summary>
 	public const string Folder = "SNC";
 
@@ -57,6 +63,15 @@ public sealed class Es1LipSyncPlayer {
 	/// none before. A face loaded without them is not opened, an engine guard.
 	/// </summary>
 	public Es1TtmManager? Scripts { get; set; }
+
+	/// <summary>
+	/// The shell's sound manager and click (<see cref="Es1ShellDevices.Sound"/>), whose manager <c>ShellSound_Manager</c>
+	/// (<c>00082768</c>) makes the line's sound; none before <see cref="Es1ShellScreens.OpenFirstScreen"/> hands it here.
+	/// </summary>
+	public Es1ShellSound? Sound { get; set; }
+
+	/// <summary><c>+0x03</c>, the line's sound, none while no voice is open.</summary>
+	public Es1SoundObject? LineSound { get; private set; }
 
 	/// <summary><c>+0x00</c>, the timer slot <c>Timer_AddCallback</c> gave.</summary>
 	public int TimerSlot { get; private set; }
@@ -220,20 +235,59 @@ public sealed class Es1LipSyncPlayer {
 	/// <summary>
 	/// <c>maybe_SncList_StartSound</c> (<c>0004544a</c>), from each <c>DialogBox_Draw</c>
 	/// (docs/es1/shell/message-box.md#loading-a-line): with a face and neither <see cref="Playing"/> nor
-	/// <see cref="StopRequested"/> set, <see cref="Playing"/> set, the line's second name, its <c>.RAW</c>, opened with
-	/// <c>ShellSnc_OpenSound</c> and started (<c>DigiSound_Play</c>) while <c>Shell_RadioOption</c> is above 0, and the clock
-	/// set to 0.
+	/// <see cref="StopRequested"/> set, <see cref="Playing"/> set, line <paramref name="line"/>'s second name, its
+	/// <c>.RAW</c>, opened with <see cref="OpenSound"/> and started through its slot <c>+0x10</c> (<c>DigiSound_Play</c>)
+	/// while <paramref name="radioOption"/> is above 0, and the clock set to 0. A line the list does not hold, which retail
+	/// reads without a bounds test, opens no sound here, an engine guard.
 	/// </summary>
-	public void StartSound() {
+	/// <param name="line"><c>MessageBox_Line</c> (<c>000aad5c</c>) as it is at the draw.</param>
+	/// <param name="radioOption"><c>Shell_RadioOption</c> (<c>0007fcbc</c>), the dword PREFERENCES' SPEECH steps.</param>
+	public void StartSound(short line, short radioOption) {
 		if (Handle == Es1TtmManager.NoHandle || Playing || StopRequested) {
 			return;
 		}
 
 		Playing = true;
-		// PLACEHOLDER: ShellSnc_OpenSound (00045801) of MessageBox_Line's second name, its .RAW, through the sound manager
-		// 00082768, and DigiSound_Play through the sound's slot +0x10 while Shell_RadioOption (0007fcbc) is above 0: the voice.
-		// The talking heads' lines are item 7's module C, part C2, so no sound is made and the face talks without one.
+		if (Line(line) is { Names.Length: > 1 } names) {
+			OpenSound(names.Names[1], radioOption);
+		}
+
+		if (LineSound is { } sound && radioOption > 0) {
+			sound.Play();
+		}
+
 		Clock = 0;
+	}
+
+	/// <summary>
+	/// <c>ShellSnc_OpenSound</c> (<c>00045801</c>)(player + 3, <paramref name="name"/>)
+	/// (docs/es1/shell/message-box.md#loading-a-line): nothing while <paramref name="radioOption"/> is 0, <c>TEXT ONLY</c>,
+	/// or with no manager, <see cref="LineSound"/> left as it is; otherwise
+	/// a wait while the manager's object slot 0 plays, then <c>snc\</c><paramref name="name"/> put on name index 0
+	/// (<see cref="Es1SoundManager.SetSampleName"/>) and, when that succeeds, <see cref="LineSound"/> made on it
+	/// (<see cref="Es1SoundManager.CreateObject"/>(2, 0, 0)) and loaded, or else cleared. Retail's wait spins while the
+	/// timer serves the driver; here each pass serves it (<see cref="Es1DigitalDriver.Update"/>), and an empty slot 0, which
+	/// retail calls through, waits for nothing, an engine guard. In the shell slot 0 holds the buttons' click, the first
+	/// object <see cref="Es1ShellSound.Init"/> makes.
+	/// </summary>
+	private void OpenSound(string name, short radioOption) {
+		if (radioOption == 0 || Sound?.Manager is not { } manager) {
+			return;
+		}
+
+		if (manager.GetObject(0) is { } first) {
+			while (first.IsPlaying()) {
+				manager.Driver.Update();
+				Thread.Sleep(1);
+			}
+		}
+
+		if (manager.SetSampleName(LineIndex, $@"{SoundFolder}\{name}")) {
+			LineSound = manager.CreateObject(2, 0, LineIndex);
+			LineSound?.LoadSample();
+		} else {
+			LineSound = null;
+		}
 	}
 
 	/// <summary>
@@ -296,8 +350,8 @@ public sealed class Es1LipSyncPlayer {
 	/// <summary>
 	/// <c>maybe_SncList_Stop</c> (<c>00045556</c>) (docs/es1/shell/message-box.md#playing-it): with a face, its page set to
 	/// <c>0x1e</c>, or to 1 when the script has no such page, and run once, then the script closed and the handle emptied;
-	/// the line released (<c>ShellSnc_Release</c>: the records freed, and the sound, which is never made here); and
-	/// <see cref="Playing"/>, <see cref="StopRequested"/> and the message box's <i>up</i> (<c>0009b013</c>) cleared.
+	/// the line released (<see cref="Release"/>); and <see cref="Playing"/>, <see cref="StopRequested"/> and the message
+	/// box's <i>up</i> (<c>0009b013</c>) cleared.
 	/// </summary>
 	public IEnumerable<Es1ShellWait> Stop() {
 		if (Handle != Es1TtmManager.NoHandle) {
@@ -314,9 +368,22 @@ public sealed class Es1LipSyncPlayer {
 			Handle = Es1TtmManager.NoHandle;
 		}
 
-		_records = null;
+		Release();
 		Playing = false;
 		StopRequested = false;
 		_box.Up = false;
+	}
+
+	/// <summary>
+	/// <c>ShellSnc_Release</c> (<c>00045a04</c>)(player + 3): the records freed; then with <see cref="LineSound"/>, the sound
+	/// stopped through its slot <c>+0x14</c>, destroyed through its slot <c>+8</c> with 3, and cleared.
+	/// </summary>
+	private void Release() {
+		_records = null;
+		if (LineSound is { } sound) {
+			sound.Stop();
+			sound.Destroy();
+			LineSound = null;
+		}
 	}
 }

@@ -137,8 +137,17 @@ public sealed class Es1TtmManager {
 	/// <summary>The shell's dirty list, which the drawing commands and the fixed rects add their boxes to; none in the simulator.</summary>
 	public Es1DirtyList? Dirty { get; }
 
-	/// <summary>The shell's <c>Math_RandomBelow</c>(<c>Shell_RandomState</c>, bound), which the random wait and the random choice draw from.</summary>
+	/// <summary>The shell's <c>Math_RandomBelow</c>(<c>Shell_RandomState</c>, bound), which the random wait, the random choice and the scripts' sounds' volume draw from.</summary>
 	public Func<short, int>? RandomBelow { get; }
+
+	/// <summary>
+	/// The shell's sound manager and click (<see cref="Es1ShellDevices.Sound"/>), whose manager <c>ShellSound_Manager</c>
+	/// (<c>00082768</c>) makes the scripts' sounds; none in the simulator, whose run steps over the sound commands.
+	/// </summary>
+	public Es1ShellSound? Sound { get; set; }
+
+	/// <summary><c>Shell_SoundOption</c> (<c>0007fcb9</c>), PREFERENCES' SOUND, while which the sound commands act; none reads 0.</summary>
+	public Func<byte>? SoundOption { get; set; }
 
 	/// <summary>Handle <paramref name="handle"/>'s script, or none.</summary>
 	public Es1TtmPlayer? Script(int handle) => handle >= 0 && handle < _handles.Length ? _handles[handle] : null;
@@ -208,21 +217,29 @@ public sealed class Es1TtmManager {
 	}
 
 	/// <summary>
-	/// <c>Ttm_Close</c> (<c>000469da</c>)(<paramref name="handle"/>): the script destroyed and the handle emptied, 1; 0
-	/// for an empty handle, whose message retail formats into a buffer it does not use. A handle past the table, which
-	/// retail reads beyond it, answers 0 here, an engine guard.
+	/// <c>Ttm_Close</c> (<c>000469da</c>)(<paramref name="handle"/>): the script destroyed, its sound with it
+	/// (<see cref="Es1TtmPlayer.DestroySound"/>), and the handle emptied, 1; 0 for an empty handle, whose message retail
+	/// formats into a buffer it does not use. A handle past the table, which retail reads beyond it, answers 0 here, an
+	/// engine guard.
 	/// </summary>
 	public bool Close(byte handle) {
-		if (Script(handle) == null) {
+		if (Script(handle) is not { } script) {
 			return false;
 		}
 
+		script.DestroySound();
 		_handles[handle] = null;
 		return true;
 	}
 
-	/// <summary><c>Ttm_CloseAll</c> (<c>00046a3f</c>): every handle's script destroyed and the handle emptied.</summary>
-	public void CloseAll() => Array.Clear(_handles);
+	/// <summary><c>Ttm_CloseAll</c> (<c>00046a3f</c>): every handle's script destroyed, its sound with it, and the handle emptied.</summary>
+	public void CloseAll() {
+		foreach (var script in _handles) {
+			script?.DestroySound();
+		}
+
+		Array.Clear(_handles);
+	}
 
 	/// <summary>
 	/// <c>Ttm_Shutdown</c> (<c>000464e8</c>): the tick's slot passed to <c>Timer_RemoveCallback</c> (<c>000565b7</c>),

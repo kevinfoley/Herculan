@@ -221,7 +221,7 @@ public abstract class Es1DialogBox {
 			}
 		}
 
-		dialog.Player.StartSound();
+		dialog.Player.StartSound(dialog.Line(), radio);
 	}
 
 	/// <summary>
