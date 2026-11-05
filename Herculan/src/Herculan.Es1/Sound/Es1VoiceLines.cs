@@ -99,7 +99,7 @@ public sealed class Es1VoiceLines {
 			slot.Taken = true;
 			// PLACEHOLDER: with the sound manager (000959ac) and Sound_SpeechEnabled (000959e4) set, simvoice\<voice
 			// name>.sfx named as the slot's index (SoundManager_SetSampleName) and loaded (SoundObject_LoadSample),
-			// answering none when that fails; no plan step ports ES1's sound yet, so there is no manager.
+			// answering none when that fails; plan item 7's module B ports it, so nothing is named or loaded.
 			Load(slot, scriptName, read);
 		}
 
@@ -196,7 +196,7 @@ public sealed class Es1VoiceLines {
 		slot.DueCount = ReadDueTime(slot);
 		Enqueue(slot, slot.DueCount);
 		// PLACEHOLDER: with a sound object, Sound_SpeechEnabled set and a frame other than 0, the answer of the object's
-		// play slot +0x10; no plan step ports ES1's sound yet, so the slot has none.
+		// play slot +0x10; plan item 7's module B ports it, so the slot's object does not play.
 		return true;
 	}
 

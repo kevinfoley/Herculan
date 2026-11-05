@@ -23171,6 +23171,66 @@
       }
     },
     {
+      "address": "0005e537",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_StopSample",
+      "description": "(driver, voice), C convention: 10 for a voice above 31; for a voice record (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6) whose word +0x30 has bit 0x8000 set and bit 0x1000 clear, clears bit 0x8000 (the byte +0x31 & 0x7f) and the word +0x34; answers 0 either way, so a busy voice with bit 0x1000 set is not stopped. es2_xref finds calls from DigiSound_Stop (000449d8), 00044684 and 0006e745. The code of ES1DBSIM's HmiDigi_StopSample (0006dd7f), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006dd7f",
+      "verified": {
+        "bytes": "0005e537+101",
+        "sha1": "710f879e02a8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005e755",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_IsVoiceDone",
+      "description": "(driver, voice), C convention: 10 for a voice above 31; 1 when bit 0x8000 of the voice record's word +0x30 (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6) is clear, 0 while it is set. es2_xref finds one call, from DigiSound_IsPlaying (00044966), which answers whether it is 0. The code of ES1DBSIM's HmiDigi_IsVoiceDone (0006df9d), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006df9d",
+      "verified": {
+        "bytes": "0005e755+71",
+        "sha1": "f7ffc9e2713b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005e80d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_CountBusyVoices",
+      "description": "(driver), C convention: how many of the driver's 32 voice records (the far pointers at 0008a1e4 + driver * 0xc0 + voice * 6) have bit 0x8000 of their word +0x30 set, the busy voices. es2_xref finds one call, from DigiSound_Play (000446ab), which makes room above 30. The code of ES1DBSIM's HmiDigi_CountBusyVoices (0006e055), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006e055",
+      "verified": {
+        "bytes": "0005e80d+64",
+        "sha1": "f60dffab16e5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005e86b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_SetSampleVolume",
+      "description": "(driver, voice, volume), C convention: with bit 0x8000 of the voice record's word +0x30 set (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6), stores the volume in its word +0x32 and answers the old word; else answers 0. It does not test the voice's range. es2_xref finds calls from 0004459a, 00044635 and 0006e745. The code of ES1DBSIM's HmiDigi_SetSampleVolume (0006e0b3), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006e0b3",
+      "verified": {
+        "bytes": "0005e86b+82",
+        "sha1": "ccd41a6c22f1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005ec79",
       "binary": "ES1GO",
       "type": "function",
@@ -23241,6 +23301,21 @@
       "verified": {
         "bytes": "00060154+312",
         "sha1": "5b693f34f71c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006028c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Str_ToLowerInPlace",
+      "description": "(string), C convention: each byte up to the zero through tolower, in place; returns the string. es2_xref finds calls from SoundManager_CreateObject (000429db) and SoundManager_SetSampleName (00042f39), which lower-case a sample name in place with it. The code of ES1DBSIM's Str_ToLowerInPlace (0006f948), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects; ES1DBSIM decompile and disassembly at 0006f948",
+      "verified": {
+        "bytes": "0006028c+38",
+        "sha1": "ba182aea7bd1",
         "scope": "body",
         "via": "decompile"
       }

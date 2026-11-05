@@ -479,7 +479,7 @@ public sealed class Es1Preferences {
 
 	/// <summary>
 	/// The byte <c>000959e4</c>, 0 in the image, which option 2's handler sets beside
-	/// <see cref="MessagePortShowEnabled"/>. PLACEHOLDER: its readers are ES1's sound, which no plan step ports yet
+	/// <see cref="MessagePortShowEnabled"/>. PLACEHOLDER: its readers, the voice lines' load and play, are plan item 7's module B
 	/// (docs/es1/simulation/preferences.md#open).
 	/// </summary>
 	public bool VoiceLinesGate { get; private set; }

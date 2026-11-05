@@ -234,7 +234,7 @@ public sealed class Es1Sound {
 
 	/// <summary>
 	/// <c>Sound_OfferPosition</c> (<c>0004dee4</c>)(<paramref name="point"/>, <paramref name="row"/>)
-	/// (docs/es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574): with a manager, the point's
+	/// (docs/es1/formats/sound-samples.md#placed-sounds): with a manager, the point's
 	/// distance from <see cref="Listener"/> (<c>Math_FastMagnitude3D</c>) and the point kept for the row while its kept
 	/// distance is 0, which <see cref="UpdateListener"/> places the row's object at. Retail's test of a kept distance
 	/// compares the dword with itself (<c>0004df4d</c>), where the new distance belongs, so the first point offered in a
@@ -259,7 +259,7 @@ public sealed class Es1Sound {
 
 	/// <summary>
 	/// <c>Sound_UpdateListener</c> (<c>0004df98</c>)(<paramref name="camera"/>)
-	/// (docs/es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574): the camera kept as
+	/// (docs/es1/formats/sound-samples.md#placed-sounds): the camera kept as
 	/// <see cref="Listener"/>; then, with a manager, each catalog row with a point offered placed there and its distance
 	/// cleared, and on every <see cref="ListenerFrames"/>th call the manager's listener given the rotation of (0, 0, 0)
 	/// (<c>BuildEulerRotationMatrixQ14</c>) at the camera's position (<see cref="Es1SoundManager.UpdateListener"/>). A row

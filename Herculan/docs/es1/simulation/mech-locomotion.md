@@ -130,6 +130,6 @@ The thresholds are the file's offsets 150–156, where a foot plants, and 170–
 ## Open
 
 - **Open:** a retail check of `Ctrl+1` with option 10 off: from standstill the first press keeps keypad 2 from backing the HERC up; after a second press keypad 8 backs it up and keypad 2 stops it.
-- **Open:** which sample sound `0x1f` is, and whether a retail fall plays it. A retail check: have the player's HERC's legs shot out; between the sound as it starts to fall and the thump as it lands, a third sound plays as its body passes 400 units above the ground.
+- **Open:** whether a retail fall plays sound `0x1f`, the catalog's `callpsb` ([the catalog](../formats/sound-samples.md#the-simulators-catalog)). A retail check: have the player's HERC's legs shot out; between the sound as it starts to fall and the thump as it lands, a third sound plays as its body passes 400 units above the ground.
 - **Open:** a retail check of the pace: from a full-speed run, pull the throttle to zero at once. ES1's code keeps the full running pace until the HERC drops to a walk and then the walk-to-run pace until it stops, where ES2's slows its legs every tick.
 - **Open:** what stops a walker at a structure of types 5, 6 or 8, which `Structure_GatherWalkCandidates` leaves out: whether step 1's slot `+0x60` answers non-zero for one, as ES2's object sweep does for the types its volume gather leaves out.

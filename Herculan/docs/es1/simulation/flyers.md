@@ -109,7 +109,7 @@ It returns the flyer. ES2's also builds the flight model's block and starts it a
 
 It returns 1. It does not clamp the flyer to the ground, probe the terrain or play a sound; ES2's (`004218c4`) adds a velocity from the flight model and does all three.
 
-**Its sound.** `Flyer_DispatchMove` (`0001afa8`), the vtable's move slot, plays catalog row 16 at the flyer's position before the move: while the flyer is not destroyed (`+0x93`), `Sound_PlayAt`(position, 16) when the row is not playing and otherwise `Sound_OfferPosition` (`0004dee4`)(position, 16), and once it is destroyed `Sound_Stop`(16). It then calls the state's move with the flyer and returns its answer, 0 for a state without one. `Sound_OfferPosition` keeps the first point offered for the row each frame ([the frame's sounds](main-loop.md#the-frames-sounds--sim_framesoundtick-00058574)), so every flyer shares one sound placed at one of them.
+**Its sound.** `Flyer_DispatchMove` (`0001afa8`), the vtable's move slot, plays catalog row 16 at the flyer's position before the move: while the flyer is not destroyed (`+0x93`), `Sound_PlayAt`(position, 16) when the row is not playing and otherwise `Sound_OfferPosition` (`0004dee4`)(position, 16), and once it is destroyed `Sound_Stop`(16). It then calls the state's move with the flyer and returns its answer, 0 for a state without one. `Sound_OfferPosition` keeps the first point offered for the row each frame ([placed sounds](../formats/sound-samples.md#placed-sounds)), so every flyer shares one sound placed at one of them.
 
 ### The player at a flyer's controls
 
@@ -200,7 +200,7 @@ The loads are in the formats' pages: `FlyerSys_RegisterSubsystem` registers `Fly
 | `Flyer_LoadResources`, `FlyerFormation_ElementCtor`, `TexPoly_AngleElementCtorFlyerSysCopy`, `FlyerType_RecordIndex`, `FlyerType_Register`, `FlyerType_LoadResources` | `0001c558`, `0001c618`, `0001c648`, `0001c678`, `0001c688`, `0001c6c8` | `00422d90`, `00423078`, —, `00422e80`, `00422e90`, `00422ed0` |
 | `FlyerTypes_LoadAll`, `FlyerTypes_Free`, `FlyerFormation_GetSlotOffset`, `FlyerSys_RegisterSubsystem` | `0001c770`, `0001c7c4`, `0001c7f0`, `0001c814` | `00422fb4`, `00423018`, `00423044`, `00423068` |
 
-`TexPoly_AngleElementCtorFlyerSysCopy` is the slots' element constructor `FlyerFormation_ElementCtor` passes, entered at its padding `0001c646`. A callee of another file read for these: `Sound_OfferPosition` (`0004dee4`), in [the frame's sounds](main-loop.md#the-frames-sounds--sim_framesoundtick-00058574).
+`TexPoly_AngleElementCtorFlyerSysCopy` is the slots' element constructor `FlyerFormation_ElementCtor` passes, entered at its padding `0001c646`. A callee of another file read for these: `Sound_OfferPosition` (`0004dee4`), in [placed sounds](../formats/sound-samples.md#placed-sounds).
 
 ## Globals
 

@@ -125,7 +125,7 @@ public sealed class Es1ShellDevices {
 			Timer.AddCallback(2, BlinkTick);
 		}
 
-		// PLACEHOLDER: ShellSound_Init, the shell's sound manager; no plan step ports ES1's sound. The manager counts as
+		// PLACEHOLDER: ShellSound_Init, the shell's sound manager, plan item 7's module C. The manager counts as
 		// present (00082768 set), as on a retail machine with a sound card and as the simulator's does (the user's choice,
 		// plan-es1-first-mission.md decision 15): the options' load below leaves options 0-2 as data\prefs.cfg holds them,
 		// and what plays through the manager plays nothing.
