@@ -36,7 +36,7 @@ Screen 1310's case of `Shell_HandleMessage` (`0003e7eb`) allocates a `0x2c`-byte
 | `+0x28` | the `int16` `Shell_DetailOption` (`0007fcba`) |
 | `+0x2a` | the `int16` `Shell_RadioOption` (`0007fcbc`) |
 
-`Shell_LoadData` sets the four from `prefs.cfg` at the shell's start ([the shared data](startup.md#the-shared-data)). `Menu_Open`, with no sound manager (the dword `00082768` 0), makes MUSIC, SOUND and SPEECH inactive, each found in any state with `DUIWindow_FindControlById` (`0001be16`) and given state 2 at `+0x19` and 1 at `+0x1f`. The boxes' lines are word lists of `eng\watext.bin` lines from `Menu_ListLines` (`0003750d`), and each box's selected line is its setting ([the build](menus.md#opening-a-menu--menu_open-0003969e), kind 15):
+`Shell_LoadData` sets the four from `prefs.cfg` at the shell's start ([the shared data](startup.md#the-shared-data)). `Menu_Open`, with no sound manager (`ShellSound_Manager`, `00082768`, 0), makes MUSIC, SOUND and SPEECH inactive, each found in any state with `DUIWindow_FindControlById` (`0001be16`) and given state 2 at `+0x19` and 1 at `+0x1f`. The boxes' lines are word lists of `eng\watext.bin` lines from `Menu_ListLines` (`0003750d`), and each box's selected line is its setting ([the build](menus.md#opening-a-menu--menu_open-0003969e), kind 15):
 
 | Box | Lines | Selected line | Alignment |
 |---|---|---|---|

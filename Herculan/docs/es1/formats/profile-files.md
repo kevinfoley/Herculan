@@ -1,4 +1,4 @@
-# DBSIM.EXE — profile files and the dongle check
+# DBSIM.EXE and GO.EXE — profile files and the dongle check
 
 **The simulator reads `resource.cfg`, the sound set-up the installer writes, with its own copy of the Windows calls that read `.ini` files.** `Sim_StartMission` takes the sound card's driver numbers, IRQ, DMA channel and port addresses from it ([the mission start](../simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc)). The same object file holds the check of a copy-protection dongle, which no reference found by `es2_xref.py` reaches. ES2 reads its configuration files through Windows itself (`GetPrivateProfileStringA`). Addresses are `ES1DBSIM` image addresses ([the X-32 executable](x32-executable.md#the-image)).
 
@@ -45,6 +45,10 @@ The readers take Windows' arguments in reverse, the functions removing their own
 
 Step 2 returns before the branch of step 5 that would remove a key for a null value can run.
 
+## The shell's copy
+
+**`GO.EXE` reads `resource.cfg` with the same readers** ([the shell's sound manager](sound-samples.md#the-shells-sound-manager)). Its `Profile_Load` (`ES1GO 000269f8`), `Profile_GetInt` (`ES1GO 00026bac`), `Profile_GetString` (`ES1GO 00026d71`) and `Profile_Save` (`ES1GO 00027056`) hold the same statements as the simulator's, compiled differently, over `Profile_FileName` (`ES1GO 000ab1e0`), `Profile_Lines` (`ES1GO 000ab1ee`) and `Profile_Dirty` (`ES1GO 00080814`). The readers test the held file's name against the one asked for with `stricmp` where the simulator's use `Str_CompareNoCaseN` with a length of `0xffff`, which compares the same. `es2_xref` finds calls of the two readers only from `ShellSound_Init` (`ES1GO 00046235`). The three functions after `Profile_Save`, `ES1GO 0002716e`, `00027293` and `0002737e`, stand where the writer and its two helpers do ([Open](#open)).
+
 ## The dongle
 
 The messages name a `Hasp`. `Dongle_IsOk` (`00051bf0`) builds a dongle object on its stack (`Dongle_Ctor`, `0007303c`, a 1-byte object), returns 1 when `Dongle_Check` (`00073078`) answers 0, and destroys it (`Dongle_Dtor`, `00073058`). `Dongle_Check` calls `00082698` twice, C convention, with a service number, the seed `0x13d` (`0009dec0`), 0 (`0009dec4`), two passwords and four answer pointers:
@@ -84,4 +88,4 @@ The messages name a `Hasp`. `Dongle_IsOk` (`00051bf0`) builds a dongle object on
 - **Open:** no reference to `Profile_WriteString`, `Dongle_IsOk`, `Dongle_PrintStatus` or `Dongle_VersionString` found by `es2_xref.py`; so whether the shipped simulator writes a profile or asks for the dongle at all.
 - **Open:** `00082698`, the call `Dongle_Check` makes, and `00072faa`, the decoder, which lies inside the extent Ghidra gives `strchr`.
 - **Open:** what a file name of 14 characters or more does to `Profile_FileName`, which `Profile_Load` copies whole into the 14 bytes before `Profile_Lines`; `Path_ApplyAltDrive` builds the name `Sim_StartMission` passes.
-- **Open:** which functions `GO.EXE`'s `ShellSound_Init` reads `resource.cfg` through; `es2_naming.py match ES1DBSIM ES1GO` pairs none of these.
+- **Open:** whether `ES1GO 0002716e`, `00027293` and `0002737e` are the shell's `Profile_DeleteSection`, `Profile_FindOrAddSection` and `Profile_WriteString`; `es2_xref` finds `0002737e` calling the other two and finds no reference to `0002737e`.

@@ -1,6 +1,6 @@
 # DBSIM.EXE and GO.EXE — digital sounds
 
-**ES1's sound effects, voice lines and spoken lines are bare sample data: each file is the sound and nothing else.** ES2's are RIFF WAVs ([ES2's sample format](../../retail/formats/sound-samples.md#sample-format)); ES1's `.SFX` and `.RAW` files carry no header, and both programs load a file whole and hand all of it to the sound driver as one sample. The two programs' sound managers are the same code: addresses are `ES1DBSIM` image addresses unless `ES1GO` is named ([the X-32 executable](x32-executable.md#the-image)), and each `ES1GO` copy is given beside its `ES1DBSIM` original. The music, `.HMP`, goes through the same manager and is [`hmp-music.md`](hmp-music.md).
+**ES1's sound effects, voice lines and spoken lines are bare sample data: each file is the sound and nothing else.** ES2's are RIFF WAVs ([ES2's sample format](../../retail/formats/sound-samples.md#sample-format)); ES1's `.SFX` and `.RAW` files carry no header, and both programs load a file whole and hand all of it to the sound driver as one sample. The two programs' sound managers are the same code: addresses are `ES1DBSIM` image addresses unless `ES1GO` is named ([the X-32 executable](x32-executable.md#the-image)), and each `ES1GO` copy is given beside its `ES1DBSIM` original or in [the shell's sound manager](#the-shells-sound-manager)'s table. The music, `.HMP`, goes through the same manager and is [`hmp-music.md`](hmp-music.md).
 
 ## Where the object files start and end
 
@@ -20,7 +20,7 @@ The first two are frameless, with no Ghidra function. ES2's `Sound_StaticInit` (
 |---|---|---|---|
 | `SIMSOUND` | `hmi\` | 52 `.SFX` | the simulator's catalog, `str\SOUNDS.STR`, as `hmi\<name>.sfx` ([The simulator's catalog](#the-simulators-catalog)) |
 | `SIMVOICE` | `simvoice\` | 147 `.SFX`, `P1_01000.SFX` … | `SpeechLine_Load`, as `simvoice\<name>.sfx` ([Voice lines](#voice-lines)) |
-| `SHELL0` | `res32\` | 3 `.SFX`, 14 `.RAW` | the shell's name table, which holds `BUTTON.SFX`, `XXXXXXXX.SFX`, `MENUCLSA.RAW`, `MENUOPN2.RAW` and `XXXXXXXX.RAW` ([The shell's names](#the-shells-names)) |
+| `SHELL0` | `res32\` | 3 `.SFX`, 14 `.RAW` | the shell's name table, which holds `BUTTON.SFX`, `XXXXXXXX.SFX`, `MENUCLSA.RAW`, `MENUOPN2.RAW` and `XXXXXXXX.RAW` ([the shell's names](#the-shells-names)) |
 | `SPEECH` | `snc\` | 161 `.RAW` | the talking heads' lip-sync lists, each line played with its `.SNC` script ([loading a line](../shell/message-box.md#loading-a-line)) |
 
 `ROSEY1.SFX` and eleven `res32\` `.RAW` files are not in the shell's table; what plays them is [Open](#open).
@@ -31,7 +31,7 @@ There is none: the file's content is the sample, and its size is the sample's le
 
 ## The sound manager
 
-One object, made at start-up, owns every sound: 60 names, 60 sound objects and the loaded data. The simulator's is `Sound_Manager` (`000959ac`), made by `Sound_Init` (`0004db14`) with `SoundManager_Ctor` (`0004eb40`); the shell's is `ES1GO 00082768`, made by `ShellSound_Init` (`ES1GO 00046235`) with `ES1GO 00041f64`. Its fields, from the functions below:
+One object, made at start-up, owns every sound: 60 names, 60 sound objects and the loaded data. The simulator's is `Sound_Manager` (`000959ac`), made by `Sound_Init` (`0004db14`) with `SoundManager_Ctor` (`0004eb40`); the shell's is `ShellSound_Manager` (`ES1GO 00082768`), made by `ShellSound_Init` (`ES1GO 00046235`) with its copy of the constructor ([the shell's sound manager](#the-shells-sound-manager)). Its fields, from the functions below:
 
 | Offset | Contents |
 |---|---|
@@ -198,7 +198,7 @@ The voice lines are digital sounds that SOUNDS does not switch: RADIO does ([pla
 
 ## The driver
 
-**The sound settings come from the install's configuration, except the rate, which the image fixes at 11,025 Hz.** `Sound_Init` (`0004db14`; `es2_xref` finds its one call, from `Sim_StartMission`) takes six values in stack order — MIDI port, port, DMA channel, IRQ, MIDI device and digital device. It first sets the number of voice-line slots `000bd73c`, 10, or 1 in the low-memory mode, and makes the slots with `__vec_new` and `VoiceSlot_ElementCtor` and their 100-byte script buffers ([the speech slot](snc-lip-sync.md#the-speech-slot)); then, with the digital device 0, it makes no manager and goes to its last store, so the slots and buffers exist with no sound manager ([voice lines](#voice-lines) says what a line does then). It stores them over the defaults block at `000959ec`, whose image values are a buffer of `0x1000`, the rate 11,025, `0x78`, DMA 1, IRQ 7, port `0x220`, digital device `0xe000`, MIDI port `0x388` and MIDI device `0xa002`. The buffer and the rate are not among the values it stores, and `es2_xref` finds one reference to the rate's dword `000959f0`, the read in `SoundManager_LoadDrivers`. The shell's block, `ES1GO 00082310`, holds the same values; `ShellSound_Init` fills its six from `resource.cfg`'s `[SoundFX]` `Driver#`, `IRQ`, `DMA` and `PortAddress` and `[Music]` `Driver#` and `PortAddress`, the driver numbers and ports read as hex, and asserts `ERROR: Run soundset first.` when the file does not open. With no `[SoundFX]` `Driver#` it makes no manager.
+**The sound settings come from the install's configuration, except the rate, which the image fixes at 11,025 Hz.** `Sound_Init` (`0004db14`; `es2_xref` finds its one call, from `Sim_StartMission`) takes six values in stack order — MIDI port, port, DMA channel, IRQ, MIDI device and digital device. It first sets the number of voice-line slots `000bd73c`, 10, or 1 in the low-memory mode, and makes the slots with `__vec_new` and `VoiceSlot_ElementCtor` and their 100-byte script buffers ([the speech slot](snc-lip-sync.md#the-speech-slot)); then, with the digital device 0, it makes no manager and goes to its last store, so the slots and buffers exist with no sound manager ([voice lines](#voice-lines) says what a line does then). It stores them over the defaults block at `000959ec`, whose image values are a buffer of `0x1000`, the rate 11,025, `0x78`, DMA 1, IRQ 7, port `0x220`, digital device `0xe000`, MIDI port `0x388` and MIDI device `0xa002`. The buffer and the rate are not among the values it stores, and `es2_xref` finds one reference to the rate's dword `000959f0`, the read in `SoundManager_LoadDrivers`. The shell's block, `SoundDriver_Defaults` (`ES1GO 00082310`), holds the same values in the same layout, which `ShellSound_Init` fills from `resource.cfg` itself ([the shell's sound manager](#the-shells-sound-manager)).
 
 `Sound_Init` then makes the manager, runs `SoundManager_LoadDrivers` (`0004ef8c`) without reading its answer, so a failed load still goes on to the rest, sets the memory limit through `00050008` (`0xffffffff`, or 200,000 with `+0x503` set in the low-memory mode), calls `0004ffe0`(manager, 100,000), zeroes `SoundCatalog_Count` (`000bd72c`) and loads the catalog; it sets the slot count again there, to the same value. Its last store, with or without a manager, is 10 into `Sound_ListenerCountdown` (`000959b4`).
 
@@ -302,9 +302,56 @@ None tests the row: the catalog fills rows 0–46, the start-up's zero fill leav
 
 So the key is the voice bank and the five digits of the id and attribute byte ([starting a line](../simulation/heads-down-display.md#starting-a-line)), and two lines with one voice name share a slot: two portraits of one voice bank saying one line get the script of whichever loaded first, though their script names differ in the portrait's letter. With the manager and speech on, a sample that fails to load leaves the key and `+0x33` stored and no script loaded, and the next line with that key finds the slot and returns it with the buffer as `Voice_EvictLru` left it, holding the script it last held. The key holds the whole name only while the voice bank is one digit and the id two: an id of 100 or more, or a bank of 10 or more, moves the attribute byte's last digit past character 7, and names that differ only there share a key.
 
-## The shell's names
+## The shell's sound manager
 
-`ShellSound_Init` (`ES1GO 00046235`; `es2_xref` finds its one call, from `ES1GO 00045d24`) gives the manager the 20 names at `ES1GO 000828c0`, `res32\xxxxxxxx.sfx` first, then the songs and sounds of the front end. Index 9, `res32\button.sfx`, is made into the sound `ES1GO 0007fd00` and loaded at once. After loading the drivers it sets the master volume to 95 (`ES1GO 000430cd`, the copy of `SoundManager_SetMasterVolume`) and the memory limit to 200,000 (`ES1GO 00043b0f`). `ES1GO 00043a90`, among the manager's copies where `SoundObject_UpdatePlacement`'s and `SoundManager_SetHearingRange`'s meet, has no `ES1DBSIM` copy: (manager and three more, its arguments removed by this function) it walks the 60 slots testing each object's `+0x15` and does nothing else; `es2_xref` finds no caller. Index 0 is a placeholder: `ShellSnc_OpenSound` names each talking-head line, `snc\<name>.RAW`, as index 0 and makes a sound on it ([loading a line](../shell/message-box.md#loading-a-line)).
+**The front end makes its sound manager from `resource.cfg` at start-up, as the simulator does, with no catalog: it names 20 files and makes one sound, the buttons' click.** `GO.EXE`'s manager, sound objects and profile readers are the simulator's code: each `ES1GO` function in the table below holds the same statements as its `ES1DBSIM` original, compiled differently, with the shell's own globals.
+
+`ShellSound_Init` (`ES1GO 00046235`; `es2_xref` finds its one call, from `Shell_InitDevices`, `ES1GO 00045d24`):
+
+1. returns at once while `Shell_DebugMode` (`ES1GO 0007fd08`) is set, leaving no manager;
+2. opens `resource.cfg`, its name through `Path_ApplyAltDrive`, as a `FileRStream`, and asserts `ERROR: Run soundset first.` (`src\system.cpp`, line `0x151`, severity 5) when it does not open;
+3. reads `[SoundFX]` `Driver#`, `IRQ`, `DMA` and `PortAddress` and `[Music]` `Driver#` and `PortAddress` through the shell's `Profile_GetString` and `Profile_GetInt` ([the shell's copy](profile-files.md#the-shells-copy)), each with a default of 0: `IRQ` and `DMA` as numbers, the other four as strings read by `sscanf` with `%X`. An empty `[SoundFX]` `Driver#` is taken as 0 before `sscanf`; the other three strings reach `sscanf` empty or not, so an empty one leaves its value as the stack held it;
+4. closes the file, and with the `[SoundFX]` device 0 returns, `ShellSound_Manager` (`ES1GO 00082768`) left 0;
+5. otherwise makes the manager with `SoundManager_Ctor`, stores the six values over `SoundDriver_Defaults` (`ES1GO 00082310`) as `Sound_Init` stores its arguments, and runs `SoundManager_LoadDrivers` without reading its answer;
+6. sets the master volume to 95, where the simulator's stays 90, and the memory limit to 200,000, and gives the manager the 20 names at `ShellSound_Names` (`ES1GO 000828c0`) with `SoundManager_SetSampleNames`;
+7. makes the click, `ShellSound_ButtonSound` (`ES1GO 0007fd00`), with `SoundManager_CreateObject`(manager, 2, 0, 9) and loads it at once.
+
+It sets no hearing range. `Shell_ShutdownDevices` destroys the click and then the manager ([the shutdown](../shell/startup.md#the-shutdown)).
+
+### The shell's names
+
+| Index | Name | Plays |
+|---|---|---|
+| 0 | `res32\xxxxxxxx.sfx` | a talking head's line: `ShellSnc_OpenSound` renames index 0 `snc\<name>.RAW` for each line and makes a sound on it ([loading a line](../shell/message-box.md#loading-a-line)) |
+| 1–8 | `menu.hmp` twice, `shella.hmp`, `shellb.hmp`, `shellc.hmp`, `shella.hmp`, `death.hmp`, `win2.hmp` | songs, by the track `ShellMusic_Play` is given ([the backdrop](../shell/menus.md#the-backdrop)) |
+| 9 | `res32\button.sfx` | the buttons' click |
+| 10, 11 | `menuclsa.raw`, `menuopn2.raw` | the animations' sounds ([playing](anm-animation.md#playing)) |
+| 12, 13 | `intro1.hmp`, `intro2.hmp` | songs |
+| 14 | `res32\xxxxxxxx.raw` | a script's sound: `TOKEN_HDS_LOAD` renames index `0xe` ([the interpreter](ttm-scripts.md#the-interpreter)) |
+| 15–19 | `rubble.hmp`, `ice.hmp`, `desert.hmp`, `volcano.hmp`, `losing.hmp` | songs |
+
+Every name but the two `xxxxxxxx` placeholders is in `res32\`.
+
+### The click
+
+**Every button of the front end clicks the same sound, `res32\button.sfx`, while the click is switched on.** A menu's text or bitmap button stops `ShellSound_ButtonSound` when it plays and plays it again, while `Shell_SoundOption` is set ([drawing a control](../shell/menu-controls.md#drawing-a-control)). The buttons of the shell's copy of the simulator's panels ([the panel base](../shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d)) click through `Widget_ClickSoundAlertCopy` (`ES1GO 00008954`), slot `+0xc` of their mixin tables `ES1GO 0007da66` and `0007dac2`: while option 1 of `Prefs_Options` (`ES1GO 000aa24e`) is set it calls `ShellSound_PlayClick` (`ES1GO 0004dde4`)(`0x11`), which plays `ShellSound_ButtonSound` through its slot `+0x10` for row `0x11`, with no stop first, and does nothing for any other row. The simulator's `Widget_ClickSound` (`000314a0`) passes row `0x11` to `Sound_Play` instead, which plays the catalog's `gm_69` ([playing a row](#playing-a-row)).
+
+### The copies
+
+| `ES1DBSIM` | `ES1GO` |
+|---|---|
+| `SoundManager_Ctor`, `SoundManager_Dtor`, `SoundManager_LoadDrivers`, `SoundManager_UnloadDrivers` | `00041f64`, `000420fd`, `0004240a`, `00042882` |
+| `SoundManager_DetectDigitalCard`, `SoundDetect_Init`, `SoundDetect_FindDevice`, `SoundDetect_FindFirst`, `SoundDetect_Close` | `000421a7`, `00042281`, `000422c9`, `0004235a`, `000423dc` |
+| `SoundManager_CountObjects`, `SoundManager_SetMasterVolume`, `SoundManager_SetHearingRange`, `SoundManager_SetMemoryLimit` | `00042bc3`, `000430cd`, `00043ade`, `00043b0f` |
+| `SoundObject_Ctor`, `SoundObject_Dtor`, `SoundObject_Unload`, `SoundObject_SetPan`, `maybe_SoundObject_SetBranchCallback`, `SoundObject_SetRepeatCount` | `00043b28`, `00043c34`, `00043cc5`, `00043cae`, `00044087`, `000440b7` |
+| the base's stubs, `SoundObject_SetPlacedVolume` to `SoundObject_IsPlaying` | `00043bbd`–`00043c28` |
+| `MidiSound_Dtor`, `maybe_MidiSound_Pause`, `maybe_MidiSound_Resume`, `MidiSound_Stop`, `MidiSound_SetPlacedVolume` | `000441c1`, `00044203`, `00044220`, `0004437c`, `0004445f` |
+| `maybe_DigiSound_Resume`, `DigiSound_SetStartWord10`, `maybe_DigiSound_SetPitch`, `DigiSound_SetVolume`, `DigiSound_SetPlacedVolume`, `maybe_DigiSound_Pause`, `DigiSound_GetVoiceStatus`, `DigiSound_SetRepeats` | `000444e8`, `00044534`, `0004454c`, `0004459a`, `00044635`, `00044684`, `0004499a`, `00044a14` |
+| `0004e710` | `SoundManager_TimerCallback` (`000419d8`), a far call through `000a09c8` |
+| `SoundManager_Instance`, `SoundManager_DriversLoaded`, `SoundDriver_Defaults` | `000ab356`, `000ab4e4`, `00082310` |
+| `SoundObjectVtable`, `MidiSoundVtable`, `DigiSoundVtable` | `00082576`, `000825bc`, `0008261c` |
+
+The functions the sections above give an `ES1GO` address beside their own are copies too. `ES1GO 00043a90`, among the copies where `SoundObject_UpdatePlacement`'s and `SoundManager_SetHearingRange`'s meet, has no `ES1DBSIM` copy: (manager and three more, its arguments removed by this function) it walks the 60 slots testing each object's `+0x15` and does nothing else; `es2_xref` finds no caller. `ES1GO 0004315a` and `0004360e` lie where `SoundManager_UpdateListener`'s and `SoundObject_UpdatePlacement`'s copies would ([Open](#open)).
 
 `Speech_ArchivePresent` (`ES1GO 000087ce`) returns 1 when `vol\speech.vol`, the `.RAW` lines' archive, opens; `es2_xref` finds its one call, from the shell's `Prefs_Init` (`ES1GO 00008920`), which keeps the answer in `Speech_ArchiveFound` (`ES1GO 0007e09c`) and sets option 2 to 0 when it is 0.
 
@@ -320,6 +367,6 @@ So the key is the voice bank and the five digits of the id and attribute byte ([
 - **Open:** what bit `0x1000` of a voice's word `+0x30` is, with which `HmiDigi_StopSample` (`0006dd7f`) leaves a busy voice playing, for module E. A lead: the start block's `+0x18` is `0x1000` + the object slot.
 - **Open:** what a `resource.cfg` with a `[SoundFX]` `Driver#` and a blank `[Music]` `Driver#` plays, since the MIDI device's open comes first in `SoundManager_LoadDrivers` ([the driver](#the-driver)) and a blank `Driver#` passes what the stack held ([the mission start's Open](../simulation/main-loop.md#open)). A retail check: set the music to none in the setup and play a mission; the click and the footfalls are heard or not.
 - **Open:** what a voice-line slot's sound object `+0x36` holds when `Sound_Init` makes no manager ([voice lines](#voice-lines)): whether the block `__vec_new` gives comes back zeroed, and so whether `Snc_Load` clears a byte `+0x16` of a stray address.
-- **Open:** `ES1GO 00041f64` and `ES1GO 0004240a`, which `ShellSound_Init` calls where `Sound_Init` calls `SoundManager_Ctor` and `SoundManager_LoadDrivers`.
+- **Open:** `ES1GO 0004315a` and `0004360e`, which `es2_xref` finds calling `ES1GO`'s `SoundObject_SetPan` and which stand where `SoundManager_UpdateListener`'s and `SoundObject_UpdatePlacement`'s copies would; their bodies are unread, and no caller of either was looked for.
 - **Open:** where the object files from `0004e710` to the HMI timer's (`00050d38`) divide, and the source names of these files: a scan of the sound file's code for a pointer to one of the image's 41 `.cpp` paths finds none, where the same scan of the Heads-Down Display's file finds its two `phdd.cpp` asserts.
 - **Open:** what reads `sos\DONS.BNK` and `sos\DRUM.DIG`. A case-insensitive search of both images for `dons` and the bank names finds `sos\melodic.bnk`, `sos\drum.bnk` and `sos\drum32.dig` in each, and no `dons` or `drum.dig`.

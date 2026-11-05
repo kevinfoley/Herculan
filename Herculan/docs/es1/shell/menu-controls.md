@@ -116,7 +116,7 @@ With any other key the constructor looks the id up among the four at `0007f2c4`,
 
 `MTButton_Draw` (`0001d200`)(button), by the state `+0x19`:
 
-- **1, pushed**: while the byte `Shell_SoundOption` (`0007fcb9`) and the sound object `0007fd00` are set, it stops the object when its slot `+0x30` answers non-zero (slot `+0x14`) and plays it (slot `+0x10`): the click. Then as state 0;
+- **1, pushed**: while the byte `Shell_SoundOption` (`0007fcb9`) and the sound object `ShellSound_ButtonSound` (`0007fd00`) are set, it stops the object when its slot `+0x30` answers non-zero (slot `+0x14`) and plays it (slot `+0x10`): the click. Then as state 0;
 - **0, up**, and pushed: `00044b86` with the state's `STYLES.DAT` record over the button's rect, and, while the byte `+0x94` is set, `0004b867`(10, rect);
 - **2, inactive**: `00044b86` with record 2;
 - any other state draws no frame;

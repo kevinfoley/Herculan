@@ -55,7 +55,7 @@ The loader reads only each track's first delta time, with `HmiMidi_ReadDelta` (`
 6. It routes each track whose map entry is `0xff` to a driver. Of the track's device ids, in order up to a 0, the first that one of the open drivers (up to five, their ids at `000a130c`) answers wins, and the map entry becomes that driver's slot: `0xa000` is answered by a driver of id `0xa000`, `0xa001` or `0xa008`, `0xa002` by `0xa002` or `0xa009`, and any other id by itself. A track whose first id is 0 goes to slot 0. A track no open driver answers loses its events pointer, keeps `0xff`, and leaves one fewer track playable.
 7. It returns 0, with the slot through the handle pointer.
 
-`MidiSound_Ctor` sets all 32 map entries to `0xff`, so every track is routed this way. The simulator opens two MIDI drivers: the MIDI device `Sound_Init` is given, `0xa002` in the image's defaults, with the melodic and drum banks, and `0xa005` with `sos\drum32.dig` ([sound-samples.md](sound-samples.md#the-driver)).
+`MidiSound_Ctor` sets all 32 map entries to `0xff`, so every track is routed this way. Each program opens two MIDI drivers, the shell through its copy of `SoundManager_LoadDrivers` (`ES1GO 0004240a`, [the copies](sound-samples.md#the-copies)): the MIDI device `resource.cfg`'s `[Music]` `Driver#` names, `0xa002` in the images' defaults, with the melodic and drum banks, and `0xa005` with `sos\drum32.dig` ([sound-samples.md](sound-samples.md#the-driver)).
 
 ## The devices
 
@@ -83,6 +83,6 @@ Track 0 of each of the 19 songs lists no device and goes to slot 0. Of the other
 - **Open:** the branch entries' `+0x00`–`+0x07` and `+0x10`–`+0x17`, and what the data they point to does.
 - **Open:** the event encoding past the first delta, and what reads the events.
 - **Open:** `0006eeae`, `0006ea6b` and `0006ee87`, which `MidiSound_Play` calls after the song is ready, and when the song player calls the two callbacks.
-- **Open:** what `0xa003`, `0xa007`, `0xa009` and `0xa00a` stand for, which `SOUNDSET.INI` does not list, and which drivers `ES1GO 0004240a` opens for the shell.
+- **Open:** what `0xa003`, `0xa007`, `0xa009` and `0xa00a` stand for, which `SOUNDSET.INI` does not list.
 - **Open:** the code that loads a driver out of `SOS\HMIMDRV.386`; both images hold the file's name.
 - **Open:** [the devices](#the-devices)' routing in the running game. A retail check: with the setup's MIDI device set to MPU 401 under DOSBox-X, `DESERT`'s song is silent and `RUBBLE`'s plays only its `0xa005` track, where FM plays both whole.
