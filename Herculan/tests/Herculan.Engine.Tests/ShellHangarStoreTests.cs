@@ -58,7 +58,7 @@ public class ShellHangarStoreTests {
 		var transformer = new PlayerSaveTransform();
 		var save = Assert.IsType<PlayerSave>(transformer.Parse(PlayerSaveRoundTripTests.BuildSave()));
 
-		// The synthetic save's squad pointers are out of range; point squad 0's at its first record.
+		// The synthetic save's squad pointers are out of range; point member 0's at its pool's first record.
 		save.SquadTailAndPlayerHead[0] = 0;
 		var hangar = ShellHangar.From(save);
 		var member = Assert.Single(hangar.SquadMembers);

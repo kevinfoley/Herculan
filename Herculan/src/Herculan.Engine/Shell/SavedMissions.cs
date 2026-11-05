@@ -10,7 +10,7 @@ namespace Herculan.Engine.Shell;
 /// Missions the editor saves into the install: content-only loose files <c>MSN\&lt;NAME&gt;.MSN</c> and its text,
 /// which <see cref="GameContent"/>, like retail's <c>VolRStream_Open</c>, reads in place of an archive's entry of that
 /// name (docs/retail/formats/vol-archive.md#loose-files-on-disk-carry-no-prefix). The text file takes the extension
-/// <c>Msn_LoadEngText</c> looks for in the shell's language (<see cref="ShellTrainingLaunch.ReadMission"/>), so the shell
+/// <c>Msn_LoadEngText</c> looks for in the shell's language (<see cref="ShellCareerMissions.ReadMission"/>), so the shell
 /// that reads the mission finds it. A name no archive holds loads as <see cref="MissionFileLaunch"/> loads any mission
 /// <c>gam\career.dat</c> does not list. Beside them goes the mission's about file (<see cref="MissionAbout"/>), which
 /// only the editor and the Custom Missions window read, and the header and heightmap of the mission's own zone when it has
@@ -52,7 +52,7 @@ public static class SavedMissions {
 	/// <summary>The loose text file for mission <paramref name="name"/>, as a shell running in <paramref name="language"/> reads it.</summary>
 	public static string TextPath(string installRoot, string name, GameLanguage language) =>
 		CaseInsensitivePath.Combine(installRoot, MissionFileLaunch.MissionFolder,
-			name + ShellTrainingLaunch.MissionTextExtension(language));
+			name + ShellCareerMissions.MissionTextExtension(language));
 
 	/// <summary>The about file for mission <paramref name="name"/> under <paramref name="installRoot"/>.</summary>
 	public static string AboutPath(string installRoot, string name) =>

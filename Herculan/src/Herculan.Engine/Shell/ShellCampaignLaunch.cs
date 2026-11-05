@@ -52,13 +52,13 @@ public static class ShellCampaignLaunch {
 	public static ShellCampaignMission? Write(string directory, GameContent content, int stage, int mission, short skill,
 			short[] flags, short[] clearList, Func<short, int> roll, out string? failure, string? missionPath = null,
 			MissionGenerating? generating = null) {
-		if (ShellTrainingLaunch.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count
-				|| (missionPath ?? ShellTrainingLaunch.MissionPath(content, stage, mission)) is not { } path) {
+		if (ShellCareerMissions.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count
+				|| (missionPath ?? ShellCareerMissions.MissionPath(content, stage, mission)) is not { } path) {
 			failure = $"gam\\career.dat or missions.bin has no stage {stage} mission {mission}.";
 			return null;
 		}
 
-		if (ShellTrainingLaunch.ReadMission(content, path) is not (byte[] msn, var text)) {
+		if (ShellCareerMissions.ReadMission(content, path) is not (byte[] msn, var text)) {
 			failure = $"{path} is not in any mounted archive.";
 			return null;
 		}
@@ -74,7 +74,7 @@ public static class ShellCampaignLaunch {
 	private static ShellCampaignMission? Load(string directory, GameContent content, int stage, int mission, string missionPath,
 			byte[] msn, byte[]? text, short skill, short[] flags, short[] clearList, Func<short, int> roll, out string? failure,
 			MissionGenerating? generating = null) {
-		if (ShellTrainingLaunch.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count) {
+		if (ShellCareerMissions.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count) {
 			failure = $"gam\\career.dat or missions.bin has no stage {stage} mission {mission}.";
 			return null;
 		}
@@ -82,7 +82,7 @@ public static class ShellCampaignLaunch {
 		// MsnGen_SeedCampaignFlags: a campaign load writes the position into flags 1 and 2.
 		flags[1] = (short)stage;
 		flags[2] = (short)mission;
-		ShellTrainingLaunch.SeedDrawnFlags(flags, roll);
+		ShellCareerMissions.SeedDrawnFlags(flags, roll);
 
 		// The theater from the stage's campaign, both training cheats off, and the pilot's skill as the difficulty.
 		short?[] header = [stages[stage].CampaignIndex, null, null, null, null, 0, 0, skill, null, null];
@@ -173,13 +173,13 @@ public static class ShellCampaignLaunch {
 		game.BuildQueueFreeSlots = ShellHangar.QueueSlots;
 		Array.Fill(game.BuildQueue, WeaponLUT.None);
 
-		// Squad_GenerateRoster, then Player_Create (00410107): each squad's record 0 taken as its member
+		// Squad_GenerateRoster, then Player_Create (00410107): each pilot pool's record 0 taken as its squad member
 		// (00483b48) and the member cursor (00483b4e) stepped to 1; the player's record at roster id 0 with
 		// a drawn name index, the typed name and the skill, rank 0, bay 0, position 0, on strength; no
 		// positions in play and one machine on strength.
-		game.Squadmates = ShellTrainingLaunch.GenerateRoster(ShellText.Load(content, "ESNAMES.BIN"), roll);
+		game.Squadmates = ShellRoster.GenerateRoster(ShellText.Load(content, "ESNAMES.BIN"), roll);
 		game.SquadTailAndPlayerHead = [0, 0, 0, 1, 1, 1, 0, 1];
-		var player = ShellTrainingLaunch.NewPilot(name, 0, roll(ShellTrainingLaunch.PlayerNameIndexCount), skill, 0);
+		var player = ShellRoster.NewPilot(name, 0, roll(ShellRoster.PlayerNameIndexCount), skill, 0);
 		player.Bay = 0;
 		player.SquadPosition = 0;
 		player.OnStrength = 1;
@@ -209,7 +209,7 @@ public static class ShellCampaignLaunch {
 			held.CareerBlock.AsSpan(2).CopyTo(game.CareerBlock.AsSpan(2));
 		}
 
-		game.SalvageTotal = roll(ShellTrainingLaunch.SalvageDrawCount) * ShellRepairCosts.KilogramsPerTon + StartingSalvage;
+		game.SalvageTotal = roll(SalvageDrawCount) * ShellRepairCosts.KilogramsPerTon + StartingSalvage;
 
 		// The flag array cleared (CampaignFlags_Clear), game state 2, and block 11 as memory holds it.
 		const int heldOffset = PlayerSave.CampaignFlagCount * 2 + 2;
@@ -286,6 +286,9 @@ public static class ShellCampaignLaunch {
 	/// <summary>The salvage pool's floor, the <c>100000</c> in <c>Game_NewCareer</c>'s draw.</summary>
 	private const int StartingSalvage = 100000;
 
+	/// <summary><c>Game_NewCareer</c>'s salvage draw, below 11: the pool is <c>draw * 1000 + 100000</c> kilograms.</summary>
+	private const short SalvageDrawCount = 11;
+
 	/// <summary><c>Game_NewCareer</c>'s game state, <c>0048260e = 2</c> — the one a game goes on from.</summary>
 	private const short ContinuingGameState = 2;
 
@@ -298,7 +301,7 @@ public static class ShellCampaignLaunch {
 	/// none. The original only ever loads a mission by position; looking one up by name is this engine's.
 	/// </summary>
 	public static (int Stage, int Mission)? Find(GameContent content, string name) {
-		if (ShellTrainingLaunch.CareerStages(content) is not { } stages || ShellText.Load(content, "MISSIONS.BIN") is not { } names) {
+		if (ShellCareerMissions.CareerStages(content) is not { } stages || ShellText.Load(content, "MISSIONS.BIN") is not { } names) {
 			return null;
 		}
 

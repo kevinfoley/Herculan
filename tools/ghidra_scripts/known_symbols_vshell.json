@@ -3775,7 +3775,13 @@
       "confidence": "high",
       "name": "Util_Shuffle",
       "description": "Fills an int16 array of the given length with a random permutation of 0..n-1 (fill with -1, then place each value into the k-th still-empty slot).",
-      "source": "docs/retail/shell/campaign-loop.md"
+      "source": "docs/retail/shell/campaign-loop.md",
+      "verified": {
+        "bytes": "0040f95c+128",
+        "sha1": "ff76ece19e6a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f9dc",
@@ -3801,8 +3807,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_GenerateRoster",
-      "description": "Generates 3 squads x 12 pilots at new-career time. Per squad it draws a 4- and a 3-element shuffle, giving each pilot a roster id (0-11) and an esnames.bin name index (0-35); the name string is copied out of esnames.bin.",
-      "source": "docs/retail/shell/campaign-loop.md"
+      "description": "Generates the 3 pilot pools x 12 pilots at new-career time, one pool per squad member. Per pool it zeroes the pool's current member (00483b48) and cursor (00483b4e), then draws a 4- and a 3-element shuffle and, row by row, a skill per pilot, giving each a roster id (0-11, pool * 4 + the 4-shuffle's column), an esnames.bin name index (roster id * 3 + the 3-shuffle's row) and the rank Pilot_RankForSkill gives the skill; the name string is copied out of esnames.bin.",
+      "source": "docs/retail/shell/campaign-loop.md",
+      "verified": {
+        "bytes": "0040fa31+286",
+        "sha1": "d3f2aba690ea",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040fb4f",
@@ -3810,8 +3822,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_TakeMember",
-      "description": "(squad) -> the squad's record at its cursor, which then steps mod 12, reset to the pilot defaults. Player_Create takes each squad's record 0.",
-      "source": "docs/retail/shell/campaign-loop.md"
+      "description": "(pool) -> the pilot pool's record at its cursor, which becomes the pool's current member (00483b48) while the cursor steps mod 12, reset by Pilot_SetDefaults. Squad member k always comes from pool k: Player_Create and Squad_ProgressAll pass the member's index.",
+      "source": "docs/retail/shell/campaign-loop.md",
+      "verified": {
+        "bytes": "0040fb4f+132",
+        "sha1": "427db4d9d505",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040fbd3",
@@ -3819,7 +3837,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_FindPilotByName",
-      "description": "(squad, name): _strcmp's name against the name field (+4) of each of the squad's twelve pilot records (Squad_Rosters 004832fc + squad * 0x2c4 + i * 0x3b) and returns the first matching i. When all twelve compare unequal the loop ends with EAX still holding the last _strcmp result (non-zero), which is what it returns; the decompile hides this. No caller or stored pointer found by es2_xref.",
+      "description": "(pool, name): _strcmp's name against the name field (+4) of each of the pilot pool's twelve records (Squad_PilotPools 004832fc + pool * 0x2c4 + i * 0x3b) and returns the first matching i. When all twelve compare unequal the loop ends with EAX still holding the last _strcmp result (non-zero), which is what it returns; the decompile hides this. No caller or stored pointer found by es2_xref.",
       "source": "VSHELL disassembly at 0040fbd3; Squad_TakeMember decompile for the roster base",
       "verified": {
         "bytes": "0040fbd3+67",
@@ -3833,18 +3851,30 @@
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "Squads_Write",
-      "description": "Save block 4: (stream) Pilot_Write on each of the 3 squads x 12 pilot records at 004832fc (squad stride 0x2c4, record stride 0x3b), then the 3 int16 current members at 00483b48 and the 3 int16 next members at 00483b4e through the write slot (vtable +0x14). Game_SaveSlot calls it.",
-      "source": "VSHELL decompile at 0040fc16"
+      "name": "PilotPools_Write",
+      "description": "Save block 4: (stream) Pilot_Write on each of the 3 pilot pools x 12 records at 004832fc (pool stride 0x2c4, record stride 0x3b), then the 3 int16 current members at 00483b48 and the 3 int16 next members at 00483b4e through the write slot (vtable +0x14). Game_SaveSlot calls it.",
+      "source": "VSHELL decompile at 0040fc16",
+      "verified": {
+        "bytes": "0040fc16+97",
+        "sha1": "60701a4f79a4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040fc77",
       "binary": "VSHELL",
       "type": "function",
       "confidence": "high",
-      "name": "Squads_Read",
-      "description": "Save block 4 reader, the mirror of Squads_Write: Pilot_Read into the same 3 x 12 records, then the 6 bytes at 00483b48 and at 00483b4e through the read slot (vtable +0x18). Game_LoadSlot calls it.",
-      "source": "VSHELL decompile at 0040fc77"
+      "name": "PilotPools_Read",
+      "description": "Save block 4 reader, the mirror of PilotPools_Write: Pilot_Read into the same 3 x 12 records, then the 6 bytes at 00483b48 and at 00483b4e through the read slot (vtable +0x18). Game_LoadSlot calls it.",
+      "source": "VSHELL decompile at 0040fc77",
+      "verified": {
+        "bytes": "0040fc77+97",
+        "sha1": "6cf5bf1511fa",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040fcd8",
@@ -3921,8 +3951,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Player_Create",
-      "description": "Builds the player structure at 00482a78 for a new career (Game_NewCareer): Pilot_Init of the embedded record with the given name and skill, then bay 0, position (+0x27) 0 and on strength, and the three squad-member pointers at +0x3f.",
-      "source": "docs/retail/formats/save-games.md#pilot-record--59-bytes-0x3b-in-memory"
+      "description": "Builds the player structure at 00482a78 for a new career (Game_NewCareer): Player_Clear, then Pilot_Init of the embedded record with roster id 0, a name index drawn below 11, the given name and skill, and rank 0; then bay 0, position (+0x27) 0, on strength, one more machine on strength (+0x02), and squad-member pointer k at +0x3f + k * 4 set to Squad_TakeMember(k) for k 0-2.",
+      "source": "docs/retail/formats/save-games.md#pilot-record--59-bytes-0x3b-in-memory",
+      "verified": {
+        "bytes": "00410107+102",
+        "sha1": "8fabf28d67a7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041016d",
@@ -4056,8 +4092,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_ProgressAll",
-      "description": "Post-mission progression pass over the player and every on-strength squad member: Pilot_Progress for survivors, replacement from the roster for a pilot at zero condition.",
-      "source": "docs/retail/shell/campaign-loop.md"
+      "description": "(player) Post-mission progression pass: Pilot_Progress on the player when its condition is non-zero, then for each position 1 up to the positions in play (+0x00), the squad member at it (Squad_MemberAtPosition) when on strength: Pilot_Progress when its condition is non-zero, otherwise replaced by Squad_TakeMember(k) from its own pilot pool and one machine taken off strength (+0x02). Returns the pilots lost, the player counted when at zero.",
+      "source": "docs/retail/shell/campaign-loop.md",
+      "verified": {
+        "bytes": "004103ba+159",
+        "sha1": "d86010d136b0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041045c",
@@ -26301,8 +26343,8 @@
       "binary": "VSHELL",
       "type": "data",
       "confidence": "high",
-      "name": "Squad_Rosters",
-      "description": "Three squads of twelve 0x3b-byte pilot records (0x2c4 bytes per squad), the name at +4 of each. Squad_TakeMember hands records out of it and Squad_FindPilotByName searches it.",
+      "name": "Squad_PilotPools",
+      "description": "Three pilot pools of twelve 0x3b-byte pilot records (0x2c4 bytes per pool), one pool per squad member, the name at +4 of each. Squad_TakeMember hands records out of it and Squad_FindPilotByName searches it.",
       "source": "VSHELL disassembly at 0040fbd3; Squad_TakeMember decompile"
     },
     {

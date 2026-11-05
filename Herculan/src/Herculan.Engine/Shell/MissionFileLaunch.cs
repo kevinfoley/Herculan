@@ -290,7 +290,7 @@ public static class MissionFileLaunch {
 		string missionPath = $"{MissionFolder}\\{file}";
 		byte[] msn;
 		byte[]? text;
-		if (ShellTrainingLaunch.ReadMission(shellContent, missionPath) is (byte[] read, var readText)) {
+		if (ShellCareerMissions.ReadMission(shellContent, missionPath) is (byte[] read, var readText)) {
 			(msn, text) = (read, readText);
 		} else if (CustomMissions.FindIncluded(Path.GetFileNameWithoutExtension(file)) is { } included) {
 			(msn, text) = (included.Msn, CustomMissions.Text(included, shellContent.Language));

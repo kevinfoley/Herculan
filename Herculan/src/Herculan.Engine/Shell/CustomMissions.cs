@@ -50,7 +50,7 @@ public sealed record CustomMissionImport(string Name, string Destination, byte[]
 public static class CustomMissions {
 	/// <summary>The extensions a mission's text takes, one per language the shell runs in.</summary>
 	public static IReadOnlyList<string> TextExtensions { get; } =
-		Enum.GetValues<GameLanguage>().Select(ShellTrainingLaunch.MissionTextExtension).Distinct().ToList();
+		Enum.GetValues<GameLanguage>().Select(ShellCareerMissions.MissionTextExtension).Distinct().ToList();
 
 	/// <summary>The install's mission folder.</summary>
 	public static string Folder(string installRoot) => CaseInsensitivePath.Combine(installRoot, MissionFileLaunch.MissionFolder);
@@ -214,8 +214,8 @@ public static class CustomMissions {
 
 	/// <summary>The text the shell running in <paramref name="language"/> reads from <paramref name="bundle"/>: its language's, else English, else the first held.</summary>
 	public static byte[]? Text(MissionBundle bundle, GameLanguage language) =>
-		bundle.Text(ShellTrainingLaunch.MissionTextExtension(language))
-		?? bundle.Text(ShellTrainingLaunch.MissionTextExtension(GameLanguage.English))
+		bundle.Text(ShellCareerMissions.MissionTextExtension(language))
+		?? bundle.Text(ShellCareerMissions.MissionTextExtension(GameLanguage.English))
 		?? bundle.TextExtensions.Select(bundle.Text).FirstOrDefault();
 
 	// Every .hcm in <folder>.

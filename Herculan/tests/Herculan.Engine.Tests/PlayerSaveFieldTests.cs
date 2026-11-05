@@ -35,7 +35,7 @@ public class PlayerSaveFieldTests {
 		Assert.Equal(7, save.CareerBlock[75]);
 	}
 
-	/// <summary>The eight shorts between the squad and the player: three squads' members, then positions and machines.</summary>
+	/// <summary>The eight shorts between the squad and the player: the three pools' current records, then positions and machines.</summary>
 	[Fact]
 	public void SquadViewsReachTheirShorts() {
 		var save = new PlayerSave();

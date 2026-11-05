@@ -1,6 +1,5 @@
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Sav;
-using HercWorks.Core.Data.Struct.Vshell.Sav;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Shell;
@@ -87,7 +86,7 @@ public static class ShellTrainingLaunch {
 			MissionGenerating? generating = null, bool ownWorld = false) {
 		int Roll(short bound) => random.NextBelow(bound);
 		return NewCareer(content, options, row, Roll, held, out failure) is var (game, hangar)
-			? Load(directory, content, options, row, MissionPath(content, 0, row), instantAction, Roll, clearList, game, hangar,
+			? Load(directory, content, options, row, ShellCareerMissions.MissionPath(content, 0, row), instantAction, Roll, clearList, game, hangar,
 				out failure, generating, ownWorld)
 			: null;
 	}
@@ -115,7 +114,7 @@ public static class ShellTrainingLaunch {
 	/// The training half of <c>MsnGen_LoadMission</c> (<c>0041c73d</c>) for <paramref name="game"/>, which
 	/// <see cref="NewCareer"/> started, with the handoff exported (<c>Game_ExportMissionHandoff</c>, <c>0040f0d4</c>) into
 	/// <paramref name="directory"/>. <paramref name="missionPath"/> is the career position's mission
-	/// (<see cref="MissionPath"/>), as <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>) loads it, or the DEBUG
+	/// (<see cref="ShellCareerMissions.MissionPath"/>), as <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>) loads it, or the DEBUG
 	/// dialog's typed one. <paramref name="row"/> is the practice screen's lit row, <c>PracticeScreen_SelectedRow</c>
 	/// (<c>00479bb8</c>), which picks the player's machine. <paramref name="clearList"/> is the row-2 clear list the shell
 	/// keeps across loads (<see cref="MissionGenerator.Load"/>), and <paramref name="instantAction"/> is
@@ -131,7 +130,7 @@ public static class ShellTrainingLaunch {
 			return null;
 		}
 
-		if (ReadMission(content, missionPath) is not (byte[] msn, var text)) {
+		if (ShellCareerMissions.ReadMission(content, missionPath) is not (byte[] msn, var text)) {
 			failure = $"{missionPath} is not in any mounted archive.";
 			return null;
 		}
@@ -154,7 +153,7 @@ public static class ShellTrainingLaunch {
 			bool wholeSquad = false) {
 		// MsnGen_SeedCampaignFlags: a training load clears the flag array first.
 		var flags = new short[MissionGenerator.CampaignFlagCount];
-		SeedDrawnFlags(flags, roll);
+		ShellCareerMissions.SeedDrawnFlags(flags, roll);
 
 		var header = PracticeHeader(options, ownWorld);
 		generating?.Invoke(msn, text, flags, header);
@@ -253,170 +252,6 @@ public static class ShellTrainingLaunch {
 		ownWorld ? null : PracticeTheater, null, null, null, null,
 		options[AmmoOption], options[DamageOption], options[DifficultyOption], 0, ownWorld ? null : options[TimeOfDayOption],
 	];
-
-	/// <summary>
-	/// Flag 3's source, <c>00482606</c>, which the startup memset from <c>MissionScreenView</c> clears.
-	/// Whether anything writes it is open — see docs/retail/shell/campaign-loop.md#open.
-	/// </summary>
-	private const short UnknownFlag3 = 0;
-
-	/// <summary>
-	/// The half of <c>MsnGen_SeedCampaignFlags</c> (<c>0040e94e</c>) both modes run: flag 3 from
-	/// <c>00482606</c>, then flags 4, 5 and 6 a draw below 12 each.
-	/// </summary>
-	internal static void SeedDrawnFlags(short[] flags, Func<short, int> roll) {
-		flags[3] = UnknownFlag3;
-		for (int flag = 4; flag <= 6; flag++) {
-			flags[flag] = (short)roll(12);
-		}
-	}
-
-	/// <summary>
-	/// The career position's mission — <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>) reads the name
-	/// <c>CareerDat_ReadStage</c> resolved through <c>missions.bin</c>, a path such as <c>MSN\TRAIN1.MSN</c>.
-	/// Null for a position <c>gam\career.dat</c> does not have.
-	/// </summary>
-	internal static string? MissionPath(GameContent content, int stage, int mission) =>
-		CareerStages(content) is { } stages && stage >= 0 && stage < stages.Count
-			&& mission >= 0 && mission < stages[stage].Missions.Length
-			? ShellText.Load(content, "MISSIONS.BIN")?.Text(stages[stage].Missions[mission])
-			: null;
-
-	/// <summary><c>gam\career.dat</c>'s stages, as <c>LoadCareerDat</c> (<c>00412906</c>) reads them, or null without one.</summary>
-	internal static List<(short CampaignIndex, int[] Missions)>? CareerStages(GameContent content) =>
-		content.Read(ShellRepairCosts.CatalogFolder, "CAREER.DAT") is { } bytes
-			? new CareerDataTransformer().Parse(bytes)?.Stages
-			: null;
-
-	/// <summary>
-	/// A mission and its text as <c>MsnGen_ParseMsnFile</c> opens them: the <c>.MSN</c> at
-	/// <paramref name="missionPath"/>, and the text <c>Msn_LoadEngText</c> (<c>0041768c</c>) finds by
-	/// swapping everything from the name's first <c>.</c> for the shell language's extension, or null text when
-	/// there is none. Null when the mission itself is not in the archives.
-	/// </summary>
-	internal static (byte[] Msn, byte[]? Text)? ReadMission(GameContent content, string missionPath) {
-		int split = missionPath.LastIndexOf('\\');
-		string folder = split < 0 ? string.Empty : missionPath[..split];
-		string name = missionPath[(split + 1)..];
-		if (content.Read(folder, name) is not { } msn) {
-			return null;
-		}
-
-		int dot = name.IndexOf('.');
-		string stem = dot < 0 ? name : name[..dot];
-		return (msn, content.Read(folder, stem + MissionTextExtension(content.Language)));
-	}
-
-	/// <summary><c>Msn_LoadEngText</c>'s extension for <paramref name="language"/>'s mission text.</summary>
-	internal static string MissionTextExtension(GameLanguage language) => language switch {
-		GameLanguage.French => ".FRE",
-		GameLanguage.German => ".GER",
-		_ => ".ENG",
-	};
-
-	/// <summary>
-	/// <c>Squad_GenerateRoster</c> (<c>0040fa31</c>) — three squads of twelve, each from a shuffle of four
-	/// and a shuffle of three and one skill draw per pilot, <c>Pilot_Init</c> (<c>0040fcd8</c>) writing each
-	/// record with its rank seeded from the skill and <c>Pilot_SetDefaults</c> (<c>0040fd17</c>)'s bay
-	/// <c>-1</c>, off strength, position <c>-1</c> and condition 100. The records come back in the save's
-	/// order, squad by squad and row by row. See
-	/// docs/retail/shell/campaign-loop.md#the-pilot-roster-is-generated-not-authored--squad_generateroster-0040fa31.
-	/// </summary>
-	internal static PilotEntry[] GenerateRoster(ShellText? names, Func<short, int> roll) {
-		var records = new PilotEntry[SquadCount * PilotsPerSquad];
-		for (int squad = 0; squad < SquadCount; squad++) {
-			short[] columns = Shuffle(4, roll);
-			short[] rows = Shuffle(3, roll);
-			for (int row = 0; row < 3; row++) {
-				for (int column = 0; column < 4; column++) {
-					int rosterId = columns[column] + squad * 4;
-					int nameIndex = rows[row] + rosterId * 3;
-					int skill = SkillDraw(roll);
-					records[squad * PilotsPerSquad + row * 4 + column] = NewPilot(names?.Text(nameIndex) ?? string.Empty,
-						rosterId, nameIndex, skill, RankForSkill[skill]);
-				}
-			}
-		}
-
-		return records;
-	}
-
-	/// <summary>
-	/// <c>Pilot_Init</c> (<c>0040fcd8</c>): the record's roster id, name index, name, skill and rank, then
-	/// <c>Pilot_SetDefaults</c> (<c>0040fd17</c>) — no bay, off strength, no squad position, condition 100
-	/// and every counter 0.
-	/// </summary>
-	internal static PilotEntry NewPilot(string name, int rosterId, int nameIndex, int skill, int rank) => new() {
-		RosterId = (short)rosterId,
-		NameIndex = (short)nameIndex,
-		Name = name,
-		Bay = -1,
-		OnStrength = 0,
-		Skill = PilotSkill.GetById((short)skill),
-		SquadPosition = -1,
-		Rank = PilotRank.GetById((short)rank),
-		Condition = 100,
-	};
-
-	/// <summary>The squad block's shape: three squads of twelve pilot records.</summary>
-	internal const int SquadCount = 3;
-	internal const int PilotsPerSquad = 12;
-
-	/// <summary>
-	/// <c>Player_Create</c>'s name-index draw and <c>Game_NewCareer</c>'s salvage draw, both below 11 —
-	/// the pool is <c>draw * 1000 + 100000</c> kilograms.
-	/// </summary>
-	internal const short PlayerNameIndexCount = 11;
-	internal const short SalvageDrawCount = 11;
-
-	/// <summary>The rank a roster pilot starts at for each skill, <c>0046f5f4</c> through <c>Pilot_RankForSkill</c> (<c>0040fa21</c>).</summary>
-	private static readonly int[] RankForSkill = { 0, 1, 2, 2 };
-
-	/// <summary>
-	/// <c>Util_Shuffle</c> (<c>0040f95c</c>): each value in turn goes into the empty slot a draw counts to.
-	/// </summary>
-	private static short[] Shuffle(short length, Func<short, int> roll) {
-		var slots = Enumerable.Repeat((short)-1, length).ToArray();
-		for (short value = 0; value < length; value++) {
-			int skip = roll((short)(length - value));
-			int empty = 0;
-			int at = 0;
-			if (skip > 0) {
-				do {
-					if (slots[at] == -1) {
-						empty++;
-					}
-
-					at++;
-				} while (empty < skip);
-			}
-
-			while (slots[at] != -1) {
-				at++;
-			}
-
-			slots[at] = value;
-		}
-
-		return slots;
-	}
-
-	/// <summary>
-	/// <c>Pilot_DrawSkill</c> (<c>0040f9dc</c>) — a draw below 100 against the thresholds at <c>0046f5ec</c>: 70, 85, 95 and
-	/// 100, so skill 0 seven times in ten.
-	/// </summary>
-	private static int SkillDraw(Func<short, int> roll) {
-		int draw = roll(100);
-		for (int skill = 0; skill < SkillThresholds.Length; skill++) {
-			if (draw < SkillThresholds[skill]) {
-				return skill;
-			}
-		}
-
-		return 0;
-	}
-
-	private static readonly int[] SkillThresholds = { 70, 85, 95, 100 };
 
 	/// <summary>
 	/// A squad machine from a mission's roster record, as <c>MsnGen_LoadMission</c> builds one:

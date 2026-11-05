@@ -8,16 +8,12 @@ namespace Herculan.Engine.Shell;
 /// replacement of a lost squad member.
 /// </summary>
 public sealed partial class ShellHangar {
-	/// <summary>The squad block's shape: three squads of twelve pilot records, one squad member drawn from each.</summary>
-	private const int SquadCount = 3;
-	private const int PilotsPerSquad = 12;
 	private readonly List<ShellBayPilot> _squad = new();
 
 	/// <summary>
 	/// <c>Squad_TakeMember</c> (<c>0040fb4f</c>) as the debrief uses it to replace squad member
-	/// <paramref name="member"/>: the squad's next record by its cursor becomes the member, the cursor steps
-	/// modulo 12, and the record is reset by <c>Pilot_SetDefaults</c> (<c>0040fd17</c>) — no bay, off strength,
-	/// no position, condition 100 and every counter 0. The debrief then takes one off
+	/// <paramref name="member"/>: the next record of the member's pilot pool, by the pool's cursor, becomes the member, the cursor steps
+	/// modulo 12, and the record is reset by <see cref="ShellRoster.SetDefaults"/>. The debrief then takes one off
 	/// <see cref="MachinesOnStrength"/>. The record written is <paramref name="save"/>'s, the game this hangar
 	/// was read from; the pilot it replaces keeps its own record as it was.
 	/// </summary>
@@ -26,28 +22,22 @@ public sealed partial class ShellHangar {
 			return;
 		}
 
-		int squad = _squadRecords[member] / PilotsPerSquad;
-		short next = save.SquadTailAndPlayerHead[SquadCount + squad];
-		save.SquadTailAndPlayerHead[squad] = next;
-		save.SquadTailAndPlayerHead[SquadCount + squad] = (short)((next + 1) % PilotsPerSquad);
-		int record = squad * PilotsPerSquad + next;
+		int pool = _squadRecords[member] / ShellRoster.PilotsPerPool;
+		short next = save.SquadTailAndPlayerHead[ShellRoster.PoolCount + pool];
+		save.SquadTailAndPlayerHead[pool] = next;
+		save.SquadTailAndPlayerHead[ShellRoster.PoolCount + pool] = (short)((next + 1) % ShellRoster.PilotsPerPool);
+		int record = pool * ShellRoster.PilotsPerPool + next;
 		if (save.Squadmates.ElementAtOrDefault(record) is not { } pilot) {
 			return;
 		}
 
-		pilot.Bay = -1;
-		pilot.OnStrength = 0;
-		pilot.SquadPosition = -1;
-		pilot.Condition = 100;
-		pilot.HercKills = pilot.FlyerKills = pilot.BaseKills = 0;
-		pilot.TotalHercKills = pilot.TotalFlyerKills = pilot.TotalBaseKills = 0;
-		pilot.MissionsFlown = 0;
+		ShellRoster.SetDefaults(pilot);
 		_squad[member] = Pilot(pilot)!;
 		_squadRecords[member] = record;
 		MachinesOnStrength--;
 	}
 
-	/// <summary>Which of the save's 36 squad records squad member <paramref name="member"/> is.</summary>
+	/// <summary>Which of the save's 36 pool records squad member <paramref name="member"/> is.</summary>
 	internal int SquadRecordIndex(int member) => _squadRecords[member];
 
 	/// <summary>The player's own pilot record, embedded in the player structure at <c>+0x04</c>.</summary>
@@ -148,8 +138,8 @@ public sealed partial class ShellHangar {
 	/// <summary>
 	/// <c>Squad_PilotForBay(00482a78, slot)</c> (<c>00410220</c>) — the pilot assigned to a bay, or null. It searches exactly
 	/// four records: the player's own, then the three squad members the player structure points at
-	/// (<c>+0x3f</c>). Each of those pointers is set on load to record <c>DAT_00483b48[k]</c> of squad
-	/// <c>k</c>, so a pilot in the squad block who is not one of the three is never found here.
+	/// (<c>+0x3f</c>). Each of those pointers is set on load to record <c>DAT_00483b48[k]</c> of pilot
+	/// pool <c>k</c>, so a pilot in the squad block who is not one of the three is never found here.
 	/// </summary>
 	public ShellBayPilot? PilotFor(int slot) {
 		if (slot < 0) {
@@ -180,6 +170,6 @@ public sealed partial class ShellHangar {
 		}
 	}
 
-	/// <summary>Which of the save's 36 squad records each of <see cref="SquadMembers"/> was read from.</summary>
+	/// <summary>Which of the save's 36 pool records each of <see cref="SquadMembers"/> was read from.</summary>
 	private readonly List<int> _squadRecords = new();
 }
