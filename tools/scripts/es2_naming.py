@@ -2,7 +2,7 @@
 """Helpers for working down the function-naming backlog in the known_symbols_<binary>.json files.
 
 Subcommands (BIN is a binary tools/scripts/retail_binaries.py registers: DBSIM, VSHELL, ES1DBSIM,
-ES1GO or ES1ESCD). rtti, vtables, classes and stats read Borland class records and refuse ES1's Symantec C++
+ES1GO, ES1ESCD or ES1PLAYFLIC). rtti, vtables, classes and stats read Borland class records and refuse ES1's Symantec C++
 binaries. match pairs two PE images or two X-32 images, never one of each, since the two mask
 address operands by different rules (insn_streams).
 
@@ -103,7 +103,7 @@ address operands by different rules (insn_streams).
   fixrefs batch.json [--write]
       Rewrite `FUN_a` to `Name` (`a`) in docs and <c>FUN_a</c> / bare FUN_a in C#, and a bare
       backticked `a` to `Name` (`a`) in the docs of its binary's family (docs/es1/ for ES1DBSIM,
-      ES1GO and ES1ESCD, docs/retail/ for DBSIM and VSHELL): the first mention in each paragraph,
+      ES1GO, ES1ESCD and ES1PLAYFLIC, docs/retail/ for DBSIM and VSHELL): the first mention in each paragraph,
       list item or table row, never one after a name, in a link, in an address column or in a code
       fence. A doc's binary is the one its title line names (DBSIM.EXE, GO.EXE, ESCD.EXE,
       VSHELL.EXE); with none named, a docs/retail/ doc's is its folder's (simulation/ and
@@ -969,7 +969,7 @@ def relink(text, new):
     return text
 
 
-BINARY_TAG = re.compile(r"\b(?:DBSIM|VSHELL|ES1DBSIM|ES1GO|ES1ESCD)(?:'s)? $")
+BINARY_TAG = re.compile(r"\b(?:DBSIM|VSHELL|ES1DBSIM|ES1GO|ES1ESCD|ES1PLAYFLIC)(?:'s)? $")
 
 
 def relink_bare(text, binary, named, quiet=False):
@@ -1128,15 +1128,15 @@ def batch_names(path):
     return named
 
 
-DOC_FAMILY = {"ES1DBSIM": "es1", "ES1GO": "es1", "ES1ESCD": "es1", "DBSIM": "retail", "VSHELL": "retail"}
+DOC_FAMILY = {"ES1DBSIM": "es1", "ES1GO": "es1", "ES1ESCD": "es1", "ES1PLAYFLIC": "es1", "DBSIM": "retail", "VSHELL": "retail"}
 # A doc's binary: the .EXE its title names, in its family; else, in docs/retail/, its folder (CLAUDE.md's split).
 EXE_NAME = re.compile(r"\b(DBSIM|GO|ESCD|VSHELL)\.EXE\b")
-EXE_BINARY = {"es1": {"DBSIM": "ES1DBSIM", "GO": "ES1GO", "ESCD": "ES1ESCD", "VSHELL": "VSHELL"},
-              "retail": {"DBSIM": "DBSIM", "VSHELL": "VSHELL", "GO": "ES1GO", "ESCD": "ES1ESCD"}}
+EXE_BINARY = {"es1": {"DBSIM": "ES1DBSIM", "GO": "ES1GO", "ESCD": "ES1ESCD", "PLAYFLIC": "ES1PLAYFLIC", "VSHELL": "VSHELL"},
+              "retail": {"DBSIM": "DBSIM", "VSHELL": "VSHELL", "GO": "ES1GO", "ESCD": "ES1ESCD", "PLAYFLIC": "ES1PLAYFLIC"}}
 FOLDER_BINARY = {"retail": {"simulation": "DBSIM", "rendering": "DBSIM", "shell": "VSHELL"}}
 # A binary named right before a mention: "ES1DBSIM `a`", "`ES1GO` `a`", "`GO.EXE`'s `a`". A bare DBSIM
 # or VSHELL is ES2's in either family.
-TEXT_BINARY = re.compile(r"\b(?:(ES1DBSIM|ES1GO|ES1ESCD|DBSIM|VSHELL)|(DBSIM|GO|ESCD|VSHELL)\.EXE)`?(?:'s)? $")
+TEXT_BINARY = re.compile(r"\b(?:(ES1DBSIM|ES1GO|ES1ESCD|ES1PLAYFLIC|DBSIM|VSHELL)|(DBSIM|GO|ESCD|PLAYFLIC|VSHELL)\.EXE)`?(?:'s)? $")
 
 
 def doc_binary(rel, text, fam):
@@ -1147,7 +1147,7 @@ def doc_binary(rel, text, fam):
         return named.pop() if len(named) == 1 else None
     parts = rel.replace("\\", "/").split("/")
     return FOLDER_BINARY.get(fam, {}).get(parts[3]) if len(parts) > 4 else None
-ADDR_COLUMN = re.compile(r"(?i)^(?:address|es1|es2|dbsim|vshell|es1dbsim|es1go|es1escd)$")
+ADDR_COLUMN = re.compile(r"(?i)^(?:address|es1|es2|dbsim|vshell|es1dbsim|es1go|es1escd|es1playflic)$")
 LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s")
 TABLE_SEP = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)*\|?\s*$")
 
@@ -1251,7 +1251,7 @@ def cmd_fixrefs(args):
     """Rewrite the usual reference shapes to a batch's new names in docs (.md) and C# (.cs):
     `FUN_a` -> `Name` (`a`) in markdown, <c>FUN_a</c> -> <c>Name</c> (<c>a</c>) and a bare FUN_a
     -> Name (a) in C#, and a bare `a` -> `Name` (`a`) in the docs of the address's binary family
-    (docs/es1/ for ES1DBSIM, ES1GO and ES1ESCD, docs/retail/ for DBSIM and VSHELL; fix_bare_doc says which).
+    (docs/es1/ for ES1DBSIM, ES1GO, ES1ESCD and ES1PLAYFLIC, docs/retail/ for DBSIM and VSHELL; fix_bare_doc says which).
     Anything else naming the address is listed for a manual edit."""
     named = batch_names(args[0])
     if not named:

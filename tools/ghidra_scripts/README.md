@@ -27,7 +27,7 @@ A single malformed `.java` in this directory breaks **every** script in it, with
 
 | File | Consumed by | Holds |
 | --- | --- | --- |
-| `known_symbols_<binary>.json`: `dbsim`, `vshell`, `es1dbsim`, `es1go`, `es1escd` | `ES2ApplySymbolNames` | address → name, description, optional C signature, one file per binary |
+| `known_symbols_<binary>.json`: `dbsim`, `vshell`, `es1dbsim`, `es1go`, `es1escd`, `es1playflic` | `ES2ApplySymbolNames` | address → name, description, optional C signature, one file per binary |
 | `known_structs.json` | `ES2ApplyStructures` | object layouts, and the parameters to type with them |
 | `known_vtables.json` | `ES2ApplyVtables` | vtable slot names and instance addresses |
 
@@ -43,7 +43,7 @@ A single malformed `.java` in this directory breaks **every** script in it, with
 
 ### Known symbols
 
-Confirmed address → meaning mappings, one file per binary: `known_symbols_dbsim.json`, `known_symbols_vshell.json`, `known_symbols_es1dbsim.json`, `known_symbols_es1go.json` and `known_symbols_es1escd.json`. `ES2ApplySymbolNames` applies one file to its binary (`es2_naming.py apply BIN` passes the right one), and it is idempotent: re-run it after adding or changing entries. Python tools read and write the files through `tools/scripts/es2_symbols.py`.
+Confirmed address → meaning mappings, one file per binary: `known_symbols_dbsim.json`, `known_symbols_vshell.json`, `known_symbols_es1dbsim.json`, `known_symbols_es1go.json`, `known_symbols_es1escd.json` and `known_symbols_es1playflic.json`. `ES2ApplySymbolNames` applies one file to its binary (`es2_naming.py apply BIN` passes the right one), and it is idempotent: re-run it after adding or changing entries. Python tools read and write the files through `tools/scripts/es2_symbols.py`.
 
 One address, one entry: when a later finding revises an existing one, edit that entry in place rather than adding a second. Entries are in ascending address order, so two branches that add symbols insert at different places. `es2_naming.py insert` and `edit` keep the order and refuse a file that breaks it, a duplicate address or name, or an entry of another binary. The apply script aborts on a duplicate.
 

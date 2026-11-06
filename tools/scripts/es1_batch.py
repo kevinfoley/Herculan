@@ -819,7 +819,7 @@ def main():
     b.add_argument("--out", help="where to write the brief (default <scratch>/brief.md)")
     b.add_argument("--auto", action="store_true",
                    help="append the tools' leads: bounds, function counts, match candidates, docs naming the range")
-    b.add_argument("--binary", default="ES1DBSIM", choices=("ES1DBSIM", "ES1GO", "ES1ESCD"),
+    b.add_argument("--binary", default="ES1DBSIM", choices=("ES1DBSIM", "ES1GO", "ES1ESCD", "ES1PLAYFLIC"),
                    help="the binary the batch reads: the range's, whose dumps the brief names and --auto reads (default ES1DBSIM)")
     pt = sub.add_parser("port", help="write a port subagent's brief from es1_port_brief.md")
     pt.add_argument("part", help="the part's name, M1")
@@ -828,7 +828,7 @@ def main():
     pt.add_argument("--notes", help="a file with the part's own section: context, the user's choices, ## Scope, and "
                                     "## Read first / ## Code / ## Limits / ## Report items to add to the template's")
     pt.add_argument("--budget", type=int, default=150, help="the tool-call budget (default 150)")
-    pt.add_argument("--binary", default="ES1DBSIM", choices=("ES1DBSIM", "ES1GO", "ES1ESCD"),
+    pt.add_argument("--binary", default="ES1DBSIM", choices=("ES1DBSIM", "ES1GO", "ES1ESCD", "ES1PLAYFLIC"),
                     help="the binary the part ports from, whose dumps the brief names (default ES1DBSIM)")
     pt.add_argument("--out", help="where to write the brief (default <scratch>/brief.md)")
     for sp in (b, pt):

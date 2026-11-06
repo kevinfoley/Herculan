@@ -21,7 +21,7 @@ Shapes it sorts the hits into:
               the first byte after the fill is what a branch or stored pointer reaches. The "true"
               address is the one after the fill; re-address a known_symbols entry to it.
 
-Symantec C++ code (ES1DBSIM, ES1GO, ES1ESCD) is also entered through the 0x90 padding before a `55 8B EC`
+Symantec C++ code (ES1DBSIM, ES1GO, ES1ESCD, ES1PLAYFLIC) is also entered through the 0x90 padding before a `55 8B EC`
 prologue, so an entry there is a real one (Herculan/docs/es1/formats/compiler.md#vtables). For those
 binaries an entry on that padding is never EARLY, and is sorted instead into:
   PADDING     Ghidra's function starts on the padding and runs on through the prologue.
@@ -36,7 +36,7 @@ so a hit already repaired shows here until the dumps are regenerated; the fixent
 `removing` lines show the live state.
 
 Usage:
-    python tools/scripts/es2_late_entries.py [--binary DBSIM|VSHELL|ES1DBSIM|ES1GO|ES1ESCD] [--no-xref]
+    python tools/scripts/es2_late_entries.py [--binary DBSIM|VSHELL|ES1DBSIM|ES1GO|ES1ESCD|ES1PLAYFLIC] [--no-xref]
 """
 
 from __future__ import annotations

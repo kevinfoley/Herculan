@@ -1,17 +1,17 @@
-# DBSIM.EXE, GO.EXE and ESCD.EXE — the X-32 executable
+# DBSIM.EXE, GO.EXE, ESCD.EXE and PLAYFLIC.EXE — the X-32 executable
 
-ES1's two game executables and its launcher, `ESCD.EXE`, are DOS `MZ` files carrying a 32-bit protected-mode program behind a DOS extender of the FlashTek X-32 family. Each file is three parts back to back: a real-mode stub, the extender's 16-bit kernel, and the program's flat 32-bit image. Nothing follows the image. `DBSIM.EXE` and `GO.EXE` carry one version of the stub and kernel (`DOS extender Copyright 1991-1994 by Doug Huffman`); `ESCD.EXE` carries another (`DOS extender Copyright 1991 1993 by Doug Huffman`), which loads the image the same way from variables at other offsets ([`ESCD.EXE`'s kernel](#escdexes-kernel)).
+ES1's two game executables, its launcher `ESCD.EXE` and its flic player `PLAYFLIC.EXE` are DOS `MZ` files carrying a 32-bit protected-mode program behind a DOS extender of the FlashTek X-32 family. Each file is three parts back to back: a real-mode stub, the extender's 16-bit kernel, and the program's flat 32-bit image. Nothing follows the image. `DBSIM.EXE` and `GO.EXE` carry one version of the stub and kernel (`DOS extender Copyright 1991-1994 by Doug Huffman`); `ESCD.EXE` and `PLAYFLIC.EXE` carry two builds of another (`DOS extender Copyright 1991 1993 by Doug Huffman`), which loads the image the same way from variables at other offsets ([`ESCD.EXE`'s kernel](#escdexes-kernel), [`PLAYFLIC.EXE`'s](#playflicexes-stub-and-kernel)).
 
-| Part | `DBSIM.EXE` | `GO.EXE` | `ESCD.EXE` |
-|---|---|---|---|
-| stub, with its own `MZ` header | `0x0000`, 1,341 bytes | `0x0000`, the same 1,341 bytes | `0x0000`, 1,329 bytes |
-| kernel `MZ` header | `0x053d`, 160 bytes | `0x053d`, 160 bytes | `0x0531`, 160 bytes |
-| kernel | `0x05dd`, 17,184 bytes (`0x432` paragraphs) | `0x05dd`, 17,184 bytes | `0x05d1`, 16,992 bytes (`0x426` paragraphs) |
-| image | `0x48fd`, 711,896 bytes, to end of file | `0x48fd`, 631,472 bytes, to end of file | `0x4831`, 25,980 bytes, to end of file |
+| Part | `DBSIM.EXE` | `GO.EXE` | `ESCD.EXE` | `PLAYFLIC.EXE` |
+|---|---|---|---|---|
+| stub, with its own `MZ` header | `0x0000`, 1,341 bytes | `0x0000`, the same 1,341 bytes | `0x0000`, 1,329 bytes | `0x0000`, 1,330 bytes |
+| kernel `MZ` header | `0x053d`, 160 bytes | `0x053d`, 160 bytes | `0x0531`, 160 bytes | `0x0532`, 160 bytes |
+| kernel | `0x05dd`, 17,184 bytes (`0x432` paragraphs) | `0x05dd`, 17,184 bytes | `0x05d1`, 16,992 bytes (`0x426` paragraphs) | `0x05d2`, 16,928 bytes (`0x422` paragraphs) |
+| image | `0x48fd`, 711,896 bytes, to end of file | `0x48fd`, 631,472 bytes, to end of file | `0x4831`, 25,980 bytes, to end of file | `0x47f2`, 149,752 bytes, to end of file |
 
-The image runs at address 0 of its own segment: its first file byte is address 0, and every address its code uses is an offset into it. Its memory runs on past the file bytes, to `0xbdd40` in `DBSIM.EXE`, `0xab7c0` in `GO.EXE` and `0x67c0` in `ESCD.EXE`. Its entry point is `0xd` in all three.
+The image runs at address 0 of its own segment: its first file byte is address 0, and every address its code uses is an offset into it. Its memory runs on past the file bytes, to `0xbdd40` in `DBSIM.EXE`, `0xab7c0` in `GO.EXE`, `0x67c0` in `ESCD.EXE` and `0x25790` in `PLAYFLIC.EXE`. Its entry point is `0xd` in all four.
 
-Image addresses are written `ES1DBSIM 000654bc`, `ES1GO 00051918` and `ES1ESCD 000005cc`. Kernel code is cited by its offset in the kernel's code segment (load segment + `0x74`, file offset `0x0d1d`) as `DBSIM.EXE` has it; `GO.EXE`'s kernel carries the same instructions `0x30` bytes lower at every location cited here. `ESCD.EXE`'s kernel code is cited as "`ESCD.EXE` kernel", by its offset in its own code segment (load segment + `0x6f`, file offset `0x0cc1`). Kernel data offsets (`+0x12c`) count from the kernel's first byte, which is also the start of its data segment.
+Image addresses are written `ES1DBSIM 000654bc`, `ES1GO 00051918`, `ES1ESCD 000005cc` and `ES1PLAYFLIC 00003e19`. Kernel code is cited by its offset in the kernel's code segment (load segment + `0x74`, file offset `0x0d1d`) as `DBSIM.EXE` has it; `GO.EXE`'s kernel carries the same instructions `0x30` bytes lower at every location cited here. `ESCD.EXE`'s kernel code is cited as "`ESCD.EXE` kernel", by its offset in its own code segment (load segment + `0x6f`, file offset `0x0cc1`). Kernel data offsets (`+0x12c`) count from the kernel's first byte, which is also the start of its data segment.
 
 ## The stub
 
@@ -105,6 +105,24 @@ The kernel reads `+0xec` from the table (`ESCD.EXE` kernel `0x3498` in the image
 
 Under DPMI the stack pointer is the block's length from its first page boundary (`0x38e3`), less `0x1200` that the image-read routine takes off it (`0x3483`). The two hand-offs push `0xd` at `0x3a7f` (DPMI, followed by the far return at `0x3a85`) and `0x365e` (VCPI and raw XMS), in the same sequences as `DBSIM.EXE`'s.
 
+### `PLAYFLIC.EXE`'s stub and kernel
+
+`PLAYFLIC.EXE`'s stub is `ESCD.EXE`'s with one instruction more, an `STI` at stub `0x2aa` between two `POP AX`. Every byte after it is `ESCD.EXE`'s one place later but for 22, and before it five bytes differ: the header's last-page count (`+0x02`), two at `+0x1c` and `+0x20`, and two in the code at `0x15e` and `0x16a`. Its header declares its 1,330 bytes (three pages, `0x132` used in the last), two relocations and entry `0000:0152`, `ESCD.EXE`'s.
+
+Its kernel carries `ESCD.EXE`'s banner and is 64 bytes shorter. Its header declares 32 relocations, minimum and maximum extra paragraphs `0xea` and `0xffff`, and entry `006f:0000`. Its address table is at `+0xd8`, as `ESCD.EXE`'s:
+
+| Offset | `PLAYFLIC.EXE` |
+|---|---|
+| `+0xd8` | `00015ed2` |
+| `+0xdc` | `00015576` |
+| `+0xe0` | `00015ee0` |
+| `+0xe4` | `00015578` |
+| `+0xe8` | `00015578` |
+| `+0xec` | `00025790`, the image's memory size |
+| `+0xf0` | `0000000d`, the entry point |
+
+The kernel holds `ESCD.EXE`'s read of the memory size from `+0xec` (`mov edx,[0xec]`) and its hand-off, `push 0xd` and a 32-bit far return. Which image words the first five entries name, and where it stores the memory size, are [Open](#open).
+
 ## The image
 
 Address 0 is the image's first file byte. Each of the 41 source-path strings in `ES1DBSIM`, 42 in `ES1GO` and 13 in `ES1ESCD` occurs exactly once in its image as a 4-byte little-endian value equal to its own offset, and every one of those is the operand of a `push` followed by a push of a line number (`ES1DBSIM 000654e2` pushes `0x98a48`, `C:\P\M\s\util\ovl.cpp`, then line `0x15`).
@@ -119,3 +137,4 @@ The kernel's read runs to end of file, and the three parts cover every byte of e
 - **Open:** where the image's stack sits under VCPI and raw XMS hosts; the kernel computes the dword at `+0x198` for them in the image-read routine.
 - **Open:** what the kernel keeps in the `0x126a` bytes (`0x1200` in `ESCD.EXE`) between the image's initial stack pointer and the end of its DPMI block.
 - **Open:** what `ES1ESCD` does with the memory size the kernel stores at `0x5798`, and with `0x5794` at `000001eb`, in the startup.
+- **Open:** `PLAYFLIC.EXE`'s kernel code: which image words its address table's first five entries name, and where it stores the memory size, which `ESCD.EXE`'s does with `mov ebx,0x67c0` and the bytes `66 BB` and the size do not occur in `PLAYFLIC.EXE`'s.

@@ -1,20 +1,21 @@
 """Extract the 32-bit program image from an ES1 X-32 executable, and import it into Ghidra.
 
-`DBSIM.EXE`, `GO.EXE` and `ESCD.EXE` are a real-mode stub, a 16-bit DOS-extender kernel and a flat
-32-bit image, in the layout of Herculan/docs/es1/formats/x32-executable.md. The image runs at
+`DBSIM.EXE`, `GO.EXE`, `ESCD.EXE` and `PLAYFLIC.EXE` are a real-mode stub, a 16-bit DOS-extender
+kernel and a flat 32-bit image, in the layout of Herculan/docs/es1/formats/x32-executable.md. The image runs at
 offset 0 of its own segment, so its file bytes are its memory from address 0 up, and every address
 the code uses is an offset into it. This writes those bytes and a layout JSON:
 
     <out>/<ID>               the image, file part only
     <out>/<ID>_layout.json   file offsets, memory size, entry point, the kernel's address table
 
-The layouts were derived from two stub and kernel versions (`LAYOUTS`). The script picks a layout
+The layouts were derived from three stub and kernel versions (`LAYOUTS`). The script picks a layout
 by the stub's hash, checks the kernel instructions that layout relies on, and refuses a file that
 differs, rather than extract from a layout it was never checked against.
 
     py tools/scripts/es1_x32_extract.py E:/ES2Stuff/ES1/DBSIM.EXE ES1DBSIM --out E:/ES2Stuff/tools/analysis_out
     py tools/scripts/es1_x32_extract.py E:/ES2Stuff/ES1/GO.EXE ES1GO --out E:/ES2Stuff/tools/analysis_out --import E:/ES2Stuff
     py tools/scripts/es1_x32_extract.py E:/ES2Stuff/ES1/ESCD.EXE ES1ESCD --out E:/ES2Stuff/tools/analysis_out --import E:/ES2Stuff
+    py tools/scripts/es1_x32_extract.py E:/ES2Stuff/ES1/PLAYFLIC.EXE ES1PLAYFLIC --out E:/ES2Stuff/tools/analysis_out --import E:/ES2Stuff
 
 `--import ROOT` then imports the image into the `ES1Recon` project under ROOT/tools/ghidra_project
 with Ghidra's raw-binary loader at base 0, `ES1SetupX32Image` before auto-analysis and
@@ -64,6 +65,8 @@ LAYOUTS = (
            b"DOS extender Copyright 1991-1994 by Doug Huffman", 0x118, False),   # DBSIM.EXE, GO.EXE
     Layout("1991 1993", "ca8b125edaf95b1077a646ec1c0692e3cd2a1bcc",
            b"DOS extender Copyright 1991 1993 by Doug Huffman", 0xD8, True),     # ESCD.EXE
+    Layout("1991 1993, PLAYFLIC.EXE's", "25f9124bfe199cea254fd2ef3106e971ef421860",
+           b"DOS extender Copyright 1991 1993 by Doug Huffman", 0xD8, False),    # PLAYFLIC.EXE
 )
 
 KERNEL_PARAS = 0x000      # word: kernel length in paragraphs; the image follows it
@@ -155,8 +158,8 @@ def ghidra_import(root, image_path, layout, overwrite):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("exe", help="DBSIM.EXE, GO.EXE or ESCD.EXE from the ES1 install")
-    ap.add_argument("id", help="binary identifier: ES1DBSIM, ES1GO or ES1ESCD; names the output files and the Ghidra program")
+    ap.add_argument("exe", help="DBSIM.EXE, GO.EXE, ESCD.EXE or PLAYFLIC.EXE from the ES1 install")
+    ap.add_argument("id", help="binary identifier: ES1DBSIM, ES1GO, ES1ESCD or ES1PLAYFLIC; names the output files and the Ghidra program")
     ap.add_argument("--out", default=os.path.join(REPO, "tools", "analysis_out"), help="output directory")
     ap.add_argument("--import", dest="import_root", metavar="ROOT",
                     help="checkout holding tools/ghidra_12.1.2_PUBLIC and tools/ghidra_project; imports into ES1Recon")

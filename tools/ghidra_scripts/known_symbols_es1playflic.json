@@ -1,0 +1,899 @@
+﻿{
+  "schema_version": 1,
+  "_readme": [
+    "Known symbols for ES1's PLAYFLIC.EXE (ES1PLAYFLIC): confirmed address -> meaning mappings, applied to the ES1Recon Ghidra project by ES2ApplySymbolNames.java.",
+    "Addresses are offsets into the flat X-32 image (Herculan/docs/es1/formats/x32-executable.md#the-image).",
+    "Schema, confidence rules and run order: tools/ghidra_scripts/README.md, 'Known symbols'.",
+    "Entries are in address order. tools/scripts/es2_naming.py insert and edit keep it, and check that it holds."
+  ],
+  "entries": [
+    {
+      "address": "00000310",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_Main",
+      "description": "(argc, argv): READFLIC's main. With argc < 2 prints the usage text and returns. The flic's name is argv[1]; each later argument starting with - or / is looked up by its second character in the 12-dword table 000158e0 (S s Z z D d B b C c Q q) and its handler taken from the table 0x30 on: S atoi(rest) into the speed override local, Z atoi into 000155f8, D 000155f0 = 1 and a call to 00004d48, B atoi into 000155fc, C atoi into 00015600, Q 000155f4 = 0; others passed over. Then Machine_Open (00001e20)(00024a60); when it answers >= 0, Flic_Open (000030f0)(name, flic local); when that answers >= 0, a non-zero override into the flic's +0x10, Flic_CenterOnScreen (00000510), Flic_Play (00003530) and Flic_Close (000031a4); Machine_Close (00002104) after an open machine. An answer < 0 other than -10 prints READFLIC had troubles with the name and Flic_ErrorText (000036a8).",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile and disassembly at 00000310",
+      "verified": {
+        "bytes": "00000310+510",
+        "sha1": "4eb0dee3f14e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000510",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_CenterOnScreen",
+      "description": "(screen, flic): the flic's x origin +0x8c = (Screen_Width (000018e0) - the header's width +8) / 2 and y origin +0x90 = (Screen_Height (000018f0) - the header's height +0xa) / 2, signed division.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 00000510",
+      "verified": {
+        "bytes": "00000510+68",
+        "sha1": "10b8f7369ba2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000554",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Preload_Open",
+      "description": "(chunk load, buffer size, flic): allocates the 0x28-byte preload record with +0 the header's file size, a buffer of the lesser of the buffer size and the file size at +4, and a 0x7fff-byte frame buffer at +8; seeks the flic's file (+0x80) to frame 1 (+0x50) and reads the buffer's size into it; +0xc = 0, +0x10, +0x14 and +0x18 = that size, +0x1c the chunk load. Returns the record, or 0 when an allocation fails (freeing what it took).",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 00000554",
+      "verified": {
+        "bytes": "00000554+257",
+        "sha1": "10145fef762b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000658",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Preload_Close",
+      "description": "(record): frees the preload record's two buffers (+4, +8) and zeroes +4, +0xc, +0x10, +0x14 and +0x18. The record itself is not freed.",
+      "source": "ES1PLAYFLIC decompile at 00000658",
+      "verified": {
+        "bytes": "00000658+55",
+        "sha1": "8125aabf7940",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000e58",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Profile_GetString",
+      "description": "(file, size, buffer, default, key, section): ES1DBSIM's Profile_GetString (000511a4) by es2_naming diff, with two differences: a key's value, after its first =, passes through 000017d4 before it is copied, and an empty one is passed over for a later line of the key in the section, then the default. The calls are the C library's strcat (00005484) and strchr (000053dc) and the same load, save and compare steps.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile at 00000e58",
+      "verified": {
+        "bytes": "00000e58+711",
+        "sha1": "9d925a3dfec7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000017f8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bios_SetVideoMode",
+      "description": "(mode): INT 10h function 0 with AL the mode, through 000073be. Returns 1.",
+      "source": "ES1PLAYFLIC decompile at 000017f8",
+      "verified": {
+        "bytes": "000017f8+42",
+        "sha1": "eede77f7c465",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001824",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bios_GetVideoMode",
+      "description": "(): INT 10h function 0x0f; returns AL, the current video mode.",
+      "source": "ES1PLAYFLIC decompile at 00001824",
+      "verified": {
+        "bytes": "00001824+32",
+        "sha1": "f5bf5766440a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001844",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Screen_OpenMode13",
+      "description": "(screen): zeroes the 0x14-byte screen record, saves Bios_GetVideoMode (00001824) at +0xc, sets mode 0x13 with Bios_SetVideoMode (000017f8) and, when the mode then reads back as 0x13, sets +0x10 = 1 (open), +4 = 320, +8 = 200 and +0 the pixels' address for 0xa0000; returns 0. Otherwise sets the saved mode back and returns -7.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 00001844",
+      "verified": {
+        "bytes": "00001844+114",
+        "sha1": "b5166e6834b2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000018b8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Screen_Close",
+      "description": "(screen): when open (+0x10), sets the saved video mode (+0xc) back with Bios_SetVideoMode (000017f8) and zeroes the 0x14-byte record.",
+      "source": "ES1PLAYFLIC decompile at 000018b8",
+      "verified": {
+        "bytes": "000018b8+40",
+        "sha1": "b97bfb776760",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000018e0",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Screen_Width",
+      "description": "(screen): returns +4, the width.",
+      "source": "ES1PLAYFLIC decompile at 000018e0",
+      "verified": {
+        "bytes": "000018e0+15",
+        "sha1": "f5fddb593629",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000018f0",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Screen_Height",
+      "description": "(screen): returns +8, the height.",
+      "source": "ES1PLAYFLIC decompile at 000018f0",
+      "verified": {
+        "bytes": "000018f0+15",
+        "sha1": "37681eabfd82",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001af0",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vga_SetDac8",
+      "description": "(count, rgb, first): sends count entries from first to the VGA DAC (port 3c8 the index, 3c9 the channels), each 8-bit channel shifted right by 2, and copies the 8-bit bytes into the DAC copy at 00024d4e.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-palette-chunks; ES1PLAYFLIC decompile at 00001af0",
+      "verified": {
+        "bytes": "00001af0+119",
+        "sha1": "a88e762f0042",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001b68",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vga_SetDac6",
+      "description": "(count, rgb, first): as Vga_SetDac8 (00001af0) with the channels sent as they are, 6-bit.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-palette-chunks; ES1PLAYFLIC decompile at 00001b68",
+      "verified": {
+        "bytes": "00001b68+101",
+        "sha1": "50ed09a57058",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001c1c",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Clock_Open",
+      "description": "(clock): +0 = 0x1234dc, 1,193,180 ticks a second, and the tick count 00025052 = 0. Returns 0.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 00001c1c",
+      "verified": {
+        "bytes": "00001c1c+30",
+        "sha1": "5d94722968c0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001c40",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Clock_Read",
+      "description": "(): latches the 8253's counter 0 (port 43 then two reads of port 40) and returns the clock in its ticks from the tick count 00025052, the reload 00016c7c and the counter halved.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 00001c40",
+      "verified": {
+        "bytes": "00001c40+86",
+        "sha1": "781d29b12e0e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001ca4",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Key_Poll",
+      "description": "(key): Bios_Keyboard (00006f3c)(1); with no key waiting returns 0, otherwise stores the word at key +0 and +1 and returns 1. The key stays in the buffer.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 00001ca4",
+      "verified": {
+        "bytes": "00001ca4+65",
+        "sha1": "ee7b4d1dc8f4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001ce8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Key_Read",
+      "description": "(key): Bios_Keyboard (00006f3c)(0), which takes the key out of the buffer; stores it at key +0 and +1 and returns its low byte.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 00001ce8",
+      "verified": {
+        "bytes": "00001ce8+48",
+        "sha1": "d15713968a35",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001e20",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Machine_Open",
+      "description": "(machine): zeroes the 0x27f-byte machine, opens the keyboard (+0x18, 00001c98, 0), Clock_Open (00001c1c)(+0x14) and Screen_OpenMode13 (00001844)(+0); a failure of any returns its answer. Then reads the SoundFX and Music drivers and ports and the drivers' path from RESOURCE.CFG, detects or forces the sound card at +0x1b and opens the drivers into +0x1a5 with SoundSys_Open (00005f08); when they open returns 0. When the card is not found or the drivers do not open it answers 0 too, leaving the screen open.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 00001e20",
+      "verified": {
+        "bytes": "00001e20+740",
+        "sha1": "395f6fa1be60",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002104",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Machine_Close",
+      "description": "(machine): Screen_Close (000018b8)(+0), SoundSys_Close (00006110)(+0x1a5) on the sound, and the clock's and keyboard's closes, which do nothing.",
+      "source": "ES1PLAYFLIC decompile at 00002104",
+      "verified": {
+        "bytes": "00002104+56",
+        "sha1": "875d1ba62658",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000213c",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_DecodeSync",
+      "description": "(machine, sync 0002566c, data): chunk type 0x18's handler. Data: the sync (0xd clock, 0xe sound), a flag, the sound's number, a zero adjust in ms. For 0xe with 000155f4 (sound, cleared by -Q) at 0 returns at once. 0xd: start (sync +8) = Clock_Read (00001c40). 0xe: sync +0xc = the number, start = DigiSample_Position (00008814)'s position of the sound of that number in the list 00015c2c, or 0. Another sync value leaves the start. With the flag set adds the zero adjust, (adjust * rate) / 1000 unsigned; then, flag or not, -Z's 000155f8 the same way, but with a signed division for a sync other than 0xd; the rate is the clock's (0xd) or 11,025. Sync +0 = the chunk's sync, +4 (the frame count) = 1. With the flag set waits for the start, on the clock or on the sound (none of that number: no wait), a waiting key read with Key_Read (00001ce8) ending the wait.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sync-chunk; ES1PLAYFLIC decompile at 0000213c",
+      "verified": {
+        "bytes": "0000213c+687",
+        "sha1": "715436d6c611",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000023ec",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_DecodeSound",
+      "description": "(sound system machine+0x1a5, flic, data): chunk type 0x15's handler; nothing while 000155f4 (cleared by -Q) is 0. Data: an operation, a number, a NUL-ended name. 0: RESOURCE.CFG [FlicPlayer] pathFlic (default .\\) through Profile_GetString (00000e58), sprintf %s%s with the name; a 0x84-byte node from malloc (00004038), +0 the number, DigiSample_Init (0000860c)(node+4, number, SoundSys_DigiDriver (000061a8)), DigiSample_Load (000086c8)(node+4, path); on success DigiSample_SetVolume (000087d0)(node+4, 0x7fff), node+0x80 = the head 00015c2c and the head = the node. 1: DigiSample_Start (000088cc) of the first node of the number in 00015c2c; 2: DigiSample_Stop (00008918). 3: the same load from [FlicPlay] pathFlic into a 0x9c-byte node through 00008934 and 000089e4, linked at +0x98 into 00015c30; 4 and 5: 00008aac and 00008afc on the first node of the number in 00015c30. Debug messages under -D (000155f0).",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound-chunk; ES1PLAYFLIC decompile at 000023ec",
+      "verified": {
+        "bytes": "000023ec+955",
+        "sha1": "6f46437da7a0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000027a8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_FadeStep",
+      "description": "(screen): a step of a kind-9 palette fade. The remaining count 00025662 goes down by 1; k = that count, or with the direction 00025666 = 7, the steps 0002565e less it. Each channel of the 256 entries is P + (C - P) * k / steps, P the palette copy at 00025056, C the color at 00025668, signed and truncated, into 0002535a, which Vga_SetDac8 (00001af0) sends whole.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-palette-fades; ES1PLAYFLIC decompile at 000027a8",
+      "verified": {
+        "bytes": "000027a8+195",
+        "sha1": "e41e08f4b229",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000286c",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_DecodeFade",
+      "description": "(screen, flic, data): chunk type 0x16's handler. Data: the direction (6 from the color, 7 to it), the kind (8 at once, 9 a step a frame), the steps n (0 as 1) and the color 0x0RGB, each nibble shifted up by 4. Kind 8 sends P + (C - P) * k / n for k = n down to 1 then P (6), or k = 1 up to n (7), back to back with Vga_SetDac8 (00001af0), and zeroes 0002565e and 00025662. Kind 9 stores the color at 00025668, the direction at 00025666, n at 0002565e and 00025662, runs Flic_FadeStep (000027a8) and adds 1 back to 00025662. Another direction or kind does nothing.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-palette-fades; ES1PLAYFLIC decompile at 0000286c",
+      "verified": {
+        "bytes": "0000286c+760",
+        "sha1": "1baba8ecaacc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002c1c",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_DecodeChunk14",
+      "description": "(screen, flic, data): chunk type 0x14's handler. Calls Flic_DecodeCopyDelta (00003e19)(screen's pixels (+0) + flic +0x90 * screen's stride (+4) + flic +0x8c, data, the stride): the frame's origin, the y offset at flic +0x90 and the x offset at +0x8c, on the screen buffer.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-picture-chunk; ES1PLAYFLIC decompile at 00002c1c",
+      "verified": {
+        "bytes": "00002c1c+54",
+        "sha1": "0eead49e03c2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002c54",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_DecodeColorPackets",
+      "description": "(setter, screen, flic, data): a uint16 packet count, then each packet a byte of entries to skip, a count byte (0 for 256) and three bytes an entry. While no fade runs (00025662 = 0) calls setter(count, rgb, first, screen); always copies the packet into the palette copy 00025056 at its first entry.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-palette-chunks; ES1PLAYFLIC decompile at 00002c54",
+      "verified": {
+        "bytes": "00002c54+169",
+        "sha1": "b7453709fc84",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002d00",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_DecodeColor256",
+      "description": "(screen, flic, data): chunk type 4, COLOR_256: Flic_DecodeColorPackets (00002c54) with Vga_SetDac8 (00001af0).",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-palette-chunks; ES1PLAYFLIC decompile at 00002d00",
+      "verified": {
+        "bytes": "00002d00+26",
+        "sha1": "628c0e7c0789",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002d1c",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_DecodeColor64",
+      "description": "(screen, flic, data): chunk type 0xb, COLOR_64: Flic_DecodeColorPackets (00002c54) with Vga_SetDac6 (00001b68).",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-palette-chunks; ES1PLAYFLIC decompile at 00002d1c",
+      "verified": {
+        "bytes": "00002d1c+26",
+        "sha1": "996bb3918344",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002ff8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_DecodeBlack",
+      "description": "(screen, flic): chunk type 0xd, BLACK: for each of the header's rows from the origin (+0x8c, +0x90), width / 2 words of 0 with 00001a84 and, for an odd width, the last pixel 0 with 00001900.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-frames; ES1PLAYFLIC decompile at 00002ff8",
+      "verified": {
+        "bytes": "00002ff8+154",
+        "sha1": "d2225080c247",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000030f0",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_Open",
+      "description": "(name, flic): zeroes the 0x98-byte flic record, opens the file into +0x80 (error -5) and reads the 128-byte header into +0 (-6 when short); +0x88 = the name. Magic 0xaf12 (.FLC): seeks to frame 1 (+0x50), returns 0. Magic 0xaf11 (.FLI): +0x50 = 0x80 and the speed +0x10 = +0x10 * 1000 / 70, returns 0. Another magic closes the file and returns -3.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 000030f0",
+      "verified": {
+        "bytes": "000030f0+178",
+        "sha1": "f874afe40f58",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000031a4",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_Close",
+      "description": "(flic): closes the file at +0x80 and zeroes the 0x98-byte record.",
+      "source": "ES1PLAYFLIC decompile at 000031a4",
+      "verified": {
+        "bytes": "000031a4+42",
+        "sha1": "61c0b614c9d5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000031d0",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_DecodeFrame",
+      "description": "(screen, frame, flic): walks the frame chunk's subchunks, as many as its +6 word, the first at +0x10, each advanced by its own +0 dword size, and dispatches each by its +4 type word on (screen, flic, the subchunk's data at +6): 4 Flic_DecodeColor256, 7 FUN_00002ecc, 0xb Flic_DecodeColor64, 0xc FUN_00002df4, 0xd Flic_DecodeBlack, 0xf FUN_00002d38, 0x10 FUN_00003094, 0x14 Flic_DecodeChunk14 (00002c1c), 0x15 Flic_DecodeSound (on screen + 0x1a5 rather than the screen), 0x16 Flic_DecodeFade, 0x17 FUN_00002b64, 0x18 Flic_DecodeSync (on 0002566c rather than the flic); any other type is passed over. Returns 0.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-frames; ES1PLAYFLIC decompile at 000031d0",
+      "verified": {
+        "bytes": "000031d0+375",
+        "sha1": "f2d3e09d8978",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003348",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_NextFrame",
+      "description": "(screen, flic): reads the next chunk with FUN_000007c0(local, flic); with none returns -4. A chunk of type 0xf1fa whose +0 size is not 4 goes to Flic_DecodeFrame (000031d0)(screen, chunk, flic), whose answer it returns; a frame of size 4 returns EBX as it stood; any other type returns -4. Calls FUN_00000690(flic) before returning on every path but the first.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-frames; ES1PLAYFLIC decompile at 00003348",
+      "verified": {
+        "bytes": "00003348+93",
+        "sha1": "763ca0f84698",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000033a8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_FrameDue",
+      "description": "(clock, speed ms, sync): the frame's due time, (speed * rate) / 1000 unsigned, times the sync's frame count (+4), plus its start (+8); the rate is the clock's (+0) for the sync 0xd and 11,025 otherwise. The first call off the clock also keeps (speed * the clock's rate) / 1000 in 00015c34 and that times the double 0.05 into 000248f8 through the C library's __LNGDBL@ (00008075), __DMUL@ (00007ea8) and __DBLLNG@ (00008110) and Clock_Read (00001c40, into 000248fc).",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 000033a8",
+      "verified": {
+        "bytes": "000033a8+151",
+        "sha1": "c897b30dd93e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00003440",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_WaitFrame",
+      "description": "(machine, due, sync): on the clock (sync 0xd) loops until Clock_Read (00001c40) reaches due, unsigned, checking Key_Poll (00001ca4) first each pass; a key is read with Key_Read (00001ce8) and returns -10. Otherwise waits the same way on DigiSample_Position (00008814)'s position of the sound whose number is the sync's +0xc in the list 00015c2c, and with no such sound returns at once. Returns 0.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 00003440",
+      "verified": {
+        "bytes": "00003440+160",
+        "sha1": "5332a9e23f6f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000034e0",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_FindFrame2",
+      "description": "(flic): seeks the file to frame 1 (+0x50) and reads the 16-byte frame header; +0x54 = frame 1's offset plus its size. Returns the read's error, or 0.",
+      "source": "ES1PLAYFLIC decompile at 000034e0",
+      "verified": {
+        "bytes": "000034e0+79",
+        "sha1": "e43a21d47d91",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003530",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_Play",
+      "description": "(machine, flic): Preload_Open (00000554)(00015600, 000155fc, flic) into flic +0x94; the sync 0002566c = 0xd with its start 00025674 = Clock_Read (00001c40) and frame count 00025670 = 1. Then for each of the header's frames (+6): Flic_FadeStep (000027a8) while 00025662 is not 0; Flic_NextFrame (00003348), whose error ends the loop; Flic_FrameDue (000033a8)(clock, speed +0x10, sync); the frame count + 1; Flic_WaitFrame (00003440), whose -10 ends it. Then Preload_Close (00000658); returns the last Flic_NextFrame answer.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#playing-a-flic; ES1PLAYFLIC decompile at 00003530",
+      "verified": {
+        "bytes": "00003530+374",
+        "sha1": "933da4fef98a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000036a8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_ErrorText",
+      "description": "(error): Success for 0 and above; for -5 and -6 0000858d's text for 00015e73; -1 to -10 from the table 00015c08; any other Unknown error.",
+      "source": "ES1PLAYFLIC decompile at 000036a8",
+      "verified": {
+        "bytes": "000036a8+79",
+        "sha1": "95f6d4984271",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003e19",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flic_DecodeCopyDelta",
+      "description": "(dest, data, stride), ending in a plain RET: decodes a 0x14 picture chunk in place onto dest. Reads the dword command count, then each command's opcode, the low 3 bits of its first byte, through the jump table 00003c7c: 0 skip (word >> 3 pixels), 1 literal (word >> 3 bytes after the word), and 2-7 copies from dest itself at a signed offset (2: byte >> 3, n byte 1; 3: byte 1, n byte >> 3; 4 and 5: byte >> 3 less or plus stride, n byte 1; 6: word >> 3, n word 2; 7: word 2, n word >> 3), each copy as REP MOVSW of n / 2 words, then one MOVSB when n is odd. The loop counts the low 16 bits of the count.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-picture-chunk; ES1PLAYFLIC disassembly at 00003e19",
+      "verified": {
+        "bytes": "00003e19+262",
+        "sha1": "4a2c7bf01b32",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005c48",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiInitBlock_Init",
+      "description": "(block, rate): the digital driver's init block: +0 = 0x1000 (the buffer), +0xc = 1 (the driver allocates it), +0x10 = the rate, the rest 0. SoundSys_Open (00005f08) passes 11,025.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-drivers; ES1PLAYFLIC decompile at 00005c48",
+      "verified": {
+        "bytes": "00005c48+71",
+        "sha1": "b1505105e994",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005f08",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundSys_Open",
+      "description": "(sound system machine+0x1a5, card machine+0x1b, MIDI device, MIDI port, drivers' path): device 0xa002 and port 0x388 for 0; the path .\\ default for null; clears the state +0xb8 and the far pointers at +0xc9, +0xcf, +0xd5; DigiInitBlock_Init (00005c48)(+0, 11,025), 00005c90 and 00005cd8 fill the blocks at +0x88 and +0x5c; port at +0xac; 000036fc(0x13, 0), 0000aa8f and 00009e10 on the path. HmiMidi_InitDriver (0000a03f)(device, +0xac, +0x5c, handle out +0xb9); on success device 0xa005 into +0xbd, else +0xb9 = -1; on success 00005db4(system, path), failing as 0xe; else +0xbd = -1. With error 0 (00018928): 0000c2ee(0) and the state 1. Otherwise 00005d0c, 0000a4a0(handle, 1) for each handle >= 0, 000037c0(0), 0000a02d and 0000aafc. Returns the state.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-drivers; ES1PLAYFLIC decompile at 00005f08",
+      "verified": {
+        "bytes": "00005f08+518",
+        "sha1": "b60b0d4628ab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00006110",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundSys_Close",
+      "description": "(sound system): with the state +0xb8 set, 0000a597 on the handles +0xb9 and +0xbd, 00005d0c, 0000a4a0(handle, 1) on +0xbd and +0xb9, 000037c0(0), 0000aafc, 0000a02d, and the state cleared; nothing otherwise.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-drivers; ES1PLAYFLIC decompile at 00006110",
+      "verified": {
+        "bytes": "00006110+123",
+        "sha1": "773dc962845d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000061a8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundSys_DigiDriver",
+      "description": "(sound system): returns the dword +0xb9, the handle HmiMidi_InitDriver (0000a03f) gives the [Music] device, which Flic_DecodeSound (000023ec) hands its samples as their driver.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile at 000061a8",
+      "verified": {
+        "bytes": "000061a8+16",
+        "sha1": "66c4c06a46fb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000061b8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundSys_SetDriverPath",
+      "description": "(card, path): copies the path, with its zero, to +0x7c (a zero byte there for null), and clears the bytes +0x17c and +0x17d.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-drivers; ES1PLAYFLIC decompile at 000061b8",
+      "verified": {
+        "bytes": "000061b8+82",
+        "sha1": "ee13535dd466",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000620c",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundSys_EndDetect",
+      "description": "(card): with +0x17c set, 0000c65f and +0x17c cleared.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-drivers; ES1PLAYFLIC decompile at 0000620c",
+      "verified": {
+        "bytes": "0000620c+31",
+        "sha1": "1dd45581cf6e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000062a8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundSys_Detect",
+      "description": "(card): 0000c4a5 on the path +0x7c (which opens hmidet.386), then 0000ca49(card, card+0x6c) and 0000ce31(card+0x6c), each while the error 00018928 stays 0. With 0: +0x17d and +0x17c set to 1 and returns 1; otherwise 0000c65f and returns 0.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-drivers; ES1PLAYFLIC decompile at 000062a8",
+      "verified": {
+        "bytes": "000062a8+118",
+        "sha1": "4b012ddb0065",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000639c",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundSys_ForceCard",
+      "description": "(card, port, DMA, IRQ, device): +0x6c the port, +0x74 the DMA channel, +0x70 the IRQ, +0x64 the device: Machine_Open's card from RESOURCE.CFG's [SoundFX] when its Driver# is not 0.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-drivers; ES1PLAYFLIC decompile at 0000639c",
+      "verified": {
+        "bytes": "0000639c+34",
+        "sha1": "a44531d0c990",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00006f3c",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bios_Keyboard",
+      "description": "(function): INT 16h with AH the function. Function 1 returns 0 with no key waiting and the key word, or -1 for a word of 0, with one; function 0 returns the key read.",
+      "source": "ES1PLAYFLIC disassembly at 00006f3c",
+      "verified": {
+        "bytes": "00006f3c+46",
+        "sha1": "fffc1611c667",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000860c",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSample_Init",
+      "description": "(object, id, driver): HmiDigi_StartSample's start block with no data: +0x78 the driver, +0x7c (the loaded state) 0, +0x18 the id, +0x28 0x100, +0x10 2, +0x14 0x7fff, +0x40 0x8000, the far pointer +0, +8, +0xc and the other fields to +0x64 zero. Returns 1. Leaves +0x74 alone.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile at 0000860c",
+      "verified": {
+        "bytes": "0000860c+128",
+        "sha1": "1e660e1e2587",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000868c",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSample_Free",
+      "description": "(object): by the loaded state +0x7c: 1, frees the data with 0000c494 (the far pointer +0); 2, clears the far pointer; then the state 0.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile at 0000868c",
+      "verified": {
+        "bytes": "0000868c+59",
+        "sha1": "0a0de5f302aa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000086c8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSample_Load",
+      "description": "(object, path): DigiSample_Free (0000868c), +0xc (the loop count) 0, File_LoadWhole (0000c3f8)(path, &+8) into the far pointer +0. With the size +8 not 0 sets the state +0x7c to 1 and returns 1; otherwise 0.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC disassembly at 000086c8",
+      "verified": {
+        "bytes": "000086c8+69",
+        "sha1": "a45ddaef23ab",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000087d0",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSample_SetVolume",
+      "description": "(object, volume): +0x14 the volume, and bit 1 of the byte +0x29 (flag 0x100) set.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile at 000087d0",
+      "verified": {
+        "bytes": "000087d0+21",
+        "sha1": "7a5450d95d9e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00008814",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSample_Position",
+      "description": "(object): the bytes of the sample played. HmiDigi_GetBytesProcessed (00009543)(driver +0x78, voice +0x74), plus the distance forward, 1 to 0x1000, from HmiDigi_GetDmaPosition (000093fd)(driver) to the DMA transfer's place 0x1000 - n in the driver's buffer, n one more than the count read twice from the channel's count port (00016c50[00016c70[driver]], the flip-flop at port 0xc cleared first), doubled for a port above 7; the distance halved when the dword 000169f0 + driver * 0x6c is not 0.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sounds-position; ES1PLAYFLIC decompile at 00008814",
+      "verified": {
+        "bytes": "00008814+160",
+        "sha1": "e2505a346f00",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000088cc",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSample_Start",
+      "description": "(object): HmiDigi_StartSample (0000d229)(driver +0x78, object); its voice into +0x74 and returns 1, or for -1 +0x74 = 0 and returns 0.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile at 000088cc",
+      "verified": {
+        "bytes": "000088cc+50",
+        "sha1": "dc73e053e5ea",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00008918",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSample_Stop",
+      "description": "(object): HmiDigi_StopSample (0000d4cf)(driver +0x78, voice +0x74).",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile at 00008918",
+      "verified": {
+        "bytes": "00008918+24",
+        "sha1": "124df27436bd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000093fd",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_GetDmaPosition",
+      "description": "(driver): the dword the far pointer at 0001698c + driver * 6 points at; DigiSample_Position (00008814) takes it as the driver's place in its DMA buffer.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sounds-position; ES1PLAYFLIC decompile at 000093fd",
+      "verified": {
+        "bytes": "000093fd+26",
+        "sha1": "88521591eb64",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009543",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_GetBytesProcessed",
+      "description": "(driver, voice): the voice record's (far pointer at 000165ac + driver * 0xc0 + voice * 6) dword +0x4c while bit 0x8000 of its word +0x30 is set; 0 otherwise. HmiDigi_StartSample (0000d229) zeroes +0x4c.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sounds-position; ES1PLAYFLIC decompile at 00009543",
+      "verified": {
+        "bytes": "00009543+66",
+        "sha1": "3299ab3b49d8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000a03f",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_InitDriver",
+      "description": "(device, port block, block, handle out) of the HMI library: ES1DBSIM's HmiMidi_InitDriver (00071076) by es2_naming diff, with two differences: device 0xa008 calls the driver as 0xa005 does, and device 0xa003's branch first copies six far pointers into the driver's table; the rest differs in addresses.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-drivers; es2_naming diff ES1PLAYFLIC 0000a03f ES1DBSIM 00071076"
+    },
+    {
+      "address": "0000c3f8",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "File_LoadWhole",
+      "description": "(path, size out): filesize (00005300) of the path, that many bytes from malloc (00004038), the file opened (00005133, mode 0), read whole (000050fc) and closed (0000526e); returns the far pointer to the bytes and stores the size. A file that does not open prints FAIL: '%s' no exist through printf (0000429a), stores size 0 and returns 0, leaving the block allocated.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile at 0000c3f8",
+      "verified": {
+        "bytes": "0000c3f8+156",
+        "sha1": "a97f196ea685",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000d229",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_StartSample",
+      "description": "(driver, block) of the HMI library: ES1DBSIM's HmiDigi_StartSample (0006dad9), identical after normalisation by es2_naming diff. Returns 0 when the dword 00016578[driver] is above 0xe105, and -1 when all 32 voices (far pointers at 000165ac + driver * 0xc0) have bit 0x8000 of their word +0x30 set; otherwise copies the block into the first free voice record, sets its word +0x30 to the block's flags | 0xa000, zeroes +0x4c, and returns the voice.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile at 0000d229",
+      "verified": {
+        "bytes": "0000d229+678",
+        "sha1": "44e10211f81a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000d4cf",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_StopSample",
+      "description": "(driver, voice) of the HMI library: ES1DBSIM's HmiDigi_StopSample (0006dd7f), identical after normalisation by es2_naming diff.",
+      "source": "es2_naming diff ES1PLAYFLIC 0000d4cf ES1DBSIM 0006dd7f"
+    }
+  ]
+}

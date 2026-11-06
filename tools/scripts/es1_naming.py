@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Naming helpers for ES1's Symantec C++ X-32 images (ES1DBSIM, ES1GO, ES1ESCD), beside es2_naming.py, whose
+"""Naming helpers for ES1's Symantec C++ X-32 images (ES1DBSIM, ES1GO, ES1ESCD, ES1PLAYFLIC), beside es2_naming.py, whose
 Borland-only subcommands (rtti, vtables, classes, stats) refuse them.
 
   vtables BIN [vtable|function|name-regex ...] [--unnamed]
@@ -65,7 +65,7 @@ STORE = re.compile(r"^([0-9a-f]{8})\s+[0-9a-f]+\s+MOV dword ptr \[[^\]]*\],0x([0
 HEX8 = re.compile(r"(?<![0-9A-Za-z_+])([0-9a-f]{8})(?![0-9A-Za-z_])")
 # The text before an address that names its binary: "VSHELL 00405739", "(VSHELL 00405739)",
 # "VSHELL's 00405739", and with a name between, "VSHELL DVJoystick_TrackMax (00405b5d)".
-TAGGED = re.compile(r"\b(DBSIM|VSHELL|ES1DBSIM|ES1GO|ES1ESCD)(?:'s)? (?:[A-Za-z_][\w:~]* \()?$")
+TAGGED = re.compile(r"\b(DBSIM|VSHELL|ES1DBSIM|ES1GO|ES1ESCD|ES1PLAYFLIC)(?:'s)? (?:[A-Za-z_][\w:~]* \()?$")
 
 
 def x32(binary):

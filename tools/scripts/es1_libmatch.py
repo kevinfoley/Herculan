@@ -293,7 +293,7 @@ def entry(binary: R.Binary, h: dict) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--binary", type=str.upper, action="append", choices=("ES1DBSIM", "ES1GO", "ES1ESCD"),
+    ap.add_argument("--binary", type=str.upper, action="append", choices=("ES1DBSIM", "ES1GO", "ES1ESCD", "ES1PLAYFLIC"),
                     help="match only this binary (repeatable; default ES1DBSIM and ES1GO)")
     ap.add_argument("--list", action="store_true", help="print every match")
     ap.add_argument("--batch", metavar="OUT", help="write the new symbols as an es2_naming.py insert batch")

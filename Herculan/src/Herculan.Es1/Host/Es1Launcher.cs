@@ -1,5 +1,6 @@
 using HercWorks.Core.Io;
 using Herculan.Engine.Platform;
+using Herculan.Es1.Flic;
 using Herculan.Es1.Shell;
 using Herculan.Es1.Sim;
 
@@ -47,7 +48,7 @@ public static class Es1Launcher {
 	/// </summary>
 	/// <param name="imguiFontPath">The faces the shell's ImGui draws in (<see cref="Es1ShellHost.Run"/>).</param>
 	/// <param name="screenshotPath"><c>--screenshot</c>'s file, which the first shell turn captures; none for a play.</param>
-	/// <param name="silent">The host's <c>--no-sound</c>: the shell's and the simulator's turns open no audio device.</param>
+	/// <param name="silent">The host's <c>--no-sound</c>: the flics', the shell's and the simulator's turns open no audio device.</param>
 	public static int Run(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath, string imguiItalicFontPath,
 			string? screenshotPath, bool silent = false) {
 		// 1. Mem_New(argc * 4 + 8), its answer not kept: no counterpart.
@@ -85,7 +86,7 @@ public static class Es1Launcher {
 		// engine sets no DOS video mode, so there is nothing to save or restore.
 
 		// 8. The flics' command lines, only with ALT_DRIVE set; 9. the flic player looked for (docs/es1/shell/launcher.md#the-flics).
-		Flics? flics = altDrive != null ? new Flics(prefixes) : null;
+		Flics? flics = altDrive != null ? new Flics(prefixes, altDrive) : null;
 		bool flicPlayerFound = FileReadable(flics?.Probe);
 
 		using var window = new HostWindow();
@@ -102,7 +103,7 @@ public static class Es1Launcher {
 					}
 
 					if (flicPlayerFound) {
-						flics!.Play(flics.Intro);
+						flics!.Play(flics.Intro, window, silent);
 					}
 
 					goto case 3;
@@ -116,7 +117,7 @@ public static class Es1Launcher {
 				case 4:
 					flicPlayerFound = FileReadable(flics?.Probe);
 					if (flicPlayerFound) {
-						flics!.Play(flics.End);
+						flics!.Play(flics.End, window, silent);
 					}
 
 					RunShell(installRoot, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
@@ -335,6 +336,8 @@ public static class Es1Launcher {
 	/// (docs/es1/shell/launcher.md#the-flics).
 	/// </summary>
 	private sealed class Flics {
+		private readonly string _installRoot, _altDrive;
+
 		/// <summary>The flic drive's paths for <c>PLAYFLIC.EXE</c> and its flic.</summary>
 		public (string Program, string File) Intro { get; }
 		public (string Program, string File) End { get; }
@@ -342,17 +345,17 @@ public static class Es1Launcher {
 		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_OtherPrefix</c>, <c>playflic.exe</c>).</summary>
 		public string Probe { get; }
 
-		private readonly char? _preferredDrive;
-
 		/// <summary>
-		/// The starting drive is the install's, standing in for <c>dos_getdrive</c>'s, or none off Windows; the preferred
-		/// drive the preferred prefix's first character, or the starting drive when that prefix is empty; the flic drive
-		/// the other prefix's first character when the preferred prefix is empty, and the starting drive otherwise.
+		/// The starting drive is the install's, standing in for <c>dos_getdrive</c>'s, or none off Windows; the flic drive
+		/// the other prefix's first character when the preferred prefix is empty, and the starting drive otherwise. The
+		/// preferred drive is not taken (<see cref="Play"/>). <paramref name="altDrive"/> is <c>ALT_DRIVE</c>'s value, which
+		/// the flics' sounds may be read under (<see cref="Es1FlicHost.Run"/>).
 		/// </summary>
-		public Flics(Prefixes prefixes) {
+		public Flics(Prefixes prefixes, string altDrive) {
+			_installRoot = prefixes.InstallRoot;
+			_altDrive = altDrive;
 			string? root = Path.GetPathRoot(Path.GetFullPath(prefixes.InstallRoot));
 			char? starting = root is { Length: >= 2 } && root[1] == ':' ? char.ToUpperInvariant(root[0]) : null;
-			_preferredDrive = prefixes.Preferred.Length > 0 ? prefixes.Preferred[0] : starting;
 			char? flicDrive = prefixes.Preferred.Length == 0 ? (prefixes.Other.Length > 0 ? prefixes.Other[0] : null) : starting;
 			Intro = (DrivePath(flicDrive, FlicPlayer), DrivePath(flicDrive, IntroFlic));
 			End = (DrivePath(flicDrive, FlicPlayer), DrivePath(flicDrive, EndFlic));
@@ -361,11 +364,18 @@ public static class Es1Launcher {
 
 		/// <summary>
 		/// A flic played: <c>dos_setdrive</c>(the preferred drive), <c>spawnl</c>(0, program, program, file, <c>-B1000000</c>,
-		/// <c>-S83</c>) and <c>dos_setdrive</c>(the starting drive). PLACEHOLDER: this engine has no <c>.DFL</c> player, so
-		/// the flic is not played.
+		/// <c>-S83</c>) and <c>dos_setdrive</c>(the starting drive), its status not kept. The program is
+		/// <see cref="Es1FlicHost"/> in <paramref name="window"/>, opening no audio device when <paramref name="silent"/>.
+		/// The file's path is taken as the host's file system resolves it, a drive-relative one against the process's current
+		/// folder on that drive, as DOS's does, and one with no drive against the current folder. The preferred drive, DOS's
+		/// current one while the player runs, is where it reads <c>RESOURCE.CFG</c>, which the install folder stands in for.
 		/// </summary>
-		public void Play((string Program, string File) flic) =>
-			Console.Error.WriteLine($"PLACEHOLDER: {flic.Program} {flic.File} {string.Join(" ", FlicSwitches)} on drive {_preferredDrive}: no .DFL player, not played.");
+		public void Play((string Program, string File) flic, HostWindow window, bool silent) {
+			string path = flic.File.Length > 1 && flic.File[1] == ':'
+				? Path.GetFullPath(flic.File)
+				: CaseInsensitivePath.Combine(Directory.GetCurrentDirectory(), flic.File);
+			Es1FlicHost.Run(path, FlicSwitches, window, _installRoot, _altDrive, silent);
+		}
 
 		/// <summary>
 		/// <c>Launcher_DrivePath</c> (<c>00000360</c>): the drive's letter and <c>:</c> followed by <paramref name="path"/>

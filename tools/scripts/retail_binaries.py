@@ -11,7 +11,7 @@ like a real negative.
 | Identifier | Game | Container | Compiler |
 |---|---|---|---|
 | `DBSIM`, `VSHELL` | ES2 | PE | Borland C++ |
-| `ES1DBSIM`, `ES1GO`, `ES1ESCD` | ES1 | X-32 flat image | Symantec C++ |
+| `ES1DBSIM`, `ES1GO`, `ES1ESCD`, `ES1PLAYFLIC` | ES1 | X-32 flat image | Symantec C++ |
 
 The PE files are read as shipped from `ES2/`. The X-32 executables are read as the flat image
 `es1_x32_extract.py` writes to `tools/analysis_out/<ID>` with `<ID>_layout.json` beside it
@@ -99,6 +99,7 @@ REGISTRY = {b.id: b for b in (
     Binary("ES1DBSIM", "ES1", X32, SYMANTEC, os.path.join("tools", "analysis_out", "ES1DBSIM"), "ES1Recon", "ES1DBSIM"),
     Binary("ES1GO", "ES1", X32, SYMANTEC, os.path.join("tools", "analysis_out", "ES1GO"), "ES1Recon", "ES1GO"),
     Binary("ES1ESCD", "ES1", X32, SYMANTEC, os.path.join("tools", "analysis_out", "ES1ESCD"), "ES1Recon", "ES1ESCD"),
+    Binary("ES1PLAYFLIC", "ES1", X32, SYMANTEC, os.path.join("tools", "analysis_out", "ES1PLAYFLIC"), "ES1Recon", "ES1PLAYFLIC"),
 )}
 IDS = tuple(REGISTRY)
 
