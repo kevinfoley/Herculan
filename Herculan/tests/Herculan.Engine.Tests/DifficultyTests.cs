@@ -42,7 +42,7 @@ public class DifficultyTests {
 
 		Assert.Equal(5, header.TheaterIndex);
 		Assert.Equal(7, header.ZoneIndex);
-		Assert.Equal(11, header.ObjectiveType);
+		Assert.Equal(11, header.SquadTargetHandling);
 		Assert.Equal(13, header.TrainingMissionNumber);
 		Assert.Equal(unlimitedAmmunition, header.UnlimitedAmmunition);
 		Assert.Equal(playerInvulnerable, header.PlayerInvulnerable);

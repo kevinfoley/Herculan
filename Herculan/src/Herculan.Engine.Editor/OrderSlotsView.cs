@@ -9,7 +9,7 @@ namespace Herculan.Engine.Editor;
 /// The group view's orders, from the <c>.MSN</c>'s layout by the group's GUID: each filled slot of the ten, numbered from 1st,
 /// with what it does, its route, its target and the trigger that ends it as choices that change them
 /// (<see cref="OrderEditor"/>), each with a link, its Present when, and buttons that add an order after the last, remove one
-/// or move one up or down. A later order's route moves nothing (a group walks only its first order's route), so it is offered
+/// or move one up or down; for the player's squad, the squad target handling first (<see cref="SquadTargetHandlingField"/>). A later order's route moves nothing (a group walks only its first order's route), so it is offered
 /// only when an objective reads it. What each field does is docs/retail/simulation/ai-goals.md's.
 /// </summary>
 internal sealed class OrderSlotsView {
@@ -25,15 +25,18 @@ internal sealed class OrderSlotsView {
 	private readonly PanelLinks _links;
 	private readonly PresentWhenView _presentWhen;
 	private readonly PresenceEditor _presence;
+	private readonly SquadTargetHandlingField _targetHandling;
 
 	/// <param name="presentWhen">Draws each slot's Present when (<paramref name="presence"/>'s target).</param>
+	/// <param name="targetHandling">Draws the squad target handling above the player's squad's orders.</param>
 	public OrderSlotsView(MissionIndex index, OrderEditor editor, PanelLinks links, PresentWhenView presentWhen,
-			PresenceEditor presence) {
+			PresenceEditor presence, SquadTargetHandlingField targetHandling) {
 		_index = index;
 		_editor = editor;
 		_links = links;
 		_presentWhen = presentWhen;
 		_presence = presence;
+		_targetHandling = targetHandling;
 	}
 
 	private MissionNames Names => _links.Names;
@@ -42,6 +45,10 @@ internal sealed class OrderSlotsView {
 	public void Draw(short guid) {
 		ImGui.Separator();
 		ImGui.TextUnformatted("Orders:");
+		if (_index.Group(guid) is { IsSquad: true }) {
+			_targetHandling.Draw();
+		}
+
 		bool locked = _editor.WhyFixed(guid) != null;
 		var slots = _editor.Slots(guid);
 		if (slots.Count == 0) {

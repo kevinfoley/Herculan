@@ -35,14 +35,15 @@ public class ScriptDat {
 	public short ZoneIndex { get => ReadHeader(2); set => WriteHeader(2, value); }
 
 	/// <summary>
-	/// Header offset 6 — <c>DAT_004a9ed8</c>, the <b>mission objective type</b>. It selects which arm of
-	/// the player's own think watches for progress: 0 the order target coming into range, 5 closing on
-	/// the goal position, 3 or 7 the data-link sequence. Type 3 also takes the data-link subject out
-	/// of the AI's candidate set, so the player's squad does not shoot the thing they came to read.
+	/// Header offset 6 — <c>DAT_004a9ed8</c>, the <b>squad target handling</b>. It selects which arm of
+	/// the player's own think runs: 0 announces the squad's order target when the player first selects it,
+	/// 5 watches for closing on the goal position, 3 or 7 runs the data-link sequence with the order
+	/// target. Type 3 also takes the data-link subject out of the AI's candidate set, so the player's
+	/// squad does not shoot the thing they came to read.
 	///
 	/// <para>Which missions patch it is in docs/retail/formats/script-dat.md#header-format.</para>
 	/// </summary>
-	public short ObjectiveType { get => ReadHeader(6); set => WriteHeader(6, value); }
+	public short SquadTargetHandling { get => ReadHeader(6); set => WriteHeader(6, value); }
 
 	/// <summary>
 	/// Header offset 8 — <c>ScriptDatTrainingMission</c> (<c>004a9eda</c>), the <b>training mission number</b>, 0 for anything that

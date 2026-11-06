@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Changes the type of a flyer, a structure or a ground vehicle outside the player's squad, a row-13 or row-14 record of the
-/// <c>.MSN</c>, as one step of <see cref="PointMover"/>'s undo history each, through <see cref="RosterFit.Write"/>: in the
+/// <c>.MSN</c>, as one step of the <see cref="EditHistory">undo history</see> each, through <see cref="RosterFit.Write"/>: in the
 /// template of the option being edited when the record picks its type from a table the editor edits
 /// (<see cref="LoadoutView"/>), so every record picking that option changes, else in the record that supplies it (docs/herculan/editor-design.md#new-units). A herc's chassis is <see cref="MachineFitter"/>'s. Each edit builds the editor's state again
 /// (<see cref="SceneSync"/>), which builds a new object for the record, as its type differs.
@@ -14,13 +14,13 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class RosterTypeEditor {
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
-	public RosterTypeEditor(MissionDocument source, PointMover mover, SceneSync sync) {
+	public RosterTypeEditor(MissionDocument source, EditHistory history, SceneSync sync) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -69,7 +69,7 @@ internal sealed class RosterTypeEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	};
 

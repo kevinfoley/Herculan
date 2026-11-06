@@ -7,7 +7,7 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Adds a ground vehicle to the open mission, as one step of <see cref="PointMover"/>'s undo history: through
+/// Adds a ground vehicle to the open mission, as one step of the <see cref="EditHistory">undo history</see>: through
 /// <see cref="VehicleGroups"/>'s record edits in a convoy of its own, standing on a route of one waypoint where it was put and
 /// travelling it, or joining the selected convoy; or, given any other structure group, as a structure joins one
 /// (<see cref="StructurePlacer"/>), where it stands as a building unless it is the group's first member
@@ -21,18 +21,18 @@ internal sealed class VehiclePlacer {
 
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly StructurePlacer _structures;
 
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="structures">Adds a vehicle to a structure group that is not a convoy, and builds its ghost.</param>
-	public VehiclePlacer(MissionDocument source, MissionIndex index, PointMover mover,
+	public VehiclePlacer(MissionDocument source, MissionIndex index, EditHistory history,
 			SceneSync sync, SelectionState selection, StructurePlacer structures) {
 		_source = source;
 		_index = index;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_selection = selection;
 		_structures = structures;
@@ -111,7 +111,7 @@ internal sealed class VehiclePlacer {
 			return $"The install has no structure type {typeIndex}.";
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		_selection.Current = new ObjectSelection(BaseRow, added);
 		return null;
 	}

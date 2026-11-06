@@ -4,8 +4,8 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Creates, edits and deletes the open mission's objectives, each edit one step of <see cref="PointMover"/>'s undo
-/// history, through <see cref="ObjectiveEditing"/>'s and <see cref="MissionTextEditing"/>'s record edits on the mission's
+/// Creates, edits and deletes the open mission's objectives, each edit one step of the <see cref="EditHistory">undo
+/// history</see>, through <see cref="ObjectiveEditing"/>'s and <see cref="MissionTextEditing"/>'s record edits on the mission's
 /// <c>.MSN</c> and <c>.ENG</c> (docs/herculan/editor-design.md#objectives). Every edit builds
 /// the editor's state again (<see cref="SceneSync"/>): block 12 changes, a create or a delete adds or removes a
 /// record, and a text edit changes <c>mission.str</c>.
@@ -19,14 +19,14 @@ internal sealed class ObjectiveEditor {
 	private const int BaseRow = 14;
 
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public ObjectiveEditor(MissionDocument source, PointMover mover, SceneSync sync, SelectionState selection) {
+	public ObjectiveEditor(MissionDocument source, EditHistory history, SceneSync sync, SelectionState selection) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_selection = selection;
 	}
@@ -173,7 +173,7 @@ internal sealed class ObjectiveEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		if (selected != null) {
 			_selection.Current = new ObjectiveSelection(selected());
 		} else if (deleted is { } record && _selection.Current is ObjectiveSelection { Record: var current } && current == record) {

@@ -547,8 +547,8 @@ public sealed class EditorHost {
 
 	private MissionDrawables Upload(GL gl, SceneRenderer renderer, EditorMission mission) {
 		var drawables = new MissionDrawables(gl, renderer, mission, _settings);
-		mission.Mover.Moved += drawables.Move;
-		mission.Mover.TerrainChanged += drawables.UploadTerrain;
+		mission.Sync.Moved += drawables.Move;
+		mission.Leveller.Changed += drawables.UploadTerrain;
 		mission.Sync.Added += drawables.Add;
 		mission.Sync.Removed += drawables.Remove;
 		mission.Sync.Rebuilt += drawables.RefreshWaiting;
@@ -558,8 +558,8 @@ public sealed class EditorHost {
 
 	// What Upload hooked <drawables> to, unhooked, for drawables about to be replaced while the mission stays.
 	private static void Unhook(EditorMission mission, MissionDrawables drawables) {
-		mission.Mover.Moved -= drawables.Move;
-		mission.Mover.TerrainChanged -= drawables.UploadTerrain;
+		mission.Sync.Moved -= drawables.Move;
+		mission.Leveller.Changed -= drawables.UploadTerrain;
 		mission.Sync.Added -= drawables.Add;
 		mission.Sync.Removed -= drawables.Remove;
 		mission.Sync.Rebuilt -= drawables.RefreshWaiting;
@@ -670,9 +670,9 @@ public sealed class EditorHost {
 		if (key == Key.S && !shift) {
 			_saving.Save();
 		} else if (key == Key.Z && !shift && !placing) {
-			_mission.Mover.Undo();
+			_mission.History.Undo();
 		} else if ((key == Key.Y || (key == Key.Z && shift)) && !placing) {
-			_mission.Mover.Redo();
+			_mission.History.Redo();
 		}
 	}
 
@@ -1029,6 +1029,7 @@ public sealed class EditorHost {
 		mission.Theater.RunRequest();
 		mission.Terrain.RunRequest();
 		mission.Sculptor.RunRequest();
+		mission.SquadTargetHandling.RunRequest();
 		mission.PlayableIn.RunRequest();
 		mission.About.RunRequest();
 		mission.Routes.RunRequest();
@@ -1047,9 +1048,9 @@ public sealed class EditorHost {
 		mission.UnusedPoints.RunRequest();
 
 		if (step == true) {
-			mission.Mover.Undo();
+			mission.History.Undo();
 		} else if (step == false) {
-			mission.Mover.Redo();
+			mission.History.Redo();
 		}
 	}
 
@@ -1261,11 +1262,11 @@ public sealed class EditorHost {
 
 		if (ImGui.BeginMenu("Edit", _mission != null)) {
 			bool idle = !_mission!.Dragging && !_mission.PlacingAny;
-			if (ImGui.MenuItem("Undo", "Ctrl+Z", false, _mission.Mover.CanUndo && idle)) {
+			if (ImGui.MenuItem("Undo", "Ctrl+Z", false, _mission.History.CanUndo && idle)) {
 				_pendingStep = true;
 			}
 
-			if (ImGui.MenuItem("Redo", "Ctrl+Y", false, _mission.Mover.CanRedo && idle)) {
+			if (ImGui.MenuItem("Redo", "Ctrl+Y", false, _mission.History.CanRedo && idle)) {
 				_pendingStep = false;
 			}
 

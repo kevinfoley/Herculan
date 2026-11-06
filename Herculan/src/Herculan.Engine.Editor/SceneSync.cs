@@ -261,7 +261,7 @@ internal sealed class SceneSync {
 }
 
 /// <summary>
-/// One step of <see cref="PointMover"/>'s undo history that the scene is synced again after: a move
+/// One step of the <see cref="EditHistory">undo history</see> that the scene is synced again after: a move
 /// (<see cref="PointMover"/>), a side change (<see cref="SideChanger"/>), an add (<see cref="StructurePlacer"/>,
 /// <see cref="HercPlacer"/>, <see cref="FlyerPlacer"/>, <see cref="VehiclePlacer"/>), a delete (<see cref="ObjectDeleter"/>), a
 /// fit or type change (<see cref="MachineFitter"/>, <see cref="RosterTypeEditor"/>), a starting condition or heading set

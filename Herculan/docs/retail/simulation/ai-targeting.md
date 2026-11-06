@@ -33,7 +33,7 @@ Every one of these writes maintains the target's `+0x1a2` holder count and raise
 - `+0xb7` invulnerable (`BASES.DAT +0x1e`, latched by `Base_Construct`);
 - with `mask & 0x10`, a candidate of this machine's own object class (`+0x1a8`);
 - a flyer (class 2) that is out of action (`+0xa5`, `+0xa4` or `+0x99`);
-- the group's own order target, while this machine's group is led by the local player and the mission's objective type is 3 -- the data-link shield, see [`mission-objectives.md`](mission-objectives.md#the-player-thinks-objective-arms);
+- the group's own order target, while this machine's group is led by the local player and the mission's squad target handling is 3 -- the data-link shield, see [`mission-objectives.md`](mission-objectives.md#the-player-thinks-objective-arms);
 - when `this+0x9a` is set, whatever the player currently has selected (`CockpitViewInstance+0x210`) — the courtesy that stops the squad piling onto the player's target. `Mech_AiOnTakingFire` clears `+0x9a` when the player's target is the thing shooting at this machine.
 
 ## Acquisition — `Ai_SelectTarget` (`00411fa0`)

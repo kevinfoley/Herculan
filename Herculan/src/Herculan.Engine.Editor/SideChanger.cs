@@ -4,7 +4,7 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Changes which side a group fights on, as one step of <see cref="PointMover"/>'s undo history. The side is the group's
+/// Changes which side a group fights on, as one step of the <see cref="EditHistory">undo history</see>. The side is the group's
 /// and not an object's: block 11's <c>0x6e</c> (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps), which every member
 /// spawns with, so changing it for one object changes it for every member of its group.
 ///
@@ -18,14 +18,14 @@ namespace Herculan.Engine.Editor;
 internal sealed class SideChanger {
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	public SideChanger(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync) {
+	public SideChanger(MissionDocument source, MissionIndex index, EditHistory history, SceneSync sync) {
 		_source = source;
 		_index = index;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -49,6 +49,6 @@ internal sealed class SideChanger {
 			return;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 	}
 }

@@ -107,6 +107,15 @@ public enum MissionCheckKind {
 	/// (<see cref="ScriptLintKind.ObjectsFull"/>). About the mission as a whole; the value is the count.
 	/// </summary>
 	ObjectsFull,
+
+	/// <summary>
+	/// A squad target handling (<see cref="ScriptDat.SquadTargetHandling"/>) of 3 or 7, a data link, in a mission where no
+	/// order of the player's squad names a target the mission has (<see cref="MissionCheck.SquadHasOrderTarget"/>): the link
+	/// is held only with the target of the squad's current order
+	/// (docs/retail/simulation/mission-objectives.md#the-data-link), so the player never completes one and an objective
+	/// waiting on it never comes true. About the squad's group; the value is the handling.
+	/// </summary>
+	DataLinkNoTarget,
 }
 
 /// <summary>One problem <see cref="MissionCheck"/> found, and the <c>.MSN</c> record it is about.</summary>
@@ -181,6 +190,7 @@ public static class MissionCheck {
 		check.Objectives();
 		check.Conditions();
 		check.Header();
+		check.DataLinkTarget();
 		check.Lines();
 
 		// The four limits retail alone has; a mission meant for HERCULAN alone is held to none of them.
@@ -246,6 +256,21 @@ public static class MissionCheck {
 
 		return implied.Contains(condition) ? null : condition;
 	}
+
+	/// <summary>
+	/// Whether an order of the player's squad, as the base of its group and of each order has it, names a target
+	/// <paramref name="layout"/> has: a group, a herc, a flyer or a structure.
+	/// </summary>
+	public static bool SquadHasOrderTarget(MissionLayout layout) =>
+		layout.Entry<MissionGroup164>(SquadRoster.Squad(layout))?.Fields is { } squad
+		&& squad.OrderRefs.Any(order => layout.Entry<MissionOrder22>(order)?.Fields is { } fields
+			&& SubjectRow(fields.SubjectKind) is { } row && fields.SubjectRef != -1 && layout.Entry(row, fields.SubjectRef) != null);
+
+	// The header word holding the squad target handling, script.dat offset 6, and its two data links
+	// (docs/retail/simulation/mission-objectives.md#the-player-thinks-objective-arms).
+	private const int TargetHandlingWord = 6 / 2;
+	private const short DataLink = 3;
+	private const short DataLinkAlt = 7;
 
 	// Condition 1: the subject destroyed or immobilised, a group written off.
 	private const short WrittenOff = 1;
@@ -571,6 +596,29 @@ public static class MissionCheck {
 
 			foreach (var variation in header.Variations) {
 				Condition(SettingsRow, -1, variation.Condition, $"record {variation.Record.Index}'s condition", true);
+			}
+		}
+
+		// A data-link squad target handling, in row 2's base or a variation, with no squad order naming a target.
+		public void DataLinkTarget() {
+			if (layout.Header is not { } header || SquadHasOrderTarget(layout)) {
+				return;
+			}
+
+			short handling = header.Words[TargetHandlingWord];
+			if (handling is DataLink or DataLinkAlt) {
+				Add(MissionCheckKind.DataLinkNoTarget, GroupRow, _squad,
+					$"the header's SquadTargetHandling is {handling}, a data link, and no OrderRefs order names a SubjectRef.", handling);
+			}
+
+			var patches = file.SettingsPatches ?? [];
+			foreach (var variation in header.Variations.Where(variation => variation.Words.Contains(TargetHandlingWord))) {
+				short value = patches[variation.Record.Index].Data[MissionSettingsPatch.HeaderWordsStart + TargetHandlingWord];
+				if (value is DataLink or DataLinkAlt) {
+					Add(MissionCheckKind.DataLinkNoTarget, GroupRow, _squad,
+						$"row-2 record {variation.Record.Index} sets SquadTargetHandling {value}, a data link, and no OrderRefs order "
+						+ "names a SubjectRef.", value, some: true);
+				}
 			}
 		}
 

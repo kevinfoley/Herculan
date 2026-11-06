@@ -12,18 +12,6 @@ namespace Herculan.Engine.Editor;
 /// <summary>What <see cref="PointMover"/> moves and the move handles drag.</summary>
 internal abstract record MoveTarget;
 
-/// <summary>
-/// One step of <see cref="PointMover"/>'s undo history: a move, an add, a delete, a side change, any edit
-/// (<see cref="RecordsEdit"/>), or a theater change. Each puts the <c>.MSN</c> back as the step found or left it
-/// (<see cref="MissionDocument.Undo"/>) and syncs the scene with it
-/// (<see cref="SceneSync"/>); the history then levels the ground.
-/// </summary>
-internal interface IEditorEdit {
-	void Undo();
-
-	void Redo();
-}
-
 /// <summary>A placed object, by the roster record it stands for, moved through a point of its record's own.</summary>
 internal sealed record ObjectTarget(ObjectKey Key) : MoveTarget;
 
@@ -36,14 +24,14 @@ internal sealed record ObjectTarget(ObjectKey Key) : MoveTarget;
 internal sealed record GroupTarget(short Guid, bool Detach = false, bool Carry = false) : MoveTarget;
 
 /// <summary>
-/// Moves what stands on a point — a placed object, a route's waypoint, a group or a trigger area's corner — and keeps an
-/// undo history. A committed move writes the mission's <c>.MSN</c> (<see cref="MissionDocument"/>) and syncs the scene with it (<see cref="SceneSync"/>), as any edit does
+/// Moves what stands on a point — a placed object, a route's waypoint, a group or a trigger area's corner. A committed
+/// move writes the mission's <c>.MSN</c> (<see cref="MissionDocument"/>) and syncs the scene with it (<see cref="SceneSync"/>),
+/// as one step of the <see cref="EditHistory">undo history</see>, as any edit does
 /// (docs/herculan/editor-design.md#which-record-an-edit-writes). A drag's preview writes nothing: everything standing on what it
 /// moves, the route and area lines included, is placed from the layout with the drag's overrides
 /// (<see cref="PlacementOverrides"/>, <see cref="SceneSync.Preview"/>). After every move, previews included,
-/// <see cref="TerrainLeveller"/> levels the ground under the structures where they now stand. Its history also holds the
-/// edits made elsewhere (<see cref="Record(IEditorEdit)"/>), so that Undo and Redo step through every edit in the order it
-/// was made. The waypoint, area corner and radius moves are <see cref="FeatureMoves"/>'.
+/// <see cref="TerrainLeveller"/> levels the ground under the structures where they now stand. The waypoint, area corner and
+/// radius moves are <see cref="FeatureMoves"/>'.
 ///
 /// <para>An object is given a point of its own (<see cref="MissionDocument.PlacePoint"/>), which its roster record's ref
 /// then names and which wins over its group's, so the object alone moves
@@ -78,52 +66,28 @@ internal sealed class PointMover {
 	private readonly SceneSync _sync;
 	private readonly FeatureMoves _features;
 	private readonly TerrainLeveller _leveller;
+	private readonly EditHistory _history;
 
 	// The terrain as it now stands, which replacing the mission's terrain swaps (TerrainChanger).
 	private HeightGrid _terrain => _world.Terrain;
 
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	public PointMover(MissionDocument source, MissionScene scene, MissionIndex index, SceneSync sync, MissionOverlay overlay,
-			TerrainMaterialTable materials) {
+	/// <param name="leveller">What levels the ground after a drag's preview, as <paramref name="history"/> does after every step.</param>
+	/// <param name="history">The undo history a committed move is a step of.</param>
+	public PointMover(MissionDocument source, MissionScene scene, MissionIndex index, SceneSync sync, TerrainLeveller leveller,
+			EditHistory history) {
 		_source = source;
 		_world = scene.World;
 		_index = index;
 		_sync = sync;
 		_features = new FeatureMoves(source, index);
-		_leveller = new TerrainLeveller(scene, index, materials, overlay, sync.Place);
+		_leveller = leveller;
+		_history = history;
 		LoadedBox = index.Box;
 	}
 
-	/// <summary>Raised with each object whose simulation object has moved, for whatever draws it.</summary>
-	public event Action<SceneObject>? Moved {
-		add => _sync.Moved += value;
-		remove => _sync.Moved -= value;
-	}
-
-	/// <summary>Raised with the run of terrain mesh vertices a move re-levelled, for whatever uploads it.</summary>
-	public event Action<int, int>? TerrainChanged {
-		add => _leveller.Changed += value;
-		remove => _leveller.Changed -= value;
-	}
-
-	/// <summary>
-	/// Takes the terrain as it now stands as levelled (<see cref="TerrainLeveller.Reset"/>), once the mission's terrain is
-	/// replaced or put back (<see cref="TerrainChanger"/>).
-	/// </summary>
-	public void TakeTerrain() => _leveller.Reset();
-
-	/// <summary>What levels the ground under the structures after every move and every step of the history.</summary>
-	public TerrainLeveller Leveller => _leveller;
-
 	/// <summary>The mission box as the mission was opened, which a point outside of grows.</summary>
 	public MissionBox LoadedBox { get; }
-
-	/// <summary>The undo history, which also says whether the mission has changed since it was last saved or opened.</summary>
-	public EditHistory History { get; } = new();
-
-	public bool CanUndo => History.CanUndo;
-
-	public bool CanRedo => History.CanRedo;
 
 	/// <summary>
 	/// What <paramref name="selection"/> names that the move handles can drag: a movable object or group in the scene, by
@@ -351,7 +315,7 @@ internal sealed class PointMover {
 					_source.Remove(PointRow, point);
 				}
 			}));
-			Record(new RecordsEdit(_sync, change));
+			_history.Record(new RecordsEdit(_sync, change));
 		} catch (InvalidOperationException ex) {
 			Failure = ex.Message;
 		}
@@ -409,33 +373,7 @@ internal sealed class PointMover {
 			return;
 		}
 
-		Record(new RecordsEdit(_sync, change));
-	}
-
-	public void Undo() => Step(History.TakeUndo(), undo: true);
-
-	public void Redo() => Step(History.TakeRedo(), undo: false);
-
-	/// <summary>
-	/// Adds an edit made elsewhere, already applied, to the history as one step, and levels after it as after a move.
-	/// </summary>
-	public void Record(IEditorEdit edit) {
-		History.Add(edit);
-		_leveller.Relevel();
-	}
-
-	private void Step(IEditorEdit? edit, bool undo) {
-		if (edit == null) {
-			return;
-		}
-
-		if (undo) {
-			edit.Undo();
-		} else {
-			edit.Redo();
-		}
-
-		_leveller.Relevel();
+		_history.Record(new RecordsEdit(_sync, change));
 	}
 
 	// Writes a move into the .MSN: a group's (WriteGroup); an object's own point (GiveObjectPoint); or a waypoint's, an area

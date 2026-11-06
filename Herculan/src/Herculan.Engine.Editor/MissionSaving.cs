@@ -103,21 +103,21 @@ internal sealed class MissionSaving {
 		get => _mission;
 		set {
 			_mission = value;
-			_mission?.Mover.History.MarkSaved();
+			_mission?.History.MarkSaved();
 		}
 	}
 
 	/// <summary>Takes <paramref name="mission"/>, a new mission no file holds yet, as the one saved, and as unsaved until it is.</summary>
 	public void OpenNew(EditorMission mission) {
 		Mission = mission;
-		mission.Mover.History.MarkNeverSaved();
+		mission.History.MarkNeverSaved();
 	}
 
 	/// <summary>Whether a prompt is up, which takes the keyboard.</summary>
 	public bool IsOpen => _prompt != Prompt.None;
 
 	/// <summary>Whether the open mission has changed since it was last saved or opened.</summary>
-	public bool Dirty => _mission?.Mover.History.Dirty == true;
+	public bool Dirty => _mission?.History.Dirty == true;
 
 	/// <summary>Why Save, Save As and Export are unavailable, or null when they are.</summary>
 	public string? WhyNoSave => _mission == null ? "No mission is open." : null;
@@ -170,7 +170,7 @@ internal sealed class MissionSaving {
 	/// yet is offered no Discard, since there would be nothing to read. Answers whether it ran now.
 	/// </summary>
 	public bool SaveFirst(string what, Action proceed) =>
-		Ask(what, proceed, discards: _mission?.Mover.History.NeverSaved != true);
+		Ask(what, proceed, discards: _mission?.History.NeverSaved != true);
 
 	private bool Ask(string what, Action proceed, bool discards) {
 		if (!Dirty) {
@@ -594,7 +594,7 @@ internal sealed class MissionSaving {
 		}
 
 		mission.Name = request.Name;
-		mission.Mover.History.MarkSaved();
+		mission.History.MarkSaved();
 		Close();
 		Saved?.Invoke();
 		request.Then?.Invoke();

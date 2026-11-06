@@ -5,19 +5,19 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Turns the radar of a herc outside the player's squad on or off, in its GUID's base (<see cref="RadarSettings.Set"/>), as one
-/// step of <see cref="PointMover"/>'s undo history each; the records that set it under other conditions are left as they are.
+/// step of the <see cref="EditHistory">undo history</see> each; the records that set it under other conditions are left as they are.
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered.</para>
 /// </summary>
 internal sealed class RadarSettingEditor {
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
-	public RadarSettingEditor(MissionDocument source, PointMover mover, SceneSync sync) {
+	public RadarSettingEditor(MissionDocument source, EditHistory history, SceneSync sync) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -48,7 +48,7 @@ internal sealed class RadarSettingEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	};
 

@@ -6,7 +6,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Creates, edits and deletes the open mission's random tables, and sets which table a herc, flyer, structure or ground
-/// vehicle outside the squad picks from, or that it picks from none, each edit one step of <see cref="PointMover"/>'s undo history, through
+/// vehicle outside the squad picks from, or that it picks from none, each edit one step of the <see cref="EditHistory">undo history</see>, through
 /// <see cref="RandomTableEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's state again
 /// (<see cref="SceneSync"/>), as it changes what the records picking from the table generate; the selection keeps a
 /// table by its row-1 GUID and an object as the rebuild keeps one.
@@ -16,15 +16,15 @@ namespace Herculan.Engine.Editor;
 internal sealed class RandomTableEditor {
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public RandomTableEditor(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync, SelectionState selection) {
+	public RandomTableEditor(MissionDocument source, MissionIndex index, EditHistory history, SceneSync sync, SelectionState selection) {
 		_source = source;
 		_index = index;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_selection = selection;
 	}
@@ -117,7 +117,7 @@ internal sealed class RandomTableEditor {
 				return ex.Message;
 			}
 
-			_mover.Record(new RecordsEdit(_sync, change));
+			_history.Record(new RecordsEdit(_sync, change));
 			if (select is { } table) {
 				_selection.Current = table != -1 && RandomTableEditing.IsTable(_source, table) ? new ConditionSelection(table) : null;
 			}

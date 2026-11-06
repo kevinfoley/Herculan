@@ -30,14 +30,12 @@ Four tables, one per consumer, all four entries wide and all indexed directly by
 
 Every table moves monotonically against the player.
 
-### The damage scale reaches all direct fire, not just plasma
+### The damage scale reaches all direct fire
 
 `Damage_ScaleByDifficulty` takes a damage figure by pointer and the **firing side**, read as `owner->group->side` (`owner+0x45`, `group+0x12`) at every call site. It has three call sites, in two functions:
 
 - `Sim_RaycastObjectList` (`00426528`) calls it twice, scaling **both** of the shot record's damage figures — `+0x06` then `+0x04` ([`weapon-firing.md`](weapon-firing.md#the-shot-record)) — at the top of the sweep, whenever the record names an owner. Every beam and every bullet goes through it, and the record is rebuilt from the catalog each time, so nothing compounds.
 - `Bullet_TickUpdate` (`0040b124`) scales the plasma round's blast figure separately, on a local copy of the figure ([`projectiles.md`](projectiles.md#the-plasma-branch)). The plasma branch empties the shot record before the raycast, so the raycast's own scaling finds zeros there and the round is scaled exactly once.
-
-So a difficulty step changes what **every weapon in the game** does, on both sides, in opposite directions — not only the one round with a blast.
 
 ### The two sibling cheats
 

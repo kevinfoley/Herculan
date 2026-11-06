@@ -136,7 +136,7 @@ What [F11] puts up lists block 13's lines and tests nothing; block 12's conditio
 
 ## The player think's objective arms
 
-`Mech_BehaviourPlayerThink` (`0041c194`) carries the waypoint arm ([`player-waypoints.md`](player-waypoints.md#the-players-think--mech_behaviourplayerthink-0041c194)) and then exactly one objective arm, chosen by the mission's own selector — `script.dat`'s header at `+0x06`. **They are the only writers of `+0x9f` and `+0xa0` in the image.** Conditions 3, 4, 9 and 10 read `+0xa0` back; the only reader of `+0x9f` is [the unreached group report](#the-group-report-and-why-nothing-shows-it), so selectors 0 and 5 have no effect on the mission beyond selector 0's message.
+`Mech_BehaviourPlayerThink` (`0041c194`) carries the waypoint arm ([`player-waypoints.md`](player-waypoints.md#the-players-think--mech_behaviourplayerthink-0041c194)) and then exactly one objective arm, chosen by the mission's **squad target handling**, a selector in `script.dat`'s header at `+0x06`; every arm but 5's works on the target of the player's squad's current order. **They are the only writers of `+0x9f` and `+0xa0` in the image.** Conditions 3, 4, 9 and 10 read `+0xa0` back; the only reader of `+0x9f` is [the unreached group report](#the-group-report-and-why-nothing-shows-it), so selectors 0 and 5 have no effect on the mission beyond selector 0's message.
 
 | selector | arm |
 |---|---|

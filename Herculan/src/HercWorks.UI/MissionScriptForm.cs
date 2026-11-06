@@ -143,7 +143,7 @@ public partial class MissionScriptForm : Form {
 		_theaterInput.Value = Clamp(script.TheaterIndex, _theaterInput);
 		_zoneInput.Value = Clamp(script.ZoneIndex, _zoneInput);
 		_variantInput.Value = Clamp(script.TheaterVariant, _variantInput);
-		_objectiveTypeInput.Value = Clamp(script.ObjectiveType, _objectiveTypeInput);
+		_squadTargetHandlingInput.Value = Clamp(script.SquadTargetHandling, _squadTargetHandlingInput);
 		_trainingInput.Value = Clamp(script.TrainingMissionNumber, _trainingInput);
 		_unlimitedCheck.Checked = script.UnlimitedAmmunition == 1;
 		_invulnerableCheck.Checked = script.PlayerInvulnerable == 1;
@@ -401,7 +401,7 @@ public partial class MissionScriptForm : Form {
 		script.TheaterIndex = (short)_theaterInput.Value;
 		script.ZoneIndex = (short)_zoneInput.Value;
 		script.TheaterVariant = (short)_variantInput.Value;
-		script.ObjectiveType = (short)_objectiveTypeInput.Value;
+		script.SquadTargetHandling = (short)_squadTargetHandlingInput.Value;
 		script.TrainingMissionNumber = (short)_trainingInput.Value;
 		script.UnlimitedAmmunition = (short)(_unlimitedCheck.Checked ? 1 : 0);
 		script.PlayerInvulnerable = (short)(_invulnerableCheck.Checked ? 1 : 0);

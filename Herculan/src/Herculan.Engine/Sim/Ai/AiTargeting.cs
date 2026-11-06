@@ -67,7 +67,7 @@ public static class AiTargeting {
 	/// <b>data-link mission of type 3</b>, a group led by the player's own machine will not target
 	/// what its current order names. That is the thing the player came to read, and the shield is
 	/// what stops their own squad shooting it while they do. Type 7, the other data-link type, does
-	/// not get it. See <see cref="World.ScriptDatHeader.ObjectiveType"/>.</para>
+	/// not get it. See <see cref="World.ScriptDatHeader.SquadTargetHandling"/>.</para>
 	/// </summary>
 	public static bool IsTargetable(SimWorld world, SimObject self, SimObject candidate,
 			TargetFilter filter) {
@@ -99,7 +99,7 @@ public static class AiTargeting {
 		}
 
 		// The data-link shield: the order's own subject is off limits to the player's squad.
-		if (world.Mission.Objectives.ObjectiveType == MechObject.ObjectiveTypeDataLink
+		if (world.Mission.Objectives.SquadTargetHandling == MechObject.SquadTargetHandlingDataLink
 				&& self.Group is { Leader: { LocallyPiloted: true } } led
 				&& ReferenceEquals(led.OrderTarget, candidate)) {
 			return false;

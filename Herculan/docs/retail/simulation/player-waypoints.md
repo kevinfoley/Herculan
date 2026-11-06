@@ -30,7 +30,7 @@ The arrival test is `Ai_DriveToPoint`'s exactly — 10000 units of ground range,
 
 ### The three arms this doc does not cover
 
-Past the waypoint arm the function switches on the mission's own objective type — `script.dat`'s header at `+0x06` — into one of three more arms. They belong to the mission objective layer and are [`mission-objectives.md`](mission-objectives.md#the-player-thinks-objective-arms)'s. None of them touches the route.
+Past the waypoint arm the function switches on the mission's squad target handling — `script.dat`'s header at `+0x06` — into one of three more arms. They belong to the mission objective layer and are [`mission-objectives.md`](mission-objectives.md#the-player-thinks-objective-arms)'s. None of them touches the route.
 
 ## The nav marker
 

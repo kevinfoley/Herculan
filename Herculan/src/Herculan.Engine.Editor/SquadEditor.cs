@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The player's squad as the layout holds it, by GUID (<see cref="SquadRoster"/>), and its squadmates added and removed, as
-/// one step of <see cref="PointMover"/>'s undo history each, through <see cref="SquadRoster"/>'s record edits; the editor's
+/// one step of the <see cref="EditHistory">undo history</see> each, through <see cref="SquadRoster"/>'s record edits; the editor's
 /// state is then built again (<see cref="SceneSync"/>) (docs/herculan/editor-design.md#the-players-squad).
 ///
 /// <para>A new squadmate is the player's HERC's chassis as the mission holds it now, with that chassis's stock fit
@@ -21,15 +21,15 @@ internal sealed class SquadEditor {
 	private const int MechRow = 12;
 
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly MachineFitter _fitter;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public SquadEditor(MissionDocument source, PointMover mover, SceneSync sync, MachineFitter fitter, ObjectDeleter deleter) {
+	public SquadEditor(MissionDocument source, EditHistory history, SceneSync sync, MachineFitter fitter, ObjectDeleter deleter) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_fitter = fitter;
 		_deleter = deleter;
@@ -132,7 +132,7 @@ internal sealed class SquadEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	}
 }

@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Changes the chassis and the weapon fit of a herc: a row-12 record of the <c>.MSN</c>, by its GUID, any the layout has, as
-/// one step of <see cref="PointMover"/>'s undo history each. For the player's squad the choices are the shell's: the nine
+/// one step of the <see cref="EditHistory">undo history</see> each. For the player's squad the choices are the shell's: the nine
 /// chassis the practice screen's Herc Type steps through, and in each mount the weapons the weapons screen lets the player
 /// fit there (docs/herculan/editor-design.md#the-players-squad). A herc outside the squad is offered every type of
 /// <c>nam\MECHS.NAM</c> (<see cref="RosterFitView"/>).
@@ -47,7 +47,7 @@ internal sealed class MachineFitter {
 	private const short NoSlot = -1;
 
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly Func<GameContent> _shellContent;
 	private readonly CybridWeapons _cybrid;
@@ -57,10 +57,10 @@ internal sealed class MachineFitter {
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="shellContent">VSHELL's mount of the install, which holds the stock fits and the arming layouts.</param>
 	/// <param name="cybrid">What a Cybrid's hardpoints offer.</param>
-	public MachineFitter(MissionDocument source, PointMover mover, SceneSync sync, Func<GameContent> shellContent,
+	public MachineFitter(MissionDocument source, EditHistory history, SceneSync sync, Func<GameContent> shellContent,
 			CybridWeapons cybrid) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_shellContent = shellContent;
 		_cybrid = cybrid;
@@ -262,7 +262,7 @@ internal sealed class MachineFitter {
 
 		// Nothing written, when every field that differs is one a template keeps.
 		if (change.Rows.Any()) {
-			_mover.Record(new RecordsEdit(_sync, change));
+			_history.Record(new RecordsEdit(_sync, change));
 		}
 
 		return null;

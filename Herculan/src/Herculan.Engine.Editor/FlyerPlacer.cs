@@ -7,7 +7,7 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Adds a flyer to the open mission, as one step of <see cref="PointMover"/>'s undo history, through
+/// Adds a flyer to the open mission, as one step of the <see cref="EditHistory">undo history</see>, through
 /// <see cref="FlyerGroups"/>'s record edits: in a new group of its own, standing on a route of one waypoint where it was put
 /// and hunting the player's squad, or joining the selected flyer group, or in a chosen member slot of a flyer group from the
 /// group's view (<see cref="RequestJoin"/>). The scene is then synced with the document
@@ -20,7 +20,7 @@ internal sealed class FlyerPlacer {
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly MissionIndex _index;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly UnitTypeNames _names;
@@ -28,12 +28,12 @@ internal sealed class FlyerPlacer {
 
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="names">The <c>nam\FLYERS.NAM</c> type names, which a ghost's model is found by.</param>
-	public FlyerPlacer(MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
+	public FlyerPlacer(MissionDocument source, MissionScene scene, MissionIndex index, EditHistory history,
 			SceneSync sync, SelectionState selection, UnitTypeNames names) {
 		_source = source;
 		_scene = scene;
 		_index = index;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_selection = selection;
 		_names = names;
@@ -144,7 +144,7 @@ internal sealed class FlyerPlacer {
 			return $"The install has no flyer type {typeIndex}.";
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		if (select) {
 			_selection.Current = new ObjectSelection(FlyerRow, added);
 		}

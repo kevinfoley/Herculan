@@ -87,6 +87,10 @@ internal static class ProblemText {
 			MissionCheckKind.ObjectsFull =>
 				$"Over maximum object limit ({ObjectLimits.Cap}) by {found.Value - ObjectLimits.Cap}, so in retail the mission can "
 				+ "crash soon after it starts: remove HERCs, flyers, structures or vehicles.",
+			MissionCheckKind.DataLinkNoTarget =>
+				$"{who} has no order with a target, and \"Squad target handling\" is "
+				+ $"\"{SquadTargetHandlingEditor.Label((short)found.Value)}\", so the player can never complete a data link: give "
+				+ "one of its orders a target under \"Target\", or choose another squad target handling.",
 			_ => found.Message,
 		};
 	}

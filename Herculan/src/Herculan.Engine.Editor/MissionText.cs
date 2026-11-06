@@ -248,8 +248,8 @@ internal static class MissionText {
 			+ $"an enemy aware of it within {clear} ({clearTarget} if it is that enemy's target), or an enemy sent after it still "
 			+ "on its way.",
 		MissionObjective.ConditionDataLink or MissionObjective.ConditionDataLinkAlso => "Tests the player alone: true once the player "
-			+ "has completed a data link, holding position facing the target of their order. Only a mission whose start settings "
-			+ "choose the data link ever completes one.",
+			+ "has completed a data link, holding position facing the target of their order. Make sure \"Squad target handling\" is set " 
+			+ "to one of the \"data link\" options, or the mission can't be completed.",
 		MissionObjective.ConditionEngaged => (group ? "True once any member has been engaged: " : "True once it has been engaged: ")
 			+ $"an enemy within {Metres(Sim.Detection.EngagementRange)} has spotted it, or it has hit the target it is aiming at.",
 		MissionObjective.ConditionDisarmed => group

@@ -4,7 +4,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Creates, edits and deletes the open mission's countdowns (row-11 action timers), each edit one step of
-/// <see cref="PointMover"/>'s undo history, through <see cref="TimerEditing"/>'s record edits on the mission's <c>.MSN</c>.
+/// the <see cref="EditHistory">undo history</see>, through <see cref="TimerEditing"/>'s record edits on the mission's <c>.MSN</c>.
 /// Every edit builds the editor's state again (<see cref="SceneSync"/>), so the trigger view lists what a countdown starts on
 /// and fires as it now stands.
 ///
@@ -15,14 +15,14 @@ internal sealed class TimerEditor {
 	private const int TimerRow = 11;
 
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public TimerEditor(MissionDocument source, PointMover mover, SceneSync sync, SelectionState selection) {
+	public TimerEditor(MissionDocument source, EditHistory history, SceneSync sync, SelectionState selection) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_selection = selection;
 	}
@@ -89,7 +89,7 @@ internal sealed class TimerEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		if (selected?.Invoke() is { } guid && guid != -1) {
 			_selection.Current = new TimerSelection(guid);
 		}

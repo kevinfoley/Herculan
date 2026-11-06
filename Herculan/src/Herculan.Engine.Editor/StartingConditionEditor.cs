@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Sets the starting condition of a herc outside the player's squad or of a structure or ground vehicle, in its GUID's base
-/// (<see cref="StartingConditions.Set"/>), as one step of <see cref="PointMover"/>'s undo history each; the records that set
+/// (<see cref="StartingConditions.Set"/>), as one step of the <see cref="EditHistory">undo history</see> each; the records that set
 /// it under other conditions are left as they are. Each edit builds the editor's state again (<see cref="SceneSync"/>), which
 /// builds a new object for the record, as a structure placed collapsed is built as its wreck.
 ///
@@ -13,13 +13,13 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class StartingConditionEditor {
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
-	public StartingConditionEditor(MissionDocument source, PointMover mover, SceneSync sync) {
+	public StartingConditionEditor(MissionDocument source, EditHistory history, SceneSync sync) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -50,7 +50,7 @@ internal sealed class StartingConditionEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	};
 
