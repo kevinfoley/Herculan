@@ -71,9 +71,18 @@ public static class Es1TextureShades {
 		return (byte)best;
 	}
 
-	/// <summary>An entry's three channels, the dword's low bytes as the palette holds them (<c>Palette_UnpackColour</c>).</summary>
-	private static int[] Channels(DynamixPalette palette, int index) =>
-		palette.Colors.TryGetValue(index, out var entry) ? [entry.Array[0], entry.Array[1], entry.Array[2]] : [0, 0, 0];
+	/// <summary>
+	/// An entry's three channels, the dword's low bytes as the palette holds them (<c>Palette_UnpackColour</c>): the file's
+	/// six bits, the palette reader's scaled-up channels divided back down by its <see cref="DynamixPalette.Scalar"/>.
+	/// </summary>
+	private static int[] Channels(DynamixPalette palette, int index) {
+		if (!palette.Colors.TryGetValue(index, out var entry)) {
+			return [0, 0, 0];
+		}
+
+		int scale = Math.Max(palette.Scalar, 1);
+		return [entry.Array[0] / scale, entry.Array[1] / scale, entry.Array[2] / scale];
+	}
 
 	/// <summary>
 	/// The renderer's palette-by-row table over 256 shade rows, one per light the shader can pick: the scene shader takes

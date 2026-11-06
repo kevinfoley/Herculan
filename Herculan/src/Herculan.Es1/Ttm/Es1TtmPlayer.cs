@@ -1342,7 +1342,8 @@ public sealed class Es1TtmPlayer {
 	/// <summary>
 	/// <c>0xf05f</c>'s palette, <c>Resource_LoadPalette</c> or the simulator's load in place: the <c>.DPL</c>'s 256 colours,
 	/// red, green and blue as the file holds them and a flag byte, or none; <paramref name="scale"/> the reader's scale for
-	/// showing them, kept when none loads.
+	/// showing them, kept when none loads. The reader holds each channel already scaled up, so it is divided back down to
+	/// the file's six bits, as <see cref="Es1PaletteFade.Entries"/> does.
 	/// </summary>
 	private uint[]? LoadPalette(string name, out int scale) {
 		scale = _paletteScales[PaletteSlot % SlotCount];
@@ -1351,11 +1352,13 @@ public sealed class Es1TtmPlayer {
 		}
 
 		scale = palette.Scalar;
+		int divisor = Math.Max(scale, 1);
 		var colours = new uint[256];
 		foreach (var (index, entry) in palette.Colors) {
 			if (index is >= 0 and < 256) {
 				var c = entry.Array;
-				colours[index] = c[0] | (uint)c[1] << 8 | (uint)c[2] << 16 | (c[3] != 0 ? 0x01000000u : 0);
+				colours[index] = (uint)(c[0] / divisor) | (uint)(c[1] / divisor) << 8 | (uint)(c[2] / divisor) << 16
+					| (c[3] != 0 ? 0x01000000u : 0);
 			}
 		}
 

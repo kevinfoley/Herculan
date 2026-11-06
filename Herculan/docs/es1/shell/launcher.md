@@ -39,7 +39,7 @@ With `ALT_DRIVE` set, `Launcher_Main` takes three drive numbers (1 for `A:`): th
 | the intro | *flic drive*`:playflic.exe` | *flic drive*`:flic\intro3.dfl` | `-B1000000`, `-S83` |
 | the end | *flic drive*`:playflic.exe` | *flic drive*`:flic\end.dfl` | `-B1000000`, `-S83` |
 
-What the two switches tell `PLAYFLIC.EXE` is [Open](#open). The probe path of step 9 is `Launcher_PrefixPath`(`Launcher_OtherPrefix`, `playflic.exe`), built once; every later probe tests that same path. The eight strings go into 25-byte locals and the probe path into a 28-byte one, each copied with no bound, so a long `ALT_DRIVE` overruns them.
+By `PLAYFLIC.EXE`'s usage text, `-B1000000` is a 1,000,000-byte preload buffer and `-S83` 83 ms a frame, over the flic header's 71 ([the player](../formats/dfl-flic.md#the-player)). The probe path of step 9 is `Launcher_PrefixPath`(`Launcher_OtherPrefix`, `playflic.exe`), built once; every later probe tests that same path. The eight strings go into 25-byte locals and the probe path into a 28-byte one, each copied with no bound, so a long `ALT_DRIVE` overruns them.
 
 A flic plays as `dos_setdrive` (`00001fab`)(preferred drive), `spawnl` (`00001be0`)(0, program, program, file, `-B1000000`, `-S83`, null), and `dos_setdrive`(starting drive): the current drive is the preferred one while `PLAYFLIC.EXE` runs. Mode 0 is `P_WAIT`: the launcher waits for the program to end.
 
@@ -157,6 +157,6 @@ ES2's supervisor ([`ES.EXE`](../../retail/command-line.md#esexe--the-supervisor)
 ## Open
 
 - **Open:** whether `00000b60`–`00000c43` are `es.cpp`'s code or an object file of their own; no assert and no zero fill stands between `Launcher_Main`'s `RET` and `00000b60`, a 4-byte boundary.
-- **Open:** what `PLAYFLIC.EXE`'s `-B1000000` and `-S83` do, and what `DETECT.EXE` does with `-c` and writes; neither program is in the Ghidra project.
+- **Open:** what `DETECT.EXE` does with `-c` and writes; it is not in the Ghidra project.
 - **Open:** what reads `data\es.got`: a search of `GO.EXE`, `DBSIM.EXE`, `DETECT.EXE` and `PLAYFLIC.EXE` for the string `es.got` finds none.
 - **Open:** a retail check of the flics under DOSBox-X: from a full install with the CD mounted, `ES` plays `INTRO3.DFL` and then opens the main menu without the shell's intro scripts; with the CD drive empty, the shell's intro scripts play instead. Letting the HERC be destroyed in a career mission, the simulator leaving 4, plays `END.DFL` before the shell.
