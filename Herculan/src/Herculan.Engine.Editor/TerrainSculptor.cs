@@ -46,7 +46,7 @@ internal enum SculptTool {
 /// flattens nothing under the structures, so the ground shows as sculpted; it flattens again once sculpting ends, as the
 /// game does on load.</para>
 ///
-/// <para>A stroke, from press to release, is one step of <see cref="PointMover"/>'s undo history. At its end the mission's own
+/// <para>A stroke, from press to release, is one step of the <see cref="EditHistory">undo history</see>. At its end the mission's own
 /// terrain is built again from the scene's (<see cref="TerrainChanger.TakeSculpted"/>), which Save and the exports write, and
 /// every flyer position rises or falls with the ground under it over the stroke (<see cref="FlyerHeights"/>). Nothing is
 /// written to a file. A mission on an archive zone is first given a terrain of its own, a copy of that zone, through a prompt
@@ -77,7 +77,8 @@ internal sealed class TerrainSculptor {
 
 	private readonly MissionDocument _source;
 	private readonly SimWorld _world;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
+	private readonly TerrainLeveller _leveller;
 	private readonly SceneSync _sync;
 	private readonly TerrainChanger _changer;
 	private readonly DrapedLines _drape;
@@ -90,11 +91,12 @@ internal sealed class TerrainSculptor {
 	private bool _raised;
 	private bool _copyRequested;
 
-	public TerrainSculptor(MissionDocument source, SimWorld world, MissionIndex index, PointMover mover, SceneSync sync,
-			TerrainChanger changer, DrapedLines drape) {
+	public TerrainSculptor(MissionDocument source, SimWorld world, MissionIndex index, EditHistory history,
+			TerrainLeveller leveller, SceneSync sync, TerrainChanger changer, DrapedLines drape) {
 		_source = source;
 		_world = world;
-		_mover = mover;
+		_history = history;
+		_leveller = leveller;
 		_sync = sync;
 		_changer = changer;
 		_drape = drape;
@@ -145,7 +147,7 @@ internal sealed class TerrainSculptor {
 		}
 
 		Active = active;
-		var leveller = _mover.Leveller;
+		var leveller = _leveller;
 		bool turned = leveller.Flattening == active;
 		leveller.Flattening = !active;
 		if (turned || active) {
@@ -287,8 +289,8 @@ internal sealed class TerrainSculptor {
 		}
 
 		terrain.WriteLoadedHeights(minX, minY, width, written);
-		_mover.Leveller.Invalidate();
-		_mover.Leveller.Relevel();
+		_leveller.Invalidate();
+		_leveller.Relevel();
 	}
 
 	/// <summary>
@@ -331,7 +333,7 @@ internal sealed class TerrainSculptor {
 		}
 
 		Note = skipped.Count > 0 ? $"Flyer positions left at their height: {string.Join(" ", skipped)}" : null;
-		_mover.Record(new SculptEdit(this, terrain, stroke.Left, stroke.Bottom, width, before, after, zoneBefore, zoneAfter,
+		_history.Record(new SculptEdit(this, terrain, stroke.Left, stroke.Bottom, width, before, after, zoneBefore, zoneAfter,
 			change));
 	}
 
@@ -565,7 +567,7 @@ internal sealed class TerrainSculptor {
 				Sculptor._sync.Undo(Change);
 			}
 
-			Sculptor._mover.Leveller.Invalidate();
+			Sculptor._leveller.Invalidate();
 		}
 
 		public void Redo() {
@@ -575,7 +577,7 @@ internal sealed class TerrainSculptor {
 				Sculptor._sync.Redo(Change);
 			}
 
-			Sculptor._mover.Leveller.Invalidate();
+			Sculptor._leveller.Invalidate();
 		}
 	}
 }

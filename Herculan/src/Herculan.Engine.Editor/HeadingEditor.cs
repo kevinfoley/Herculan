@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Sets or takes away the own heading of a structure, a ground vehicle or a group (<see cref="OwnHeadings.Set"/>), as one step
-/// of <see cref="PointMover"/>'s undo history each; the records that name another heading under other conditions are left as
+/// of the <see cref="EditHistory">undo history</see> each; the records that name another heading under other conditions are left as
 /// they are. Each edit builds the editor's state again (<see cref="SceneSync"/>), which turns the object where it stands, or
 /// a group's formation and every member that faces with it.
 ///
@@ -15,13 +15,13 @@ internal sealed class HeadingEditor {
 	private const int GroupRow = 16;
 
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
-	public HeadingEditor(MissionDocument source, PointMover mover, SceneSync sync) {
+	public HeadingEditor(MissionDocument source, EditHistory history, SceneSync sync) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -59,7 +59,7 @@ internal sealed class HeadingEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	};
 

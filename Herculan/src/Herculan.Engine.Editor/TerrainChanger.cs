@@ -12,8 +12,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The mission's own terrain (<see cref="ZoneFiles"/>), which Save writes beside its <c>.MSN</c>
 /// (<see cref="SavedMissions.Write"/>) and Export Mission Bundle into its bundle, or none when it plays on the archive's
-/// zone; and replacing it from a terrain image (<see cref="TerrainImages"/>) as one step of <see cref="PointMover"/>'s
-/// undo history, as the Terrain window asks (<see cref="MissionTerrainWindow"/>).
+/// zone; and replacing it from a terrain image (<see cref="TerrainImages"/>) as one step of the
+/// <see cref="EditHistory">undo history</see>, as the Terrain window asks (<see cref="MissionTerrainWindow"/>).
 ///
 /// <para>A replacement plays as the zone the mission already has of its own, or else as the highest number no zone of the
 /// install has (<see cref="ZoneCatalog.FreeZone"/>), which it writes as the mission's zone, header word 1
@@ -45,7 +45,8 @@ internal sealed class TerrainChanger {
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly MissionIndex _index;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
+	private readonly TerrainLeveller _leveller;
 	private readonly SceneSync _sync;
 	private readonly MissionOverlay _overlay;
 	private readonly TerrainMaterialTable _materials;
@@ -55,15 +56,18 @@ internal sealed class TerrainChanger {
 	private ZoneFiles? _requested;
 
 	/// <param name="content">DBSIM's mount, which holds the archive's zones.</param>
+	/// <param name="leveller">What levels the ground under the structures, which takes a replaced or put-back terrain as levelled (<see cref="TerrainLeveller.Reset"/>).</param>
 	/// <param name="detailLevel">The terrain detail setting the mission's terrain was loaded at (<see cref="TerrainDetail"/>).</param>
 	/// <param name="freeZone">The number a mission's own terrain is played as when it has none yet (<see cref="ZoneCatalog.FreeZone"/>).</param>
-	public TerrainChanger(GameContent content, MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
-			SceneSync sync, MissionOverlay overlay, TerrainMaterialTable materials, int detailLevel, Func<short> freeZone) {
+	public TerrainChanger(GameContent content, MissionDocument source, MissionScene scene, MissionIndex index, EditHistory history,
+			TerrainLeveller leveller, SceneSync sync, MissionOverlay overlay, TerrainMaterialTable materials, int detailLevel,
+			Func<short> freeZone) {
 		_content = content;
 		_source = source;
 		_scene = scene;
 		_index = index;
-		_mover = mover;
+		_history = history;
+		_leveller = leveller;
 		_sync = sync;
 		_overlay = overlay;
 		_materials = materials;
@@ -178,7 +182,7 @@ internal sealed class TerrainChanger {
 		}
 
 		_sync.Sync();
-		_mover.Record(new TerrainEdit(this, change, (before, previous), (after, zone), dx, dy));
+		_history.Record(new TerrainEdit(this, change, (before, previous), (after, zone), dx, dy));
 		Replaced?.Invoke(dx, dy, before);
 		var notes = new List<string>();
 		if (dx != 0 || dy != 0) {
@@ -238,7 +242,7 @@ internal sealed class TerrainChanger {
 		}
 
 		OwnZone = zone;
-		_mover.Record(new OwnZoneEdit(this, change, zone));
+		_history.Record(new OwnZoneEdit(this, change, zone));
 		return null;
 	}
 
@@ -278,7 +282,7 @@ internal sealed class TerrainChanger {
 			_sync.Place(placed, placed.Object.Position, placed.Object.Heading);
 		}
 
-		_mover.TakeTerrain();
+		_leveller.Reset();
 		_overlay.Redrape();
 		WorldChanged?.Invoke();
 	}

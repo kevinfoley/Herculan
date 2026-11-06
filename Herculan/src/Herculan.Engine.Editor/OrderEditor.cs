@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 internal sealed record EditableOrder(int Slot, short Guid, MissionOrder22 Order);
 
 /// <summary>
-/// Edits a group's ten order slots, each edit one step of <see cref="PointMover"/>'s undo history, through
+/// Edits a group's ten order slots, each edit one step of the <see cref="EditHistory">undo history</see>, through
 /// <see cref="GroupOrders"/>'s record edits on the mission's <c>.MSN</c>: a slot's verb, route, subject and ending action, and adding,
 /// removing and moving orders (docs/herculan/editor-design.md#orders). Every edit builds the
 /// editor's state again (<see cref="SceneSync"/>): an order's verb, route and subject decide which routes are walked,
@@ -22,14 +22,14 @@ internal sealed class OrderEditor {
 	private const int GroupRow = 16;
 
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
-	public OrderEditor(MissionDocument source, PointMover mover, SceneSync sync) {
+	public OrderEditor(MissionDocument source, EditHistory history, SceneSync sync) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -127,7 +127,7 @@ internal sealed class OrderEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	}
 }

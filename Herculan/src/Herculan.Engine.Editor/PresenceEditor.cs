@@ -14,8 +14,8 @@ internal sealed record PresenceLosers(DeleteNamers Names, IReadOnlyList<short> M
 }
 
 /// <summary>
-/// Sets a record's Present when, which campaign states it is in, each set one step of <see cref="PointMover"/>'s undo
-/// history: as clauses through <see cref="PresenceRules"/>, or, under Advanced, to one of the mission's conditions through
+/// Sets a record's Present when, which campaign states it is in, each set one step of the <see cref="EditHistory">undo
+/// history</see>: as clauses through <see cref="PresenceRules"/>, or, under Advanced, to one of the mission's conditions through
 /// <see cref="RecordConditions"/>, both record edits on the mission's <c>.MSN</c>
 /// (docs/herculan/editor-design.md#present-when). Every set builds the editor's state again
 /// (<see cref="SceneSync"/>), as it conditions the record in or out; the selection stays on the record, whose view still
@@ -41,18 +41,18 @@ internal sealed class PresenceEditor {
 
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _scene;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 	private PresenceTarget? _asked;
 
 	/// <param name="campaign">Whether the mission is played as a campaign mission, the one kind whose campaign variables vary.</param>
-	public PresenceEditor(MissionDocument source, MissionIndex scene, PointMover mover, SceneSync sync, ObjectDeleter deleter,
+	public PresenceEditor(MissionDocument source, MissionIndex scene, EditHistory history, SceneSync sync, ObjectDeleter deleter,
 			Func<bool> campaign) {
 		_source = source;
 		_scene = scene;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_deleter = deleter;
 		Campaign = campaign;
@@ -148,7 +148,7 @@ internal sealed class PresenceEditor {
 				return ex.Message;
 			}
 
-			_mover.Record(new RecordsEdit(_sync, change));
+			_history.Record(new RecordsEdit(_sync, change));
 			return null;
 		};
 	}

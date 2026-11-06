@@ -4,20 +4,20 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Edits the open mission's objective, briefing and intelligence lines (row 4) and their text, each edit one step of
-/// <see cref="PointMover"/>'s undo history, through <see cref="MissionTextEditing"/>'s record edits on the mission's
+/// the <see cref="EditHistory">undo history</see>, through <see cref="MissionTextEditing"/>'s record edits on the mission's
 /// <c>.MSN</c> and <c>.ENG</c> (docs/herculan/editor-design.md#the-missions-text). Every
 /// edit builds the editor's state again (<see cref="SceneSync"/>).
 /// The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).
 /// </summary>
 internal sealed class MissionTextEditor {
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
-	public MissionTextEditor(MissionDocument source, PointMover mover, SceneSync sync) {
+	public MissionTextEditor(MissionDocument source, EditHistory history, SceneSync sync) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -73,7 +73,7 @@ internal sealed class MissionTextEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	}
 }

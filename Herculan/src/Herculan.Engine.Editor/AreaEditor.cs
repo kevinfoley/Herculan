@@ -15,8 +15,8 @@ internal sealed record AreaDeleteBlockers(string? Fixed, DeleteNamers Names) {
 }
 
 /// <summary>
-/// Creates, reshapes and deletes the open mission's trigger areas, each edit one step of <see cref="PointMover"/>'s undo
-/// history, through <see cref="TriggerAreaEditing"/>'s record edits on the mission's <c>.MSN</c>; the scene and the indices are then
+/// Creates, reshapes and deletes the open mission's trigger areas, each edit one step of the <see cref="EditHistory">undo
+/// history</see>, through <see cref="TriggerAreaEditing"/>'s record edits on the mission's <c>.MSN</c>; the scene and the indices are then
 /// synced with the document (<see cref="SceneSync"/>), as a new area's records are exported last and a shape change or a
 /// delete adds or removes points, which moves every later point of block 1
 /// (docs/herculan/editor-design.md#which-record-an-edit-writes). A corner, centre or radius
@@ -34,16 +34,18 @@ internal sealed class AreaEditor {
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public AreaEditor(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync,
+	public AreaEditor(MissionDocument source, MissionIndex index, PointMover mover, EditHistory history, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
 		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_selection = selection;
 		_deleter = deleter;
@@ -129,7 +131,7 @@ internal sealed class AreaEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		if (area() is not -1 and var guid) {
 			_selection.Current = new AreaSelection(guid);
 		}

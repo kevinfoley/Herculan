@@ -5,19 +5,19 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Mission Settings window's "Playable in" choice: whether the mission is meant for HERCULAN alone
 /// (<see cref="MissionDocument.SetHerculanOnly"/>), which frees it of the limits retail alone has, as one step of
-/// <see cref="PointMover"/>'s undo history.
+/// the <see cref="EditHistory">undo history</see>.
 ///
 /// <para>The edit runs when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered.</para>
 /// </summary>
 internal sealed class PlayableInEditor {
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private bool? _requested;
 
-	public PlayableInEditor(MissionDocument source, PointMover mover, SceneSync sync) {
+	public PlayableInEditor(MissionDocument source, EditHistory history, SceneSync sync) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -53,6 +53,6 @@ internal sealed class PlayableInEditor {
 			return;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 	}
 }

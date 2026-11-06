@@ -35,45 +35,47 @@ internal sealed class EditorMission {
 		GroupOverlay = new GroupOverlay(sceneIndex, drape, Picker);
 		Outliner = new MissionOutliner(source, sceneIndex, Names, Selection);
 		Sync = new SceneSync(source, scene, tables, sceneIndex, Overlay, Picker, Outliner, Selection);
-		Mover = new PointMover(source, scene, sceneIndex, Sync, Overlay, materials);
+		Leveller = new TerrainLeveller(scene, sceneIndex, materials, Overlay, Sync.Place);
+		History = new EditHistory(Leveller.Relevel);
+		Mover = new PointMover(source, scene, sceneIndex, Sync, Leveller, History);
 		Gizmo = new MoveGizmo(Selection, Mover);
-		Placer = new StructurePlacer(source, scene, sceneIndex, Mover, Sync, Selection, tables.Bases);
-		Sides = new SideChanger(source, sceneIndex, Mover, Sync);
-		Deleter = new ObjectDeleter(source, sceneIndex, Mover, Sync);
-		GroupDeleter = new GroupDeleter(source, sceneIndex, Mover, Sync, Deleter);
-		Members = new MemberMover(source, sceneIndex, Mover, Sync);
-		Fitter = new MachineFitter(source, Mover, Sync, shellContent, cybrid);
+		Placer = new StructurePlacer(source, scene, sceneIndex, History, Sync, Selection, tables.Bases);
+		Sides = new SideChanger(source, sceneIndex, History, Sync);
+		Deleter = new ObjectDeleter(source, sceneIndex, History, Sync);
+		GroupDeleter = new GroupDeleter(source, sceneIndex, History, Sync, Deleter);
+		Members = new MemberMover(source, sceneIndex, History, Sync);
+		Fitter = new MachineFitter(source, History, Sync, shellContent, cybrid);
 		Presets = new LoadoutPresetView(Fitter, presets);
-		Squad = new SquadEditor(source, Mover, Sync, Fitter, Deleter);
-		Theater = new TheaterChanger(source, scene, sceneIndex, Mover, Sync);
-		Terrain = new TerrainChanger(content, source, scene, sceneIndex, Mover, Sync, Overlay, materials, detailLevel, zones.FreeZone);
-		Routes = new RouteEditor(source, sceneIndex, Mover, Sync, Selection, Deleter);
+		Squad = new SquadEditor(source, History, Sync, Fitter, Deleter);
+		Theater = new TheaterChanger(source, scene, sceneIndex, History, Sync);
+		Terrain = new TerrainChanger(content, source, scene, sceneIndex, History, Leveller, Sync, Overlay, materials, detailLevel, zones.FreeZone);
+		Routes = new RouteEditor(source, sceneIndex, History, Sync, Selection, Deleter);
 		Placing = new RoutePlacing(Routes, sceneIndex, drape);
-		Areas = new AreaEditor(source, sceneIndex, Mover, Sync, Selection, Deleter);
+		Areas = new AreaEditor(source, sceneIndex, Mover, History, Sync, Selection, Deleter);
 		AreaPlacing = new AreaPlacing(Areas, drape);
 		Placing.Blocked = () => AreaPlacing.Active;
 		AreaPlacing.Blocked = () => Placing.Active;
-		Sculptor = new TerrainSculptor(source, scene.World, sceneIndex, Mover, Sync, Terrain, drape) { Blocked = () => PlacingAny };
-		Hercs = new HercPlacer(source, scene, sceneIndex, Mover, Sync, Selection, Fitter, UnitTypeNames.LoadMechs(content));
-		Flyers = new FlyerPlacer(source, scene, sceneIndex, Mover, Sync, Selection, UnitTypeNames.LoadFlyers(content));
-		Vehicles = new VehiclePlacer(source, sceneIndex, Mover, Sync, Selection, Placer);
-		Orders = new OrderEditor(source, Mover, Sync);
-		Objectives = new ObjectiveEditor(source, Mover, Sync, Selection);
-		Texts = new MissionTextEditor(source, Mover, Sync);
-		Debrief = new DebriefEditor(source, Mover, Sync, () => squad.PlayerMachine == PlayerMachineSource.CareerSquad);
-		Actions = new ActionEditor(source, Mover, Sync, Selection);
-		Timers = new TimerEditor(source, Mover, Sync, Selection);
-		Conditions = new ConditionEditor(source, sceneIndex, Names, Mover, Sync, Selection, Deleter);
-		Presence = new PresenceEditor(source, sceneIndex, Mover, Sync, Deleter,
+		Sculptor = new TerrainSculptor(source, scene.World, sceneIndex, History, Leveller, Sync, Terrain, drape) { Blocked = () => PlacingAny };
+		Hercs = new HercPlacer(source, scene, sceneIndex, History, Sync, Selection, Fitter, UnitTypeNames.LoadMechs(content));
+		Flyers = new FlyerPlacer(source, scene, sceneIndex, History, Sync, Selection, UnitTypeNames.LoadFlyers(content));
+		Vehicles = new VehiclePlacer(source, sceneIndex, History, Sync, Selection, Placer);
+		Orders = new OrderEditor(source, History, Sync);
+		Objectives = new ObjectiveEditor(source, History, Sync, Selection);
+		Texts = new MissionTextEditor(source, History, Sync);
+		Debrief = new DebriefEditor(source, History, Sync, () => squad.PlayerMachine == PlayerMachineSource.CareerSquad);
+		Actions = new ActionEditor(source, History, Sync, Selection);
+		Timers = new TimerEditor(source, History, Sync, Selection);
+		Conditions = new ConditionEditor(source, sceneIndex, Names, History, Sync, Selection, Deleter);
+		Presence = new PresenceEditor(source, sceneIndex, History, Sync, Deleter,
 			() => squad.PlayerMachine == PlayerMachineSource.CareerSquad);
-		TableEditor = new RandomTableEditor(source, sceneIndex, Mover, Sync, Selection);
-		Types = new RosterTypeEditor(source, Mover, Sync);
-		StartingConditions = new StartingConditionEditor(source, Mover, Sync);
-		RadarSettings = new RadarSettingEditor(source, Mover, Sync);
-		Headings = new HeadingEditor(source, Mover, Sync);
-		Pads = new BasePadEditor(source, sceneIndex, tables.Bases, Mover, Sync);
-		Formations = new FormationEditor(source, sceneIndex, tables, Mover, Sync);
-		UnusedPoints = new UnusedPointRemover(source, Mover, Sync);
+		TableEditor = new RandomTableEditor(source, sceneIndex, History, Sync, Selection);
+		Types = new RosterTypeEditor(source, History, Sync);
+		StartingConditions = new StartingConditionEditor(source, History, Sync);
+		RadarSettings = new RadarSettingEditor(source, History, Sync);
+		Headings = new HeadingEditor(source, History, Sync);
+		Pads = new BasePadEditor(source, sceneIndex, tables.Bases, History, Sync);
+		Formations = new FormationEditor(source, sceneIndex, tables, History, Sync);
+		UnusedPoints = new UnusedPointRemover(source, History, Sync);
 		Outliner.Placing = Placing;
 		Outliner.AreaPlacing = AreaPlacing;
 		Outliner.Objectives = Objectives;
@@ -82,10 +84,10 @@ internal sealed class EditorMission {
 		Outliner.Conditions = Conditions;
 		var randomTables = new RandomTables(source, sceneIndex, Names, squad);
 		Outliner.Tables = randomTables;
-		SquadTargetHandling = new SquadTargetHandlingEditor(source, Mover, Sync);
+		SquadTargetHandling = new SquadTargetHandlingEditor(source, History, Sync);
 		var targetHandling = new SquadTargetHandlingField(SquadTargetHandling);
-		PlayableIn = new PlayableInEditor(source, Mover, Sync);
-		About = new MissionAboutEditor(Mover);
+		PlayableIn = new PlayableInEditor(source, History, Sync);
+		About = new MissionAboutEditor(History);
 		Settings = new MissionSettingsWindow(() => Name, Theater, TheaterNames.Labels(content), targetHandling, PlayableIn, About,
 			new MissionTextView(Texts), new DebriefView(Debrief));
 		TerrainWindow = new MissionTerrainWindow(
@@ -145,7 +147,13 @@ internal sealed class EditorMission {
 	/// <summary>The Terrain window, which Mission Settings &gt; Terrain opens.</summary>
 	public MissionTerrainWindow TerrainWindow { get; }
 
-	/// <summary>The edits made to <see cref="Source"/>, and their undo history.</summary>
+	/// <summary>Every edit made to <see cref="Source"/>, as the steps Undo and Redo step through, and whether it is unsaved.</summary>
+	public EditHistory History { get; }
+
+	/// <summary>Levels the ground under the structures where they now stand, after every step of <see cref="History"/> and every drag's preview.</summary>
+	public TerrainLeveller Leveller { get; }
+
+	/// <summary>Moves what stands on a point: a placed object, a route's waypoint, a group or a trigger area's corner.</summary>
 	public PointMover Mover { get; }
 
 	public MoveGizmo Gizmo { get; }
@@ -153,111 +161,111 @@ internal sealed class EditorMission {
 	/// <summary>Syncs the scene and the indices with <see cref="Source"/> after every edit, undo and redo.</summary>
 	public SceneSync Sync { get; }
 
-	/// <summary>Adds structures to <see cref="Source"/>, a structure group's chosen place included, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Adds structures to <see cref="Source"/>, a structure group's chosen place included, as steps of <see cref="History"/>.</summary>
 	public StructurePlacer Placer { get; }
 
-	/// <summary>Adds hercs outside the player's squad to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Adds hercs outside the player's squad to <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public HercPlacer Hercs { get; }
 
-	/// <summary>Adds flyers to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Adds flyers to <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public FlyerPlacer Flyers { get; }
 
-	/// <summary>Adds ground vehicles to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Adds ground vehicles to <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public VehiclePlacer Vehicles { get; }
 
-	/// <summary>Edits groups' order slots in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Edits groups' order slots in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public OrderEditor Orders { get; }
 
-	/// <summary>Removes the positions nothing in <see cref="Source"/> uses, as a step of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Removes the positions nothing in <see cref="Source"/> uses, as a step of <see cref="History"/>.</summary>
 	public UnusedPointRemover UnusedPoints { get; }
 
-	/// <summary>Creates, edits and deletes objectives in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Creates, edits and deletes objectives in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public ObjectiveEditor Objectives { get; }
 
-	/// <summary>Edits the objective, briefing and intelligence lines of <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Edits the objective, briefing and intelligence lines of <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public MissionTextEditor Texts { get; }
 
-	/// <summary>Edits the debrief text of <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Edits the debrief text of <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public DebriefEditor Debrief { get; }
 
 	/// <summary>
 	/// Creates, edits and deletes actions in <see cref="Source"/>, and wires them into groups and objects, as steps of
-	/// <see cref="Mover"/>'s undo history.
+	/// <see cref="History"/>.
 	/// </summary>
 	public ActionEditor Actions { get; }
 
-	/// <summary>Creates, edits and deletes action timers in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Creates, edits and deletes action timers in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public TimerEditor Timers { get; }
 
-	/// <summary>Creates, edits and deletes conditions in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Creates, edits and deletes conditions in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public ConditionEditor Conditions { get; }
 
-	/// <summary>Sets which campaign states a record of <see cref="Source"/> is present in, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Sets which campaign states a record of <see cref="Source"/> is present in, as steps of <see cref="History"/>.</summary>
 	public PresenceEditor Presence { get; }
 
-	/// <summary>Creates, edits and deletes random tables in <see cref="Source"/>, and sets which one an object picks from, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Creates, edits and deletes random tables in <see cref="Source"/>, and sets which one an object picks from, as steps of <see cref="History"/>.</summary>
 	public RandomTableEditor TableEditor { get; }
 
 	public SideChanger Sides { get; }
 
-	/// <summary>Deletes objects from <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Deletes objects from <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public ObjectDeleter Deleter { get; }
 
 	/// <summary>Deletes a group whole, its members with it.</summary>
 	public GroupDeleter GroupDeleter { get; }
 
-	/// <summary>Moves objects into other groups of <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Moves objects into other groups of <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public MemberMover Members { get; }
 
-	/// <summary>Changes hercs' chassis and weapon fits in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Changes hercs' chassis and weapon fits in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public MachineFitter Fitter { get; }
 
 	/// <summary>The loadout preset choice of a HERC's view, and its prompts, which take the keyboard while one is up.</summary>
 	public LoadoutPresetView Presets { get; }
 
-	/// <summary>Changes the types of flyers, structures and ground vehicles in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Changes the types of flyers, structures and ground vehicles in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public RosterTypeEditor Types { get; }
 
-	/// <summary>Sets the starting condition of hercs, structures and ground vehicles in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Sets the starting condition of hercs, structures and ground vehicles in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public StartingConditionEditor StartingConditions { get; }
 
-	/// <summary>Turns the radar of hercs on and off in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Turns the radar of hercs on and off in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public RadarSettingEditor RadarSettings { get; }
 
-	/// <summary>Sets how <see cref="Source"/>'s player's squad's order target is handled, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Sets how <see cref="Source"/>'s player's squad's order target is handled, as steps of <see cref="History"/>.</summary>
 	public SquadTargetHandlingEditor SquadTargetHandling { get; }
 
-	/// <summary>Marks <see cref="Source"/> as meant for HERCULAN alone or for retail too, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Marks <see cref="Source"/> as meant for HERCULAN alone or for retail too, as steps of <see cref="History"/>.</summary>
 	public PlayableInEditor PlayableIn { get; }
 
-	/// <summary>Edits the mission's about file, kept beside its <c>.MSN</c>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Edits the mission's about file, kept beside its <c>.MSN</c>, as steps of <see cref="History"/>.</summary>
 	public MissionAboutEditor About { get; }
 
-	/// <summary>Sets the own headings of structures, ground vehicles and groups in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Sets the own headings of structures, ground vehicles and groups in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public HeadingEditor Headings { get; }
 
-	/// <summary>Turns structure groups' base pads on and off in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Turns structure groups' base pads on and off in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public BasePadEditor Pads { get; }
 
-	/// <summary>Sets groups' formations in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Sets groups' formations in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public FormationEditor Formations { get; }
 
-	/// <summary>Adds and removes the player's squadmates in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Adds and removes the player's squadmates in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public SquadEditor Squad { get; }
 
-	/// <summary>Changes the mission's theater and time of day in <see cref="Source"/>, reloading the scene's world, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Changes the mission's theater and time of day in <see cref="Source"/>, reloading the scene's world, as steps of <see cref="History"/>.</summary>
 	public TheaterChanger Theater { get; }
 
-	/// <summary>Holds the mission's own terrain and replaces it, swapping the scene's terrain, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Holds the mission's own terrain and replaces it, swapping the scene's terrain, as steps of <see cref="History"/>.</summary>
 	public TerrainChanger Terrain { get; }
 
-	/// <summary>Creates, edits and deletes routes in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Creates, edits and deletes routes in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public RouteEditor Routes { get; }
 
 	/// <summary>The route-placing mode, which takes the view's clicks while it is on.</summary>
 	public RoutePlacing Placing { get; }
 
-	/// <summary>Creates, reshapes and deletes trigger areas in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Creates, reshapes and deletes trigger areas in <see cref="Source"/>, as steps of <see cref="History"/>.</summary>
 	public AreaEditor Areas { get; }
 
 	/// <summary>The area-placing mode, which takes the view's presses and releases while it is on.</summary>

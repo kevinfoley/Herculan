@@ -16,8 +16,8 @@ internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, int Temp
 }
 
 /// <summary>
-/// Creates, edits and deletes the open mission's conditions, row 1, each edit one step of <see cref="PointMover"/>'s undo
-/// history, through <see cref="ConditionEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's
+/// Creates, edits and deletes the open mission's conditions, row 1, each edit one step of the <see cref="EditHistory">undo
+/// history</see>, through <see cref="ConditionEditing"/>'s record edits on the mission's <c>.MSN</c>. Every edit builds the editor's
 /// state again (<see cref="SceneSync"/>), as a condition conditions records in and out of the generation.
 ///
 /// <para>The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).</para>
@@ -26,19 +26,19 @@ internal sealed class ConditionEditor {
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly MissionNames _names;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
 	/// <param name="names">What the Used by list names the records it lists by.</param>
-	public ConditionEditor(MissionDocument source, MissionIndex index, MissionNames names, PointMover mover, SceneSync sync,
+	public ConditionEditor(MissionDocument source, MissionIndex index, MissionNames names, EditHistory history, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
 		_names = names;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_selection = selection;
 		_deleter = deleter;
@@ -243,7 +243,7 @@ internal sealed class ConditionEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		short guid = selected();
 		_selection.Current = guid != -1 && ConditionEditing.IndexOf(_source, guid) != null ? new ConditionSelection(guid) : null;
 		return null;

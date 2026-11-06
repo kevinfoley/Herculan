@@ -9,7 +9,7 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Adds a structure to the open mission, as one step of <see cref="PointMover"/>'s undo history: a row-14 roster record,
+/// Adds a structure to the open mission, as one step of the <see cref="EditHistory">undo history</see>: a row-14 roster record,
 /// and a row-16 group of its own that places it, standing on a row-6 point appended for it and facing a row-7 heading of
 /// 0 degrees. Each record is appended to the <c>.MSN</c> unconditioned, with no random table key and a new GUID
 /// (<see cref="MissionDocument.Append"/>), so every version of the mission has it; the scene is then synced
@@ -59,7 +59,7 @@ internal sealed class StructurePlacer {
 	private readonly MissionScene _scene;
 	private readonly SimWorld _world;
 	private readonly MissionIndex _index;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly BaseFormationTable _formations;
@@ -71,12 +71,12 @@ internal sealed class StructurePlacer {
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="formations">The structure formations, which place a base's members (<see cref="BasePlaces"/>).</param>
 	public StructurePlacer(MissionDocument source, MissionScene scene, MissionIndex index,
-			PointMover mover, SceneSync sync, SelectionState selection, BaseFormationTable formations) {
+			EditHistory history, SceneSync sync, SelectionState selection, BaseFormationTable formations) {
 		_source = source;
 		_scene = scene;
 		_world = scene.World;
 		_index = index;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_selection = selection;
 		_formations = formations;
@@ -277,7 +277,7 @@ internal sealed class StructurePlacer {
 			}
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		if (selected != null) {
 			_selection.Current = selected();
 		}

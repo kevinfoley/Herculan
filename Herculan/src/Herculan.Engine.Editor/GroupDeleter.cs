@@ -21,7 +21,7 @@ internal sealed record GroupDeleteBlockers(string? Fixed, DeleteNamers Group,
 }
 
 /// <summary>
-/// Deletes a group whole from the open mission, its members with it, as one step of <see cref="PointMover"/>'s undo history:
+/// Deletes a group whole from the open mission, its members with it, as one step of the <see cref="EditHistory">undo history</see>:
 /// <see cref="RosterDeletion.DeleteGroup"/>'s record edits, refused as it refuses them, then the scene synced with the
 /// document (<see cref="SceneSync"/>), which takes a base's pad away with its group. What blocks it is named by identity in
 /// the layout, as <see cref="ObjectDeleter.Resolve"/> names it.
@@ -32,15 +32,15 @@ internal sealed record GroupDeleteBlockers(string? Fixed, DeleteNamers Group,
 internal sealed class GroupDeleter {
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly ObjectDeleter _objects;
 	private short? _requested;
 
-	public GroupDeleter(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync, ObjectDeleter objects) {
+	public GroupDeleter(MissionDocument source, MissionIndex index, EditHistory history, SceneSync sync, ObjectDeleter objects) {
 		_source = source;
 		_index = index;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_objects = objects;
 	}
@@ -97,7 +97,7 @@ internal sealed class GroupDeleter {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	}
 }

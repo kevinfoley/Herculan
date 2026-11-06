@@ -9,7 +9,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Edit &gt; "Remove unused positions": removes every position nothing uses (<see cref="UnusedPoints"/>), as one step of
-/// <see cref="PointMover"/>'s undo history, which brings the Positions count of the viewport's readout down
+/// the <see cref="EditHistory">undo history</see>, which brings the Positions count of the viewport's readout down
 /// (<see cref="RosterCountsOverlay"/>). When removing those on the play area's edge would shrink it, a prompt first asks
 /// whether they go too, saying how far, since the play area frames the heads-down map and sets the mission's boundary
 /// (<see cref="PointFields.PlayAreaWarning"/>).
@@ -20,7 +20,7 @@ internal sealed class UnusedPointRemover {
 	private const string PromptTitle = "Remove unused positions###unused-positions";
 
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private bool _requested;
 	private bool _edges;
@@ -29,9 +29,9 @@ internal sealed class UnusedPointRemover {
 	private bool _asking;
 	private bool _raised;
 
-	public UnusedPointRemover(MissionDocument source, PointMover mover, SceneSync sync) {
+	public UnusedPointRemover(MissionDocument source, EditHistory history, SceneSync sync) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -149,6 +149,6 @@ internal sealed class UnusedPointRemover {
 		}
 
 		var source = _source;
-		_mover.Record(new RecordsEdit(_sync, _sync.Run(() => UnusedPoints.Remove(source, edges))));
+		_history.Record(new RecordsEdit(_sync, _sync.Run(() => UnusedPoints.Remove(source, edges))));
 	}
 }

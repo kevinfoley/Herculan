@@ -142,17 +142,17 @@ public sealed class MissionSavingTests : IDisposable {
 	/// </summary>
 	[Fact]
 	public void UndoingBackToTheSaveIsClean() {
-		var history = new EditHistory();
-		history.Add(new Step());
+		var history = new EditHistory(() => { });
+		history.Record(new Step());
 		history.MarkSaved();
-		history.Add(new Step());
+		history.Record(new Step());
 		Assert.True(history.Dirty);
 
-		history.TakeUndo();
+		history.Undo();
 		Assert.False(history.Dirty);
-		history.TakeUndo();
+		history.Undo();
 		Assert.True(history.Dirty);
-		history.TakeRedo();
+		history.Redo();
 		Assert.False(history.Dirty);
 	}
 
@@ -162,13 +162,13 @@ public sealed class MissionSavingTests : IDisposable {
 	/// </summary>
 	[Fact]
 	public void AnEditInPlaceOfAnUndoneOneIsUnsaved() {
-		var history = new EditHistory();
-		history.Add(new Step());
-		history.Add(new Step());
+		var history = new EditHistory(() => { });
+		history.Record(new Step());
+		history.Record(new Step());
 		history.MarkSaved();
 
-		history.TakeUndo();
-		history.Add(new Step());
+		history.Undo();
+		history.Record(new Step());
 		Assert.True(history.Dirty);
 	}
 

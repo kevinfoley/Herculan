@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Changes the mission's theater and its time of day, header words 0 and 9 (docs/retail/formats/script-dat.md#header-format),
-/// as one step of <see cref="PointMover"/>'s undo history each, and dresses the scene in the world they pick,
+/// as one step of the <see cref="EditHistory">undo history</see> each, and dresses the scene in the world they pick,
 /// <c>wld\world&lt;theater * 2 + variant&gt;</c> (<see cref="MissionScene.ChangeTheater"/>): the terrain bank, the palette every
 /// model is drawn through, the sky and the fog. <see cref="WorldChanged"/> then tells whatever has the scene uploaded to
 /// upload it again.
@@ -24,17 +24,17 @@ internal sealed class TheaterChanger {
 	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly MissionIndex _index;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private (int Word, short Value)? _requested;
 
 	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="index">The scene's objects, every one of which is dressed in the new world.</param>
-	public TheaterChanger(MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover, SceneSync sync) {
+	public TheaterChanger(MissionDocument source, MissionScene scene, MissionIndex index, EditHistory history, SceneSync sync) {
 		_source = source;
 		_scene = scene;
 		_index = index;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -102,7 +102,7 @@ internal sealed class TheaterChanger {
 		}
 
 		_sync.Sync();
-		_mover.Record(new WorldEdit(this, change));
+		_history.Record(new WorldEdit(this, change));
 		return null;
 	}
 

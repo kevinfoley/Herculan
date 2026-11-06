@@ -12,7 +12,7 @@ namespace Herculan.Engine.Editor;
 internal readonly record struct FormationPlace(int X, int Y, short Turn);
 
 /// <summary>
-/// Sets a group's formation, as one step of <see cref="PointMover"/>'s undo history: row 16's
+/// Sets a group's formation, as one step of the <see cref="EditHistory">undo history</see>: row 16's
 /// <see cref="MissionGroup164.FormationId"/>, written to the record of the group's GUID that supplies it
 /// (<see cref="MissionDocument.SetField"/>), as <see cref="BasePadEditor"/> writes the pad flag. A herc group picks from
 /// <c>dat\MFORMS.DAT</c>, a flyer group from <c>dat\FFORMS.DAT</c> and a structure group from <c>dat\BFORMS.DAT</c>
@@ -30,15 +30,15 @@ internal sealed class FormationEditor {
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly PlacementTables _tables;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
-	public FormationEditor(MissionDocument source, MissionIndex index, PlacementTables tables, PointMover mover, SceneSync sync) {
+	public FormationEditor(MissionDocument source, MissionIndex index, PlacementTables tables, EditHistory history, SceneSync sync) {
 		_source = source;
 		_index = index;
 		_tables = tables;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -106,7 +106,7 @@ internal sealed class FormationEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	};
 

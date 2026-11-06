@@ -16,7 +16,7 @@ internal sealed record RouteDeleteBlockers(string? Fixed, DeleteNamers Names, IR
 }
 
 /// <summary>
-/// Creates, edits and deletes the open mission's routes, each edit one step of <see cref="PointMover"/>'s undo history,
+/// Creates, edits and deletes the open mission's routes, each edit one step of the <see cref="EditHistory">undo history</see>,
 /// through <see cref="RouteEditing"/>'s record edits on the mission's <c>.MSN</c>; the scene and the indices are then synced
 /// with the document (<see cref="SceneSync"/>), as a new route's records are exported last and a delete moves
 /// every later route, and every later point when a point goes with it, down one
@@ -40,17 +40,17 @@ internal sealed class RouteEditor {
 
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public RouteEditor(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync,
+	public RouteEditor(MissionDocument source, MissionIndex index, EditHistory history, SceneSync sync,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_selection = selection;
 		_deleter = deleter;
@@ -188,7 +188,7 @@ internal sealed class RouteEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		if (route() is not -1 and var guid) {
 			bool listed = waypoint < _index.Route(guid)?.Points.Count;
 			_selection.Current = new RouteSelection(guid, listed ? waypoint : -1);

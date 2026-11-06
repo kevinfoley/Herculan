@@ -6,8 +6,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The "Squad target handling" choice, in the Mission Settings window and in the player's squad's properties: header word 3
 /// (<see cref="HercWorks.Core.Data.File.Msn.Script.ScriptDat.SquadTargetHandling"/>), which picks the player's think's arm
-/// (docs/retail/simulation/mission-objectives.md#the-player-thinks-objective-arms), as one step of <see cref="PointMover"/>'s undo
-/// history. It is written through <see cref="MissionDocument.SetHeaderWord"/>; no launch writes over it.
+/// (docs/retail/simulation/mission-objectives.md#the-player-thinks-objective-arms), as one step of the <see cref="EditHistory">undo
+/// history</see>. It is written through <see cref="MissionDocument.SetHeaderWord"/>; no launch writes over it.
 ///
 /// <para>Types 3 and 7 are the two data links; why every other shows as "None" is
 /// docs/herculan/editor-design.md#the-players-squad.</para>
@@ -27,13 +27,13 @@ internal sealed class SquadTargetHandlingEditor {
 	];
 
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private short? _requested;
 
-	public SquadTargetHandlingEditor(MissionDocument source, PointMover mover, SceneSync sync) {
+	public SquadTargetHandlingEditor(MissionDocument source, EditHistory history, SceneSync sync) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -95,7 +95,7 @@ internal sealed class SquadTargetHandlingEditor {
 			return;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 	}
 
 	/// <summary>The choice squad target handling <paramref name="type"/> plays as.</summary>

@@ -5,7 +5,7 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Turns a structure group's base pad on or off, as one step of <see cref="PointMover"/>'s undo history: row 16's
+/// Turns a structure group's base pad on or off, as one step of the <see cref="EditHistory">undo history</see>: row 16's
 /// <see cref="MissionGroup164.PaintsGround"/>, 1 or 0, written to the record of the group's GUID that supplies it
 /// (<see cref="MissionDocument.SetField"/>), as <see cref="SideChanger"/> writes a group's side; 0 is the field's unset value,
 /// so turning it off clears it in every record of the GUID. The edit builds the editor's state again (<see cref="SceneSync"/>),
@@ -19,15 +19,15 @@ internal sealed class BasePadEditor {
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly BaseFormationTable _formations;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private Func<string?>? _requested;
 
-	public BasePadEditor(MissionDocument source, MissionIndex index, BaseFormationTable formations, PointMover mover, SceneSync sync) {
+	public BasePadEditor(MissionDocument source, MissionIndex index, BaseFormationTable formations, EditHistory history, SceneSync sync) {
 		_source = source;
 		_index = index;
 		_formations = formations;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -58,7 +58,7 @@ internal sealed class BasePadEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	};
 

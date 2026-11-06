@@ -34,7 +34,7 @@ internal sealed record DeleteBlockers(string? Fixed, DeleteNamers Object, IReadO
 
 /// <summary>
 /// Deletes a placed structure, mech or flyer from the open mission, whether it was loaded with it or added since, as one
-/// step of <see cref="PointMover"/>'s undo history. The delete is <see cref="RosterDeletion"/>'s record edits on the
+/// step of the <see cref="EditHistory">undo history</see>. The delete is <see cref="RosterDeletion"/>'s record edits on the
 /// mission's <c>.MSN</c>, by the roster record the object stands for, which remove the object's records and the group it
 /// leaves empty; the scene is then synced with the document (<see cref="SceneSync"/>)
 /// (docs/herculan/editor-design.md#which-record-an-edit-writes).
@@ -52,14 +52,14 @@ internal sealed class ObjectDeleter {
 
 	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private SceneObject? _requested;
 
-	public ObjectDeleter(MissionDocument source, MissionIndex index, PointMover mover, SceneSync sync) {
+	public ObjectDeleter(MissionDocument source, MissionIndex index, EditHistory history, SceneSync sync) {
 		_source = source;
 		_index = index;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 	}
 
@@ -113,7 +113,7 @@ internal sealed class ObjectDeleter {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		return null;
 	}
 

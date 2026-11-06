@@ -20,7 +20,7 @@ internal sealed record TriggerDeleteBlockers(string? Fixed, IReadOnlyList<short>
 
 /// <summary>
 /// Creates, edits and deletes the open mission's triggers (row-10 actions), and wires them into the records that wait on them
-/// or fire them, each edit one step of <see cref="PointMover"/>'s undo history, through <see cref="ActionEditing"/>'s,
+/// or fire them, each edit one step of the <see cref="EditHistory">undo history</see>, through <see cref="ActionEditing"/>'s,
 /// <see cref="ActionWiring"/>'s and <see cref="TriggerFollowers"/>' record edits on the mission's <c>.MSN</c>. Every edit
 /// builds the editor's state again (<see cref="SceneSync"/>): a trigger's areas decide how the overlay colors each area, and
 /// its arrival how its waiting groups arrive.
@@ -34,14 +34,14 @@ internal sealed class ActionEditor {
 	private const int ActionRow = 10;
 
 	private readonly MissionDocument _source;
-	private readonly PointMover _mover;
+	private readonly EditHistory _history;
 	private readonly SceneSync _sync;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public ActionEditor(MissionDocument source, PointMover mover, SceneSync sync, SelectionState selection) {
+	public ActionEditor(MissionDocument source, EditHistory history, SceneSync sync, SelectionState selection) {
 		_source = source;
-		_mover = mover;
+		_history = history;
 		_sync = sync;
 		_selection = selection;
 	}
@@ -241,7 +241,7 @@ internal sealed class ActionEditor {
 			return ex.Message;
 		}
 
-		_mover.Record(new RecordsEdit(_sync, change));
+		_history.Record(new RecordsEdit(_sync, change));
 		if (selected?.Invoke() is { } guid && guid != -1) {
 			_selection.Current = new ActionSelection(guid);
 		}
