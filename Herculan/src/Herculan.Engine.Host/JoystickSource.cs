@@ -164,6 +164,16 @@ sealed class JoystickSource : IJoystickSource {
 	}
 
 	/// <summary>
+	/// Whether a gamepad's sticks and triggers read as at rest, while its other buttons and its d-pad still work: set
+	/// while the Heads-Down Display has them (<see cref="Simulator.HddGamepad"/>). Every map slot and button row filled
+	/// from one of them reads centred or up. A joystick that is not a gamepad is read as usual.
+	/// </summary>
+	public bool PadAxesMuted { get; set; }
+
+	/// <summary>How a gamepad works as the mouse, from the file the stick is read through.</summary>
+	public GamepadMouseSettings MouseSettings => _file.Mouse;
+
+	/// <summary>
 	/// Reads the stick through <paramref name="file"/>'s maps from now on, as the Controller window saves it, picking the
 	/// device again, and says what it can do again on the next <see cref="Announce"/>, so the CONTROLS panel greys its rows
 	/// against the new map.
@@ -199,7 +209,7 @@ sealed class JoystickSource : IJoystickSource {
 			Probe(device);
 		}
 
-		return Read(map, device);
+		return map.Read(AxisOf(device), index => !device.Reserved(index) && device.Button(index), device.Hat(map.HatIndex));
 	}
 
 	/// <summary>
@@ -207,7 +217,12 @@ sealed class JoystickSource : IJoystickSource {
 	/// <see cref="Read"/> reports the stick neutral: while <see cref="Muted"/>, and after it until every button is let go.
 	/// </summary>
 	public bool RadarToggleHeld() =>
-		!Muted && !_awaitingRelease && Device is { } device && Map is { } map && RadarToggleHeld(map, device);
+		!Muted && !_awaitingRelease && Device is { } device && Map is { } map
+		&& map.RadarToggle.Pressed(AxisOf(device), index => !device.Reserved(index) && device.Button(index));
+
+	// A gamepad's axes are its two sticks and two triggers, which read at rest while PadAxesMuted.
+	private Func<int, float> AxisOf(ControllerDevice device) =>
+		PadAxesMuted && device.IsGamepad ? ControllerDevice.GamepadAxisAtRest : device.Axis;
 
 	/// <summary>Whether <paramref name="map"/>'s radar toggle is held on <paramref name="device"/>, a button the host keeps reading as up.</summary>
 	public static bool RadarToggleHeld(JoystickDeviceMap map, ControllerDevice device) =>

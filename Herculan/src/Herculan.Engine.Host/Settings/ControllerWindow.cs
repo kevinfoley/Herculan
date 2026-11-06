@@ -16,7 +16,7 @@ namespace Herculan.Engine.Host.Settings;
 /// <c>data\herculan-joystick.cfg</c> (<see cref="JoystickMapFile"/>; docs/herculan/joystick-config.md), and is this
 /// engine's own: retail reads a stick's axes in a fixed order and has nothing to set. What each control does stays
 /// with retail's CONTROLS panel. Above the device's own settings, and only while a gamepad is connected, "Mouse emulation" chooses the stick, its speed and the triggers
-/// a gamepad works the pointer with in the front end and the mission editor (<see cref="JoystickMapFile.Mouse"/>), which
+/// a gamepad works the pointer with in the front end, on the Heads-Down Display and in the mission editor (<see cref="JoystickMapFile.Mouse"/>), which
 /// serve every gamepad whichever device is being edited.
 ///
 /// <para>What the player sees and does is docs/herculan/joystick-config.md, "Setting up a stick". Save hands the file to

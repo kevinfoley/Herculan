@@ -213,7 +213,7 @@ controller.saved_for_model     Ces réglages sont enregistrés pour ce modèle d
 controller.saved_for_joysticks Ces réglages sont enregistrés pour tous les joysticks sans réglages propres.
 controller.none_connected      Aucune manette n'est branchée. Branchez-en une et elle apparaîtra ici.
 controller.mouse_emulation     Émulation de la souris
-controller.mouse_emulation_note L'émulation de la souris sert dans l'interface de jeu (menus) et dans l'Éditeur. L'émulation de la souris n'est pas disponible dans cette fenêtre ; utilisez la croix directionnelle pour naviguer dans cette fenêtre.
+controller.mouse_emulation_note L'émulation de la souris sert dans l'interface de jeu (menus), sur l'affichage tête basse et dans l'Éditeur. L'émulation de la souris n'est pas disponible dans cette fenêtre ; utilisez la croix directionnelle pour naviguer dans cette fenêtre.
 controller.cursor_control      Contrôle du curseur
 controller.left_stick          Stick gauche
 controller.right_stick         Stick droit

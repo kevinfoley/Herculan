@@ -14,7 +14,7 @@ public enum GamepadSide {
 
 /// <summary>
 /// Which stick moves the pointer and how fast, and which trigger is the left button, while a gamepad works as the mouse
-/// in the front end and the mission editor (<see cref="Platform.GamepadPointer"/>; docs/herculan/herculan-key-bindings.md,
+/// in the front end, on the Heads-Down Display and in the mission editor (<see cref="Platform.GamepadPointer"/>; docs/herculan/herculan-key-bindings.md,
 /// "Gamepad in the front end"). The other trigger is the right button. <b>This engine's own</b>, kept in
 /// <c>herculan-joystick.cfg</c>'s <c>[Gamepad]</c> section.
 /// </summary>
@@ -62,7 +62,8 @@ public sealed record GamepadMouseSettings {
 
 	/// <summary>Writes the three settings <see cref="FromValues"/> reads, with a comment on what they are.</summary>
 	public void WriteValues(StringBuilder text) {
-		text.AppendLine(";; The gamepad as the mouse, in the front end and the mission editor: the stick");
+		text.AppendLine(";; The gamepad as the mouse, in the front end, on the Heads-Down Display and in");
+		text.AppendLine(";; the mission editor: the stick");
 		text.AppendLine(";; that moves the pointer, and the trigger that is the left button (the other");
 		text.AppendLine(";; trigger is the right), Left or Right; and the pointer's speed, as a percentage");
 		text.AppendLine($";; of the default, {MinCursorSpeed} to {MaxCursorSpeed}.");

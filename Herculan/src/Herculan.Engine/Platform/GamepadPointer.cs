@@ -7,8 +7,8 @@ namespace Herculan.Engine.Platform;
 
 /// <summary>
 /// The first connected gamepad as a mouse: one stick moves the pointer, one trigger is held as the left button and the
-/// other as the right, as <see cref="Settings"/> chooses, and its other buttons are read as a skip, so a front end or the
-/// mission editor can be worked without a mouse (docs/herculan/herculan-key-bindings.md, "Gamepad in the front end").
+/// other as the right, as <see cref="Settings"/> chooses, and its other buttons are read as a skip, so a front end, a
+/// mission's Heads-Down Display or the mission editor can be worked without a mouse (docs/herculan/herculan-key-bindings.md, "Gamepad in the front end").
 /// This engine's own; retail has no gamepad. The stick moves the window's own cursor, so whatever reads the mouse sees the
 /// pad's moves, and the mouse still works alongside it; each host decides what the held buttons reach.
 ///
