@@ -52,6 +52,16 @@ public sealed class Es1HostMouse {
 	public Func<ScreenPointer>? Pointer { get; set; }
 
 	/// <summary>
+	/// <b>This engine's own:</b> whether the host's own layer over the game has the pointer, as HERCULAN's menu bar has it
+	/// while the pointer is over the bar or one of its windows. While it has, the host's moves and presses are not events
+	/// and the pointer keeps its last position. A release still is one for a button the word holds, so a button that went
+	/// down in the game does not stay down in it. With none, the game has the pointer throughout.
+	/// </summary>
+	public Func<bool>? HostHasPointer { get; set; }
+
+	private bool HostHas => HostHasPointer?.Invoke() == true;
+
+	/// <summary>
 	/// Whether the driver reports the mouse, which <see cref="DisableDriver"/> and <see cref="EnableDriver"/> turn off and
 	/// on; on from the start. While it is off the host's moves and button changes are not events: the pointer and the
 	/// word keep their last values and no callback runs.
@@ -147,7 +157,7 @@ public sealed class Es1HostMouse {
 
 	/// <summary>One host move to the client position (<paramref name="clientX"/>, <paramref name="clientY"/>): a move event at the screen pixel under it.</summary>
 	internal void OnMove(float clientX, float clientY) {
-		if (Pointer == null || !DriverEnabled) {
+		if (Pointer == null || !DriverEnabled || HostHas) {
 			return;
 		}
 
@@ -167,7 +177,7 @@ public sealed class Es1HostMouse {
 			MouseButton.Middle => (MiddleBit, MiddlePressed, MiddleReleased),
 			_ => ((ushort)0, (byte)0, (byte)0),
 		};
-		if (bit == 0) {
+		if (bit == 0 || (HostHas && (down || (Buttons & bit) == 0))) {
 			return;
 		}
 
@@ -214,7 +224,7 @@ public sealed class Es1HostMouse {
 
 	/// <summary>The pointer read from the host before a button event, which the driver reports with the pointer where it is.</summary>
 	private void SyncFromHost(IMouse mouse) {
-		if (Pointer != null && DriverEnabled) {
+		if (Pointer != null && DriverEnabled && !HostHas) {
 			(X, Y) = Pointer().ToScreen(mouse.Position.X, mouse.Position.Y);
 		}
 	}

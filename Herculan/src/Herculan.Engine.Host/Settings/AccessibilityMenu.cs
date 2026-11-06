@@ -9,15 +9,15 @@ namespace Herculan.Engine.Host.Settings;
 /// <summary>
 /// The floating "Accessibility" window opened from the menu bar. It works as <see cref="TweaksMenu"/> does: edits land
 /// on the live <see cref="A11ySettings"/> at once, Save writes them and closes, and Cancel, the title-bar close and
-/// [Esc] (<see cref="HostMenuBar.BackOut"/>) reload the file and close. A category with no visible setting is left out.
+/// [Esc] (<see cref="HostMenuBar.BackOut"/>) reload the file and close. It lists the settings the host offers, those the
+/// running game honors, less the hidden ones; a category with none of them is left out.
 /// </summary>
 public sealed class AccessibilityMenu {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 400f;
 
 	// The visible settings in the order they are drawn, grouped once rather than every frame.
-	private static readonly (A11yCategory Category, A11ySettingDefinition<bool>[] Settings)[] VisibleByCategory =
-		A11ySettingDefinitions.All.Where(d => !d.Hidden).GroupBy(d => d.Category).OrderBy(g => g.Key).Select(g => (g.Key, g.ToArray())).ToArray();
+	private readonly (A11yCategory Category, A11ySettingDefinition<bool>[] Settings)[] _visibleByCategory;
 
 	private readonly A11ySettings _settings;
 	private readonly LocalizationTable _localization;
@@ -28,10 +28,14 @@ public sealed class AccessibilityMenu {
 	/// <summary>Whether the panel is currently open. Set by the menu bar; see <see cref="HostMenuBar"/>.</summary>
 	public bool IsOpen { get; set; }
 
-	public AccessibilityMenu(A11ySettings settings, LocalizationTable localization) {
+	/// <param name="offered">The settings to list, or null for every one in <see cref="A11ySettingDefinitions.All"/>.</param>
+	public AccessibilityMenu(A11ySettings settings, LocalizationTable localization,
+			IReadOnlyCollection<A11ySettingDefinition<bool>>? offered = null) {
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_localization = localization ?? throw new ArgumentNullException(nameof(localization));
 		_closeButtons = [("general.save", Save), ("general.cancel", Cancel)];
+		_visibleByCategory = A11ySettingDefinitions.All.Where(d => !d.Hidden && (offered == null || offered.Contains(d)))
+			.GroupBy(d => d.Category).OrderBy(g => g.Key).Select(g => (g.Key, g.ToArray())).ToArray();
 	}
 
 	/// <summary>
@@ -50,7 +54,7 @@ public sealed class AccessibilityMenu {
 
 		bool stayOpen = true;
 		if (ImGui.Begin(_localization.GetStringOrKey("a11y.title"), ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
-			foreach (var (category, settings) in VisibleByCategory) {
+			foreach (var (category, settings) in _visibleByCategory) {
 				ImGui.SeparatorText(_localization.GetStringOrKey(CategoryKey(category)));
 				foreach (var definition in settings) {
 					bool value = _settings.GetSettingValue(definition);

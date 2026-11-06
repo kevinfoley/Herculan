@@ -64,6 +64,19 @@ public sealed class Es1HostKeyboard {
 	/// <summary>Each character the host types: the shell's BIOS stand-in, <see cref="Es1BiosKeyBuffer.HostChar"/>.</summary>
 	public Action<char>? Typed { get; init; }
 
+	/// <summary>
+	/// <b>This engine's own:</b> the host's own layer over the game, offered each host key-down before the game sees it, as
+	/// HERCULAN's menu bar takes its own keys. True when the layer took the key: no byte is sent, the key is not held, and
+	/// so its key-up sends nothing either. With none, every key is the game's.
+	/// </summary>
+	public Func<Key, bool>? HostTakes { get; set; }
+
+	/// <summary>
+	/// <b>This engine's own:</b> whether the host's own layer has the keyboard, as a field of the menu bar's windows has it
+	/// while it is typed into; while it has, the characters the host types are not <see cref="Typed"/>.
+	/// </summary>
+	public Func<bool>? HostHasKeyboard { get; set; }
+
 	/// <summary>The set-1 make byte <paramref name="key"/> sends, or null for a key with none.</summary>
 	public static byte? MakeCodeOf(Key key) => MakeCodes.TryGetValue(key, out byte code) ? code : null;
 
@@ -85,11 +98,16 @@ public sealed class Es1HostKeyboard {
 		}
 	}
 
-	/// <summary>A host key-down: the make byte, and the typematic restarted on this key. A key already down is ignored.</summary>
+	/// <summary>
+	/// A host key-down: the make byte, and the typematic restarted on this key. A key already down, and one the host's
+	/// layer takes (<see cref="HostTakes"/>), is ignored.
+	/// </summary>
 	public void KeyDown(Key key) {
-		if (MakeCodeOf(key) is not { } make || !_held.Add(key)) {
+		if (MakeCodeOf(key) is not { } make || _held.Contains(key) || HostTakes?.Invoke(key) == true) {
 			return;
 		}
+
+		_held.Add(key);
 
 		_repeating = key;
 		_untilRepeat = _typematic.Delay;
@@ -163,7 +181,11 @@ public sealed class Es1HostKeyboard {
 
 	private void OnKeyUp(IKeyboard device, Key key, int scancode) => KeyUp(key);
 
-	private void OnKeyChar(IKeyboard device, char character) => Typed?.Invoke(character);
+	private void OnKeyChar(IKeyboard device, char character) {
+		if (HostHasKeyboard?.Invoke() != true) {
+			Typed?.Invoke(character);
+		}
+	}
 
 	private static Dictionary<Key, byte> BuildMakeCodes() {
 		var codes = new Dictionary<Key, byte>();

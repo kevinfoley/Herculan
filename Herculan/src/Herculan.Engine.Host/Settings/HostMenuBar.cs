@@ -13,7 +13,9 @@ namespace Herculan.Engine.Host.Settings;
 /// <summary>
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, and the pointer at the window's top left over the
 /// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's, and the
-/// panels it opens: Debug and Mission Scripting (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About; the
+/// panels it opens: Debug and Mission Scripting (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About,
+/// of which a host greys Settings, Controller, Keys and Tweaks by passing none (Metaltech: Earthsiege's shell, which has
+/// no counterpart of them yet); the
 /// Editor item, which leaves the shell for the mission editor and is greyed over a mission; Custom Missions
 /// (<see cref="CustomMissionsWindow"/>), the shell's alone and absent over a mission; and the
 /// first start's <see cref="WelcomeDialog"/>, the <see cref="UpdateDialog"/> and the <see cref="ErrorDialog"/>, which the shell raises without the bar; and a
@@ -40,36 +42,44 @@ sealed class HostMenuBar : IEscapeMenu {
 	private bool _panelWasOpen;
 	private bool _highlightWasShowing;
 
-	/// <param name="keys">The key map the Keys window lists.</param>
+	/// <param name="keys">The key map the Keys window lists, or null to grey the item.</param>
+	/// <param name="tweaks">The Tweaks window, or null to grey the item.</param>
+	/// <param name="settings">The Settings window, or null to grey the item.</param>
+	/// <param name="controller">The Controller window, or null to grey the item.</param>
 	/// <param name="openEditor">The Editor item's switch to the mission editor, or null to grey the item.</param>
 	/// <param name="scripting">The Mission Scripting window, which the host draws as it does the Debug panel, or null for no item.</param>
 	/// <param name="customMissions">The Custom Missions item's window, or null for a bar without the item.</param>
-	public HostMenuBar(LocalizationTable localization, KeyMap keys, TweaksMenu tweaks, SettingsWindow settings,
-			ControllerWindow controller, DebugPanel? debug = null, Action? openEditor = null, MissionScriptingWindow? scripting = null,
-			CustomMissionsWindow? customMissions = null) {
+	/// <param name="accessibilitySettings">The settings the Accessibility window offers (<see cref="AccessibilityMenu"/>), or null for all.</param>
+	public HostMenuBar(LocalizationTable localization, KeyMap? keys, TweaksMenu? tweaks, SettingsWindow? settings,
+			ControllerWindow? controller, DebugPanel? debug = null, Action? openEditor = null, MissionScriptingWindow? scripting = null,
+			CustomMissionsWindow? customMissions = null, IReadOnlyCollection<A11ySettingDefinition<bool>>? accessibilitySettings = null) {
 		_localization = localization;
 		_openEditor = openEditor;
 		_customMissions = customMissions;
 		Tweaks = tweaks;
 		Settings = settings;
 		Controller = controller;
-		Keys = new KeysWindow(localization, keys);
-		Accessibility = new AccessibilityMenu(A11ySettings.Current, localization);
+		Keys = keys != null ? new KeysWindow(localization, keys) : null;
+		Accessibility = new AccessibilityMenu(A11ySettings.Current, localization, accessibilitySettings);
 		_debug = debug;
 		_scripting = scripting;
 		About = new AboutWindow(localization);
-		Welcome = new WelcomeDialog(localization, () => Tweaks.IsOpen = true);
+		Welcome = new WelcomeDialog(localization, () => {
+			if (Tweaks != null) {
+				Tweaks.IsOpen = true;
+			}
+		});
 		Update = new UpdateDialog(localization);
 		Error = new ErrorDialog(localization);
 	}
 
-	public TweaksMenu Tweaks { get; }
+	public TweaksMenu? Tweaks { get; }
 
-	public SettingsWindow Settings { get; }
+	public SettingsWindow? Settings { get; }
 
-	public ControllerWindow Controller { get; }
+	public ControllerWindow? Controller { get; }
 
-	public KeysWindow Keys { get; }
+	public KeysWindow? Keys { get; }
 
 	public AccessibilityMenu Accessibility { get; }
 
@@ -85,7 +95,8 @@ sealed class HostMenuBar : IEscapeMenu {
 	public bool Visible { get; private set; }
 
 	/// <summary>Whether one of the bar's panels, or the welcome, the update notice or the error notice, is up.</summary>
-	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || Controller.IsOpen || Keys.IsOpen || Accessibility.IsOpen || About.IsOpen
+	public bool PanelOpen => Tweaks?.IsOpen == true || Settings?.IsOpen == true || Controller?.IsOpen == true || Keys?.IsOpen == true
+		|| Accessibility.IsOpen || About.IsOpen
 		|| Welcome.IsOpen || Update.IsOpen || Error.IsOpen || _debug?.IsOpen == true || _scripting?.IsOpen == true
 		|| _customMissions?.IsOpen == true;
 
@@ -140,10 +151,10 @@ sealed class HostMenuBar : IEscapeMenu {
 			yield return ("menu.mission_scripting", true, () => _scripting.IsOpen = true);
 		}
 
-		yield return ("menu.settings", true, () => Settings.IsOpen = true);
-		yield return ("menu.controller", true, Controller.Open);
-		yield return ("menu.keys", true, () => Keys.IsOpen = true);
-		yield return ("menu.tweaks", true, () => Tweaks.IsOpen = true);
+		yield return ("menu.settings", Settings != null, () => Settings!.IsOpen = true);
+		yield return ("menu.controller", Controller != null, () => Controller!.Open());
+		yield return ("menu.keys", Keys != null, () => Keys!.IsOpen = true);
+		yield return ("menu.tweaks", Tweaks != null, () => Tweaks!.IsOpen = true);
 		yield return ("menu.accessibility", true, () => Accessibility.IsOpen = true);
 		yield return ("menu.editor", _openEditor != null, () => _openEditor!());
 		if (_customMissions != null) {
@@ -179,10 +190,10 @@ sealed class HostMenuBar : IEscapeMenu {
 			if (_scripting != null) {
 				_scripting.IsOpen = false;
 			}
-			if (Tweaks.IsOpen) {
+			if (Tweaks?.IsOpen == true) {
 				Tweaks.Cancel();
 			}
-			if (Controller.IsOpen) {
+			if (Controller?.IsOpen == true) {
 				Controller.Cancel();
 			}
 			if (Accessibility.IsOpen) {
@@ -193,9 +204,11 @@ sealed class HostMenuBar : IEscapeMenu {
 			}
 			Update.Dismiss();
 			Error.Dismiss();
-			Settings.Close();
+			Settings?.Close();
 			_customMissions?.BackOut();
-			Keys.IsOpen = false;
+			if (Keys != null) {
+				Keys.IsOpen = false;
+			}
 			About.IsOpen = false;
 			return true;
 		}
@@ -254,10 +267,10 @@ sealed class HostMenuBar : IEscapeMenu {
 			ImGui.EndMainMenuBar();
 		}
 
-		Tweaks.Draw(_centring.Condition);
-		Settings.Draw(owner, _centring.Condition);
-		Controller.Draw(_centring.Condition);
-		Keys.Draw(_centring.Condition);
+		Tweaks?.Draw(_centring.Condition);
+		Settings?.Draw(owner, _centring.Condition);
+		Controller?.Draw(_centring.Condition);
+		Keys?.Draw(_centring.Condition);
 		Accessibility.Draw(_centring.Condition);
 		About.Draw(_centring.Condition);
 		_customMissions?.Draw(owner, _centring.Condition);

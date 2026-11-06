@@ -47,10 +47,11 @@ public static class Es1Launcher {
 	/// assert or the fault of a <c>PREFER_ALT</c> without <c>ALT_DRIVE</c>. Retail's <c>Launcher_Main</c> returns no value.
 	/// </summary>
 	/// <param name="imguiFontPath">The faces the shell's ImGui draws in (<see cref="Es1ShellHost.Run"/>).</param>
+	/// <param name="shellMenus">Builds each shell turn's menu bar and its windows (<see cref="Es1ShellHost.Run"/>).</param>
 	/// <param name="screenshotPath"><c>--screenshot</c>'s file, which the first shell turn captures; none for a play.</param>
 	/// <param name="silent">The host's <c>--no-sound</c>: the flics', the shell's and the simulator's turns open no audio device.</param>
 	public static int Run(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath, string imguiItalicFontPath,
-			string? screenshotPath, bool silent = false) {
+			Func<IFrontEndMenus> shellMenus, string? screenshotPath, bool silent = false) {
 		// 1. Mem_New(argc * 4 + 8), its answer not kept: no counterpart.
 		// 2. The memory check, X32_LargestFreeBlock() - 25,000 against 3,435,000: the extender's largest free block has no
 		// counterpart, so the check always passes, an engine choice, and its figure is not computed.
@@ -111,7 +112,7 @@ public static class Es1Launcher {
 				case 6:
 					flicPlayerFound = FileReadable(flics?.Probe);
 					RunShell(installRoot, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
-						firstShell ? screenshotPath : null, window, silent);
+						shellMenus, firstShell ? screenshotPath : null, window, silent);
 					firstShell = false;
 					break;
 				case 4:
@@ -121,7 +122,7 @@ public static class Es1Launcher {
 					}
 
 					RunShell(installRoot, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
-						firstShell ? screenshotPath : null, window, silent);
+						shellMenus, firstShell ? screenshotPath : null, window, silent);
 					firstShell = false;
 					break;
 				case 2:
@@ -153,10 +154,10 @@ public static class Es1Launcher {
 		return 0;
 	}
 
-	/// <summary>A turn of the shell, <c>spawnv</c>(0, <c>go.exe</c>, ...), its status not kept.</summary>
+	/// <summary>A turn of the shell, <c>spawnv</c>(0, <c>go.exe</c>, ...), its status not kept, under menus <paramref name="menus"/> builds for it.</summary>
 	private static void RunShell(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath,
-			string imguiItalicFontPath, string? screenshotPath, HostWindow window, bool silent) {
-		Es1ShellHost.Run(installRoot, arguments, imguiFontPath, imguiItalicFontPath, screenshotPath, window, silent);
+			string imguiItalicFontPath, Func<IFrontEndMenus> menus, string? screenshotPath, HostWindow window, bool silent) {
+		Es1ShellHost.Run(installRoot, arguments, imguiFontPath, imguiItalicFontPath, menus(), screenshotPath, window, silent);
 		window.Hold(null);
 	}
 

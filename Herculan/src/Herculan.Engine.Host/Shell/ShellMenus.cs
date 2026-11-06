@@ -14,6 +14,9 @@ namespace Herculan.Engine.Host.Shell;
 /// </summary>
 sealed class ShellMenus : IFrontEndMenus {
 	private readonly HostMenuBar _menuBar;
+	private readonly TweaksMenu _tweaks;
+	private readonly SettingsWindow _settings;
+	private readonly ControllerWindow _controller;
 	private readonly LocalizationTable _localization;
 
 	/// <param name="dataDirectory">The folder the Controller window loads and saves the controller map in.</param>
@@ -28,10 +31,11 @@ sealed class ShellMenus : IFrontEndMenus {
 	public ShellMenus(HostSession session, string dataDirectory, Action restartRequested, Action editorRequested,
 			CustomMissionsWindow? customMissions = null) {
 		_localization = session.Localization;
-		var controller = new ControllerWindow(session.Localization, () => dataDirectory);
-		controller.Saved += file => PadPointerSettingsChanged?.Invoke(file.Mouse);
-		_menuBar = new HostMenuBar(session.Localization, session.Keys, new TweaksMenu(TweakSettings.Current, session.Localization),
-			new SettingsWindow(session, () => RequestClose(restartRequested)), controller,
+		_controller = new ControllerWindow(session.Localization, () => dataDirectory);
+		_controller.Saved += file => PadPointerSettingsChanged?.Invoke(file.Mouse);
+		_tweaks = new TweaksMenu(TweakSettings.Current, session.Localization);
+		_settings = new SettingsWindow(session, () => RequestClose(restartRequested));
+		_menuBar = new HostMenuBar(session.Localization, session.Keys, _tweaks, _settings, _controller,
 			openEditor: () => RequestClose(editorRequested), customMissions: customMissions);
 	}
 
@@ -44,11 +48,11 @@ sealed class ShellMenus : IFrontEndMenus {
 	public bool PanelOpen => _menuBar.PanelOpen;
 
 	/// <summary>While the Controller window's Detect is listening (<see cref="ControllerWindow.Listening"/>).</summary>
-	public bool PadNavigationSuspended => _menuBar.Controller.Listening;
+	public bool PadNavigationSuspended => _controller.Listening;
 
 	public void Attach(ScaledImGui imgui, IInputContext input) {
-		_menuBar.Tweaks.Fonts = imgui;
-		_menuBar.Controller.Attach(input);
+		_tweaks.Fonts = imgui;
+		_controller.Attach(input);
 	}
 
 	public void Show() => _menuBar.Show();
@@ -89,7 +93,7 @@ sealed class ShellMenus : IFrontEndMenus {
 	public void ShowErrorOutsideWindow(string message, string detail) =>
 		NativeAlert.ShowError(_localization.GetStringOrKey("error.window_title"), $"{message}\n\n{detail}");
 
-	public void Dispose() => _menuBar.Settings.Dispose();
+	public void Dispose() => _settings.Dispose();
 
 	// Settings and the Editor item ask from inside an ImGui window, and the close disposes the ImGui context, so the
 	// close waits for the frame to finish (FrontEndWindow.CloseAfterFrame).

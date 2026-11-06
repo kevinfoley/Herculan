@@ -138,7 +138,7 @@ public sealed class Es1DigitalDriver {
 
 	/// <summary>
 	/// A busy voice's pan, −1 left to 1 right, from <see cref="Es1Sound.Stereo"/>'s listener; it holds for the voice's
-	/// repeats. Not retail's: the stereo tweak's. A voice not busy or past the last is left alone.
+	/// repeats. Not retail's, which is broken; this is the stereo tweak's. A voice not busy or past the last is left alone.
 	/// </summary>
 	public void SetPan(int voice, float pan) {
 		if ((uint)voice >= Voices || !_voices[voice].Busy) {

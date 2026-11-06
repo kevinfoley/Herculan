@@ -48,7 +48,7 @@ public class PanelLayoutTests {
 			return new Scene(() => InstallWindow.Draw(panel, 0), panel);
 		}),
 		["Menu bar"] = new(Screen, localization => MenuBar(localization, _ => { })),
-		["Settings"] = new(Screen, localization => MenuBar(localization, bar => bar.Settings.IsOpen = true)),
+		["Settings"] = new(Screen, localization => MenuBar(localization, bar => bar.Settings!.IsOpen = true)),
 		["Settings, install folder prompt"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.Install, refuse: false)),
 		["Settings, install folder refused"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.Install, refuse: true)),
 		["Settings, disc folder prompt"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.DiscFolder, refuse: false)),
@@ -56,12 +56,12 @@ public class PanelLayoutTests {
 		["Settings, disc image prompt"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.DiscImage, refuse: false)),
 		["Settings, disc image refused"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.DiscImage, refuse: true)),
 		["Settings, install from a disc"] = new(Screen, localization => MenuBar(localization, bar => {
-			bar.Settings.IsOpen = true;
-			bar.Settings.OpenInstall();
+			bar.Settings!.IsOpen = true;
+			bar.Settings!.OpenInstall();
 		})),
-		["Controller"] = new(Screen, localization => MenuBar(localization, bar => bar.Controller.Open())),
-		["Keys"] = new(Screen, localization => MenuBar(localization, bar => bar.Keys.IsOpen = true)),
-		["Tweaks"] = new(Screen, localization => MenuBar(localization, bar => bar.Tweaks.IsOpen = true)),
+		["Controller"] = new(Screen, localization => MenuBar(localization, bar => bar.Controller!.Open())),
+		["Keys"] = new(Screen, localization => MenuBar(localization, bar => bar.Keys!.IsOpen = true)),
+		["Tweaks"] = new(Screen, localization => MenuBar(localization, bar => bar.Tweaks!.IsOpen = true)),
 		["Accessibility"] = new(Screen, localization => MenuBar(localization, bar => bar.Accessibility.IsOpen = true)),
 		["About"] = new(Screen, localization => MenuBar(localization, bar => bar.About.IsOpen = true)),
 		["Welcome"] = new(Screen, localization => MenuBar(localization, bar => bar.Welcome.Raise())),
@@ -103,11 +103,11 @@ public class PanelLayoutTests {
 
 	private static Scene SettingsPrompt(LocalizationTable localization, SettingsWindow.PromptKind kind, bool refuse) =>
 		MenuBar(localization, bar => {
-			bar.Settings.IsOpen = true;
-			bar.Settings.OpenPrompt(kind);
+			bar.Settings!.IsOpen = true;
+			bar.Settings!.OpenPrompt(kind);
 			if (refuse) {
 				// Each prompt refuses a path that is not there with a message naming it.
-				bar.Settings.Prompt!.Accept();
+				bar.Settings!.Prompt!.Accept();
 			}
 		});
 

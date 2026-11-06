@@ -51,6 +51,8 @@ sealed class SimulatorHost : IDisposable {
 	private readonly DebugPanel _debugPanel;
 	private readonly MissionScriptingWindow? _scripting;
 	private readonly HostMenuBar _menuBar;
+	private readonly TweaksMenu _tweaks;
+	private readonly ControllerWindow _controller;
 	private readonly DeveloperKeys _developerKeys;
 	private readonly KeyMap _keyMap;
 
@@ -157,9 +159,10 @@ sealed class SimulatorHost : IDisposable {
 		// Hidden until [Shift+Esc] first raises it — see SimulatorFrame's [Esc] — since it is the only way
 		// to reach its panels and every key from F1 to F12, [Esc] and [Tab] among the rest, is already retail's. A
 		// mission has no shell turn to restart, so Settings shows the folders greyed.
-		_menuBar = new HostMenuBar(session.Localization, session.Keys, new TweaksMenu(TweakSettings.Current, session.Localization),
-			new SettingsWindow(session, restartShell: null), new ControllerWindow(session.Localization, () => _start.DataDirectory),
-			developerMode ? _debugPanel : null, scripting: _scripting);
+		_tweaks = new TweaksMenu(TweakSettings.Current, session.Localization);
+		_controller = new ControllerWindow(session.Localization, () => _start.DataDirectory);
+		_menuBar = new HostMenuBar(session.Localization, session.Keys, _tweaks, new SettingsWindow(session, restartShell: null),
+			_controller, developerMode ? _debugPanel : null, scripting: _scripting);
 
 		// The -SPRUNKNOWN keys, and the Alt+S freeze a replay honours without them.
 		_developerKeys = new DeveloperKeys(developerMode);
@@ -311,7 +314,7 @@ sealed class SimulatorHost : IDisposable {
 		_transient = new TransientDrawItems(_scene, _uploads, _filing, _world);
 		_passes = new WorldPassRenderer(gl, _scene, _view.Camera, _debugOptions, _world, _transient);
 		_imgui = new ScaledImGui(gl, _window, input, _session.ImGuiFontPath, _session.ImGuiItalicFontPath);
-		_menuBar.Tweaks.Fonts = _imgui;
+		_tweaks.Fonts = _imgui;
 		_padNav = new ImGuiGamepad(input);
 		_imgui.GamepadFeed = _padNav.Feed;
 
@@ -330,7 +333,7 @@ sealed class SimulatorHost : IDisposable {
 		// what it can do is announced on the first frame that knows.
 		_joystick = JoystickSource.Open(input, _start.DataDirectory, _options.ProbeJoystick);
 		_frame.Pilot.Joystick = _joystick;
-		_menuBar.Controller.Attach(input, _joystick);
+		_controller.Attach(input, _joystick);
 
 		// WinMain's toggle, after the pointer is known so it is confined and centred as Video_ToggleFullscreen's is.
 		_windowKeys.StartFullScreen(_start.StartFullScreen);
@@ -355,7 +358,7 @@ sealed class SimulatorHost : IDisposable {
 		}
 
 		if (_padNav != null) {
-			_padNav.Suspended = _menuBar.Controller.Listening;
+			_padNav.Suspended = _controller.Listening;
 		}
 
 		_imgui?.Update((float)deltaSeconds);

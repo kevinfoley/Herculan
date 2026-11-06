@@ -42,6 +42,12 @@ public static class Es1ShellHost {
 	/// step asserts.
 	/// </summary>
 	/// <param name="imguiFontPath">The faces the frame's ImGui draws in (<see cref="FrontEndWindow"/>).</param>
+	/// <param name="menus">
+	/// HERCULAN's menu bar and its windows over the shell, which the window disposes once the turn has run. [Shift+Esc]
+	/// raises it, plain [Esc] backs out of it while it is up, and the pointer at the window's top left raises it as over
+	/// Earthsiege 2's shell; neither key then reaches the shell, nor does the mouse while it is over the bar or one of its
+	/// windows, where the system's pointer stands in for the shell's own.
+	/// </param>
 	/// <param name="screenshotPath"><c>--screenshot</c>'s file, which the window captures and then closes; none for a play.</param>
 	/// <param name="window">
 	/// The window the launcher's turns share (<see cref="Host.Es1Launcher"/>), which stays open after the shell; none for a
@@ -49,7 +55,7 @@ public static class Es1ShellHost {
 	/// </param>
 	/// <param name="silent">The host's <c>--no-sound</c>: no audio device, so the sound manager plays into nothing.</param>
 	public static int Run(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath, string imguiItalicFontPath,
-			string? screenshotPath, HostWindow? window = null, bool silent = false) {
+			IFrontEndMenus menus, string? screenshotPath, HostWindow? window = null, bool silent = false) {
 		// 1. Mem_InitHeap(3,700,000) and its assert: this engine has no fixed heap.
 		// 2. Shell_ParseCommandLine; without -eggplant this engine goes on (Es1ShellSwitches).
 		var switches = Es1ShellSwitches.Parse(arguments);
@@ -87,8 +93,8 @@ public static class Es1ShellHost {
 				: $"Audio unavailable ({audioFailure}) — the front end runs silent.");
 		}
 
-		return new Session(installRoot, content, switches, exitCode, audio).Run(imguiFontPath, imguiItalicFontPath, screenshotPath,
-			window);
+		return new Session(installRoot, content, switches, exitCode, audio).Run(imguiFontPath, imguiItalicFontPath, menus,
+			screenshotPath, window);
 	}
 
 	/// <summary>One run's objects and its window.</summary>
@@ -128,12 +134,13 @@ public static class Es1ShellHost {
 			_shellMouse = new Es1ShellMouse(_globals);
 		}
 
-		public int Run(string imguiFontPath, string imguiItalicFontPath, string? screenshotPath, HostWindow? shared) {
+		public int Run(string imguiFontPath, string imguiItalicFontPath, IFrontEndMenus menus, string? screenshotPath,
+				HostWindow? shared) {
 			using (var owned = shared == null ? new HostWindow() : null) {
 				var host = shared ?? owned!;
 				string dataDirectory = CaseInsensitivePath.Combine(_installRoot, Es1MissionFiles.DataFolder);
 				using var window = new FrontEndWindow(host, Title, screenshotPath, imguiFontPath, imguiItalicFontPath, dataDirectory,
-					new Es1ShellMenus());
+					menus);
 				window.Load += (gl, input) => Guard(() => OnLoad(window, gl, input));
 				window.Update += delta => {
 					if (!_asserted) {
@@ -149,8 +156,9 @@ public static class Es1ShellHost {
 				};
 				window.Render += (delta, gl) => {
 					window.BeginFrame(delta);
+					ShowSystemPointer(window);
 					_monitor?.Present(window.FramebufferSize);
-					window.DrawMenuBar(revealOnHover: false);
+					window.DrawMenuBar(revealOnHover: true);
 					window.FrameDrawn(gl);
 				};
 				window.Closing += () => {
@@ -202,6 +210,7 @@ public static class Es1ShellHost {
 			_frame.UploadPalette = _monitor.SetPalette;
 			_screens.UploadPalette = _monitor.SetPalette;
 			_devices.Mouse.Pointer = () => Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize);
+			_devices.Mouse.HostHasPointer = () => window.ImGuiWantsMouse;
 
 			_frame.Start(Main(Es1HostKeyboard.ReadBiosShiftFlags(window.Keyboard)));
 
@@ -210,8 +219,46 @@ public static class Es1ShellHost {
 				mouse.Cursor.CursorMode = CursorMode.Hidden;
 			}
 
-			if (window.Keyboard is { } keyboard) {
-				_devices.HostKeyboard?.Attach(keyboard);
+			if (window.Keyboard is { } keyboard && _devices.HostKeyboard is { } hostKeyboard) {
+				hostKeyboard.Attach(keyboard);
+				hostKeyboard.HostTakes = key => MenuBarTakes(window, key);
+				hostKeyboard.HostHasKeyboard = () => window.ImGuiWantsKeyboard;
+			}
+		}
+
+		/// <summary>
+		/// <b>This engine's own:</b> whether a key-down is the menu bar's, which it then has: [Shift+Esc] alone raises the bar
+		/// or backs out of it, and so does plain [Esc] while the bar or one of its windows is up, the keys Earthsiege 2's
+		/// shell gives the bar by default; and any key while a field of the bar's windows is typed into. [Esc] with Alt or
+		/// Ctrl, and any other [Esc], is the shell's.
+		/// </summary>
+		private static bool MenuBarTakes(FrontEndWindow window, Key key) {
+			if (key == Key.Escape) {
+				bool Held(Key modifier) => window.Keyboard?.IsKeyPressed(modifier) == true;
+				bool shift = Held(Key.ShiftLeft) || Held(Key.ShiftRight);
+				bool alt = Held(Key.AltLeft) || Held(Key.AltRight);
+				bool ctrl = Held(Key.ControlLeft) || Held(Key.ControlRight);
+				if (!alt && !ctrl && (shift || window.MenuBarUp)) {
+					window.MenuBarEscape();
+					return true;
+				}
+			}
+
+			return window.ImGuiWantsKeyboard;
+		}
+
+		/// <summary>
+		/// <b>This engine's own:</b> the system's pointer while the pointer is over the menu bar or one of its windows, where
+		/// the shell takes no mouse events and its own pointer stops; hidden over the shell, which draws its own.
+		/// </summary>
+		private static void ShowSystemPointer(FrontEndWindow window) {
+			if (window.Mouse is not { } mouse) {
+				return;
+			}
+
+			var mode = window.ImGuiWantsMouse ? CursorMode.Normal : CursorMode.Hidden;
+			if (mouse.Cursor.CursorMode != mode) {
+				mouse.Cursor.CursorMode = mode;
 			}
 		}
 

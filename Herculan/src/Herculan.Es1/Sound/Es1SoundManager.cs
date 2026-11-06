@@ -346,7 +346,7 @@ public sealed class Es1SoundManager {
 	/// <summary>
 	/// <see cref="Es1Sound.Stereo"/>'s listener, from the camera every frame: the frame of <paramref name="view"/>'s
 	/// angles at <paramref name="position"/>, then each placed object panned against it (<see cref="PanStereo"/>), a voice
-	/// already playing among them. Not retail's: the stereo tweak's.
+	/// already playing among them. Not retail's, which is broken: this is the stereo tweak's.
 	/// </summary>
 	public void UpdateStereoListener(Vec3i position, (short X, short Y, short Z) view) {
 		var frame = Transform3.FromEuler(view.X, view.Y, view.Z);
@@ -367,7 +367,7 @@ public sealed class Es1SoundManager {
 	/// straight to the right is 1, one straight to the left −1, and one ahead, behind, above, below or at the listener 0;
 	/// given to the sound's voice when it plays (<see cref="Es1DigitalDriver.SetPan"/>). The offset is taken unshifted, so
 	/// that a sound by the camera, the player's own guns and footfalls, keeps its true side where retail's placement rounds
-	/// it to a whole axis. Not retail's: the stereo tweak's.
+	/// it to a whole axis. Not retail's, which is broken; this is the stereo tweak's.
 	/// </summary>
 	internal void PanStereo(Es1SoundObject sound) {
 		var frame = StereoListener;

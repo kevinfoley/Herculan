@@ -98,8 +98,8 @@ if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
 			return 1;
 		}
 
-		return Es1Launcher.Run(installRoot, es1.ShellArguments, imguiFontPath, imguiItalicFontPath, options.ScreenshotPath,
-			options.SilentAudio);
+		return Es1Launcher.Run(installRoot, es1.ShellArguments, imguiFontPath, imguiItalicFontPath,
+			() => new Es1ShellMenus(localization), options.ScreenshotPath, options.SilentAudio);
 	}
 
 	if (es1.ShellArguments.Count > 0) {
