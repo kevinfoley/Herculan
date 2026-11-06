@@ -6,7 +6,8 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The floating "Mission Settings" window, opened from Mission Settings &gt; General: the mission's name, then the theater it
-/// is played on and the time of day, changed through <see cref="TheaterChanger"/>, then whether it is meant for HERCULAN alone
+/// is played on and the time of day, changed through <see cref="TheaterChanger"/>, then how the player's squad's order target is handled
+/// (<see cref="SquadTargetHandlingField"/>), then whether it is meant for HERCULAN alone
 /// (<see cref="PlayableInEditor"/>), then its about file (<see cref="MissionAboutEditor"/>), then its text (<see cref="MissionTextView"/>), with the briefing,
 /// intelligence report and debrief (<see cref="DebriefView"/>) under "Campaign Only".
 /// </summary>
@@ -21,6 +22,7 @@ internal sealed class MissionSettingsWindow {
 
 	private readonly TheaterChanger _theaters;
 	private readonly IReadOnlyList<string> _labels;
+	private readonly SquadTargetHandlingField _squadTargetHandling;
 	private readonly PlayableInEditor _playableIn;
 	private readonly MissionAboutEditor _about;
 	private readonly MissionAboutFields _aboutFields = new();
@@ -31,10 +33,12 @@ internal sealed class MissionSettingsWindow {
 	/// <param name="name">What the window title calls the mission, which a Save As changes.</param>
 	/// <param name="labels">Each theater's label, in theater order (<see cref="TheaterNames.Labels"/>).</param>
 	public MissionSettingsWindow(Func<string> name, TheaterChanger theaters, IReadOnlyList<string> labels,
-			PlayableInEditor playableIn, MissionAboutEditor about, MissionTextView text, DebriefView debrief) {
+			SquadTargetHandlingField squadTargetHandling, PlayableInEditor playableIn, MissionAboutEditor about, MissionTextView text,
+			DebriefView debrief) {
 		_name = name;
 		_theaters = theaters;
 		_labels = labels;
+		_squadTargetHandling = squadTargetHandling;
 		_playableIn = playableIn;
 		_about = about;
 		_text = text;
@@ -103,6 +107,7 @@ internal sealed class MissionSettingsWindow {
 			EditorText.Note(failure);
 		}
 
+		_squadTargetHandling.Draw();
 		DrawPlayableIn();
 		DrawAbout();
 		_text.Draw();

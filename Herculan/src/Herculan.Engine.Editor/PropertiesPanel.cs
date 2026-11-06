@@ -44,7 +44,8 @@ internal sealed class PropertiesPanel {
 			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, RandomTableEditor tableEditor,
 			StartingConditionEditor startingConditions, RadarSettingEditor radarSettings, HeadingEditor headings, RandomTables tables, TriggerMessages messages, MissionNames names,
 			UnitTypeCatalog catalog, BaseFormationTable formations, RosterTypeEditor types, MachineFitter fitter, StructurePlacer placer,
-			HercPlacer hercs, FlyerPlacer flyers, BasePadEditor pads, FormationEditor groupFormations, GroupDeleter groupDeleter) {
+			HercPlacer hercs, FlyerPlacer flyers, BasePadEditor pads, FormationEditor groupFormations, GroupDeleter groupDeleter,
+			SquadTargetHandlingField targetHandling) {
 		_index = index;
 		_selection = selection;
 		var links = new PanelLinks(index, names, selection);
@@ -57,7 +58,7 @@ internal sealed class PropertiesPanel {
 		_route = new RouteView(index, names, selection, mover, routes, placing, orders, links, sharers, tableView.DrawRouteTable);
 		_area = new TriggerAreaView(index, names, mover, areas, areaPlacing, actions, _trigger.DrawSummary,
 			namers => links.References(namers), sharers);
-		var orderSlots = new OrderSlotsView(index, orders, links, presentWhen, presence);
+		var orderSlots = new OrderSlotsView(index, orders, links, presentWhen, presence, targetHandling);
 		_objectives = objectives;
 		_objective = new ObjectiveView(index, objectives, links, presentWhen, presence);
 		var team = new TeamField(index, sides);

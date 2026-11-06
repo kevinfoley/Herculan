@@ -82,9 +82,11 @@ internal sealed class EditorMission {
 		Outliner.Conditions = Conditions;
 		var randomTables = new RandomTables(source, sceneIndex, Names, squad);
 		Outliner.Tables = randomTables;
+		SquadTargetHandling = new SquadTargetHandlingEditor(source, Mover, Sync);
+		var targetHandling = new SquadTargetHandlingField(SquadTargetHandling);
 		PlayableIn = new PlayableInEditor(source, Mover, Sync);
 		About = new MissionAboutEditor(Mover);
-		Settings = new MissionSettingsWindow(() => Name, Theater, TheaterNames.Labels(content), PlayableIn, About,
+		Settings = new MissionSettingsWindow(() => Name, Theater, TheaterNames.Labels(content), targetHandling, PlayableIn, About,
 			new MissionTextView(Texts), new DebriefView(Debrief));
 		TerrainWindow = new MissionTerrainWindow(
 			() => Terrain.OwnZone is { } own ? ZoneCatalog.DescribeOwn(Zone, own) : zones.Describe(Zone),
@@ -94,7 +96,7 @@ internal sealed class EditorMission {
 			new SquadMachinePanel(Fitter, Squad, squad, Presets), new RosterFitView(Fitter, Types, TableEditor, catalog, Presets),
 			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, TableEditor,
 			StartingConditions, RadarSettings, Headings, randomTables, new TriggerMessages(content), Names, catalog, tables.Bases, Types, Fitter, Placer, Hercs, Flyers,
-			Pads, Formations, GroupDeleter);
+			Pads, Formations, GroupDeleter, targetHandling);
 	}
 
 	/// <summary>
@@ -221,6 +223,9 @@ internal sealed class EditorMission {
 
 	/// <summary>Turns the radar of hercs on and off in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public RadarSettingEditor RadarSettings { get; }
+
+	/// <summary>Sets how <see cref="Source"/>'s player's squad's order target is handled, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public SquadTargetHandlingEditor SquadTargetHandling { get; }
 
 	/// <summary>Marks <see cref="Source"/> as meant for HERCULAN alone or for retail too, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public PlayableInEditor PlayableIn { get; }

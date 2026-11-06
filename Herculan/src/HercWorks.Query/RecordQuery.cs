@@ -46,7 +46,7 @@ internal static class RecordQuery {
 
 	/// <summary>The ten header words' <see cref="ScriptDat"/> names, by offset / 2.</summary>
 	private static readonly string?[] HeaderFields = [
-		nameof(ScriptDat.TheaterIndex), nameof(ScriptDat.ZoneIndex), null, nameof(ScriptDat.ObjectiveType),
+		nameof(ScriptDat.TheaterIndex), nameof(ScriptDat.ZoneIndex), null, nameof(ScriptDat.SquadTargetHandling),
 		nameof(ScriptDat.TrainingMissionNumber), nameof(ScriptDat.UnlimitedAmmunition), nameof(ScriptDat.PlayerInvulnerable),
 		nameof(ScriptDat.Difficulty), null, nameof(ScriptDat.TheaterVariant),
 	];

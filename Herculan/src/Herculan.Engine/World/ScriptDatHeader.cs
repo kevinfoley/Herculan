@@ -27,12 +27,12 @@ public readonly struct ScriptDatHeader {
 	/// </summary>
 	public const short CheatEnabled = 1;
 
-	private ScriptDatHeader(int theaterIndex, int zoneIndex, int objectiveType, int theaterVariant,
+	private ScriptDatHeader(int theaterIndex, int zoneIndex, int squadTargetHandling, int theaterVariant,
 			int difficulty, bool unlimitedAmmunition, bool playerInvulnerable,
 			int trainingMissionNumber) {
 		TheaterIndex = theaterIndex;
 		ZoneIndex = zoneIndex;
-		ObjectiveType = objectiveType;
+		SquadTargetHandling = squadTargetHandling;
 		TheaterVariant = theaterVariant;
 		Difficulty = difficulty;
 		UnlimitedAmmunition = unlimitedAmmunition;
@@ -47,11 +47,11 @@ public readonly struct ScriptDatHeader {
 	/// <inheritdoc cref="ScriptDat.ZoneIndex"/>
 	public int ZoneIndex { get; }
 
-	/// <inheritdoc cref="ScriptDat.ObjectiveType"/>
+	/// <inheritdoc cref="ScriptDat.SquadTargetHandling"/>
 	/// <remarks>
 	/// See <see cref="Sim.MechObject.PlayerThink"/> and <see cref="Sim.Ai.AiTargeting.IsTargetable"/>.
 	/// </remarks>
-	public int ObjectiveType { get; }
+	public int SquadTargetHandling { get; }
 
 	/// <inheritdoc cref="ScriptDat.TheaterVariant"/>
 	public int TheaterVariant { get; }
@@ -91,7 +91,7 @@ public readonly struct ScriptDatHeader {
 	/// <summary>
 	/// The engine's reading of a parsed <c>script.dat</c>'s header fields. The fields offsets 4 and
 	/// 16 hold are left out — <c>DBSim_LoadScriptDat</c> zeroes the one at 4 before use, and 16 is
-	/// unread. <see cref="ObjectiveType"/> is not the theater's: it is the mission layer's, and its
+	/// unread. <see cref="SquadTargetHandling"/> is not the theater's: it is the mission layer's, and its
 	/// reader is <c>Mech_BehaviourPlayerThink</c>.
 	///
 	/// <para>The two cheat flags are read as <c>== 1</c> rather than as "nonzero", which is how both
@@ -100,7 +100,7 @@ public readonly struct ScriptDatHeader {
 	public static ScriptDatHeader From(ScriptDat script) => new(
 		script.TheaterIndex,
 		script.ZoneIndex,
-		script.ObjectiveType,
+		script.SquadTargetHandling,
 		script.TheaterVariant,
 		System.Math.Clamp((int)script.Difficulty, 0, DifficultyLevels - 1),
 		script.UnlimitedAmmunition == CheatEnabled,

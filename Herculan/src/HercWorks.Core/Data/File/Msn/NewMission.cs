@@ -31,12 +31,12 @@ public static class NewMission {
 	public const short NavPoint = 1;
 
 	/// <summary>
-	/// <c>TRAIN1.MSN</c>'s header objective type, <see cref="Script.ScriptDat.ObjectiveType"/>: 2, which runs none of
-	/// the player think's objective arms (<c>Mech_BehaviourPlayerThink</c> (<c>0041c194</c>)), where the 0 a patch
+	/// <c>TRAIN1.MSN</c>'s squad target handling, <see cref="Script.ScriptDat.SquadTargetHandling"/>: 2, which runs none of
+	/// the player think's arms (<c>Mech_BehaviourPlayerThink</c> (<c>0041c194</c>)), where the 0 a patch
 	/// that sets none leaves would run the one-shot MISSION TARGET DETECTED arm. The objective here needs no arm: it
 	/// reads the order's completion flag.
 	/// </summary>
-	private const short ObjectiveType = 2;
+	private const short SquadTargetHandling = 2;
 
 	// PLACEHOLDER: the mission's text, plain English an author replaces. The failure text is three consecutive lines,
 	// the third blank as in TRAIN1.ENG; the objective line ends " \n" as TRAIN5.ENG's do.
@@ -105,7 +105,7 @@ public static class NewMission {
 	}
 
 	/// <summary>
-	/// The header patch: the theater, the zone and the time of day, and <see cref="ObjectiveType"/>; every other word at
+	/// The header patch: the theater, the zone and the time of day, and <see cref="SquadTargetHandling"/>; every other word at
 	/// its unset value, as <c>TRAIN5.MSN</c> to <c>TRAIN8.MSN</c> leave them, so the training mission number is 0 and
 	/// the cheats and difficulty are what the launch writes. No flag is cleared. A practice load writes the theater and
 	/// the time of day over the patch's (docs/retail/formats/script-dat.md#the-training-fields).
@@ -115,7 +115,7 @@ public static class NewMission {
 		data[0] = -1;
 		data[MissionSettingsPatch.HeaderWordsStart + 0 / 2] = theater;
 		data[MissionSettingsPatch.HeaderWordsStart + 2 / 2] = zone;
-		data[MissionSettingsPatch.HeaderWordsStart + 6 / 2] = ObjectiveType;
+		data[MissionSettingsPatch.HeaderWordsStart + 6 / 2] = SquadTargetHandling;
 		data[MissionSettingsPatch.HeaderWordsStart + 18 / 2] = (short)(night ? 1 : 0);
 		Array.Fill(data, (short)-1, MissionSettingsPatch.ClearListStart, MissionSettingsPatch.Words - MissionSettingsPatch.ClearListStart);
 		return new MissionSettingsPatch { Data = data };

@@ -1028,6 +1028,7 @@ public sealed class EditorHost {
 		mission.Theater.RunRequest();
 		mission.Terrain.RunRequest();
 		mission.Sculptor.RunRequest();
+		mission.SquadTargetHandling.RunRequest();
 		mission.PlayableIn.RunRequest();
 		mission.About.RunRequest();
 		mission.Routes.RunRequest();

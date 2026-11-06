@@ -40,8 +40,8 @@ partial class MissionScriptForm {
 		_worldValueLabel = new Label();
 		_headerRawLabel = new Label();
 		_headerRawText = new TextBox();
-		_objectiveTypeLabel = new Label();
-		_objectiveTypeInput = new NumericUpDown();
+		_squadTargetHandlingLabel = new Label();
+		_squadTargetHandlingInput = new NumericUpDown();
 		_trainingLabel = new Label();
 		_trainingInput = new NumericUpDown();
 		_difficultyLabel = new Label();
@@ -188,7 +188,7 @@ partial class MissionScriptForm {
 		((System.ComponentModel.ISupportInitialize)_theaterInput).BeginInit();
 		((System.ComponentModel.ISupportInitialize)_zoneInput).BeginInit();
 		((System.ComponentModel.ISupportInitialize)_variantInput).BeginInit();
-		((System.ComponentModel.ISupportInitialize)_objectiveTypeInput).BeginInit();
+		((System.ComponentModel.ISupportInitialize)_squadTargetHandlingInput).BeginInit();
 		((System.ComponentModel.ISupportInitialize)_trainingInput).BeginInit();
 		((System.ComponentModel.ISupportInitialize)_difficultyInput).BeginInit();
 		_pointsTab.SuspendLayout();
@@ -320,8 +320,8 @@ partial class MissionScriptForm {
 		_headerGroupBox.Controls.Add(_headerRawLabel);
 		_headerGroupBox.Controls.Add(_headerRawText);
 		_headerGroupBox.Controls.Add(_headerNoteLabel);
-		_headerGroupBox.Controls.Add(_objectiveTypeLabel);
-		_headerGroupBox.Controls.Add(_objectiveTypeInput);
+		_headerGroupBox.Controls.Add(_squadTargetHandlingLabel);
+		_headerGroupBox.Controls.Add(_squadTargetHandlingInput);
 		_headerGroupBox.Controls.Add(_trainingLabel);
 		_headerGroupBox.Controls.Add(_trainingInput);
 		_headerGroupBox.Controls.Add(_difficultyLabel);
@@ -413,20 +413,20 @@ partial class MissionScriptForm {
 		_headerRawText.Size = new Size(490, 23);
 		_headerRawText.TabIndex = 3;
 		//
-		// _objectiveTypeLabel
+		// _squadTargetHandlingLabel
 		//
-		_objectiveTypeLabel.AutoSize = true;
-		_objectiveTypeLabel.Location = new Point(380, 34);
-		_objectiveTypeLabel.Name = "_objectiveTypeLabel";
-		_objectiveTypeLabel.Text = "Objective type:";
+		_squadTargetHandlingLabel.AutoSize = true;
+		_squadTargetHandlingLabel.Location = new Point(380, 34);
+		_squadTargetHandlingLabel.Name = "_squadTargetHandlingLabel";
+		_squadTargetHandlingLabel.Text = "Squad target handling:";
 		//
-		// _objectiveTypeInput
+		// _squadTargetHandlingInput
 		//
-		_objectiveTypeInput.Location = new Point(570, 32);
-		_objectiveTypeInput.Maximum = short.MaxValue;
-		_objectiveTypeInput.Name = "_objectiveTypeInput";
-		_objectiveTypeInput.Size = new Size(80, 23);
-		_objectiveTypeInput.TabIndex = 4;
+		_squadTargetHandlingInput.Location = new Point(570, 32);
+		_squadTargetHandlingInput.Maximum = short.MaxValue;
+		_squadTargetHandlingInput.Name = "_squadTargetHandlingInput";
+		_squadTargetHandlingInput.Size = new Size(80, 23);
+		_squadTargetHandlingInput.TabIndex = 4;
 		//
 		// _trainingLabel
 		//
@@ -1568,7 +1568,7 @@ partial class MissionScriptForm {
 		((System.ComponentModel.ISupportInitialize)_theaterInput).EndInit();
 		((System.ComponentModel.ISupportInitialize)_zoneInput).EndInit();
 		((System.ComponentModel.ISupportInitialize)_variantInput).EndInit();
-		((System.ComponentModel.ISupportInitialize)_objectiveTypeInput).EndInit();
+		((System.ComponentModel.ISupportInitialize)_squadTargetHandlingInput).EndInit();
 		((System.ComponentModel.ISupportInitialize)_trainingInput).EndInit();
 		((System.ComponentModel.ISupportInitialize)_difficultyInput).EndInit();
 		_pointsTab.ResumeLayout(false);
@@ -1633,8 +1633,8 @@ partial class MissionScriptForm {
 	private Label _worldValueLabel;
 	private Label _headerRawLabel;
 	private TextBox _headerRawText;
-	private Label _objectiveTypeLabel;
-	private NumericUpDown _objectiveTypeInput;
+	private Label _squadTargetHandlingLabel;
+	private NumericUpDown _squadTargetHandlingInput;
 	private Label _trainingLabel;
 	private NumericUpDown _trainingInput;
 	private Label _difficultyLabel;

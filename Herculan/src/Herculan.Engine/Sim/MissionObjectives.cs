@@ -45,7 +45,7 @@ public sealed class MissionObjectives {
 	/// which picks which arm of the player's think watches for progress. See
 	/// <see cref="MechObject.PlayerThink"/>.
 	/// </summary>
-	public int ObjectiveType { get; init; }
+	public int SquadTargetHandling { get; init; }
 
 	/// <summary>
 	/// <c>DAT_004a9ed0</c> — the last status handed up to the caller, which is what stops the same

@@ -25,10 +25,10 @@ public partial class MechObject {
 	/// terminating duplicate (<see cref="MissionGroup.NextWaypointClosesRoute"/>), so a patrol circuit
 	/// stops announcing rather than repeating its first waypoint forever.</para>
 	///
-	/// <para><b>Then one of three objective arms</b>, chosen by the mission's own
-	/// <see cref="ScriptDatHeader.ObjectiveType"/>. They are the only writers of
+	/// <para><b>Then one of three arms</b>, chosen by the mission's own
+	/// <see cref="ScriptDatHeader.SquadTargetHandling"/>. They are the only writers of
 	/// <see cref="SimObject.MissionGoalReached"/> and <see cref="SimObject.DataLinkComplete"/>
-	/// anywhere in the image, and those two flags are what the objective conditions read back. None
+	/// anywhere in the image; the objective conditions read back only the second. None
 	/// of them touches the route.</para>
 	/// </summary>
 	private bool PlayerThink(SimWorld world) {
@@ -43,15 +43,15 @@ public partial class MechObject {
 			group.AdvanceRouteCursor();
 		}
 
-		switch (world.Mission.Objectives.ObjectiveType) {
-			case ObjectiveTypeTargetDetected:
+		switch (world.Mission.Objectives.SquadTargetHandling) {
+			case SquadTargetHandlingAnnounce:
 				TargetDetectedArm(world, group);
 				break;
-			case ObjectiveTypeGoalPosition:
+			case SquadTargetHandlingGoalPosition:
 				GoalPositionArm();
 				break;
-			case ObjectiveTypeDataLink:
-			case ObjectiveTypeDataLinkAlt:
+			case SquadTargetHandlingDataLink:
+			case SquadTargetHandlingDataLinkAlt:
 				DataLinkArm(world, group);
 				break;
 		}
@@ -60,7 +60,7 @@ public partial class MechObject {
 	}
 
 	/// <summary>
-	/// Objective type 0 — <b>the mission target has been picked up</b>. One-shot for the whole
+	/// Squad target handling 0 — <b>the mission target has been picked up</b>. One-shot for the whole
 	/// mission: the first time the player selects a target that is what their group's current order
 	/// names, the computer says <c>MISSION TARGET DETECTED</c> and the goal flag goes up.
 	///
@@ -78,7 +78,7 @@ public partial class MechObject {
 	}
 
 	/// <summary>
-	/// Objective type 5 — <b>the goal has been reached</b>. Closing to
+	/// Squad target handling 5 — <b>the goal has been reached</b>. Closing to
 	/// <see cref="GoalArrivalRange"/> of <see cref="GoalPosition"/> on the ground plane raises the
 	/// goal flag, and that is all it does: it says nothing and it does not latch, because the flag it
 	/// writes is already one-way.
@@ -93,7 +93,7 @@ public partial class MechObject {
 	}
 
 	/// <summary>
-	/// Objective types 3 and 7 — <b>the data link</b>. The player parks in front of the thing their
+	/// Squad target handling 3 and 7 — <b>the data link</b>. The player parks in front of the thing their
 	/// order names and reads it, and the computer narrates four lines while they do:
 	/// <c>ENGAGING DATA LINK</c>, <c>INITIATING COMMAND OVERRIDE PROTOCOL</c>,
 	/// <c>TRANSFERRING DATA</c>, <c>DATA TRANSFER COMPLETE</c>. Breaking off part-way says
@@ -106,8 +106,8 @@ public partial class MechObject {
 	///
 	/// <para>Only the completed link is durable: <see cref="SimObject.DataLinkComplete"/> goes up at
 	/// the end of the fourth step and nothing lowers it. It goes up when the last line is
-	/// <i>queued</i>, not when it is read out, so the objective is satisfied at ten seconds of
-	/// holding while the computer is still narrating — see <see cref="DataLinkStepDelays"/>.</para>
+	/// <i>queued</i>, not when it is read out, so the objective is satisfied while the computer is
+	/// still narrating — see <see cref="DataLinkStepDelays"/>.</para>
 	/// </summary>
 	private void DataLinkArm(SimWorld world, MissionGroup group) {
 		if (_dataLinkStep >= DataLinkSteps) {
@@ -149,17 +149,17 @@ public partial class MechObject {
 		return (ushort)(bearing - Heading + AimTwist + DataLinkArc) < DataLinkArc * 2;
 	}
 
-	/// <summary><see cref="ScriptDatHeader.ObjectiveType"/> 0 — watch for the order target.</summary>
-	public const int ObjectiveTypeTargetDetected = 0;
+	/// <summary><see cref="ScriptDatHeader.SquadTargetHandling"/> 0 — watch for the order target.</summary>
+	public const int SquadTargetHandlingAnnounce = 0;
 
 	/// <summary>Type 5 — watch for the goal position.</summary>
-	public const int ObjectiveTypeGoalPosition = 5;
+	public const int SquadTargetHandlingGoalPosition = 5;
 
 	/// <summary>Type 3 — the data link, and the one that also shields the subject from the AI.</summary>
-	public const int ObjectiveTypeDataLink = 3;
+	public const int SquadTargetHandlingDataLink = 3;
 
 	/// <summary>Type 7 — the data link without that shield.</summary>
-	public const int ObjectiveTypeDataLinkAlt = 7;
+	public const int SquadTargetHandlingDataLinkAlt = 7;
 
 	/// <summary>
 	/// Ground range inside which the goal-position arm counts the player as arrived — the original's

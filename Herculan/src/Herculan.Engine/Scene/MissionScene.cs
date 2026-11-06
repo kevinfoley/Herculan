@@ -699,7 +699,7 @@ public sealed class MissionScene {
 
 		return new MissionObjectives(states) {
 			ObjectiveTextRefs = briefing,
-			ObjectiveType = mission.Header.ObjectiveType
+			SquadTargetHandling = mission.Header.SquadTargetHandling
 		};
 	}
 
