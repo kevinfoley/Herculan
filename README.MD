@@ -172,7 +172,10 @@ The result lands in `Herculan/src/Herculan.Engine.Host/bin/publish/<profile>/`; 
 For details on specific reverse-engineering work and file format documentation, see the files in `Herculan/docs/`.
 
 ## AI Disclosure
+
 Development of HercWorks CSharp and HERCULAN Engine has been largely powered by Claude (with extensive prompting, testing, and feedback from a human). AI-generated documentation and code may contain mistakes. See the accompanying LICENSE file for copyright information.
+
+Custom missions included in HERCULAN were created entirely by human hand.
 
 ## License
 
