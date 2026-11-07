@@ -316,8 +316,10 @@ internal sealed class MissionOutliner {
 
 			var name = _names.Group(group.Guid);
 			string full = $"{name.Full}{waiting}{Marker(GroupRow, group.Guid)}";
+			// "###": the node's open state is stored under its ID, which must not change with the cut label. A "##" ID hashes
+			// the label too, so a scrollbar appearing re-cuts it, the node reads as closed, the scrollbar goes, and so on.
 			string shown = NameText.Fit(full, ImGui.GetContentRegionAvail().X - ImGui.GetTreeNodeToLabelSpacing());
-			bool open = ImGui.TreeNodeEx($"{shown}##group{group.Guid}", flags);
+			bool open = ImGui.TreeNodeEx($"{shown}###group{group.Guid}", flags);
 			if (shown != full && ImGui.IsItemHovered()) {
 				ImGui.SetTooltip(full);
 			}
