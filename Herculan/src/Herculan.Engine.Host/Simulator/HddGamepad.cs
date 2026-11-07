@@ -116,9 +116,12 @@ sealed class HddGamepad {
 		}
 	}
 
-	// Up, down, left or right (0-3) for a push past ArrowPress, whichever of its axes is the larger; the arrow already
-	// held while the push stays past ArrowRelease; none otherwise. GLFW reads a stick pushed up as negative Y.
-	private static int ArrowOf(Vector2 stick, int held) {
+	/// <summary>
+	/// Up, down, left or right (0-3) for a push past half the stick's travel, whichever of its axes is the larger; the
+	/// arrow already held while the push stays past a little over a third; none (-1) otherwise. GLFW reads a stick pushed up as
+	/// negative Y. <see cref="PanelGamepad"/> leans on it too.
+	/// </summary>
+	public static int ArrowOf(Vector2 stick, int held) {
 		float push = stick.Length();
 		if (push < ArrowRelease) {
 			return -1;

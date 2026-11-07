@@ -320,6 +320,13 @@ public sealed class PreferencesPanel {
 	public bool HandleStick(bool trigger, bool button2, long nowTicks) =>
 		IsOpen && _focus.AnswerStick(trigger, button2, index => PressWidget(index, nowTicks));
 
+	/// <summary>A gamepad's focus step, this engine's own — see <see cref="PanelPadFocus"/>.</summary>
+	public void PadFocusToward(PadDirection direction) {
+		if (IsOpen) {
+			PanelPadFocus.Step(_focus, direction);
+		}
+	}
+
 	/// <summary>
 	/// <c>AlertPanel_PressWidget</c> (<c>00454dcc</c>): unless the widget is greyed, its click with the left
 	/// button, then its press flash.

@@ -56,6 +56,9 @@ public sealed class AlertPanelFocus {
 	/// <summary>The focused widget, or -1.</summary>
 	public int Index { get; private set; } = -1;
 
+	/// <summary>Widget <paramref name="index"/>'s rect, in panel-local device pixels: what <see cref="PanelPadFocus"/> steps the focus by.</summary>
+	public AlertPanelLayout.Rect RectOf(int index) => _rect(index);
+
 	/// <summary>
 	/// <c>AlertPanel_SetFocus</c>: focuses <paramref name="index"/> and asks for the pointer at the centre of its
 	/// rect. A greyed widget takes the focus like any other; pressing it is what refuses it.

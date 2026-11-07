@@ -170,6 +170,23 @@ sealed class JoystickSource : IJoystickSource {
 	/// </summary>
 	public bool PadAxesMuted { get; set; }
 
+	/// <summary>
+	/// Whether a gamepad's A and B read as up, as they do while they work a retail panel (<see cref="Simulator.PanelGamepad"/>),
+	/// so A does not also step the focus as joystick button 2 does there, nor pick its row on the CONTROLS panel. After it
+	/// comes down they stay up until both are let go, so the press that answered a panel does not also act on the mission.
+	/// A joystick that is not a gamepad is read as usual.
+	/// </summary>
+	public bool PanelButtonsTaken {
+		get => _panelButtonsTaken;
+		set {
+			_panelButtonsAwaitRelease |= _panelButtonsTaken && !value;
+			_panelButtonsTaken = value;
+		}
+	}
+
+	private bool _panelButtonsTaken;
+	private bool _panelButtonsAwaitRelease;
+
 	/// <summary>How a gamepad works as the mouse, from the file the stick is read through.</summary>
 	public GamepadMouseSettings MouseSettings => _file.Mouse;
 
@@ -209,7 +226,7 @@ sealed class JoystickSource : IJoystickSource {
 			Probe(device);
 		}
 
-		return map.Read(AxisOf(device), index => !device.Reserved(index) && device.Button(index), device.Hat(map.HatIndex));
+		return map.Read(AxisOf(device), ButtonOf(device), device.Hat(map.HatIndex));
 	}
 
 	/// <summary>
@@ -218,7 +235,22 @@ sealed class JoystickSource : IJoystickSource {
 	/// </summary>
 	public bool RadarToggleHeld() =>
 		!Muted && !_awaitingRelease && Device is { } device && Map is { } map
-		&& map.RadarToggle.Pressed(AxisOf(device), index => !device.Reserved(index) && device.Button(index));
+		&& map.RadarToggle.Pressed(AxisOf(device), ButtonOf(device));
+
+	// A device button as the bindings read it: a button the host keeps reads as up, and so do a gamepad's A and B while
+	// PanelButtonsTaken has them, and after it until both are let go.
+	private Func<int, bool> ButtonOf(ControllerDevice device) {
+		bool panelButtons = device.IsGamepad && (_panelButtonsTaken || _panelButtonsAwaitRelease);
+		if (panelButtons && !_panelButtonsTaken
+				&& !device.Button(ControllerDevice.GamepadA) && !device.Button(ControllerDevice.GamepadB)) {
+			_panelButtonsAwaitRelease = false;
+			panelButtons = false;
+		}
+
+		return index => !device.Reserved(index)
+			&& !(panelButtons && index is ControllerDevice.GamepadA or ControllerDevice.GamepadB)
+			&& device.Button(index);
+	}
 
 	// A gamepad's axes are its two sticks and two triggers, which read at rest while PadAxesMuted.
 	private Func<int, float> AxisOf(ControllerDevice device) =>

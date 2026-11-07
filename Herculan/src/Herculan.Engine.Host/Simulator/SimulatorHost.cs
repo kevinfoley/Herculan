@@ -58,6 +58,7 @@ sealed class SimulatorHost : IDisposable {
 	private readonly PauseMenu _pauseMenu;
 	private readonly GamepadHostButtons _padButtons = new();
 	private readonly HddGamepad _hddPad = new();
+	private readonly PanelGamepad _panelPad = new();
 
 	// The left stick's click: FLASH COMM's six orders. The right stick's: the MFD's six screens, then the Heads-Down
 	// Display's two pages. Each label radius keeps its ring's neighbouring labels apart.
@@ -371,13 +372,16 @@ sealed class SimulatorHost : IDisposable {
 		// Before the hold, which the pause menu's Start ends.
 		ReadGamepad();
 		ReadHddGamepad(deltaSeconds);
+		ReadPanelGamepad(deltaSeconds);
 
 		// The one owner of the mute: the mission's stick drives nothing while the pad works the menu bar and its
-		// windows, the pause menu or a radial, and for a moment after a radial's choice (PadRadial.MutesStick); and its
-		// sticks and triggers drive nothing while the Heads-Down Display has them (HddGamepad.HoldsAxes).
+		// windows, the pause menu or a radial, and for a moment after a radial's choice (PadRadial.MutesStick); its
+		// sticks and triggers drive nothing while the Heads-Down Display has them (HddGamepad.HoldsAxes); and its A and B
+		// nothing while they work a retail panel (PanelGamepad).
 		if (_joystick != null) {
 			_joystick.Muted = _menuBar.Up || _pauseMenu.Showing || _orderRadial.MutesStick || _screenRadial.MutesStick;
 			_joystick.PadAxesMuted = _hddPad.HoldsAxes;
+			_joystick.PanelButtonsTaken = _panelPad.Active;
 		}
 
 		ReadRadarToggle();
@@ -472,6 +476,18 @@ sealed class SimulatorHost : IDisposable {
 		_hddPad.Update(_inputContext, _input, _window.ClientSize, deltaSeconds, allowed,
 			damagePage: _displays.Hud.Hdd == HddPage.DamageDetail, _keyMap,
 			_joystick?.MouseSettings ?? new GamepadMouseSettings());
+	}
+
+	// The gamepad on retail's panels (PanelGamepad), while one is up with neither the menu bar nor a window of it over
+	// it. A replay's keys are the tape's.
+	private void ReadPanelGamepad(double deltaSeconds) {
+		if (_inputContext == null) {
+			return;
+		}
+
+		bool allowed = _options.ScreenshotPath == null && !_frame.Suspended && !_tape.Playing && _panels.AnyOpen
+			&& !_menuBar.Up;
+		_panelPad.Update(_inputContext, _input.LiveKeys, _panels, _keyMap, allowed, deltaSeconds);
 	}
 
 	// A radial opens only where its choice would be heard: in the machine with the cockpit up, since FLASH COMM's

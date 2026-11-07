@@ -486,6 +486,13 @@ public sealed class ControlsPanel {
 	public bool HandleKey(AlertPanelKey key, long nowTicks) =>
 		IsOpen && _focus.AnswerKey(key, ControlsPanelLayout.DoneButton, index => PressWidget(index, nowTicks));
 
+	/// <summary>A gamepad's focus step, this engine's own — see <see cref="PanelPadFocus"/>.</summary>
+	public void PadFocusToward(PadDirection direction) {
+		if (IsOpen) {
+			PanelPadFocus.Step(_focus, direction);
+		}
+	}
+
 	// AlertPanel_PressWidget: unless the widget is greyed, its click, then its flash.
 	private void PressWidget(int index, long nowTicks) {
 		if (!IsGreyed(index)) {
