@@ -314,7 +314,7 @@ public sealed class HeadsDownPainter {
 				// builds and nothing ever fills, so retail never shows it. Under the tweak it carries the
 				// slot number — the key that selects this pilot. Read every frame, so toggling the tweak
 				// shows or hides it at once.
-				if (TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ShowSquadmateNumber)) {
+				if (TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.ShowSquadmateNumber)) {
 					var slotBox = new HddLayout.Rect(box.X0, box.Y1 - 20, box.X0 + 20, box.Y1);
 					if (hud.HeadsDownColors?.Indicator is { } slotFill) {
 						Fill(slotBox, slotFill);
@@ -534,7 +534,7 @@ public sealed class HeadsDownPainter {
 				}
 			}
 
-			bool iconsOnTop = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HddWeaponIconsOnTop);
+			bool iconsOnTop = TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.HddWeaponIconsOnTop);
 			if (iconsOnTop) {
 				AddTints();
 			}

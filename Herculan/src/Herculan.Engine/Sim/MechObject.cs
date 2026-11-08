@@ -363,7 +363,7 @@ public sealed partial class MechObject : SimObject {
 
 	/// <summary>
 	/// The eye's lift above the camera node: <see cref="MechTypeRecord.EyeOffsetZ"/>, except on a Raptor II with
-	/// <see cref="Settings.TweakSettingDefinitions.FixRaptorIIPerspective"/> on, where it is 0. Every reader of the
+	/// <see cref="Settings.Es2TweakSettingDefinitions.FixRaptorIIPerspective"/> on, where it is 0. Every reader of the
 	/// lift goes through this, so the view, turret tracking (<see cref="TrackWorldPoint"/>) and gun convergence
 	/// (<see cref="WeaponMount.ConvergeOnRange"/>) move together, as they would with the file changed.
 	///
@@ -373,7 +373,7 @@ public sealed partial class MechObject : SimObject {
 	/// rest; the cockpit's identity is the user's reading of the model.</para>
 	/// </summary>
 	public short EyeLift =>
-		WorldTweaks?.GetSettingValue(Settings.TweakSettingDefinitions.FixRaptorIIPerspective) == true
+		WorldTweaks?.GetSettingValue(Settings.Es2TweakSettingDefinitions.FixRaptorIIPerspective) == true
 			&& string.Equals(Name, RaptorIIName, StringComparison.OrdinalIgnoreCase)
 			? (short)0
 			: Type.EyeOffsetZ;

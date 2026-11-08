@@ -14,7 +14,7 @@ public readonly record struct GroundShapeDraw(SceneItem Item, Vec3i Position, in
 /// <summary>
 /// The ground and what is painted with it: the terrain item, its grid, the ground shapes to draw in
 /// the terrain's paint order, and the table every other object is filed in by terrain cell — see
-/// <see cref="SceneRenderer.Render(Camera, IEnumerable{SceneItem}, GroundShapeLayer?, int, int, int, int)"/> for the
+/// <see cref="GroundLayerPass.Draw"/> for the
 /// per-pixel depth draw and <see cref="WorldDrawPass"/> for the painter's-order one, where each ground shape is an
 /// entry at the head of its cell. One per loaded zone, holding the zone's <see cref="TerrainVisibleRegion"/> between
 /// frames as the original's grid holds its own.

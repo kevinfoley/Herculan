@@ -137,7 +137,7 @@ public sealed partial class WeaponMount {
 
 	/// <summary>
 	/// The charge bar's slider committed at <paramref name="position"/>, under
-	/// <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/>. Retail's path, which no press
+	/// <see cref="Settings.Es2TweakSettingDefinitions.ChargeBarPowerLevel"/>. Retail's path, which no press
 	/// reaches there: <c>EnergyWeaponGauge_OnChildClick</c> (<c>00440ef0</c>) clamps the position to
 	/// 0..<see cref="ChargeBarRange"/> into the gauge's state block, and the next
 	/// <see cref="PushGaugeState"/> with the hand-off clear reads it back as the charge target. A key

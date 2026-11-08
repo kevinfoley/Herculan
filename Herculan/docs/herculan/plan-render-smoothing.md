@@ -45,7 +45,7 @@ The sim stays as it is. At the end of each tick the host saves a render snapshot
    - the view switches between cockpit, external and fly camera.
 5. **Cameras.** Snapshot the eye transform and the external camera's placement the same way. Leave cockpit pan, view kick and hit shake as they are; they already apply per frame on top of the camera.
 6. **Beams and sprites.** Beam chains are rebuilt each tick (`SimWorld.Beams`, `BeamTracer`) and are short-lived. Interpolate their endpoints when the same tracer exists in both snapshots, and snap otherwise.
-7. **Setting.** One preference (Tweaks menu), off by default, following the pattern set by `TweakSettingDefinitions.SmootherTurretMovement`.
+7. **Setting.** One preference (Tweaks menu), off by default, following the pattern set by `Es2TweakSettingDefinitions.SmootherTurretMovement`.
 
 **Cost:** up to one tick (40 ms) of added visual latency, averaging half a tick. Other objects' motion does not feel this delay. The player's own view does, which is what stage B addresses.
 

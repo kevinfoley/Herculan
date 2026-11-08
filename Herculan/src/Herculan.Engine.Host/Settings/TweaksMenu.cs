@@ -22,8 +22,7 @@ public sealed class TweaksMenu {
 	private const float PanelWidth = 440f;
 
 	// The visible settings in the order they are drawn, grouped once rather than every frame.
-	private static readonly (TweakCategory Category, TweakSettingDefinition<bool>[] Settings)[] VisibleByCategory =
-		TweakSettingDefinitions.All.Where(d => !d.Hidden).GroupBy(d => d.Category).Select(g => (g.Key, g.ToArray())).ToArray();
+	private readonly (TweakCategory Category, TweakSettingDefinition<bool>[] Settings)[] _visibleByCategory;
 
 	private readonly TweakSettings _settings;
 	private readonly LocalizationTable _localization;
@@ -43,6 +42,7 @@ public sealed class TweaksMenu {
 		_localization = localization ?? throw new ArgumentNullException(nameof(localization));
 		_presetButtons = [("tweaks.none", DisableAll), ("tweaks.defaults", ApplyDefaults), ("tweaks.recommended", ApplyRecommended), ("tweaks.all", EnableAll)];
 		_closeButtons = [("general.save", Save), ("general.cancel", Cancel)];
+		_visibleByCategory = settings.All.Where(d => !d.Hidden).GroupBy(d => d.Category).Select(g => (g.Key, g.ToArray())).ToArray();
 	}
 
 	/// <summary>
@@ -73,7 +73,7 @@ public sealed class TweaksMenu {
 				ImGui.TextWrapped(_localization.GetStringOrKey("tweaks.note"));
 			}
 
-			foreach (var (category, settings) in VisibleByCategory) {
+			foreach (var (category, settings) in _visibleByCategory) {
 				ImGui.SeparatorText(_localization.GetStringOrKey(CategoryKey(category)));
 				foreach (var definition in settings) {
 					bool value = _settings.GetSettingValue(definition);
@@ -120,19 +120,19 @@ public sealed class TweaksMenu {
 	}
 
 	private void ApplyToAll(bool value) {
-		foreach (var definition in TweakSettingDefinitions.All.Where(d => !d.Hidden)) {
+		foreach (var definition in _settings.All.Where(d => !d.Hidden)) {
 			_settings.SetSettingValue(definition, value);
 		}
 	}
 
 	private void ApplyDefaults() {
-		foreach (var setting in TweakSettingDefinitions.All) {
+		foreach (var setting in _settings.All) {
 			_settings.SetSettingValue(setting, setting.DefaultValue);
 		}
 	}
 
 	private void ApplyRecommended() {
-		foreach (var setting in TweakSettingDefinitions.All) {
+		foreach (var setting in _settings.All) {
 			_settings.SetSettingValue(setting, setting.RecommendedValue);
 		}
 	}

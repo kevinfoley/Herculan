@@ -655,7 +655,7 @@ public sealed class WeaponMounts {
 
 	/// <summary>
 	/// A drag released on weapon row <paramref name="gaugeSlot"/>'s charge bar, under
-	/// <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/> — see
+	/// <see cref="Settings.Es2TweakSettingDefinitions.ChargeBarPowerLevel"/> — see
 	/// <see cref="WeaponMount.SetPowerFromChargeBar"/>. Unlike the keys, which reach only the armed
 	/// mount, the bar sets the power level of whichever row it belongs to.
 	/// </summary>

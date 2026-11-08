@@ -397,7 +397,7 @@ public sealed class HddCommandScreen {
 	/// and the receiver guards that unit. With the tweak off, an order with no pick writes neither half
 	/// here; the original writes that pilot's last pick back into the record again, which only changes
 	/// which unit a later bare-ground DEFEND POSITION inherits. With
-	/// <see cref="TweakSettingDefinitions.FixDefendPositionOrder"/> on, each order is built fresh
+	/// <see cref="Es2TweakSettingDefinitions.FixDefendPositionOrder"/> on, each order is built fresh
 	/// instead, and a unit pick also fills the point with the unit's position. See
 	/// docs/retail/simulation/ai-squadmates.md, "The order record — 22 bytes".</para>
 	/// </summary>
@@ -406,7 +406,7 @@ public sealed class HddCommandScreen {
 			return false;
 		}
 
-		if (TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FixDefendPositionOrder)) {
+		if (TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.FixDefendPositionOrder)) {
 			_recordPoint = ChosenPoint ?? ChosenUnit?.Position ?? default;
 			_recordSubject = ChosenUnit;
 		} else if (ChosenUnit != null) {

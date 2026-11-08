@@ -60,7 +60,7 @@ public enum CockpitWidgetKind {
 	/// <summary>
 	/// An energy weapon row's charge bar, as the slider retail builds it — index is the row's
 	/// <c>.GAU</c> weapon slot. Listed only under
-	/// <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/>; see <see cref="ChargeBarSlider"/>.
+	/// <see cref="Settings.Es2TweakSettingDefinitions.ChargeBarPowerLevel"/>; see <see cref="ChargeBarSlider"/>.
 	/// </summary>
 	WeaponChargeBar = 10,
 
@@ -419,7 +419,7 @@ public static class CockpitWidgets {
 	///
 	/// <para>Under <see cref="CockpitHudState.ChargeBarsDraggable"/> an energy or ELF row's charge bar is
 	/// listed just ahead of its row, so it takes presses on its own span — the
-	/// <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/> tweak, and the one place this
+	/// <see cref="Settings.Es2TweakSettingDefinitions.ChargeBarPowerLevel"/> tweak, and the one place this
 	/// list departs from the original's order. A row the power-up has not reached, or the sensor
 	/// dropout is holding back, draws no bar and lists none.</para>
 	/// </summary>

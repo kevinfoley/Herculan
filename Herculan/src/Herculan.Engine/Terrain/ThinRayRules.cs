@@ -12,7 +12,7 @@ namespace Herculan.Engine.Terrain;
 /// whether or not it does.
 /// </param>
 /// <param name="ExactFarPlane">
-/// The <see cref="Settings.TweakSettingDefinitions.FixTerrainHitPoint"/> tweak: solve a selector-2
+/// The <see cref="Settings.Es2TweakSettingDefinitions.FixTerrainHitPoint"/> tweak: solve a selector-2
 /// cell's far triangle against its own plane, not the one with the near plane's constant that
 /// both releases use.
 /// </param>

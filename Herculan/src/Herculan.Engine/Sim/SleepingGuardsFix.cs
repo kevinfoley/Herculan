@@ -4,7 +4,7 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Sim;
 
 /// <summary>
-/// The <see cref="Settings.TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> tweak's reach — <b>this engine's
+/// The <see cref="Settings.Es2TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> tweak's reach — <b>this engine's
 /// own</b>, a fix for one retail mission. <c>C5_10</c>'s six single-Cybrid groups (162-167) each guard the base and
 /// then sleep, and retail moves them on to the sleep the moment they arrive, so they stand still and ignore fire
 /// (docs/retail/simulation/ai-goals.md#a-guard-nobody-contests--c5_10s-ring). This marks those six

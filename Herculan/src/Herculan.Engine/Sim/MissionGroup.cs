@@ -214,14 +214,14 @@ public sealed partial class MissionGroup {
 	} ?? WaypointAt(0);
 
 	/// <summary>
-	/// The action that, under <see cref="Settings.TweakSettingDefinitions.StrandedStingrayClosesIn"/>, sends this
+	/// The action that, under <see cref="Settings.Es2TweakSettingDefinitions.StrandedStingrayClosesIn"/>, sends this
 	/// group's leader straight at what its search/destroy order names. Set by <see cref="StrandedStingrayFix"/> on
 	/// <c>C2_05</c>'s Stingray and null on every other group. Not the original's.
 	/// </summary>
 	internal MissionActionState? ClosesInOn { get; set; }
 
 	/// <summary>
-	/// Whether <see cref="Settings.TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> holds this group's guard order.
+	/// Whether <see cref="Settings.Es2TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> holds this group's guard order.
 	/// Set by <see cref="SleepingGuardsFix"/> on <c>C5_10</c>'s six base guards and false on every other group. Not the
 	/// original's.
 	/// </summary>
@@ -235,7 +235,7 @@ public sealed partial class MissionGroup {
 	internal Vec3i? ClosingInPoint(SimWorld world) =>
 		ClosesInOn is { Activated: true } && OrderVerb == MissionOrder.VerbSearchDestroy
 			&& OrderTarget is { Removed: false, AwaitingDeployment: false, Destroyed: false } quarry
-			&& world.Tweaks.GetSettingValue(Settings.TweakSettingDefinitions.StrandedStingrayClosesIn)
+			&& world.Tweaks.GetSettingValue(Settings.Es2TweakSettingDefinitions.StrandedStingrayClosesIn)
 			? quarry.Position
 			: null;
 
@@ -403,7 +403,7 @@ public sealed partial class MissionGroup {
 	};
 
 	/// <summary>
-	/// Whether <see cref="Settings.TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> drops the no-rival half of the
+	/// Whether <see cref="Settings.Es2TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> drops the no-rival half of the
 	/// guard order's completion test, so the order lasts until its subject is destroyed: only for a group
 	/// <see cref="SleepingGuardsFix"/> marked (<see cref="HoldsGuard"/>). <b>This engine's own</b>, not the original's:
 	/// it keeps <c>C5_10</c>'s guards on their post, where retail moves them on to the sleep order behind it the moment
@@ -411,7 +411,7 @@ public sealed partial class MissionGroup {
 	/// turning it on during a mission holds a guard order still in force.
 	/// </summary>
 	private bool GuardHeldUntilSubjectDestroyed(SimWorld world) =>
-		HoldsGuard && world.Tweaks.GetSettingValue(Settings.TweakSettingDefinitions.GuardHoldsUntilDestroyed);
+		HoldsGuard && world.Tweaks.GetSettingValue(Settings.Es2TweakSettingDefinitions.GuardHoldsUntilDestroyed);
 
 	/// <summary>
 	/// <c>Group_OrderSubjectCondition</c> (<c>00412dc4</c>) — how far gone the thing the current

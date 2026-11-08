@@ -246,7 +246,7 @@ public sealed class ShellCampaignLoop {
 	/// script.dat, mission.str and player.mec, beside the mission.var the simulator itself last wrote, which no one
 	/// rewrites. Returns the launch, or null when the slot cannot be read or mission.var written, which is reported
 	/// (<see cref="ShellFailure.MissionLoad"/>).
-	/// <para>Under <see cref="TweakSettingDefinitions.ResetCountersOnReplay"/>, mission.var is written again from the
+	/// <para>Under <see cref="Es2TweakSettingDefinitions.ResetCountersOnReplay"/>, mission.var is written again from the
 	/// slot's own flag array. The shell autosaves slot 10 on its way out to a mission, from the same game the handoff's
 	/// mission.var was written from, so the replay starts from the counters the failed attempt started from
 	/// (docs/retail/campaign-continuity.md#replaying-a-mission).</para>
@@ -254,7 +254,7 @@ public sealed class ShellCampaignLoop {
 	public ShellLaunch? Replay() {
 		if (!TryLoadSlot(GameInProgress.CurrentGameSlot, out string? failure)) {
 			failure ??= "No current game is saved.";
-		} else if (TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ResetCountersOnReplay) && _game.LoadedGame is { } game) {
+		} else if (TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.ResetCountersOnReplay) && _game.LoadedGame is { } game) {
 			ShellWorkingFiles.TryWrite(() => ShellMissionLaunch.WriteCampaignFlags(DataDirectory, game), out failure);
 		}
 

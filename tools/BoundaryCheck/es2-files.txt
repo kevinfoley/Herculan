@@ -18,6 +18,7 @@ Audio/GameAudio.cs
 Audio/InstructorVoice.cs
 Audio/SoundCatalog.cs
 Audio/SoundDirector.cs
+Content/BeamAppearance.cs
 Content/CockpitArt.cs
 Content/CockpitClipRegions.cs
 Content/HudColorTable.cs
@@ -39,6 +40,8 @@ Input/TapeRecording.cs
 Render/BeamRenderer.cs
 Render/Cockpit/
 Render/CockpitScreenLayout.cs
+Render/DistanceColorBands.cs
+Render/GroundLayerPass.cs
 Render/GroundShapeLayer.cs
 Render/HddMapRaster.cs
 Render/ObjectDrawTable.cs
@@ -47,6 +50,8 @@ Render/TerrainPaintOrder.cs
 Render/TerrainPaintRankBuffer.cs
 Render/TerrainTextureBank.cs
 Render/WorldDrawPass.cs
+Settings/Es2A11ySettingDefinitions.cs
+Settings/Es2TweakSettingDefinitions.cs
 View/CockpitGlance.cs
 View/CockpitHitShake.cs
 View/CockpitViewKick.cs

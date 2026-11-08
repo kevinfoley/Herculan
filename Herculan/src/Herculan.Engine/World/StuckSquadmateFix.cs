@@ -3,7 +3,7 @@ using Herculan.Engine.Numerics;
 namespace Herculan.Engine.World;
 
 /// <summary>
-/// The <see cref="Settings.TweakSettingDefinitions.SquadmateClearOfTransport"/> tweak — <b>this engine's own</b>, a fix
+/// The <see cref="Settings.Es2TweakSettingDefinitions.SquadmateClearOfTransport"/> tweak — <b>this engine's own</b>, a fix
 /// for one retail mission. <c>C5_05</c> stands the player's squad at the first waypoint of its route, inside the lunar
 /// outpost it defends, and formation slot 1's offset puts the first squadmate's centre inside the collision volume of
 /// the outpost's SUPPLY TRANSPORT (<c>BASES.DAT</c> type <c>0x37</c>): 1918 units from the vehicle, within its 3422-unit

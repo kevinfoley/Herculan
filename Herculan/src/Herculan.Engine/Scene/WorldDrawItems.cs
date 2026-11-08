@@ -105,8 +105,8 @@ public sealed class WorldDrawItems {
 		// The built-time visibility is captured rather than assumed: a wreckable structure's hulk item is
 		// built hidden, and un-hiding it on arrival would show every waiting building as its own rubble.
 		_undeployed = built
-			.Where(entry => entry.LightSubject is { AwaitingDeployment: true })
-			.GroupBy(entry => entry.LightSubject!)
+			.Where(entry => entry.LightSubject is SimObject { AwaitingDeployment: true })
+			.GroupBy(entry => (SimObject)entry.LightSubject!)
 			.Select(group => (group.Key, group.Select(entry => (entry, entry.Visible)).ToArray()))
 			.ToList();
 
@@ -125,7 +125,7 @@ public sealed class WorldDrawItems {
 		// Every item that draws a simulation object is filed with it. The terrain has no subject and is
 		// not filed.
 		foreach (var item in built) {
-			if (item.LightSubject is { } subject) {
+			if (item.LightSubject is SimObject subject) {
 				item.Filing = filing.ObjectEntry(subject);
 			}
 		}

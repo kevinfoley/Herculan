@@ -67,7 +67,7 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// <b>Not retail.</b> The speed readout the HUD shows in place of <see cref="DisplaySpeedKph"/>
-	/// under the <see cref="Settings.TweakSettingDefinitions.ShowAccurateSpeed"/> tweak. Retail's
+	/// under the <see cref="Settings.Es2TweakSettingDefinitions.ShowAccurateSpeed"/> tweak. Retail's
 	/// readout is the speed scalar through a ratio calibrated for the run gait, and a walk stride
 	/// covers about half the ground at the same scalar, so a walking HERC reads about twice its real
 	/// speed — docs/retail/simulation/mech-locomotion.md, "Walk/run gait discontinuity".

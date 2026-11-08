@@ -116,7 +116,9 @@ public class PanelLayoutTests {
 		var session = new HostSession(InstallRoot, localization, Path.Combine(ImGuiLayoutCheck.FontFolder, "OpenSans-Regular.ttf"),
 			Path.Combine(ImGuiLayoutCheck.FontFolder, "OpenSans-Italic.ttf"));
 		var settings = new SettingsWindow(session, restartShell: () => { });
-		var bar = new HostMenuBar(localization, KeyMap.Retail, new TweaksMenu(new TweakSettings(), localization), settings,
+		// Every Earthsiege 2 row too, as the host holds them: the Accessibility window lists A11ySettings.Current's.
+		A11ySettings.Current = new A11ySettings(Es2A11ySettingDefinitions.All);
+		var bar = new HostMenuBar(localization, KeyMap.Retail, new TweaksMenu(new TweakSettings(Es2TweakSettingDefinitions.All), localization), settings,
 			new ControllerWindow(localization, () => null));
 		bar.Show();
 		open(bar);

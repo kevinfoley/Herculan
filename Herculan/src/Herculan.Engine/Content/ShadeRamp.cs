@@ -28,7 +28,7 @@ namespace Herculan.Engine.Content;
 /// distance is measured: per fragment here, per cell and per object there.</para>
 ///
 /// <para>A <c>TSGouraudPoly</c> has no ramp row to bias; it fades through
-/// <see cref="Render.DistanceColorBands"/> instead, as in the original. A
+/// the distance colour bands instead (<see cref="Render.SceneRenderer.DistanceBands"/>), as in the original. A
 /// surface in a theater whose ramp did not load falls back to <see cref="Render.SceneRenderer"/>'s
 /// blend toward <see cref="FogColor"/> over the same interval, which is a poorer likeness than it
 /// looks — why is in docs/retail/rendering/distance-fog-and-sky.md's "Rejected readings".</para>

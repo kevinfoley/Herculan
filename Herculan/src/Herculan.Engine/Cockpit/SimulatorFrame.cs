@@ -424,7 +424,7 @@ public sealed class SimulatorFrame {
 		var framebuffer = _framebufferSize();
 		var (artX, artY) = CockpitScreenLayout.Create(framebuffer.X, framebuffer.Y, _art, 0f, _view.Pan.TravelRows)
 			.Center.WindowToArt(x, y);
-		bool tweak = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FixGunsightDrag);
+		bool tweak = TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.FixGunsightDrag);
 		bool right = tweak
 			? buttons.HasFlag(CockpitMouseButtons.Right)
 			: _input.Cockpit.RightPressedLast;

@@ -18,7 +18,7 @@ public readonly record struct GunsightPointer(bool Right, int X, int Y, bool Lef
 /// press inside the gunsight complex's rect, the pointer's distance from that press aims the turret, squared, added to
 /// the twist and pitch <c>Sim_PollPlayerInput</c> (<c>00460764</c>) hands the machine after either of its branches.
 /// Retail's mouse record drops the held right button at the first move, so it never acts there; which button state
-/// feeds it is <see cref="Settings.TweakSettingDefinitions.FixGunsightDrag"/>'s.
+/// feeds it is <see cref="Settings.Es2TweakSettingDefinitions.FixGunsightDrag"/>'s.
 /// </summary>
 public sealed class GunsightDrag {
 	// 0049f702, and the press point at 004d2afa / 004d2afe.

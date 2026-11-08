@@ -28,13 +28,13 @@ public sealed class AccessibilityMenu {
 	/// <summary>Whether the panel is currently open. Set by the menu bar; see <see cref="HostMenuBar"/>.</summary>
 	public bool IsOpen { get; set; }
 
-	/// <param name="offered">The settings to list, or null for every one in <see cref="A11ySettingDefinitions.All"/>.</param>
+	/// <param name="offered">The settings to list, or null for every one <paramref name="settings"/> holds.</param>
 	public AccessibilityMenu(A11ySettings settings, LocalizationTable localization,
 			IReadOnlyCollection<A11ySettingDefinition<bool>>? offered = null) {
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_localization = localization ?? throw new ArgumentNullException(nameof(localization));
 		_closeButtons = [("general.save", Save), ("general.cancel", Cancel)];
-		_visibleByCategory = A11ySettingDefinitions.All.Where(d => !d.Hidden && (offered == null || offered.Contains(d)))
+		_visibleByCategory = settings.All.Where(d => !d.Hidden && (offered == null || offered.Contains(d)))
 			.GroupBy(d => d.Category).OrderBy(g => g.Key).Select(g => (g.Key, g.ToArray())).ToArray();
 	}
 

@@ -61,7 +61,7 @@ public sealed class SquadMessages {
 	/// whatever its id, because <c>MessagePort_StepToVariant</c> (<c>00435a74</c>) steps from the first
 	/// entry on every pass (docs/retail/simulation/cockpit-message-port.md, "Posting"). So an id's
 	/// third recording is never picked. <paramref name="everyVariant"/> is this engine's alternative,
-	/// the <see cref="Settings.TweakSettingDefinitions.EverySquadmateReply"/> tweak: the roll picks
+	/// the <see cref="Settings.Es2TweakSettingDefinitions.EverySquadmateReply"/> tweak: the roll picks
 	/// that variant, so each is equally likely. The draw is the same either way.</para>
 	/// </summary>
 	public Entry? Pick(int id, Numerics.SimRandom? random, bool everyVariant = false) {

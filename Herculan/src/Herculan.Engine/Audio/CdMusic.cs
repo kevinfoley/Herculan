@@ -65,14 +65,14 @@ public sealed class CdMusic : IDisposable {
 	/// <para>The original's remainder is a signed <c>IDIV</c>, so a negative <c>-R</c> would give it
 	/// a track below 2 and <c>MCI_PLAY</c> an invalid one; the magnitude is taken here instead.</para>
 	///
-	/// <para>With <paramref name="allTracks"/> (<see cref="Settings.TweakSettingDefinitions.PlayLastMusicTrack"/>,
+	/// <para>With <paramref name="allTracks"/> (<see cref="Settings.Es2TweakSettingDefinitions.PlayLastMusicTrack"/>,
 	/// this engine's) the remainder is taken over <see cref="DiscMusicTrackCount"/>, so the rotation reaches track 7.</para>
 	/// </summary>
 	public static int MissionTrack(int select, bool allTracks = false) =>
 		System.Math.Abs(select % (allTracks ? DiscMusicTrackCount : MissionTrackCount)) + FirstMusicTrack;
 
 	/// <summary>
-	/// <see cref="Settings.TweakSettingDefinitions.ShuffleMissionMusic"/>, this engine's: one of the
+	/// <see cref="Settings.Es2TweakSettingDefinitions.ShuffleMissionMusic"/>, this engine's: one of the
 	/// <paramref name="count"/> tracks from <see cref="FirstMusicTrack"/> up, drawn evenly from those that are not
 	/// <paramref name="previous"/>. A <paramref name="previous"/> outside that range excludes nothing.
 	/// </summary>
@@ -106,8 +106,8 @@ public sealed class CdMusic : IDisposable {
 	/// <param name="musicEnabled"><see cref="SoundDirector.MusicEnabled"/>.</param>
 	public void StartMission(int select, bool musicEnabled) {
 		var tweaks = Settings.TweakSettings.Current;
-		bool allTracks = tweaks.GetSettingValue(Settings.TweakSettingDefinitions.PlayLastMusicTrack);
-		Track = tweaks.GetSettingValue(Settings.TweakSettingDefinitions.ShuffleMissionMusic)
+		bool allTracks = tweaks.GetSettingValue(Settings.Es2TweakSettingDefinitions.PlayLastMusicTrack);
+		Track = tweaks.GetSettingValue(Settings.Es2TweakSettingDefinitions.ShuffleMissionMusic)
 			? ShuffledTrack(allTracks ? DiscMusicTrackCount : MissionTrackCount, s_previousMissionTrack, ShuffleRandom)
 			: MissionTrack(select, allTracks);
 		s_previousMissionTrack = Track;

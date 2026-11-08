@@ -13,7 +13,7 @@ namespace Herculan.Engine.Host.Simulator.Rendering;
 /// One pass of the world into a viewport: the scene with its beams and billboards (<see cref="WorldDrawPass"/>), then the
 /// debug skeleton over it. Every view the simulator draws — the cockpit's panels, the heads-down window, the external
 /// view, the observer camera and the MFD's missile camera — is one or more of these. Each pass reads
-/// <see cref="TweakSettingDefinitions.PerPixelDepthSorting"/> as it starts, so the tweak takes effect on the next frame.
+/// <see cref="Es2TweakSettingDefinitions.PerPixelDepthSorting"/> as it starts, so the tweak takes effect on the next frame.
 /// </summary>
 sealed class WorldPassRenderer : IDisposable {
 	private readonly MissionScene _scene;
@@ -146,7 +146,7 @@ sealed class WorldPassRenderer : IDisposable {
 	// after — see BeamTracer.
 	private void DrawWorld(Camera view, IEnumerable<SceneItem> items, GroundShapeLayer groundLayer,
 			int x, int y, int width, int height) {
-		var mode = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.PerPixelDepthSorting)
+		var mode = TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.PerPixelDepthSorting)
 			? WorldDrawMode.PerPixelDepth
 			: WorldDrawMode.PaintersOrder;
 		_draw.Draw(mode, view, items, groundLayer, _transient.Sprites, _scene.World.Tracers, _transient.BeamSpans,
@@ -185,6 +185,7 @@ sealed class WorldPassRenderer : IDisposable {
 	}
 
 	public void Dispose() {
+		_draw.Dispose();
 		Scene.Dispose();
 		_wireframe.Dispose();
 		_beams?.Dispose();

@@ -91,7 +91,7 @@ public sealed class PilotControls {
 	/// retail's own record arms leaves the clicks as retail has them.
 	/// </summary>
 	public bool LeftButtonFires => _gunsightDrag.Armed
-		&& TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FixGunsightDrag);
+		&& TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.FixGunsightDrag);
 
 	/// <summary>What the stick in use can do: the recording machine's during a replay, the attached one otherwise.</summary>
 	public JoystickCapabilities StickCapabilities =>
@@ -442,7 +442,7 @@ public sealed class PilotControls {
 	/// throttle; not while the controls drive a camera; and not while a missile is flown, which the turret pair can steer.
 	/// </summary>
 	private bool FasterKeyboardAiming =>
-		TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FasterKeyboardAiming)
+		TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.FasterKeyboardAiming)
 		&& !Bindings.PilotingRazor && !_view.ControlsOnCamera && !_scene.World.PlayerMissile.Flown;
 
 	/// <summary>

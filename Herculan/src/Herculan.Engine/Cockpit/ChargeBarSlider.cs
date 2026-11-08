@@ -8,7 +8,7 @@ namespace Herculan.Engine.Cockpit;
 /// <summary>
 /// An energy weapon row's charge bar as the slider it is built as: where it can be pressed, and what
 /// position a point on it means. Used only under
-/// <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/>; in retail no press reaches it.
+/// <see cref="Settings.Es2TweakSettingDefinitions.ChargeBarPowerLevel"/>; in retail no press reaches it.
 ///
 /// <para>The slider is <c>WeaponSliderGadget_Ctor</c>'s (<c>00442950</c>): the row's value field,
 /// a knob one GAU unit wide, and the range 0..<see cref="WeaponMount.ChargeBarRange"/>

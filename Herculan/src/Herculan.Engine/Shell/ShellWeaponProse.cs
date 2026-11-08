@@ -3,7 +3,7 @@ using Herculan.Engine.Settings;
 namespace Herculan.Engine.Shell;
 
 /// <summary>
-/// The weapon prose lines <see cref="TweakSettingDefinitions.ShowCorrectStats"/> corrects, shared by the
+/// The weapon prose lines <see cref="Es2TweakSettingDefinitions.ShowCorrectStats"/> corrects, shared by the
 /// weapons screen (<c>wpn_desc.bin</c>, <see cref="ShellWeaponsScreen"/>) and the armory
 /// (<c>wpn_info.bin</c>, <see cref="ShellArmoryScreen"/>). Each file entry is a whole hand-laid line —
 /// labels, figures and alignment together — so a correction is the retail line swapped for a corrected
@@ -182,7 +182,7 @@ internal static class ShellWeaponProse {
 	/// <summary><paramref name="text"/>, or its corrected line when the tweak is on and it has one.</summary>
 	public static string? Correct(string? text) =>
 		text != null && Corrections.TryGetValue(text, out string? corrected)
-			&& TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ShowCorrectStats)
+			&& TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.ShowCorrectStats)
 			? corrected
 			: text;
 }

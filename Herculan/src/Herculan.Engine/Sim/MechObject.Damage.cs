@@ -412,7 +412,7 @@ public sealed partial class MechObject {
 	/// <para><b><c>0x12</c> <c>DAMAGE LEVEL CRITICAL</c> is never said</b> in retail: its call site
 	/// cannot be reached (docs/retail/simulation/cockpit-messages.md). The cockpit jolt beside it is
 	/// raised, through <see cref="CockpitHits"/>, and the message is said under the
-	/// <see cref="TweakSettingDefinitions.CriticalDamageMessage"/> tweak.</para>
+	/// <see cref="Es2TweakSettingDefinitions.CriticalDamageMessage"/> tweak.</para>
 	/// </summary>
 	private void ApplyDirectFireDamage(SimWorld world, short componentIndex, WeaponShot shot, Vec3i hitPoint) {
 		if (_damage == null) {
@@ -454,7 +454,7 @@ public sealed partial class MechObject {
 			// each test from the other reading turns it into the upward crossing it reads as
 			// intended to be. This is a non-vanilla tweak. See SystemMessages.DamageLevelCritical
 			// and KNOWN_ISSUES.md.
-			if (world.Tweaks.GetSettingValue(TweakSettingDefinitions.CriticalDamageMessage) && LocallyPiloted
+			if (world.Tweaks.GetSettingValue(Es2TweakSettingDefinitions.CriticalDamageMessage) && LocallyPiloted
 					&& before < CockpitShakeDamageLimit && CockpitShakeDamageLimit < after
 					&& (componentIndex == CockpitFrontComponent
 						|| componentIndex == CockpitRearComponent)) {

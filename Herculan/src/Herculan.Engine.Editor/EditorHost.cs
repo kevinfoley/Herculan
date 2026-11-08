@@ -166,6 +166,7 @@ public sealed class EditorHost {
 
 	private GL? _gl;
 	private SceneRenderer? _renderer;
+	private GroundLayerPass? _ground;
 	private WireframeRenderer? _wireframe;
 	private ScaledImGui? _imgui;
 	private MissionDrawables? _drawables;
@@ -336,6 +337,7 @@ public sealed class EditorHost {
 	private void OnLoad(GL gl, IInputContext input) {
 		_gl = gl;
 		_renderer = new SceneRenderer(gl, editorGrid: true);
+		_ground = new GroundLayerPass(gl, _renderer);
 		_wireframe = new WireframeRenderer(gl);
 		_heightmaps = new ZoneHeightmaps(gl, _launch.SimulatorContent);
 		if (_mission != null) {
@@ -869,8 +871,8 @@ public sealed class EditorHost {
 		mission.Sculptor.Paint(renderer.Discs, pointer);
 
 		// Full-window viewport: the editor draws one 3D view, unlike the simulator host's three cockpit
-		// panels, which is what SceneRenderer.Render's x/y origin exists for.
-		renderer.Render(_camera, drawables.Items, drawables.GroundLayer, 0, 0, size.X, size.Y);
+		// panels, which is what the draw's x/y origin exists for.
+		_ground!.Draw(_camera, drawables.Items, drawables.GroundLayer, 0, 0, size.X, size.Y);
 
 		var selection = mission.Selection;
 		mission.Overlay.Draw(wireframe, _camera, aspect, _settings, selection);
@@ -891,6 +893,7 @@ public sealed class EditorHost {
 	private void OnClosing() {
 		_imgui?.Dispose();
 		_drawables?.Dispose();
+		_ground?.Dispose();
 		_renderer?.Dispose();
 		_wireframe?.Dispose();
 		_heightmaps?.Dispose();

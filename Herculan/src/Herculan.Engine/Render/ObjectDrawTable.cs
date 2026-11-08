@@ -50,7 +50,7 @@ public enum ObjectTypeTag : short {
 /// object draws as shares its entry — a HERC's guns are parts of its shape in the original.
 /// <see cref="Drawn"/> is the answer, settled per pass by <see cref="ObjectDrawTable.File"/>.
 /// </summary>
-public sealed class DrawEntry {
+public sealed class DrawEntry : IDrawFiling {
 	public DrawEntry(object subject) {
 		Subject = subject;
 	}

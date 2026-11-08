@@ -8,8 +8,8 @@ namespace Herculan.Engine.Host.Shell;
 /// <summary>
 /// The save names this engine writes for the player, none of them retail's, each the pilot's name, the sector and the
 /// mission number of the game being saved (<see cref="ShellSaveScreen.AutoName"/>) in the interface's language: the name
-/// SAVE fills its row with when clicked with a gamepad or under <see cref="TweakSettingDefinitions.AutoFillSaveName"/>,
-/// and the auto-save a debrief writes under <see cref="TweakSettingDefinitions.AutoSaveSlot10"/>.
+/// SAVE fills its row with when clicked with a gamepad or under <see cref="Es2TweakSettingDefinitions.AutoFillSaveName"/>,
+/// and the auto-save a debrief writes under <see cref="Es2TweakSettingDefinitions.AutoSaveSlot10"/>.
 /// </summary>
 sealed class SaveNames {
 	/// <summary>
@@ -42,14 +42,14 @@ sealed class SaveNames {
 	/// null, retail's empty row.
 	/// </summary>
 	public string? RenameFill() =>
-		_padClicked() || TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.AutoFillSaveName) ? GameName() : null;
+		_padClicked() || TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.AutoFillSaveName) ? GameName() : null;
 
 	/// <summary>
 	/// The debrief's auto-save under the tweak: the game in progress written to <see cref="AutoSaveRow"/> as ACCEPT
 	/// writes a row, named <c>AUTO SAVE</c> and the game's own name.
 	/// </summary>
 	public void AutoSaveAfterDebrief() {
-		if (!TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.AutoSaveSlot10) || GameName() is not { } name) {
+		if (!TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.AutoSaveSlot10) || GameName() is not { } name) {
 			return;
 		}
 

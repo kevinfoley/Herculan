@@ -29,7 +29,7 @@ internal static class PaperDollPainter {
 	/// weapon stays green. The doll under them is blue by then and takes no part.</item>
 	/// </list>
 	///
-	/// <para><paramref name="iconsOnTop"/> is the <see cref="Settings.TweakSettingDefinitions.HddWeaponIconsOnTop"/>
+	/// <para><paramref name="iconsOnTop"/> is the <see cref="Settings.Es2TweakSettingDefinitions.HddWeaponIconsOnTop"/>
 	/// tweak, a HERCULAN departure: the caller draws the region tints first, and the structural and internal
 	/// recolour then turns only the icons' own pixels blue, leaving the doll under an icon's rect as it is.</para>
 	/// </summary>

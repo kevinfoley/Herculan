@@ -4,7 +4,7 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Sim;
 
 /// <summary>
-/// The <see cref="Settings.TweakSettingDefinitions.StrandedStingrayClosesIn"/> tweak — <b>this engine's own</b>, a
+/// The <see cref="Settings.Es2TweakSettingDefinitions.StrandedStingrayClosesIn"/> tweak — <b>this engine's own</b>, a
 /// fix for one retail mission. <c>C2_05</c>'s lone Cybrid Stingray (group 188) hunts the Raptor II prototype from the
 /// start, but walks a closed loop in the map's north-east corner that never runs out, so it never comes near the
 /// prototype and counts as a threat to it at any range: the escort objective cannot be met until the player finds

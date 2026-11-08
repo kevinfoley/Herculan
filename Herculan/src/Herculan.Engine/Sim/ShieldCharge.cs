@@ -110,7 +110,7 @@ public sealed class ShieldCharge {
 	/// disagree so completely — dark rings over a confident "100".</para>
 	///
 	/// <para><paramref name="rounded"/> is <b>not retail</b> — it is the
-	/// <see cref="Settings.TweakSettingDefinitions.RoundShieldBalance"/> tweak, which snaps the
+	/// <see cref="Settings.Es2TweakSettingDefinitions.RoundShieldBalance"/> tweak, which snaps the
 	/// front number to the nearest multiple of <see cref="ReadoutStep"/>, so it reads 120/80, 140/60 …
 	/// where retail reads 119/81, 139/61 … <see cref="AdjustBalance"/> is the only thing that moves
 	/// <see cref="Balance"/>, and its steps fall 0.08 of a point short of 20 each. Rounding to the

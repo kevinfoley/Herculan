@@ -41,9 +41,13 @@ if (options.InstallSource != null && options.InstallDestination != null) {
 // Host-lifetime, not mission-lifetime: neither reads the install, and both need to survive into
 // the shell and --movie once those have a menu bar of their own to raise TweaksMenu from — see
 // docs/herculan/planning.md. Built before that branch so nothing below has to change when they do.
+// Earthsiege 2's catalogs are held whichever game runs, since the files are shared and a save writes only the settings
+// it holds.
 var localization = new LocalizationTable();
 HostLog.Localization = localization;
+TweakSettings.Current = new TweakSettings(Es2TweakSettingDefinitions.All);
 TweakSettings.Current.LoadFromDisk();
+A11ySettings.Current = new A11ySettings(Es2A11ySettingDefinitions.All);
 A11ySettings.Current.LoadFromDisk();
 HostWindow.Icons = WindowIcon.Load();
 

@@ -12,7 +12,7 @@ namespace Herculan.Engine.Render;
 /// covers it and every earlier cell's is covered by it (docs/retail/rendering/terrain-drawing.md, "Objects in
 /// the walk"); with this target, a fragment shader keeps a pixel exactly when the ground there ranks no later
 /// than the cell what it draws is filed under. The per-pixel depth draw tests the ground shapes against it
-/// (<see cref="SceneRenderer.Render(Camera, IEnumerable{SceneItem}, GroundShapeLayer?, int, int, int, int)"/>);
+/// (<see cref="GroundLayerPass.Draw"/>);
 /// the painter's-order draw (<see cref="WorldDrawPass"/>) tests every entry, the terrain's depth having been
 /// cleared, so the ranks are then the only way the ground covers anything.
 ///

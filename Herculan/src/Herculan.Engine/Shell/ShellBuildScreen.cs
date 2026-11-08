@@ -342,7 +342,7 @@ public sealed class ShellBuildScreen {
 	}
 
 	/// <summary>
-	/// The top speed <see cref="TweakSettingDefinitions.ShowCorrectStats"/> prints for each chassis, indexed by
+	/// The top speed <see cref="Es2TweakSettingDefinitions.ShowCorrectStats"/> prints for each chassis, indexed by
 	/// <see cref="HercInfEntry.HercId"/>: what the cockpit's speed readout shows at full throttle, where retail prints
 	/// <c>herc_inf.dat</c>'s own figure, which differs for all eight. A walker's readout tops out at
 	/// <see cref="Sim.MechTypeRecord.HudSpeedScale"/>, <c>315 × rawMaxForward / 1024</c> truncated; these are those
@@ -366,7 +366,7 @@ public sealed class ShellBuildScreen {
 		if (entry != null) {
 			speed = entry.Speed;
 			hardpointTotal = entry.HardpointTotal;
-			if (TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ShowCorrectStats)) {
+			if (TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.ShowCorrectStats)) {
 				if (entry.HercId >= 0 && entry.HercId < CorrectTopSpeeds.Length) {
 					speed = CorrectTopSpeeds[entry.HercId];
 				}

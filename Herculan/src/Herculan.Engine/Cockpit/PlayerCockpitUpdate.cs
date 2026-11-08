@@ -79,7 +79,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 		}
 
 		var (shieldFront, shieldRear) = pilotMech.Shields.Readout(
-			rounded: TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.RoundShieldBalance));
+			rounded: TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.RoundShieldBalance));
 
 		var squadComm = displays.SquadComm;
 		var hddCommand = displays.HddCommand;
@@ -89,7 +89,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 		hudState = displays.Hud;
 		hudState = hudState with {
 			MissionTime = displays.Clock.Text,
-			SpeedKph = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ShowAccurateSpeed)
+			SpeedKph = TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.ShowAccurateSpeed)
 				? pilotMech.GroundSpeedKph
 				: pilotMech.DisplaySpeedKph,
 			Throttle = displays.ThrottleGauge,
@@ -106,7 +106,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 			Weapons = weaponRowStates,
 			WeaponPaintOrder = displays.WeaponRepaints.Update(weaponRowStates),
 			Dropout = cockpitDropouts.Snapshot,
-			ChargeBarsDraggable = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ChargeBarPowerLevel),
+			ChargeBarsDraggable = TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.ChargeBarPowerLevel),
 			ChainGroup = pilotMech.Weapons.Group,
 			AutoTrack = pilotMech.Weapons.AutoTrack,
 			TrackHidden = pilotMech.Type.IsFlyer,

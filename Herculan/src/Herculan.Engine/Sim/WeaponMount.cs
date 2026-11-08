@@ -187,12 +187,12 @@ public sealed partial class WeaponMount {
 	/// subtype id picks its <c>BULLETS.DAT</c> or <c>BEAM.DAT</c> record. Retail's shot constructors
 	/// look the record up again by type and subtype id (<see cref="WeaponCatalog.Lookup"/>) and take
 	/// the first match, which for <c>ATC75</c>, <c>ATC100</c>, <c>LAS400</c> and <c>LAS500</c> is an
-	/// earlier weapon's record. With <see cref="TweakSettingDefinitions.FixWeaponDamageRecords"/> on in
+	/// earlier weapon's record. With <see cref="Es2TweakSettingDefinitions.FixWeaponDamageRecords"/> on in
 	/// <paramref name="world"/>'s <see cref="SimWorld.Tweaks"/>, the shot is <see cref="Projectile"/> under its corrected subtype id
 	/// (<see cref="WeaponCatalog.CorrectedProjectile"/>). See docs/retail/formats/proj-dat.md#lookup.
 	/// </summary>
 	public ProjectileData.Projectile? ShotProjectile(SimWorld world) =>
-		world.Tweaks.GetSettingValue(TweakSettingDefinitions.FixWeaponDamageRecords)
+		world.Tweaks.GetSettingValue(Es2TweakSettingDefinitions.FixWeaponDamageRecords)
 			? _correctedProjectile
 			: _lookedUpProjectile;
 

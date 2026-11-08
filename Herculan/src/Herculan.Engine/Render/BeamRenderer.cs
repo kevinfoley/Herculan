@@ -314,7 +314,7 @@ public sealed class BeamRenderer : IDisposable {
 
 		// Read every frame, so toggling the tweak recolours the next shot at once.
 		bool hueTurned = BeamAppearance.IsParticleBeam(tracer.SubtypeId)
-			&& TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ChangePbwBeamHue);
+			&& TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.ChangePbwBeamHue);
 		return halfWidth > 0 && Profile(tracer.SubtypeId, hueTurned) is { } profile
 			? (halfWidth, profile)
 			: null;

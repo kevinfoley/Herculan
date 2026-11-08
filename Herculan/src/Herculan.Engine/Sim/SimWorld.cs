@@ -209,9 +209,9 @@ public sealed class SimWorld {
 	/// <summary>
 	/// The rules every thin-ray ground test runs by, <see cref="HeightGrid.RayWalk"/> for weapon
 	/// fire and line of sight: this install's release, and the
-	/// <see cref="TweakSettingDefinitions.FixTerrainHitPoint"/> tweak as it stands now.
+	/// <see cref="Es2TweakSettingDefinitions.FixTerrainHitPoint"/> tweak as it stands now.
 	/// </summary>
-	public ThinRayRules ThinRay => new(IsV110, Tweaks.GetSettingValue(TweakSettingDefinitions.FixTerrainHitPoint));
+	public ThinRayRules ThinRay => new(IsV110, Tweaks.GetSettingValue(Es2TweakSettingDefinitions.FixTerrainHitPoint));
 
 	/// <summary>
 	/// Where the camera is, in world units — the original's own view object (<c>ViewObjectPtr</c> (<c>004d256e</c>)),

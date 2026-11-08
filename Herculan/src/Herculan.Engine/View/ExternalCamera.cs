@@ -6,7 +6,7 @@ using Herculan.Engine.Terrain;
 namespace Herculan.Engine.View;
 
 /// <summary>
-/// The outside view under <see cref="Settings.TweakSettingDefinitions.MouseExternalView"/> — an orbit
+/// The outside view under <see cref="Settings.Es2TweakSettingDefinitions.MouseExternalView"/> — an orbit
 /// camera the player drags round the object being viewed with the mouse, always facing back at it,
 /// drawn over the whole window.
 ///

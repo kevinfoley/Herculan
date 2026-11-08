@@ -116,7 +116,7 @@ public sealed class SquadMessagePort {
 		SquadMessages.Entry? picked = Training
 			? sentences.Count > 0 ? sentences[0] : null
 			: catalog?.Pick(messageId, _random,
-				TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.EverySquadmateReply));
+				TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.EverySquadmateReply));
 
 		if (picked is not { } message) {
 			return;

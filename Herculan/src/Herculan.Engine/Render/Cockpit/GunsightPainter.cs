@@ -110,7 +110,7 @@ internal sealed class GunsightPainter {
 
 		// Retail's tape blits never reach the screen — see AltitudeScale.TapeFrame. Read every frame, so
 		// toggling the tweak shows or hides it at once.
-		if (!TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ShowAltitudeTape)) {
+		if (!TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.ShowAltitudeTape)) {
 			return;
 		}
 

@@ -23,8 +23,8 @@ namespace Herculan.Engine.Render;
 /// simply count up.
 /// </param>
 /// <param name="Filing">
-/// How the object the billboards belong to is filed by terrain cell — see <see cref="SceneItem.Filing"/>.
-/// A batch whose entry the pass leaves undrawn is skipped.
+/// How the object the billboards belong to is filed — see <see cref="SceneItem.Filing"/>. A batch whose filing the
+/// pass leaves undrawn is skipped.
 /// </param>
 /// <param name="UprightFocalPixels">
 /// Set for Earthsiege's billboard, <c>TSBitmapPart_Render</c> (<c>ES1DBSIM 00052b90</c>,
@@ -35,7 +35,7 @@ namespace Herculan.Engine.Render;
 /// </param>
 public readonly record struct SpriteBatch(
 	SpriteQuad[][] Sprites, TextureAtlas Atlas, uint TextureHandle, Matrix4x4 Transform, int Frame,
-	DrawEntry? Filing = null, int? UprightFocalPixels = null);
+	IDrawFiling? Filing = null, int? UprightFocalPixels = null);
 
 /// <summary>
 /// Draws <see cref="SpriteQuad"/> billboards, the flat camera-facing bitmaps that impact effects and
@@ -55,9 +55,9 @@ public readonly record struct SpriteBatch(
 /// either wrote a palette byte or skipped the pixel. Depth writes are off.</para>
 ///
 /// <para>The original paints each impact effect, fire or shot as one entry of its per-cell draw list
-/// (docs/retail/rendering/terrain-drawing.md, "Objects in the walk"). <see cref="WorldDrawPass"/> draws a batch in its
-/// entry's turn through <see cref="DrawEntry"/>, with that entry's depth slice and the terrain's paint-rank test, so a
-/// puff is painted whole over what came before it and the ridge in front of it still covers it. The per-pixel depth draw
+/// (docs/retail/rendering/terrain-drawing.md, "Objects in the walk"). A painter's-order draw draws a batch in its
+/// entry's turn through <see cref="DrawRanked"/>, with that entry's depth slice and the paint-rank test, so a
+/// puff is painted whole over what came before it and the ridge in front of it still covers it. A per-pixel depth draw
 /// instead draws every batch after the world through <see cref="Render"/>, depth-tested against it.</para>
 /// </summary>
 public sealed class SpriteRenderer : IDisposable {
@@ -133,12 +133,12 @@ public sealed class SpriteRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws one batch as its entry's turn in <see cref="WorldDrawPass"/>'s painter's order: placed through
+	/// Draws one batch as its entry's turn in a painter's-order draw: placed through
 	/// <paramref name="entryProjection"/>, clipped by <paramref name="projection"/> (the camera's own), and kept only where
-	/// the ground showing ranks no later than <paramref name="rank"/>. The caller has bound the paint ranks and set the
-	/// entry's depth range.
+	/// the bound paint ranks hold no more than <paramref name="rank"/> (<see cref="SceneRenderer.BindPaintRanks"/>). The
+	/// caller has bound them and set the entry's depth range.
 	/// </summary>
-	internal void DrawEntry(in SpriteBatch batch, Camera camera, in Matrix4x4 projection, in Matrix4x4 entryProjection,
+	public void DrawRanked(in SpriteBatch batch, Camera camera, in Matrix4x4 projection, in Matrix4x4 entryProjection,
 			uint rank) {
 		_shader.Use();
 		_shader.SetMatrix("uProjection", projection);
@@ -155,11 +155,11 @@ public sealed class SpriteRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Widens [<paramref name="nearest"/>, <paramref name="farthest"/>] to the view depths <see cref="DrawEntry"/> would
+	/// Widens [<paramref name="nearest"/>, <paramref name="farthest"/>] to the view depths <see cref="DrawRanked"/> would
 	/// draw <paramref name="batch"/>'s quads at. Each quad lies in the plane square to the view axis at its anchor's depth,
 	/// so the anchors are the whole of it.
 	/// </summary>
-	internal static void ExtendDepth(in SpriteBatch batch, in Matrix4x4 view, float nearPlane,
+	public static void ExtendDepth(in SpriteBatch batch, in Matrix4x4 view, float nearPlane,
 			ref float nearest, ref float farthest) {
 		foreach (var quad in Quads(batch)) {
 			float depth = -Vector3.Transform(Vector3.Transform(quad.Center, batch.Transform), view).Z;

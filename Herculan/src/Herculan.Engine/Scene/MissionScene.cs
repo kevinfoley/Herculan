@@ -161,7 +161,7 @@ public sealed class MissionScene {
 
 		var objects = new List<SceneObject>(mission.Placements.Count);
 		SceneObject? playerObject = null;
-		bool squadmateClear = world.Tweaks.GetSettingValue(TweakSettingDefinitions.SquadmateClearOfTransport);
+		bool squadmateClear = world.Tweaks.GetSettingValue(Es2TweakSettingDefinitions.SquadmateClearOfTransport);
 		foreach (var listed in mission.Placements) {
 			var placement = squadmateClear ? StuckSquadmateFix.Adjust(listed, mission.Placements) : listed;
 			var spawned = Spawn(placement, models, tables, world.Random, world.Tweaks, world.DwellJitter);
@@ -903,7 +903,7 @@ public sealed class MissionScene {
 					new BaseObject(type, volume, baseCollision[type.Index], boundingRadius,
 						models.BaseAnimCellCount(type), models.BaseAnimation(type),
 						placement.StartingCondition, models.HulkCollision(type),
-						tweaks.GetSettingValue(TweakSettingDefinitions.SmootherTurretMovement)) {
+						tweaks.GetSettingValue(Es2TweakSettingDefinitions.SmootherTurretMovement)) {
 						// The two PROJ.DAT rows the armed structure's tick names by literal, the same
 						// way the flyer AI does — see BaseObject.ArmedThinkTick.
 						GunProjectile = weapons?.ProjectileAt(BaseObject.GunProjectileIndex),

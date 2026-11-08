@@ -374,7 +374,7 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// <para>The throttle axis is passed as zero. The model's lever test is the player's
 	/// (<see cref="SimWorld.FlightThrottleIsLever"/>): when it holds, the zero axis is read as a lever at
 	/// its centre and the throttle set to 0, so a SKIMMER cruises at 750 rather than the 875 that
-	/// <see cref="InitialThrottle"/> asks for. <see cref="TweakSettingDefinitions.FlyerIgnoresPlayerThrottle"/>
+	/// <see cref="InitialThrottle"/> asks for. <see cref="Es2TweakSettingDefinitions.FlyerIgnoresPlayerThrottle"/>
 	/// refuses the lever branch, leaving 875 whatever the player's controls
 	/// (docs/retail/simulation/ai-flyers.md, "A flyer cannot change speed").</para>
 	/// </summary>
@@ -437,7 +437,7 @@ public sealed partial class FlyerObject : IFlightBody {
 			Elevator = elevator,
 			GroundHeight = world.GroundHeightAt(Position),
 			AnalogueThrottle = world.FlightThrottleIsLever
-				&& !world.Tweaks.GetSettingValue(TweakSettingDefinitions.FlyerIgnoresPlayerThrottle)
+				&& !world.Tweaks.GetSettingValue(Es2TweakSettingDefinitions.FlyerIgnoresPlayerThrottle)
 		};
 
 		if (roll >= maxBank - BankHysteresis && bank > 0) {

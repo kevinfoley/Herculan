@@ -130,7 +130,7 @@ public sealed class CockpitView {
 	// outside view the player steers, not the ones the game steers itself.
 	public bool MouseOutsideView =>
 		Chain is { Mode: ExternalViewMode.Outside, DeathCameraRunning: false, PanelOrbitRunning: false }
-		&& TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.MouseExternalView);
+		&& TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.MouseExternalView);
 
 	/// <summary>Whether the camera is circling the player behind the [F12] preferences panel — see <see cref="AdvancePanelOrbit"/>.</summary>
 	public bool PanelOrbitUp => Chain is { PanelOrbitRunning: true };
@@ -343,9 +343,9 @@ public sealed class CockpitView {
 	public void UpdateKickAndShake(double deltaSeconds) {
 		var pilotMech = PilotMech!;
 		Shake.FlashSurvivesRestart =
-			TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FlashThroughSecondHit);
-		Shake.FlashHidden = A11ySettings.Current.GetSettingValue(A11ySettingDefinitions.DisableDamageFlash);
-		Shake.ShakeHidden = A11ySettings.Current.GetSettingValue(A11ySettingDefinitions.DisableDamageShake);
+			TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.FlashThroughSecondHit);
+		Shake.FlashHidden = A11ySettings.Current.GetSettingValue(Es2A11ySettingDefinitions.DisableDamageFlash);
+		Shake.ShakeHidden = A11ySettings.Current.GetSettingValue(Es2A11ySettingDefinitions.DisableDamageShake);
 		Shake.HeadsDownView = Pan.HeadsDownViewIndex;
 		if (ExternalViewActive) {
 			Kick.Reset();

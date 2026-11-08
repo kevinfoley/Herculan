@@ -6,7 +6,7 @@ using Xunit;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// <see cref="TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> over <c>C5_10</c> itself, loaded as the practice
+/// <see cref="Es2TweakSettingDefinitions.GuardHoldsUntilDestroyed"/> over <c>C5_10</c> itself, loaded as the practice
 /// screen's DEBUG dialog loads a typed mission: a Cybrid ordered to guard the base and then sleep keeps its guard order
 /// while the tweak is on, and moves on to the sleep as retail does once it is off.
 ///
@@ -31,7 +31,7 @@ public sealed class GuardHoldsUntilDestroyedTests : IDisposable {
 
 		var world = scene.World;
 		world.Tweaks = new TweakSettings();
-		world.Tweaks.SetSettingValue(TweakSettingDefinitions.GuardHoldsUntilDestroyed, true);
+		world.Tweaks.SetSettingValue(Es2TweakSettingDefinitions.GuardHoldsUntilDestroyed, true);
 
 		var guards = world.Groups.Where(group => group.Side == MissionSide.Cybrid
 			&& group.Orders.Count > 1
@@ -49,7 +49,7 @@ public sealed class GuardHoldsUntilDestroyedTests : IDisposable {
 		Assert.False(guard.AwaitingDeployment);
 		Assert.Equal(0, guard.OrderIndex);
 
-		world.Tweaks.SetSettingValue(TweakSettingDefinitions.GuardHoldsUntilDestroyed, false);
+		world.Tweaks.SetSettingValue(Es2TweakSettingDefinitions.GuardHoldsUntilDestroyed, false);
 		world.Tick();
 
 		Assert.Equal(1, guard.OrderIndex);

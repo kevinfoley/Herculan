@@ -122,10 +122,10 @@ public sealed class BeamAppearance {
 		return _profiles[frame];
 	}
 
-	/// <summary>The <c>PROJ.DAT</c> subtype id of PBW, whose beam <see cref="Settings.TweakSettingDefinitions.ChangePbwBeamHue"/> recolours.</summary>
+	/// <summary>The <c>PROJ.DAT</c> subtype id of PBW, whose beam <see cref="Settings.Es2TweakSettingDefinitions.ChangePbwBeamHue"/> recolours.</summary>
 	public const int PbwSubtype = 0;
 
-	/// <summary>The <c>PROJ.DAT</c> subtype id of PBW2, whose beam <see cref="Settings.TweakSettingDefinitions.ChangePbwBeamHue"/> recolours.</summary>
+	/// <summary>The <c>PROJ.DAT</c> subtype id of PBW2, whose beam <see cref="Settings.Es2TweakSettingDefinitions.ChangePbwBeamHue"/> recolours.</summary>
 	public const int Pbw2Subtype = 6;
 
 	/// <summary>Whether <paramref name="subtypeId"/> is PBW's or PBW2's.</summary>
@@ -136,7 +136,7 @@ public sealed class BeamAppearance {
 	public static bool IsPBW2(int subtypeId) => subtypeId is Pbw2Subtype;
 
 	/// <summary>
-	/// <paramref name="texels"/> recoloured for <see cref="Settings.TweakSettingDefinitions.ChangePbwBeamHue"/>, after the
+	/// <paramref name="texels"/> recoloured for <see cref="Settings.Es2TweakSettingDefinitions.ChangePbwBeamHue"/>, after the
 	/// colours Metaltech: Earthsiege gives the two weapons: PBW's beam blue (<see cref="TurnHueHalf"/>) and PBW2's green
 	/// (<see cref="TurnHueThird"/>). Any other subtype comes back unchanged. The shades are HERCULAN's, not retail's.
 	/// </summary>

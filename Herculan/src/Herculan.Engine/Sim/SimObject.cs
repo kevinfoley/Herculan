@@ -40,7 +40,7 @@ public enum TargetClass : short {
 /// disassembly and get added alongside the systems that call them, so that each arrives as a
 /// translation rather than a redesign.</para>
 /// </summary>
-public abstract class SimObject {
+public abstract class SimObject : Render.ILightSubject {
 	/// <summary>Position in world units, X/Y on the ground plane and Z up (see <see cref="Vec3i"/>).</summary>
 	public Vec3i Position { get; set; }
 

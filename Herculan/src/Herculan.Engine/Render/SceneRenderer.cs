@@ -1,8 +1,5 @@
 ﻿using System.Numerics;
 using Herculan.Engine.Gl;
-using Herculan.Engine.Settings;
-using Herculan.Engine.Sim;
-using Herculan.Engine.Terrain;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Render;
@@ -17,8 +14,8 @@ public sealed class SceneItem {
 	}
 
 	/// <summary>
-	/// The geometry. Settable because a structure that falls is redrawn as its wreck rather than
-	/// rebuilt — see <see cref="Sim.BaseObject.ShowingHulk"/>.
+	/// The geometry. Settable so an object can be redrawn as another mesh, such as a fallen structure as its wreck,
+	/// without rebuilding the item.
 	/// </summary>
 	public GpuMesh Mesh { get; set; }
 
@@ -43,12 +40,11 @@ public sealed class SceneItem {
 	public bool DetailSelected { get; set; } = true;
 
 	/// <summary>
-	/// How the object this item draws is filed by terrain cell, which is a third reason for it not to
-	/// be drawn: <see cref="DrawEntry.Drawn"/>, settled per pass by the <see cref="ObjectDrawTable"/> of
-	/// the <see cref="GroundShapeLayer"/> it is drawn with. Every item of one object shares one entry.
-	/// Null for the terrain, which is not filed.
+	/// How the game files the object this item draws, which is a third reason for it not to be drawn:
+	/// <see cref="IDrawFiling.Drawn"/>, settled per pass by the game. Every item of one object shares one filing. Null
+	/// for what is never filed, such as the terrain.
 	/// </summary>
-	public DrawEntry? Filing { get; set; }
+	public IDrawFiling? Filing { get; set; }
 
 	/// <summary>Optional texture for this item. If null, flat-shaded rendering is used.</summary>
 	public uint? TextureHandle { get; set; }
@@ -90,21 +86,20 @@ public sealed class SceneItem {
 	public int? RampBlock { get; set; }
 
 	/// <summary>
-	/// The object this item's geometry belongs to, which is what the effect-light pass measures
-	/// from — <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) takes the drawn entry's own position and bounding radius, and both
-	/// come off the object rather than off the mesh. A machine drawn as one item per posed node names
-	/// the machine on every one of them, because the original selects once for the whole shape.
+	/// The object this item's geometry belongs to, which is what the effect-light pass measures from
+	/// (<see cref="ILightSubject"/>). A machine drawn as one item per posed node names the machine on every one of them,
+	/// because the original selects once for the whole shape.
 	///
 	/// <para>Null leaves the item lit by the mission sun alone, which is right for the two things
 	/// that carry no object: the terrain, whose shade is baked at zone load and cannot respond to a
 	/// light at all, and a projectile, drawn fullbright.</para>
 	/// </summary>
-	public SimObject? LightSubject { get; set; }
+	public ILightSubject? LightSubject { get; set; }
 
 	/// <summary>
 	/// What the effect-light pass measures from when <see cref="LightSubject"/> is null: the drawn object's position, in
-	/// world units, and the radius its render entry caches. Earthsiege's items carry no <see cref="SimObject"/> and set
-	/// this instead, from the entry <c>ObjList_DrawEntryRender</c> (<c>ES1DBSIM 00020f40</c>) passes to
+	/// world units, and the radius its render entry caches. Earthsiege's items set this instead, from the entry
+	/// <c>ObjList_DrawEntryRender</c> (<c>ES1DBSIM 00020f40</c>) passes to
 	/// <c>LightManager_SelectLightsForObject</c> (docs/es1/rendering/polygon-shading.md#effect-lights). Null with no
 	/// subject leaves the item lit by the sun alone.
 	/// </summary>
@@ -122,8 +117,7 @@ public sealed class SceneItem {
 
 	/// <summary>
 	/// Whether this item is the terrain, whose untextured cells fill the way
-	/// <c>Terrain_FillCellUntextured</c> (<c>0046bb40</c>) fills them rather than as a flat solid face
-	/// — see <see cref="TerrainMeshBuilder"/>. Both carry a palette index per vertex; the two read
+	/// <c>Terrain_FillCellUntextured</c> (<c>0046bb40</c>) fills them rather than as a flat solid face. Both carry a palette index per vertex; the two read
 	/// different rows of the theater ramp, and only the terrain's is fogged through it.
 	/// </summary>
 	public bool GroundFill { get; set; }
@@ -241,6 +235,11 @@ public sealed class GroundHighlight {
 /// Draws a list of <see cref="SceneItem"/>s from a <see cref="Camera"/> with one directional light
 /// plus ambient. Deliberately minimal — the first milestone's rendering goal is a correct,
 /// legible view of real game geometry, not a material system.
+///
+/// <para>A pass is <see cref="Render"/>, or a game's own sequence of the steps it is made of: <see cref="BeginPass"/>,
+/// then <see cref="DrawItem"/> and <see cref="DrawItems"/>, with <see cref="DrawUndepthed"/> and the paint-rank test
+/// (<see cref="BindPaintRanks"/>, <see cref="BeginRankTest"/>, <see cref="EndRankTest"/>) for a game that paints its
+/// ground in an order of its own.</para>
 /// </summary>
 public sealed class SceneRenderer : IDisposable {
 	private readonly GL _gl;
@@ -260,7 +259,6 @@ public sealed class SceneRenderer : IDisposable {
 	private int _shadeRampRows;
 	private int _shadeRampGouraudRow;
 	private int _shadeRampPaletteRow;
-	private TerrainPaintRankBuffer? _paintRanks;
 	private readonly SelectedEffectLight[] _effectLights =
 		new SelectedEffectLight[EffectLightSelection.MaxPerObject];
 
@@ -273,7 +271,7 @@ public sealed class SceneRenderer : IDisposable {
 		.Range(0, EffectLightSelection.MaxPerObject)
 		.Select(i => $"uEffectLightIntensity[{i}]").ToArray();
 	private static readonly string[] BandRampNames = Enumerable
-		.Range(0, DistanceColorBands.MaxRepoints)
+		.Range(0, BandRamp.MaxPerItem)
 		.Select(i => $"uBandRamps[{i}]").ToArray();
 
 	/// <param name="editorGrid">
@@ -351,8 +349,7 @@ public sealed class SceneRenderer : IDisposable {
 	public float SunShadeSlope { get; set; } = MissionSun.FaceShadeSlope;
 
 	/// <summary>
-	/// The impact effects' dynamic lights — <see cref="EffectPools.Lights"/>, or the game's own manager behind the same
-	/// seam. Each drawn item whose <see cref="SceneItem.LightSubject"/> or <see cref="SceneItem.LightAnchor"/> is set gets
+	/// The impact effects' dynamic lights, the game's light manager. Each drawn item whose <see cref="SceneItem.LightSubject"/> or <see cref="SceneItem.LightAnchor"/> is set gets
 	/// its own selection out of these, which is what <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) does per
 	/// render entry. Null lights the scene by the sun alone, which is what a tool with no simulation running gets.
 	/// </summary>
@@ -470,22 +467,21 @@ public sealed class SceneRenderer : IDisposable {
 
 	/// <summary>
 	/// The theater's distance colour bands, which re-point a <c>TSGouraudPoly</c>'s ramps by its object's distance from the
-	/// view, or null to draw every Gouraud face through the palette's own ramps. An item is banded by its
-	/// <see cref="SceneItem.Filing"/>'s tag and distance; one with none is not banded, and nothing is while
+	/// view, or null to draw every Gouraud face through the palette's own ramps. Nothing is banded while
 	/// <see cref="FogEnabled"/> is off. Set once per loaded mission.
 	/// </summary>
-	public DistanceColorBands? DistanceBands { get; set; }
+	public IBandRampSource? DistanceBands { get; set; }
 
 	/// <summary>
-	/// Whether the scene draws through the damage-flash palette this frame. The cockpit's shake owns
-	/// it — see <c>CockpitHitShake.FlashActive</c> — and it does nothing until
+	/// Whether the scene draws through the damage-flash palette this frame. The game's damage flash owns
+	/// it, and it does nothing until
 	/// <see cref="SetImpactRamps"/> has supplied a table to swap to.
 	/// </summary>
 	public bool ImpactPaletteActive { get; set; }
 
 	/// <summary>
 	/// What distant geometry fades into. The theater's own ramp knows this colour — see
-	/// <see cref="Content.ShadeRamp.FogColor"/> — and <see cref="Scene.Atmosphere"/> supplies it.
+	/// <see cref="Content.ShadeRamp.FogColor"/> — and the game sets it from there.
 	/// The value here is only the fallback for a mission whose ramp did not load.
 	/// </summary>
 	public Vector3 FogColor { get; set; } = new(0.55f, 0.60f, 0.68f);
@@ -514,7 +510,7 @@ public sealed class SceneRenderer : IDisposable {
 
 	/// <summary>
 	/// Distance in render units (metres) at which fog starts — half the zone's visibility range,
-	/// which is where the original's ramp fade begins. See <see cref="Scene.Atmosphere"/>.
+	/// which is where the original's ramp fade begins.
 	/// </summary>
 	public float FogStart { get; set; } = 900f;
 
@@ -531,7 +527,7 @@ public sealed class SceneRenderer : IDisposable {
 	/// direction and subtracted from the terrain's own depth: the same fog on the same ground without
 	/// a per-vertex attribute carrying the four corners, missing only the flat step across each cell.
 	///
-	/// <para>Zero leaves the terrain fogged per pixel. Set from <see cref="Scene.Atmosphere"/>.</para>
+	/// <para>Zero leaves the terrain fogged per pixel.</para>
 	/// </summary>
 	public float FogCellSize { get; set; }
 
@@ -586,166 +582,64 @@ public sealed class SceneRenderer : IDisposable {
 	/// caller has set, which is how passes sharing one viewport stay out of each other's pixels.
 	/// </summary>
 	public void Render(Camera camera, IEnumerable<SceneItem> items,
-			int viewportX, int viewportY, int viewportWidth, int viewportHeight) =>
-		Render(camera, items, null, viewportX, viewportY, viewportWidth, viewportHeight);
-
-	/// <summary>
-	/// The same pass with the ground drawn as the original paints it and every object depth-tested per pixel:
-	/// <paramref name="ground"/>'s terrain first, then its ground shapes in the terrain's paint order, then everything else
-	/// in <paramref name="items"/> (which may hold the terrain item too; it is not drawn twice). This is the mission
-	/// editor's draw, and the simulator's when its "Per-pixel depth sorting" tweak is on; the simulator's default, the
-	/// original's painter's order, is <see cref="WorldDrawPass"/>, which draws through this class's internal members.
-	///
-	/// <para>The original paints each ground shape straight after its own cell's ground, so the
-	/// ground of every cell its walk paints later covers it and it covers everything painted
-	/// before (docs/retail/simulation/ground-shapes.md#the-draw-pass). Here each shape is filed under the
-	/// cell <see cref="HeightGrid.PickDrawCell"/> picks, as the original's submit files it, takes that
-	/// cell's <see cref="TerrainPaintOrder.Rank"/>, and is drawn with depth testing off, keeping only
-	/// the pixels where the ground showing ranks no later — <see cref="TerrainPaintRankBuffer"/>. Where
-	/// no ground shows, the sky, it draws. The shapes are drawn in rank order, so where two overlap
-	/// the later cell's is on top, and within one cell in the order given, the original's submit
-	/// order. A shape off the grid ranks after all of it, as the original's no-cell bucket
-	/// draws.</para>
-	///
-	/// <para>A structure's ground plane — its shadow and floor plates, <see cref="MeshCell.Ground"/> —
-	/// is drawn in the same pass, ranked by the cell its object was filed under, after that cell's
-	/// shapes. The original paints the whole structure over its own cell's ground
-	/// (docs/retail/rendering/terrain-drawing.md#objects-in-the-walk), and these polys lie in the
-	/// terrain's own plane on a level pad, where a depth test could only tie with the ground.</para>
-	///
-	/// <para>Everything else is drawn afterwards with the depth test, so a machine stands over its
-	/// own shadow and a structure over its floor. Two things the original's painter's order does are
-	/// not reproduced by this draw: a shape filed under a later cell is painted over an object filed under an earlier one
-	/// where the two overlap on screen, where here every object is drawn over every shape; and
-	/// one object is painted whole over another (docs/retail/rendering/terrain-drawing.md, "The draw order within a cell"),
-	/// where here a surface of one that cuts through the other, such as an impact effect's billboard through the building
-	/// it struck, shows only its nearer part.</para>
-	///
-	/// <para>Before any of it, the pass rebuilds the zone's visible region for its own view, as
-	/// <c>Terrain_SetupVisibleRegion</c> does before the submit, and files <paramref name="ground"/>'s
-	/// <see cref="GroundShapeLayer.Objects"/> by it; an item whose <see cref="SceneItem.Filing"/> that
-	/// leaves undrawn, and a ground shape filed under a cell the draw does not reach, are skipped. The
-	/// billboards and beams drawn after this call for the same pass read the same answers.</para>
-	/// </summary>
-	public void Render(Camera camera, IEnumerable<SceneItem> items, GroundShapeLayer? ground,
 			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
 		float aspect = (float)viewportWidth / System.Math.Max(viewportHeight, 1);
-		var projection = camera.ProjectionMatrix(aspect);
-
-		var order = ground != null ? FileObjects(camera, aspect, ground) : default;
-
-		// Before anything is drawn into the frame, because it draws into a target of its own.
-		var groundShapes = ground is { Shapes.Count: > 0 } or { ObjectGround.Count: > 0 }
-			? RankGroundShapes(camera, projection, ground, order,
-				viewportX, viewportY, viewportWidth, viewportHeight)
-			: null;
-
-		BeginDraw(camera, projection, viewportX, viewportY, viewportWidth, viewportHeight);
-
-		if (ground != null) {
-			DrawItem(ground.Terrain);
-		}
-
-		if (groundShapes != null) {
-			_gl.Disable(EnableCap.DepthTest);
-			_gl.DepthMask(false);
-			BindPaintRanks();
-			_shader.SetInt("uPaintRankTest", 1);
-
-			foreach (var (item, rank) in groundShapes) {
-				_shader.SetUInt("uEntryRank", rank);
-				DrawItem(item);
-			}
-
-			_shader.SetInt("uPaintRankTest", 0);
-			_gl.DepthMask(true);
-			_gl.Enable(EnableCap.DepthTest);
-		}
-
-		DrawItems(items, ground?.Terrain);
-	}
-
-	/// <summary>
-	/// The start of a <see cref="WorldDrawPass"/> pass in the original's painter's order: files <paramref name="ground"/>'s
-	/// objects for this view as <see cref="Render(Camera, IEnumerable{SceneItem}, GroundShapeLayer?, int, int, int, int)"/>
-	/// does, draws the terrain's paint ranks (<see cref="TerrainPaintRankBuffer"/>) for every entry to test against, and
-	/// readies the frame: the viewport, the sky and the scene program's per-pass state. Returns the walk's order.
-	/// </summary>
-	internal TerrainPaintOrder BeginPaintedPass(Camera camera, GroundShapeLayer ground,
-			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
-		float aspect = (float)viewportWidth / System.Math.Max(viewportHeight, 1);
-		var projection = camera.ProjectionMatrix(aspect);
-		var order = FileObjects(camera, aspect, ground);
-
-		// Before anything is drawn into the frame, because it draws into a target of its own.
-		_paintRanks ??= new TerrainPaintRankBuffer(_gl);
-		_paintRanks.Draw(ground.Terrain, ground.Grid, order, camera.ViewMatrix, projection,
-			viewportX, viewportY, viewportWidth, viewportHeight);
-
-		BeginDraw(camera, projection, viewportX, viewportY, viewportWidth, viewportHeight);
-		return order;
+		BeginPass(camera, camera.ProjectionMatrix(aspect), viewportX, viewportY, viewportWidth, viewportHeight);
+		DrawItems(items);
 	}
 
 	/// <summary>The camera's own projection for the pass under way, which every program's clip distances are taken from.</summary>
-	internal Matrix4x4 PassProjection => _passProjection;
+	public Matrix4x4 PassProjection => _passProjection;
 
-	/// <summary>Draws the terrain through the pass's own projection, with no rank test and depth-tested against itself.</summary>
-	internal void DrawTerrain(SceneItem terrain) {
-		_shader.Use();
-		_shader.SetMatrix("uEntryProjection", _passProjection);
-		_shader.SetInt("uPaintRankTest", 0);
-		DrawItem(terrain);
-	}
-
-	/// <summary>Binds the paint ranks this pass drew to <see cref="PaintRankUnit"/>, where every program's rank test samples them.</summary>
-	internal void BindPaintRanks() {
+	/// <summary>
+	/// Binds <paramref name="rankTexture"/> to <see cref="PaintRankUnit"/>, where every program's paint-rank test
+	/// (<see cref="BeginRankTest"/>) samples it: an unsigned integer texture the size of the viewport, holding at each pixel
+	/// the rank of what the game painted there.
+	/// </summary>
+	public void BindPaintRanks(uint rankTexture) {
 		_gl.ActiveTexture(TextureUnit.Texture0 + PaintRankUnit);
-		_gl.BindTexture(TextureTarget.Texture2D, _paintRanks!.RankTexture);
+		_gl.BindTexture(TextureTarget.Texture2D, rankTexture);
 	}
 
 	/// <summary>
-	/// Readies the scene program for one entry of a <see cref="WorldDrawPass"/> pass: <paramref name="entryProjection"/>
-	/// places its vertices, the pass's own projection still clips them, and a fragment is kept only where the ground
-	/// showing ranks no later than <paramref name="rank"/>.
+	/// Readies the scene program for what is drawn next under the paint-rank test: <paramref name="entryProjection"/>
+	/// places its vertices, the pass's own projection still clips them, and a fragment is kept only where the bound paint
+	/// ranks (<see cref="BindPaintRanks"/>) hold no more than <paramref name="rank"/>.
 	/// </summary>
-	internal void BeginEntry(in Matrix4x4 entryProjection, uint rank) {
+	public void BeginRankTest(in Matrix4x4 entryProjection, uint rank) {
 		_shader.Use();
 		_shader.SetMatrix("uEntryProjection", entryProjection);
 		_shader.SetInt("uPaintRankTest", 1);
 		_shader.SetUInt("uEntryRank", rank);
 	}
 
-	/// <summary>
-	/// Draws <paramref name="item"/> with depth testing, and so depth writing, off: painted over whatever is there, the way
-	/// a ground shape and a structure's ground plane are drawn.
-	/// </summary>
-	internal void DrawUndepthed(SceneItem item) {
-		_gl.Disable(EnableCap.DepthTest);
-		DrawItem(item);
-		_gl.Enable(EnableCap.DepthTest);
-	}
-
-	/// <summary>Draws one entry's items, depth-tested among themselves, a BSP part's children in its walk's order.</summary>
-	internal void DrawEntryItems(IReadOnlyList<SceneItem> items) => DrawItems(items, null);
-
-	/// <summary>Ends a <see cref="WorldDrawPass"/> pass, leaving the scene program with the pass's own projection and no rank test.</summary>
-	internal void EndPaintedPass() {
+	/// <summary>Ends the paint-rank test, leaving the scene program with the pass's own projection.</summary>
+	public void EndRankTest() {
 		_shader.Use();
 		_shader.SetMatrix("uEntryProjection", _passProjection);
 		_shader.SetInt("uPaintRankTest", 0);
 	}
 
 	/// <summary>
+	/// Draws <paramref name="item"/> with depth testing, and so depth writing, off: painted over whatever is there.
+	/// </summary>
+	public void DrawUndepthed(SceneItem item) {
+		_gl.Disable(EnableCap.DepthTest);
+		DrawItem(item);
+		_gl.Enable(EnableCap.DepthTest);
+	}
+
+	/// <summary>
 	/// Whether a pass draws <paramref name="item"/>: it is <see cref="SceneItem.Visible"/>, <see cref="SceneItem.DetailSelected"/>,
 	/// and its <see cref="SceneItem.Filing"/> does not leave it out.
 	/// </summary>
-	internal static bool IsDrawn(SceneItem item) =>
+	public static bool IsDrawn(SceneItem item) =>
 		item.Visible && item.DetailSelected && item.Filing is not { Drawn: false };
 
 	/// <summary>The camera's projection for the pass under way.</summary>
 	private Matrix4x4 _passProjection;
 
-	/// <summary>Whether any impact effect carries a light this pass — see BeginDraw.</summary>
+	/// <summary>Whether any impact effect carries a light this pass — see BeginPass.</summary>
 	private bool _anyEffectLights;
 
 	/// <summary>The effect-light count last uploaded this pass, so that a scene with none sets it once.</summary>
@@ -769,9 +663,12 @@ public sealed class SceneRenderer : IDisposable {
 	/// <summary>The number DrawItems gave its current call, which a <see cref="BspDrawGroup"/> forgets the last one by.</summary>
 	private int _itemsPass;
 
-	// The frame and the scene program's per-pass state, which both draws share: the viewport, the sky, and every uniform
-	// that does not change from item to item.
-	private void BeginDraw(Camera camera, Matrix4x4 projection,
+	/// <summary>
+	/// Starts a pass into the viewport sub-rect, as <see cref="Render"/> does before it draws: sets the viewport, paints the
+	/// backdrop or the sky, and sets every scene-program uniform that does not change from item to item, with
+	/// <paramref name="projection"/> as the pass's own (<see cref="PassProjection"/>).
+	/// </summary>
+	public void BeginPass(Camera camera, Matrix4x4 projection,
 			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
 		_passProjection = projection;
 		_gl.Viewport(viewportX, viewportY, (uint)System.Math.Max(viewportWidth, 1), (uint)System.Math.Max(viewportHeight, 1));
@@ -885,9 +782,11 @@ public sealed class SceneRenderer : IDisposable {
 		_stencilCleared = false;
 	}
 
-	// Draws `items`, all but `skip` (the terrain, already drawn). A child of a BSP part is held back and painted with the
-	// rest of its part, in the walk's order — see DrawBspGroup.
-	private void DrawItems(IEnumerable<SceneItem> items, SceneItem? skip) {
+	/// <summary>
+	/// Draws <paramref name="items"/>, all but <paramref name="skip"/> (one the caller has drawn already), depth-tested. A
+	/// child of a BSP part is held back and painted with the rest of its part, in its walk's order.
+	/// </summary>
+	public void DrawItems(IEnumerable<SceneItem> items, SceneItem? skip = null) {
 		_itemsPass = ++_pass;
 		_bspRoots.Clear();
 
@@ -1070,9 +969,12 @@ public sealed class SceneRenderer : IDisposable {
 		}
 	}
 
+	/// <summary>Draws <paramref name="item"/> on its own, depth-tested, if <see cref="IsDrawn"/>.</summary>
+	public void DrawItem(SceneItem item) => DrawItem(item, null);
+
 	// `lightRetarget` moves the effect lights into the frame the original shades this item's faces
 	// against them in — see PrepareBspGroup.
-	private void DrawItem(SceneItem item, Matrix4x4? lightRetarget = null) {
+	private void DrawItem(SceneItem item, Matrix4x4? lightRetarget) {
 		if (!IsDrawn(item)) {
 			return;
 		}
@@ -1113,9 +1015,9 @@ public sealed class SceneRenderer : IDisposable {
 		}
 
 		// WorldShades_ApplyForObject (0042e8e8), run per drawn object as ObjList_DrawEntryRender runs it — see
-		// DistanceColorBands.
-		IReadOnlyList<BandRamp> bandRamps = FogEnabled && DistanceBands is { } bands && item.Filing is { } entry
-			? bands.Ramps(entry.Tag, bands.Band(entry.Tag, entry.DistanceFrom(_viewer), entry.ShapeRadius))
+		// IBandRampSource.
+		IReadOnlyList<BandRamp> bandRamps = FogEnabled && DistanceBands is { } bands
+			? bands.For(item, _viewer)
 			: Array.Empty<BandRamp>();
 		if (!ReferenceEquals(bandRamps, _uploadedBandRamps)) {
 			for (int i = 0; i < bandRamps.Count; i++) {
@@ -1154,88 +1056,14 @@ public sealed class SceneRenderer : IDisposable {
 		item.Mesh.Draw();
 	}
 
-	/// <summary>The texture unit the terrain's paint ranks are sampled from.</summary>
-	internal const int PaintRankUnit = 3;
+	/// <summary>The texture unit the paint ranks are sampled from (<see cref="BindPaintRanks"/>).</summary>
+	public const int PaintRankUnit = 3;
 
 	/// <summary>The texture unit an item's <see cref="SceneItem.TextureWalk"/> is sampled from.</summary>
 	private const int TextureWalkUnit = 4;
 
 	// The ground discs' texture unit (GroundDiscs), on its own for the reason PaintRankUnit is.
 	private const uint DiscUnit = 5;
-
-	/// <summary>
-	/// This pass's side of the original's submit: rebuilds the zone's visible region for the pass's
-	/// view, as <c>Terrain_SetupVisibleRegion</c> does before the submit, and files the layer's objects
-	/// by it. Returns the walk's order, which the ground shapes are ranked by. Under the widescreen tweak the filing
-	/// also draws a structure the walk misses while it is on screen (<see cref="ObjectDrawTable.File"/>).
-	/// </summary>
-	private static TerrainPaintOrder FileObjects(Camera camera, float aspect, GroundShapeLayer ground) {
-		var grid = ground.Grid;
-		var viewer = camera.Position;
-		var rotation = camera.ViewRotation;
-		var edges = camera.EdgeSlopes(aspect);
-		ground.Region.Update(grid, viewer, rotation, edges);
-		var order = TerrainPaintOrder.For(grid, viewer, camera.SimHeading);
-		ViewSphereTest? reachesView = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HighResolutionWidescreen)
-			? new ViewSphereTest(viewer, rotation, edges)
-			: null;
-		ground.Objects.File(grid, ground.Region, viewer, order, reachesView);
-		return order;
-	}
-
-	/// <summary>
-	/// The ground shapes' side of it: files each shape under the cell
-	/// <see cref="HeightGrid.PickDrawCell"/> picks, drops it when this pass's draw does not reach that
-	/// cell (<see cref="ObjectDrawTable.CellDrawn"/>), takes the cell's rank in this view's walk, and
-	/// draws the terrain's ranks for the shapes' fragments to test against. The structures' ground
-	/// planes (<see cref="GroundShapeLayer.ObjectGround"/>) take the rank of the cell their object was
-	/// filed under. Returns everything in the order to draw it.
-	/// </summary>
-	private List<(SceneItem Item, uint Rank)> RankGroundShapes(Camera camera, Matrix4x4 projection,
-			GroundShapeLayer ground, TerrainPaintOrder order,
-			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
-		var grid = ground.Grid;
-		var viewer = camera.Position;
-
-		var ranked = new List<(SceneItem Item, uint Rank, int Distance)>(
-			ground.Shapes.Count + ground.ObjectGround.Count);
-		foreach (var shape in ground.Shapes) {
-			var cell = grid.PickDrawCell(shape.Position, shape.Radius, viewer, ground.Region);
-			if (ground.ShapesFollowWalk && cell is { } filed && !ground.Objects.CellDrawn(filed)) {
-				continue;
-			}
-
-			ranked.Add((shape.Item, RankOf(cell), -1));
-		}
-
-		// A structure's ground plane, under the cell its object was filed under this pass. Within that
-		// cell it comes after the cell's ground shapes, which ObjList_DrawCellObjects (00428c60) draws on
-		// the spot before the rest, and with the cell's other structures farthest first, the order
-		// ObjList_DrawSorted (00429620) paints them in. An entry this pass does not draw is skipped by the
-		// draw itself.
-		foreach (var item in ground.ObjectGround) {
-			if (item.Filing is not { } entry) {
-				continue;
-			}
-
-			ranked.Add((item, RankOf(entry.Cell), entry.Position.ApproxDistanceTo(viewer)));
-		}
-
-		// Stable, so shapes sharing a cell keep the order they were given in.
-		var result = ranked.OrderBy(entry => entry.Rank).ThenByDescending(entry => entry.Distance < 0)
-			.ThenByDescending(entry => entry.Distance)
-			.Select(entry => (entry.Item, entry.Rank)).ToList();
-
-		_paintRanks ??= new TerrainPaintRankBuffer(_gl);
-		_paintRanks.Draw(ground.Terrain, grid, order, camera.ViewMatrix, projection,
-			viewportX, viewportY, viewportWidth, viewportHeight);
-
-		return result;
-
-		// A cell's place in this view's walk; the no-cell bucket is drawn after all of it.
-		uint RankOf((int X, int Y)? cell) =>
-			cell is { } filed ? order.Rank(filed.X, filed.Y) : TerrainPaintOrder.AfterTerrain;
-	}
 
 	/// <summary>
 	/// Whether <see cref="EffectLights"/> holds a slot bright enough to light anything — the test
@@ -1301,7 +1129,6 @@ public sealed class SceneRenderer : IDisposable {
 		_paletteRampTexture?.Dispose();
 		_impactShadeRampTexture?.Dispose();
 		_impactPaletteRampTexture?.Dispose();
-		_paintRanks?.Dispose();
 		Discs.Free(_gl);
 		_gl.DeleteVertexArray(_skyVertexArray);
 	}

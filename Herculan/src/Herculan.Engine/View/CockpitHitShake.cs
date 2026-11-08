@@ -23,7 +23,7 @@ namespace Herculan.Engine.View;
 /// <para>As in the original, a second trigger inside the window stops the shake rather than
 /// compounding it, and whether the flash carries on depends on its phase.
 /// <see cref="FlashSurvivesRestart"/> is the
-/// <see cref="Settings.TweakSettingDefinitions.FlashThroughSecondHit"/> tweak, under which the flash
+/// <see cref="Settings.Es2TweakSettingDefinitions.FlashThroughSecondHit"/> tweak, under which the flash
 /// carries on from either phase.</para>
 ///
 /// <para>Three parts of the original have no counterpart here. A view change clears a running band
@@ -113,19 +113,19 @@ public sealed class CockpitHitShake {
 	public bool FlashShown => FlashActive && !FlashHidden;
 
 	/// <summary>
-	/// The <see cref="Settings.A11ySettingDefinitions.DisableDamageFlash"/> setting, which the host sets: the flash
+	/// The <see cref="Settings.Es2A11ySettingDefinitions.DisableDamageFlash"/> setting, which the host sets: the flash
 	/// still runs, and draws on the generator as before, but <see cref="FlashShown"/> stays false.
 	/// </summary>
 	public bool FlashHidden { get; set; }
 
 	/// <summary>
-	/// The <see cref="Settings.A11ySettingDefinitions.DisableDamageShake"/> setting, which the host sets: the walk
+	/// The <see cref="Settings.Es2A11ySettingDefinitions.DisableDamageShake"/> setting, which the host sets: the walk
 	/// still runs, and draws on the generator as before, but <see cref="OffsetPixels"/> stays 0.
 	/// </summary>
 	public bool ShakeHidden { get; set; }
 
 	/// <summary>
-	/// The <see cref="Settings.TweakSettingDefinitions.FlashThroughSecondHit"/> tweak, which the host
+	/// The <see cref="Settings.Es2TweakSettingDefinitions.FlashThroughSecondHit"/> tweak, which the host
 	/// sets: a restart over a running shake hands the toggle the impact palette whatever phase it
 	/// landed on, so the flash carries on for the rest of the window. Off, the restart leaves the swap
 	/// partner where the toggles left it, as the original does.

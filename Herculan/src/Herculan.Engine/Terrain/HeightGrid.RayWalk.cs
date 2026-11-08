@@ -458,7 +458,7 @@ public sealed partial class HeightGrid {
 	/// docs/retail/simulation/terrain-heightmap.md#mode-0--the-thin-ray.</para>
 	/// </summary>
 	/// <param name="exactFarPlane">
-	/// The <see cref="Settings.TweakSettingDefinitions.FixTerrainHitPoint"/> tweak: recompute the far
+	/// The <see cref="Settings.Es2TweakSettingDefinitions.FixTerrainHitPoint"/> tweak: recompute the far
 	/// plane's constant through corner <c>00</c> with the far normal, which both of a selector-2 cell's
 	/// triangles contain. Not retail.
 	/// </param>

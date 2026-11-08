@@ -59,7 +59,7 @@ public readonly struct AltitudeScale {
 	/// <summary>
 	/// Frame 18, the tick strip that scrolls with height. Retail blits it and never shows it
 	/// (docs/retail/simulation/cockpit-gunsight-hud.md, "The tick tape is never drawn"), so it is drawn only
-	/// under the <see cref="Settings.TweakSettingDefinitions.ShowAltitudeTape"/> tweak.
+	/// under the <see cref="Settings.Es2TweakSettingDefinitions.ShowAltitudeTape"/> tweak.
 	/// </summary>
 	public const int TapeFrame = 18;
 

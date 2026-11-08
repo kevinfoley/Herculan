@@ -55,7 +55,7 @@ public sealed class StrandedStingrayFixTests : IDisposable {
 
 		var world = scene.World;
 		world.Tweaks = new TweakSettings();
-		world.Tweaks.SetSettingValue(TweakSettingDefinitions.StrandedStingrayClosesIn, true);
+		world.Tweaks.SetSettingValue(Es2TweakSettingDefinitions.StrandedStingrayClosesIn, true);
 
 		var hunter = Assert.Single(world.Groups, group => group.ClosesInOn != null);
 		var stingray = Assert.IsType<MechObject>(hunter.Leader);

@@ -2,6 +2,7 @@ using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
+using Herculan.Engine.Numerics;
 
 namespace Herculan.Engine.Render;
 
@@ -18,10 +19,7 @@ namespace Herculan.Engine.Render;
 /// has them, since nothing here carries ramp state from one object's draw to the next. Of retail shapes, only the ground
 /// vehicles' (tag 10) have Gouraud faces under such a tag; KNOWN_ISSUES.md lists it.</para>
 /// </summary>
-public sealed class DistanceColorBands {
-	/// <summary>The most ramps one tag re-points that the scene program takes; <c>SHADES.DAT</c> lists six at most.</summary>
-	public const int MaxRepoints = 8;
-
+public sealed class DistanceColorBands : IBandRampSource {
 	/// <summary>The shape radius from which a structure's distance takes the second offset.</summary>
 	private const int LargeShapeRadius = 5000;
 
@@ -52,7 +50,8 @@ public sealed class DistanceColorBands {
 					}
 				}
 
-				_ramps[(list.Tag, band)] = ramps.Take(MaxRepoints).ToArray();
+				// SHADES.DAT lists six at most.
+				_ramps[(list.Tag, band)] = ramps.Take(BandRamp.MaxPerItem).ToArray();
 			}
 		}
 	}
@@ -95,6 +94,16 @@ public sealed class DistanceColorBands {
 		return Math.Min(band, _levels - 1);
 	}
 
+	/// <summary>
+	/// The ramps <paramref name="item"/> is drawn with, by its filing's tag and distance from <paramref name="viewer"/>, as
+	/// <c>WorldShades_ApplyForObject</c> picks them before <c>ObjList_DrawEntryRender</c> draws it. An item with no
+	/// filing is not banded.
+	/// </summary>
+	public IReadOnlyList<BandRamp> For(SceneItem item, Vec3i viewer) =>
+		item.Filing is DrawEntry entry
+			? Ramps(entry.Tag, Band(entry.Tag, entry.DistanceFrom(viewer), entry.ShapeRadius))
+			: Array.Empty<BandRamp>();
+
 	/// <summary>The ramps an object of <paramref name="tag"/> is drawn with re-pointed in <paramref name="band"/>, in list order.</summary>
 	public IReadOnlyList<BandRamp> Ramps(ObjectTypeTag tag, int band) =>
 		_ramps.TryGetValue(((int)tag, band), out var ramps) ? ramps : Array.Empty<BandRamp>();
@@ -136,9 +145,3 @@ public sealed class DistanceColorBands {
 		return ranges;
 	}
 }
-
-/// <summary>
-/// One re-pointed shade ramp: <paramref name="Count"/> palette indices from <paramref name="Start"/>, which a Gouraud corner
-/// at shade <c>s</c> takes entry <c>(s * Count) &gt;&gt; 8</c> of (<c>Raster_FillContourPolygon</c>, <c>004879c0</c>).
-/// </summary>
-public readonly record struct BandRamp(int Ramp, int Start, int Count);

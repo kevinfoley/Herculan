@@ -69,7 +69,7 @@ public readonly record struct CockpitDrag(CockpitWidgetId Id, CockpitSurface Sur
 /// <para><b>Drag capture</b> (§7): a press on a widget whose <c>+0x1d</c> flag is set latches the
 /// pointer to that widget until the button comes back up, and every move in between is delivered to
 /// it wherever the pointer has got to. A captured release fires no click. The throttle slider is the
-/// only such widget a press can reach in retail; <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/>
+/// only such widget a press can reach in retail; <see cref="Settings.Es2TweakSettingDefinitions.ChargeBarPowerLevel"/>
 /// makes the energy rows' charge bars reachable too.</para>
 ///
 /// <para><b>What is not.</b> The Win32 hook chain and the two ten-slot subscriber tables the original

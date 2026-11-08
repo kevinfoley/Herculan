@@ -271,11 +271,11 @@ public sealed class ShellRepairDiagrams {
 	/// The external group whose damage a layout's group <paramref name="group"/> shows and whose row its hotspot
 	/// selects. Retail's are the same, which puts <c>Left Torso</c> on the viewer's left and <c>Left Leg</c> on the
 	/// viewer's right (docs/retail/shell/weapons-and-repair.md, "The damage diagram").
-	/// <see cref="TweakSettingDefinitions.FixRepairDiagramSides"/> swaps the two torsos, so both pairs read as seen
+	/// <see cref="Es2TweakSettingDefinitions.FixRepairDiagramSides"/> swaps the two torsos, so both pairs read as seen
 	/// from the front. Only the colouring and the clicks change: the parts stay where the layout puts them.
 	/// </summary>
 	private static int GroupDrawnAt(int group) =>
-		!TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FixRepairDiagramSides) ? group
+		!TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.FixRepairDiagramSides) ? group
 			: group == LeftTorsoGroup ? RightTorsoGroup
 			: group == RightTorsoGroup ? LeftTorsoGroup
 			: group;

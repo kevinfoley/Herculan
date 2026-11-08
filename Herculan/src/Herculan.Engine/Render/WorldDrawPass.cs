@@ -16,7 +16,7 @@ public enum WorldDrawMode {
 /// <summary>
 /// One pass of the world into a viewport, terrain, objects, billboards and beams, in either <see cref="WorldDrawMode"/>.
 ///
-/// <para><b>Per-pixel depth</b> is <see cref="SceneRenderer.Render(Camera, IEnumerable{SceneItem}, GroundShapeLayer?, int, int, int, int)"/>,
+/// <para><b>Per-pixel depth</b> is <see cref="GroundLayerPass.Draw"/>,
 /// then <see cref="BeamRenderer.Render"/>, then <see cref="SpriteRenderer.Render"/>, each depth-tested against what is
 /// already drawn.</para>
 ///
@@ -53,7 +53,7 @@ public enum WorldDrawMode {
 /// the simulator draws is unfiled.</description></item>
 /// </list>
 /// </summary>
-public sealed class WorldDrawPass {
+public sealed class WorldDrawPass : IDisposable {
 	/// <summary>
 	/// Depth-buffer steps (of 2^24) left between two slices, so a fragment clamped to one slice's far plane never ties
 	/// with one clamped to the near plane of the slice before it.
@@ -65,6 +65,7 @@ public sealed class WorldDrawPass {
 
 	private readonly GL _gl;
 	private readonly SceneRenderer _scene;
+	private readonly GroundLayerPass _ground;
 	private readonly SpriteRenderer _sprites;
 	private readonly BeamRenderer? _beams;
 
@@ -78,6 +79,7 @@ public sealed class WorldDrawPass {
 	public WorldDrawPass(GL gl, SceneRenderer scene, SpriteRenderer sprites, BeamRenderer? beams) {
 		_gl = gl;
 		_scene = scene;
+		_ground = new GroundLayerPass(gl, scene);
 		_sprites = sprites;
 		_beams = beams;
 	}
@@ -92,16 +94,16 @@ public sealed class WorldDrawPass {
 			IReadOnlyList<SpriteBatch> sprites, IReadOnlyList<BeamTracer> tracers, IReadOnlyList<BeamSpanDraw> beamSpans,
 			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
 		if (mode == WorldDrawMode.PerPixelDepth) {
-			_scene.Render(camera, items, ground, viewportX, viewportY, viewportWidth, viewportHeight);
+			_ground.Draw(camera, items, ground, viewportX, viewportY, viewportWidth, viewportHeight);
 			_beams?.Render(camera, tracers, viewportWidth, viewportHeight, ground.Objects);
 			_sprites.Render(camera, sprites, viewportWidth, viewportHeight);
 			return;
 		}
 
 		Release();
-		var order = _scene.BeginPaintedPass(camera, ground, viewportX, viewportY, viewportWidth, viewportHeight);
+		var order = _ground.BeginPainted(camera, ground, viewportX, viewportY, viewportWidth, viewportHeight);
 		var projection = _scene.PassProjection;
-		_scene.DrawTerrain(ground.Terrain);
+		_scene.DrawItem(ground.Terrain);
 		ClearDepth(viewportX, viewportY, viewportWidth, viewportHeight);
 
 		Collect(camera, items, ground, sprites, beamSpans, order);
@@ -111,7 +113,7 @@ public sealed class WorldDrawPass {
 		_gl.Enable(EnableCap.DepthClamp);
 		_gl.Enable(EnableCap.ClipDistance0);
 		_gl.Enable(EnableCap.ClipDistance1);
-		_scene.BindPaintRanks();
+		_ground.BindPaintRanks();
 
 		foreach (var entry in _order) {
 			DrawEntry(entry, camera, projection, viewportWidth, viewportHeight);
@@ -121,7 +123,7 @@ public sealed class WorldDrawPass {
 		_gl.Disable(EnableCap.ClipDistance1);
 		_gl.Disable(EnableCap.ClipDistance0);
 		_gl.Disable(EnableCap.DepthClamp);
-		_scene.EndPaintedPass();
+		_scene.EndRankTest();
 		Release();
 	}
 
@@ -171,7 +173,7 @@ public sealed class WorldDrawPass {
 		}
 
 		foreach (var item in ground.ObjectGround) {
-			if (item.Filing is { } filing && SceneRenderer.IsDrawn(item)) {
+			if (item.Filing is DrawEntry filing && SceneRenderer.IsDrawn(item)) {
 				EntryFor(filing).Ground.Add(item);
 			}
 		}
@@ -190,8 +192,9 @@ public sealed class WorldDrawPass {
 			}
 		}
 
-		PaintEntry EntryFor(DrawEntry? filing) {
-			if (filing == null) {
+		// Every filing the simulator hands out is a DrawEntry.
+		PaintEntry EntryFor(IDrawFiling? drawFiling) {
+			if (drawFiling is not DrawEntry filing) {
 				if (_unfiled == null) {
 					_unfiled = Rent();
 					_unfiled.Kind = 1;
@@ -345,7 +348,7 @@ public sealed class WorldDrawPass {
 			_gl.DepthRange(entry.DepthNear, entry.DepthFar);
 		}
 
-		_scene.BeginEntry(entryProjection, entry.Rank);
+		_scene.BeginRankTest(entryProjection, entry.Rank);
 		if (entry.Shape != null) {
 			_scene.DrawUndepthed(entry.Shape);
 		}
@@ -359,11 +362,11 @@ public sealed class WorldDrawPass {
 		}
 
 		if (entry.Items.Count > 0) {
-			_scene.DrawEntryItems(entry.Items);
+			_scene.DrawItems(entry.Items);
 		}
 
 		foreach (var batch in entry.Sprites) {
-			_sprites.DrawEntry(batch, camera, projection, entryProjection, entry.Rank);
+			_sprites.DrawRanked(batch, camera, projection, entryProjection, entry.Rank);
 		}
 
 		if (_beams != null) {
@@ -394,6 +397,8 @@ public sealed class WorldDrawPass {
 		_unfiled = null;
 		_order.Clear();
 	}
+
+	public void Dispose() => _ground.Dispose();
 
 	/// <summary>One entry of the paint and where it falls.</summary>
 	private sealed class PaintEntry {

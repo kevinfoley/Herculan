@@ -153,7 +153,7 @@ public sealed class MeteorObject {
 
 			// The original plays both sounds at the camera itself, not at the pod; the tweak moves them
 			// onto it. See TweakSoundReach.
-			bool fromPod = world.Tweaks.GetSettingValue(TweakSettingDefinitions.DropPodSoundFromPod);
+			bool fromPod = world.Tweaks.GetSettingValue(Es2TweakSettingDefinitions.DropPodSoundFromPod);
 
 			if (!WhistlePlayed && next.Z < WhistleAltitude) {
 				if (fromPod) {
@@ -231,7 +231,7 @@ public sealed class MeteorObject {
 
 	/// <summary>
 	/// The volume and range both pod sounds are placed with under
-	/// <see cref="Settings.TweakSettingDefinitions.DropPodSoundFromPod"/>. Not the original's, which
+	/// <see cref="Settings.Es2TweakSettingDefinitions.DropPodSoundFromPod"/>. Not the original's, which
 	/// plays them at the camera by their catalog rows: volume 70, rolloff from 5 × 1024 world units
 	/// (31 m) to a cutoff at 100 × 1024 (614 m).
 	///

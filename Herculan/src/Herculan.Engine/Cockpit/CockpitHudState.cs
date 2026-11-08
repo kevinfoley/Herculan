@@ -136,7 +136,7 @@ namespace Herculan.Engine.Cockpit;
 /// </param>
 /// <param name="ChargeBarsDraggable">
 /// Whether the energy rows' charge bars take presses —
-/// <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/>, carried here so the widget list
+/// <see cref="Settings.Es2TweakSettingDefinitions.ChargeBarPowerLevel"/>, carried here so the widget list
 /// can be built without the settings. See <see cref="CockpitWidgets.VisibleWeaponRows"/>.
 /// </param>
 /// <param name="MissileCam">What F6's MISSILE CAM screen last painted — see <see cref="MfdMissileCamScreen"/>.</param>

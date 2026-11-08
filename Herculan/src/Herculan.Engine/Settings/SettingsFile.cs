@@ -27,6 +27,9 @@ public abstract class SettingsFile<TDefinition> where TDefinition : SettingDefin
 		_fileName = fileName;
 	}
 
+	/// <summary>Every setting in the catalog, in the order a menu lists them.</summary>
+	public IReadOnlyList<TDefinition> All => _all;
+
 	public bool GetSettingValue(TDefinition setting)
 		=> _bools.TryGetValue(setting, out bool value) ? value : setting.DefaultValue;
 

@@ -142,7 +142,7 @@ public readonly record struct MfdStatusSubject(
 		bool own = subject == viewer;
 		bool hostile = subject.Side != World.MissionSide.Human;
 		int distance = Range(subject, viewer, v110,
-			TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ShowTargetDistanceInMeters));
+			TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.ShowTargetDistanceInMeters));
 
 		switch (subject) {
 			case Sim.MechObject mech: {
@@ -228,7 +228,7 @@ public readonly record struct MfdStatusSubject(
 	/// <c>Hud_WorldUnitsToMetres</c> first (docs/retail/retail-builds.md#how-v110s-programs-differ), so with the
 	/// tweak off each release reads as its own executable does.</para>
 	///
-	/// <para>With <see cref="TweakSettingDefinitions.ShowTargetDistanceInMeters"/> on, both releases print what the
+	/// <para>With <see cref="Es2TweakSettingDefinitions.ShowTargetDistanceInMeters"/> on, both releases print what the
 	/// F4 scanner's <c>TRG:</c> would: metres of the ground-plane range, at least 1 unit, so the two screens agree.
 	/// Neither release does this; it is the tweak's own reading (KNOWN_ISSUES.md, the F5 range entry).</para>
 	/// </summary>
