@@ -13,7 +13,7 @@ namespace Herculan.Engine.Input;
 public sealed class KeyRepeat((double Delay, double Interval) typematic) {
 	// Every key a set-1 scancode stands for, modifiers included, the right-hand modifiers, which share their
 	// left-hand twins' scancodes, and every key a layout can make one of those (KeyboardLayout.Movable).
-	private static readonly Key[] Watched = Enumerable.Range(1, 0x58).SelectMany(TapeKeys.KeysOf)
+	private static readonly Key[] Watched = Enumerable.Range(1, 0x58).SelectMany(Scancodes.KeysOf)
 		.Append(Key.ControlRight).Append(Key.AltRight).Concat(KeyboardLayout.Movable).Distinct().ToArray();
 
 	private readonly HashSet<Key> _down = new();

@@ -5,7 +5,7 @@ namespace Herculan.Engine.Input;
 /// <summary>
 /// ES2's keys, as the handlers read them: docs/retail/key-bindings.md, less its developer keys (DeveloperKeys reads
 /// those itself), and the keyboard keys of docs/herculan/herculan-key-bindings.md. The arrows and the keypad's are the
-/// same scancodes to retail (<see cref="TapeKeys.KeysOf"/>), so each such action has both, the one the manual names
+/// same scancodes to retail (<see cref="Scancodes.KeysOf"/>), so each such action has both, the one the manual names
 /// first.
 /// </summary>
 internal static class RetailKeyMap {

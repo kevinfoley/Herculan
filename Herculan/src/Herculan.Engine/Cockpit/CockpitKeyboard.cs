@@ -81,7 +81,7 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 	};
 
 	// The four arrows on each page, in the order of the display's arrow buttons. Each action's second chord is the
-	// keypad's arrow, the same scancode to the original (TapeKeys.KeysOf): with the axis keys off on the display, it
+	// keypad's arrow, the same scancode to the original (Scancodes.KeysOf): with the axis keys off on the display, it
 	// reaches its key dispatch as the arrow does.
 	private static readonly KeyAction[] HddArrowKeys = {
 		KeyAction.CommandScrollUp, KeyAction.CommandScrollDown, KeyAction.CommandScrollLeft, KeyAction.CommandScrollRight,

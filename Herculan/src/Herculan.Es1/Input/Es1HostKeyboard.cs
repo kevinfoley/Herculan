@@ -11,7 +11,7 @@ namespace Herculan.Es1.Input;
 ///
 /// <para>Each host key-down sends the key's set-1 make byte and each key-up its break byte (<c>| 0x80</c>), in the
 /// order the host reports them, from the host's key events, so a press shorter than a host frame still arrives. The
-/// byte is <see cref="TapeKeys.KeysOf"/> reversed, which gives the grey arrows and editing keys the keypad's codes,
+/// byte is <see cref="Scancodes.KeysOf"/> reversed, which gives the grey arrows and editing keys the keypad's codes,
 /// with the other keys ES1 folds onto a plain one: keypad <c>Enter</c> and <c>/</c>, and the right <c>Ctrl</c> and
 /// <c>Alt</c>. To the simulator's <c>INT 9</c> keyboard a grey key sends its plain key's byte only: ES1 dispatches the
 /// <c>E0</c> prefix as a code nothing wants (input.md's "Extended keys"), so it is not sent. To the shell's <c>INT 15h</c>
@@ -21,7 +21,7 @@ namespace Herculan.Es1.Input;
 /// <para>A held key repeats as the keyboard's typematic does: the key pressed last sends its make byte again after the
 /// host's repeat delay and then at its rate (<see cref="KeyRepeat.SystemTypematic"/>), until it goes up, since ES1 is
 /// not seen setting the rate (input.md's Open on the rate). The host's own repeated key-downs are ignored in its
-/// place. It is not <see cref="KeyRepeat"/>, which is polled and watches only the keys <see cref="TapeKeys.KeysOf"/>
+/// place. It is not <see cref="KeyRepeat"/>, which is polled and watches only the keys <see cref="Scancodes.KeysOf"/>
 /// names.</para>
 /// </summary>
 public sealed class Es1HostKeyboard {
@@ -190,7 +190,7 @@ public sealed class Es1HostKeyboard {
 	private static Dictionary<Key, byte> BuildMakeCodes() {
 		var codes = new Dictionary<Key, byte>();
 		for (int scancode = 0x01; scancode <= 0x58; scancode++) {
-			foreach (var key in TapeKeys.KeysOf(scancode)) {
+			foreach (var key in Scancodes.KeysOf(scancode)) {
 				codes[key] = (byte)scancode;
 			}
 		}

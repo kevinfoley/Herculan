@@ -16,8 +16,10 @@ Audio/CdMusic.cs
 Audio/ComputerVoice.cs
 Audio/GameAudio.cs
 Audio/InstructorVoice.cs
+Audio/SoundBank.cs
 Audio/SoundCatalog.cs
 Audio/SoundDirector.cs
+Audio/SquadVoice.cs
 Content/BeamAppearance.cs
 Content/CockpitArt.cs
 Content/CockpitClipRegions.cs
@@ -25,9 +27,12 @@ Content/HudColorTable.cs
 Content/HudSpriteSheet.cs
 Content/PilotRoster.cs
 Content/SimulatorPreferences.cs
+Content/SquadMessages.cs
 Content/SystemMessages.cs
 Input/CockpitInput.cs
 Input/GunsightDrag.cs
+Input/IPointerDevice.cs
+Input/ISimulatorInput.cs
 Input/InputTapePlayer.cs
 Input/InputTapeRecorder.cs
 Input/JoystickAction.cs
@@ -35,6 +40,7 @@ Input/JoystickBindings.cs
 Input/JoystickPilotInput.cs
 Input/KeyboardAxes.cs
 Input/PressFlashes.cs
+Input/TapeKeys.cs
 Input/TapePlayback.cs
 Input/TapeRecording.cs
 Render/BeamRenderer.cs

@@ -50,9 +50,9 @@ public sealed class PaletteRampTable {
 	public int UnlitRow { get; private init; }
 
 	/// <summary>
-	/// The row an untextured terrain cell reads — <see cref="TerrainMeshBuilder.UntexturedRowShade"/>'s
-	/// row in slice 0. Like <see cref="UnlitRow"/> it is fogged: the cell's depth slice is added to
-	/// it, as <c>Raster_ShadeRampRow</c> adds the fade <c>Terrain_DrawCellQuad</c> installed.
+	/// The row a <see cref="SceneItem.GroundFill"/> item reads: the row in slice 0 of the shade the game passed
+	/// <see cref="Build"/>, or row 0 when it passed none. Like <see cref="UnlitRow"/> it is fogged: the item's depth
+	/// slice is added to it, as <c>Raster_ShadeRampRow</c> adds the fade <c>Terrain_DrawCellQuad</c> installed.
 	/// </summary>
 	public int GroundRow { get; private init; }
 
@@ -95,8 +95,10 @@ public sealed class PaletteRampTable {
 	/// <summary>
 	/// Builds the table for a theater, or returns null without a ramp or a palette — in which case a
 	/// textured surface falls back to its expanded colour and the renderer's own light term.
+	/// <paramref name="groundFillShade"/> is the shade an untextured ground cell is filled at (<see cref="GroundRow"/>),
+	/// for a game that draws them.
 	/// </summary>
-	public static PaletteRampTable? Build(SurfaceShading? shading) {
+	public static PaletteRampTable? Build(SurfaceShading? shading, int? groundFillShade = null) {
 		if (shading?.Palette is not { } palette) {
 			return null;
 		}
@@ -138,7 +140,7 @@ public sealed class PaletteRampTable {
 
 		return new PaletteRampTable(pixels, shadeRows, slices) {
 			UnlitRow = ramp.RowFor(ShadeRamp.UnlitShade),
-			GroundRow = ramp.RowFor(TerrainMeshBuilder.UntexturedRowShade),
+			GroundRow = groundFillShade is { } groundShade ? ramp.RowFor(groundShade) : 0,
 		};
 	}
 

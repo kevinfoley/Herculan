@@ -343,9 +343,11 @@ public sealed class MissionModels {
 
 		return new MissionModels(models.Models.ToArray(), terrainMesh, terrainBank, bulletModels, explosionModels,
 			rocketModels, mechWeaponModels, Atmosphere.From(terrain, models.Shading, theater.File),
-			SurfaceRampTable.Build(models.Shading), PaletteRampTable.Build(models.Shading),
+			SurfaceRampTable.Build(models.Shading),
+			PaletteRampTable.Build(models.Shading, TerrainMeshBuilder.UntexturedRowShade),
 			models.ImpactShading is { } impact
-				? new ImpactFlash(SurfaceRampTable.Build(impact), PaletteRampTable.Build(impact),
+				? new ImpactFlash(SurfaceRampTable.Build(impact),
+					PaletteRampTable.Build(impact, TerrainMeshBuilder.UntexturedRowShade),
 					Atmosphere.From(terrain, impact, theater.File))
 				: null,
 			debrisModels, fireModels, hulkModels, dropPodModel, dropPodOpening, groundShapeModels) {

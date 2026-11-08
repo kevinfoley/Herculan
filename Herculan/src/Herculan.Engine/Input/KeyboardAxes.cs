@@ -11,7 +11,7 @@ namespace Herculan.Engine.Input;
 /// </summary>
 public static class KeyboardAxes {
 	// Keys 0-7, in the order of the original's wanted-codes list. Each scancode is two keys here, the action's two
-	// chords: VkToScancode (004a1104) gives the arrow and editing cluster the keypad's own codes (TapeKeys.KeysOf).
+	// chords: VkToScancode (004a1104) gives the arrow and editing cluster the keypad's own codes (Scancodes.KeysOf).
 	private static readonly (KeyAction Action, sbyte Dx, sbyte Dy, bool Diagonal)[] FirstPairKeys = {
 		(KeyAction.DiagonalForwardLeft, -1, -1, true),
 		(KeyAction.ThrottleForward, 0, -1, false),

@@ -6,7 +6,7 @@ How HERCULAN plays and records DBSIM's `.TAP` input tapes. The format, and what 
 
 ## Playback
 
-A tape is a path or a stem found in the install's `TAPES` folder. `Input.InputTapePlayer` decodes frames and lays out the bundle, and the host feeds each frame's keystrokes, pointer, stick and trigger through the same handlers live input takes. The tape's keystrokes reach the host's key handlers through `TapeKeys`, which maps each set-1 scancode back to a key.
+A tape is a path or a stem found in the install's `TAPES` folder. `Input.InputTapePlayer` decodes frames and lays out the bundle, and the host feeds each frame's keystrokes, pointer, stick and trigger through the same handlers live input takes. The tape's keystrokes reach the host's key handlers through `TapeKeys`, which presses the keys `Scancodes.KeysOf` gives each code's set-1 scancode.
 
 Where it differs from retail, by this engine's choice:
 

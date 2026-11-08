@@ -32,8 +32,8 @@ public static class VkToScancode {
 
 	/// <summary>
 	/// The key the simulator's handlers read for a virtual-key code, or null for a code that makes no command. A
-	/// keypad scancode is two keys in <see cref="TapeKeys.KeysOf"/>; this is the first, the keypad's own.
+	/// keypad scancode is two keys in <see cref="Scancodes.KeysOf"/>; this is the first, the keypad's own.
 	/// </summary>
 	public static Key? KeyOf(int virtualKey) =>
-		Of(virtualKey) is not 0 and var scancode ? TapeKeys.KeysOf(scancode).Cast<Key?>().FirstOrDefault() : null;
+		Of(virtualKey) is not 0 and var scancode ? Scancodes.KeysOf(scancode).Cast<Key?>().FirstOrDefault() : null;
 }

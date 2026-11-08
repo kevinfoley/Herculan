@@ -64,8 +64,8 @@ public sealed class TapeRecording {
 		int modifiers = (AltHeld(liveKeys) ? InputTapePlayer.AltBit : 0)
 			| (CtrlHeld(liveKeys) ? InputTapePlayer.CtrlBit : 0);
 		foreach (int scancode in TapeKeys.RecordedScancodes) {
-			bool down = TapeKeys.KeysOf(scancode).Any(liveKeys.IsKeyPressed);
-			bool repeated = RecordsRepeats(scancode | modifiers) && TapeKeys.KeysOf(scancode).Any(liveKeys.IsKeyRepeated);
+			bool down = Scancodes.KeysOf(scancode).Any(liveKeys.IsKeyPressed);
+			bool repeated = RecordsRepeats(scancode | modifiers) && Scancodes.KeysOf(scancode).Any(liveKeys.IsKeyRepeated);
 			bool taken = scancode == 0x01 && hostTakesEscape;
 			if (down && listening && !taken && (!_keysDown.Contains(scancode) || repeated)) {
 				Recorder.AddPress(scancode | modifiers);
