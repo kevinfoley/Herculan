@@ -95,22 +95,16 @@ public sealed partial class WeaponMount {
 
 		// WeaponMount_CtorBase (0040df30)'s own first act: an invisibly-mounted hardpoint loads no shape, and every
 		// other one loads the weapon model its template names for the mounting code it sits at.
-		ModelShapeIndex = _hardpoint.MountingCode < InvisibleMounting && _template != null
+		ModelShapeIndex = _hardpoint.MountingCode < GunLayout.HardpointEntry.InvisibleMounting && _template != null
 			? _template.ModelShapeIndex(_hardpoint.MountingCode)
 			: -1;
 		FlashCellCount = ModelShapeIndex >= 0 ? modelCellCount?.Invoke(ModelShapeIndex) ?? 0 : 0;
 	}
 
 	/// <summary>
-	/// The <c>.GL</c> mounting code (<c>+6</c>) that means the hardpoint carries no visible weapon.
-	/// Every test the original spells as <c>.GL +6 &lt; 4</c> is this one.
-	/// </summary>
-	public const int InvisibleMounting = 4;
-
-	/// <summary>
 	/// Which shape of <c>dts\MECHWPNS.DTS</c> this mount is drawn as, or -1 for an invisible
 	/// mounting — <c>WeaponMount_ShapeForMountingCode</c> (<c>0040fab0</c>), which the base constructor calls only when the hardpoint's
-	/// mounting code is under <see cref="InvisibleMounting"/>. The mount owns a private copy of that
+	/// mounting code is under <see cref="GunLayout.HardpointEntry.InvisibleMounting"/>. The mount owns a private copy of that
 	/// shape in the original (<c>mount+0x10</c>), because it translates the geometry to the muzzle
 	/// point and steps its flipbook independently of every other mount carrying the same weapon.
 	///

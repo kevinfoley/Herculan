@@ -1,11 +1,10 @@
 using System.Numerics;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Sim;
 
 namespace Herculan.Engine.Render;
 
 /// <summary>
-/// One <see cref="EffectLight"/> as it applies to one drawn object — what <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>)
+/// One effect light slot (<see cref="IEffectLightSlots"/>) as it applies to one drawn object — what <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>)
 /// synthesises into the active light list just before that object is drawn.
 /// </summary>
 /// <param name="Directional">
@@ -26,7 +25,7 @@ namespace Herculan.Engine.Render;
 public readonly record struct SelectedEffectLight(bool Directional, Vector3 Vector, float Intensity);
 
 /// <summary>
-/// <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) — picks which of a manager's slots (<see cref="IEffectLightSlots"/>, <see cref="EffectLightField"/>'s for Earthsiege 2) light one drawn
+/// <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) — picks which of a manager's slots (<see cref="IEffectLightSlots"/>) light one drawn
 /// object, and what each one looks like from where that object stands.
 ///
 /// <para>The original runs this from <c>ObjList_DrawEntryRender</c> (<c>0042876c</c>), once per
@@ -51,10 +50,33 @@ public readonly record struct SelectedEffectLight(bool Directional, Vector3 Vect
 public static class EffectLightSelection {
 	/// <summary>
 	/// How many effect lights one object can be lit by: the room <c>Light_Register</c>'s ten-entry active
-	/// list leaves beside the mission sun. Never reached: the handle pool allows
-	/// <see cref="EffectLightField.HandleCount"/> effect lights at once.
+	/// list leaves beside the mission sun. Never reached: each game's handle pool allows three effect lights at once.
 	/// </summary>
 	public const int MaxPerObject = 9;
+
+	/// <summary>
+	/// <c>A</c>, the denominator offset of both falloffs — <c>mgr+0x10</c>.
+	///
+	/// <para><b>Zero, not ten.</b> <c>LightManager_SetFalloffConstants</c> (<c>00406ee4</c>) stores its argument shifted right by 5, and
+	/// the call that survives into every frame is <c>LightManager_InitSubsystem</c> (<c>004076e4</c>)'s <c>(10, 2000)</c>, not the
+	/// constructor's <c>(2000, 3000)</c>. <c>10 &gt;&gt; 5</c> is 0.</para>
+	/// </summary>
+	public const int FalloffOffset = 10 >> 5;
+
+	/// <summary>
+	/// <c>B</c>, the numerator of both falloffs — <c>mgr+0x14</c>, <c>2000 &gt;&gt; 5</c>. See
+	/// <see cref="FalloffOffset"/> for why it is this pair of literals and not the constructor's.
+	/// </summary>
+	public const int FalloffRange = 2000 >> 5;
+
+	/// <summary>
+	/// The <c>0x20</c> both constants are multiplied back up by wherever they are used — the shift
+	/// the setter applied, undone at the point of use rather than at the point of storage.
+	/// </summary>
+	public const int FalloffScale = 0x20;
+
+	/// <summary>The largest intensity a slot carries, the ramp byte's own ceiling.</summary>
+	public const int MaxIntensity = 255;
 
 	/// <summary>
 	/// The angular size, in the sim's binary angle unit, below which an object is far enough from a
@@ -71,8 +93,7 @@ public static class EffectLightSelection {
 	/// the world scale. The original's <c>A</c> is zero, so the denominator carries the distance
 	/// alone; see docs/retail/rendering/effect-lights.md, "What a light contributes".
 	/// </summary>
-	public const float PointFalloff =
-		EffectLightField.FalloffRange * EffectLightField.FalloffScale / WorldScale.WorldUnitsPerMeter;
+	public const float PointFalloff = FalloffRange * FalloffScale / WorldScale.WorldUnitsPerMeter;
 
 	/// <summary>
 	/// Fills <paramref name="selected"/> with the lights that reach an object of radius
@@ -108,8 +129,7 @@ public static class EffectLightSelection {
 			// x first. This is atan(radius / distance) either way, and reading it the other way round
 			// mirrors the test about the 45-degree line and swaps the two branches.
 			if (d != 0 && SimTrig.Atan2Guarded(shapeRadius >> 5, d) < DirectionalAngle) {
-				int attenuation = System.Math.Min(EffectLightField.MaxIntensity,
-					(EffectLightField.FalloffRange << 8) / (d + EffectLightField.FalloffOffset));
+				int attenuation = System.Math.Min(MaxIntensity, (FalloffRange << 8) / (d + FalloffOffset));
 
 				Vector3 travel = WorldScale.ToRender(position - slotPosition);
 				if (travel.LengthSquared() > 1e-12f) {

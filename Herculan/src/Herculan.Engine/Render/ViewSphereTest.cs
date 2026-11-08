@@ -1,12 +1,11 @@
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Terrain;
 
 namespace Herculan.Engine.Render;
 
 /// <summary>
 /// Whether a sphere reaches into a view: in front of the eye's plane and inside the four edge planes
 /// <see cref="Camera.EdgeSlopes"/> gives, the same frustum the projection draws. This engine's own test, not the
-/// original's: <see cref="ObjectDrawTable"/> uses it under the widescreen tweak to draw a structure whose cell the terrain
+/// original's: Earthsiege 2's object draw table uses it under the widescreen tweak to draw a structure whose cell the terrain
 /// walk does not reach while part of it is on screen. Conservative near the frustum's corners, where a sphere outside it
 /// can still pass.
 /// </summary>

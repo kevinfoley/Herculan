@@ -6,6 +6,7 @@ using HercWorks.Core.Data.File.Dts.Bsp;
 using HercWorks.Core.Data.File.Dts.Part;
 using HercWorks.Core.Data.File.Dts.Poly;
 using HercWorks.Core.Data.File.Dyn;
+using Herculan.Engine.Anim;
 using Herculan.Engine.Gl;
 
 namespace Herculan.Engine.Render;
@@ -14,7 +15,7 @@ namespace Herculan.Engine.Render;
 /// Which cell of which cell-animation sequence a piece of geometry belongs to, and so whether it is
 /// on screen: a <see cref="TSCellAnimPart"/> draws exactly one of its children, the one its
 /// sequence's entry in the shape instance's cell-frame array names
-/// (<see cref="Sim.ShapeCellFrames"/>).
+/// (<see cref="ShapeCellFrames"/>).
 ///
 /// <para><see cref="Ungated"/> is geometry under no cell-animation part at all, which is always
 /// drawn. One gate per piece of geometry is the whole of the condition, as no retail shape nests one
@@ -45,7 +46,7 @@ public readonly record struct CellGate(short Sequence, short Frame, PartDetail? 
 	public bool IsDetailGated => Detail != null;
 
 	/// <summary>Whether <paramref name="frames"/> puts this piece on screen.</summary>
-	public bool VisibleIn(Sim.ShapeCellFrames? frames) =>
+	public bool VisibleIn(ShapeCellFrames? frames) =>
 		!IsGated || (frames?[Sequence] ?? 0) == Frame;
 }
 
@@ -528,7 +529,7 @@ public static partial class DtsMeshBuilder {
 	/// frame, with the fitted mount or a blank record, so the shipped placeholder is never drawn
 	/// (docs/retail/rendering/mech-shape-drawing.md#hardpoint-attachment-slots-are-overwritten-every-frame).
 	/// The slots are the <c>.GL</c> records' <see cref="GunLayout.HardpointEntry.BoneId"/>s, less any
-	/// under the <see cref="Sim.WeaponMount.InvisibleMounting"/>.</para>
+	/// under the <see cref="GunLayout.HardpointEntry.InvisibleMounting"/>.</para>
 	///
 	/// <para><b>This engine hides the slots instead of splicing</b>, since the fitted weapon is
 	/// already drawn on its own, out of <c>MECHWPNS.DTS</c> at the mount's frame — see
@@ -541,7 +542,7 @@ public static partial class DtsMeshBuilder {
 	public static IReadOnlySet<short> AttachmentPartIds(GunLayout? hardpoints) {
 		var ids = new HashSet<short>();
 		foreach (var hardpoint in hardpoints?.Hardpoints ?? Array.Empty<GunLayout.HardpointEntry>()) {
-			if (hardpoint.MountingCode < Sim.WeaponMount.InvisibleMounting && hardpoint.BoneId != 0) {
+			if (hardpoint.MountingCode < GunLayout.HardpointEntry.InvisibleMounting && hardpoint.BoneId != 0) {
 				ids.Add(hardpoint.BoneId);
 			}
 		}
@@ -600,7 +601,7 @@ public static partial class DtsMeshBuilder {
 	///
 	/// <para>Every cell of every <see cref="TSCellAnimPart"/> is built, each into its own segment
 	/// under its own <see cref="CellGate"/>, because a machine's cells are damage state rather than
-	/// a flipbook the shape can be built around — see <see cref="Sim.ShapeCellFrames"/>. The
+	/// a flipbook the shape can be built around — see <see cref="ShapeCellFrames"/>. The
 	/// renderer draws the segment whose gate the object's cell frames name and leaves the rest
 	/// alone.</para>
 	/// </summary>

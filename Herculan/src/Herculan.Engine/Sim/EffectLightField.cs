@@ -1,10 +1,12 @@
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Render;
 
 namespace Herculan.Engine.Sim;
 
 /// <summary>
 /// The effect light manager, <c>DAT_004a968c</c> — twenty slots an impact effect can claim a
-/// dynamic light in, and the constants that decide how far one reaches.
+/// dynamic light in. The constants that decide how far one reaches are the renderer's
+/// (<see cref="EffectLightSelection.FalloffRange"/> and its siblings), which both games share.
 ///
 /// <para>This is the simulation half only: it holds where the lights are and how bright, and the
 /// renderer reads <see cref="Slots"/> to decide what each drawn object is lit by. The per-object
@@ -27,30 +29,6 @@ public sealed class EffectLightField : Render.IEffectLightSlots {
 	/// effect runs dark. See docs/retail/rendering/effect-lights.md, "Claiming a slot".
 	/// </summary>
 	public const int HandleCount = 3;
-
-	/// <summary>
-	/// <c>A</c>, the denominator offset of both falloffs — <c>mgr+0x10</c>.
-	///
-	/// <para><b>Zero, not ten.</b> <c>LightManager_SetFalloffConstants</c> (<c>00406ee4</c>) stores its argument shifted right by 5, and
-	/// the call that survives into every frame is <c>LightManager_InitSubsystem</c> (<c>004076e4</c>)'s <c>(10, 2000)</c>, not the
-	/// constructor's <c>(2000, 3000)</c>. <c>10 &gt;&gt; 5</c> is 0.</para>
-	/// </summary>
-	public const int FalloffOffset = 10 >> 5;
-
-	/// <summary>
-	/// <c>B</c>, the numerator of both falloffs — <c>mgr+0x14</c>, <c>2000 &gt;&gt; 5</c>. See
-	/// <see cref="FalloffOffset"/> for why it is this pair of literals and not the constructor's.
-	/// </summary>
-	public const int FalloffRange = 2000 >> 5;
-
-	/// <summary>
-	/// The <c>0x20</c> both constants are multiplied back up by wherever they are used — the shift
-	/// the setter applied, undone at the point of use rather than at the point of storage.
-	/// </summary>
-	public const int FalloffScale = 0x20;
-
-	/// <summary>The largest intensity a slot carries, the ramp byte's own ceiling.</summary>
-	public const int MaxIntensity = 255;
 
 	private readonly EffectLight[] _slots = new EffectLight[SlotCount];
 	private readonly List<int> _pendingReleases = new(HandleCount);
@@ -144,7 +122,7 @@ public sealed class EffectLightField : Render.IEffectLightSlots {
 		_handlesInUse = 0;
 	}
 
-	private static int ClampIntensity(int intensity) => Math.Clamp(intensity, 0, MaxIntensity);
+	private static int ClampIntensity(int intensity) => Math.Clamp(intensity, 0, EffectLightSelection.MaxIntensity);
 }
 
 /// <summary>
@@ -177,6 +155,6 @@ public readonly record struct EffectLight(Vec3i Position, int Intensity, bool Cl
 	/// which with the live constants is <c>intensity * 198.4</c>, about 300 m at full brightness.
 	/// </summary>
 	public int CullRadius =>
-		Intensity * EffectLightField.FalloffRange * EffectLightField.FalloffScale / 10
-			+ EffectLightField.FalloffOffset * EffectLightField.FalloffScale;
+		Intensity * EffectLightSelection.FalloffRange * EffectLightSelection.FalloffScale / 10
+			+ EffectLightSelection.FalloffOffset * EffectLightSelection.FalloffScale;
 }

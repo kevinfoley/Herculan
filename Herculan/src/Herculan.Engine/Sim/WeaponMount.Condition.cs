@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Dat.Sim;
+using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.Struct;
 using Herculan.Engine.Numerics;
 
@@ -35,7 +36,7 @@ public sealed partial class WeaponMount {
 	/// docs/retail/simulation/weapon-mounts.md#losing-a-mount.
 	///
 	/// <para><b>A visibly-mounted gun is thrown off as wreckage.</b> When the hardpoint's mounting
-	/// code is under <see cref="InvisibleMounting"/>, the gun's own shape, out of
+	/// code is under <see cref="GunLayout.HardpointEntry.InvisibleMounting"/>, the gun's own shape, out of
 	/// <see cref="DebrisShapeLibraryName"/>, leaves the mount point as a <see cref="DebrisObject"/>
 	/// heading away from the machine's aim point, at the hardpoint's own pitch and
 	/// <see cref="DebrisMass"/>, keeping the mount's attitude. <paramref name="rolled"/> picks the
@@ -56,7 +57,7 @@ public sealed partial class WeaponMount {
 			return;
 		}
 
-		bool visible = _hardpoint.MountingCode < InvisibleMounting;
+		bool visible = _hardpoint.MountingCode < GunLayout.HardpointEntry.InvisibleMounting;
 		int thrownShape = ModelShapeIndex;
 
 		ModelShapeIndex = -1;

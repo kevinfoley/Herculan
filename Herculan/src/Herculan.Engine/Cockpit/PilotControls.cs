@@ -7,6 +7,7 @@ using Herculan.Engine.Scene;
 using Herculan.Engine.Settings;
 using Herculan.Engine.Sim;
 using Herculan.Engine.View;
+using Silk.NET.Input;
 using static Herculan.Engine.Input.KeyChords;
 using InputTape = HercWorks.Core.Data.File.Dbsim.InputTape;
 
@@ -591,5 +592,28 @@ public sealed class PilotControls {
 				_view.Chain?.ToggleChase();
 				break;
 		}
+	}
+
+	/// <summary>
+	/// The observer camera's keys: this engine's own fly camera, not anything of the original's. The live keyboard's
+	/// are read by place (<see cref="LiveKeys.Positional"/>), so [W] [A] [S] [D] sit together on any layout.
+	/// </summary>
+	private static CameraInput FlyCameraInput(IKeyState? keyboard) {
+		if (keyboard == null) {
+			return default;
+		}
+
+		if (keyboard is LiveKeys liveKeys) {
+			keyboard = liveKeys.Positional;
+		}
+
+		return new CameraInput {
+			Forward = Axis(keyboard, Key.W, Key.S),
+			Strafe = Axis(keyboard, Key.D, Key.A),
+			Vertical = Axis(keyboard, Key.R, Key.F),
+			Yaw = Axis(keyboard, Key.Right, Key.Left),
+			Pitch = Axis(keyboard, Key.Up, Key.Down),
+			Boost = ShiftHeld(keyboard),
+		};
 	}
 }

@@ -37,6 +37,12 @@ public class GunLayout {
 		/// </summary>
 		public byte MountingCode { get; set; }
 
+		/// <summary>
+		/// The <see cref="MountingCode"/> that means the hardpoint carries no visible weapon. Every test the
+		/// original spells as <c>.GL +6 &lt; 4</c> is this one.
+		/// </summary>
+		public const int InvisibleMounting = 4;
+
 		/// <summary><c>+0x07</c> — the cockpit weapon row this mount owns; the panel prints it as <c>n+1</c>.</summary>
 		public byte FireChainNumber { get; set; }
 

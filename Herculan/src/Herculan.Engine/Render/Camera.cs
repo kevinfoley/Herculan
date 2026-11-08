@@ -6,9 +6,9 @@ namespace Herculan.Engine.Render;
 /// <summary>
 /// A view onto the world. Its position and orientation are kept in simulation terms — an integer
 /// world position and binary-angle yaw/pitch — and only converted to float matrices when a frame is
-/// actually drawn. That keeps the camera something a <see cref="Sim.SimObject"/> can drive with the
-/// same ported math as anything else (see <see cref="Sim.FlyCameraObject"/>) instead of it being a
-/// separate float-space concept bolted onto the side of the renderer.
+/// actually drawn. That keeps the camera something a simulation object can drive with the same
+/// ported math as anything else, instead of it being a separate float-space concept bolted onto the
+/// side of the renderer.
 /// </summary>
 public sealed class Camera {
 	/// <summary>Eye position in world units.</summary>
@@ -156,10 +156,10 @@ public sealed class Camera {
 	/// about <see cref="PrincipalPoint"/>. They stand where DBSIM's view has its rect, projection
 	/// centre and focal length.
 	/// </summary>
-	public Terrain.ViewEdgeSlopes EdgeSlopes(float aspectRatio) {
+	public ViewEdgeSlopes EdgeSlopes(float aspectRatio) {
 		float height = 2f * MathF.Tan(FieldOfView / 2f);
 		float width = height * MathF.Max(aspectRatio, 0.0001f);
-		return new Terrain.ViewEdgeSlopes(
+		return new ViewEdgeSlopes(
 			Left: PrincipalPoint.X * width,
 			Right: (1f - PrincipalPoint.X) * width,
 			Top: PrincipalPoint.Y * height,

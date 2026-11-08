@@ -1,4 +1,3 @@
-using Herculan.Engine.Sim;
 using Silk.NET.Input;
 
 namespace Herculan.Engine.Input;
@@ -28,29 +27,6 @@ public static class KeyChords {
 	// One signed axis from a pair of keys.
 	public static int Axis(IKeyState keyboard, Key positive, Key negative) =>
 		(keyboard.IsKeyPressed(positive) ? 1 : 0) - (keyboard.IsKeyPressed(negative) ? 1 : 0);
-
-	/// <summary>
-	/// The observer camera's keys: this engine's own fly camera, not anything of the original's. The live keyboard's
-	/// are read by place (<see cref="LiveKeys.Positional"/>), so [W] [A] [S] [D] sit together on any layout.
-	/// </summary>
-	public static CameraInput FlyCameraInput(IKeyState? keyboard) {
-		if (keyboard == null) {
-			return default;
-		}
-
-		if (keyboard is LiveKeys liveKeys) {
-			keyboard = liveKeys.Positional;
-		}
-
-		return new CameraInput {
-			Forward = Axis(keyboard, Key.W, Key.S),
-			Strafe = Axis(keyboard, Key.D, Key.A),
-			Vertical = Axis(keyboard, Key.R, Key.F),
-			Yaw = Axis(keyboard, Key.Right, Key.Left),
-			Pitch = Axis(keyboard, Key.Up, Key.Down),
-			Boost = ShiftHeld(keyboard),
-		};
-	}
 }
 
 /// <summary>

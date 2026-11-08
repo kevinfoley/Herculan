@@ -1,4 +1,4 @@
-namespace Herculan.Engine.Sim;
+namespace Herculan.Engine.Anim;
 
 /// <summary>
 /// A drawn shape's <b>per-sequence cell-frame array</b> — <c>shapeInstance+8</c>, the array
@@ -6,11 +6,8 @@ namespace Herculan.Engine.Sim;
 /// <see cref="HercWorks.Core.Data.File.Dts.Part.TSCellAnimPart.AnimSequence"/> to decide which of
 /// its children is the one drawn.
 ///
-/// <para>Every entry starts at zero, which is the intact shape. Damage is what moves one: a
-/// destroyed machine component steps its sequence to <see cref="ComponentDamage.DestroyedCell"/>
-/// and a collapsed structure part steps its own to <see cref="BaseObject.CollapsedCell"/>. A
-/// machine's cell draws nothing, so the part comes off; a structure's is that part's own rubble, so
-/// it is redrawn as wreckage.</para>
+/// <para>Every entry starts at zero, which is the intact shape. Damage is what moves one: the game
+/// steps a destroyed part's sequence to the cell that shows it destroyed.</para>
 ///
 /// <para>This is state, not geometry: the renderer holds every cell of every sequence built and
 /// gated, and reads this array to pick which of them are on screen — see

@@ -186,7 +186,7 @@ public readonly record struct BaseComponentType(
 /// <param name="AnimCellSequence">
 /// <c>+0x24</c> — which cell sequence <c>Base_ThinkTick</c> (<c>00403ca8</c>) steps to animate the
 /// standing structure, or negative for a type that does not animate. It is the same per-sequence
-/// cell array damage moves (<see cref="Sim.ShapeCellFrames"/>); this is the idle flipbook rather
+/// cell array damage moves (<see cref="Anim.ShapeCellFrames"/>); this is the idle flipbook rather
 /// than a damage state, and it is what makes a radar dish turn.
 /// </param>
 /// <param name="AnimCellInterval">

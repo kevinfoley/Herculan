@@ -27,7 +27,7 @@ public sealed class SceneItem {
 
 	/// <summary>
 	/// Whether this item is drawn at all this frame. It is how a shape built one cell at a time shows
-	/// the cell its object's <see cref="Sim.ShapeCellFrames"/> names and no other: every item under a
+	/// the cell its object's <see cref="Anim.ShapeCellFrames"/> names and no other: every item under a
 	/// sequence goes false except the one standing on the cell it has reached. A machine's destroyed
 	/// limb lands on a blank cell and so comes off; a structure's collapsed part lands on its rubble.
 	/// </summary>
