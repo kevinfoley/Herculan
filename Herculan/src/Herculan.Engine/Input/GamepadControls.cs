@@ -8,7 +8,7 @@ namespace Herculan.Engine.Input;
 /// <summary>
 /// What each control does while a gamepad is the device being read: the walker's and the RAZOR's CONTROLS settings,
 /// in <c>prefs.cfg</c>'s own layout (four axis rows, then eight action codes), standing in for <c>prefs.cfg</c>'s through
-/// <see cref="SimulatorPreferences.ControlsOverride"/>. <b>This engine's own</b>, kept in <c>herculan-joystick.cfg</c>'s
+/// <see cref="Content.IControlsOverride"/>. <b>This engine's own</b>, kept in <c>herculan-joystick.cfg</c>'s
 /// <c>[Gamepad]</c> section, so a joystick and the original game go on using <c>prefs.cfg</c>'s
 /// (docs/herculan/joystick-config.md, "Gamepads").
 ///

@@ -36,9 +36,15 @@ public static class LauncherLanguage {
 			? letter
 			: null;
 
-	/// <summary>Whether the install is v1.10's: whether its <c>VOL</c> folder holds <see cref="V110ArchiveName"/>.</summary>
+	/// <summary>
+	/// Whether the install is v1.10's: whether its <c>VOL</c> folder holds <see cref="V110ArchiveName"/>. v1.10's shell
+	/// takes the folder of <c>campaign.str</c> and of the intro movies from the content's language, where v1.0's names
+	/// English ones whatever its language (docs/retail/retail-builds.md#v110s-shell-reads-the-language-twice-more). The
+	/// cockpit reads it for the simulator changes it follows (docs/retail/retail-builds.md#how-v110s-programs-differ):
+	/// the MFD status screen's range in metres (<see cref="Cockpit.MfdStatusSubject.Range"/>).
+	/// </summary>
 	public static bool IsV110(string installRoot) {
-		string archives = GameInstall.ArchiveDirectory(installRoot);
+		string archives = GameContent.ArchiveDirectory(installRoot);
 		return Directory.Exists(archives) && Directory.EnumerateFiles(archives, V110ArchiveName,
 			new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive }).Any();
 	}

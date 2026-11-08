@@ -5,6 +5,7 @@ using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Sim;
 using Herculan.Engine.World;
+using Herculan.Engine.Install;
 
 namespace Herculan.Engine.Cockpit;
 
@@ -22,7 +23,7 @@ public sealed class CockpitDisplays {
 		_view = view;
 		_ports = start.Ports;
 		Art = art;
-		IsV110 = start.Content.IsV110;
+		IsV110 = LauncherLanguage.IsV110(start.Content.InstallRoot);
 		var scene = start.Scene;
 		var squadPlacements = start.SquadPlacements;
 
@@ -123,7 +124,7 @@ public sealed class CockpitDisplays {
 
 	public CockpitArt? Art { get; }
 
-	/// <inheritdoc cref="GameContent.IsV110"/>
+	/// <inheritdoc cref="LauncherLanguage.IsV110"/>
 	public bool IsV110 { get; }
 
 	/// <summary>What every cockpit widget draws from this frame.</summary>

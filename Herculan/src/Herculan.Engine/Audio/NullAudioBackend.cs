@@ -5,7 +5,7 @@ namespace Herculan.Engine.Audio;
 /// where OpenAL failed to open.
 ///
 /// <para>It hands out real sample ids and play handles and remembers nothing else, so
-/// <see cref="SoundDirector"/> runs its whole rule set — variation rolls, distance cutoff, the
+/// the game's sound code runs its whole rule set — variation rolls, distance cutoff, the
 /// newest-handle bookkeeping — exactly as it would with a device attached. That is what makes those
 /// rules testable without one.</para>
 ///

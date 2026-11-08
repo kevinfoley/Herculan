@@ -25,7 +25,7 @@ public class GameContentMountTests : IDisposable {
 		WriteVol(Disc, "B.VOL", Voln.DbsimProgram, 0x05, ("X.DAT", "b"), ("Y.DAT", "b"));
 		WriteDriveCfg(Disc);
 
-		var content = GameContent.MountSimulator(Install);
+		var content = GameInstall.MountSimulator(Install);
 
 		Assert.Equal(new[] { "A.VOL", "B.VOL" }, content.MountedArchives);
 		Assert.Equal("install", Text(content, "X.DAT"));
@@ -38,8 +38,8 @@ public class GameContentMountTests : IDisposable {
 		WriteVol(Install, "SHELL.VOL", Voln.VshellProgram, 0x05, ("H.DAT", "shell"));
 		WriteVol(Install, "BOTH.VOL", Voln.DbsimProgram | Voln.VshellProgram, 0x05, ("Z.DAT", "both"));
 
-		Assert.Equal(new[] { "BOTH.VOL", "SIM.VOL" }, GameContent.MountSimulator(Install).MountedArchives);
-		Assert.Equal(new[] { "BOTH.VOL", "SHELL.VOL" }, GameContent.MountShell(Install).MountedArchives);
+		Assert.Equal(new[] { "BOTH.VOL", "SIM.VOL" }, GameInstall.MountSimulator(Install).MountedArchives);
+		Assert.Equal(new[] { "BOTH.VOL", "SHELL.VOL" }, GameInstall.MountShell(Install).MountedArchives);
 	}
 
 	[Fact]
@@ -48,7 +48,7 @@ public class GameContentMountTests : IDisposable {
 		WriteVol(Disc, "PATCH.VOL", Voln.DbsimProgram, 0x0A, ("X.DAT", "patch"));
 		WriteDriveCfg(Disc);
 
-		var content = GameContent.MountSimulator(Install);
+		var content = GameInstall.MountSimulator(Install);
 
 		Assert.Equal(new[] { "PATCH.VOL", "BASE.VOL" }, content.MountedArchives);
 		Assert.Equal("patch", Text(content, "X.DAT"));
@@ -59,7 +59,7 @@ public class GameContentMountTests : IDisposable {
 		WriteVol(Install, "A.VOL", Voln.DbsimProgram, 0x05, ("X.DAT", "install"));
 		WriteVol(Disc, "B.VOL", Voln.DbsimProgram, 0x05, ("Y.DAT", "disc"));
 
-		Assert.Equal(new[] { "A.VOL" }, GameContent.MountSimulator(Install).MountedArchives);
+		Assert.Equal(new[] { "A.VOL" }, GameInstall.MountSimulator(Install).MountedArchives);
 	}
 
 	[Fact]
@@ -85,7 +85,7 @@ public class GameContentMountTests : IDisposable {
 		WriteFile(Path.Combine(Install, "dat", "x.dat"), "loose");
 		WriteFile(Path.Combine(Install, "dat", "new.dat"), "new");
 
-		var content = GameContent.MountSimulator(Install);
+		var content = GameInstall.MountSimulator(Install);
 
 		Assert.Equal("loose", Text(content, "X.DAT"));
 		Assert.Equal("archive", Text(content, "Y.DAT"));
@@ -101,7 +101,7 @@ public class GameContentMountTests : IDisposable {
 		WriteFile(Path.Combine(Disc, "DAT", "Z.DAT"), "disc");
 		WriteDriveCfg(Disc);
 
-		var content = GameContent.MountSimulator(Install);
+		var content = GameInstall.MountSimulator(Install);
 
 		Assert.Equal("archive", Text(content, "X.DAT"));
 		Assert.False(content.Contains("DAT", "Z.DAT"));
@@ -117,14 +117,14 @@ public class GameContentMountTests : IDisposable {
 			return;
 		}
 
-		var simulator = GameContent.MountSimulator(install).MountedArchives;
+		var simulator = GameInstall.MountSimulator(install).MountedArchives;
 		Assert.Equal("SIMPATCH.VOL", simulator[0]);
 		Assert.Equal(
 			new[] { "SIMALERT.VOL", "SIMLANG.VOL", "SIMPATCH.VOL", "SIMSOUND.VOL", "SIMVOICE.VOL", "SIMVOICF.VOL",
 				"SIMVOICG.VOL", "SIMVOL0.VOL", "ZONES.VOL" },
 			simulator.Order(StringComparer.OrdinalIgnoreCase));
 
-		var shell = GameContent.MountShell(install).MountedArchives;
+		var shell = GameInstall.MountShell(install).MountedArchives;
 		Assert.Equal("SHELL1.VOL", shell[0]);
 		Assert.Equal(new[] { "LANG0.VOL", "SHELL0.VOL", "SHELL1.VOL", "SHLSOUND.VOL", "ZONES.VOL" },
 			shell.Order(StringComparer.OrdinalIgnoreCase));
@@ -137,12 +137,12 @@ public class GameContentMountTests : IDisposable {
 			return;
 		}
 
-		var simulator = GameContent.MountSimulator(install);
+		var simulator = GameInstall.MountSimulator(install);
 		Assert.Contains("SIMVOL0.VOL", simulator.MountedArchives);
 		Assert.Contains("ZONES.VOL", simulator.MountedArchives);
-		Assert.False(File.Exists(Path.Combine(GameInstall.ArchiveDirectory(install), "SIMVOL0.VOL")));
+		Assert.False(File.Exists(Path.Combine(GameContent.ArchiveDirectory(install), "SIMVOL0.VOL")));
 
-		var shell = GameContent.MountShell(install);
+		var shell = GameInstall.MountShell(install);
 		Assert.Equal(new[] { "LANG0.VOL", "SHELL0.VOL", "SHELL1.VOL", "SHLSOUND.VOL", "ZONES.VOL" },
 			shell.MountedArchives.Order(StringComparer.OrdinalIgnoreCase));
 		Assert.NotNull(shell.Read("ENG", "ESTEXT.BIN"));
@@ -207,7 +207,7 @@ public class GameContentMountTests : IDisposable {
 		}
 
 		bytes.AddRange(data);
-		string path = Path.Combine(root, GameInstall.ArchiveFolderName, fileName);
+		string path = Path.Combine(root, GameContent.ArchiveFolderName, fileName);
 		Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 		File.WriteAllBytes(path, bytes.ToArray());
 	}

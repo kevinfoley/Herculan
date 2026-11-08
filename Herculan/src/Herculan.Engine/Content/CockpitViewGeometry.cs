@@ -18,7 +18,7 @@ namespace Herculan.Engine.Content;
 ///
 /// <para>Coordinates in the file are authored in the 320-wide space and shifted left by
 /// <c>VideoMode_X/YCoordShift</c> at load — 0 in mode 0, 1 in the 640x480 modes. Herculan renders the
-/// <c>hb&lt;n&gt;</c>/<c>hba\</c> hi-res assets throughout (see <see cref="CockpitArt"/>), so this
+/// <c>hb&lt;n&gt;</c>/<c>hba\</c> hi-res assets throughout, so this
 /// class applies shift <see cref="CoordShift"/> = 1 and reports device pixels: the heads-down view's
 /// authored origin of (0,237) becomes (0,474).</para>
 /// </summary>
@@ -34,7 +34,7 @@ public sealed class CockpitViewGeometry {
 
 	/// <summary>
 	/// The glance whose canopy bitmap is the authored one, canvas origin (+320,0) — the same view
-	/// <see cref="CockpitArt.SideViewIndex"/> loads <c>.HB2</c> and <c>.HD2</c> for.
+	/// the cockpit art loads <c>.HB2</c> and <c>.HD2</c> for.
 	/// </summary>
 	public const int GlanceViewIndex = 2;
 

@@ -39,7 +39,7 @@ public class MissionFileLaunchTests {
 		}
 
 		// The game's draws, not the editor's lowest ones, under which a generator copied at the wrong moment draws the same.
-		string? script = MissionFileLaunch.Open(GameContent.MountShell(root), root, "TRAIN5.MSN", directory,
+		string? script = MissionFileLaunch.Open(GameInstall.MountShell(root), root, "TRAIN5.MSN", directory,
 			ShellTrainingLaunch.StartupRandom(), out var document, out var squad, out string? failure);
 
 		Assert.True(script != null, failure);
@@ -68,7 +68,7 @@ public class MissionFileLaunchTests {
 			}
 		}
 
-		string? script = MissionOpener.Open(GameContent.MountShell(root), root, "TRAIN5.MSN", directory, out var document, out _,
+		string? script = MissionOpener.Open(GameInstall.MountShell(root), root, "TRAIN5.MSN", directory, out var document, out _,
 			out string? failure);
 
 		Assert.True(script != null, failure);
@@ -104,10 +104,10 @@ public class MissionFileLaunchTests {
 			}
 		}
 
-		var shell = GameContent.MountShell(root);
+		var shell = GameInstall.MountShell(root);
 		string? script = MissionOpener.Open(shell, root, "C1_07.MSN", directory, out var document, out var squad, out string? failure);
 		Assert.True(script != null, failure);
-		var simulator = GameContent.MountSimulator(root);
+		var simulator = GameInstall.MountSimulator(root);
 		var archived = new ArchivedMissions(() => shell);
 		var mission = EditorMission.Open(simulator, script, "C1_07", directory, document!, squad!, () => shell,
 			new CybridWeapons(simulator, archived), new ZoneCatalog(simulator, archived));
@@ -140,7 +140,7 @@ public class MissionFileLaunchTests {
 			nameof(ALaunchWritesTheMissionsOwnZoneBesideItsScriptAndALaunchWithoutOneRemovesIt));
 		Directory.CreateDirectory(directory);
 		MissionFileLaunch.ClearHandoff(directory);
-		var shell = GameContent.MountShell(root);
+		var shell = GameInstall.MountShell(root);
 		var (msn, text) = ShellCareerMissions.ReadMission(shell, $"{MissionFileLaunch.MissionFolder}\\TRAIN5.MSN")!.Value;
 		var heights = new byte[128 * 128];
 		new Random(128).NextBytes(heights);

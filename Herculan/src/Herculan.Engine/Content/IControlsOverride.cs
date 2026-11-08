@@ -2,7 +2,7 @@ namespace Herculan.Engine.Content;
 
 /// <summary>
 /// CONTROLS settings that stand in for some of <c>prefs.cfg</c>'s while they apply, read and written through
-/// <see cref="SimulatorPreferences"/> in their place, and saved somewhere other than <c>prefs.cfg</c>. A gamepad's
+/// the simulator's preferences in their place, and saved somewhere other than <c>prefs.cfg</c>. A gamepad's
 /// (<see cref="Input.GamepadControls"/>) is the one there is.
 /// </summary>
 public interface IControlsOverride {

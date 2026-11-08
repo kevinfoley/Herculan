@@ -53,7 +53,7 @@ public sealed class HudFont {
 		_glyphs = glyphs;
 	}
 
-	/// <summary>The font's resource name, e.g. <c>WHITE</c> — also its key in <see cref="HudSpriteSheet"/>.</summary>
+	/// <summary>The font's resource name, e.g. <c>WHITE</c> — also its key in the HUD sprite sheet.</summary>
 	public string Name { get; }
 
 	/// <summary>Character code of glyph 0. 32 (space) in every retail file.</summary>
@@ -144,7 +144,7 @@ public sealed class HudFont {
 	/// Resource folder, which is also the extension. Defaults to <see cref="ResourceFolder"/>, the
 	/// simulator's 640-wide set. The shell ships its own fonts only as <c>dfn\</c> and draws them
 	/// unscaled on a 640-wide canvas, which is a different arrangement from DBSIM's
-	/// <c>dfn</c>/<c>hfn</c> pair but the same file format — see <see cref="Shell.ShellArt"/>.
+	/// <c>dfn</c>/<c>hfn</c> pair but the same file format.
 	/// </param>
 	public static HudFont? Load(GameContent content, string name, string? folder = null) {
 		folder ??= ResourceFolder;

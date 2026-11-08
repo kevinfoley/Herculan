@@ -67,7 +67,7 @@ public sealed record JoystickDeviceMap {
 	/// Whether the RAZOR's pitch runs the other way to what the four inverts above give it — <b>this engine's
 	/// invention</b>; retail has no invert of any kind. The per-axis inverts serve both machines, and with the
 	/// default bindings one control pitches a HERC's turret and a RAZOR's nose, so this is how the two get
-	/// separate senses. <see cref="JoystickBindings.InvertRazorPitch"/> applies it.
+	/// separate senses. The bindings apply it.
 	/// </summary>
 	public bool InvertRazorPitch { get; init; }
 

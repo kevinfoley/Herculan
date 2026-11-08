@@ -145,7 +145,7 @@ public class SkyGradientTests {
 			return;
 		}
 
-		var content = GameContent.MountSimulator(root);
+		var content = GameInstall.MountSimulator(root);
 		for (int worldIndex = 0; worldIndex < TheaterDescriptor.Count; worldIndex++) {
 			var theater = TheaterDescriptor.LoadByWorldIndex(content, worldIndex);
 			var bytes = content.Read(TheaterDescriptor.ResourceFolder, $"WORLD{worldIndex}.WLD")!;

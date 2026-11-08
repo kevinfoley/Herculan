@@ -94,7 +94,7 @@ static class SimulatorStartup {
 		Console.WriteLine($"HERCULAN Engine — loading {scriptPath} from {installRoot}");
 
 		var disc = session.Disc;
-		var content = GameContent.MountSimulator(installRoot, disc);
+		var content = GameInstall.MountSimulator(installRoot, disc);
 		Console.WriteLine($"Mounted archives: {string.Join(", ", content.MountedArchives)}");
 
 		loading.Show(content, scriptPath);
@@ -188,8 +188,8 @@ static class SimulatorStartup {
 		// VoiceArchivePresent (0049e9cd) -- which Voice_ArchiveExists (00459d6c) sets by trying to fopen the localised
 		// vol\simvoic?.vol under the install, not the disc -- is what lets the two message rows be stepped at all.
 		bool soundAvailable = audio.Director != null;
-		bool voiceAvailable = Directory.Exists(GameInstall.ArchiveDirectory(installRoot))
-			&& Directory.EnumerateFiles(GameInstall.ArchiveDirectory(installRoot), ComputerVoice.VoiceFolder(content.Language) + ".VOL",
+		bool voiceAvailable = Directory.Exists(GameContent.ArchiveDirectory(installRoot))
+			&& Directory.EnumerateFiles(GameContent.ArchiveDirectory(installRoot), ComputerVoice.VoiceFolder(content.Language) + ".VOL",
 				new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive }).Any();
 
 		// Prefs_Init (0045a19c): the option handlers, then the walk that runs each once over what was read,

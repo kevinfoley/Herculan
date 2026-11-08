@@ -7,8 +7,8 @@ namespace Herculan.Engine.View;
 
 /// <summary>
 /// A Unity-Editor-style free-fly observer camera: hold the right mouse button and move the mouse
-/// to look, WASD/arrow keys to move, shift to move faster. Unlike <see cref="Sim.FlyCameraObject"/>
-/// this is not a <see cref="Sim.SimObject"/> — it is tool-only input handling with no place in the
+/// to look, WASD/arrow keys to move, shift to move faster. Unlike the simulator's fly camera
+/// this is not a simulation object — it is tool-only input handling with no place in the
 /// simulation, for the hosts that show a scene without running one (the mission editor, the ES1
 /// zone viewer), and drives a <see cref="Camera"/> directly from float deltas each frame rather than
 /// through the fixed-point sim tick.
@@ -26,7 +26,7 @@ public sealed class EditorCamera {
 	/// <summary>Radians of yaw/pitch per pixel of mouse movement while looking.</summary>
 	public float LookSensitivity { get; set; } = 0.0025f;
 
-	/// <summary>Pitch clamp, just short of straight up/down (matches <see cref="Sim.FlyCameraObject.PitchLimit"/>'s intent).</summary>
+	/// <summary>Pitch clamp, just short of straight up/down (as the simulator's fly camera clamps).</summary>
 	public float PitchLimit { get; set; } = MathF.PI / 2f * 0.98f;
 
 	/// <summary>Eye position in world units (float, not the sim's fixed <see cref="Vec3i"/>).</summary>

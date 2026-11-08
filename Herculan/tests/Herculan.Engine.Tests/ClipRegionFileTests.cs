@@ -24,7 +24,7 @@ public class ClipRegionFileTests {
 	[InlineData("MFDCLIP.EDG")]
 	public void EdgFileIsOneSpanBlock(string name) {
 		if (GameInstall.Locate(null) is not { } root
-			|| GameContent.MountSimulator(root).Read("edg", name) is not { } bytes) {
+			|| GameInstall.MountSimulator(root).Read("edg", name) is not { } bytes) {
 			return;
 		}
 
@@ -53,7 +53,7 @@ public class ClipRegionFileTests {
 			return;
 		}
 
-		var content = GameContent.MountSimulator(root);
+		var content = GameInstall.MountSimulator(root);
 		var clip = new ClipRegionFileTransformer().Parse(content.Read("edg", "HDDCLIP.EDG")!);
 		var gau = new GauFileTransformer().Parse(content.Read("gau", herc + ".GAU")!);
 		var screen = HddLayout.Load(gau!, headsDownCanvasOriginY: 0)!.Screen;

@@ -122,7 +122,7 @@ public enum KeyAction {
 	CommandSquadmate2,
 	CommandSquadmate3,
 
-	/// <summary>The first of the eight orders, in the screen's list order (<see cref="Cockpit.HddOrder"/>).</summary>
+	/// <summary>The first of the eight orders, in the screen's list order.</summary>
 	CommandDisengage,
 	CommandAttackEnemy,
 	CommandDefendPosition,

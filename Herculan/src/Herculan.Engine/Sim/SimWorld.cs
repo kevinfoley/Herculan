@@ -202,7 +202,7 @@ public sealed class SimWorld {
 	/// </summary>
 	public bool FlightThrottleIsLever { get; set; }
 
-	/// <inheritdoc cref="Content.GameContent.IsV110"/>
+	/// <inheritdoc cref="Install.LauncherLanguage.IsV110"/>
 	/// <remarks>The simulation asks it only which release's ray walk to run — see <see cref="ThinRay"/>.</remarks>
 	public bool IsV110 { get; set; }
 

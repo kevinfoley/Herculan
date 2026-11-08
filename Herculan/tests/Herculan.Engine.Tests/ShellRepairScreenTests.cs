@@ -545,7 +545,7 @@ public class ShellRepairScreenTests {
 	[Fact]
 	public void RoundTripsTheRetailValueTableAndRetailValuesIsIt() {
 		if (GameInstall.Locate(null) is not { } root
-			|| GameContent.MountShell(root).Read(ShellRepairCosts.CatalogFolder, ShellRepairCosts.ValuesResourceName)
+			|| GameInstall.MountShell(root).Read(ShellRepairCosts.CatalogFolder, ShellRepairCosts.ValuesResourceName)
 				is not { } bytes) {
 			return;
 		}

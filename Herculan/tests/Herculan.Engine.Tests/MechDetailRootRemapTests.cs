@@ -85,7 +85,7 @@ public class MechDetailRootRemapTests {
 
 	private static (IReadOnlyList<TSObject> Roots, byte[] PartIds)? Load(string herc) {
 		if (GameInstall.Locate(null) is not { } root
-				|| GameContent.MountSimulator(root) is not { } content
+				|| GameInstall.MountSimulator(root) is not { } content
 				|| content.Read("dts", herc + ".DTS") is not { } dtsBytes
 				|| content.Read("dat", herc + ".DAT") is not { } datBytes
 				|| new DTSModelTransformer().Parse(dtsBytes) is not DynamixThreeSpaceModel { Roots: { Count: > 1 } roots }

@@ -114,7 +114,7 @@ public struct MeshVertex {
 	/// (docs/retail/rendering/dts-texture-binding.md#tssolidpoly--palette-index-unlit-fill-plus-outline),
 	/// which here is one row of <see cref="Render.PaletteRampTable"/>. The index travels to the GPU
 	/// rather than a color resolved on the CPU because that color could follow neither the slice nor
-	/// the table swap for the cockpit's damage flash (<see cref="Scene.ImpactFlash"/>). The outline
+	/// the table swap for the cockpit's damage flash. The outline
 	/// pass carries its line entry's index the same way.</para>
 	///
 	/// <para><see cref="Color"/> still carries the resolved colour and is what draws when no palette

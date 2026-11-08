@@ -1,16 +1,13 @@
 using HercWorks.Core.Io;
 using HercWorks.Disc;
 using HercWorks.Disc.Iso9660;
-using Herculan.Engine.Install;
 
 namespace Herculan.Engine.Content;
 
 /// <summary>
-/// The Earthsiege 2 disc, as both programs reach it through <c>data\drive.cfg</c>: the <c>VOL</c> archives an
-/// install did not copy, the movies, the on-line manual and the training instructor's clips
-/// (docs/retail/retail-builds.md, "The installer"). Retail's disc is always a directory; here it is either a directory
-/// (<see cref="OpenFolder"/>) or a CD image read in place (<see cref="OpenImage"/>), which is this engine's own
-/// (<see cref="GameInstall.OpenDisc"/> says which an install names).
+/// A game's disc: the <c>VOL</c> archives an install did not copy, and the other files its programs read from the
+/// disc. Retail's disc is always a directory; here it is either a directory (<see cref="OpenFolder"/>) or a CD image
+/// read in place (<see cref="OpenImage"/>), which is this engine's own.
 ///
 /// <para>Paths are relative to the disc's root, <c>\</c> or <c>/</c> separated, and matched ignoring case on an
 /// image, as ISO 9660 names are. An image is untrusted input; <see cref="DiscImage"/> bounds-checks everything it
@@ -97,7 +94,7 @@ public abstract class GameDisc : IDisposable {
 		}
 
 		public override IReadOnlyList<string> ArchiveNames() {
-			string archives = CaseInsensitivePath.Combine(directory, GameInstall.ArchiveFolderName);
+			string archives = CaseInsensitivePath.Combine(directory, GameContent.ArchiveFolderName);
 			return Directory.Exists(archives)
 				? Directory.GetFiles(archives, GameContent.ArchivePattern, new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive })
 					.Select(Path.GetFileName).OfType<string>().ToList()
@@ -127,7 +124,7 @@ public abstract class GameDisc : IDisposable {
 			fileSystem.Find(relativePath) is { IsDirectory: false } file ? fileSystem.OpenRead(file) : null;
 
 		public override IReadOnlyList<string> ArchiveNames() =>
-			fileSystem.Find(GameInstall.ArchiveFolderName) is { IsDirectory: true } archives
+			fileSystem.Find(GameContent.ArchiveFolderName) is { IsDirectory: true } archives
 				? archives.Children
 					.Where(entry => !entry.IsDirectory && entry.Name.EndsWith(".vol", StringComparison.OrdinalIgnoreCase))
 					.Select(entry => entry.Name)

@@ -9,6 +9,7 @@ using Herculan.Engine.Sim.Ai;
 using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
 using System.Numerics;
+using Herculan.Engine.Install;
 
 namespace Herculan.Engine.Scene;
 
@@ -391,7 +392,7 @@ public sealed class MissionScene {
 			PlayerInvulnerable = mission.Header.PlayerInvulnerable,
 			Theater = mission.Header.TheaterIndex,
 			Tweaks = TweakSettings.Current,
-			IsV110 = content.IsV110
+			IsV110 = LauncherLanguage.IsV110(content.InstallRoot)
 		};
 		world.Mission.LoadCounters(mission.Counters);
 		int cockpitScheme = CockpitPalette.ReadSchemeIndex(content, mission.Player?.TypeName);

@@ -3,6 +3,7 @@ using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
 using ImGuiNET;
 using Silk.NET.OpenGL;
+using Herculan.Engine.Content;
 
 namespace Herculan.Engine.Host.Install;
 
@@ -33,7 +34,7 @@ static class InstallPrompt {
 	/// <summary>Why <paramref name="path"/> cannot be the install, in the player's language, or null when it can.</summary>
 	public static string? Refusal(LocalizationTable localization, string path) =>
 		!GameInstall.IsInstallRoot(path)
-			? string.Format(localization.GetStringOrKey("install_prompt.not_an_install"), path, GameInstall.ArchiveFolderName)
+			? string.Format(localization.GetStringOrKey("install_prompt.not_an_install"), path, GameContent.ArchiveFolderName)
 			: GameInstall.IsOnDisc(path) ? localization.GetStringOrKey("install_prompt.on_disc")
 			: null;
 
@@ -117,7 +118,7 @@ static class InstallPrompt {
 			| ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
 		languageChanged = language.Draw();
 		ImGui.Separator();
-		var outcome = prompt.Draw(owner, GameInstall.ArchiveFolderName);
+		var outcome = prompt.Draw(owner, GameContent.ArchiveFolderName);
 		ImGui.End();
 		return outcome;
 	}

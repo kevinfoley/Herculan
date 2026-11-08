@@ -22,7 +22,7 @@ public readonly record struct AtlasRect(float U0, float V0, float U1, float V1);
 /// each other.</para>
 ///
 /// <para>CPU-side on purpose: nothing but <see cref="Upload"/> touches GL, so
-/// <see cref="Scene.MissionScene"/> stays buildable headlessly.</para>
+/// a mission's scene stays buildable headlessly.</para>
 /// </summary>
 public sealed class TextureAtlas {
 	/// <summary>Blank pixels between packed frames, so no filtering or rounding can sample a neighbour.</summary>
@@ -138,9 +138,9 @@ public sealed class TextureAtlas {
 	/// <para><paramref name="transparentIndex0"/> decodes palette index 0 to alpha 0 instead of an
 	/// opaque colour. Off by default because most banks want index 0 opaque; sprite banks and the
 	/// structure banks, whose cutout frames are documented in docs/retail/rendering/dts-texture-binding.md,
-	/// both ask for it — see <c>Scene.SceneModelLibrary.LoadAtlas</c>. The 2D HUD sprite banks
-	/// (<c>Content.HudSpriteSheet</c>) treat 0 as "leave the console art showing through", the same
-	/// sentinel role index 0 plays in <c>Content.CockpitArt</c>.</para>
+	/// both ask for it. The 2D HUD sprite banks
+	/// treat 0 as "leave the console art showing through", the same
+	/// sentinel role index 0 plays in the cockpit art.</para>
 	/// </summary>
 	public static TextureAtlas? Build(DynamixBitmapArray bank, DynamixPalette? palette, bool transparentIndex0 = false) {
 		if (bank.Images is not { Length: > 0 } images) {

@@ -19,7 +19,7 @@ namespace Herculan.Engine.Host.Settings;
 /// them after.
 ///
 /// <para>The install and the disc are read once per shell turn — the archives are mounted from them as the turn
-/// starts (<see cref="GameContent.MountShell(string, GameDisc?)"/>) — so changing any of them brings the shell back
+/// starts (<see cref="GameInstall.MountShell(string, GameDisc?)"/>) — so changing any of them brings the shell back
 /// up through <c>restartShell</c>. A mission has none to give, and there they are greyed. The install is asked for
 /// with the startup's own prompt (<see cref="InstallPrompt"/>), or made from a disc (<see cref="InstallPanel"/>);
 /// the disc folder is written into the install's <c>drive.cfg</c> (<see cref="GameInstall.WriteDiscDirectory"/>),
@@ -397,7 +397,7 @@ sealed class SettingsWindow : IDisposable {
 		}
 
 		var outcome = _promptKind == PromptKind.Install
-			? _prompt.Draw(owner, GameInstall.ArchiveFolderName)
+			? _prompt.Draw(owner, GameContent.ArchiveFolderName)
 			: _prompt.Draw(owner, Drive.FileName);
 		if (outcome != PathPrompt.Outcome.Open) {
 			ImGui.CloseCurrentPopup();

@@ -1,3 +1,4 @@
+using Herculan.Engine.Content;
 using Herculan.Engine.Host;
 using Herculan.Engine.Host.Install;
 using Herculan.Engine.Host.Shell;
@@ -78,7 +79,7 @@ if (installRoot == null) {
 	HostLog.Fail(
 		"Could not find an Earthsiege 2 installation.\n" +
 		$"Pass its path as the first argument, or set {GameInstall.PathVariable}.\n" +
-		$"The path should be the folder containing the '{GameInstall.ArchiveFolderName}' directory.");
+		$"The path should be the folder containing the '{GameContent.ArchiveFolderName}' directory.");
 	return 1;
 }
 

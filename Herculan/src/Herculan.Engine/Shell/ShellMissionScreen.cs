@@ -2,6 +2,7 @@ using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 
 namespace Herculan.Engine.Shell;
 
@@ -241,7 +242,7 @@ public static class ShellCampaignText {
 
 	/// <summary>The <c>LANG0.VOL</c> folder <c>campaign.str</c> is read from.</summary>
 	internal static string Folder(GameContent content) =>
-		content.IsV110 ? ShellText.LanguageFolder(content.Language) : ShellText.EnglishFolder;
+		LauncherLanguage.IsV110(content.InstallRoot) ? ShellText.LanguageFolder(content.Language) : ShellText.EnglishFolder;
 }
 
 /// <summary>The mission tab's banks: the arrow faces, the <c>TERRA DEFENSE</c> plate and the campaign map's two pictures.</summary>

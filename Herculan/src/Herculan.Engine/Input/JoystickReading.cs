@@ -14,7 +14,7 @@ namespace Herculan.Engine.Input;
 /// Nothing in it names hardware; <see cref="JoystickDeviceMap"/> decides which physical control
 /// fills which field.</para>
 /// </summary>
-/// <param name="StickX">The stick's left/right axis, <see cref="Sim.MechControls.AxisFull"/> at full right.</param>
+/// <param name="StickX">The stick's left/right axis, full deflection, 256, at full right.</param>
 /// <param name="StickY">The stick's fore/aft axis, positive pulled back.</param>
 /// <param name="Throttle">The throttle axis. Present only when <see cref="JoystickCapabilitiesOf"/> says so.</param>
 /// <param name="Rudder">The rudder axis, positive right.</param>
@@ -36,7 +36,7 @@ public readonly record struct JoystickReading(
 	///
 	/// <para>It is <b>not</b> what a stick delivers to the simulation —
 	/// <see cref="ApplyResponse"/> is what settles that, and it lands on
-	/// <see cref="Sim.MechControls.AxisFull"/>.</para>
+	/// full deflection, 256.</para>
 	/// </summary>
 	public const int RawFull = 0x80;
 
@@ -60,7 +60,7 @@ public readonly record struct JoystickReading(
 	/// (docs/retail/simulation/joystick-input.md#normalising-an-axis).
 	///
 	/// <para>The deadzone is subtracted, then the result is squared and scaled, so full deflection
-	/// comes out at 258 — a shade over <see cref="Sim.MechControls.AxisFull"/>, which the control laws
+	/// comes out at 258 — a shade over full deflection, 256, which the control laws
 	/// clamp it to — and the first stretch of travel past the band is worth almost nothing.</para>
 	/// </summary>
 	/// <param name="raw">One axis in <see cref="RawFull"/> units, as the normalisation leaves it.</param>

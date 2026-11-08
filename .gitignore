@@ -5,6 +5,9 @@ herc-works-mdk-main/
 tools/*
 !tools/ghidra_scripts
 !tools/scripts
+!tools/BoundaryCheck
+tools/BoundaryCheck/bin/
+tools/BoundaryCheck/obj/
 Herculan/.vs/
 Herculan/src/HercWorks.UI/bin/
 Herculan/src/HercWorks.UI/obj/

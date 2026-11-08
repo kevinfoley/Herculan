@@ -136,7 +136,7 @@ sealed class ShellHost : IDisposable {
 			ShellCampaignMode? forcedMode = null, int startTab = ShellScreen.MainMenuTab,
 			int startBay = 0, bool startPractice = false, bool silentAudio = false, bool writePreferences = true,
 			bool startWindowed = false, bool moviesEnabled = true, int returnCode = StartupCode, bool missionPicker = false) {
-		var content = GameContent.MountShell(session.InstallRoot, session.Disc);
+		var content = GameInstall.MountShell(session.InstallRoot, session.Disc);
 		Console.WriteLine($"Mounted archives: {string.Join(", ", content.MountedArchives)}");
 
 		// Shell_Main (00401525) opens avi\pt1.avi through Path_UnderDriveCfg (0040d429) and, failing,

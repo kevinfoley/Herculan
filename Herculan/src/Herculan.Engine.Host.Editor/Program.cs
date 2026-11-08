@@ -12,7 +12,7 @@ if (installRoot == null) {
 	Console.Error.WriteLine(
 		"Could not find an Earthsiege 2 installation.\n" +
 		$"Pass its path as the first argument, or set {GameInstall.PathVariable}.\n" +
-		$"The path should be the folder containing the '{GameInstall.ArchiveFolderName}' directory.");
+		$"The path should be the folder containing the '{GameContent.ArchiveFolderName}' directory.");
 	return 1;
 }
 if (GameInstall.IsOnDisc(installRoot)) {
@@ -22,8 +22,8 @@ if (GameInstall.IsOnDisc(installRoot)) {
 GameInstall.Remember(installRoot);
 
 GameContent? shellContent = null;
-EditorHost.Run(new EditorLaunch(installRoot, GameContent.MountSimulator(installRoot),
-	() => shellContent ??= GameContent.MountShell(installRoot),
+EditorHost.Run(new EditorLaunch(installRoot, GameInstall.MountSimulator(installRoot),
+	() => shellContent ??= GameInstall.MountShell(installRoot),
 	Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "Open_Sans", "static", "OpenSans-Regular.ttf")) {
 	Mission = args.Length > 1 ? args[1] : null,
 	BoldFontPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "Open_Sans", "static", "OpenSans-Bold.ttf"),

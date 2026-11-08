@@ -49,7 +49,7 @@ public static class ShapeDetail {
 
 	/// <summary>
 	/// The HERC DETAIL setting to use when none can be read — the finest, matching
-	/// <see cref="Terrain.TerrainDetail.DefaultLevel"/>'s reasoning and the install the reference
+	/// the TERRAIN DETAIL default's reasoning and the install the reference
 	/// captures were taken on.
 	/// </summary>
 	public const int DefaultDetailSetting = 4;

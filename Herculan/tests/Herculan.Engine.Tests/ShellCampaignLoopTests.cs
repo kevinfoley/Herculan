@@ -174,7 +174,7 @@ public sealed class ShellCampaignLoopTests : IDisposable {
 		var options = SimulatorPreferences.Defaults();
 		var game = new GameInProgress(_root, saveScreen, new ShellMainMenu(false), options, mode, null, ShellHangar.From(null),
 			ShellWorkingFiles.ForSlot(_root, -1));
-		var loop = new ShellCampaignLoop(_root, GameContent.MountShell(install), game, saveScreen);
+		var loop = new ShellCampaignLoop(_root, GameInstall.MountShell(install), game, saveScreen);
 		loop.Adopted += (adopted, files) => _adopted.Add((adopted, files));
 		loop.SlotLoaded += _loaded.Add;
 		return (loop, game);

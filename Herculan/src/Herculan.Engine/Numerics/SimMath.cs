@@ -23,7 +23,7 @@ public static class SimMath {
 	/// The global simulation timestep — DBSIM's <c>SimTickDelta</c> (<c>004d3be8</c>), read by
 	/// <see cref="IntegrateRateOverTick"/> and <see cref="CountdownTimerTick"/>. In DBSIM this is
 	/// refreshed once per frame from a hardware timer by the per-frame sim tick
-	/// (<c>Sim_MainTick</c>, <c>0045f464</c>); here the sim loop owns it the same way (see <c>Sim/SimWorld</c>).
+	/// (<c>Sim_MainTick</c>, <c>0045f464</c>); here the game's simulation loop owns it the same way.
 	///
 	/// Everything scaled by it is a "per this tick" quantity, not "per second" — which is what
 	/// makes DBSIM a discrete fixed/semi-fixed timestep sim rather than a continuous-time
@@ -57,8 +57,7 @@ public static class SimMath {
 	/// <summary>
 	/// <c>Math_Q16Multiply</c> (<c>0047df81</c>) — Q16 fixed-point multiply: <c>(int64)a*b >> 16</c>.
 	/// Pairs with <see cref="Q16Divide"/> to apply a ratio built from two integers; that is exactly
-	/// what <c>MechType_InitOne</c> does to rescale a mech type's speed fields at load
-	/// (see <see cref="Sim.MechTypeRecord"/>).
+	/// what <c>MechType_InitOne</c> does to rescale a mech type's speed fields at load.
 	/// </summary>
 	/// <summary>
 	/// <c>Math_MapRange</c> (<c>0047de3c</c>) — a linear remap of <paramref name="value"/> from
@@ -172,7 +171,7 @@ public static class SimMath {
 	/// The <see cref="TickDelta"/> the original produces on hardware fast enough to hit its own
 	/// 40 ms frame cap: <c>40 * 256 / 125</c>. It is the reference point
 	/// <see cref="ScalePerTickStep"/> measures against, and the value the engine's fixed timestep
-	/// pins <see cref="TickDelta"/> to (see <c>Sim/SimWorld</c>).
+	/// pins <see cref="TickDelta"/> to.
 	/// </summary>
 	public const short VanillaTickDelta = 81;
 

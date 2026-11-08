@@ -149,8 +149,7 @@ public sealed class ShadeRamp {
 	/// outer half only.</para>
 	/// </summary>
 	/// <param name="distance">Distance from the view, in world units.</param>
-	/// <param name="visibilityRange">The far limit, in world units — see
-	/// <see cref="Terrain.HeightGrid.VisibilityRange"/>.</param>
+	/// <param name="visibilityRange">The far limit, in world units: the zone's draw distance.</param>
 	public int DepthSliceFor(long distance, long visibilityRange) {
 		if (visibilityRange <= 0) {
 			return 0;

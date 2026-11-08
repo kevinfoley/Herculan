@@ -1,7 +1,7 @@
 namespace Herculan.Engine.Audio;
 
 /// <summary>
-/// The mixer underneath <see cref="SoundDirector"/>: it holds the decoded samples, hands out a
+/// The mixer underneath the game's sound code: it holds the decoded samples, hands out a
 /// playback channel when one is asked for, and does nothing but play what it is told at the gain
 /// and pan it is given.
 ///
@@ -12,7 +12,7 @@ namespace Herculan.Engine.Audio;
 /// restart". Channels are finite, so <see cref="Start"/> can refuse.</para>
 ///
 /// <para><b>Deliberately not a 3D audio API.</b> Distance rolloff, panning and the audible cutoff
-/// are the original's own rules and are computed in <see cref="SoundDirector.Place"/> before
+/// are the original's own rules and are computed by the game's sound code before
 /// anything reaches here — see docs/retail/simulation/audio.md.</para>
 ///
 /// <para>The abstraction will enable building different audio backends for different platforms. It
@@ -34,7 +34,7 @@ public interface IAudioBackend : IDisposable {
 	/// Begins a playback of <paramref name="sample"/> on a free channel.
 	///
 	/// <para>Gain, pan and pitch are passed in rather than set afterwards; they are the caller's own
-	/// per-sound state, which <see cref="SoundDirector"/> keeps exactly as the original keeps it on 
+	/// per-sound state, which the game's sound code keeps exactly as the original keeps it on 
 	/// the voice record.</para>
 	/// </summary>
 	/// <param name="looping">Endless repetition.</param>

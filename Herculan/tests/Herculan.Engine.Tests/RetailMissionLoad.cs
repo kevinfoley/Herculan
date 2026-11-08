@@ -4,6 +4,7 @@ using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Shell;
 using Xunit;
+using Herculan.Engine.Install;
 
 namespace Herculan.Engine.Tests;
 
@@ -18,7 +19,7 @@ internal static class RetailMissionLoad {
 			return null;
 		}
 
-		var shell = GameContent.MountShell(install);
+		var shell = GameInstall.MountShell(install);
 		var options = SimulatorPreferences.Defaults();
 		var random = new SimRandom();
 		int Roll(short bound) => random.NextBelow(bound);
@@ -30,6 +31,6 @@ internal static class RetailMissionLoad {
 		var handoff = ShellTrainingLaunch.Load(root, shell, options, 0, $@"MSN\{mission}.MSN", false, Roll,
 			new short[MissionGenerator.ClearListLength], game, hangar, out string? failure);
 		Assert.True(handoff != null, failure);
-		return MissionScene.Load(GameContent.MountSimulator(install), handoff.ScriptPath);
+		return MissionScene.Load(GameInstall.MountSimulator(install), handoff.ScriptPath);
 	}
 }

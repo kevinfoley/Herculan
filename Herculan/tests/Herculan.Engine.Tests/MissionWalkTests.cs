@@ -103,10 +103,10 @@ public sealed class MissionWalkTests : IDisposable {
 			return null;
 		}
 
-		var handoff = ShellTrainingLaunch.Write(_root, GameContent.MountShell(install), SimulatorPreferences.Defaults(), row,
+		var handoff = ShellTrainingLaunch.Write(_root, GameInstall.MountShell(install), SimulatorPreferences.Defaults(), row,
 			instantAction: false, new SimRandom(), new short[MissionGenerator.ClearListLength], held: null, out string? failure);
 		Assert.True(handoff != null, failure);
-		return MissionScene.Load(GameContent.MountSimulator(install), handoff.ScriptPath);
+		return MissionScene.Load(GameInstall.MountSimulator(install), handoff.ScriptPath);
 	}
 
 	private static MissionScene? Load() {
@@ -122,6 +122,6 @@ public sealed class MissionWalkTests : IDisposable {
 			return null;
 		}
 
-		return MissionScene.Load(GameContent.MountSimulator(root), script);
+		return MissionScene.Load(GameInstall.MountSimulator(root), script);
 	}
 }

@@ -8,6 +8,7 @@ using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
+using Herculan.Engine.Install;
 
 namespace Herculan.Engine.Shell;
 
@@ -66,7 +67,7 @@ public static class MissionFileLaunch {
 	public static string? Write(string installRoot, string name, bool ownWorld, out string? failure) =>
 		// The career table, the name tables and the catalogs are the shell's, and the missions are in ZONES.VOL,
 		// which the shell mounts with them.
-		Write(GameContent.MountShell(installRoot), installRoot, name, ShellWorkingFiles.DataDirectory(installRoot), ownWorld, out failure);
+		Write(GameInstall.MountShell(installRoot), installRoot, name, ShellWorkingFiles.DataDirectory(installRoot), ownWorld, out failure);
 
 	/// <summary>
 	/// Writes the handoff for <paramref name="name"/> into <paramref name="directory"/> and returns its

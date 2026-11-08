@@ -166,8 +166,8 @@ public static class Es1ZoneViewer {
 
 		// What the simulator mounts: SIMVOL0 (program mask 1) and ZONES (0x101), searched by ES2's precedence rule.
 		// ES1's own volume code is unread (docs/es1/formats/zone-terrain.md#open), and its CD drive comes from ALT_DRIVE,
-		// not drive.cfg, so no disc is mounted.
-		var content = GameContent.MountInstall(installRoot, disc: null, Voln.DbsimProgram);
+		// not drive.cfg, so no disc is mounted. Nothing ES1 reads takes the content's language, so it is English.
+		var content = GameContent.MountInstall(installRoot, disc: null, Voln.DbsimProgram, GameLanguage.English);
 		// The HERCs and the cockpit are loaded before the zone, unlike retail, so the scene is built in the live palette
 		// with the player chassis' scheme installed (Es1ZoneScene.Palette); with no player's machine nothing is installed.
 		Es1World world;

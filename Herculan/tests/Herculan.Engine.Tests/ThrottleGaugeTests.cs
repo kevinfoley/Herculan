@@ -120,7 +120,7 @@ public class ThrottleGaugeTests {
 	/// </summary>
 	private static ThrottleTrack? Track(string herc) {
 		if (GameInstall.Locate(null) is { } root
-			&& GameContent.MountSimulator(root) is { } content
+			&& GameInstall.MountSimulator(root) is { } content
 			&& CockpitArt.Load(content, herc, "WORLD1") is { } art) {
 			return ThrottleTrack.From(art);
 		}

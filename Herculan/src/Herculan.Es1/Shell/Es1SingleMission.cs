@@ -36,8 +36,12 @@ public static class Es1SingleMission {
 	/// <summary><paramref name="name"/> in the install's <c>car\</c>.</summary>
 	public static string CarPath(string installRoot, string name) => CaseInsensitivePath.Combine(installRoot, CarFolder, name);
 
-	/// <summary>The shell's resources, from the archives its program mask mounts.</summary>
-	public static GameContent MountShell(string installRoot) => GameContent.MountInstall(installRoot, disc: null, Voln.VshellProgram);
+	/// <summary>
+	/// The shell's resources, from the archives its program mask mounts. Nothing ES1 reads takes the content's language,
+	/// so it is English.
+	/// </summary>
+	public static GameContent MountShell(string installRoot) =>
+		GameContent.MountInstall(installRoot, disc: null, Voln.VshellProgram, GameLanguage.English);
 
 	/// <summary>
 	/// Loads <paramref name="missionName"/> (with or without <c>.MSN</c>) from <c>msn\</c> and writes the five files.

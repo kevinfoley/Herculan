@@ -6,6 +6,7 @@ using Herculan.Engine.Host.Simulator;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
 using Herculan.Engine.World;
+using Herculan.Engine.Install;
 
 namespace Herculan.Engine.Host;
 
@@ -149,8 +150,8 @@ static class Launcher {
 	private static EditorResult RunEditor(HostSession session, HostWindow window, string? mission) {
 		GameContent? shellContent = null;
 		return EditorHost.Run(new EditorLaunch(session.InstallRoot,
-			GameContent.MountSimulator(session.InstallRoot, session.Disc),
-			() => shellContent ??= GameContent.MountShell(session.InstallRoot, session.Disc),
+			GameInstall.MountSimulator(session.InstallRoot, session.Disc),
+			() => shellContent ??= GameInstall.MountShell(session.InstallRoot, session.Disc),
 			session.ImGuiFontPath) {
 			Window = window,
 			Mission = mission,

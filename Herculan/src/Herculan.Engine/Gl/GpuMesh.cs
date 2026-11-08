@@ -109,7 +109,7 @@ public sealed class GpuMesh : IDisposable {
 
 	/// <summary>
 	/// The least corner of a model-space box holding every vertex uploaded, which is how far along the view axis the
-	/// mesh can reach — what the painter's-order draw fits each entry's depth range to (<see cref="Render.WorldDrawPass"/>).
+	/// mesh can reach — what the painter's-order draw fits each entry's depth range to.
 	/// <see cref="Update"/> grows it and nothing shrinks it. Zero for an empty mesh.
 	/// </summary>
 	public Vector3 BoundsMin { get; private set; }

@@ -24,7 +24,7 @@ public class HardpointOverlayTests {
 			return null;
 		}
 
-		var content = GameContent.MountShell(root);
+		var content = GameInstall.MountShell(root);
 		return content.Read("gam", name) is { } bytes
 			? new HardpointOverlayTransformer().Parse(bytes)
 			: null;
@@ -111,7 +111,7 @@ public class HardpointOverlayTests {
 			return;
 		}
 
-		var content = GameContent.MountShell(root);
+		var content = GameInstall.MountShell(root);
 		if (content.Read("gam", name) is not { } original) {
 			return;
 		}

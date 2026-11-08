@@ -29,8 +29,8 @@ public class PropertiesPanelLayoutTests {
 	private sealed class Install {
 		public Install(string root) {
 			Root = root;
-			Shell = GameContent.MountShell(root);
-			Simulator = GameContent.MountSimulator(root);
+			Shell = GameInstall.MountShell(root);
+			Simulator = GameInstall.MountSimulator(root);
 			Archived = new ArchivedMissions(() => Shell);
 			Cybrid = new CybridWeapons(Simulator, Archived);
 			Zones = new ZoneCatalog(Simulator, Archived);

@@ -7,15 +7,13 @@ namespace Herculan.Engine.Input;
 ///
 /// <para>They are the <b>destinations</b> of the binding, not sources: the joystick, the hat and the
 /// keyboard all write here, and which of them reaches a given axis is what a controls block
-/// decides. Full deflection is <see cref="Sim.MechControls.AxisFull"/> on every one; a stick reaches
+/// decides. Full deflection is 256 on every one; a stick reaches
 /// it through <see cref="JoystickReading.ApplyResponse"/>, a held key is worth half
-/// (<see cref="Sim.MechControls.KeyboardAxis"/>) and a hat three quarters
-/// (<see cref="JoystickBindings.HatAxis"/>).</para>
+/// and a hat three quarters.</para>
 ///
 /// <para>A RAZOR reads the same four differently: <see cref="Steer"/> is the aileron,
 /// <see cref="Throttle"/> the elevator, <see cref="TorsoTwist"/> the rudder and
-/// <see cref="TorsoPitch"/> the throttle. The device layer makes no distinction — see
-/// <see cref="Sim.MechControls"/>.</para>
+/// <see cref="TorsoPitch"/> the throttle. The device layer makes no distinction.</para>
 /// </summary>
 public readonly record struct PilotAxes(short Steer = 0, short Throttle = 0,
 		short TorsoTwist = 0, short TorsoPitch = 0) {

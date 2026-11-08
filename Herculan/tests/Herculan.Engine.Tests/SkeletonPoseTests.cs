@@ -137,6 +137,6 @@ public class SkeletonPoseTests {
 
 	private static GameContent? Content() {
 		string? root = GameInstall.Locate(null);
-		return root != null ? GameContent.MountSimulator(root) : null;
+		return root != null ? GameInstall.MountSimulator(root) : null;
 	}
 }

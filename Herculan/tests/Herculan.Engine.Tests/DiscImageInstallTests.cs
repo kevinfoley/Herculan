@@ -119,14 +119,14 @@ public class DiscImageInstallTests : IDisposable {
 		var names = folder.ArchiveNames().Order(StringComparer.OrdinalIgnoreCase).ToList();
 		Assert.Equal(names, image.ArchiveNames().Order(StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
 		foreach (string name in names) {
-			string relative = Path.Combine(GameInstall.ArchiveFolderName, name);
+			string relative = Path.Combine(GameContent.ArchiveFolderName, name);
 			Assert.True(folder.ReadAllBytes(relative, long.MaxValue).AsSpan()
 				.SequenceEqual(image.ReadAllBytes(relative, long.MaxValue)), name);
 		}
 
 		foreach (uint program in new[] { Voln.DbsimProgram, Voln.VshellProgram }) {
-			Assert.Equal(GameContent.MountInstall(install, folder, program).MountedArchives,
-				GameContent.MountInstall(install, image, program).MountedArchives);
+			Assert.Equal(GameContent.MountInstall(install, folder, program, GameLanguage.English).MountedArchives,
+				GameContent.MountInstall(install, image, program, GameLanguage.English).MountedArchives);
 		}
 	}
 

@@ -9,7 +9,7 @@ namespace Herculan.Engine.Audio;
 /// <para><b>OpenAL's own 3D model is switched off.</b> <see cref="DistanceModel.None"/> is set
 /// globally and every source is marked source-relative with its rolloff factor zeroed, so no
 /// attenuation of OpenAL's happens at all. Gain and stereo position are computed by
-/// <see cref="SoundDirector.Place"/> from the original's rules and arrive here already final; the
+/// the game's sound code from the original's rules and arrive here already final; the
 /// source position exists only to make OpenAL pan, and rides a unit circle around the listener at
 /// the origin.</para>
 ///

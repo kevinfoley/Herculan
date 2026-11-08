@@ -85,10 +85,8 @@ public sealed class Camera {
 	public float ViewNearPlane { get; set; } = WorldScale.DistanceToRender(MainViewNearPlaneUnits);
 
 	/// <summary>
-	/// Far plane, in render units. A mission view sets this to the zone's own draw distance —
-	/// <see cref="Terrain.HeightGrid.VisibilityRange"/>, applied through
-	/// <see cref="Scene.Atmosphere.ApplyTo(Camera)"/> — which is where the original's terrain draw
-	/// region ends and where its fog has already saturated, so the clip is not visible as a clip.
+	/// Far plane, in render units. A mission view sets this to the zone's own draw distance, which is where the
+	/// original's terrain draw region ends and where its fog has already saturated, so the clip is not visible as a clip.
 	///
 	/// <para>The default is deliberately not that distance: a camera with no zone behind it still
 	/// has to draw something. A retail zone is 12.6 km across (128 cells of 16384 units) at
@@ -143,7 +141,7 @@ public sealed class Camera {
 	/// <summary>
 	/// The view's orientation as the simulation holds it — the <c>BuildEulerRotationMatrixQ14</c>
 	/// matrix of its euler triple, rows right, forward and up — for the ported code that builds
-	/// the original's view geometry from it (<see cref="Terrain.TerrainVisibleRegion"/>).
+	/// the original's view geometry from it.
 	/// </summary>
 	public Transform3 ViewRotation => SimRotation;
 

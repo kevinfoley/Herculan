@@ -256,7 +256,28 @@ public sealed class ControlsPanel {
 	// The rows ControlsPanel_Run puts in state 2 before its loop starts, and the axis rows of settings that fix them.
 	private bool IsGreyed(int index) =>
 		index < ControlsPanelLayout.RowCount
-		&& (!Capabilities.RowEnabled(index) || index < ControlsPanelLayout.AxisRowCount && AxisRowsFixed);
+		&& (!RowEnabled(index) || index < ControlsPanelLayout.AxisRowCount && AxisRowsFixed);
+
+	/// <summary>
+	/// Whether row <paramref name="row"/> is live by <see cref="Capabilities"/>. Rows 0-3 are JOYSTICK, THROTTLE, RUDDER
+	/// and HAT, live with <see cref="JoystickCapabilities.HasThrottle"/>, <see cref="JoystickCapabilities.HasRudder"/> and
+	/// <see cref="JoystickCapabilities.HasHat"/>; 4-11 are BUTTON 1-8, live up to
+	/// <see cref="JoystickCapabilities.ButtonCount"/>. The JOYSTICK row has no capability byte of its own: once a stick is
+	/// present at all, it is always live. No row is live without a stick.
+	/// </summary>
+	private bool RowEnabled(int row) {
+		if (!Capabilities.Present) {
+			return false;
+		}
+
+		return row switch {
+			0 => true,
+			1 => Capabilities.HasThrottle,
+			2 => Capabilities.HasRudder,
+			3 => Capabilities.HasHat,
+			_ => row - ControlsPanelLayout.AxisRowCount < Math.Min(Capabilities.ButtonCount, JoystickCapabilities.MaxButtons),
+		};
+	}
 
 	/// <summary>
 	/// Whether the axis rows are fixed by settings standing in for the file's, a gamepad's
@@ -335,7 +356,7 @@ public sealed class ControlsPanel {
 	/// </summary>
 	private void RefreshValues() {
 		for (int row = 0; row < _values.Length; row++) {
-			if (!Capabilities.RowEnabled(row)) {
+			if (!RowEnabled(row)) {
 				_values[row] = string.Empty;
 				continue;
 			}
@@ -355,7 +376,7 @@ public sealed class ControlsPanel {
 	/// list back to showing nothing, which a button row does not.
 	/// </summary>
 	private void CycleAxis(int row, bool rightButton) {
-		if (Capabilities.RowEnabled(row) && !AxisRowsFixed) {
+		if (RowEnabled(row) && !AxisRowsFixed) {
 			_preferences.Step(_optionBase + row, AxisWordCount, forward: !rightButton);
 		}
 

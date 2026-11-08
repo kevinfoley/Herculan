@@ -109,7 +109,7 @@ sealed class SimulatorRig {
 		string folder = Path.Combine(Path.GetTempPath(), "herculan-tests", "rig-" + Guid.NewGuid().ToString("N"));
 		string scriptPath = tape.ExtractBundle(folder, installDataDirectory: null);
 
-		var content = GameContent.MountSimulator(root, null);
+		var content = GameInstall.MountSimulator(root, null);
 		var scene = MissionScene.Load(content, scriptPath, folder);
 		var ports = new MessagePorts(SystemMessages.Load(content));
 		var audio = GameAudio.Create(content, ports, scene.World.PresentationRandom, silent: true);

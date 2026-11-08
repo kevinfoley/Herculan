@@ -1,0 +1,57 @@
+# ES2's game code in Herculan.Engine: what leaves for ES2's own assembly. Paths are relative to
+# Herculan/src/Herculan.Engine; a trailing '/' marks a folder, whose namespace is ES2's too.
+# Everything not listed is the core, and BoundaryCheck reports each core reference to what is listed.
+
+# ES2's own folders.
+Cockpit/
+Install/
+Scene/
+Shell/
+Sim/
+Terrain/
+World/
+
+# ES2's code in core folders.
+Audio/CdMusic.cs
+Audio/ComputerVoice.cs
+Audio/GameAudio.cs
+Audio/InstructorVoice.cs
+Audio/SoundCatalog.cs
+Audio/SoundDirector.cs
+Content/CockpitArt.cs
+Content/CockpitClipRegions.cs
+Content/HudColorTable.cs
+Content/HudSpriteSheet.cs
+Content/PilotRoster.cs
+Content/SimulatorPreferences.cs
+Content/SystemMessages.cs
+Input/CockpitInput.cs
+Input/GunsightDrag.cs
+Input/InputTapePlayer.cs
+Input/InputTapeRecorder.cs
+Input/JoystickAction.cs
+Input/JoystickBindings.cs
+Input/JoystickPilotInput.cs
+Input/KeyboardAxes.cs
+Input/PressFlashes.cs
+Input/TapePlayback.cs
+Input/TapeRecording.cs
+Render/BeamRenderer.cs
+Render/Cockpit/
+Render/CockpitScreenLayout.cs
+Render/GroundShapeLayer.cs
+Render/HddMapRaster.cs
+Render/ObjectDrawTable.cs
+Render/TerrainMeshBuilder.cs
+Render/TerrainPaintOrder.cs
+Render/TerrainPaintRankBuffer.cs
+Render/TerrainTextureBank.cs
+Render/WorldDrawPass.cs
+View/CockpitGlance.cs
+View/CockpitHitShake.cs
+View/CockpitViewKick.cs
+View/ExternalCamera.cs
+View/ExternalViewChain.cs
+View/FlyCameraView.cs
+View/PlayerTrail.cs
+View/ViewCamera.cs

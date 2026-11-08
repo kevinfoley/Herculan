@@ -94,7 +94,7 @@ public readonly record struct MeshSegment(int TransformId, CellGate Gate, MeshVe
 /// Whether this piece holds the polys lying in the shape's own ground plane — a structure's shadow and
 /// floor plates, which only a build asked to split them apart separates (see
 /// <see cref="DtsMeshBuilder.BuildCells"/>). Such a piece is drawn with the ground rather than
-/// depth-tested against the terrain it lies in — see <see cref="GroundShapeLayer.ObjectGround"/>, and
+/// depth-tested against the terrain it lies in — see
 /// <c>LiesInGroundPlane</c> for the rule.
 /// </param>
 /// <param name="Layer">
@@ -532,8 +532,7 @@ public static partial class DtsMeshBuilder {
 	/// under the <see cref="GunLayout.HardpointEntry.InvisibleMounting"/>.</para>
 	///
 	/// <para><b>This engine hides the slots instead of splicing</b>, since the fitted weapon is
-	/// already drawn on its own, out of <c>MECHWPNS.DTS</c> at the mount's frame — see
-	/// <see cref="Scene.SceneModelLibrary.MechWeapon"/>.</para>
+	/// already drawn on its own, out of <c>MECHWPNS.DTS</c> at the mount's frame.</para>
 	///
 	/// <para><b>Bone id 0 is skipped</b>, and no retail chassis uses it: the original resolves one slot
 	/// per hardpoint, where matching on the id here would hide every part that carries the default id of
@@ -564,7 +563,7 @@ public static partial class DtsMeshBuilder {
 	/// <summary>
 	/// The same array read at an arbitrary sequence, which is what a structure's idle flipbook needs:
 	/// <c>Base_ThinkTick</c> steps the sequence its <c>BASES.DAT</c> record names
-	/// (<see cref="World.BaseType.AnimCellSequence"/>) rather than sequence zero, and takes its
+	/// rather than sequence zero, and takes its
 	/// modulus from that sequence's own entry.
 	/// </summary>
 	public static int CellFrameCount(TSObject? root, int sequence) =>
@@ -625,7 +624,7 @@ public static partial class DtsMeshBuilder {
 	///
 	/// <para>This is the flat-mesh counterpart of <see cref="BuildSegments"/>, for the two classes
 	/// that have cells damage drives but no nodes anything poses: a structure, whose parts collapse
-	/// one at a time (<see cref="Sim.BaseObject.CellFrames"/>), and a flyer, which loses components
+	/// one at a time, and a flyer, which loses components
 	/// like a machine but is drawn rigid.</para>
 	///
 	/// <para>A shape with no cell-animation parts comes back as a single ungated piece, which is
@@ -664,7 +663,7 @@ public static partial class DtsMeshBuilder {
 
 	/// <summary>
 	/// Axis-aligned bounds of a built mesh, as (min, max) in render units. Used to sit a model on the
-	/// ground and to derive <see cref="Sim.SimObject.ShapeRadius"/>, the original's vtable
+	/// ground and to derive the shape's radius, the original's vtable
 	/// <c>+0x10</c>, which it reads off the shape the same way.
 	/// </summary>
 	public static (Vector3 Min, Vector3 Max) Bounds(IReadOnlyList<MeshVertex> vertices) {

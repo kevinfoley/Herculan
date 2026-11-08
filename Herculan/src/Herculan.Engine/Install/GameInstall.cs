@@ -2,6 +2,7 @@ using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Disc;
+using HercWorks.Vol;
 using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
 using Herculan.Engine.World;
@@ -16,9 +17,6 @@ namespace Herculan.Engine.Install;
 public static class GameInstall {
 	/// <summary>Environment variable checked first, so a developer can point at any install.</summary>
 	public const string PathVariable = "ES2_GAME_PATH";
-
-	/// <summary>The archive subfolder inside an install root.</summary>
-	public const string ArchiveFolderName = "VOL";
 
 	/// <summary>
 	/// Where the last install used is remembered: <c>install-path.txt</c> in <see cref="UserConfig.Folder"/>. One line,
@@ -71,13 +69,35 @@ public static class GameInstall {
 	/// </summary>
 	public static void Remember(string installRoot) => UserConfig.Write(RememberedPathFile, Path.GetFullPath(installRoot));
 
-	/// <summary>The <c>VOL</c> archive directory inside an install root.</summary>
-	public static string ArchiveDirectory(string installRoot) =>
-		CaseInsensitivePath.Combine(installRoot, ArchiveFolderName);
-
 	/// <summary>Whether <paramref name="path"/> is an install root: a directory holding the archive directory.</summary>
 	public static bool IsInstallRoot(string path) =>
-		Directory.Exists(path) && Directory.Exists(ArchiveDirectory(path));
+		Directory.Exists(path) && Directory.Exists(GameContent.ArchiveDirectory(path));
+
+	/// <summary>What DBSIM mounts of the install and of the disc <see cref="OpenDisc"/> opens.</summary>
+	public static GameContent MountSimulator(string installRoot) {
+		using var disc = OpenDisc(installRoot);
+		return MountSimulator(installRoot, disc);
+	}
+
+	/// <summary>What VSHELL mounts of the install and of the disc <see cref="OpenDisc"/> opens.</summary>
+	public static GameContent MountShell(string installRoot) {
+		using var disc = OpenDisc(installRoot);
+		return MountShell(installRoot, disc);
+	}
+
+	/// <summary>
+	/// What DBSIM mounts of the install and its open disc (<see cref="GameContent.MountInstall"/>), in the language
+	/// <see cref="LauncherLanguage.Simulator"/> gives it.
+	/// </summary>
+	public static GameContent MountSimulator(string installRoot, GameDisc? disc) =>
+		GameContent.MountInstall(installRoot, disc, Voln.DbsimProgram, LauncherLanguage.Simulator(installRoot));
+
+	/// <summary>
+	/// What VSHELL mounts of the install and its open disc (<see cref="GameContent.MountInstall"/>), in the language
+	/// <see cref="LauncherLanguage.Shell"/> gives it.
+	/// </summary>
+	public static GameContent MountShell(string installRoot, GameDisc? disc) =>
+		GameContent.MountInstall(installRoot, disc, Voln.VshellProgram, LauncherLanguage.Shell(installRoot));
 
 	/// <summary>
 	/// Whether <paramref name="path"/> is on a CD or DVD, or a disc image mounted as one: the drive holding it, the

@@ -6,7 +6,7 @@ namespace Herculan.Engine.Audio;
 /// engine's</b>; retail asks the drive to play through MCI, which on current Windows never reports
 /// the end of a play and so never loops — see docs/retail/simulation/audio.md's "CD audio". Everything the
 /// original decides — which track, when, and where a suspend resumes — is
-/// <see cref="SoundDirector"/>'s and is unchanged.
+/// the game's and is unchanged.
 ///
 /// <para><b>The loop is gapless.</b> Reading wraps from the track's last frame to its first as it
 /// fills the stream's queue, so the seam is two adjacent blocks with nothing between them.</para>

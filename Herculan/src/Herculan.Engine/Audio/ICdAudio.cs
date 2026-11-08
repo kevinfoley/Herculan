@@ -9,7 +9,7 @@ namespace Herculan.Engine.Audio;
 /// engine plays the disc's audio through its own mixer (<see cref="StreamedCdAudio"/>), keeps
 /// retail's MCI (<see cref="MciCdAudio"/>) for a drive that will not be read digitally, and runs
 /// silent (<see cref="NullCdAudio"/>) with neither. Everything above it — the track choice, the
-/// enable flag, the saved position across a suspend — is <see cref="SoundDirector"/>'s and is the
+/// enable flag, the saved position across a suspend — belongs to the game and is the
 /// same against all three. <see cref="CdAudio.Open"/> chooses.</para>
 /// </summary>
 public interface ICdAudio : IDisposable {

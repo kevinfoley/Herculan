@@ -43,7 +43,7 @@ sealed class ShellMovies : IDisposable {
 		_window = window;
 		_buttons = buttons;
 		_repaint = repaint;
-		Queue = new ShellMovieQueue(moviesEnabled, content.IsV110 ? content.Language : GameLanguage.English);
+		Queue = new ShellMovieQueue(moviesEnabled, LauncherLanguage.IsV110(content.InstallRoot) ? content.Language : GameLanguage.English);
 	}
 
 	public ShellMovieQueue Queue { get; }
