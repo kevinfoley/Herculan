@@ -49,11 +49,18 @@ public static class Es1TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> ProceedKeepsLevels = new("tweak.es1_no_free_repair_level", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 	#endregion
 
-	/// <summary>
-	/// Every Metaltech: Earthsiege tweak setting, listed after the core's in its file. These are the ones its Tweaks menu
-	/// offers: no Metaltech: Earthsiege code reads a core tweak.
-	/// </summary>
+	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ProceedKeepsLevels,
+	};
+
+	/// <summary>
+	/// The tweaks Metaltech: Earthsiege's Tweaks menu offers, those its code reads: of the core's,
+	/// <see cref="TweakSettingDefinitions.HighResolutionWidescreen"/> (<see cref="View.Es1Monitor.Fit"/>), then all of
+	/// its own (docs/herculan/planning.md#how-the-two-games-share-code).
+	/// </summary>
+	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> Offered = new[] {
+		TweakSettingDefinitions.HighResolutionWidescreen,
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ProceedKeepsLevels,
 	};
 }

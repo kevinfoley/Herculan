@@ -26,7 +26,7 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 	/// <summary>The Tweaks window edits <see cref="TweakSettings.Current"/>, which the host has loaded with ES1's catalog.</summary>
 	public Es1ShellMenus(LocalizationTable localization) {
 		_localization = localization;
-		_tweaks = new TweaksMenu(TweakSettings.Current, localization, offered: Es1TweakSettingDefinitions.All);
+		_tweaks = new TweaksMenu(TweakSettings.Current, localization, offered: Es1TweakSettingDefinitions.Offered);
 		_menuBar = new HostMenuBar(localization, keys: null, tweaks: _tweaks, settings: null, controller: null,
 			accessibilitySettings: Accessibility);
 	}

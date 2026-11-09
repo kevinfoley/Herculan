@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.Struct;
 using Herculan.Engine.Render;
+using Herculan.Engine.Settings;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
@@ -11,8 +12,8 @@ namespace Herculan.Es1.View;
 /// shown at 4:3 as a CRT showed it (docs/herculan/plan-es1-first-mission.md, decision 7), each cell's palette index
 /// through the live palette and each world cell from the world layer under it (<see cref="IndexedWorldSurface"/>). It
 /// is the display's world layer: the 3D pass is drawn into it where <see cref="Es1VideoMemory.DrawWorld"/> marks the
-/// cells, and a camera's view into a cockpit rect where <see cref="Es1VideoMemory.DrawWorldView"/> does, at a whole scale <i>k</i>, the least that fills the window's 4:3 rect's height, so the projection computed in
-/// the screen's own pixels keeps its shape.
+/// cells, and a camera's view into a cockpit rect where <see cref="Es1VideoMemory.DrawWorldView"/> does, at the whole
+/// scale <i>k</i> <see cref="Fit"/> picks, so the projection computed in the screen's own pixels keeps its shape.
 /// </summary>
 public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 	/// <summary>The shape the screen is shown at.</summary>
@@ -132,8 +133,20 @@ public sealed class Es1Monitor : IEs1WorldLayer, IDisposable {
 		});
 	}
 
-	/// <summary>Sets the world layer's scale for a window of <paramref name="windowSize"/>.</summary>
+	/// <summary>
+	/// Sets the world layer's scale for a window of <paramref name="windowSize"/>: under the "High resolution widescreen"
+	/// tweak (<see cref="TweakSettingDefinitions.HighResolutionWidescreen"/>) the least whole scale that fills the 4:3
+	/// rect's height, and with it off 1, the world in the 320 × 200 screen's own pixels as retail rasterizes it. Every
+	/// world pass takes the layer's scale, the NAV MAP's, the missile camera's and the Heads-Down Display map's
+	/// (plan decisions 17 and 19) as well as view 0's. Read on every <see cref="Present"/>, so the tweak takes effect on
+	/// the frame it is set.
+	/// </summary>
 	public void Fit(Vector2D<int> windowSize) {
+		if (!TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HighResolutionWidescreen)) {
+			_surface.SetScale(1);
+			return;
+		}
+
 		var (_, _, _, height) = new FrameFit(DisplayFrame, windowSize).Placement;
 		_surface.SetScale((height + Es1VideoMemory.PageHeight - 1) / Es1VideoMemory.PageHeight);
 	}
