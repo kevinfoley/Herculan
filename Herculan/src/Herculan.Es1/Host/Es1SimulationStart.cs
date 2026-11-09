@@ -35,6 +35,7 @@ public sealed class Es1SimulationStart : IDisposable {
 	private readonly GameContent? _content;
 	private readonly Es1TapePlayback? _tape;
 	private readonly Es1TapeRecording? _recording;
+	private readonly Es1FullScreenKey? _fullScreenKey;
 	private int _frames;
 
 	/// <param name="preferences">The install's <c>data\prefs.cfg</c>.</param>
@@ -43,9 +44,11 @@ public sealed class Es1SimulationStart : IDisposable {
 	/// <param name="content">The volumes the panels' own files are read from.</param>
 	/// <param name="tape">The tape <c>-p</c> or <c>-D</c> opened, handed to the simulation.</param>
 	/// <param name="recording">The tape <c>-r</c> started, handed to the simulation.</param>
+	/// <param name="fullScreenKey">The window's [Alt+Enter], handed to the simulation's keyboard.</param>
 	public Es1SimulationStart(Es1World world, string installRoot, Es1Preferences preferences, IInputContext input, IKeyboard? keyboard, Es1HostMouse? mouse, View.Es1ViewChain? viewChain = null,
 			Panels.Es1WidgetResources? widgets = null, GameContent? content = null, Es1TapePlayback? tape = null,
-			Es1TapeRecording? recording = null) {
+			Es1TapeRecording? recording = null, Es1FullScreenKey? fullScreenKey = null) {
+		_fullScreenKey = fullScreenKey;
 		_tape = tape;
 		_recording = recording;
 		_viewChain = viewChain;
@@ -76,7 +79,7 @@ public sealed class Es1SimulationStart : IDisposable {
 
 		var port = Es1ControllerPort.Over(_controller);
 		Runner = new Es1SimulationRunner(_world, _installRoot, _preferences, _keyboard, _mouse, port, _viewChain, _widgets,
-			_content, _tape, _recording);
+			_content, _tape, _recording, _fullScreenKey);
 		Console.WriteLine(Describe(port));
 		return Runner;
 	}

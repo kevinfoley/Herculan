@@ -424,10 +424,15 @@ public static class Es1ZoneViewer {
 				hostMouse.Attach(mouse);
 			}
 
+			var fullScreenKey = new Es1FullScreenKey(() => window.ToggleFullScreen(mouse));
 			if (world.LocalPlayer != null) {
 				simulation = new Es1SimulationStart(world, installRoot, preferences, input, keyboard, hostMouse,
-					chain, widgets, content, tape, recording);
+					chain, widgets, content, tape, recording, fullScreenKey);
 				disposables.Add(simulation);
+			} else if (keyboard is { } device) {
+				// With no simulator to take the keyboard, the toggle reads it itself.
+				device.KeyDown += (_, key, _) => fullScreenKey.KeyDown(key, device.IsKeyPressed);
+				device.KeyUp += (_, key, _) => fullScreenKey.KeyUp(key);
 			}
 
 			// As in both other hosts: DTS geometry isn't reliably wound, so nothing is backface-culled.

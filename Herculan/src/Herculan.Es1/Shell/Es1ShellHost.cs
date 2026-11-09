@@ -222,6 +222,7 @@ public static class Es1ShellHost {
 
 			if (window.Keyboard is { } keyboard && _devices.HostKeyboard is { } hostKeyboard) {
 				hostKeyboard.Attach(keyboard);
+				hostKeyboard.FullScreenKey = new Es1FullScreenKey(window.ToggleFullScreen);
 				hostKeyboard.HostTakes = key => MenuBarTakes(window, key);
 				hostKeyboard.HostHasKeyboard = () => window.ImGuiWantsKeyboard;
 			}

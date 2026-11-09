@@ -77,6 +77,13 @@ public sealed class Es1HostKeyboard {
 	/// </summary>
 	public Func<bool>? HostHasKeyboard { get; set; }
 
+	/// <summary>
+	/// <b>This engine's own:</b> the window's [Alt+Enter], offered each host key-down and key-up before anything else, with
+	/// the modifiers as the game holds them. A key it takes sends no byte and is not held. With none, [Alt+Enter] is the
+	/// game's.
+	/// </summary>
+	public Es1FullScreenKey? FullScreenKey { get; set; }
+
 	/// <summary>The set-1 make byte <paramref name="key"/> sends, or null for a key with none.</summary>
 	public static byte? MakeCodeOf(Key key) => MakeCodes.TryGetValue(key, out byte code) ? code : null;
 
@@ -96,14 +103,17 @@ public sealed class Es1HostKeyboard {
 			device.KeyChar -= OnKeyChar;
 			_device = null;
 		}
+
+		FullScreenKey?.Reset();
 	}
 
 	/// <summary>
-	/// A host key-down: the make byte, and the typematic restarted on this key. A key already down, and one the host's
-	/// layer takes (<see cref="HostTakes"/>), is ignored.
+	/// A host key-down: the make byte, and the typematic restarted on this key. A key already down, and one the
+	/// full-screen toggle (<see cref="FullScreenKey"/>) or the host's layer (<see cref="HostTakes"/>) takes, is ignored.
 	/// </summary>
 	public void KeyDown(Key key) {
-		if (MakeCodeOf(key) is not { } make || _held.Contains(key) || HostTakes?.Invoke(key) == true) {
+		if (MakeCodeOf(key) is not { } make || _held.Contains(key) || FullScreenKey?.KeyDown(key, _held.Contains) == true
+				|| HostTakes?.Invoke(key) == true) {
 			return;
 		}
 
@@ -117,7 +127,7 @@ public sealed class Es1HostKeyboard {
 
 	/// <summary>A host key-up: the break byte, and the typematic stopped when this key had it.</summary>
 	public void KeyUp(Key key) {
-		if (MakeCodeOf(key) is not { } make || !_held.Remove(key)) {
+		if (FullScreenKey?.KeyUp(key) == true || MakeCodeOf(key) is not { } make || !_held.Remove(key)) {
 			return;
 		}
 

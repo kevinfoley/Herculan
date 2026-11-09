@@ -7,6 +7,7 @@ using HercWorks.Core.Io.Read;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Platform;
+using Herculan.Es1.Input;
 using Herculan.Es1.Shell;
 using Herculan.Es1.View;
 using Silk.NET.Input;
@@ -194,12 +195,15 @@ public static class Es1FlicHost {
 
 		window.Load += (gl, input) => {
 			monitor = new Es1Monitor(gl, display);
+			// The window's [Alt+Enter] is not a key that skips the movie.
+			var fullScreenKey = new Es1FullScreenKey(() => window.ToggleFullScreen(input.Mice.Count > 0 ? input.Mice[0] : null));
 			foreach (var keyboard in input.Keyboards) {
-				keyboard.KeyDown += (_, key, _) => {
-					if (BiosBuffers(key)) {
+				keyboard.KeyDown += (device, key, _) => {
+					if (!fullScreenKey.KeyDown(key, device.IsKeyPressed) && BiosBuffers(key)) {
 						player.KeyPressed();
 					}
 				};
+				keyboard.KeyUp += (_, key, _) => fullScreenKey.KeyUp(key);
 			}
 
 			// Mode 0x13 shows no pointer.

@@ -52,11 +52,13 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// <param name="recording">
 	/// The tape <c>-r</c> started, to which the input build appends each frame with the tick's <c>SimTickDelta</c>.
 	/// </param>
+	/// <param name="fullScreenKey">The window's [Alt+Enter], which takes its keys before the simulator sees them.</param>
 	public Es1SimulationRunner(Es1World world, string installRoot, Es1Preferences preferences, IKeyboard? keyboard,
 			Es1HostMouse? mouse, IEs1GamePort port, View.Es1ViewChain? viewChain = null, Es1WidgetResources? widgets = null,
-			GameContent? content = null, Es1TapePlayback? tape = null, Es1TapeRecording? recording = null) {
+			GameContent? content = null, Es1TapePlayback? tape = null, Es1TapeRecording? recording = null,
+			Es1FullScreenKey? fullScreenKey = null) {
 		var keyboardInput = new Es1KeyboardInput(Es1HostKeyboard.ReadBiosShiftFlags(keyboard));
-		_hostKeyboard = new Es1HostKeyboard(keyboardInput.Keyboard);
+		_hostKeyboard = new Es1HostKeyboard(keyboardInput.Keyboard) { FullScreenKey = fullScreenKey };
 		if (keyboard != null) {
 			_hostKeyboard.Attach(keyboard);
 		}
