@@ -75,6 +75,14 @@ tweak.auto_fill_save_name.display_name  Spielstandnamen immer vorschlagen
 tweak.auto_fill_save_name.description   Wenn Sie auf SPEICHERN klicken, wird ein Name automatisch ausgefüllt. Sie müssen trotzdem noch auf ANNEHMEN klicken. Mit einem Controller wird der Name immer automatisch ausgefüllt.
 tweak.auto_save_slot_10.display_name  Autospeichern in Platz 10
 tweak.auto_save_slot_10.description   Nach der Nachbesprechung jedes Einsatzes wird Ihr Spiel in Platz 10 des Bildschirms GESPEICHERTE SPIELE gesichert. Was Platz 10 enthielt, wird ersetzt.
+tweak.es1_perspective_textures.display_name  Perspektivkorrekte Texturen
+tweak.es1_perspective_textures.description  Zeichnet die Texturen von HERCs, Fliegern und Gebäuden in echter Perspektive, sodass sie sich auf schräg gesehenen Flächen nicht mehr verbiegen und verschieben. Das Originalspiel füllt jede texturierte Fläche Zeile für Zeile über den Bildschirm.
+tweak.es1_nearest_flyer_sound.display_name  Nächsten Flieger hören
+tweak.es1_nearest_flyer_sound.description  Alle Flieger teilen sich ein Geräusch, das vom nächsten Flieger kommt. Im Originalspiel kommt es von dem Flieger, der sich in jedem Bild als erster bewegt, und das ist nicht unbedingt der nächste.
+tweak.es1_stereo_sound.display_name  Stereoklang
+tweak.es1_stereo_sound.description  Jedes Geräusch in der Welt kommt von links oder rechts, je nachdem, wo es in Ihrer Sicht liegt, und folgt der Sicht, wenn sie sich dreht. Ausgeschaltet kommt jedes Geräusch aus der Mitte, wie im Originalspiel mit einer Mono-Soundkarte. Die Entfernung bestimmt die Lautstärke in beiden Fällen.
+tweak.es1_no_free_repair_level.display_name  Keine kostenlose Reparaturstufe
+tweak.es1_no_free_repair_level.description  Im Bildschirm SYSTEM REPAIR behält PROCEED nur die Reparaturen, die Sie mit + und − bezahlt haben. Das Originalspiel repariert das Teil bis zu der Stufe, die die Liste STATUS zeigt, und die ist nach einem + eine Stufe höher als bezahlt.
 tweaks.title                   Optimierungen
 tweaks.description             Optimierungen verändern das Spielverhalten, meist um Fehler zu beheben oder den Komfort zu verbessern. Für ein möglichst originalgetreues Spielerlebnis (Fehler inklusive) klicken Sie auf „Keine“, um alle Optimierungen abzuschalten.
 tweaks.note                    Einige kleinere optische Fehler und mögliche Abstürze werden in HERCULAN nicht nachgebildet. Moderne Eingabegeräte und alternative Steuerungsschemata werden über das Menü Controller immer unterstützt.

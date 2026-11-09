@@ -3,15 +3,16 @@ using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
+using Herculan.Es1.Settings;
 using Silk.NET.Input;
 
 namespace Herculan.Es1.Host;
 
 /// <summary>
 /// Metaltech: Earthsiege's shell's menus over its <see cref="FrontEndWindow"/>: HERCULAN's own <see cref="HostMenuBar"/>
-/// with the windows that work the same in either game, Accessibility and About, and the <see cref="ErrorDialog"/>.
-/// Settings, Controller, Keys, Tweaks and Editor are greyed, since each is built on Earthsiege 2's install, controls,
-/// tweaks or missions; Custom Missions is left out. There is no welcome and no automatic update check.
+/// with the windows that work the same in either game, Accessibility and About, its own Tweaks, and the
+/// <see cref="ErrorDialog"/>. Settings, Controller, Keys and Editor are greyed, since each is built on Earthsiege 2's
+/// install, controls or missions; Custom Missions is left out. There is no welcome and no automatic update check.
 /// </summary>
 public sealed class Es1ShellMenus : IFrontEndMenus {
 	// The accessibility settings ES1 honors: the larger font, which ScaledImGui reads for the bar's own windows. The damage
@@ -19,11 +20,14 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 	private static readonly A11ySettingDefinition<bool>[] Accessibility = [A11ySettingDefinitions.LargerFont];
 
 	private readonly HostMenuBar _menuBar;
+	private readonly TweaksMenu _tweaks;
 	private readonly LocalizationTable _localization;
 
+	/// <summary>The Tweaks window edits <see cref="TweakSettings.Current"/>, which the host has loaded with ES1's catalog.</summary>
 	public Es1ShellMenus(LocalizationTable localization) {
 		_localization = localization;
-		_menuBar = new HostMenuBar(localization, keys: null, tweaks: null, settings: null, controller: null,
+		_tweaks = new TweaksMenu(TweakSettings.Current, localization, offered: Es1TweakSettingDefinitions.All);
+		_menuBar = new HostMenuBar(localization, keys: null, tweaks: _tweaks, settings: null, controller: null,
 			accessibilitySettings: Accessibility);
 	}
 
@@ -45,6 +49,7 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 	public bool PadNavigationSuspended => false;
 
 	public void Attach(ScaledImGui imgui, IInputContext input) {
+		_tweaks.Fonts = imgui;
 	}
 
 	public void Show() => _menuBar.Show();

@@ -75,6 +75,14 @@ tweak.auto_fill_save_name.display_name  Always auto-fill save name
 tweak.auto_fill_save_name.description   When you click SAVE, a name is auto-filled. You must still click accept. The name is always auto-filled while using a controller.
 tweak.auto_save_slot_10.display_name  Auto-save in slot 10
 tweak.auto_save_slot_10.description   After each mission's debrief, your game is saved in slot 10 of the SAVED GAMES screen. This replaces whatever slot 10 held.
+tweak.es1_perspective_textures.display_name  Perspective-correct textures
+tweak.es1_perspective_textures.description  Draw the textures on HERCs, flyers and structures in true perspective, so they no longer bend and slide across surfaces seen at an angle. Retail fills each textured surface row by row across the screen.
+tweak.es1_nearest_flyer_sound.display_name  Hear the nearest flyer
+tweak.es1_nearest_flyer_sound.description  All flyers share one sound, which plays from the nearest flyer. Retail plays it from whichever flyer moves first in each frame, which need not be the nearest.
+tweak.es1_stereo_sound.display_name  Stereo sound
+tweak.es1_stereo_sound.description  Play each sound in the world from the left or the right by where it is in your view, following the view as it turns. Off, every sound plays from the center, as retail does on a mono sound card. Distance sets the volume either way.
+tweak.es1_no_free_repair_level.display_name  No free repair level
+tweak.es1_no_free_repair_level.description  On the SYSTEM REPAIR screen, PROCEED keeps only the repairs you paid for with + and −. Retail repairs the item to the level the STATUS list shows, which after a + is one level more than you paid for.
 tweaks.title                   Tweaks
 tweaks.description             Tweaks alter game behavior, generally either to fix bugs or provide quality-of-life enhancements. For the closest-to-vanilla experience (bugs included), click "None" to disable all tweaks.
 tweaks.note                    Some minor cosmetic bugs and potential crashes are not reproduced in HERCULAN. Support for modern input devices and alternate control schemes is always available via the Controller menu.

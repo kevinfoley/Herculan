@@ -16,6 +16,9 @@ namespace Herculan.Engine.Menus;
 /// writes the current values to disk and closes, Cancel reloads from disk (discarding anything not
 /// yet saved) and closes, and so does closing the window by its title-bar button or [Esc]; see
 /// <see cref="HostMenuBar.BackOut"/> for the latter.</para>
+///
+/// <para>It lists the settings the host offers, those the running game reads, less the hidden ones, and its preset
+/// buttons set those alone.</para>
 /// </summary>
 public sealed class TweaksMenu {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
@@ -23,6 +26,9 @@ public sealed class TweaksMenu {
 
 	// The visible settings in the order they are drawn, grouped once rather than every frame.
 	private readonly (TweakCategory Category, TweakSettingDefinition<bool>[] Settings)[] _visibleByCategory;
+
+	// The offered settings, hidden ones included, which the preset buttons set.
+	private readonly TweakSettingDefinition<bool>[] _offered;
 
 	private readonly TweakSettings _settings;
 	private readonly LocalizationTable _localization;
@@ -37,12 +43,15 @@ public sealed class TweaksMenu {
 	/// <summary>The ImGui the panel draws in, for its italic note; the note is drawn upright without one.</summary>
 	public ScaledImGui? Fonts { get; set; }
 
-	public TweaksMenu(TweakSettings settings, LocalizationTable localization) {
+	/// <param name="offered">The settings to list and set, or null for every one <paramref name="settings"/> holds.</param>
+	public TweaksMenu(TweakSettings settings, LocalizationTable localization,
+			IReadOnlyCollection<TweakSettingDefinition<bool>>? offered = null) {
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_localization = localization ?? throw new ArgumentNullException(nameof(localization));
 		_presetButtons = [("tweaks.none", DisableAll), ("tweaks.defaults", ApplyDefaults), ("tweaks.recommended", ApplyRecommended), ("tweaks.all", EnableAll)];
 		_closeButtons = [("general.save", Save), ("general.cancel", Cancel)];
-		_visibleByCategory = settings.All.Where(d => !d.Hidden).GroupBy(d => d.Category).Select(g => (g.Key, g.ToArray())).ToArray();
+		_offered = settings.All.Where(d => offered == null || offered.Contains(d)).ToArray();
+		_visibleByCategory = _offered.Where(d => !d.Hidden).GroupBy(d => d.Category).Select(g => (g.Key, g.ToArray())).ToArray();
 	}
 
 	/// <summary>
@@ -120,19 +129,19 @@ public sealed class TweaksMenu {
 	}
 
 	private void ApplyToAll(bool value) {
-		foreach (var definition in _settings.All.Where(d => !d.Hidden)) {
+		foreach (var definition in _offered.Where(d => !d.Hidden)) {
 			_settings.SetSettingValue(definition, value);
 		}
 	}
 
 	private void ApplyDefaults() {
-		foreach (var setting in _settings.All) {
+		foreach (var setting in _offered) {
 			_settings.SetSettingValue(setting, setting.DefaultValue);
 		}
 	}
 
 	private void ApplyRecommended() {
-		foreach (var setting in _settings.All) {
+		foreach (var setting in _offered) {
 			_settings.SetSettingValue(setting, setting.RecommendedValue);
 		}
 	}

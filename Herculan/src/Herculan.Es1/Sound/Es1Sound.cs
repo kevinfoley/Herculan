@@ -4,6 +4,8 @@ using HercWorks.Core.Io.Read;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
+using Herculan.Es1.Settings;
 using Herculan.Es1.View;
 
 namespace Herculan.Es1.Sound;
@@ -86,20 +88,19 @@ public sealed class Es1Sound {
 	/// <summary>
 	/// Whether <see cref="OfferPosition"/> keeps the nearest point offered in a frame, comparing the new distance where
 	/// retail compares the kept one with itself, so that the flyers' shared sound plays from the nearest flyer; off, the
-	/// first point offered is kept, as retail's is.
-	/// The code path of a tweak that is not built (docs/herculan/plan-es1-first-mission.md#open).
+	/// first point offered is kept, as retail's is. From <see cref="Es1TweakSettingDefinitions.NearestOfferWins"/>.
 	/// </summary>
-	public static bool NearestOfferWins { get; set; }
+	public static bool NearestOfferWins => TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.NearestOfferWins);
 
 	/// <summary>
 	/// Whether placed sounds play in stereo, each panned by where it lies across the camera's view, every frame and on a
 	/// voice already playing (<see cref="Es1SoundManager.UpdateStereoListener"/>); off, every voice plays in the center,
 	/// as retail's do on the mono device the user heard (<see cref="Es1DigitalDriver"/>). Retail's own placement, whose pan
 	/// follows the world's x axis and not the camera's heading (docs/es1/formats/sound-samples.md#placed-sounds), still
-	/// runs either way and still sets the volume. This engine's invention, on by default, the user's choice; the code path
-	/// of a tweak that is not built (docs/herculan/plan-es1-first-mission.md#open).
+	/// runs either way and still sets the volume. This engine's invention, on by default, the user's choice; from
+	/// <see cref="Es1TweakSettingDefinitions.Stereo"/>.
 	/// </summary>
-	public static bool Stereo { get; set; } = true;
+	public static bool Stereo => TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.Stereo);
 
 	/// <summary><c>Sound_Listener</c> (<c>000bd730</c>): the camera <see cref="UpdateListener"/> last kept, none until then.</summary>
 	public Es1Camera? Listener { get; private set; }

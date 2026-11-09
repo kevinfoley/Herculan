@@ -4,6 +4,7 @@ using Herculan.Engine.Host;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using Herculan.Es1.Host;
+using Herculan.Es1.Settings;
 using Herculan.Es2.Host;
 using Herculan.Es2.Host.Install;
 using Herculan.Es2.Host.Shell;
@@ -40,15 +41,12 @@ if (options.InstallSource != null && options.InstallDestination != null) {
 	return DiscInstall.Run(options.InstallSource, options.InstallDestination, options.InstallSize, options.InstallLanguage, options.InstallDiscFiles);
 }
 
-// Host-lifetime, not mission-lifetime: neither reads the install, and both need to survive into
-// the shell and --movie once those have a menu bar of their own to raise TweaksMenu from — see
-// docs/herculan/planning.md. Built before that branch so nothing below has to change when they do.
-// Earthsiege 2's catalogs are held whichever game runs, since the files are shared and a save writes only the settings
-// it holds.
+// Host-lifetime, not mission-lifetime. The accessibility settings, which both games share, are loaded before the
+// install is found, since every ImGui window reads them, the install prompt's included; each game's tweak settings are
+// its own and are loaded once the install says which game runs (docs/herculan/planning.md#how-the-two-games-share-code).
+// Earthsiege 2's accessibility catalog is held whichever game runs, since a save writes only the settings it holds.
 var localization = new LocalizationTable();
 HostLog.Localization = localization;
-TweakSettings.Current = new TweakSettings(Es2TweakSettingDefinitions.All);
-TweakSettings.Current.LoadFromDisk();
 A11ySettings.Current = new A11ySettings(Es2A11ySettingDefinitions.All);
 A11ySettings.Current.LoadFromDisk();
 HostWindow.Icons = WindowIcon.Load();
@@ -96,6 +94,11 @@ if (installRoot == null) {
 // runs it on the install's data\ files, as DBSIM.EXE does; --play and --demo play a tape, as its -p and -D do, and
 // --record records one, as its -r does.
 if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
+	// Loaded for both turns: the shell's SYSTEM REPAIR and Tweaks window read them, and so does the simulator, which has
+	// no menu bar of its own, for its textures and sounds.
+	TweakSettings.Current = new TweakSettings(Es1TweakSettingDefinitions.All, Es1TweakSettingDefinitions.FileName);
+	TweakSettings.Current.LoadFromDisk();
+
 	var es1 = options.Es1;
 	bool simulator = options.MissionPath != null || options.PlayTape != null || options.DemoTape || options.RecordTape != null
 		|| es1.Simulator;
@@ -121,6 +124,9 @@ if (options.Es1.Staged || options.Es1.Simulator || options.Es1.ShellArguments.Co
 	HostLog.Fail($"--theater, --world, {Es1Options.SimulatorFlag} and GO.EXE's switches are for a Metaltech: Earthsiege install.");
 	return 1;
 }
+
+TweakSettings.Current = new TweakSettings(Es2TweakSettingDefinitions.All, Es2TweakSettingDefinitions.FileName);
+TweakSettings.Current.LoadFromDisk();
 
 if (!options.AskForInstall) {
 	GameInstall.Remember(installRoot);

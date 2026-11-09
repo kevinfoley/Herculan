@@ -6,7 +6,9 @@ using Herculan.Engine.Anim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Render;
+using Herculan.Engine.Settings;
 using Herculan.Es1.Scene;
+using Herculan.Es1.Settings;
 using Herculan.Es1.Sim;
 using Silk.NET.OpenGL;
 
@@ -45,10 +47,10 @@ public sealed class Es1MechModels : IDisposable {
 	/// Whether the HERCs' textured faces are mapped with perspective, through the mesh's own homogeneous mapping
 	/// (<see cref="MeshVertex.UvWeight"/>), in place of retail's row walk in screen space
 	/// (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7). Off: the pieces carry the walk's face
-	/// tables. Read when the pieces are uploaded. The code path of a tweak that is not built
-	/// (docs/herculan/plan-es1-first-mission.md#open).
+	/// tables. Read when the pieces are uploaded, from <see cref="Es1TweakSettingDefinitions.PerspectiveTextureMapping"/>.
 	/// </summary>
-	public static bool PerspectiveTextureMapping { get; set; }
+	public static bool PerspectiveTextureMapping =>
+		TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.PerspectiveTextureMapping);
 
 	/// <summary>The texture handle of each chassis' bank, by type.</summary>
 	public IReadOnlyDictionary<short, uint> Textures => _textures;

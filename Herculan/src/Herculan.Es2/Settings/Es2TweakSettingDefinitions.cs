@@ -7,9 +7,15 @@ namespace Herculan.Es2.Settings;
 
 /// <summary>
 /// Earthsiege 2's tweak settings, which a host gives <see cref="TweakSettings"/> beside the core's
-/// <see cref="TweakSettingDefinitions"/>. Schema only, as the core's catalog is.
+/// <see cref="TweakSettingDefinitions"/>, kept in <see cref="FileName"/>. Schema only, as the core's catalog is.
 /// </summary>
 public static class Es2TweakSettingDefinitions {
+	/// <summary>
+	/// The file Earthsiege 2's tweak settings are kept in, apart from Metaltech: Earthsiege's
+	/// (docs/herculan/planning.md#how-the-two-games-share-code).
+	/// </summary>
+	public const string FileName = "tweak-settings.json";
+
 	#region COSMETIC
 	/// <summary>
 	/// Fix issues where HERC or weapon stats were displayed in the UI with incorrect

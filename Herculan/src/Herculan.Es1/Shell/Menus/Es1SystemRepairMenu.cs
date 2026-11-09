@@ -1,4 +1,6 @@
 using HercWorks.Core.Data.File.Dat.Shell;
+using Herculan.Engine.Settings;
+using Herculan.Es1.Settings;
 using Herculan.Es1.Shell.Hangar;
 
 namespace Herculan.Es1.Shell.Menus;
@@ -28,10 +30,10 @@ public sealed class Es1SystemRepairMenu : Es1Menu {
 	/// <summary>
 	/// Whether PROCEED keeps the levels + and − set, setting no status before it shows the bay again; off, PROCEED sets the
 	/// item to <see cref="Es1RepairCosts.TargetForLevel"/> of the level STATUS shows, which after a + is one level above
-	/// what + paid for (docs/es1/shell/repair-and-build.md#cancel-and-proceed). The code path of a tweak that is not built
-	/// (docs/herculan/plan-es1-first-mission.md#open).
+	/// what + paid for (docs/es1/shell/repair-and-build.md#cancel-and-proceed). From
+	/// <see cref="Es1TweakSettingDefinitions.ProceedKeepsLevels"/>.
 	/// </summary>
-	public static bool ProceedKeepsLevels { get; set; }
+	public static bool ProceedKeepsLevels => TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.ProceedKeepsLevels);
 
 	/// <summary>
 	/// <c>SystemRepairMenu_Ctor</c> (<c>0002f1aa</c>)(0) (docs/es1/shell/repair-and-build.md#system-repair--screen-1920):
