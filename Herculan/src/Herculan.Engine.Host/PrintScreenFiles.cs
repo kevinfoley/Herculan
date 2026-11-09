@@ -1,5 +1,6 @@
 using HercWorks.Help.Html;
 using Herculan.Engine.Platform;
+using Herculan.Es2.Host;
 
 namespace Herculan.Engine.Host;
 

@@ -1,11 +1,13 @@
 using Herculan.Engine.Content;
-using Herculan.Engine.Host.Install;
 using Herculan.Engine.Localization;
-using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Host;
+using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using Herculan.Es1.Host;
+using Herculan.Es2.Host;
+using Herculan.Es2.Host.Install;
+using Herculan.Es2.Host.Shell;
 using Herculan.Es2.Install;
 using Herculan.Es2.Settings;
 using HercWorks.Core.Io.Transform;
@@ -19,7 +21,7 @@ using HercWorks.Core.Io.Transform;
 // This file is the entry point alone: parse the command line, find the install, and hand over to the
 // turn that was asked for — an install (DiscInstall), Metaltech: Earthsiege's launcher (Es1Launcher) or one of its
 // missions (Es1ZoneViewer), a movie
-// (MovieHost), one mission, or by default ES.EXE's loop of front end and simulator (Launcher).
+// (MovieHost), one mission, or by default ES.EXE's loop of front end and simulator (Launcher), in the window opened here.
 
 HostLog.Start();
 
@@ -126,7 +128,6 @@ if (!options.AskForInstall) {
 }
 using var session = new HostSession(installRoot, localization, imguiFontPath, imguiItalicFontPath) {
 	RememberInstall = !options.AskForInstall,
-	SavePrintScreens = options.SavePrintScreens,
 };
 
 // A drive.cfg that opens no disc is given an image found the way the install was, written in as if chosen in Settings.
@@ -154,6 +155,12 @@ if (options.MoviePath != null) {
 	return MovieHost.Run(installRoot, session.Disc, options.MoviePath, options.ScreenshotPath, options.SilentAudio);
 }
 
+// The window every turn of Earthsiege 2's run takes in turn, with --save-prtscn's captures attached.
+using var window = new HostWindow();
+if (options.SavePrintScreens) {
+	PrintScreenFiles.Attach(window, session);
+}
+
 return options.RunMission
-	? Launcher.RunMission(session, options)
-	: Launcher.RunShellLoop(session, options);
+	? Launcher.RunMission(session, window, options.Es2)
+	: Launcher.RunShellLoop(session, window, options.Es2, HostEditorTurn.Run);

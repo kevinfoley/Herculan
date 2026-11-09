@@ -1,7 +1,8 @@
 using System.Numerics;
-using Herculan.Engine.Host.Install;
+using Herculan.Es2.Host;
+using Herculan.Es2.Host.Install;
 using Herculan.Engine.Localization;
-using Herculan.Engine.Host.Settings;
+using Herculan.Es2.Host.Settings;
 using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;

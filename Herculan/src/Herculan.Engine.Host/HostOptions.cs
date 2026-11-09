@@ -3,6 +3,7 @@ using Herculan.Es1.Host;
 using Herculan.Es1.Input;
 using Herculan.Es1.World;
 using Herculan.Es2.Cockpit;
+using Herculan.Es2.Host;
 using Herculan.Es2.Input;
 using Herculan.Es2.Install;
 using Herculan.Es2.Shell;
@@ -13,7 +14,8 @@ namespace Herculan.Engine.Host;
 /// <summary>
 /// The command line, parsed. <see cref="HostArguments"/> reads each flag's value and holds the <c>--help</c>
 /// text; docs/herculan/herculan-command-line.md describes every flag. Each comment below says why the flag
-/// exists, which is what that page links back to.
+/// exists, which is what that page links back to. Earthsiege 2's own flags go into <see cref="Es2"/> and Metaltech:
+/// Earthsiege's into <see cref="Es1"/>; the flags both games take are set in <see cref="Es2"/> too once parsing ends.
 /// </summary>
 sealed class HostOptions {
 	private readonly List<string> _positional = new();
@@ -32,26 +34,14 @@ sealed class HostOptions {
 	public string? MoviePath { get; private set; }
 
 	public bool SilentAudio { get; private set; }
-	public string? CdDrive { get; private set; }
-	public string? MusicDirectory { get; private set; }
-	public int MusicTrackSelect { get; private set; }
-
-	public bool WritePreferences { get; private set; } = true;
 	public bool AskForInstall { get; private set; }
-	public bool MissionWindowed { get; private set; }
-	public bool ProbeJoystick { get; private set; }
-	public bool WriteJoystickMap { get; private set; }
 
 	public string? PlayTape { get; private set; }
 	public bool DemoTape { get; private set; }
 	public string? RecordTape { get; private set; }
-	public bool DeveloperMode { get; private set; }
 
 	/// <summary>Whether a mission is started directly instead of starting in the front end.</summary>
 	public bool RunMission { get; private set; }
-
-	/// <summary>Whether a mission named by its <c>.MSN</c> keeps its own theater and time of day (<see cref="MissionFileLaunch.Write(string, string, bool, out string?)"/>).</summary>
-	public bool OwnWorld { get; private set; }
 
 	public string? InstallSource { get; private set; }
 	public string? InstallDestination { get; private set; }
@@ -59,10 +49,8 @@ sealed class HostOptions {
 	public RetailInstaller.Language InstallLanguage { get; private set; } = RetailInstaller.Language.English;
 	public bool InstallDiscFiles { get; private set; }
 
-	public ShellOptions Shell { get; } = new();
+	public Es2Options Es2 { get; } = new();
 	public Es1Options Es1 { get; } = new();
-	public StagedStart StagedStart { get; } = new();
-	public StagedScreenshot StagedScreenshot { get; } = new();
 
 	/// <summary>
 	/// Parses <paramref name="args"/>, recording every problem in <paramref name="errors"/> rather than stopping
@@ -70,9 +58,10 @@ sealed class HostOptions {
 	/// </summary>
 	public static HostOptions Parse(string[] args, List<string> errors) {
 		var options = new HostOptions();
-		var staging = options.StagedStart;
-		var capture = options.StagedScreenshot;
-		var shell = options.Shell;
+		var es2 = options.Es2;
+		var staging = es2.StagedStart;
+		var capture = es2.StagedScreenshot;
+		var shell = es2.Shell;
 
 		for (int i = 0; i < args.Length; i++) {
 			if (HostArguments.IsHelp(args[i])) {
@@ -128,17 +117,17 @@ sealed class HostOptions {
 				// Prints each axis and button of the attached stick as it moves. Its whole purpose is filling
 				// in data\herculan-joystick.cfg by hand: a modern stick's axis order is its own, and nothing
 				// but moving each control in turn will say which index is the throttle.
-				options.ProbeJoystick = true;
+				es2.ProbeJoystick = true;
 			} else if (args[i] == "--write-joystick-map") {
 				// Writes the map the engine is actually using out to data\herculan-joystick.cfg, comments and
 				// all, so there is something to edit rather than a file to compose from scratch. With no file
 				// there already, that is the device's own reported shape in retail's X/Y/Z/R order.
-				options.WriteJoystickMap = true;
+				es2.WriteJoystickMap = true;
 			} else if (args[i] == "--no-write-prefs") {
 				// Leaves data\prefs.cfg alone. Saving is on by default, as it is in the original: each panel
 				// writes its own options back as it closes. This is the way out for anyone who would rather
 				// their retail install were not touched at all.
-				options.WritePreferences = false;
+				es2.WritePreferences = false;
 			} else if (args[i] == "--ask-install") {
 				// Opens the install prompt without searching — ES2_GAME_PATH, the remembered install and the ES2 folder
 				// above the executable are all passed over — and remembers nothing, neither the folder picked there nor one
@@ -227,7 +216,7 @@ sealed class HostOptions {
 				// Play a practice, demo or user-made mission named by its .MSN on its own theater and time of day, where the
 				// training load writes theater 1 and the practice screen's time of day over them. The mission editor's Play
 				// passes it, so the game plays what the editor showed. This engine's own flag.
-				options.OwnWorld = true;
+				es2.OwnWorld = true;
 			} else if (args[i] == "--shell-palette") {
 				// Which dpl\<name>.DPL the shell decodes its art through, pinned for the whole run. Without it
 				// the palette follows the tab, as the original's does — see ShellPalette for the table and for
@@ -266,7 +255,7 @@ sealed class HostOptions {
 				// Keep every mission's window windowed at startup whatever prefs.cfg option 6 says -- --shell-windowed's
 				// counterpart for the simulator. This engine's own flag, not retail's -Z0: see the startup toggle in
 				// SimulatorStartup for what it does to the option's write-back.
-				options.MissionWindowed = true;
+				es2.MissionWindowed = true;
 			} else if (args[i] == "--shell-no-movies") {
 				// Turn the shell's movies off — retail's -a, which clears Shell_MoviesEnabled (00482275) so the movie queue takes
 				// nothing and plays nothing. See ShellMovieQueue.
@@ -277,20 +266,20 @@ sealed class HostOptions {
 				// CD drive it answers with -- nothing in either executable reads a drive letter from anywhere --
 				// so this is the engine's own, for a machine with more than one drive. See CdAudio.Open.
 				if (HostArguments.TryReadString(args, ref i, errors, out string drive)) {
-					options.CdDrive = drive;
+					es2.CdDrive = drive;
 				}
 			} else if (args[i] == "--music-dir") {
 				// A directory of Track02.wav ... Track07.wav to play instead of the disc -- the engine's own,
 				// for a machine with no drive. See WaveFileMusicSource.
 				if (HostArguments.TryReadString(args, ref i, errors, out string musicFolder)) {
-					options.MusicDirectory = musicFolder;
+					es2.MusicDirectory = musicFolder;
 				}
 			} else if (args[i] == "--music") {
 				// DBSIM's own -R<n>: the mission's track is n % 5 + 2, so 0-4 pick tracks 2 to 6. Retail's
 				// launcher passes its count of simulator launches here, as --shell's loop does, counting on from
 				// this value; a lone mission without the switch plays track 2.
 				if (HostArguments.TryReadInt(args, ref i, 0, int.MaxValue, errors, out int trackSelect)) {
-					options.MusicTrackSelect = trackSelect;
+					es2.MusicTrackSelect = trackSelect;
 				}
 			} else if (args[i] == "--no-sound" || args[i] == "--silent") {
 				// Skip the output device entirely. Same effect as running on a machine with no sound card:
@@ -361,7 +350,7 @@ sealed class HostOptions {
 				}
 			} else if (args[i] == "--developer") {
 				// DBSIM's own -SPRUNKNOWN: the developer keys. See DeveloperKeys and docs/retail/key-bindings.md.
-				options.DeveloperMode = true;
+				es2.DeveloperMode = true;
 			} else if (args[i] == "--demo") {
 				// DBSIM's own -D: a tape picked from TAPES\demolist.str, as VIEW DEMO plays one, which ends the
 				// mission when it runs out or the moment a key is pressed. With --play, that tape instead.
@@ -440,20 +429,15 @@ sealed class HostOptions {
 			errors.Add($"Unexpected argument {options._positional[2]}: the only positional arguments are the install and the mission.");
 		}
 
+		es2.MissionPath = options.MissionPath;
+		es2.ScreenshotPath = options.ScreenshotPath;
+		es2.SilentAudio = options.SilentAudio;
+		es2.PlayTape = options.PlayTape;
+		es2.DemoTape = options.DemoTape;
+		es2.RecordTape = options.RecordTape;
+
 		return options;
 	}
-}
-
-/// <summary>The front end's flags. Each <c>--shell-*</c> flag sets <see cref="Staged"/>.</summary>
-sealed class ShellOptions {
-	/// <summary>Whether any <c>--shell-*</c> flag was given, which a lone mission cannot honour.</summary>
-	public bool Staged { get; set; }
-	public string? Palette { get; set; }
-	public int Tab { get; set; } = ShellScreen.MainMenuTab;
-	public int Bay { get; set; }
-	public bool Practice { get; set; }
-	public bool Windowed { get; set; }
-	public bool Movies { get; set; } = true;
 }
 
 /// <summary>The flags only a Metaltech: Earthsiege install takes.</summary>
