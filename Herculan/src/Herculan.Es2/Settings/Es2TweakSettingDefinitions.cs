@@ -194,15 +194,6 @@ public static class Es2TweakSettingDefinitions {
 
 	#region FUNCTIONAL
 	/// <summary>
-	/// Enable smoother turret movement when aiming with a joystick or other analog
-	/// input. Retail rounds the turret rotation values, causing noticeable stutter
-	/// when aiming at slow speeds. Irrelevant if controlling the turret with a
-	/// keyboard.
-	/// <para>Defaults on, an exception to the retail-by-default rule. See <see cref="Engine.Anim.SeekRounding.KeepRemainder"/>.</para>
-	/// </summary>
-	public static readonly TweakSettingDefinition<bool> SmootherTurretMovement = new("tweak.smoother_turret_movement", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
-
-	/// <summary>
 	/// Drive the outside view with the mouse instead of the controls: drag with the left button to
 	/// swing the camera round the HERC, which stays under the player's control throughout, and the
 	/// cockpit's keys keep working. Retail hands the stick and arrow keys to the camera and makes
@@ -244,12 +235,6 @@ public static class Es2TweakSettingDefinitions {
 	/// unchanged by it. See <see cref="Terrain.ThinRayRules.ExactFarPlane"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixTerrainHitPoint = new("tweak.fix_terrain_hit_point", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
-
-	/// <summary>
-	/// A held key aims the turret as fast as a stick pushed all the way. Retail's key is worth half a stick, so
-	/// the keyboard turns the turret at half the rate the stick can reach. See <see cref="Input.KeyboardAxes.AtStickRate"/>.
-	/// </summary>
-	public static readonly TweakSettingDefinition<bool> FasterKeyboardAiming = new("tweak.faster_keyboard_aiming", TweakCategory.Functional, defaultValue: false, recommendedValue: false);
 
 	/// <summary>
 	/// Hold the right mouse button on the front window and move the mouse to aim the turret. Retail has the control,
@@ -304,9 +289,9 @@ public static class Es2TweakSettingDefinitions {
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		ShowCorrectStats, ShowAccurateSpeed, RoundShieldBalance, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, HddWeaponIconsOnTop, EverySquadmateReply, FixComputerMessagePreference,
-		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
+		MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
-		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FasterKeyboardAiming, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay, SquadmateClearOfTransport,
+		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay, SquadmateClearOfTransport,
 		AutoFillSaveName, AutoSaveSlot10, PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue, PerPixelDepthSorting,
 	};
 }

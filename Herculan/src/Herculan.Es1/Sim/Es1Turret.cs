@@ -1,5 +1,6 @@
 using Herculan.Engine.Anim;
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
 using Herculan.Es1.Sound;
 
 namespace Herculan.Es1.Sim;
@@ -12,7 +13,7 @@ namespace Herculan.Es1.Sim;
 /// thread's sequence (docs/retail/simulation/torso-aim.md#angle-to-pose). The type record's fields are the chassis file's.
 ///
 /// <para>The multiplies are ES1's rounding ones, the rate-over-tick helpers <see cref="Es1SimClock"/>'s, and the seek
-/// <see cref="SeekRounding.RoundToNearest"/> (docs/herculan/plan-es1-first-mission.md#decisions, decision 1).</para>
+/// <see cref="Rounding"/>'s (docs/herculan/plan-es1-first-mission.md#decisions, decisions 1 and 31).</para>
 /// </summary>
 public sealed class Es1Turret {
 	/// <summary>The Q10 gain <c>Mech_CenterTorsoTick</c> takes of each angle.</summary>
@@ -165,10 +166,24 @@ public sealed class Es1Turret {
 		return (rate, angle);
 	}
 
-	/// <summary><c>AnimThread_SeekToPosition</c> (<c>000620c4</c>) of the thread, when there is one, to the unsigned angle shifted right by 2.</summary>
+	/// <summary>
+	/// <c>AnimThread_SeekToPosition</c> (<c>000620c4</c>) of the thread, when there is one, to the unsigned angle shifted
+	/// right by 2, with <see cref="Rounding"/>.
+	/// </summary>
 	internal static void Seek(AnimationThread? thread, short sequence, short angle) {
-		thread?.SeekToPosition(sequence, (short)((ushort)angle >> 2), SeekRounding.RoundToNearest);
+		thread?.SeekToPosition(sequence, (short)((ushort)angle >> 2), Rounding);
 	}
+
+	/// <summary>
+	/// The arithmetic every ES1 seek scales its position with: retail's <see cref="SeekRounding.RoundToNearest"/>,
+	/// or with <see cref="TweakSettingDefinitions.SmootherTurretMovement"/> on,
+	/// <see cref="SeekRounding.KeepRemainder"/>. Kept, the remainder places the pose at the exact position, so
+	/// the tweak is Earthsiege 2's whichever way retail rounds, and the drawn pose is within half an animation tick of
+	/// retail's.
+	/// </summary>
+	internal static SeekRounding Rounding =>
+		TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.SmootherTurretMovement)
+			? SeekRounding.KeepRemainder : SeekRounding.RoundToNearest;
 
 	/// <summary>Q10(<see cref="CentringGain"/>, <paramref name="angle"/>) held to ±<see cref="AxisFull"/>.</summary>
 	private static int CentringDemand(short angle) {

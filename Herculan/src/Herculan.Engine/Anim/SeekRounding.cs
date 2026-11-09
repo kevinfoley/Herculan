@@ -14,10 +14,11 @@ public enum SeekRounding {
 	Truncate,
 
 	/// <summary>
-	/// Not retail: ES2's smoother turret movement tweak (<c>tweak.smoother_turret_movement</c>). The
+	/// Not retail: the smoother turret movement tweak (<see cref="Settings.TweakSettingDefinitions.SmootherTurretMovement"/>),
+	/// which both games' turret seeks read in place of their own rounding. The
 	/// product is <see cref="Truncate"/>'s, but the sub-tick remainder the Q14 scale-down truncates
 	/// away is kept, and the thread's frame fraction spends it, so a seeked pose is not quantized
-	/// to a whole animation tick (docs/retail/simulation/torso-aim.md, "Angle to pose"). On OUTLAW that
+	/// to a whole animation tick (docs/retail/simulation/torso-aim.md, "Angle to pose"). On ES2's OUTLAW that
 	/// is 1747 drawn twist poses from centre to limit where retail has 170, and the drawn view moves
 	/// every tick from half stick up rather than from three quarters. Playback is untouched: only a
 	/// seek produces a remainder, and the locomotion thread is never seeked.

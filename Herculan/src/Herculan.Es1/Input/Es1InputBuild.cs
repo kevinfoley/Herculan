@@ -1,3 +1,5 @@
+using Herculan.Engine.Settings;
+
 namespace Herculan.Es1.Input;
 
 /// <summary>
@@ -121,11 +123,15 @@ public sealed class Es1InputBuild {
 		byte[]? tapeSources = PlayFrame(live, block);
 
 		// 3. Live, the keyboard's axes; the source buttons are the live block's +0x1d. In playback the keyboard's pairs
-		// are not built, and what steps 5 and 6 do to them only the live step 7 reads.
+		// are not built, and what steps 5 and 6 do to them only the live step 7 reads. The faster keyboard aiming tweak
+		// takes the first pair as aiming when step 6 will move it onto the second; like the slow keys, it goes by the mode
+		// at entry.
 		bool playing = TapePlayback;
 		bool camera = Controls.InputDrivesCamera;
 		bool missileFlown = Controls.MissileFlown;
-		Es1KeyboardAxesBlock? keys = playing ? null : _keyboard.BuildKeyboardAxes((modeAtEntry == 1 && !camera) || missileFlown);
+		Es1KeyboardAxesBlock? keys = playing ? null : _keyboard.BuildKeyboardAxes((modeAtEntry == 1 && !camera) || missileFlown,
+			TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FasterKeyboardAiming),
+			firstPairAims: modeAtEntry == 1 && !camera && !missileFlown);
 		int[] kb = keys is { } built ? [built.FirstX, built.FirstY, built.SecondX, built.SecondY] : new int[4];
 		int[] stick = live.StickAxes;
 		byte[] sourceButtons = playing ? tapeSources! : live.StickButtons;

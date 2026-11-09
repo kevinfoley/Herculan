@@ -44,7 +44,7 @@ tweak.per_pixel_depth_sorting.description   Dessine la vue 3D avec un test de pr
 tweak.high_resolution_widescreen.display_name  Rendu haute résolution panoramique
 tweak.high_resolution_widescreen.description   Activé, le jeu est rendu à la résolution et aux proportions de la fenêtre. Désactivé, le jeu est rendu en 640x480. L'interface hors mission est toujours en 640x480.
 tweak.smoother_turret_movement.display_name   Mouvement de tourelle plus fluide
-tweak.smoother_turret_movement.description     Fluidifie la rotation de la tourelle lors de la visée au joystick ou avec une autre commande analogique. Le jeu original arrondit la valeur de rotation, ce qui provoque des saccades aux faibles vitesses de visée. Sans effet lors de la visée au clavier.
+tweak.smoother_turret_movement.description     Fluidifie la rotation de la tourelle lors de la visée au joystick ou avec une autre commande analogique. Le jeu original arrondit la valeur de rotation, ce qui provoque des saccades aux faibles vitesses de visée.
 tweak.mouse_external_view.display_name         Vue extérieure à la souris
 tweak.mouse_external_view.description          Faites pivoter la vue extérieure [V] autour de votre HERC en faisant glisser la souris avec le bouton gauche, tout en gardant le contrôle du HERC et des touches du cockpit. Le jeu original oriente la caméra avec le joystick ou les touches fléchées, et [Entrée] les fait basculer entre la caméra et le HERC.
 tweak.fix_defend_position_order.display_name  Corriger l'ordre DEFEND POSITION
@@ -62,7 +62,7 @@ tweak.c2_05_stingray_closes_in.description   Dans la mission d'escorte du protot
 tweak.c5_10_guards_hold.display_name  Corriger la mission Luna 10
 tweak.c5_10_guards_hold.description   Dans la dernière mission, les Cybrids qui apparaissent autour de la base ennemie la gardent : ils se regroupent près de son cœur et combattent quiconque s'approche. Dans le jeu original, ils restent là où ils apparaissent et ne ripostent jamais, même quand on leur tire dessus.
 tweak.faster_keyboard_aiming.display_name  Visée au clavier plus rapide
-tweak.faster_keyboard_aiming.description   Maintenir une touche enfoncée fait pivoter et incliner la tourelle de votre HERC aussi vite qu'un joystick poussé à fond. Dans le jeu original, une touche vise à la moitié de cette vitesse, et le chapeau chinois du joystick aux trois quarts.
+tweak.faster_keyboard_aiming.description   Maintenir une touche enfoncée fait pivoter et incliner la tourelle de votre HERC aussi vite qu'un joystick poussé à fond. Dans Earthsiege 2, une touche vise à la moitié de cette vitesse, et le chapeau chinois du joystick aux trois quarts. Dans Metaltech: Earthsiege, une touche vise au quart de cette vitesse, sauf si Alt est maintenue.
 tweak.fix_gunsight_drag.display_name  Corriger la visée souris
 tweak.fix_gunsight_drag.description   Maintenez le bouton droit de la souris n'importe où dans la vitre avant et déplacez la souris pour orienter la tourelle de votre HERC : plus le pointeur est loin de l'endroit où vous avez appuyé, plus la tourelle tourne vite, jusqu'à la vitesse d'un joystick poussé à fond. Pendant que vous visez ainsi, le bouton gauche de la souris fait feu, comme la barre d'espace. Le jeu original possède cette commande, mais oublie le bouton droit dès que la souris bouge, si bien qu'elle ne fonctionne jamais.
 tweak.fix_raptor2_perspective.display_name  Corriger la perspective du Raptor II

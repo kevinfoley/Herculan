@@ -42,7 +42,8 @@ public sealed class Es1KeyboardInput {
 	public ushort PopCommand() => Keyboard.Queue.Pop();
 
 	/// <summary><c>Input_BuildKeyboardAxes</c>(slow, <c>000b188c</c>).</summary>
-	public Es1KeyboardAxesBlock BuildKeyboardAxes(bool slow) => AxisKeys.BuildKeyboardAxes(slow);
+	public Es1KeyboardAxesBlock BuildKeyboardAxes(bool slow, bool aimAtStickRate = false, bool firstPairAims = false) =>
+		AxisKeys.BuildKeyboardAxes(slow, aimAtStickRate, firstPairAims);
 
 	/// <summary>Clears the three key-state blocks.</summary>
 	public void ResetKeyState() => AxisKeys.ResetKeyState();

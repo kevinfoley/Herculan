@@ -44,7 +44,7 @@ tweak.per_pixel_depth_sorting.description   Zeichnet die 3D-Ansicht mit einem Ti
 tweak.high_resolution_widescreen.display_name  Hochauflösende Breitbilddarstellung aktivieren
 tweak.high_resolution_widescreen.description   Wenn aktiviert, wird das Spielgeschehen in der Auflösung und im Seitenverhältnis des Fensters dargestellt. Wenn deaktiviert, wird es in 640x480 dargestellt. Die Menüs außerhalb des Einsatzes sind immer 640x480.
 tweak.smoother_turret_movement.display_name   Flüssigere Geschützturmbewegung
-tweak.smoother_turret_movement.description     Glättet die Drehung des Geschützturms beim Zielen mit Joystick oder einem anderen analogen Eingabegerät. Das Originalspiel rundet den Drehwert, was bei langsamen Zielbewegungen zu Ruckeln führt. Hat beim Zielen mit der Tastatur keine Wirkung.
+tweak.smoother_turret_movement.description     Glättet die Drehung des Geschützturms beim Zielen mit Joystick oder einem anderen analogen Eingabegerät. Das Originalspiel rundet den Drehwert, was bei langsamen Zielbewegungen zu Ruckeln führt.
 tweak.mouse_external_view.display_name         Außenansicht per Maus
 tweak.mouse_external_view.description          Schwenken Sie die Außenansicht [V] um Ihren HERC, indem Sie mit gedrückter linker Maustaste ziehen, während Sie die Kontrolle über den HERC behalten und die Cockpittasten weiter funktionieren. Das Originalspiel steuert die Kamera stattdessen mit Joystick oder Pfeiltasten, und [Eingabe] schaltet diese zwischen Kamera und HERC um.
 tweak.fix_defend_position_order.display_name  Befehl DEFEND POSITION korrigieren
@@ -62,7 +62,7 @@ tweak.c2_05_stingray_closes_in.description   Im Einsatz, in dem Sie den Raptor-I
 tweak.c5_10_guards_hold.display_name  Luna-Einsatz 10 korrigieren
 tweak.c5_10_guards_hold.description   Im letzten Einsatz bewachen die Cybrids, die rund um die feindliche Basis erscheinen, diese: Sie sammeln sich nahe ihrem Kern und bekämpfen jeden, der sich nähert. Im Originalspiel bleiben sie stehen, wo sie erscheinen, und erwidern nie das Feuer, auch nicht unter Beschuss.
 tweak.faster_keyboard_aiming.display_name  Schnelleres Zielen mit der Tastatur
-tweak.faster_keyboard_aiming.description   Eine gehaltene Taste dreht und neigt den Geschützturm Ihres HERC so schnell wie ein ganz ausgelenkter Joystick. Im Originalspiel zielt eine Taste mit der halben Geschwindigkeit und der Coolie-Hat des Joysticks mit drei Vierteln davon.
+tweak.faster_keyboard_aiming.description   Eine gehaltene Taste dreht und neigt den Geschützturm Ihres HERC so schnell wie ein ganz ausgelenkter Joystick. In Earthsiege 2 zielt eine Taste mit der halben Geschwindigkeit und der Coolie-Hat des Joysticks mit drei Vierteln davon. In Metaltech: Earthsiege zielt eine Taste mit einem Viertel davon, solange Alt nicht gedrückt ist.
 tweak.fix_gunsight_drag.display_name  Zielen mit Maus reparieren
 tweak.fix_gunsight_drag.description   Halten Sie die rechte Maustaste irgendwo im vorderen Fenster gedrückt und bewegen Sie die Maus, um den Geschützturm Ihres HERC auszurichten: Je weiter der Zeiger von der Stelle entfernt ist, an der Sie gedrückt haben, desto schneller dreht sich der Turm, bis zur Geschwindigkeit eines ganz ausgelenkten Joysticks. Während Sie so zielen, feuert die linke Maustaste wie die Leertaste. Das Originalspiel hat diese Steuerung, vergisst die rechte Taste aber, sobald sich die Maus bewegt, sodass sie nie funktioniert.
 tweak.fix_raptor2_perspective.display_name  Raptor-II-Perspektive korrigieren

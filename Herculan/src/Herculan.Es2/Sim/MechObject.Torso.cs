@@ -1,7 +1,7 @@
 using Herculan.Engine.Anim;
 using Herculan.Engine.Numerics;
 using Herculan.Engine;
-using Herculan.Es2.Settings;
+using Herculan.Engine.Settings;
 
 namespace Herculan.Es2.Sim;
 
@@ -66,7 +66,7 @@ public sealed partial class MechObject {
 		}
 
 		TorsoTwistThread?.SeekToPosition(Type.TorsoTwistSequence, SequencePosition(TorsoTwistAngle),
-			(world.Tweaks.GetSettingValue(Es2TweakSettingDefinitions.SmootherTurretMovement)
+			(world.Tweaks.GetSettingValue(TweakSettingDefinitions.SmootherTurretMovement)
 				? SeekRounding.KeepRemainder : SeekRounding.Truncate));
 	}
 
@@ -98,7 +98,7 @@ public sealed partial class MechObject {
 		}
 
 		TorsoPitchThread?.SeekToPosition(Type.TorsoPitchSequence, SequencePosition(TorsoPitchAngle),
-			(world.Tweaks.GetSettingValue(Es2TweakSettingDefinitions.SmootherTurretMovement)
+			(world.Tweaks.GetSettingValue(TweakSettingDefinitions.SmootherTurretMovement)
 				? SeekRounding.KeepRemainder : SeekRounding.Truncate));
 
 		Weapons.ConvergeOnRange(this, convergeRange);

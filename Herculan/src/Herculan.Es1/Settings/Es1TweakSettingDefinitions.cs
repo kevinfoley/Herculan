@@ -56,11 +56,15 @@ public static class Es1TweakSettingDefinitions {
 
 	/// <summary>
 	/// The tweaks Metaltech: Earthsiege's Tweaks menu offers, those its code reads: of the core's,
-	/// <see cref="TweakSettingDefinitions.HighResolutionWidescreen"/> (<see cref="View.Es1Monitor.Fit"/>), then all of
-	/// its own (docs/herculan/planning.md#how-the-two-games-share-code).
+	/// <see cref="TweakSettingDefinitions.HighResolutionWidescreen"/> (<see cref="View.Es1Monitor.Fit"/>),
+	/// <see cref="TweakSettingDefinitions.SmootherTurretMovement"/> (<see cref="Sim.Es1Turret.Rounding"/>, plan decision 31)
+	/// and <see cref="TweakSettingDefinitions.FasterKeyboardAiming"/> (<see cref="Input.Es1KeyboardAxes.Build"/>, plan
+	/// decision 32, docs/herculan/plan-es1-first-mission.md#decisions), then all of its own
+	/// (docs/herculan/planning.md#how-the-two-games-share-code).
 	/// </summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> Offered = new[] {
-		TweakSettingDefinitions.HighResolutionWidescreen,
+		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
+		TweakSettingDefinitions.FasterKeyboardAiming,
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ProceedKeepsLevels,
 	};
 }

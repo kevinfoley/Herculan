@@ -445,7 +445,7 @@ public sealed class PilotControls {
 	/// throttle; not while the controls drive a camera; and not while a missile is flown, which the turret pair can steer.
 	/// </summary>
 	private bool FasterKeyboardAiming =>
-		TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.FasterKeyboardAiming)
+		TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FasterKeyboardAiming)
 		&& !Bindings.PilotingRazor && !_view.ControlsOnCamera && !_scene.World.PlayerMissile.Flown;
 
 	/// <summary>

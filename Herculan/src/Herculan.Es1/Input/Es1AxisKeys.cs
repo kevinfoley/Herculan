@@ -172,7 +172,8 @@ public sealed class Es1AxisKeys {
 	}
 
 	/// <summary><c>Input_BuildKeyboardAxes</c> (<c>0004c818</c>) over the blocks: <see cref="Es1KeyboardAxes.Build"/>.</summary>
-	public Es1KeyboardAxesBlock BuildKeyboardAxes(bool slow) => Es1KeyboardAxes.Build(this, slow);
+	public Es1KeyboardAxesBlock BuildKeyboardAxes(bool slow, bool aimAtStickRate = false, bool firstPairAims = false) =>
+		Es1KeyboardAxes.Build(this, slow, aimAtStickRate, firstPairAims);
 
 	private static byte[] BuildWantedCodes() {
 		byte[] makes = [0x47, 0x48, 0x49, 0x4b, 0x4d, 0x4f, 0x50, 0x51, 0x32, 0x24, 0x25, 0x17, 0x39, EnterScancode];

@@ -72,7 +72,7 @@ public sealed class Es1Base : IEs1SimObject {
 		RadarOn = baseClass == Es1BaseClass.Radar;
 
 		// The threads: for i of 0 and 1 below +0x06, ShapeInst_AddThread(structure, i), the rate +0x26 + 2i, and thread 1
-		// seeked to 6000. Retail tests neither the instance nor the sequence; a sequence the shape lacks, or a static
+		// seeked to 6000, with Es1Turret.Rounding. Retail tests neither the instance nor the sequence; a sequence the shape lacks, or a static
 		// instance, builds no thread here, an engine guard.
 		for (int i = 0; i < MaxThreads; i++) {
 			if (i >= type.ThreadCount || Instance == null || !Instance.Animation.HasSequence(i)) {
@@ -82,7 +82,7 @@ public sealed class Es1Base : IEs1SimObject {
 			var thread = Instance.AddThread(i);
 			thread.Rate = type.ThreadRate(i);
 			if (i == SeekedThread) {
-				thread.SeekToPosition(i, SeekedPosition, SeekRounding.RoundToNearest);
+				thread.SeekToPosition(i, SeekedPosition, Es1Turret.Rounding);
 			}
 
 			_threads[i] = thread;

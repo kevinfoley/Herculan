@@ -905,7 +905,7 @@ public sealed class MissionScene {
 					new BaseObject(type, volume, baseCollision[type.Index], boundingRadius,
 						models.BaseAnimCellCount(type), models.BaseAnimation(type),
 						placement.StartingCondition, models.HulkCollision(type),
-						tweaks.GetSettingValue(Es2TweakSettingDefinitions.SmootherTurretMovement)) {
+						tweaks.GetSettingValue(TweakSettingDefinitions.SmootherTurretMovement)) {
 						// The two PROJ.DAT rows the armed structure's tick names by literal, the same
 						// way the flyer AI does — see BaseObject.ArmedThinkTick.
 						GunProjectile = weapons?.ProjectileAt(BaseObject.GunProjectileIndex),

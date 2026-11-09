@@ -86,7 +86,7 @@ public static class KeyboardAxes {
 	/// <summary>
 	/// <see cref="Build"/>'s pairs with each key that will aim the turret worth <see cref="StickFullDeflection"/>
 	/// rather than <see cref="MechControls.KeyboardAxis"/>, so a held key turns the turret as fast as the stick can
-	/// (<see cref="Settings.Es2TweakSettingDefinitions.FasterKeyboardAiming"/>). <b>This engine's own</b>; retail's key
+	/// (<see cref="Engine.Settings.TweakSettingDefinitions.FasterKeyboardAiming"/>). <b>This engine's own</b>; retail's key
 	/// is worth half a stick. The second pair aims the turret in a walker; the first does too when
 	/// <paramref name="firstPairAims"/>, the stick having taken the movement pair
 	/// (<see cref="JoystickPilotInput.KeyboardAimsTurret"/>).

@@ -47,8 +47,16 @@ public static class Es1KeyboardAxes {
 	/// 8–11 adds into the second and ends the loop. Then <c>Space</c> and <c>Enter</c> held, and every key both held and
 	/// release-pending has its held and seen bytes cleared, so a key pressed and released between two builds counts
 	/// for one.
+	///
+	/// <para>With <paramref name="aimAtStickRate"/>, the core's faster keyboard aiming tweak
+	/// (<see cref="Engine.Settings.TweakSettingDefinitions.FasterKeyboardAiming"/>, plan decision 32,
+	/// docs/herculan/plan-es1-first-mission.md#decisions), every key that aims the turret adds the whole of its entry, as
+	/// it does with <c>Alt</c> held: keys 8–11, and keys 0–7 when <paramref name="firstPairAims"/>, the input build moving
+	/// the first pair onto the second. The whole of <c>0x100</c> is the travel a stick pushed all the way reaches under the
+	/// squared response every device is built with (docs/es1/simulation/joystick.md#the-record). This engine's own; off,
+	/// the build is retail's.</para>
 	/// </summary>
-	internal static Es1KeyboardAxesBlock Build(Es1AxisKeys keys, bool slow) {
+	internal static Es1KeyboardAxesBlock Build(Es1AxisKeys keys, bool slow, bool aimAtStickRate = false, bool firstPairAims = false) {
 		byte[] held = keys.Held, seen = keys.Seen, releasePending = keys.ReleasePending;
 		int firstX = 0, firstY = 0, secondX = 0, secondY = 0;
 		for (int key = 0; key < AxisKeys; key++) {
@@ -56,7 +64,8 @@ public static class Es1KeyboardAxes {
 				continue;
 			}
 
-			int shift = keys.AltHeld != 0 || (key < FirstPairKeys && !slow) ? FullShift : QuarterShift;
+			bool aims = key >= FirstPairKeys || firstPairAims;
+			int shift = keys.AltHeld != 0 || (key < FirstPairKeys && !slow) || (aimAtStickRate && aims) ? FullShift : QuarterShift;
 			seen[key] = 1;
 			var (dx, dy) = Deltas[key];
 			if (key >= FirstPairKeys) {

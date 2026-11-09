@@ -1,7 +1,7 @@
 using Herculan.Engine.Anim;
 using Herculan.Engine.Numerics;
 using Herculan.Engine;
-using Herculan.Es2.Settings;
+using Herculan.Engine.Settings;
 
 namespace Herculan.Es2.Sim;
 
@@ -95,7 +95,7 @@ public sealed partial class BaseObject {
 				: (short)moved;
 
 			_threads[axis]?.SeekToPosition(axis, (short)((ushort)_turretAngle[axis] >> 2),
-				(world.Tweaks.GetSettingValue(Es2TweakSettingDefinitions.SmootherTurretMovement)
+				(world.Tweaks.GetSettingValue(TweakSettingDefinitions.SmootherTurretMovement)
 				? SeekRounding.KeepRemainder : SeekRounding.Truncate));
 		}
 	}
