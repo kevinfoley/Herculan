@@ -62,7 +62,7 @@ public sealed class HostSession(string installRoot, LocalizationTable localizati
 
 	public string ImGuiFontPath { get; } = imguiFontPath;
 
-	/// <summary>The italic face of <see cref="ImGuiFontPath"/>'s font (<see cref="ScaledImGui.ItalicFont"/>).</summary>
+	/// <summary>The italic face of <see cref="ImGuiFontPath"/>'s font (<see cref="Herculan.Engine.Platform.ScaledImGui.ItalicFont"/>).</summary>
 	public string ImGuiItalicFontPath { get; } = imguiItalicFontPath;
 
 	/// <summary>

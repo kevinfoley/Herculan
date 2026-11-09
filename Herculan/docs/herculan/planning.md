@@ -79,9 +79,9 @@ So ES1 does not run on ES2's simulation code with ES1's data swapped in. Common 
 
 **A shared core with one assembly per game**, the shape ScummVM has: one application and one brand over many game engines that share almost no game logic, each in its own folder above a common backend.
 
-- **The core** holds what does not depend on which game is running: the HercWorks readers, the 3Space asset classes (`TS*`, `GL*`, `AN*`), the assembly math library and its tables, and the platform, GL, render back end, audio back end, input devices, settings, install detection and launcher.
-- **One assembly per game** holds that game's simulation, cockpit, shell, mission world and static `.DAT` tables. ES2's is `Herculan.Es2`, ES1's `Herculan.Es1`, ported fresh beside it. Host code that wires one game's screens goes with that game.
-- **One application.** It finds which installs it has been given and runs the chosen game under that game's own title ("HERCULAN — Earthsiege 2", "HERCULAN — Metaltech: Earthsiege"), with the one logo.
+- **The core** holds what does not depend on which game is running: the HercWorks readers, `RetailGameDetector` among them, which tells which game an install holds; the 3Space asset classes (`TS*`, `GL*`, `AN*`); the assembly math library and its tables; and the platform, GL, render back end, audio back end, input devices, settings, localization and the menu bar, which a game's own panels join through `IMenuBarPanel`.
+- **One assembly per game** holds that game's simulation, cockpit, shell, mission world and static `.DAT` tables. ES2's is `Herculan.Es2`, ES1's `Herculan.Es1`, ported fresh beside it. Host code that wires one game's screens goes with that game, in its `Host/` folder: ES2's launcher, session, options and settings panels, with its install lookup (`GameInstall`) beside them, and ES1's launcher, shell menus and options.
+- **One application.** It finds which installs it has been given and runs the chosen game under that game's own title ("HERCULAN — Earthsiege 2", "HERCULAN — Metaltech: Earthsiege"), with the one logo. `Herculan.Engine.Host` keeps only what is the application's own: the command-line parser, which fills each game's options, the log, the print-screen files, the window icon, and the mission editor's turn, which it hands ES2's launcher because the editor references `Herculan.Es2`.
 
 Three rules keep the boundary:
 
