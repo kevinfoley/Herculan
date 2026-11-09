@@ -156,6 +156,9 @@ menu.controller                Manette
 menu.keys                      Touches
 menu.editor                    Éditeur
 menu.custom_missions           Missions personnalisées
+menu.game                      Jeu
+menu.switch_game               Passer à {0}
+menu.ask_at_startup            Demander au démarrage
 custom_missions.title          Missions personnalisées
 custom_missions.mission        Mission
 custom_missions.author         Auteur

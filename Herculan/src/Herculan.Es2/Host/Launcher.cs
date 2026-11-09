@@ -1,3 +1,4 @@
+using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
 using Herculan.Es2.Cockpit;
 using Herculan.Es2.Host.Shell;
@@ -37,7 +38,8 @@ public static class Launcher {
 	/// Editor item's: the mission editor, whose Back to game brings the shell up again as the restart does, whose Play
 	/// runs its mission and then brings the editor back on it, and whose window closing ends the run as the shell's does.
 	/// So is Custom Missions' Play: the mission it hands over, then the shell again as after the editor, however the
-	/// mission ended, with no debrief; the window closing in the mission ends the run.
+	/// mission ended, with no debrief; the window closing in the mission ends the run. The "Game" menu's "Switch to" ends
+	/// the run after the shell's turn, leaving the window open for the other game (<see cref="GameSwitch"/>).
 	/// </summary>
 	public static int RunShellLoop(HostSession session, HostWindow window, Es2Options options, EditorTurn editor) {
 		var shell = options.Shell;
@@ -53,8 +55,8 @@ public static class Launcher {
 				missionPicker: options.DeveloperMode);
 			window.Hold(null);
 			// A termination signal closed the window (TerminationSignal), so it ends the run as QUIT would, whatever
-			// the window was left holding.
-			if (TerminationSignal.Requested) {
+			// the window was left holding; so does the "Game" menu's "Switch to" (GameSwitch), whose game the host runs next.
+			if (TerminationSignal.Requested || GameSwitch.Requested != null) {
 				return 0;
 			}
 

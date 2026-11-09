@@ -13,7 +13,8 @@ namespace Herculan.Engine.Host;
 /// (<see cref="GameChooser"/>); a <c>--screenshot</c> run, which has nobody to ask, takes Earthsiege 2 in its place. That
 /// game's install is then found (<see cref="RetailInstalls.Locate"/>), or asked for in its install prompt when the search
 /// comes up empty, finds one on a disc, or is skipped by <c>--ask-install</c>. A prompt opened from the chooser goes
-/// back to it when the player gives up. This engine's own; retail has no counterpart.
+/// back to it when the player gives up. A switch from the "Game" menu finds the other game's install the same way
+/// (<see cref="ForSwitch"/>). This engine's own; retail has no counterpart.
 /// </summary>
 static class StartupInstall {
 	/// <summary>
@@ -43,33 +44,51 @@ static class StartupInstall {
 				game = choice;
 			}
 
-			string? root = options.AskForInstall ? null : RetailInstalls.Locate(game);
-			string? onDisc = root != null && RetailInstalls.IsOnDisc(root) ? root : null;
-			if (onDisc == null && root != null) {
-				return Settled(game, root, dontAskAgain);
-			}
-
-			if (!canAsk) {
-				HostLog.Fail(onDisc != null
-					? $"{onDisc}: {localization.GetStringOrKey("install_prompt.on_disc")}"
-					: $"Could not find a {localization.GetStringOrKey(GameChooser.NameKey(game))} installation.\n" +
-						$"Pass its path as the first argument, or set {RetailInstalls.PathVariable(game)}.\n" +
-						$"The path should be the folder containing the '{GameContent.ArchiveFolderName}' directory.");
-				return null;
-			}
-
 			string dismissKey = fixedGame == null ? "install_prompt.back" : "install_prompt.quit";
-			root = game == RetailGame.Earthsiege1
-				? InstallPromptWindow.Run(localization, fontPath, game, onDisc, dismissKey).Chosen
-				: InstallPrompt.Run(localization, fontPath, onDisc, dismissKey);
-			if (root != null) {
+			if (InstallOf(game, options, localization, fontPath, canAsk, dismissKey) is { } root) {
 				return Settled(game, root, dontAskAgain);
 			}
 
+			// A fixed game is always the case without asking, so a failed search ends here too.
 			if (fixedGame != null) {
 				return null;
 			}
 		}
+	}
+
+	/// <summary>
+	/// The install of <paramref name="game"/>, which the "Game" menu's "Switch to" asked for (<see cref="GameSwitch"/>),
+	/// found as <see cref="Find"/> finds a game's, its prompt's Back giving up; null when the player gave up. The saved
+	/// start-up game is not touched. <paramref name="beforePrompt"/> runs before the prompt opens, a window of its own.
+	/// </summary>
+	public static string? ForSwitch(RetailGame game, HostOptions options, LocalizationTable localization, string fontPath,
+			Action beforePrompt) =>
+		InstallOf(game, options, localization, fontPath, canAsk: true, "install_prompt.back", beforePrompt);
+
+	// The install of game: the one found, unless --ask-install skips the search, else the one chosen in its install prompt,
+	// whose dismissal is labelled dismissKey; null when the player dismissed the prompt, or with the reason reported when
+	// canAsk is clear and the search found none.
+	private static string? InstallOf(RetailGame game, HostOptions options, LocalizationTable localization, string fontPath,
+			bool canAsk, string dismissKey, Action? beforePrompt = null) {
+		string? root = options.AskForInstall ? null : RetailInstalls.Locate(game);
+		string? onDisc = root != null && RetailInstalls.IsOnDisc(root) ? root : null;
+		if (onDisc == null && root != null) {
+			return root;
+		}
+
+		if (!canAsk) {
+			HostLog.Fail(onDisc != null
+				? $"{onDisc}: {localization.GetStringOrKey("install_prompt.on_disc")}"
+				: $"Could not find a {localization.GetStringOrKey(GameChooser.NameKey(game))} installation.\n" +
+					$"Pass its path as the first argument, or set {RetailInstalls.PathVariable(game)}.\n" +
+					$"The path should be the folder containing the '{GameContent.ArchiveFolderName}' directory.");
+			return null;
+		}
+
+		beforePrompt?.Invoke();
+		return game == RetailGame.Earthsiege1
+			? InstallPromptWindow.Run(localization, fontPath, game, onDisc, dismissKey).Chosen
+			: InstallPrompt.Run(localization, fontPath, onDisc, dismissKey);
 	}
 
 	/// <summary>Whether an option only Metaltech: Earthsiege takes was given (<see cref="HostOptions.Es1"/>).</summary>

@@ -22,7 +22,8 @@ using HercWorks.Core.Io.Transform;
 // This file is the entry point alone: parse the command line, find the install, and hand over to the
 // turn that was asked for — an install (DiscInstall), Metaltech: Earthsiege's launcher (Es1Launcher) or one of its
 // missions (Es1ZoneViewer), a movie
-// (MovieHost), one mission, or by default ES.EXE's loop of front end and simulator (Launcher), in the window opened here.
+// (MovieHost), one mission, or by default ES.EXE's loop of front end and simulator (Launcher), in the window opened here;
+// and, when a shell's "Game" menu switches game (GameSwitch), the other game's launcher in the same window.
 
 HostLog.Start();
 
@@ -65,8 +66,52 @@ string? installRoot = StartupInstall.Find(options, localization, imguiFontPath);
 if (installRoot == null) {
 	return 1;
 }
-if (!options.AskForInstall) {
-	RetailInstalls.Remember(installRoot);
+
+// The window every turn of either game takes in turn, opened by the first turn that needs it, with --save-prtscn's
+// captures attached, which are written under the install of the Earthsiege 2 session running; where the window last
+// stood, for one opened after an install prompt closed it.
+HostWindow? window = null;
+WindowPlacement? placement = null;
+HostSession? es2Session = null;
+
+// Each game in turn: the one found, then, for as long as a shell's "Switch to" asks for one (GameSwitch), the game asked
+// for, its install found as at start-up without changing the saved start-up game. A game switched to runs its shell
+// whatever the command line asked the first game for. Its install prompt opens a window of its own, so the shared one
+// closes while it is up; the prompt's Back goes back to the game switched from.
+try {
+	bool switched = false;
+	while (true) {
+		if (!options.AskForInstall) {
+			RetailInstalls.Remember(installRoot);
+		}
+
+		int exit = RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1
+			? RunEs1(installRoot, switched)
+			: RunEs2(installRoot, switched);
+		if (GameSwitch.Take() is not { } next) {
+			return exit;
+		}
+
+		installRoot = StartupInstall.ForSwitch(next, options, localization, imguiFontPath, () => {
+			placement = window?.Placement;
+			window?.Dispose();
+			window = null;
+		}) ?? installRoot;
+		switched = true;
+	}
+} finally {
+	window?.Dispose();
+}
+
+HostWindow SharedWindow() {
+	if (window == null) {
+		window = new HostWindow(placement: placement);
+		if (options.SavePrintScreens) {
+			PrintScreenFiles.Attach(window, () => es2Session?.InstallRoot);
+		}
+	}
+
+	return window;
 }
 
 // A Metaltech: Earthsiege install, with no mission named and none of --play, --demo, --record and --sim, runs the
@@ -74,23 +119,23 @@ if (!options.AskForInstall) {
 // the simulator. A named mission loads as a single mission and runs the simulator alone; --sim
 // runs it on the install's data\ files, as DBSIM.EXE does; --play and --demo play a tape, as its -p and -D do, and
 // --record records one, as its -r does.
-if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
+int RunEs1(string root, bool switched) {
 	// Loaded for both turns: the shell's SYSTEM REPAIR and Tweaks window read them, and so does the simulator, which has
 	// no menu bar of its own, for its textures and sounds.
 	TweakSettings.Current = new TweakSettings(Es1TweakSettingDefinitions.All, Es1TweakSettingDefinitions.FileName);
 	TweakSettings.Current.LoadFromDisk();
 
 	var es1 = options.Es1;
-	bool simulator = options.MissionPath != null || options.PlayTape != null || options.DemoTape || options.RecordTape != null
-		|| es1.Simulator;
+	bool simulator = !switched && (options.MissionPath != null || options.PlayTape != null || options.DemoTape
+		|| options.RecordTape != null || es1.Simulator);
 	if (!simulator) {
 		if (es1.Staged) {
 			HostLog.Fail($"--theater and --world stage the simulator: add {Es1Options.SimulatorFlag} or name a mission.");
 			return 1;
 		}
 
-		return Es1Launcher.Run(installRoot, es1.ShellArguments, imguiFontPath, imguiItalicFontPath,
-			() => new Es1ShellMenus(localization), options.ScreenshotPath, options.SilentAudio);
+		return Es1Launcher.Run(root, es1.ShellArguments, imguiFontPath, imguiItalicFontPath,
+			() => new Es1ShellMenus(localization), options.ScreenshotPath, SharedWindow(), options.SilentAudio);
 	}
 
 	if (es1.ShellArguments.Count > 0) {
@@ -98,52 +143,53 @@ if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
 		return 1;
 	}
 
-	return Es1ZoneViewer.Run(installRoot, options.MissionPath, es1.ToOverrides(), options.PlayTape, options.DemoTape,
+	return Es1ZoneViewer.Run(root, options.MissionPath, es1.ToOverrides(), options.PlayTape, options.DemoTape,
 		options.RecordTape, silent: options.SilentAudio);
 }
-if (StartupInstall.Es1Requested(options)) {
-	HostLog.Fail($"--theater, --world, {Es1Options.SimulatorFlag} and GO.EXE's switches are for a Metaltech: Earthsiege install.");
-	return 1;
-}
 
-TweakSettings.Current = new TweakSettings(Es2TweakSettingDefinitions.All, Es2TweakSettingDefinitions.FileName);
-TweakSettings.Current.LoadFromDisk();
+int RunEs2(string root, bool switched) {
+	if (!switched && StartupInstall.Es1Requested(options)) {
+		HostLog.Fail($"--theater, --world, {Es1Options.SimulatorFlag} and GO.EXE's switches are for a Metaltech: Earthsiege install.");
+		return 1;
+	}
 
-using var session = new HostSession(installRoot, localization, imguiFontPath, imguiItalicFontPath) {
-	RememberInstall = !options.AskForInstall,
-};
+	TweakSettings.Current = new TweakSettings(Es2TweakSettingDefinitions.All, Es2TweakSettingDefinitions.FileName);
+	TweakSettings.Current.LoadFromDisk();
 
-// A drive.cfg that opens no disc is given an image found the way the install was, written in as if chosen in Settings.
-if (session.Disc == null && GameInstall.FindDiscImage(installRoot, ShellHost.DiscCheckMovie) is { } foundImage) {
+	using var session = new HostSession(root, localization, imguiFontPath, imguiItalicFontPath) {
+		RememberInstall = !options.AskForInstall,
+	};
+	es2Session = session;
 	try {
-		GameInstall.WriteDiscImage(installRoot, foundImage);
-		session.ReopenDisc();
-	} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-		Console.Error.WriteLine($"Found the disc image {foundImage}, but could not write it into data\\drive.cfg ({ex.Message}).");
+		// A drive.cfg that opens no disc is given an image found the way the install was, written in as if chosen in Settings.
+		if (session.Disc == null && GameInstall.FindDiscImage(root, ShellHost.DiscCheckMovie) is { } foundImage) {
+			try {
+				GameInstall.WriteDiscImage(root, foundImage);
+				session.ReopenDisc();
+			} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+				Console.Error.WriteLine($"Found the disc image {foundImage}, but could not write it into data\\drive.cfg ({ex.Message}).");
+			}
+		}
+
+		// The disc GameInstall.OpenDiscFile falls back from, said once: a disc without the movie the shell's startup
+		// probes for (ShellHost.DiscCheckMovie) is not the CD.
+		if (session.Disc is { } startupDisc) {
+			Console.WriteLine($"Disc: {startupDisc.Location}");
+			if (!startupDisc.FileExists(ShellHost.DiscCheckMovie)) {
+				Console.Error.WriteLine($"data\\drive.cfg specifies {startupDisc.Location}, but it is not a retail CD. "
+					+ "Falling back to the install directory for some files.");
+			}
+		}
+
+		// --movie shares even less: no archives, no zone, no shell art — one file and a quad. See MovieHost.
+		if (!switched && options.MoviePath != null) {
+			return MovieHost.Run(root, session.Disc, options.MoviePath, options.ScreenshotPath, options.SilentAudio);
+		}
+
+		return options.RunMission && !switched
+			? Launcher.RunMission(session, SharedWindow(), options.Es2)
+			: Launcher.RunShellLoop(session, SharedWindow(), options.Es2, HostEditorTurn.Run);
+	} finally {
+		es2Session = null;
 	}
 }
-
-// The disc GameInstall.OpenDiscFile falls back from, said once: a disc without the movie the shell's startup
-// probes for (ShellHost.DiscCheckMovie) is not the CD.
-if (session.Disc is { } startupDisc) {
-	Console.WriteLine($"Disc: {startupDisc.Location}");
-	if (!startupDisc.FileExists(ShellHost.DiscCheckMovie)) {
-		Console.Error.WriteLine($"data\\drive.cfg specifies {startupDisc.Location}, but it is not a retail CD. "
-			+ "Falling back to the install directory for some files.");
-	}
-}
-
-// --movie shares even less: no archives, no zone, no shell art — one file and a quad. See MovieHost.
-if (options.MoviePath != null) {
-	return MovieHost.Run(installRoot, session.Disc, options.MoviePath, options.ScreenshotPath, options.SilentAudio);
-}
-
-// The window every turn of Earthsiege 2's run takes in turn, with --save-prtscn's captures attached.
-using var window = new HostWindow();
-if (options.SavePrintScreens) {
-	PrintScreenFiles.Attach(window, session);
-}
-
-return options.RunMission
-	? Launcher.RunMission(session, window, options.Es2)
-	: Launcher.RunShellLoop(session, window, options.Es2, HostEditorTurn.Run);

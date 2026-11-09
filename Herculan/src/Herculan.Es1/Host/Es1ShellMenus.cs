@@ -1,3 +1,5 @@
+using HercWorks.Core.Io.Transform;
+using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
@@ -10,7 +12,7 @@ namespace Herculan.Es1.Host;
 
 /// <summary>
 /// Metaltech: Earthsiege's shell's menus over its <see cref="FrontEndWindow"/>: HERCULAN's own <see cref="HostMenuBar"/>
-/// with the windows that work the same in either game, Accessibility and About, its own Tweaks, and the
+/// with its "Game" menu, the windows that work the same in either game, Accessibility and About, its own Tweaks, and the
 /// <see cref="ErrorDialog"/>. Settings, Controller, Keys and Editor are greyed, since each is built on Earthsiege 2's
 /// install, controls or missions; Custom Missions is left out. There is no welcome and no automatic update check.
 /// </summary>
@@ -27,16 +29,18 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 	public Es1ShellMenus(LocalizationTable localization) {
 		_localization = localization;
 		_tweaks = new TweaksMenu(TweakSettings.Current, localization, offered: Es1TweakSettingDefinitions.Offered);
+		var game = new GameMenu(localization, RetailGame.Earthsiege1, other => {
+			GameSwitch.Request(other);
+			CloseRequested?.Invoke();
+		});
 		_menuBar = new HostMenuBar(localization, keys: null, tweaks: _tweaks, settings: null, controller: null,
-			accessibilitySettings: Accessibility);
+			accessibilitySettings: Accessibility, game: game);
 	}
 
-	// Neither is raised: no item ends the shell's turn, and there is no Controller window to save the pad's settings.
-	public event Action? CloseRequested {
-		add { }
-		remove { }
-	}
+	/// <summary>Raised by "Switch to", the one item that ends the shell's turn.</summary>
+	public event Action? CloseRequested;
 
+	// Never raised: there is no Controller window to save the pad's settings.
 	public event Action<GamepadMouseSettings>? PadPointerSettingsChanged {
 		add { }
 		remove { }

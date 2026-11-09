@@ -156,6 +156,9 @@ menu.controller                Controller
 menu.keys                      Keys
 menu.editor                    Editor
 menu.custom_missions           Custom Missions
+menu.game                      Game
+menu.switch_game               Switch to {0}
+menu.ask_at_startup            Ask at start-up
 custom_missions.title          Custom Missions
 custom_missions.mission        Mission
 custom_missions.author         Author

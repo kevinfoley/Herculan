@@ -1,6 +1,5 @@
 using HercWorks.Help.Html;
 using Herculan.Engine.Platform;
-using Herculan.Es2.Host;
 
 namespace Herculan.Engine.Host;
 
@@ -13,10 +12,17 @@ namespace Herculan.Engine.Host;
 static class PrintScreenFiles {
 	public const string FolderName = "Screenshots";
 
-	/// <summary>Has <paramref name="window"/>'s captures written under <paramref name="session"/>'s install at capture time.</summary>
-	public static void Attach(HostWindow window, HostSession session) =>
+	/// <summary>
+	/// Has <paramref name="window"/>'s captures written under the install <paramref name="installRoot"/> names at capture
+	/// time: the Earthsiege 2 session's, which may change install meanwhile. A capture while it names none is not written.
+	/// </summary>
+	public static void Attach(HostWindow window, Func<string?> installRoot) =>
 		window.PrintScreenCaptured += (width, height, rgb) => {
-			string folder = Path.Combine(session.InstallRoot, FolderName);
+			if (installRoot() is not { } root) {
+				return;
+			}
+
+			string folder = Path.Combine(root, FolderName);
 			var taken = DateTime.Now;
 			Task.Run(() => Write(folder, taken, width, height, rgb));
 		};

@@ -1,4 +1,5 @@
 using HercWorks.Core.Io;
+using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
 using Herculan.Es1.Flic;
 using Herculan.Es1.Shell;
@@ -12,15 +13,16 @@ namespace Herculan.Es1.Host;
 /// (<see cref="Es1ZoneViewer"/>) one after the other, each by the number the program before left in <c>data\exit.cfg</c>,
 /// until that number is 0. The programs' exit statuses are not read, as retail keeps none of <c>spawnv</c>'s answers.
 ///
-/// <para>Retail spawns each program as a DOS executable; here each is a turn in one <see cref="HostWindow"/> the launcher
-/// opens once its start-up checks pass, which shows black between turns (<see cref="HostWindow.Hold"/>). The DOS current
-/// folder a prefix-less path is relative to is the install folder here.</para>
+/// <para>Retail spawns each program as a DOS executable; here each is a turn in the one <see cref="HostWindow"/> the host
+/// hands the launcher, which shows black between turns (<see cref="HostWindow.Hold"/>) and stays open after the loop. The
+/// DOS current folder a prefix-less path is relative to is the install folder here.</para>
 ///
-/// <para><b>Engine guard:</b> a window closed by the player, or a termination signal (<see cref="TerminationSignal"/>),
-/// has no DOS counterpart: it ends the loop after the program it closed, whatever <c>data\exit.cfg</c> then holds, as
-/// ES2's launcher does. The shell's close writes the code it started with (the class summary of
-/// <see cref="Es1ShellHost"/>), which would otherwise run the shell or a mission again. A <c>--screenshot</c> run, which
-/// has nobody to close the window, ends the loop after the first shell turn, another engine guard.</para>
+/// <para><b>Engine guard:</b> a window closed by the player, a termination signal (<see cref="TerminationSignal"/>), or
+/// the "Game" menu's "Switch to" (<see cref="GameSwitch"/>) has no DOS counterpart: it ends the loop after the program it
+/// closed, whatever <c>data\exit.cfg</c> then holds, as ES2's launcher does. The shell's close writes the code it started
+/// with (the class summary of <see cref="Es1ShellHost"/>), which would otherwise run the shell or a mission again. A
+/// <c>--screenshot</c> run, which has nobody to close the window, ends the loop after the first shell turn, another
+/// engine guard.</para>
 /// </summary>
 public static class Es1Launcher {
 	/// <summary>The status <c>Assert_Report</c>'s fatal path ends the program with, <c>__exit(1)</c> (docs/es1/simulation/asserts.md#severities).</summary>
@@ -49,9 +51,10 @@ public static class Es1Launcher {
 	/// <param name="imguiFontPath">The faces the shell's ImGui draws in (<see cref="Es1ShellHost.Run"/>).</param>
 	/// <param name="shellMenus">Builds each shell turn's menu bar and its windows (<see cref="Es1ShellHost.Run"/>).</param>
 	/// <param name="screenshotPath"><c>--screenshot</c>'s file, which the first shell turn captures; none for a play.</param>
+	/// <param name="window">The window every turn runs in, which the host owns.</param>
 	/// <param name="silent">The host's <c>--no-sound</c>: the flics', the shell's and the simulator's turns open no audio device.</param>
 	public static int Run(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath, string imguiItalicFontPath,
-			Func<IFrontEndMenus> shellMenus, string? screenshotPath, bool silent = false) {
+			Func<IFrontEndMenus> shellMenus, string? screenshotPath, HostWindow window, bool silent = false) {
 		// 1. Mem_New(argc * 4 + 8), its answer not kept: no counterpart.
 		// 2. The memory check, X32_LargestFreeBlock() - 25,000 against 3,435,000: the extender's largest free block has no
 		// counterpart, so the check always passes, an engine choice, and its figure is not computed.
@@ -90,7 +93,6 @@ public static class Es1Launcher {
 		Flics? flics = altDrive != null ? new Flics(prefixes, altDrive) : null;
 		bool flicPlayerFound = FileReadable(flics?.Probe);
 
-		using var window = new HostWindow();
 		int state = InitialState;
 		bool firstShell = true;
 		while (state != 0) {
@@ -138,7 +140,7 @@ public static class Es1Launcher {
 			}
 
 			// The engine guards of the class summary.
-			if (window.Closed || TerminationSignal.Requested || (screenshotPath != null && !firstShell)) {
+			if (window.Closed || TerminationSignal.Requested || GameSwitch.Requested != null || (screenshotPath != null && !firstShell)) {
 				return 0;
 			}
 

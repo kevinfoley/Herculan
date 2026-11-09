@@ -9,8 +9,8 @@ namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, and the pointer at the window's top left over the
-/// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's, and the
-/// panels it opens: Debug and Mission Scripting (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About,
+/// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's; its "Game" menu, the shell's alone and absent over
+/// a mission (<see cref="GameMenu"/>); and the panels it opens: Debug and Mission Scripting (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About,
 /// of which a host greys Settings, Controller, Keys and Tweaks by passing none (Metaltech: Earthsiege's shell, which has
 /// no counterpart of them yet); the
 /// Editor item, which leaves the shell for the mission editor and is greyed over a mission; Custom Missions, the shell's
@@ -33,6 +33,7 @@ public sealed class HostMenuBar : IEscapeMenu {
 	private readonly Action? _openEditor;
 	private readonly IDrawnMenuBarPanel? _customMissions;
 	private readonly Func<bool>? _manualOpening;
+	private readonly GameMenu? _game;
 	private readonly PanelCentring _centring = new();
 
 	// Set when the next frame's bar is to take the focus with the highlight on its first item, and what the previous
@@ -51,14 +52,16 @@ public sealed class HostMenuBar : IEscapeMenu {
 	/// <param name="customMissions">The Custom Missions item's window, or null for a bar without the item.</param>
 	/// <param name="accessibilitySettings">The settings the Accessibility window offers (<see cref="AccessibilityMenu"/>), or null for all.</param>
 	/// <param name="manualOpening">Whether the on-line manual is being opened, which the bar shows a notice for, or null for a bar without the notice.</param>
+	/// <param name="game">The "Game" menu, or null for a bar without it.</param>
 	public HostMenuBar(LocalizationTable localization, KeyMap? keys, TweaksMenu? tweaks, IDrawnMenuBarPanel? settings,
 			IDrawnMenuBarPanel? controller, IMenuBarPanel? debug = null, Action? openEditor = null, IMenuBarPanel? scripting = null,
 			IDrawnMenuBarPanel? customMissions = null, IReadOnlyCollection<A11ySettingDefinition<bool>>? accessibilitySettings = null,
-			Func<bool>? manualOpening = null) {
+			Func<bool>? manualOpening = null, GameMenu? game = null) {
 		_localization = localization;
 		_openEditor = openEditor;
 		_customMissions = customMissions;
 		_manualOpening = manualOpening;
+		_game = game;
 		Tweaks = tweaks;
 		Settings = settings;
 		Controller = controller;
@@ -141,30 +144,35 @@ public sealed class HostMenuBar : IEscapeMenu {
 	}
 
 	/// <summary>
-	/// The bar's items in order, each its label's localization key, whether it can be chosen, and what choosing it does: the
-	/// one list <see cref="Draw"/> draws and <see cref="ItemsWidth"/> measures. A bare item per panel, no checkmark, since each
+	/// The bar's items in order, each its label's localization key, whether it can be chosen, and what choosing it does,
+	/// or for a menu the items drawn while it is open: the one list <see cref="Draw"/> draws and <see cref="ItemsWidth"/>
+	/// measures, ImGui laying a menu out in the bar as it does an item. A bare item per panel, no checkmark, since each
 	/// panel closes itself.
 	/// </summary>
-	private IEnumerable<(string Key, bool Enabled, Action Choose)> Items() {
+	private IEnumerable<(string Key, bool Enabled, Action Choose, Action? MenuItems)> Items() {
+		if (_game != null) {
+			yield return ("menu.game", true, () => { }, _game.DrawItems);
+		}
+
 		if (_debug != null) {
-			yield return ("menu.debug", true, _debug.Open);
+			yield return ("menu.debug", true, _debug.Open, null);
 		}
 
 		if (_scripting != null) {
-			yield return ("menu.mission_scripting", true, _scripting.Open);
+			yield return ("menu.mission_scripting", true, _scripting.Open, null);
 		}
 
-		yield return ("menu.settings", Settings != null, () => Settings!.Open());
-		yield return ("menu.controller", Controller != null, () => Controller!.Open());
-		yield return ("menu.keys", Keys != null, () => Keys!.IsOpen = true);
-		yield return ("menu.tweaks", Tweaks != null, () => Tweaks!.IsOpen = true);
-		yield return ("menu.accessibility", true, () => Accessibility.IsOpen = true);
-		yield return ("menu.editor", _openEditor != null, () => _openEditor!());
+		yield return ("menu.settings", Settings != null, () => Settings!.Open(), null);
+		yield return ("menu.controller", Controller != null, () => Controller!.Open(), null);
+		yield return ("menu.keys", Keys != null, () => Keys!.IsOpen = true, null);
+		yield return ("menu.tweaks", Tweaks != null, () => Tweaks!.IsOpen = true, null);
+		yield return ("menu.accessibility", true, () => Accessibility.IsOpen = true, null);
+		yield return ("menu.editor", _openEditor != null, () => _openEditor!(), null);
 		if (_customMissions != null) {
-			yield return ("menu.custom_missions", true, _customMissions.Open);
+			yield return ("menu.custom_missions", true, _customMissions.Open, null);
 		}
 
-		yield return ("menu.about", true, () => About.IsOpen = true);
+		yield return ("menu.about", true, () => About.IsOpen = true, null);
 	}
 
 	/// <summary>
@@ -242,22 +250,31 @@ public sealed class HostMenuBar : IEscapeMenu {
 				ImGuiNavigation.FocusMenuBar();
 			}
 
-			foreach (var (key, enabled, choose) in Items()) {
-				if (ImGui.MenuItem(_localization.GetStringOrKey(key), null, false, enabled)) {
+			bool menuOpen = false;
+			foreach (var (key, enabled, choose, menuItems) in Items()) {
+				string label = _localization.GetStringOrKey(key);
+				if (menuItems != null) {
+					if (ImGui.BeginMenu(label, enabled)) {
+						menuOpen = true;
+						menuItems();
+						ImGui.EndMenu();
+					}
+				} else if (ImGui.MenuItem(label, null, false, enabled)) {
 					choose();
 				}
 			}
 
 			// A click outside the bar hides it, but only while no panel is up — with one open, that click
 			// either lands on it or is DebugPanel's own outside-click close, and Tweaks and Settings close by
-			// their own buttons.
-			if (!PanelOpen && !ImGui.IsWindowHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left)) {
+			// their own buttons — and no menu is open, whose items lie outside the bar and which ImGui closes itself.
+			if (!PanelOpen && !menuOpen && !ImGui.IsWindowHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left)) {
 				Visible = false;
 			}
 
-			// So does a gamepad's B while no panel is up. ImGui's own B leaves the bar for the window under it, which is
-			// none then, so it would only take the highlight off a bar still standing over the game.
-			if (!PanelOpen && ImGui.IsKeyPressed(ImGuiKey.GamepadFaceRight, false)) {
+			// So does a gamepad's B while no panel or menu is up. ImGui's own B leaves the bar for the window under it, which
+			// is none then, so it would only take the highlight off a bar still standing over the game; with a menu open,
+			// its B closes the menu.
+			if (!PanelOpen && !menuOpen && ImGui.IsKeyPressed(ImGuiKey.GamepadFaceRight, false)) {
 				Visible = false;
 			}
 

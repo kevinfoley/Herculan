@@ -1,3 +1,5 @@
+using HercWorks.Core.Io.Transform;
+using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
 using Herculan.Es2.Host.Settings;
 using Herculan.Engine.Menus;
@@ -10,8 +12,8 @@ using Silk.NET.Input;
 namespace Herculan.Es2.Host.Shell;
 
 /// <summary>
-/// The shell's menus over its <see cref="FrontEndWindow"/>: HERCULAN's own <see cref="HostMenuBar"/> with its Settings
-/// menu's restart, its Editor item and Custom Missions, the first start's <see cref="WelcomeDialog"/>, the automatic
+/// The shell's menus over its <see cref="FrontEndWindow"/>: HERCULAN's own <see cref="HostMenuBar"/> with its "Game" menu,
+/// its Settings menu's restart, its Editor item and Custom Missions, the first start's <see cref="WelcomeDialog"/>, the automatic
 /// update check and its <see cref="UpdateDialog"/>, and the <see cref="ErrorDialog"/>.
 /// </summary>
 sealed class ShellMenus : IFrontEndMenus {
@@ -37,8 +39,10 @@ sealed class ShellMenus : IFrontEndMenus {
 		_controller.Saved += file => PadPointerSettingsChanged?.Invoke(file.Mouse);
 		_tweaks = new TweaksMenu(TweakSettings.Current, session.Localization);
 		_settings = new SettingsWindow(session, () => RequestClose(restartRequested));
+		var game = new GameMenu(session.Localization, RetailGame.Earthsiege2, other => RequestClose(() => GameSwitch.Request(other)));
 		_menuBar = new HostMenuBar(session.Localization, session.Keys, _tweaks, _settings, _controller,
-			openEditor: () => RequestClose(editorRequested), customMissions: customMissions, manualOpening: () => OnlineManual.Opening);
+			openEditor: () => RequestClose(editorRequested), customMissions: customMissions, manualOpening: () => OnlineManual.Opening,
+			game: game);
 	}
 
 	public event Action? CloseRequested;
@@ -97,7 +101,7 @@ sealed class ShellMenus : IFrontEndMenus {
 
 	public void Dispose() => _settings.Dispose();
 
-	// Settings and the Editor item ask from inside an ImGui window, and the close disposes the ImGui context, so the
+	// Settings, the Editor item and "Switch to" ask from inside an ImGui window, and the close disposes the ImGui context, so the
 	// close waits for the frame to finish (FrontEndWindow.CloseAfterFrame).
 	private void RequestClose(Action requested) {
 		requested();
