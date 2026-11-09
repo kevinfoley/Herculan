@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Cfg;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
+using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using Herculan.Es2.Audio;
 using Herculan.Es2.Content;
@@ -456,19 +457,4 @@ public sealed class SimulatorFrame {
 			squadChannel.Port.Mode = (MessageChannelMode)_start.Preferences[Prefs.PilotMessageOption];
 		}
 	}
-}
-
-/// <summary>
-/// The host's own layer over the simulator, which [Shift+Esc] raises and [Esc] backs out of before the game's views
-/// see the key; see <see cref="SimulatorFrame"/>.
-/// </summary>
-public interface IEscapeMenu {
-	/// <summary>Whether any of the menu is up.</summary>
-	bool Up { get; }
-
-	/// <summary>Takes down whatever of the menu is up; false when nothing was.</summary>
-	bool BackOut();
-
-	/// <summary>Raises the menu.</summary>
-	void Show();
 }

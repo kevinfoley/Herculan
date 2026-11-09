@@ -1,10 +1,10 @@
 using System.Numerics;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The floating "Tweaks" window opened from the menu bar.

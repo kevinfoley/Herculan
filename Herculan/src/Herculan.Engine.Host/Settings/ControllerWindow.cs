@@ -1,6 +1,7 @@
 using System.Numerics;
 using HercWorks.Core.Io;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Es2.Sim;
@@ -23,7 +24,7 @@ namespace Herculan.Engine.Host.Settings;
 /// a mission's stick (<see cref="JoystickSource.Configure"/>); the front end reads no stick, and the next mission reads
 /// the file. Cancel, the title-bar close and [Esc] (<see cref="HostMenuBar.BackOut"/>) discard the edit.</para>
 /// </summary>
-sealed class ControllerWindow {
+sealed class ControllerWindow : IDrawnMenuBarPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 600f;
 
@@ -118,6 +119,15 @@ sealed class ControllerWindow {
 		IsOpen = false;
 		_detecting = NotDetecting;
 	}
+
+	/// <summary>[Esc]'s step back, which discards the edit as <see cref="Cancel"/> does.</summary>
+	void IMenuBarPanel.BackOut() {
+		if (IsOpen) {
+			Cancel();
+		}
+	}
+
+	void IDrawnMenuBarPanel.Draw(nint owner, ImGuiCond centre) => Draw(centre);
 
 	/// <summary>
 	/// Draws the window, when it is up. Call once per frame inside the ImGui frame. <paramref name="centre"/> is when it

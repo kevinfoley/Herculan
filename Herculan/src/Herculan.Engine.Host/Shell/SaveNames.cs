@@ -1,5 +1,5 @@
 using Herculan.Engine.Content;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Settings;
 using Herculan.Es2.Settings;
 using Herculan.Es2.Shell;

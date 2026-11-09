@@ -1,4 +1,5 @@
 using System.Numerics;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Platform;
 using Herculan.Es2.Sim;
 using ImGuiNET;
@@ -11,7 +12,7 @@ namespace Herculan.Engine.Host.Debugging;
 /// route. This engine's own, not retail's. A button only queues its change, which <see cref="ApplyPending"/> makes from
 /// the host's update, so the simulation is never changed while a frame is being drawn.
 /// </summary>
-sealed class MissionScriptingWindow {
+sealed class MissionScriptingWindow : IMenuBarPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float Width = 300f;
 	private const float MaxHeight = 560f;
@@ -19,8 +20,12 @@ sealed class MissionScriptingWindow {
 
 	private Action<SimWorld>? _pending;
 
-	/// <summary>Whether the window is up. Set by the menu bar (<see cref="Settings.HostMenuBar"/>), cleared by the window's own close.</summary>
+	/// <summary>Whether the window is up. Set by the menu bar (<see cref="HostMenuBar"/>), cleared by the window's own close.</summary>
 	public bool IsOpen { get; set; }
+
+	void IMenuBarPanel.Open() => IsOpen = true;
+
+	void IMenuBarPanel.BackOut() => IsOpen = false;
 
 	/// <summary>Builds this frame's ImGui draw list for the window. Does nothing while <see cref="IsOpen"/> is false.</summary>
 	public void Draw(SimWorld world, int windowHeight) {

@@ -1,5 +1,5 @@
-using Herculan.Engine.Host.Localization;
-using Herculan.Engine.Host.Settings;
+using Herculan.Engine.Localization;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;

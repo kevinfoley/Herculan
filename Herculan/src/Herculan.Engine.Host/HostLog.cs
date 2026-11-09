@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 
 namespace Herculan.Engine.Host;

@@ -1,7 +1,7 @@
 using System.Globalization;
 using Herculan.Engine.Platform;
 
-namespace Herculan.Engine.Host.Localization;
+namespace Herculan.Engine.Localization;
 
 /// <summary>
 /// Loads HERCULAN's own interface strings from <c>Localization/&lt;locale&gt;.lang</c> next to

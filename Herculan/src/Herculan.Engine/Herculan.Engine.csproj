@@ -16,9 +16,17 @@
     <EmbeddedResource Include="Render\Shaders\*.glsl" />
   </ItemGroup>
 
+  <!-- The licence the About window shows, embedded so that a build run from bin, which has no copy beside it, has it too.
+       The release zip also carries the file itself. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\LICENSE.txt" LogicalName="LICENSE.txt" />
+  </ItemGroup>
+
   <ItemGroup>
     <!-- The tests reach internal members such as PaintLayers.Face. -->
     <InternalsVisibleTo Include="Herculan.Engine.Tests" />
+    <!-- PanelLayoutTests and KeysWindowTests reach the menu bar's internals, such as KeyRows. -->
+    <InternalsVisibleTo Include="Herculan.Engine.Host.Tests" />
   </ItemGroup>
 
   <ItemGroup>

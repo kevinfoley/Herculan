@@ -3,6 +3,7 @@ using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Debugging;
 using Herculan.Engine.Host.Settings;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Host.Simulator.Rendering;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
@@ -164,7 +165,7 @@ sealed class SimulatorHost : IDisposable {
 		_tweaks = new TweaksMenu(TweakSettings.Current, session.Localization);
 		_controller = new ControllerWindow(session.Localization, () => _start.DataDirectory);
 		_menuBar = new HostMenuBar(session.Localization, session.Keys, _tweaks, new SettingsWindow(session, restartShell: null),
-			_controller, developerMode ? _debugPanel : null, scripting: _scripting);
+			_controller, developerMode ? _debugPanel : null, scripting: _scripting, manualOpening: () => OnlineManual.Opening);
 
 		// The -SPRUNKNOWN keys, and the Alt+S freeze a replay honours without them.
 		_developerKeys = new DeveloperKeys(developerMode);

@@ -1,6 +1,6 @@
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Input;
 using Herculan.Es2.Content;
 using Herculan.Es2.Input;

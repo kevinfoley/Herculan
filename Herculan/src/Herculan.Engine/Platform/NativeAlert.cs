@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Herculan.Engine.Platform;
 
-namespace Herculan.Engine.Host;
+namespace Herculan.Engine.Platform;
 
 /// <summary>
 /// The operating system's own error box, shown with no window of the host's behind it — the stand-in for the
@@ -12,7 +11,7 @@ namespace Herculan.Engine.Host;
 /// error as well, unless the caller put it there already, so a Linux desktop with neither tool still says it
 /// somewhere.
 /// </summary>
-static class NativeAlert {
+public static class NativeAlert {
 	/// <summary>
 	/// Shows <paramref name="message"/> under <paramref name="title"/> and returns once it is closed;
 	/// <paramref name="writeToError"/> false leaves it off standard error, for a caller that wrote it there already.

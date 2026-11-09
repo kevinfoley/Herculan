@@ -1,4 +1,4 @@
-using Herculan.Engine.Host.Settings;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
 using Xunit;
 

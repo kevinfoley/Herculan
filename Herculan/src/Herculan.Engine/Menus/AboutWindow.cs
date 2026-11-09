@@ -1,18 +1,18 @@
 using System.Numerics;
 using System.Reflection;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The floating "About" window opened from the menu bar: the engine's name, its version, and the licence it is
-/// released under. The licence is <c>LICENSE.txt</c> from the repository root, embedded in the executable (see
-/// <c>Herculan.Engine.Host.csproj</c>) so that a build run straight from <c>bin</c>, which has no copy beside it, shows
+/// released under. The licence is <c>LICENSE.txt</c> from the repository root, embedded in the engine library (see
+/// <c>Herculan.Engine.csproj</c>) so that a build run straight from <c>bin</c>, which has no copy beside it, shows
 /// it too.
 /// </summary>
-sealed class AboutWindow {
+public sealed class AboutWindow {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 520f;
 	private const float LicenseHeight = 260f;

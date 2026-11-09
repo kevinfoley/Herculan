@@ -38,7 +38,7 @@ internal static class OnlineManual {
 	/// <summary>
 	/// Whether an <see cref="Open"/> is under way: from the call until the page has been handed to the browser, or the
 	/// conversion has failed. Reading the help file off a CD can take seconds, so the menu bar shows a notice meanwhile
-	/// (<see cref="Settings.HostMenuBar"/>). When the browser has finished drawing the page is not known here.
+	/// (<see cref="Menus.HostMenuBar"/>). When the browser has finished drawing the page is not known here.
 	/// </summary>
 	public static bool Opening => _opening;
 

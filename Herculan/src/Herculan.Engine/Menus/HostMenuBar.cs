@@ -1,15 +1,11 @@
 using System.Numerics;
-using Herculan.Engine.Host.Debugging;
-using Herculan.Engine.Host.Localization;
-using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Input;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
-using Herculan.Es2.Cockpit;
-using Herculan.Es2.Settings;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, and the pointer at the window's top left over the
@@ -17,24 +13,26 @@ namespace Herculan.Engine.Host.Settings;
 /// panels it opens: Debug and Mission Scripting (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About,
 /// of which a host greys Settings, Controller, Keys and Tweaks by passing none (Metaltech: Earthsiege's shell, which has
 /// no counterpart of them yet); the
-/// Editor item, which leaves the shell for the mission editor and is greyed over a mission; Custom Missions
-/// (<see cref="CustomMissionsWindow"/>), the shell's alone and absent over a mission; and the
+/// Editor item, which leaves the shell for the mission editor and is greyed over a mission; Custom Missions, the shell's
+/// alone and absent over a mission; and the
 /// first start's <see cref="WelcomeDialog"/>, the <see cref="UpdateDialog"/> and the <see cref="ErrorDialog"/>, which the shell raises without the bar; and a
-/// notice while the on-line manual opens (<see cref="OnlineManual.Opening"/>). Hidden until <see cref="Show"/>, and never
+/// notice while the on-line manual opens. The game's own panels (Debug, Mission Scripting, Settings, Controller, Custom
+/// Missions) come in as <see cref="IMenuBarPanel"/>s. Hidden until <see cref="Show"/>, and never
 /// drawn into a <c>--screenshot</c> capture. Plain [Esc] is retail's in a mission, where it pans to and from the
 /// Heads-Down Display, so which key reaches the bar is each host's to decide: over a mission
-/// <see cref="SimulatorFrame"/>, over the shell <c>KeyboardRouting</c>.
+/// the game's simulator frame, over the shell <c>KeyboardRouting</c>.
 /// </summary>
-sealed class HostMenuBar : IEscapeMenu {
+public sealed class HostMenuBar : IEscapeMenu {
 	// The height of the zone ShowOnHover watches, in pixels on a 100% display (ScaledImGui.Scaled). Its width is the
 	// bar's items' (ItemsWidth).
 	private const float HoverHeight = 4f;
 
 	private readonly LocalizationTable _localization;
-	private readonly DebugPanel? _debug;
-	private readonly MissionScriptingWindow? _scripting;
+	private readonly IMenuBarPanel? _debug;
+	private readonly IMenuBarPanel? _scripting;
 	private readonly Action? _openEditor;
-	private readonly CustomMissionsWindow? _customMissions;
+	private readonly IDrawnMenuBarPanel? _customMissions;
+	private readonly Func<bool>? _manualOpening;
 	private readonly PanelCentring _centring = new();
 
 	// Set when the next frame's bar is to take the focus with the highlight on its first item, and what the previous
@@ -48,15 +46,19 @@ sealed class HostMenuBar : IEscapeMenu {
 	/// <param name="settings">The Settings window, or null to grey the item.</param>
 	/// <param name="controller">The Controller window, or null to grey the item.</param>
 	/// <param name="openEditor">The Editor item's switch to the mission editor, or null to grey the item.</param>
+	/// <param name="debug">The Debug panel, which the host draws, or null for no item.</param>
 	/// <param name="scripting">The Mission Scripting window, which the host draws as it does the Debug panel, or null for no item.</param>
 	/// <param name="customMissions">The Custom Missions item's window, or null for a bar without the item.</param>
 	/// <param name="accessibilitySettings">The settings the Accessibility window offers (<see cref="AccessibilityMenu"/>), or null for all.</param>
-	public HostMenuBar(LocalizationTable localization, KeyMap? keys, TweaksMenu? tweaks, SettingsWindow? settings,
-			ControllerWindow? controller, DebugPanel? debug = null, Action? openEditor = null, MissionScriptingWindow? scripting = null,
-			CustomMissionsWindow? customMissions = null, IReadOnlyCollection<A11ySettingDefinition<bool>>? accessibilitySettings = null) {
+	/// <param name="manualOpening">Whether the on-line manual is being opened, which the bar shows a notice for, or null for a bar without the notice.</param>
+	public HostMenuBar(LocalizationTable localization, KeyMap? keys, TweaksMenu? tweaks, IDrawnMenuBarPanel? settings,
+			IDrawnMenuBarPanel? controller, IMenuBarPanel? debug = null, Action? openEditor = null, IMenuBarPanel? scripting = null,
+			IDrawnMenuBarPanel? customMissions = null, IReadOnlyCollection<A11ySettingDefinition<bool>>? accessibilitySettings = null,
+			Func<bool>? manualOpening = null) {
 		_localization = localization;
 		_openEditor = openEditor;
 		_customMissions = customMissions;
+		_manualOpening = manualOpening;
 		Tweaks = tweaks;
 		Settings = settings;
 		Controller = controller;
@@ -76,9 +78,9 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	public TweaksMenu? Tweaks { get; }
 
-	public SettingsWindow? Settings { get; }
+	public IDrawnMenuBarPanel? Settings { get; }
 
-	public ControllerWindow? Controller { get; }
+	public IDrawnMenuBarPanel? Controller { get; }
 
 	public KeysWindow? Keys { get; }
 
@@ -145,14 +147,14 @@ sealed class HostMenuBar : IEscapeMenu {
 	/// </summary>
 	private IEnumerable<(string Key, bool Enabled, Action Choose)> Items() {
 		if (_debug != null) {
-			yield return ("menu.debug", true, () => _debug.IsOpen = true);
+			yield return ("menu.debug", true, _debug.Open);
 		}
 
 		if (_scripting != null) {
-			yield return ("menu.mission_scripting", true, () => _scripting.IsOpen = true);
+			yield return ("menu.mission_scripting", true, _scripting.Open);
 		}
 
-		yield return ("menu.settings", Settings != null, () => Settings!.IsOpen = true);
+		yield return ("menu.settings", Settings != null, () => Settings!.Open());
 		yield return ("menu.controller", Controller != null, () => Controller!.Open());
 		yield return ("menu.keys", Keys != null, () => Keys!.IsOpen = true);
 		yield return ("menu.tweaks", Tweaks != null, () => Tweaks!.IsOpen = true);
@@ -181,22 +183,16 @@ sealed class HostMenuBar : IEscapeMenu {
 	/// [Esc]'s step back: takes down whichever panel is up, else hides the bar. Returns false when neither
 	/// was up, leaving the key to the host. Tweaks and Accessibility go through their Cancel, so an edit made but not saved is
 	/// discarded rather than left applied but unpersisted. The welcome and the error notice go as their OK does, the update notice
-	/// as its Close does. Custom Missions takes down the prompt it has up, if any, else closes.
+	/// as its Close does. The game's panels go through their own <see cref="IMenuBarPanel.BackOut"/>.
 	/// </summary>
 	public bool BackOut() {
 		if (PanelOpen) {
-			if (_debug != null) {
-				_debug.IsOpen = false;
-			}
-			if (_scripting != null) {
-				_scripting.IsOpen = false;
-			}
+			_debug?.BackOut();
+			_scripting?.BackOut();
 			if (Tweaks?.IsOpen == true) {
 				Tweaks.Cancel();
 			}
-			if (Controller?.IsOpen == true) {
-				Controller.Cancel();
-			}
+			Controller?.BackOut();
 			if (Accessibility.IsOpen) {
 				Accessibility.Cancel();
 			}
@@ -205,7 +201,7 @@ sealed class HostMenuBar : IEscapeMenu {
 			}
 			Update.Dismiss();
 			Error.Dismiss();
-			Settings?.Close();
+			Settings?.BackOut();
 			_customMissions?.BackOut();
 			if (Keys != null) {
 				Keys.IsOpen = false;
@@ -270,7 +266,7 @@ sealed class HostMenuBar : IEscapeMenu {
 
 		Tweaks?.Draw(_centring.Condition);
 		Settings?.Draw(owner, _centring.Condition);
-		Controller?.Draw(_centring.Condition);
+		Controller?.Draw(owner, _centring.Condition);
 		Keys?.Draw(_centring.Condition);
 		Accessibility.Draw(_centring.Condition);
 		About.Draw(_centring.Condition);
@@ -286,10 +282,10 @@ sealed class HostMenuBar : IEscapeMenu {
 		_highlightWasShowing = ImGui.GetIO().NavVisible;
 	}
 
-	// While the on-line manual is being opened (OnlineManual.Opening), a notice at the window's centre with no buttons, which
-	// takes no input and goes by itself.
+	// While the on-line manual is being opened (the constructor's manualOpening), a notice at the window's centre with no
+	// buttons, which takes no input and goes by itself.
 	private void DrawManualNotice() {
-		if (!OnlineManual.Opening) {
+		if (_manualOpening?.Invoke() != true) {
 			return;
 		}
 

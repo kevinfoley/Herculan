@@ -1,9 +1,9 @@
 using System.Numerics;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The welcome HERCULAN shows the first time the front end reaches the main menu, after the intro movies and the startup
@@ -16,7 +16,7 @@ namespace Herculan.Engine.Host.Settings;
 /// next start. The same dismissals save the box (<see cref="UpdateChecks.Automatic"/>) and, ticked, start this run's
 /// check.</para>
 /// </summary>
-sealed class WelcomeDialog {
+public sealed class WelcomeDialog {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 460f;
 	// "###" so that the popup's ID is this part alone, the same for OpenPopup and for the titled BeginPopupModal.

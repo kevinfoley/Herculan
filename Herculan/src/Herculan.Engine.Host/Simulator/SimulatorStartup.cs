@@ -7,6 +7,7 @@ using HercWorks.Core.Data.Struct.Herc;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
+using Herculan.Engine.Platform;
 using Herculan.Es2.Audio;
 using Herculan.Es2.Content;
 using Herculan.Es2.Input;

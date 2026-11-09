@@ -2,7 +2,8 @@ using System.Numerics;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Install;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Platform;
 using Herculan.Es2.Content;
 using Herculan.Es2.Shell;
@@ -12,7 +13,7 @@ using ImGuiNET;
 namespace Herculan.Engine.Host.Shell;
 
 /// <summary>
-/// The Custom Missions window the shell's menu bar opens (<see cref="Settings.HostMenuBar"/>), HERCULAN's own: every
+/// The Custom Missions window the shell's menu bar opens (<see cref="Menus.HostMenuBar"/>), HERCULAN's own: every
 /// custom mission in the install and every one HERCULAN comes with (<see cref="CustomMissions"/>), each with Play, its
 /// author and About, and Delete, which asks first and is not offered for one HERCULAN comes with; and Import..., which copies a mission bundle the player picks into the install's mission folder,
 /// asking first before it replaces one of the same file name. Play writes the mission's handoff into a scratch directory of
@@ -22,7 +23,7 @@ namespace Herculan.Engine.Host.Shell;
 ///
 /// <para>A mission's name, author and about text are anyone's, so they are drawn as text and never as ImGui format strings or labels.</para>
 /// </summary>
-sealed class CustomMissionsWindow {
+sealed class CustomMissionsWindow : IDrawnMenuBarPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 640f;
 	private const float PanelHeight = 420f;
@@ -108,7 +109,7 @@ sealed class CustomMissionsWindow {
 
 	/// <summary>
 	/// Draws the window, if it is open. Call once per frame, inside the ImGui frame. <paramref name="owner"/> is the native
-	/// window the file picker belongs to, and <paramref name="centre"/> when the window is centred (<see cref="Settings.PanelCentring.Condition"/>).
+	/// window the file picker belongs to, and <paramref name="centre"/> when the window is centred (<see cref="Menus.PanelCentring.Condition"/>).
 	/// </summary>
 	public void Draw(nint owner, ImGuiCond centre) {
 		if (!IsOpen) {

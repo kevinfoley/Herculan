@@ -1,9 +1,9 @@
 using System.Numerics;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The notice that something the player asked for failed, raised over the front end by <see cref="FrontEndWindow.ShowError"/>:
@@ -14,7 +14,7 @@ namespace Herculan.Engine.Host.Settings;
 /// up does not take the notice down before it is read; [Esc] and Back are not held.
 /// A failure raised while one is up waits behind it and comes up when it is dismissed.
 /// </summary>
-sealed class ErrorDialog {
+public sealed class ErrorDialog {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 460f;
 	// "###" so that the popup's ID is this part alone, the same for OpenPopup and for the titled BeginPopupModal.

@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using Herculan.Engine.Input;
 
-namespace Herculan.Engine.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>One of an action's chords in a <see cref="KeyMap"/>, by its position: 0 is the primary key.</summary>
 readonly record struct KeyRef(KeyAction Action, int Chord = 0);

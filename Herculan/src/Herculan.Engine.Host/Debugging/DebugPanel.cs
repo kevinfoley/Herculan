@@ -1,5 +1,6 @@
 using System.Numerics;
 using Herculan.Engine.Content;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
@@ -28,10 +29,14 @@ namespace Herculan.Engine.Host.Debugging;
 /// <see cref="DebugProbes"/>, which the host takes every frame and on every <see cref="SimulationStepper.Ticked"/>,
 /// both whether or not the panel is reachable.</para>
 /// </summary>
-sealed class DebugPanel(DebugOptions options, DebugProbes probes) {
-	/// <summary>Whether the panel is up. Set by the menu bar (<see cref="Settings.HostMenuBar"/>), and
+sealed class DebugPanel(DebugOptions options, DebugProbes probes) : IMenuBarPanel {
+	/// <summary>Whether the panel is up. Set by the menu bar (<see cref="HostMenuBar"/>), and
 	/// cleared here on a click outside the window.</summary>
 	public bool IsOpen { get; set; }
+
+	void IMenuBarPanel.Open() => IsOpen = true;
+
+	void IMenuBarPanel.BackOut() => IsOpen = false;
 
 	/// <summary>Whether the panel was already open on the previous <see cref="Draw"/> call. Suppresses
 	/// the click-outside-closes check for the one frame it opens on — that frame's own click (the menu

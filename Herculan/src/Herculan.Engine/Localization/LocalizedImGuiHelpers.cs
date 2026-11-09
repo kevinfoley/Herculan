@@ -1,7 +1,6 @@
-using Herculan.Engine.Host.Localization;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host;
+namespace Herculan.Engine.Localization;
 
 public static class LocalizedImGuiHelpers {
 	/// <summary>

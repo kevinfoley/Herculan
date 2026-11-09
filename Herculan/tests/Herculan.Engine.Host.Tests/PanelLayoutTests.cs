@@ -1,7 +1,8 @@
 using System.Numerics;
 using Herculan.Engine.Host.Install;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Host.Settings;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
@@ -48,25 +49,25 @@ public class PanelLayoutTests {
 			var panel = new InstallPanel(localization);
 			return new Scene(() => InstallWindow.Draw(panel, 0), panel);
 		}),
-		["Menu bar"] = new(Screen, localization => MenuBar(localization, _ => { })),
-		["Settings"] = new(Screen, localization => MenuBar(localization, bar => bar.Settings!.IsOpen = true)),
+		["Menu bar"] = new(Screen, localization => MenuBar(localization, (_, _) => { })),
+		["Settings"] = new(Screen, localization => MenuBar(localization, (_, settings) => settings.IsOpen = true)),
 		["Settings, install folder prompt"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.Install, refuse: false)),
 		["Settings, install folder refused"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.Install, refuse: true)),
 		["Settings, disc folder prompt"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.DiscFolder, refuse: false)),
 		["Settings, disc folder refused"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.DiscFolder, refuse: true)),
 		["Settings, disc image prompt"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.DiscImage, refuse: false)),
 		["Settings, disc image refused"] = new(Screen, localization => SettingsPrompt(localization, SettingsWindow.PromptKind.DiscImage, refuse: true)),
-		["Settings, install from a disc"] = new(Screen, localization => MenuBar(localization, bar => {
-			bar.Settings!.IsOpen = true;
-			bar.Settings!.OpenInstall();
+		["Settings, install from a disc"] = new(Screen, localization => MenuBar(localization, (_, settings) => {
+			settings.IsOpen = true;
+			settings.OpenInstall();
 		})),
-		["Controller"] = new(Screen, localization => MenuBar(localization, bar => bar.Controller!.Open())),
-		["Keys"] = new(Screen, localization => MenuBar(localization, bar => bar.Keys!.IsOpen = true)),
-		["Tweaks"] = new(Screen, localization => MenuBar(localization, bar => bar.Tweaks!.IsOpen = true)),
-		["Accessibility"] = new(Screen, localization => MenuBar(localization, bar => bar.Accessibility.IsOpen = true)),
-		["About"] = new(Screen, localization => MenuBar(localization, bar => bar.About.IsOpen = true)),
-		["Welcome"] = new(Screen, localization => MenuBar(localization, bar => bar.Welcome.Raise())),
-		["Update"] = new(Screen, localization => MenuBar(localization, bar =>
+		["Controller"] = new(Screen, localization => MenuBar(localization, (bar, _) => bar.Controller!.Open())),
+		["Keys"] = new(Screen, localization => MenuBar(localization, (bar, _) => bar.Keys!.IsOpen = true)),
+		["Tweaks"] = new(Screen, localization => MenuBar(localization, (bar, _) => bar.Tweaks!.IsOpen = true)),
+		["Accessibility"] = new(Screen, localization => MenuBar(localization, (bar, _) => bar.Accessibility.IsOpen = true)),
+		["About"] = new(Screen, localization => MenuBar(localization, (bar, _) => bar.About.IsOpen = true)),
+		["Welcome"] = new(Screen, localization => MenuBar(localization, (bar, _) => bar.Welcome.Raise())),
+		["Update"] = new(Screen, localization => MenuBar(localization, (bar, _) =>
 			bar.Update.Offer(new ReleaseCheckResult(ReleaseCheckStatus.NewerAvailable, new Version(10, 20, 30), "https://example.com/")))),
 	};
 
@@ -103,17 +104,17 @@ public class PanelLayoutTests {
 	}
 
 	private static Scene SettingsPrompt(LocalizationTable localization, SettingsWindow.PromptKind kind, bool refuse) =>
-		MenuBar(localization, bar => {
-			bar.Settings!.IsOpen = true;
-			bar.Settings!.OpenPrompt(kind);
+		MenuBar(localization, (_, settings) => {
+			settings.IsOpen = true;
+			settings.OpenPrompt(kind);
 			if (refuse) {
 				// Each prompt refuses a path that is not there with a message naming it.
-				bar.Settings!.Prompt!.Accept();
+				settings.Prompt!.Accept();
 			}
 		});
 
 	// The menu bar up, with whatever open does opened over it.
-	private static Scene MenuBar(LocalizationTable localization, Action<HostMenuBar> open) {
+	private static Scene MenuBar(LocalizationTable localization, Action<HostMenuBar, SettingsWindow> open) {
 		var session = new HostSession(InstallRoot, localization, Path.Combine(ImGuiLayoutCheck.FontFolder, "OpenSans-Regular.ttf"),
 			Path.Combine(ImGuiLayoutCheck.FontFolder, "OpenSans-Italic.ttf"));
 		var settings = new SettingsWindow(session, restartShell: () => { });
@@ -122,7 +123,7 @@ public class PanelLayoutTests {
 		var bar = new HostMenuBar(localization, KeyMap.Retail, new TweaksMenu(new TweakSettings(Es2TweakSettingDefinitions.All), localization), settings,
 			new ControllerWindow(localization, () => null));
 		bar.Show();
-		open(bar);
+		open(bar, settings);
 		return new Scene(() => bar.Draw(0, fullScreen: false), settings, session);
 	}
 }

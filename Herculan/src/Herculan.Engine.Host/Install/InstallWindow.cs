@@ -1,4 +1,4 @@
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using ImGuiNET;
 using Silk.NET.OpenGL;

@@ -1,10 +1,10 @@
 using System.Numerics;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The floating "Keys" window opened from the menu bar: every fixed keyboard key of a <see cref="KeyMap"/>, read-only,
@@ -14,7 +14,7 @@ namespace Herculan.Engine.Host.Settings;
 /// frame it is open, so a layout switched with the window up shows on the next frame. The window is HERCULAN's own.
 /// The title-bar close, Close and [Esc] (<see cref="HostMenuBar.BackOut"/>) close it.
 /// </summary>
-sealed class KeysWindow {
+public sealed class KeysWindow {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 680f;
 	private const float PanelHeight = 560f;

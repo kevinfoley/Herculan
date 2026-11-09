@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Updates;
 
-namespace Herculan.Engine.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The "Auto check for updates" setting and the check it makes, once per run, as the front end first reaches the main
@@ -11,7 +11,7 @@ namespace Herculan.Engine.Host.Settings;
 /// release is announced once (<see cref="TakeNews"/>), by <see cref="UpdateDialog"/>. Settings' "Check for updates"
 /// makes its own check (<see cref="Check"/>). What a check sends and reads is <see cref="ReleaseCheck"/>'s.
 /// </summary>
-static class UpdateChecks {
+public static class UpdateChecks {
 	private static Task<ReleaseCheckResult>? _automatic;
 	private static bool _announced;
 	private static bool? _automaticSetting;

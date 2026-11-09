@@ -1,10 +1,10 @@
 using System.Numerics;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Updates;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The notice that a newer HERCULAN release is out, raised over the front end when the automatic check
@@ -12,7 +12,7 @@ namespace Herculan.Engine.Host.Settings;
 /// browser, and Close. Retail has no such dialog. It is a modal popup like <see cref="WelcomeDialog"/>, raised only
 /// once the welcome is down, and [Esc] takes it down as Close does (<see cref="HostMenuBar.BackOut"/>).
 /// </summary>
-sealed class UpdateDialog {
+public sealed class UpdateDialog {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 460f;
 	// "###" so that the popup's ID is this part alone, the same for OpenPopup and for the titled BeginPopupModal.

@@ -1,13 +1,13 @@
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Localization;
+namespace Herculan.Engine.Localization;
 
 /// <summary>
 /// The interface-language combo: every <c>.lang</c> file by the name it gives itself
 /// (<see cref="LocalizationTable.GetLanguages"/>), a choice taking effect at once. The Settings window and the
 /// startup's install prompt both show it.
 /// </summary>
-sealed class InterfaceLanguageCombo {
+public sealed class InterfaceLanguageCombo {
 	private readonly LocalizationTable _localization;
 
 	// Found on the first draw; finding them reads every .lang file.

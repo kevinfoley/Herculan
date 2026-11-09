@@ -3,7 +3,8 @@ using HercWorks.Core.Data.File.Cfg;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Install;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Updates;
@@ -40,7 +41,7 @@ namespace Herculan.Engine.Host.Settings;
 /// <para>Updates holds the "Auto check for updates" setting and a Check for Updates button (<see cref="UpdateChecks"/>),
 /// which work in a mission too.</para>
 /// </summary>
-sealed class SettingsWindow : IDisposable {
+sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 520f;
 	private static readonly Vector2 PromptSize = new(640f, 240f);
@@ -99,6 +100,10 @@ sealed class SettingsWindow : IDisposable {
 			_install = null;
 		}
 	}
+
+	void IMenuBarPanel.Open() => IsOpen = true;
+
+	void IMenuBarPanel.BackOut() => Close();
 
 	/// <summary>
 	/// Draws the window and the install window, when each is up. <paramref name="owner"/> is the native window a picker

@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Text;
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Input;
 using Silk.NET.Input;
 
-namespace Herculan.Engine.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// A key's text in a key list, built when drawn from a <see cref="KeyMap"/> chord: what is printed on the player's own

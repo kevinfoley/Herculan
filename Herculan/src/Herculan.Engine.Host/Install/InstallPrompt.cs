@@ -1,4 +1,4 @@
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using Herculan.Es2.Install;
 using ImGuiNET;

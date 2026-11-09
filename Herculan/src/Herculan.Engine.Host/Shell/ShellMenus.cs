@@ -1,5 +1,6 @@
-using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Host.Settings;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
@@ -37,7 +38,7 @@ sealed class ShellMenus : IFrontEndMenus {
 		_tweaks = new TweaksMenu(TweakSettings.Current, session.Localization);
 		_settings = new SettingsWindow(session, () => RequestClose(restartRequested));
 		_menuBar = new HostMenuBar(session.Localization, session.Keys, _tweaks, _settings, _controller,
-			openEditor: () => RequestClose(editorRequested), customMissions: customMissions);
+			openEditor: () => RequestClose(editorRequested), customMissions: customMissions, manualOpening: () => OnlineManual.Opening);
 	}
 
 	public event Action? CloseRequested;
