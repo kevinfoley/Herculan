@@ -141,7 +141,7 @@ public static class Es1ShellHost {
 				string dataDirectory = CaseInsensitivePath.Combine(_installRoot, Es1MissionFiles.DataFolder);
 				using var window = new FrontEndWindow(host, Title, screenshotPath, imguiFontPath, imguiItalicFontPath, dataDirectory,
 					menus);
-				window.Load += (gl, input) => Guard(() => OnLoad(window, gl, input));
+				window.Load += (gl, input) => Guard(() => OnLoad(window, gl, input, keepWindow: screenshotPath != null));
 				window.Update += delta => {
 					if (!_asserted) {
 						_devices.Sound.UpdateDriver();
@@ -201,12 +201,14 @@ public static class Es1ShellHost {
 		}
 
 		/// <summary>
-		/// The window's load: the monitor on the display, then the start-up's steps 7 on and the frame loop started, which
-		/// run until the first wait for the timer; then the host's mouse and keys taken, the cursor standing in for the
-		/// host's pointer over the window.
+		/// The window's load: the window full screen or not as ES1 last ran (<see cref="Es1FullScreen"/>), unless
+		/// <paramref name="keepWindow"/>; the monitor on the display, then the start-up's steps 7 on and the frame loop
+		/// started, which run until the first wait for the timer; then the host's mouse and keys taken, the cursor standing
+		/// in for the host's pointer over the window.
 		/// </summary>
-		private void OnLoad(FrontEndWindow window, GL gl, IInputContext input) {
+		private void OnLoad(FrontEndWindow window, GL gl, IInputContext input, bool keepWindow) {
 			window.Attach(gl, input);
+			var fullScreenKey = Es1FullScreen.Start(window, keepWindow);
 			_monitor = new Es1Monitor(gl, _devices.Display);
 			_frame.UploadPalette = _monitor.SetPalette;
 			_screens.UploadPalette = _monitor.SetPalette;
@@ -222,7 +224,7 @@ public static class Es1ShellHost {
 
 			if (window.Keyboard is { } keyboard && _devices.HostKeyboard is { } hostKeyboard) {
 				hostKeyboard.Attach(keyboard);
-				hostKeyboard.FullScreenKey = new Es1FullScreenKey(window.ToggleFullScreen);
+				hostKeyboard.FullScreenKey = fullScreenKey;
 				hostKeyboard.HostTakes = key => MenuBarTakes(window, key);
 				hostKeyboard.HostHasKeyboard = () => window.ImGuiWantsKeyboard;
 			}

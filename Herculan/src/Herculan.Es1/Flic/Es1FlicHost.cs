@@ -221,8 +221,8 @@ public static class Es1FlicHost {
 
 		window.Load += (gl, input) => {
 			monitor = new Es1Monitor(gl, display);
-			// The window's [Alt+Enter] is not a key that skips the movie.
-			var fullScreenKey = new Es1FullScreenKey(() => window.ToggleFullScreen(input.Mice.Count > 0 ? input.Mice[0] : null));
+			// The window as ES1 last ran; its [Alt+Enter] is not a key that skips the movie.
+			var fullScreenKey = Es1FullScreen.Start(window, () => input.Mice.Count > 0 ? input.Mice[0] : null);
 			foreach (var keyboard in input.Keyboards) {
 				keyboard.KeyDown += (device, key, _) => {
 					if (!fullScreenKey.KeyDown(key, device.IsKeyPressed) && BiosBuffers(key)) {

@@ -424,7 +424,8 @@ public static class Es1ZoneViewer {
 				hostMouse.Attach(mouse);
 			}
 
-			var fullScreenKey = new Es1FullScreenKey(() => window.ToggleFullScreen(mouse));
+			// The window as ES1 last ran.
+			var fullScreenKey = Es1FullScreen.Start(window, () => mouse);
 			if (world.LocalPlayer != null) {
 				simulation = new Es1SimulationStart(world, installRoot, preferences, input, keyboard, hostMouse,
 					chain, widgets, content, tape, recording, fullScreenKey);
