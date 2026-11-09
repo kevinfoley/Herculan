@@ -124,6 +124,11 @@ internal static class Es1LiftStart {
 	/// generator's next word mod <see cref="JoltSpread"/> and <c>Sim_RenderFrame</c>, each pass standing at the waits its
 	/// page moves owe or, with none, until the next host frame (plan decision 11); <c>CockpitView_ClearShake</c> and
 	/// <c>PitchGradient_Enabled</c> set.
+	/// <para><b>This engine's own</b> (plan decision 30): the canvas's side panels draw each pass's cut, art and fills too
+	/// (<see cref="Es1ViewManager.CanvasOverlay"/>). The canvas is held through each pass's drawing time
+	/// (<see cref="Es1ViewManager.CanvasHeld"/>), while the monitor still shows the previous pass, and drawn just before
+	/// <c>Sim_EndFrame</c> shows the new one (<see cref="Es1FrameLoop.DrawCanvas"/>); it holds the ride's last frame through
+	/// the jolt.</para>
 	/// <para>With no machine or camera, which retail always has, nothing; with no art, which retail reads unchecked, no
 	/// art and no fill under it, the fill over the whole rect still drawn: engine guards.</para>
 	/// </summary>
@@ -140,33 +145,20 @@ internal static class Es1LiftStart {
 		var home = machine.Position;
 		var entry = views.Window;
 		globals.Sound.Play(RiseSound);
+		views.CanvasOverlay = new SidePanelRide(art, camera);
 		for (int height = home.Z - Depth; height < home.Z; height += Rise) {
 			machine.Position = new Vec3i(home.X, home.Y, height);
 			loop.UpdateCamera();
 			views.InstallViewProjection(camera);
-			var projection = views.Projection!;
-			int row = projection.ProjectToScreen(
-				Es1ViewProjection.PerspectiveDivide(new Vec3i(0, RowPointAhead, -camera.Position.Z))).Y;
-			views.Window = views.Window with { Y1 = row < 1 ? views.Window.Y0 : Math.Min(row, entry.Y1) };
+			int row = Row(views.Projection!, camera);
+			views.Window = Cut(views.Window, row);
+			views.CanvasHeld = true;
 			frame.RenderFrame();
 
 			// The context's pair at 0 and its bottom back for the art and the gunsight; the pair back after.
 			var window = views.Window with { Y1 = entry.Y1 };
 			views.Window = window with { CentreX = window.X0, CentreY = window.Y0 };
-			var canvas = views.SceneCanvas();
-			int artRows = art?.Rows ?? 0;
-			if (row + artRows < window.Y0) {
-				canvas.FillRect(window.X0, window.Y0, window.X1, window.Y1, FillColor);
-			} else if (row + artRows < window.Y1) {
-				if (art != null) {
-					canvas.Blit(art, 0, row);
-				}
-
-				canvas.FillRect(0, row + artRows, window.X1, window.Y1, FillColor);
-			} else if (art != null) {
-				canvas.Blit(art, 0, row);
-			}
-
+			DrawArt(views.SceneCanvas(), window, art, row);
 			views.Cockpit.Gunsight.UpdateAndPaint();
 			views.Window = window with { CentreX = entry.CentreX, CentreY = entry.CentreY };
 			yield return Es1Wait.ForTime(PassDrawTime);
@@ -174,6 +166,9 @@ internal static class Es1LiftStart {
 				globals.LiftStartFadeRemaining = (short)fade.Step(clock.Clock, frame.InstallPalette);
 			}
 
+			// The monitor shows the page drawn only from the frame's end on, so the canvas takes the pass just before it.
+			views.CanvasHeld = false;
+			loop.DrawCanvas();
 			foreach (var retrace in frame.EndFrame(frozen())) {
 				yield return Es1Wait.For(retrace);
 			}
@@ -181,6 +176,9 @@ internal static class Es1LiftStart {
 
 		machine.Position = home;
 		globals.Sound.Stop(RiseSound);
+		views.CanvasOverlay = null;
+		// The jolt's frames go to a page that is not shown, so the canvas keeps the ride's last frame, as the monitor does.
+		views.CanvasHeld = true;
 		uint end = clock.Clock + JoltLength;
 		views.SetShakeBand(JoltBand);
 		globals.Sound.Play(JoltSound);
@@ -198,7 +196,54 @@ internal static class Es1LiftStart {
 			}
 		} while (clock.Clock < end);
 
+		views.CanvasHeld = false;
 		views.ClearShake();
 		globals.PitchGradientEnabled = true;
+	}
+
+	/// <summary>
+	/// The row the view point (0, <see cref="RowPointAhead"/>, −<paramref name="camera"/>'s height) projects to through
+	/// <paramref name="projection"/>, which does not depend on the camera's angles
+	/// (docs/es1/simulation/lift-start.md#the-ride--liftstart_rise-00057ffc).
+	/// </summary>
+	private static int Row(Es1ViewProjection projection, Es1Camera camera) =>
+		projection.ProjectToScreen(Es1ViewProjection.PerspectiveDivide(new Vec3i(0, RowPointAhead, -camera.Position.Z))).Y;
+
+	/// <summary><paramref name="window"/> with its bottom cut to <paramref name="row"/>, or to its top while the row is below 1.</summary>
+	private static Es1ViewWindow Cut(Es1ViewWindow window, int row) =>
+		window with { Y1 = row < 1 ? window.Y0 : Math.Min(row, window.Y1) };
+
+	/// <summary>
+	/// The art and the <see cref="FillColor"/> fills for <paramref name="row"/> through <paramref name="canvas"/>, at page
+	/// coordinates: the whole of <paramref name="window"/>'s rect while the art lies above its top; the art at (0, row)
+	/// and the fill from the art's bottom edge, from column 0, while it ends above its bottom; the art alone otherwise.
+	/// </summary>
+	private static void DrawArt(Es1SceneCanvas canvas, Es1ViewWindow window, DynamixBitmap? art, int row) {
+		int artRows = art?.Rows ?? 0;
+		if (row + artRows < window.Y0) {
+			canvas.FillRect(window.X0, window.Y0, window.X1, window.Y1, FillColor);
+		} else if (row + artRows < window.Y1) {
+			if (art != null) {
+				canvas.Blit(art, 0, row);
+			}
+
+			canvas.FillRect(0, row + artRows, window.X1, window.Y1, FillColor);
+		} else if (art != null) {
+			canvas.Blit(art, 0, row);
+		}
+	}
+
+	/// <summary>
+	/// <b>This engine's own</b> (plan decision 30): the ride's pass as the canvas's side panels draw it, each panel's
+	/// window cut at the row its own projection gives and the art and fills drawn over it, as the ride draws them in the
+	/// window it runs in. The views share one image plane, so the row lines up across the panels, and the art, one
+	/// screen wide, repeats in each.
+	/// </summary>
+	private sealed class SidePanelRide(DynamixBitmap? art, Es1Camera camera) : IEs1CanvasOverlay {
+		public Es1ViewWindow Cut(Es1ViewWindow window) => Es1LiftStart.Cut(window, RowIn(window));
+
+		public void DrawOver(Es1SceneCanvas canvas, Es1ViewWindow window) => DrawArt(canvas, window, art, RowIn(window));
+
+		private int RowIn(Es1ViewWindow window) => Row(Es1ViewProjection.Install(camera, window), camera);
 	}
 }

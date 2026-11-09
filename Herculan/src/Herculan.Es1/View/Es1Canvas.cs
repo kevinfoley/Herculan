@@ -82,7 +82,9 @@ public sealed class Es1Canvas {
 	///
 	/// Every pass draws from the current camera, as the frame's own pass did. <paramref name="beginWorldPass"/> readies the
 	/// host's camera from <see cref="Es1ViewManager.Window"/>, so each pass runs with its own window installed there. The
-	/// installed view's window is put back after, and readied again. The art is drawn every frame: it would otherwise need
+	/// installed view's window is put back after, and readied again. With a <see cref="Es1ViewManager.CanvasOverlay"/>,
+	/// each pass's world is drawn in the window the overlay cuts, and the overlay's draw goes over it, cut to the pass's
+	/// clip block. The art is drawn every frame: it would otherwise need
 	/// redrawing after any page copy, any switch into or out of view 4, and any change to the external rect.
 	/// </summary>
 	internal void DrawSidePanels(Es1ViewManager views, Action? beginWorldPass) {
@@ -122,9 +124,12 @@ public sealed class Es1Canvas {
 				clip = files.Clip(view);
 			}
 
-			views.Window = window;
+			var overlay = views.CanvasOverlay;
+			var drawn = overlay?.Cut(window) ?? window;
+			views.Window = drawn;
 			beginWorldPass?.Invoke();
-			Memory.DrawWorld(window, clip);
+			Memory.DrawWorld(drawn, clip);
+			overlay?.DrawOver(new Es1SceneCanvas(Memory, clip), window);
 		}
 
 		views.Window = installedWindow;

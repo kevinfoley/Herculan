@@ -23,6 +23,18 @@ public readonly record struct Es1Retrace {
 }
 
 /// <summary>
+/// <b>This engine's own</b> (plan decision 30): a 2D draw over the frame's 3D pass that the canvas's side panels take
+/// too (<see cref="Es1ViewManager.CanvasOverlay"/>).
+/// </summary>
+internal interface IEs1CanvasOverlay {
+	/// <summary>The window a panel's world is drawn in, given the window it would be drawn in without the draw.</summary>
+	Es1ViewWindow Cut(Es1ViewWindow window);
+
+	/// <summary>The draw over the panel's world through <paramref name="canvas"/>, the panel's uncut window being <paramref name="window"/>.</summary>
+	void DrawOver(Es1SceneCanvas canvas, Es1ViewWindow window);
+}
+
+/// <summary>
 /// The cockpit view manager, <c>mechview.cpp</c> (docs/es1/simulation/cockpit-views.md): the manager's state
 /// <c>CockpitViewManager_Ctor</c> (<c>ES1DBSIM 00021dd4</c>) sets up, the render context's window and clip block the
 /// current view installs, and the view changes on the display's pages: <c>CockpitView_ApplyViewState</c>,
@@ -204,7 +216,16 @@ public sealed class Es1ViewManager {
 	/// </summary>
 	public void EndRenderFrame() {
 		_pageViews[Display.DrawPage] = InstalledView;
-		if (Canvas is { } canvas && WideCanvas) {
+		TakeCanvasPage();
+	}
+
+	/// <summary>
+	/// <b>This engine's own:</b> under the "High resolution widescreen" tweak, with a canvas that is not
+	/// <see cref="CanvasHeld"/>, the draw page copied into <see cref="InstalledView"/>'s page of it
+	/// (<see cref="Es1Canvas.TakeDrawnPage"/>).
+	/// </summary>
+	internal void TakeCanvasPage() {
+		if (Canvas is { } canvas && WideCanvas && !CanvasHeld) {
 			canvas.TakeDrawnPage(Display, InstalledView);
 		}
 	}
@@ -214,6 +235,19 @@ public sealed class Es1ViewManager {
 	/// lays it out. With none, it is taken as shown.
 	/// </summary>
 	public Func<bool>? CanvasShown { get; set; }
+
+	/// <summary>
+	/// <b>This engine's own:</b> what a 2D draw over the frame's 3D pass does to the side panels as well
+	/// (<see cref="Es1Canvas.DrawSidePanels"/>), so the canvas shows it as the view's own window does; none outside one.
+	/// </summary>
+	internal IEs1CanvasOverlay? CanvasOverlay { get; set; }
+
+	/// <summary>
+	/// <b>This engine's own:</b> set while the frame drawn is not yet shown, or never will be. The canvas then keeps the
+	/// last frame shown, as the monitor does: <see cref="EndRenderFrame"/> copies nothing into it and
+	/// <see cref="DrawCanvasPanels"/> draws nothing.
+	/// </summary>
+	internal bool CanvasHeld { get; set; }
 
 	/// <summary>
 	/// <b>This engine's own</b>, after <see cref="EndRenderFrame"/> in a frame whose 3D pass ran: draws the side panels
@@ -227,7 +261,7 @@ public sealed class Es1ViewManager {
 	/// is put back after.</para>
 	/// </summary>
 	internal void DrawCanvasPanels(Action? beginWorldPass) {
-		if (Canvas is not { } canvas || !WideCanvas || CanvasShown?.Invoke() == false) {
+		if (Canvas is not { } canvas || !WideCanvas || CanvasHeld || CanvasShown?.Invoke() == false) {
 			return;
 		}
 

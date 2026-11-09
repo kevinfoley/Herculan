@@ -222,6 +222,17 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		Views.Cockpit.Globals.Sound.Play(Sound.Es1Sound.StartRow);
 	}
 
+	/// <summary>
+	/// <b>This engine's own:</b> the canvas drawn for the frame on the draw page, as <see cref="RenderFrame"/> draws it
+	/// after its 3D pass: the page copied in (<see cref="Es1ViewManager.TakeCanvasPage"/>) and the side panels
+	/// (<see cref="Es1ViewManager.DrawCanvasPanels"/>). For a frame drawn while <see cref="Es1ViewManager.CanvasHeld"/>
+	/// was set.
+	/// </summary>
+	internal void DrawCanvas() {
+		Views.TakeCanvasPage();
+		Views.DrawCanvasPanels(_beginWorldPass);
+	}
+
 	/// <summary><c>Cam_Update</c>(<c>ViewObjectPtr</c>).</summary>
 	internal void UpdateCamera() => _camUpdate();
 
