@@ -71,7 +71,7 @@ HERCULAN Engine is a reimplementation of _Earthsiege 2_, **not** a remake. There
 
 - Enhanced graphics (other than basic quality of life changes like support for higher resolutions and widescreen displays)
 - Gameplay changes or balance adjustments (other than bug fixes)
-- New Hercs, weapons, or missions
+- New HERCs, weapons, or campaigns
 - Multiplayer
 
 Higher tickrates/smoother motion are under consideration for a future update, but are not a priority right now.
