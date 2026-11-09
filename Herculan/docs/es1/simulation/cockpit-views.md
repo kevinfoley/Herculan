@@ -70,6 +70,25 @@ It does not set the current view `+0x10`, which ES2's sets to −1. The manager 
 
 The eight schemes read `dpl\cockpit` entries 0 to 255 between them. The [pitch gradient](../rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479) rewrites entries `0x40`–`0x4f` from step 3's color at `0x40` before the mission's first frame and on every frame after while it runs, so step 2's colors there are replaced before any frame is drawn. For a type above 7 the word read is past the table's end, in `CockpitViewShakeArmed` and the globals after it. ES2's installs one window of 24 colors at entry 42 from entry 32 + 24*s*, its scheme being the type record's file offset 80 ([ES2's palette](../../retail/rendering/cockpit-canopy-palette.md#palette)); ES1's files hold 0 at offset 80 and its scheme is the type number.
 
+## The views' geometry
+
+**Every chassis's `.VUE` file has ES2's layout ([the file](../../retail/formats/vue-view-geometry.md)), four records, and in all eight the glances continue the forward view's projection: views 0, 2 and 3 are three windows on one image plane 960 columns wide, as ES2's are ([one image plane](../../retail/simulation/cockpit-views.md#the-side-glances-are-one-image-plane)).** `CockpitView_ApplyViewState` adds the view's canvas origin to the record's pair ([above](#cockpitview_applyviewstate-000222c0)) and `Raster_InstallViewProjection` takes the centre as the rect's top-left less that sum ([the projection](../rendering/view-transform-and-projection.md)), so view 0's centre is (160, 72) on its page in every file, view 2's (−160, 72) and view 3's (480, 72): the forward view's centre seen from pages 320 columns to its right and to its left. A glance keeps the forward camera ([the view command](#cockpitview_processviewcommand-000226f0)), whose focal shift is 8 ([the main camera](main-loop.md#the-mission-start--sim_startmission-0005a9dc), step 12), so the three share the focal length as well.
+
+Every file gives the canvas origins (0, 0), (0, 197), (320, 0) and (−320, 0), every pair's *x* is −160, and views 2 and 3 carry the same rect and pair. Rects are {*x0*, *y0*, *x1*, *y1*}:
+
+| File | View 0 rect | View 0 pair | Views 2 and 3 rect | Their pair | View 1 rect |
+|---|---|---|---|---|---|
+| `COLOSSUS` | 0, 0, 320, 133 | −160, −72 | 0, 0, 320, 164 | −160, −72 | 0, 0, 320, 3 |
+| `GUNSLING` | 0, 12, 320, 144 | −160, −60 | 0, 0, 320, 179 | −160, −72 | 0, 0, 0, 0 |
+| `HERCULES` | 0, 0, 320, 135 | −160, −72 | 0, 0, 320, 177 | −160, −72 | 0, 0, 320, 3 |
+| `PANTHER` | 0, 6, 320, 146 | −160, −66 | 0, 0, 320, 186 | −160, −72 | 0, 0, 320, 3 |
+| `PATRIOT` | 0, 0, 320, 154 | −160, −72 | 0, 0, 320, 165 | −160, −72 | 0, 0, 0, 0 |
+| `RAPTOR` | 0, 0, 320, 151 | −160, −72 | 0, 0, 320, 178 | −160, −72 | 0, 0, 0, 0 |
+| `ROADRUNN` | 0, 0, 320, 150 | −160, −72 | 0, 0, 320, 183 | −160, −72 | 0, 0, 320, 200 |
+| `TOMAHAWK` | 0, 0, 320, 150 | −160, −72 | 0, 0, 320, 174 | −160, −72 | 0, 0, 0, 0 |
+
+`GUNSLING`'s and `PANTHER`'s view 0 rects start below row 0 and their pairs make up the difference, so the centre is row 72 in all three views of every file. The side views' rects reach lower than view 0's. View 1's pair is (−160, 125) in every file, which puts its centre at row −322 of its page, canvas row −125: the heads-down view does not continue the forward view's plane downward, where the RAZOR's in ES2 does ([the RAZOR's heads-down view](../../retail/simulation/cockpit-views.md#the-razors-heads-down-view)).
+
 ## Loading and freeing the canopy art
 
 `CockpitCanopy_LoadViewBitmap` (`00022184`), (manager, view) in stack order, callee-cleaned, is ES2's ([the canopy art](../../retail/formats/canopy-art-hb-db.md#canopy-art--hb0hb1hb2-and-db0db1db2)) with one folder: it writes the file number, the view less 1 for views above 2, with `ltoa` over the third character of the string `dba` (`00092674`), making `db0` to `db2`, and loads `db<n>\<name>` with `ClassItem_LoadResource` into slot *view* of `+0x08`, asserting at severity 5 when the stream does not open. It loads nothing for view 4 or a filled slot, and after file 2 copies the pointer to slot 3. It has no `hb` folder and no layout-mode branch.
