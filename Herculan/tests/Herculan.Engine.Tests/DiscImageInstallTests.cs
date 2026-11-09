@@ -48,11 +48,14 @@ public class DiscImageInstallTests : IDisposable {
 		string install = Path.Combine(_root, "install");
 		installer.Install(install, size, language, discFiles: false);
 
-		// An oracle install that has been played holds saves, and the game has rewritten its preferences and save
-		// list; those two are checked against the disc's own copies instead.
+		// An oracle install that has been played holds saves and the files a mission's launch and debrief write, and the
+		// game has rewritten its preferences, save list and mission text; those three are checked against the disc's own
+		// copies instead.
 		var expected = Files(oracle)
-			.Where(file => !IsSave(file.Key) || file.Key.Equals(SaveList, StringComparison.OrdinalIgnoreCase))
+			.Where(file => (!IsSave(file.Key) || file.Key.Equals(SaveList, StringComparison.OrdinalIgnoreCase))
+				&& !MissionFiles.Contains(file.Key))
 			.ToDictionary(StringComparer.OrdinalIgnoreCase);
+		var (languageFolder, extension) = RetailInstaller.LanguageFolder(language);
 		var actual = Files(install);
 		Assert.Equal(expected.Keys.Order(StringComparer.OrdinalIgnoreCase), actual.Keys.Order(StringComparer.OrdinalIgnoreCase),
 			StringComparer.OrdinalIgnoreCase);
@@ -64,7 +67,9 @@ public class DiscImageInstallTests : IDisposable {
 			string reference = relative.Equals(SaveList, StringComparison.OrdinalIgnoreCase)
 					|| relative.Equals(Preferences, StringComparison.OrdinalIgnoreCase)
 				? Path.Combine(folder, relative)
-				: path;
+				: relative.Equals(MissionText, StringComparison.OrdinalIgnoreCase)
+					? Path.Combine(folder, languageFolder, $"MISSION.{extension}")
+					: path;
 			Assert.True(File.ReadAllBytes(reference).AsSpan().SequenceEqual(File.ReadAllBytes(actual[relative])), relative);
 		}
 
@@ -151,6 +156,13 @@ public class DiscImageInstallTests : IDisposable {
 
 	private static readonly string SaveList = Path.Combine("SAV", "GAMEFILE.STR");
 	private static readonly string Preferences = Path.Combine("DATA", "PREFS.CFG");
+	private static readonly string MissionText = Path.Combine("DATA", "MISSION.STR");
+
+	// The working files a campaign mission's launch and debrief write into data\ (docs/retail/shell/campaign-loop.md),
+	// which no install copies.
+	private static readonly HashSet<string> MissionFiles = new(
+		new[] { "mission.var", "player.mec", "script.dat", "results.dat" }.Select(name => Path.Combine("DATA", name)),
+		StringComparer.OrdinalIgnoreCase);
 
 	private static bool IsSave(string relative) => relative.StartsWith("SAV" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
 
