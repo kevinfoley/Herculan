@@ -3,6 +3,7 @@ using HercWorks.Core.Data.File.Dyn;
 using Herculan.Es1.Host;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
+using Silk.NET.Maths;
 using Xunit;
 
 namespace Herculan.Engine.Tests;
@@ -69,6 +70,44 @@ public class Es1ViewChangeTests {
 		// Below the view's window, the side canopy that the glance blitted into page 2 is on page 0 too.
 		Assert.Equal(CanopyIndex + 2, display.Cell(0, 5, 150));
 		Assert.Equal(CanopyIndex + 2, display.Cell(2, 5, 150));
+	}
+
+	/// <summary>
+	/// In a 1400 × 600 window, whose 800 × 600 monitor leaves 120 canvas columns showing on each side, a glance right
+	/// waits a retrace for each step only up to the reach of 200 columns, where the right side panel's outer edge, canvas
+	/// column 960, lies on the window's right edge; the steps beyond and the last set take none, and the far half's show
+	/// and the frame's flip wait as before. Catches the reach not read, a step past it that still waits, and a reach that
+	/// stops the slide with the panel's edge off the window's.
+	/// </summary>
+	[Fact]
+	public void AGlanceInAWideWindowWaitsOnlyUntilTheSidePanelMeetsTheWindowEdge() {
+		var window = new Vector2D<int>(1400, 600);
+		var (views, frames) = Start();
+		Assert.Equal(200, Es1CanvasLayout.Create(window, 0, 0).Reach);
+		views.GlanceReach = () => Es1CanvasLayout.Create(window, 0, 0).Reach;
+
+		var columns = Glance(views, frames);
+
+		Assert.Equal(Enumerable.Range(1, 20).Select(step => 10 * step).Append(320).Append(320), columns);
+		Assert.Equal(window.X, Es1CanvasLayout.Create(window, columns[19], 0).CanvasX(Es1Canvas.Width));
+		Assert.Equal(2, views.CurrentView);
+	}
+
+	/// <summary>
+	/// Through a glance right the monitor's canvas column follows the slide to 320 and stays there on the retrace after
+	/// its last step, when the far half holding view 2 is shown at its own origin while the current view is still 0, and
+	/// on the frame's flip after the far half is copied back onto page 0. Catches the column taken from the current view
+	/// rather than the view the shown page holds, and the copy back not carrying that view to page 0.
+	/// </summary>
+	[Fact]
+	public void TheMonitorsCanvasColumnStaysOnTheSidePanelAcrossTheGlancesEnd() {
+		var (views, frames) = Start();
+
+		var columns = Glance(views, frames);
+
+		var slide = Enumerable.Range(1, 32).Select(step => 10 * step);
+		Assert.Equal(slide.Append(320).Append(320).Append(320), columns);
+		Assert.Equal(2, views.PageView(0));
 	}
 
 	/// <summary>
@@ -179,6 +218,23 @@ public class Es1ViewChangeTests {
 		}
 
 		return shown;
+	}
+
+	/// <summary>A glance right queued once page 0 is on the monitor and run to its end; returns the monitor's canvas column at each retrace of the frame that slides.</summary>
+	private static List<int> Glance(Es1ViewManager views, Es1FrameLoop frames) {
+		RunFrame(frames);
+		RunFrame(frames);
+		views.QueueViewCommand(4);
+		RunFrame(frames);
+		RunFrame(frames);
+		Assert.True(views.Staged);
+		var columns = new List<int>();
+		foreach (var _ in frames.RunFrame(frozen: false)) {
+			columns.Add(views.MonitorCanvasPoint.Column);
+			Assert.True(columns.Count < 1000, "The frame's end never finished.");
+		}
+
+		return columns;
 	}
 
 	private sealed class RecordingLayer : IEs1WorldLayer {

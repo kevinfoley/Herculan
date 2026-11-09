@@ -484,7 +484,7 @@ public sealed class Es1Cockpit {
 	/// stays the one it set. So each such copy shows the cursor again when it was hidden.
 	/// </summary>
 	internal bool DrawToCockpit(Es1Rect rect, int which = 1) {
-		if (!RectCornerVisible(rect) || _views.Staged || (which == 1 && BringUp)) {
+		if (_repaintingForward || !RectCornerVisible(rect) || _views.Staged || (which == 1 && BringUp)) {
 			return false;
 		}
 
@@ -529,6 +529,52 @@ public sealed class Es1Cockpit {
 		Gunsight.Paint();
 		Clock.Update();
 		RunTtmScripts();
+	}
+
+	// Set while RepaintForward runs, when DrawToCockpit copies nothing.
+	private bool _repaintingForward;
+
+	/// <summary>
+	/// <b>This engine's own</b> (plan decision 30): view 0's instruments repainted during a glance, into the display the
+	/// view manager has put in place (<see cref="Es1ViewManager.DrawCanvasPanels"/>), with the canvas context's origin at
+	/// <paramref name="forwardOrigin"/>, view 0's. It runs the slots of <see cref="InvalidateWidgets"/> that only draw.
+	/// <see cref="DrawToCockpit"/> copies nothing while it runs, because the target is one page.
+	///
+	/// <para>The paints leave state behind them, such as the throttle knob's saved screen and the bars' painted values.
+	/// That state does not matter: the update slots draw nothing in a glance, and the return to view 0
+	/// (<see cref="Es1ViewManager.SetView"/>) runs <see cref="InvalidateWidgets"/> on the display before they draw again.</para>
+	///
+	/// <para>Left out: the clock's slot, which advances the clock, so its text is drawn without advancing
+	/// (<see cref="Es1CockpitClock.PaintText"/>); <see cref="RunTtmScripts"/>, which steps the scripts, so the <c>.TTM</c>
+	/// areas keep their last picture; and the Heads-Down Display, whose page's show changes its state, and of which view
+	/// 0's page holds only the top rows. The gunsight's paint draws the state its last update left, because its update
+	/// does nothing in a glance.</para>
+	/// </summary>
+	internal void RepaintForward((int X, int Y) forwardOrigin) {
+		if (WidgetsOff) {
+			return;
+		}
+
+		var origin = CanvasOrigin;
+		CanvasOrigin = forwardOrigin;
+		_repaintingForward = true;
+		try {
+			foreach (var row in _weaponRows) {
+				row?.Paint();
+			}
+
+			PodRow?.Paint();
+			ConsoleButtons.Paint();
+			EnergyMeter.Paint();
+			Shields.Paint();
+			Throttle.Paint();
+			Mfd.Repaint();
+			Gunsight.Paint();
+			Clock.PaintText();
+		} finally {
+			_repaintingForward = false;
+			CanvasOrigin = origin;
+		}
 	}
 
 	/// <summary>

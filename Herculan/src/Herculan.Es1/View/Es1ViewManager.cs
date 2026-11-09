@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Dbsim;
+using Herculan.Engine.Settings;
 using Herculan.Es1.Input;
 using Herculan.Es1.Sim;
 
@@ -66,7 +67,7 @@ public sealed class Es1ViewManager {
 	public Es1ViewManager(Es1CockpitViews files, Es1VideoMemory display, Es1Mech? machine = null, Es1CockpitMouse? mouse = null,
 			Es1SimGlobals? globals = null, Es1Preferences? preferences = null) {
 		Files = files;
-		Display = display;
+		_display = display;
 		if (mouse == null) {
 			mouse = new Es1CockpitMouse(display.Cursor);
 			mouse.Init(null);
@@ -82,8 +83,17 @@ public sealed class Es1ViewManager {
 	/// <summary>The <c>.VUE</c> records, the clip blocks and the canopy art.</summary>
 	public Es1CockpitViews Files { get; }
 
-	/// <summary><c>SimDisplay</c> (<c>000b5b5c</c>), the display the views draw on and the frame's end flips.</summary>
-	public Es1VideoMemory Display { get; }
+	/// <summary>
+	/// <c>SimDisplay</c> (<c>000b5b5c</c>), the display the views draw on and the frame's end flips. While this engine
+	/// repaints view 0's instruments into the canvas during a glance (<see cref="DrawCanvasPanels"/>), it is the canvas's
+	/// memory instead.
+	/// </summary>
+	public Es1VideoMemory Display => _paintTarget ?? _display;
+
+	private readonly Es1VideoMemory _display;
+
+	// The canvas's memory while view 0's instruments are repainted into it; null otherwise.
+	private Es1VideoMemory? _paintTarget;
 
 	/// <summary><c>+0x1b</c>, the cockpit, <c>CockpitViewInstance</c>.</summary>
 	public Es1Cockpit Cockpit { get; }
@@ -142,6 +152,112 @@ public sealed class Es1ViewManager {
 
 	/// <summary>The render context's six values <c>+0x210</c>–<c>+0x224</c> as the last view state installed them.</summary>
 	public Es1ViewWindow Window { get; internal set; }
+
+	/// <summary>
+	/// <b>This engine's own:</b> the view whose window and clip block <see cref="Window"/> and <see cref="Clip"/> hold, the
+	/// view the next 3D pass is drawn for. While a view change is staged <see cref="CurrentView"/> is still the old view and
+	/// this the new one.
+	/// </summary>
+	public int InstalledView { get; private set; }
+
+	/// <summary>
+	/// <b>This engine's own:</b> the canvas beside the monitor (plan decision 30, <see cref="Es1Canvas"/>), which the frame
+	/// fills under the "High resolution widescreen" tweak; none with no host to show it.
+	/// </summary>
+	public Es1Canvas? Canvas { get; set; }
+
+	/// <summary>
+	/// <b>This engine's own:</b> how far the monitor's canvas column may move from view 0's before the window showing the
+	/// canvas stops following it (<see cref="Es1CanvasLayout.Reach"/>); a glance's slide steps past it set the page's origin
+	/// without waiting for a retrace (<see cref="Glance"/>). None waits at every step, as retail's slide does.
+	/// </summary>
+	public Func<int>? GlanceReach { get; set; }
+
+	// The view each page was last drawn for, or carried to it by a copy of a whole page; view 0 in the zero-filled manager.
+	private readonly int[] _pageViews = new int[Es1VideoMemory.PageCount];
+
+	/// <summary><b>This engine's own:</b> the view page <paramref name="page"/> holds: the last frame drawn on it, or the page a whole-page copy brought onto it.</summary>
+	public int PageView(int page) => _pageViews[page];
+
+	/// <summary>
+	/// <b>This engine's own:</b> where the monitor's top-left pixel lies on the cockpit's canvas, from view 0's top-left:
+	/// the visible page's origin less its own, plus the canvas origin of the view the page holds (<see cref="PageView"/>),
+	/// in columns; less its own in rows. So it stays right on the retrace between a glance's last step and the view
+	/// change, when the slid page and then the far half are on the monitor while <see cref="CurrentView"/> is still the
+	/// old view.
+	/// </summary>
+	public (int Column, int Row) MonitorCanvasPoint {
+		get {
+			int page = Display.VisiblePage;
+			var (originX, originY) = Display.PageOrigin(page);
+			var (baseX, baseY) = Display.PageBase(page);
+			int view = _pageViews[page];
+			int canvasX = view >= 0 && view < Files.Count ? Files.Record(view).CanvasOriginX : 0;
+			return (originX - baseX + canvasX, originY - baseY);
+		}
+	}
+
+	/// <summary>
+	/// <b>This engine's own</b>, at the end of each <c>Sim_RenderFrame</c>: the draw page recorded as holding
+	/// <see cref="InstalledView"/>, and under the "High resolution widescreen" tweak, with a canvas, the page copied into
+	/// that view's page of it (<see cref="Es1Canvas.TakeDrawnPage"/>).
+	/// </summary>
+	public void EndRenderFrame() {
+		_pageViews[Display.DrawPage] = InstalledView;
+		if (Canvas is { } canvas && WideCanvas) {
+			canvas.TakeDrawnPage(Display, InstalledView);
+		}
+	}
+
+	/// <summary>
+	/// <b>This engine's own:</b> whether the window shows <see cref="Canvas"/> beside the monitor, as the host's monitor
+	/// lays it out. With none, it is taken as shown.
+	/// </summary>
+	public Func<bool>? CanvasShown { get; set; }
+
+	/// <summary>
+	/// <b>This engine's own</b>, after <see cref="EndRenderFrame"/> in a frame whose 3D pass ran: draws the side panels
+	/// into the canvas (<see cref="Es1Canvas.DrawSidePanels"/>). This needs the "High resolution widescreen" tweak, a
+	/// canvas, and a window that shows the canvas (<see cref="CanvasShown"/>).
+	///
+	/// <para>In a glance it then repaints view 0's instruments over view 0's page (<see cref="Es1Cockpit.RepaintForward"/>),
+	/// as plan decision 30 keeps view 0 live. For the repaint, view 0's state is put in place: <see cref="Display"/> is the
+	/// canvas's memory on view 0's page, and <see cref="Window"/>, <see cref="Clip"/> and <see cref="Projection"/> are view
+	/// 0's. The cockpit's canvas origin is view 0's: the glance's move and the shake's total are taken back out. Everything
+	/// is put back after.</para>
+	/// </summary>
+	internal void DrawCanvasPanels(Action? beginWorldPass) {
+		if (Canvas is not { } canvas || !WideCanvas || CanvasShown?.Invoke() == false) {
+			return;
+		}
+
+		canvas.DrawSidePanels(this, beginWorldPass);
+		if (InstalledView is not (2 or 3) || Files.Count == 0) {
+			return;
+		}
+
+		var forward = Files.Record(0);
+		var glance = Files.Record(InstalledView);
+		var (window, clip, projection) = (Window, Clip, Projection);
+		var origin = Cockpit.CanvasOrigin;
+		Window = Es1ViewWindow.Install(forward, forward.CanvasOriginX, forward.CanvasOriginY);
+		Clip = Files.Clip(0);
+		if (Chain?.Camera is { } camera) {
+			InstallViewProjection(camera);
+		}
+
+		canvas.BeginForwardPaint();
+		_paintTarget = canvas.Memory;
+		try {
+			Cockpit.RepaintForward((origin.X - (glance.CanvasOriginX - forward.CanvasOriginX),
+				origin.Y - ShakeTotal - (glance.CanvasOriginY - forward.CanvasOriginY)));
+		} finally {
+			_paintTarget = null;
+			(Window, Clip, Projection) = (window, clip, projection);
+		}
+	}
+
+	private static bool WideCanvas => TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HighResolutionWidescreen);
 
 	/// <summary>The render context's clip block as the last view state copied it in, clip mode 2.</summary>
 	public Es1ClipBlock Clip { get; private set; } = Es1ClipBlock.Empty;
@@ -223,6 +339,7 @@ public sealed class Es1ViewManager {
 			SavedView = CurrentView;
 			Clip = ExternalViewClip;
 			Window = Es1ViewWindow.Install(ExternalViewRect, 0, 0);
+			InstalledView = Es1CockpitViews.ExternalView;
 			CurrentView = Es1CockpitViews.ExternalView;
 			Cockpit.DisableWidgets();
 			CanvasOrigin = (0, 0);
@@ -257,6 +374,7 @@ public sealed class Es1ViewManager {
 
 		Clip = Files.Clip(view);
 		Window = Es1ViewWindow.Install(record, record.CanvasOriginX, record.CanvasOriginY);
+		InstalledView = view;
 		CanvasOrigin = (record.CanvasOriginX, record.CanvasOriginY);
 	}
 
@@ -456,6 +574,10 @@ public sealed class Es1ViewManager {
 			display.CopyRect(rect.X0, rect.Y0, rect.X1, rect.Y1, dx, dy);
 			cursor.Show();
 			display.DrawPage = drawn;
+			// Command 3's copy is the whole page, which brings the drawn page's view onto the shown one.
+			if (command == 3) {
+				_pageViews[shown] = _pageViews[drawn];
+			}
 		}
 
 		Staged = false;
@@ -596,6 +718,12 @@ public sealed class Es1ViewManager {
 	/// <i>x</i> less record 0's, and by record 0's plus record 3's the other way; command 6 slides back by record 0's
 	/// plus the current view's, toward the side it came from. Then the far half's page is shown, the near one drawn on,
 	/// the pair swapped, the slid page put back on its own origin and the far half copied onto it.
+	///
+	/// <para><b>This engine's own</b> (plan decision 30, KNOWN_ISSUES.md): a step that leaves the monitor's canvas column
+	/// (<see cref="MonitorCanvasPoint"/>) further than <see cref="GlanceReach"/> from view 0's does not wait for its
+	/// retrace, so a window that already shows part of the side panel slides only until the panel's outer edge meets the
+	/// window's edge, as ES2's port does, and the steps beyond happen at once. The retrace wait after the slide, the far
+	/// half's show, is kept.</para>
 	/// </summary>
 	private IEnumerable<Es1Retrace> Glance(int command, (int X, int Y) page, bool lifted) {
 		var display = Display;
@@ -610,7 +738,7 @@ public sealed class Es1ViewManager {
 				if (0 < travel) {
 					do {
 						x += GlanceStep;
-						if (SlideStep(lifted, shown, page.X + x, page.Y)) {
+						if (GlanceSlideStep(lifted, shown, page.X + x, page.Y)) {
 							yield return default;
 						}
 
@@ -627,7 +755,7 @@ public sealed class Es1ViewManager {
 				if (0 < travel) {
 					do {
 						x -= GlanceStep;
-						if (SlideStep(lifted, shown, page.X + x, page.Y)) {
+						if (GlanceSlideStep(lifted, shown, page.X + x, page.Y)) {
 							yield return default;
 						}
 
@@ -654,7 +782,7 @@ public sealed class Es1ViewManager {
 
 				while (limit < left) {
 					x -= step;
-					if (SlideStep(lifted, shown, page.X + x, page.Y)) {
+					if (GlanceSlideStep(lifted, shown, page.X + x, page.Y)) {
 						yield return default;
 					}
 
@@ -666,7 +794,7 @@ public sealed class Es1ViewManager {
 			}
 		}
 
-		if (SlideStep(lifted, shown, page.X + x, page.Y)) {
+		if (GlanceSlideStep(lifted, shown, page.X + x, page.Y)) {
 			yield return default;
 		}
 
@@ -690,6 +818,7 @@ public sealed class Es1ViewManager {
 		cursor.Hide();
 		display.CopyRect(0, 0, 319, 199, 0, 0);
 		cursor.Show();
+		_pageViews[shown] = _pageViews[drawn];
 		CurrentView = command switch { 4 => 2, 5 => 3, _ => 0 };
 	}
 
@@ -712,6 +841,13 @@ public sealed class Es1ViewManager {
 
 		return waited;
 	}
+
+	/// <summary>
+	/// A glance's <see cref="SlideStep"/>, answering a wait only while the step leaves the monitor's canvas column within
+	/// <see cref="GlanceReach"/> of view 0's.
+	/// </summary>
+	private bool GlanceSlideStep(bool lifted, int page, int x, int y) =>
+		SlideStep(lifted, page, x, y) && (GlanceReach is not { } reach || Math.Abs(MonitorCanvasPoint.Column) <= reach());
 
 	/// <summary>
 	/// A lifted slide's end: the draw page put back to <paramref name="drawn"/>, <c>+0x8c</c>, and the pilot channel's box

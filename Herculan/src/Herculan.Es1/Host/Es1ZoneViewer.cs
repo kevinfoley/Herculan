@@ -293,7 +293,10 @@ public static class Es1ZoneViewer {
 			var display = new Es1VideoMemory();
 			var cockpitMouse = new Es1CockpitMouse(display.Cursor) { Tape = tape };
 			cockpitMouse.Init(hostMouse);
-			manager = new Es1ViewManager(views, display, player, cockpitMouse, world.Globals, preferences);
+			manager = new Es1ViewManager(views, display, player, cockpitMouse, world.Globals, preferences) {
+				// The canvas a window wider than 4:3 shows around the monitor (plan decision 30).
+				Canvas = new Es1Canvas(),
+			};
 		}
 
 		var chain = player != null ? new Es1ViewChain(player, manager, Es1ViewCaption.Load(content)) : null;
@@ -356,8 +359,11 @@ public static class Es1ZoneViewer {
 			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables, projectileDraw, explosionDraw, debrisDraw,
 				smokeDraw, flyerDraw, structureDraw);
 			if (manager != null && chain != null) {
-				monitor = new Es1Monitor(gl, manager.Display);
+				monitor = new Es1Monitor(gl, manager.Display, manager);
 				disposables.Add(monitor);
+				var shownMonitor = monitor;
+				manager.GlanceReach = () => shownMonitor.GlanceReach(window.FramebufferSize);
+				manager.CanvasShown = () => shownMonitor.ShowsCanvas(window.FramebufferSize);
 				monitor.SetPalette(scene.Palette);
 				// The cockpit script's palette commands upload to the same live palette, and the shield display's rings are
 				// installed into it.
@@ -412,7 +418,8 @@ public static class Es1ZoneViewer {
 
 			keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
 			mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
-			hostMouse.Pointer = () => Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize);
+			hostMouse.Pointer = () => monitor?.CockpitPointer(window.FramebufferSize, window.ClientSize)
+				?? Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize);
 			if (mouse != null) {
 				hostMouse.Attach(mouse);
 			}

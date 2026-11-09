@@ -16,6 +16,12 @@ public readonly record struct FrameFit(Vector2D<int> Frame, Vector2D<int> Window
 	/// <summary>Whether the frame is drawn at a size other than the window's, and so has to be scaled into it.</summary>
 	public bool Scaled => Frame != Window;
 
+	/// <summary>
+	/// How far right of centre the frame sits, in framebuffer pixels, for a frame that is one window onto a wider
+	/// picture and moves across the window with it; 0 centres it.
+	/// </summary>
+	public int ShiftX { get; init; }
+
 	/// <summary>The frame's place in the window, from the window's top-left corner, in framebuffer pixels.</summary>
 	public (int Left, int Top, int Width, int Height) Placement {
 		get {
@@ -26,7 +32,7 @@ public readonly record struct FrameFit(Vector2D<int> Frame, Vector2D<int> Window
 			float scale = MathF.Min(Window.X / (float)Frame.X, Window.Y / (float)Frame.Y);
 			int width = (int)MathF.Round(Frame.X * scale);
 			int height = (int)MathF.Round(Frame.Y * scale);
-			return ((Window.X - width) / 2, (Window.Y - height) / 2, width, height);
+			return ((Window.X - width) / 2 + ShiftX, (Window.Y - height) / 2, width, height);
 		}
 	}
 

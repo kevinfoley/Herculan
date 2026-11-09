@@ -1,4 +1,5 @@
 using Herculan.Engine.Gl;
+using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Render;
@@ -396,6 +397,27 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
+	/// Copies the world pixels of <paramref name="source"/>'s rect of <paramref name="width"/> × <paramref name="height"/>
+	/// cells at (<paramref name="sourceX"/>, <paramref name="sourceY"/>) into this surface's rect at
+	/// (<paramref name="targetX"/>, <paramref name="targetY"/>), each at its own surface's scale.
+	/// </summary>
+	public void CopyWorldFrom(IndexedWorldSurface source, int sourceX, int sourceY, int targetX, int targetY, int width, int height) {
+		if (width <= 0 || height <= 0) {
+			return;
+		}
+
+		int k = source.Scale, sourceBottom = (source.Rows - (sourceY + height)) * k;
+		int t = Scale, targetBottom = (Rows - (targetY + height)) * t;
+		_gl.Disable(EnableCap.ScissorTest);
+		_gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, source._framebuffer);
+		_gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, _framebuffer);
+		_gl.BlitFramebuffer(sourceX * k, sourceBottom, (sourceX + width) * k, sourceBottom + height * k,
+			targetX * t, targetBottom, (targetX + width) * t, targetBottom + height * t,
+			ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
+		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+	}
+
+	/// <summary>
 	/// Shows the window of <paramref name="windowWidth"/> × <paramref name="windowRows"/> cells read from the linear
 	/// address <paramref name="start"/>, each row <see cref="Width"/> cells on from the last and every address taken
 	/// modulo <paramref name="cellCount"/>, at <paramref name="fit"/>'s placement in the window over black. Leaves the
@@ -403,16 +425,32 @@ public sealed class IndexedWorldSurface : IDisposable {
 	/// <see cref="SetCursor"/> sprite's top-left lies at that cell of the window, over the cells.
 	/// </summary>
 	public void Present(FrameFit fit, int start, int windowWidth, int windowRows, int cellCount, (int X, int Y)? cursorAt = null) {
-		var window = fit.Window;
+		Clear(fit.Window);
+		Draw(fit.Window, fit.Placement, start, windowWidth, windowRows, cellCount, cursorAt);
+	}
+
+	/// <summary>The window's framebuffer of <paramref name="window"/> pixels cleared to black, as <see cref="Present"/> clears it before it draws.</summary>
+	public void Clear(Vector2D<int> window) {
 		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 		_gl.Disable(EnableCap.ScissorTest);
 		_gl.Viewport(0, 0, (uint)Math.Max(window.X, 1), (uint)Math.Max(window.Y, 1));
 		_gl.ColorMask(true, true, true, true);
 		_gl.ClearColor(0f, 0f, 0f, 1f);
 		_gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+	}
 
-		var (left, top, width, height) = fit.Placement;
-		if (width <= 0 || height <= 0 || _palette == null) {
+	/// <summary>
+	/// <see cref="Present"/>'s draw without its clear, at <paramref name="placement"/> (left, top, width, height from
+	/// the top-left of a window of <paramref name="window"/> pixels), which may reach past the window's edges, over
+	/// whatever the window already shows: so several windows onto stores can be laid side by side or stretched, a window
+	/// one cell wide repeating its cells across the placement's width.
+	/// </summary>
+	public void Draw(Vector2D<int> window, (int Left, int Top, int Width, int Height) placement, int start,
+			int windowWidth, int windowRows, int cellCount, (int X, int Y)? cursorAt = null) {
+		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+		_gl.Disable(EnableCap.ScissorTest);
+		var (left, top, width, height) = placement;
+		if (width <= 0 || height <= 0 || windowWidth <= 0 || windowRows <= 0 || _palette == null) {
 			return;
 		}
 

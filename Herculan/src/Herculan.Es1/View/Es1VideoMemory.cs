@@ -27,6 +27,13 @@ public interface IEs1WorldLayer {
 	void Copy(int sourceX, int sourceY, int targetX, int targetY, int width, int height);
 
 	/// <summary>
+	/// Copies the world pixels of <paramref name="source"/>'s rect of cells at (<paramref name="sourceX"/>,
+	/// <paramref name="sourceY"/>) onto this layer's at (<paramref name="targetX"/>, <paramref name="targetY"/>), for
+	/// <see cref="Es1VideoMemory.CopyPageFrom"/>. A layer that cannot read <paramref name="source"/> copies nothing.
+	/// </summary>
+	void CopyFrom(IEs1WorldLayer source, int sourceX, int sourceY, int targetX, int targetY, int width, int height) { }
+
+	/// <summary>
 	/// The object the last <see cref="DrawWorld"/> drew at the cell (<paramref name="x"/>, <paramref name="y"/>), read
 	/// back before anything else draws into the layer, or null for none. Asked only of a cell inside that pass's rect.
 	/// </summary>
@@ -63,17 +70,25 @@ public sealed class Es1VideoMemory {
 	/// <summary>The VGA's 256 KB, one pixel a byte across its four planes, where its addresses wrap.</summary>
 	public const int CellCount = 0x40000;
 
-	/// <summary>A display of <paramref name="screenWidth"/> pixels a row: <see cref="Width"/>, the simulator's, or <see cref="ShellWidth"/>.</summary>
-	public Es1VideoMemory(int screenWidth = Width) {
+	/// <summary>
+	/// A display of <paramref name="screenWidth"/> pixels a row: <see cref="Width"/>, the simulator's, or
+	/// <see cref="ShellWidth"/>, over <paramref name="addressCount"/> cells, the VGA's <see cref="CellCount"/>, or a store
+	/// of this engine's own (<see cref="Es1Canvas"/>).
+	/// </summary>
+	public Es1VideoMemory(int screenWidth = Width, int addressCount = CellCount) {
 		ScreenWidth = screenWidth;
-		Rows = CellCount / screenWidth;
-		StoreRows = (CellCount + screenWidth - 1) / screenWidth;
+		AddressCount = addressCount;
+		Rows = addressCount / screenWidth;
+		StoreRows = (addressCount + screenWidth - 1) / screenWidth;
 		Cells = new ushort[screenWidth * StoreRows];
 		_dirtyLast = StoreRows - 1;
 	}
 
 	/// <summary>The screen's width, the cells a row of the memory holds.</summary>
 	public int ScreenWidth { get; }
+
+	/// <summary>The cells the memory addresses, where its addresses wrap: <see cref="CellCount"/> for the VGA's.</summary>
+	public int AddressCount { get; }
 
 	/// <summary>The whole rows the memory holds, 409 at 640 pixels a row; the next is partly addressable.</summary>
 	public int Rows { get; }
@@ -410,6 +425,43 @@ public sealed class Es1VideoMemory {
 		return Layer.ObjectAt(address % ScreenWidth, address / ScreenWidth);
 	}
 
+	/// <summary>
+	/// The cells of <paramref name="source"/>'s page <paramref name="page"/>, <paramref name="width"/> columns and
+	/// <paramref name="rows"/> rows from its origin as it lies now, written at (<paramref name="targetX"/>,
+	/// <paramref name="targetY"/>) of this store's rows, and the world layer's pixels under them copied from the source's
+	/// layer (<see cref="IEs1WorldLayer.CopyFrom"/>), in one rect when the page lies in one piece of the source's store
+	/// and a run at a time otherwise. This store's page origins are not read: the canvas (<see cref="Es1Canvas"/>) places
+	/// its pages by column.
+	/// </summary>
+	public void CopyPageFrom(Es1VideoMemory source, int page, int width, int rows, int targetX, int targetY) {
+		for (int y = 0; y < rows; y++) {
+			int from = source.Address(page, 0, y), to = (targetY + y) * ScreenWidth + targetX;
+			for (int x = 0; x < width; x++) {
+				Write(Wrap(to + x), source.Cells[source.Wrap(from + x)]);
+			}
+		}
+
+		if (Layer == null || source.Layer == null) {
+			return;
+		}
+
+		int corner = source.Address(page, 0, 0);
+		if (corner % source.ScreenWidth + width <= source.ScreenWidth && corner + (rows - 1) * source.ScreenWidth + width <= source.AddressCount) {
+			Layer.CopyFrom(source.Layer, corner % source.ScreenWidth, corner / source.ScreenWidth, targetX, targetY, width, rows);
+			return;
+		}
+
+		for (int y = 0; y < rows; y++) {
+			int from = source.Address(page, 0, y), x = 0;
+			while (x < width) {
+				int run = Math.Min(width - x, source.RunLeft(from));
+				Layer.CopyFrom(source.Layer, from % source.ScreenWidth, from / source.ScreenWidth, targetX + x, targetY + y, run, 1);
+				from = source.Wrap(from + run);
+				x += run;
+			}
+		}
+	}
+
 	/// <summary>The store's rows written since the last call, for the GPU's copy of the cells; (0, 0) for none.</summary>
 	public (int FirstRow, int RowCount) TakeDirtyRows() {
 		if (_dirtyLast < _dirtyFirst) {
@@ -431,9 +483,9 @@ public sealed class Es1VideoMemory {
 		return Wrap((origin.Y + y) * ScreenWidth + origin.X + x);
 	}
 
-	private static int Wrap(int address) {
-		int wrapped = address % CellCount;
-		return wrapped < 0 ? wrapped + CellCount : wrapped;
+	private int Wrap(int address) {
+		int wrapped = address % AddressCount;
+		return wrapped < 0 ? wrapped + AddressCount : wrapped;
 	}
 
 	private void Write(int address, ushort value) {
@@ -458,5 +510,5 @@ public sealed class Es1VideoMemory {
 		}
 	}
 
-	private int RunLeft(int address) => Math.Min(ScreenWidth - address % ScreenWidth, CellCount - address);
+	private int RunLeft(int address) => Math.Min(ScreenWidth - address % ScreenWidth, AddressCount - address);
 }

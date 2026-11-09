@@ -144,6 +144,14 @@ public sealed class Es1CockpitClock {
 			}
 		}
 
+		PaintText();
+	}
+
+	/// <summary>
+	/// <see cref="Advance"/>'s drawing alone, from its visibility test on: this engine's own split, so view 0's clock can be
+	/// repainted during a glance without advancing it (<see cref="Es1Cockpit.RepaintForward"/>).
+	/// </summary>
+	internal void PaintText() {
 		if (!_cockpit.RectCornerVisible(Hour.Rect)) {
 			return;
 		}

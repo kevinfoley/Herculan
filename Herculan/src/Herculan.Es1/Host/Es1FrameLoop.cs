@@ -447,7 +447,10 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// <c>Player_PerFrameCockpitUpdate</c>, and the gunsight's per-frame update over it
 	/// (<see cref="Gunsight.Es1Gunsight.UpdateAndPaint"/>), which reads the pick's answer in the same frame, as retail's does;
 	/// and last the pilot channel's slot <c>+0x10</c> (<see cref="Messages.Es1PilotChannel.Update"/>), after which the
-	/// shake's offset is taken back out.
+	/// shake's offset is taken back out; then this engine's record of the page drawn and its copy into the canvas
+	/// (<see cref="Es1ViewManager.EndRenderFrame"/>). After a 3D pass, this engine also draws the canvas's side panels
+	/// (<see cref="Es1ViewManager.DrawCanvasPanels"/>). They are drawn without the shake's offset, because the canvas
+	/// already moves with the monitor's shaken row.
 	/// </summary>
 	private void RenderFrame() {
 		var globals = Views.Cockpit.Globals;
@@ -464,7 +467,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		var (shakeX, shakeY) = Views.ShakeOffset;
 		Views.MoveProjectionPair(shakeX, shakeY);
 		Views.Cockpit.DrawFrame();
-		if (Views.CurrentView != 1 || Views.Staged) {
+		bool drewWorld = Views.CurrentView != 1 || Views.Staged;
+		if (drewWorld) {
 			if (_viewCamera?.Invoke() is { } camera) {
 				Views.InstallViewProjection(camera);
 			}
@@ -484,6 +488,10 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		Views.Cockpit.Gunsight.UpdateAndPaint();
 		Views.Cockpit.PilotChannel.Update();
 		Views.MoveProjectionPair(-shakeX, -shakeY);
+		Views.EndRenderFrame();
+		if (drewWorld) {
+			Views.DrawCanvasPanels(_beginWorldPass);
+		}
 	}
 
 	/// <summary>

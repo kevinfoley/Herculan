@@ -132,6 +132,25 @@ public class Es1CockpitMouseTests {
 		Assert.Equal((319, 0), pointer.ToScreen(clientX, clientY));
 	}
 
+	/// <summary>
+	/// In a 1400 × 600 window showing the canvas beside the 800 × 600 monitor, a pointer over a side panel rests on the
+	/// monitor's edge column toward it; at a glance right's end, the monitor moved 300 pixels right of centre, the pointer
+	/// maps onto the monitor where it now lies, and over view 0's canvas left of it holds to column 0. Catches the pointer
+	/// mapped across the whole window, and mapped through the centred placement after the monitor has moved.
+	/// </summary>
+	[Fact]
+	public void InAWideWindowThePointerIsHeldToTheMonitorsColumnsWhereverTheyLie() {
+		var window = new Vector2D<int>(1400, 600);
+
+		var rest = Es1CanvasLayout.Create(window, 0, 0).Pointer(window);
+		var glanced = Es1CanvasLayout.Create(window, 320, 0).Pointer(window);
+
+		Assert.Equal((319, 100), rest.ToScreen(1350, 300));
+		Assert.Equal((0, 100), rest.ToScreen(50, 300));
+		Assert.Equal((160, 100), glanced.ToScreen(1000, 300));
+		Assert.Equal((0, 100), glanced.ToScreen(500, 300));
+	}
+
 	/// <summary>A left press and release at (<paramref name="x"/>, <paramref name="y"/>), handled as the input build's step 4 handles them.</summary>
 	private static void Click(Es1CockpitMouse mouse, int x, int y) {
 		mouse.Push(1, new Es1MouseRecord(x, y, Es1HostMouse.LeftBit));
