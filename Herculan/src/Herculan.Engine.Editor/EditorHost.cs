@@ -181,7 +181,7 @@ public sealed class EditorHost {
 	private IInputContext? _input;
 
 	// A gamepad as the mouse: a stick moves the pointer, one trigger is the left button and the other the right, as the
-	// install's herculan-joystick.cfg chooses (docs/herculan/herculan-key-bindings.md, "Gamepad in the editor"). What each trigger was last frame, so
+	// player's herculan-joystick.cfg chooses (docs/herculan/herculan-key-bindings.md, "Gamepad in the editor"). What each trigger was last frame, so
 	// its press and release reach the viewport as the button's own would; ImGui takes them through
 	// ScaledImGui.HeldAsMouseButtons. The pad works only while the window has the focus, as GLFW reads it regardless.
 	private readonly GamepadPointer _padPointer;
@@ -219,7 +219,7 @@ public sealed class EditorHost {
 		_zones = new ZoneCatalog(launch.SimulatorContent, archived);
 		_flyNearPlane = _camera.NearPlane;
 		_flyFarPlane = _camera.FarPlane;
-		_padPointer = new GamepadPointer { Settings = JoystickMapFile.LoadIn(_installData).Mouse };
+		_padPointer = new GamepadPointer { Settings = JoystickMapFile.LoadForPlayer(_installData).Mouse };
 		_settingsPanel = new EditorSettingsPanel(_settings);
 		_help = new HelpWindow(() => _imgui?.RadialFont, () => _imgui?.ItalicFont);
 		IReadOnlyList<BrowsedMission> All() =>

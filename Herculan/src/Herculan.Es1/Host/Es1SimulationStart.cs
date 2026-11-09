@@ -1,3 +1,4 @@
+using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
 using Herculan.Es1.Input;
@@ -59,8 +60,9 @@ public sealed class Es1SimulationStart : IDisposable {
 		_preferences = preferences;
 		_keyboard = keyboard;
 		_mouse = mouse;
-		// The install's maps, read and never written; with no file the device's defaults apply.
-		_controller = new MappedController(input, JoystickMapFile.Load(Es1MissionFiles.DataPath(installRoot, JoystickMapFile.FileName)));
+		// The player's maps, which the install's copy seeds while they are missing; with no map for the device its defaults apply.
+		_controller = new MappedController(input,
+			JoystickMapFile.LoadForPlayer(CaseInsensitivePath.Combine(installRoot, Es1MissionFiles.DataFolder)));
 	}
 
 	/// <summary>The runner, once built.</summary>

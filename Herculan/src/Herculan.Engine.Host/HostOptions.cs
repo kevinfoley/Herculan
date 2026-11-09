@@ -115,11 +115,11 @@ sealed class HostOptions {
 				}
 			} else if (args[i] == "--joystick-probe") {
 				// Prints each axis and button of the attached stick as it moves. Its whole purpose is filling
-				// in data\herculan-joystick.cfg by hand: a modern stick's axis order is its own, and nothing
+				// in the player's herculan-joystick.cfg by hand: a modern stick's axis order is its own, and nothing
 				// but moving each control in turn will say which index is the throttle.
 				es2.ProbeJoystick = true;
 			} else if (args[i] == "--write-joystick-map") {
-				// Writes the map the engine is actually using out to data\herculan-joystick.cfg, comments and
+				// Writes the map the engine is actually using out to the player's herculan-joystick.cfg, comments and
 				// all, so there is something to edit rather than a file to compose from scratch. With no file
 				// there already, that is the device's own reported shape in retail's X/Y/Z/R order.
 				es2.WriteJoystickMap = true;

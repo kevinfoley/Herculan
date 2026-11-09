@@ -384,7 +384,7 @@ sealed class SimulatorHost : IDisposable {
 			return;
 		}
 
-		_joystick?.Announce(_frame.Pilot.Bindings, _panels.Controls, _options.WriteJoystickMap, _start.DataDirectory);
+		_joystick?.Announce(_frame.Pilot.Bindings, _panels.Controls, _options.WriteJoystickMap);
 
 		_input.LiveKeys?.AdvanceRepeat(deltaSeconds);
 		_frame.BeginFrame(deltaSeconds);

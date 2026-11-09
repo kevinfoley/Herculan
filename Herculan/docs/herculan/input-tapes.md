@@ -51,7 +51,7 @@ Beyond what the [bundle](../retail/formats/tap-input-tape.md#the-bundle) leaves 
 - **The stick on the CONTROLS panel.** The panel reads the device directly, so presses made on it are not on the tape.
 - **The single-step key.** `Alt+keypad +` ticks the simulation once while recording; playback has no single step and runs that frame as a frozen tick.
 - **The staging flags.** `--heading`, `--throttle`, `--weapon`, `--link`, `--track` and `--target` set the mission's opening state, which the bundle does not carry.
-- **The device map.** A bipolar throttle is `data\herculan-joystick.cfg`'s setting, which the bundle does not carry, so the playing machine's applies.
+- **The device map.** A bipolar throttle is the player's `herculan-joystick.cfg` setting, which the bundle does not carry, so the playing machine's applies.
 - **The stick's shape.** The capability block is written once, so a stick plugged in or out later in the recording is not on it.
 
 ## Comparing against retail

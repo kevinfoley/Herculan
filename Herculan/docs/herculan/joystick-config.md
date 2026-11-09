@@ -1,4 +1,4 @@
-# Joystick configuration: `data\herculan-joystick.cfg`
+# Joystick configuration: `herculan-joystick.cfg`
 
 How HERCULAN maps a modern stick onto the retail game's joystick bindings. What the retail bindings are, and how DBSIM applies them, is [`../retail/simulation/joystick-input.md`](../retail/simulation/joystick-input.md). The flags named here are in [`herculan-command-line.md`](herculan-command-line.md#settings-and-input-devices).
 
@@ -8,7 +8,7 @@ Retail's `prefs.cfg` says which *game axis pair* each control feeds and which *a
 
 A modern stick does not. The host reads it through GLFW, whose axes are **positional**: an ordered array of floats with no HID usages, in whatever order the driver enumerated. On a HOTAS the throttle and the twist grip commonly come out swapped against the order retail assumes. No API fixes this. HID has no "throttle" usage, and a vendor labels a throttle `Z`, `Rz` or `Slider` as it pleases, so `joyGetPosEx`, DirectInput and Raw Input all just relay that choice. A resting position does not identify a lever either: a throttle parked mid-travel reads 0.00, the same as a self-centring twist.
 
-So `prefs.cfg` keeps owning what each control **does**, byte for byte as retail writes it, and `data\herculan-joystick.cfg` owns which piece of hardware each control **is**. Retail never reads it. It is an INI in `keyjoy.cfg`'s shape, with one section per kind of device ([below](#one-file-many-devices)). For a device it has no section for, a gamepad gets its own map ([A gamepad's own controls](#a-gamepads-own-controls)) and a joystick retail's order over its reported counts.
+So `prefs.cfg` keeps owning what each control **does**, byte for byte as retail writes it, and `herculan-joystick.cfg` owns which piece of hardware each control **is**. Retail never reads it. It is an INI in `keyjoy.cfg`'s shape, with one section per kind of device ([below](#one-file-many-devices)). For a device it has no section for, a gamepad gets its own map ([A gamepad's own controls](#a-gamepads-own-controls)) and a joystick retail's order over its reported counts.
 
 ## Gamepads
 
@@ -47,6 +47,8 @@ On the CONTROLS panel the four axis rows show these settings and take no click. 
 
 ## One file, many devices
 
+**The file is the player's, not an install's.** It is kept in HERCULAN's settings folder, `%APPDATA%\Herculan` on Windows and the platform's user-config directory elsewhere, and both games read and save the same one, so a controller set up for one game is set up for the other. While that file is missing, a game that finds a copy in its install's `data` folder, where earlier builds kept it, copies it there; an install's copy is read for nothing else.
+
 **Each kind of controller keeps its own settings, so switching between them needs no setting up again.** The file has one section per kind of device:
 
 | Section | Serves |
@@ -66,7 +68,7 @@ The **Controller** window on the [Shift+Esc] menu bar edits the file, in the fro
 From the command line:
 
 1. `--joystick-probe` prints each axis and button as it moves, which is how to find out what the driver calls each control.
-2. `--write-joystick-map` writes the map in force to the device's section of `data\herculan-joystick.cfg`, for editing.
+2. `--write-joystick-map` writes the map in force to the device's section of the file, for editing.
 
 Both are off by default; the map file is the player's to own. `Herculan/examples/herculan-joystick.cfg` is a worked map for a Thrustmaster T.Flight in PC mode.
 

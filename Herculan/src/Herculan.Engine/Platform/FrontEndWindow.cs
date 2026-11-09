@@ -45,7 +45,8 @@ public sealed class FrontEndWindow : IDisposable {
 	/// <param name="imguiFontPath">The regular face ImGui draws the menus in (<see cref="ScaledImGui"/>).</param>
 	/// <param name="imguiItalicFontPath">The italic face ImGui draws the menus in.</param>
 	/// <param name="dataDirectory">
-	/// The folder whose controller map (<see cref="JoystickMapFile"/>) gives the gamepad pointer its starting settings.
+	/// The game's <c>data</c> folder, whose copy of the controller map seeds the player's while the player's is missing
+	/// (<see cref="JoystickMapFile.LoadForPlayer(string?)"/>); the player's gives the gamepad pointer its starting settings.
 	/// </param>
 	/// <param name="menus">The game's menu bar and its windows, which the window takes over and disposes once its turn has run.</param>
 	public FrontEndWindow(HostWindow window, string title, string? screenshotPath, string imguiFontPath,
@@ -54,7 +55,7 @@ public sealed class FrontEndWindow : IDisposable {
 		_imguiItalicFontPath = imguiItalicFontPath;
 		_screenshotPath = screenshotPath;
 		_window = new EngineWindow(window, title);
-		_padPointer.Settings = JoystickMapFile.LoadIn(dataDirectory).Mouse;
+		_padPointer.Settings = JoystickMapFile.LoadForPlayer(dataDirectory).Mouse;
 		_menus = menus;
 		_menus.PadPointerSettingsChanged += settings => _padPointer.Settings = settings;
 		_menus.CloseRequested += CloseAfterFrame;

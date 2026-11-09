@@ -1,4 +1,3 @@
-using HercWorks.Core.Io;
 using Herculan.Engine.Input;
 using Herculan.Es2.Cockpit;
 using Herculan.Es2.Input;
@@ -33,8 +32,8 @@ namespace Herculan.Es2.Host;
 /// </summary>
 sealed class JoystickSource : IJoystickSource {
 	/// <summary>
-	/// The device and its map, picked against the install's maps, one per kind of device, as read at the start or saved
-	/// by the Controller window.
+	/// The device and its map, picked against the player's maps (<see cref="JoystickMapFile.PlayerPath"/>), one per kind
+	/// of device, as read at the start or saved by the Controller window.
 	/// </summary>
 	private readonly MappedController _controller;
 
@@ -50,12 +49,8 @@ sealed class JoystickSource : IJoystickSource {
 	// Set when Muted comes down, and cleared once the device holds no button: see Muted.
 	private bool _awaitingRelease;
 
-	/// <summary>Where <see cref="MappedController.File"/> is saved, or null when there is no data folder.</summary>
-	private readonly string? _mapPath;
-
-	private JoystickSource(IInputContext input, JoystickMapFile file, string? mapPath, bool probe) {
+	private JoystickSource(IInputContext input, JoystickMapFile file, bool probe) {
 		_controller = new MappedController(input, file);
-		_mapPath = mapPath;
 		PersistGamepadControls();
 		_probe = probe;
 
@@ -66,18 +61,16 @@ sealed class JoystickSource : IJoystickSource {
 	}
 
 	/// <summary>
-	/// Opens the joystick layer. <paramref name="dataDirectory"/> is the game's <c>data</c> folder,
-	/// where the map file lives beside <c>keyjoy.cfg</c>; for a device the file has no map for,
-	/// <see cref="ControllerDevice.Defaults"/> applies, once the device reports its shape.
+	/// Opens the joystick layer over the player's map file, which <paramref name="dataDirectory"/>, the game's
+	/// <c>data</c> folder, seeds while it is missing (<see cref="JoystickMapFile.LoadForPlayer(string?)"/>); for a device
+	/// the file has no map for, <see cref="ControllerDevice.Defaults"/> applies, once the device reports its shape.
 	///
 	/// <para>Returns a source even when nothing is attached — a stick plugged in later is picked up on
 	/// a following frame, and until then <see cref="Capabilities"/> reads
 	/// <see cref="JoystickCapabilities.None"/>.</para>
 	/// </summary>
-	public static JoystickSource Open(IInputContext input, string? dataDirectory, bool probe) {
-		string? mapPath = dataDirectory is null ? null : CaseInsensitivePath.Combine(dataDirectory, JoystickMapFile.FileName);
-		return new(input, mapPath is null ? new JoystickMapFile() : JoystickMapFile.Load(mapPath), mapPath, probe);
-	}
+	public static JoystickSource Open(IInputContext input, string? dataDirectory, bool probe) =>
+		new(input, JoystickMapFile.LoadForPlayer(dataDirectory), probe);
 
 	/// <summary>
 	/// What each control does in place of <c>prefs.cfg</c>'s CONTROLS settings
@@ -175,7 +168,7 @@ sealed class JoystickSource : IJoystickSource {
 	/// for a map to exist rather than running at load. Anything keyed off the device's shape has to wait with
 	/// it: the derived map itself, the CONTROLS panel's capabilities, and --write-joystick-map.
 	/// </summary>
-	public void Announce(JoystickBindings bindings, ControlsPanel? controlsPanel, bool writeMap, string? dataDirectory) {
+	public void Announce(JoystickBindings bindings, ControlsPanel? controlsPanel, bool writeMap) {
 		if (_announced || Map is not { } map) {
 			return;
 		}
@@ -200,18 +193,14 @@ sealed class JoystickSource : IJoystickSource {
 
 		if (_probe) {
 			Console.WriteLine("Move one control at a time; put what it prints into "
-				+ $"data\\{JoystickMapFile.FileName}, or set it up in the Controller window.");
+				+ $"{JoystickMapFile.PlayerPath}, or set it up in the Controller window.");
 		}
 
-		// The map in force becomes the device's own section, the file's other sections kept.
-		if (writeMap && dataDirectory is not null && Device is { } device) {
-			string mapPath = CaseInsensitivePath.Combine(dataDirectory, JoystickMapFile.FileName);
-			try {
-				_controller.File.Set(device.IsGamepad, device.Guid, device.Name, map);
-				_controller.File.Save(mapPath);
-				Console.WriteLine($"Wrote {mapPath}.");
-			} catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
-				Console.WriteLine($"Could not write {mapPath}: {error.Message}");
+		// The map in force becomes the device's own section, the file's other sections kept. A failed write is logged.
+		if (writeMap && Device is { } device) {
+			_controller.File.Set(device.IsGamepad, device.Guid, device.Name, map);
+			if (_controller.File.Save(JoystickMapFile.PlayerPath, out _)) {
+				Console.WriteLine($"Wrote {JoystickMapFile.PlayerPath}.");
 			}
 		}
 	}
@@ -237,7 +226,7 @@ sealed class JoystickSource : IJoystickSource {
 		if (!_controller.MapFromFile && !device.IsGamepad) {
 			yield return "  Axis order is the driver's, not a meaning — a throttle and a twist grip can "
 				+ "come out swapped. The Controller window, or --joystick-probe and "
-				+ $"data\\{JoystickMapFile.FileName}, settle it.";
+				+ $"{JoystickMapFile.PlayerPath}, settle it.";
 		}
 
 		if (!_probe) {
@@ -257,13 +246,8 @@ sealed class JoystickSource : IJoystickSource {
 
 	// The CONTROLS panel's DONE saves the gamepad's settings by writing the whole file, its other sections kept.
 	private void PersistGamepadControls() {
-		_controller.File.Gamepad.Persist = _mapPath is null ? null : () => {
-			try {
-				_controller.File.Save(_mapPath);
-			} catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
-				Console.Error.WriteLine($"Could not write {_mapPath}: {error.Message}");
-			}
-		};
+		// A failed write is logged.
+		_controller.File.Gamepad.Persist = () => _controller.File.Save(JoystickMapFile.PlayerPath, out _);
 	}
 
 	/// <summary>Reports an axis that moved appreciably or a button that went down, once per change.</summary>

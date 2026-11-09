@@ -25,7 +25,7 @@ public sealed class MappedController {
 	private ControllerDevice? _device;
 
 	/// <param name="input">The input context whose devices are picked from.</param>
-	/// <param name="file">The install's maps, one per kind of device.</param>
+	/// <param name="file">The player's maps, one per kind of device.</param>
 	public MappedController(IInputContext input, JoystickMapFile file) {
 		_input = input;
 		File = file;

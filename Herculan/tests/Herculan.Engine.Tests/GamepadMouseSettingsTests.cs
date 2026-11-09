@@ -18,7 +18,7 @@ public class GamepadMouseSettingsTests {
 			var file = new JoystickMapFile {
 				Mouse = new GamepadMouseSettings { CursorStick = stick, LeftClickTrigger = trigger, CursorSpeed = 250 },
 			};
-			file.Save(path);
+			Assert.True(file.Save(path, out _));
 
 			var read = JoystickMapFile.Load(path);
 			Assert.Equal(stick, read.Mouse.CursorStick);

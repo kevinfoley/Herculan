@@ -1,13 +1,18 @@
 using System.Text;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Read;
+using Herculan.Engine.Platform;
 
 namespace Herculan.Engine.Input;
 
 /// <summary>
-/// <c>data\herculan-joystick.cfg</c>: a <see cref="JoystickDeviceMap"/> for every kind of device the player has set up,
+/// <c>herculan-joystick.cfg</c>: a <see cref="JoystickDeviceMap"/> for every kind of device the player has set up,
 /// so that switching controllers does not mean mapping again (docs/herculan/joystick-config.md, "One file, many
 /// devices"). This engine's own file; retail never reads it.
+///
+/// <para>The player keeps one, in <see cref="UserConfig.Folder"/>, which every game reads and writes
+/// (<see cref="PlayerPath"/>). An install's <c>data</c> folder may hold one an earlier build kept there, which seeds the
+/// player's while the player's is missing (<see cref="LoadForPlayer(string?)"/>) and is read for nothing else.</para>
 ///
 /// <para>Each map is an INI section. <c>[Gamepad]</c> serves every gamepad, since GLFW reads all of them in one
 /// layout, and also carries what each control does with one (<see cref="Gamepad"/>) and how one works as the mouse
@@ -16,8 +21,11 @@ namespace Herculan.Engine.Input;
 /// has.</para>
 /// </summary>
 public sealed class JoystickMapFile {
-	/// <summary>Where the file is, relative to the game's <c>data</c> folder.</summary>
+	/// <summary>The file's name, in the player's settings folder and in an install's <c>data</c> folder alike.</summary>
 	public const string FileName = "herculan-joystick.cfg";
+
+	/// <summary>The player's file, which every game reads and saves.</summary>
+	public static string PlayerPath => UserConfig.PathOf(FileName);
 
 	private const string GamepadSection = "Gamepad";
 	private const string JoystickSection = "Joystick";
@@ -60,8 +68,39 @@ public sealed class JoystickMapFile {
 		return file;
 	}
 
-	/// <summary>Reads the file in a game's <c>data</c> folder, as <see cref="Load"/> does.</summary>
-	public static JoystickMapFile LoadIn(string dataDirectory) => Load(CaseInsensitivePath.Combine(dataDirectory, FileName));
+	/// <summary>
+	/// Reads the player's file (<see cref="PlayerPath"/>), seeding it first from the copy in the running game's
+	/// <paramref name="installDataDirectory"/> while it is missing, as <see cref="LoadForPlayer(string, string?)"/> says.
+	/// </summary>
+	public static JoystickMapFile LoadForPlayer(string? installDataDirectory) => LoadForPlayer(PlayerPath,
+		installDataDirectory is null ? null : CaseInsensitivePath.Combine(installDataDirectory, FileName));
+
+	/// <summary>
+	/// Reads <paramref name="playerPath"/>. While it is missing and <paramref name="installPath"/> exists, the install's
+	/// copy is written there first, so the maps a player set up for one game serve every game from then on; with no
+	/// install copy nothing is written, which leaves the seeding to the next game that has one. A seed that cannot be
+	/// written reads the install's copy for this run.
+	/// </summary>
+	public static JoystickMapFile LoadForPlayer(string playerPath, string? installPath) {
+		if (File.Exists(playerPath)) {
+			return Load(playerPath);
+		}
+
+		if (installPath is null || !File.Exists(installPath)) {
+			return new JoystickMapFile();
+		}
+
+		try {
+			if (UserConfig.Write(playerPath, File.ReadAllText(installPath))) {
+				Console.WriteLine($"Copied {installPath} to {playerPath}, which every game reads from now on.");
+				return Load(playerPath);
+			}
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			Console.Error.WriteLine($"Could not read {installPath}: {ex.Message}");
+		}
+
+		return Load(installPath);
+	}
 
 	/// <summary>Whether no device has a map.</summary>
 	public bool IsEmpty => _sections.Count == 0;
@@ -88,8 +127,12 @@ public sealed class JoystickMapFile {
 		_sections[Normalise(section)] = new Entry(Normalise(section), map, deviceName);
 	}
 
-	/// <summary>Writes every section, gamepads first, then the shared joystick section, then each model's.</summary>
-	public void Save(string path) {
+	/// <summary>
+	/// Writes every section to <paramref name="path"/>, gamepads first, then the shared joystick section, then each
+	/// model's, through <see cref="UserConfig.TryWrite"/>; false, with the reason in <paramref name="error"/>, when the
+	/// write fails.
+	/// </summary>
+	public bool Save(string path, out string? error) {
 		// Gamepad actions or mouse settings changed with no gamepad map saved yet: the section they go in, with the map it
 		// implies.
 		if ((!Gamepad.IsDefault || !Mouse.IsDefault) && !_sections.ContainsKey(GamepadSection)) {
@@ -123,7 +166,7 @@ public sealed class JoystickMapFile {
 			}
 		}
 
-		File.WriteAllText(path, text.ToString());
+		return UserConfig.TryWrite(path, text.ToString(), out error);
 	}
 
 	private static int Order(Entry entry) =>

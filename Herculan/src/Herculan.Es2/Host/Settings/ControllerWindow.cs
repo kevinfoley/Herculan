@@ -1,5 +1,4 @@
 using System.Numerics;
-using HercWorks.Core.Io;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
@@ -13,8 +12,8 @@ namespace Herculan.Es2.Host.Settings;
 /// <summary>
 /// The floating "Controller" window opened from the menu bar: which axes, hat and buttons of a connected controller
 /// stand for the stick, throttle, rudder, hat and eight buttons the retail bindings name, and the radar toggle, which is
-/// this engine's own (<see cref="JoystickDeviceMap.RadarToggle"/>). It edits the install's
-/// <c>data\herculan-joystick.cfg</c> (<see cref="JoystickMapFile"/>; docs/herculan/joystick-config.md), and is this
+/// this engine's own (<see cref="JoystickDeviceMap.RadarToggle"/>). It edits the player's
+/// <c>herculan-joystick.cfg</c> (<see cref="JoystickMapFile.PlayerPath"/>; docs/herculan/joystick-config.md), and is this
 /// engine's own: retail reads a stick's axes in a fixed order and has nothing to set. What each control does stays
 /// with retail's CONTROLS panel. Above the device's own settings, and only while a gamepad is connected, "Mouse emulation" chooses the stick, its speed and the triggers
 /// a gamepad works the pointer with in the front end and the mission editor (<see cref="JoystickMapFile.Mouse"/>), which
@@ -75,8 +74,8 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 	private float[] _restingAxes = [];
 	private bool[] _restingButtons = [];
 
-	/// <param name="dataDirectory">The game's <c>data</c> folder the map is read from and saved to, or null when there
-	/// is none.</param>
+	/// <param name="dataDirectory">The game's <c>data</c> folder, whose copy of the map file seeds the player's while the
+	/// player's is missing (<see cref="JoystickMapFile.LoadForPlayer(string?)"/>), or null when there is none.</param>
 	public ControllerWindow(LocalizationTable localization, Func<string?> dataDirectory) {
 		_localization = localization;
 		_dataDirectory = dataDirectory;
@@ -107,7 +106,7 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 			return;
 		}
 
-		_file = MapPath() is { } path ? JoystickMapFile.Load(path) : new JoystickMapFile();
+		_file = JoystickMapFile.LoadForPlayer(_dataDirectory());
 		Edit(_input == null ? null : ControllerDevice.Pick(_input, _file));
 		_error = null;
 		_detecting = NotDetecting;
@@ -654,20 +653,13 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 	}
 
 	private void Save() {
-		if (MapPath() is not { } path) {
-			_error = Text("controller.no_data_folder");
-			return;
-		}
-
 		// The device on screen is saved as shown, even unedited, since Save is pressed for it.
 		if (CurrentDevice() is { } device) {
 			_file.Set(device.IsGamepad, device.Guid, device.Name, _draft);
 		}
 
-		try {
-			_file.Save(path);
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			_error = string.Format(Text("settings.write_failed"), JoystickMapFile.FileName, ex.Message);
+		if (!_file.Save(JoystickMapFile.PlayerPath, out string? error)) {
+			_error = string.Format(Text("settings.write_failed"), JoystickMapFile.PlayerPath, error);
 			return;
 		}
 
@@ -675,11 +667,6 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 		Saved?.Invoke(_file);
 		Cancel();
 	}
-
-	private string? MapPath() =>
-		_dataDirectory() is { } directory && Directory.Exists(directory)
-			? CaseInsensitivePath.Combine(directory, JoystickMapFile.FileName)
-			: null;
 
 	private int AxisOf(int row) => row switch {
 		0 => _draft.StickXAxis,

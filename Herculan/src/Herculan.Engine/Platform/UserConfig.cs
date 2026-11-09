@@ -22,7 +22,11 @@ public static class UserConfig {
 	/// temporary file beside it, flushed to the disk, which then replaces it, so a crash, a power cut or a full disk
 	/// mid-save leaves the old file whole rather than empty or cut short. A failed write is logged, and returns false.
 	/// </summary>
-	public static bool Write(string path, string contents) {
+	public static bool Write(string path, string contents) => TryWrite(path, contents, out _);
+
+	/// <summary><see cref="Write"/>, with the reason a failed write gives in <paramref name="error"/>, for a window that shows it.</summary>
+	public static bool TryWrite(string path, string contents, out string? error) {
+		error = null;
 		string temporary = path + ".tmp";
 		try {
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -34,6 +38,7 @@ public static class UserConfig {
 			File.Move(temporary, path, overwrite: true);
 			return true;
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			error = ex.Message;
 			Console.Error.WriteLine($"Could not write {path}: {ex.Message}");
 			try {
 				File.Delete(temporary);
