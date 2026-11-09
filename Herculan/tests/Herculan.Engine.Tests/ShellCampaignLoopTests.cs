@@ -1,7 +1,7 @@
 using HercWorks.Core.Data.File.Sav;
-using Herculan.Engine.Content;
-using Herculan.Engine.Install;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Content;
+using Herculan.Es2.Install;
+using Herculan.Es2.Shell;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

@@ -1,5 +1,5 @@
 using Herculan.Engine.Content;
-using Herculan.Engine.Install;
+using Herculan.Es2.Install;
 
 namespace Herculan.Engine.Host.Install;
 

@@ -1,6 +1,6 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Editor;
-using Herculan.Engine.Install;
+using Herculan.Es2.Install;
 
 // The mission editor on its own: find the install and run the editor (EditorHost) over it. The game runs the
 // same editor as a turn of its own loop, and is built beside this one for Play to start (PlayInGame). The second

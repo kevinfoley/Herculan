@@ -3,7 +3,7 @@ using HercWorks.Core.Io;
 using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Sim;
+using Herculan.Es2.Sim;
 using ImGuiNET;
 using Silk.NET.Input;
 

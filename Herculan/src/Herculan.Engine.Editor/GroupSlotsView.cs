@@ -1,6 +1,6 @@
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Platform;
-using Herculan.Engine.World;
+using Herculan.Es2.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
@@ -141,7 +141,7 @@ internal sealed class GroupSlotsView {
 	private void DrawMember(PlannedGroup group, PlannedObject member) {
 		var key = member.Key;
 		var sceneObject = _index.ObjectOf(key);
-		bool isVehicle = sceneObject?.Object is Sim.BaseObject { Type.IsVehicle: true };
+		bool isVehicle = sceneObject?.Object is Es2.Sim.BaseObject { Type.IsVehicle: true };
 		var kind = UnitTypeCatalog.KindOf(group.Kind, isVehicle);
 		bool herc = key.Row == MechRow;
 		string? fixedType = herc ? _fitter.WhyFixed(key.Guid) : _types.WhyFixed(key.Row, key.Guid);

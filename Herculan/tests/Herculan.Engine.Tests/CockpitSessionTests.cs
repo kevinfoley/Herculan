@@ -1,10 +1,11 @@
 using System.Security.Cryptography;
 using System.Text;
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Input;
-using Herculan.Engine.Scene;
-using Herculan.Engine.Sim;
-using Herculan.Engine.World;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Input;
+using Herculan.Es2.Scene;
+using Herculan.Es2.Sim;
+using Herculan.Es2.World;
 using Silk.NET.Input;
 using Xunit;
 

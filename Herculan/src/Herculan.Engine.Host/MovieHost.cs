@@ -2,9 +2,10 @@ using System.Numerics;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
-using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Video;
+using Herculan.Es2.Content;
+using Herculan.Es2.Install;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Host;
@@ -34,7 +35,7 @@ static class MovieHost {
 	/// The folder cutscenes sit in, on the disc beside the archive directory rather than inside it;
 	/// paths under it go through <see cref="GameInstall.OpenDiscFile"/>.
 	/// </summary>
-	public const string MovieFolderName = Herculan.Engine.Shell.ShellMovieQueue.MovieFolder;
+	public const string MovieFolderName = Herculan.Es2.Shell.ShellMovieQueue.MovieFolder;
 
 	public static int Run(string installRoot, GameDisc? disc, string movieName, string? screenshotPath = null,
 			bool silentAudio = false) {

@@ -1,6 +1,6 @@
 using HercWorks.Core.Data.File.Msn;
-using Herculan.Engine.Scene;
-using Herculan.Engine.Sim;
+using Herculan.Es2.Scene;
+using Herculan.Es2.Sim;
 
 namespace Herculan.Engine.Editor;
 

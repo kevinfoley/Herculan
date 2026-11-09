@@ -1,7 +1,7 @@
 using HercWorks.Core.Data.File.Dyn;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
-using Herculan.Engine.Terrain;
+using Herculan.Es2.Terrain;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Editor;

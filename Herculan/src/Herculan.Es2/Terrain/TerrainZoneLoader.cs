@@ -1,0 +1,226 @@
+using HercWorks.Core.Data.File.Dat.Sim;
+using HercWorks.Core.Data.File.Dyn;
+using HercWorks.Core.Io.Transform.Common;
+using Herculan.Engine.Content;
+using Herculan.Engine.Numerics;
+using Herculan.Es2.Content;
+
+namespace Herculan.Es2.Terrain;
+
+/// <summary>
+/// Port of DBSIM's zone-loading pipeline — <c>Terrain_LoadZone</c> (<c>0042789c</c>),
+/// <c>TerrainZone_LoadHeightmap</c> (<c>0046c650</c>) and <c>TerrainZone_PopulateFromBitmap</c>
+/// (<c>0046c3c0</c>) — turning a zone's two files into a ready <see cref="HeightGrid"/>: the
+/// 16-byte <c>dat\zoneNNNN.dat</c> header (<see cref="HercWorks.Core.Data.File.Dat.Sim.ZoneDat"/>),
+/// of which the cell size shift and height scale are kept, and the <c>dba\zoneNNNN.dba</c>
+/// <see cref="DynamixBitmapArray"/>, whose one 8-bit image is the heightmap. See
+/// docs/retail/formats/zone-terrain.md#loading-pipeline and
+/// docs/retail/simulation/terrain-heightmap.md.
+///
+/// <para>Only the <c>.dba</c> path is ported. The original's ASCII fallback for any other
+/// extension is not, since no retail file uses it.</para>
+/// </summary>
+public static class TerrainZoneLoader {
+	/// <summary>Resource folder holding the per-zone 16-byte header.</summary>
+	public const string HeaderFolder = "dat";
+
+	/// <summary>Resource folder holding the per-zone heightmap image.</summary>
+	public const string HeightmapFolder = "dba";
+
+	/// <summary>
+	/// The pixel bias subtracted from every heightmap byte. <c>Terrain_LoadZone</c> passes a
+	/// literal <c>'\0'</c> for it on the retail path, so it is 0 for every real zone; it stays a
+	/// parameter here only because the original threads it through as one.
+	/// </summary>
+	public const byte DefaultHeightBias = 0;
+
+	/// <summary>Zone <paramref name="zoneIndex"/>'s header file name, <c>zoneNNNN.dat</c>, in <see cref="HeaderFolder"/> and a handoff alike.</summary>
+	public static string HeaderFile(int zoneIndex) => $"zone{zoneIndex}.dat";
+
+	/// <summary>Zone <paramref name="zoneIndex"/>'s heightmap file name, <c>zoneNNNN.dba</c>, in <see cref="HeightmapFolder"/> and a handoff alike.</summary>
+	public static string HeightmapFile(int zoneIndex) => $"zone{zoneIndex}.dba";
+
+	/// <summary>
+	/// Loads zone <paramref name="zoneIndex"/> (e.g. 504 for <c>ZONE504</c>) from mounted content.
+	/// <paramref name="materials"/> supplies the shared <c>dat\mat0</c> table, whose first record
+	/// sizes the material-roll block (see <see cref="TerrainMaterial.BlockShift"/>);
+	/// <paramref name="random"/> drives the roll itself.
+	///
+	/// <para>A zone a mission carries of its own (<see cref="ZoneFiles"/>) is read first from
+	/// <paramref name="handoffDirectory"/>, beside the handoff's <c>script.dat</c>, under <see cref="HeaderFile"/> and
+	/// <see cref="HeightmapFile"/>, and checked as <see cref="ZoneFiles.Read"/> checks it; a pair there that does not read,
+	/// or half of one, is an <see cref="InvalidDataException"/>. Retail reads no zone from its handoff; this lookup is this
+	/// engine's, and the handoff writer is <see cref="Shell.MissionFileLaunch"/>.</para>
+	/// </summary>
+	/// <param name="detailLevel">
+	/// The terrain-detail setting the zone's draw radius comes from — see <see cref="TerrainDetail"/>.
+	/// </param>
+	public static HeightGrid Load(GameContent content, int zoneIndex, TerrainMaterialTable materials,
+			SimRandom random, byte heightBias = DefaultHeightBias,
+			int detailLevel = TerrainDetail.DefaultLevel, string? handoffDirectory = null) {
+		if (ReadHandoffZone(handoffDirectory, zoneIndex) is { } own) {
+			return FromZone(own, materials, random, heightBias, detailLevel);
+		}
+
+		string baseName = $"zone{zoneIndex}";
+
+		byte[] bytes = content.ReadRequired(HeaderFolder, HeaderFile(zoneIndex));
+		var header = new ZoneDatTransformer().Parse(bytes)
+			?? throw new InvalidDataException(
+				$"{HeaderFolder}\\{baseName}.dat is {bytes.Length} bytes; the zone header is {ZoneDatTransformer.Size}.");
+
+		// The width/height shifts are not used. The original reads them into locals and then
+		// discards them — TerrainZone_PopulateFromBitmap re-derives both from the heightmap image's
+		// own dimensions rather than trusting these copies.
+		int cellSizeShift = header.CellSizeShift;
+		int heightScale = header.HeightScale;
+
+		var bitmap = ReadHeightmapImage(content, zoneIndex);
+
+		return PopulateFromBitmap(bitmap, cellSizeShift, heightScale, materials, random, heightBias,
+			detailLevel);
+	}
+
+	/// <summary>
+	/// The terrain of <paramref name="zone"/>, a zone a mission carries of its own, built as <see cref="Load"/> builds one
+	/// read from a handoff, the roll drawn on <paramref name="random"/>.
+	/// </summary>
+	public static HeightGrid FromZone(ZoneFiles zone, TerrainMaterialTable materials, SimRandom random,
+			byte heightBias = DefaultHeightBias, int detailLevel = TerrainDetail.DefaultLevel) =>
+		PopulateFromBitmap(zone.Heightmap(), zone.CellSizeShift, zone.HeightScale, materials, random, heightBias, detailLevel);
+
+	// The zone <directory> holds for <zoneIndex>, or null when it holds neither file or there is no directory.
+	private static ZoneFiles? ReadHandoffZone(string? directory, int zoneIndex) {
+		if (string.IsNullOrEmpty(directory)) {
+			return null;
+		}
+
+		string headerPath = Path.Combine(directory, HeaderFile(zoneIndex));
+		string heightmapPath = Path.Combine(directory, HeightmapFile(zoneIndex));
+		bool hasHeader = File.Exists(headerPath);
+		if (hasHeader != File.Exists(heightmapPath)) {
+			throw new InvalidDataException(
+				$"The handoff in {directory} holds {Path.GetFileName(hasHeader ? headerPath : heightmapPath)} without "
+				+ $"{Path.GetFileName(hasHeader ? heightmapPath : headerPath)}.");
+		}
+
+		if (!hasHeader) {
+			return null;
+		}
+
+		return ZoneFiles.Read(File.ReadAllBytes(headerPath), File.ReadAllBytes(heightmapPath), out string? failure)
+			?? throw new InvalidDataException($"{HeaderFile(zoneIndex)} and {HeightmapFile(zoneIndex)} in {directory}: {failure}");
+	}
+
+	/// <summary>
+	/// Opens <c>dba\zoneNNNN.dba</c> and returns its single image. In the original this goes
+	/// through the generic <c>ClassItem_LoadResource</c> registry dispatch — the same polymorphic
+	/// loader used for <c>.DFN</c>/<c>.HFN</c>/<c>.DCI</c> — which resolves to the ordinary
+	/// DynamixBitmapArray reader; here that dispatch collapses to calling the already-ported
+	/// transformer directly.
+	/// </summary>
+	public static DynamixBitmap ReadHeightmapImage(GameContent content, int zoneIndex) {
+		string baseName = $"zone{zoneIndex}";
+		byte[] bytes = content.ReadRequired(HeightmapFolder, HeightmapFile(zoneIndex));
+
+		var array = new DynamixBitmapArrayTransformer().Parse(bytes) as DynamixBitmapArray
+			?? throw new InvalidDataException($"{HeightmapFolder}\\{baseName}.dba is not a DynamixBitmapArray.");
+
+		if (array.Images is not { Length: > 0 } images || images[0] is not { } image) {
+			throw new InvalidDataException($"{HeightmapFolder}\\{baseName}.dba contains no image.");
+		}
+
+		if (image.ImageData == null || image.Cols <= 0 || image.Rows <= 0) {
+			throw new InvalidDataException($"{HeightmapFolder}\\{baseName}.dba's image has no pixel data.");
+		}
+
+		return image;
+	}
+
+	/// <summary>
+	/// Port of <c>TerrainZone_PopulateFromBitmap</c> (<c>0046c3c0</c>): walks the heightmap image row
+	/// by row, writing each pixel (minus the bias) into a cell's raw height, and rolls each cell's
+	/// material.
+	///
+	/// <para>Image row 0 becomes the grid's highest cell row. Only cells on a block boundary roll —
+	/// about 30% material 1, otherwise material 0 — and the rest of each block copies that roll. The
+	/// diagonal selector (<see cref="HeightGrid.DiagonalSelectorAt"/>) is not written here:
+	/// <see cref="HeightGrid"/>'s constructor derives it, as <c>Terrain_BuildSurface</c>
+	/// (<c>0046c1dc</c>) does after the original's load. See
+	/// docs/retail/formats/zone-terrain.md#loading-pipeline and
+	/// docs/retail/simulation/terrain-heightmap.md#per-cell-record-16-bytes.</para>
+	/// </summary>
+	private static HeightGrid PopulateFromBitmap(DynamixBitmap image, int cellSizeShift, int heightScale,
+			TerrainMaterialTable materials, SimRandom random, byte heightBias, int detailLevel) {
+		var (widthShift, heightShift) = GridShifts(image);
+
+		int width = 1 << widthShift;
+		int height = 1 << heightShift;
+		int cellCount = width * height;
+
+		byte[] pixels = image.ImageData!;
+		if (pixels.Length < cellCount) {
+			throw new InvalidDataException(
+				$"Zone heightmap is {image.Cols}x{image.Rows} with {pixels.Length} pixels, but the " +
+				$"{width}x{height} cell grid derived from it needs {cellCount}.");
+		}
+
+		var rawHeights = new byte[cellCount];
+		var cellFlags = new byte[cellCount];
+
+		// LOD (HeightGrid+0x10c): the terrain draw radius in cells, off the detail setting's table
+		// with the shift-15 correction — see TerrainDetail, which owns the derivation.
+		//
+		// The one difference from the original is when: Terrain_SetupVisibleRegion re-reads the
+		// setting every frame, where this reads it once at load. Equivalent while nothing changes the
+		// setting mid-mission, which nothing in this engine does.
+		int detailLod = TerrainDetail.RadiusFor(detailLevel, cellSizeShift);
+
+		int blockMask = (1 << (0x15 - materials[0].BlockShift - cellSizeShift)) - 1;
+		if (blockMask < 0) {
+			blockMask = 0;
+		}
+
+		int maxRaw = 0;
+
+		for (int row = 0; row < height; row++) {
+			int destRowBase = (height - row - 1) << widthShift;
+			int sourceRowBase = row << widthShift;
+
+			for (int col = 0; col < width; col++) {
+				int destIndex = destRowBase + col;
+
+				byte raw = (byte)(pixels[sourceRowBase + col] - heightBias);
+				if (raw > maxRaw) {
+					maxRaw = raw;
+				}
+				rawHeights[destIndex] = raw;
+
+				if ((row & blockMask) == 0 && (col & blockMask) == 0) {
+					cellFlags[destIndex] &= 2;
+					if (random.NextMasked(0xfff) < 0x4ce) {
+						cellFlags[destIndex] = (byte)((cellFlags[destIndex] & 2) | (1 << 2));
+					}
+				} else {
+					int blockRowBase = (height - (row & ~blockMask) - 1) << widthShift;
+					int sourceIndex = blockRowBase + (col & ~blockMask);
+					cellFlags[destIndex] = (byte)((cellFlags[destIndex] & 2) | ((cellFlags[sourceIndex] >> 2) << 2));
+				}
+			}
+		}
+
+		return new HeightGrid(widthShift, heightShift, cellSizeShift, heightScale, detailLod, rawHeights, cellFlags) {
+			MaxWorldHeight = heightScale * maxRaw
+		};
+	}
+
+	/// <summary>
+	/// The cell grid's width and height shifts for heightmap <paramref name="image"/>, as
+	/// <c>TerrainZone_PopulateFromBitmap</c> derives them from the image itself (<see cref="ZoneFiles.GridShift"/>); the
+	/// zone header's copies are never read. Cols drives the width shift and Rows the height shift, matching the original's
+	/// reads at bitmap offsets +6 and +4 respectively. Every retail zone is square (128x128 or 256x256),
+	/// so no real data distinguishes the two — worth knowing if a non-square zone ever turns up.
+	/// </summary>
+	public static (int Width, int Height) GridShifts(DynamixBitmap image) =>
+		(ZoneFiles.GridShift(image.Cols), ZoneFiles.GridShift(image.Rows));
+}

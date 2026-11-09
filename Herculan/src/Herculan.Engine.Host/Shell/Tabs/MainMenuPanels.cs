@@ -1,7 +1,8 @@
 using HercWorks.Core.Data.File.Cfg;
 using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Content;
+using Herculan.Es2.Shell;
 
 namespace Herculan.Engine.Host.Shell.Tabs;
 

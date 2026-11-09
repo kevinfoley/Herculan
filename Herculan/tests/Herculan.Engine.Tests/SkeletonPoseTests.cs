@@ -2,10 +2,10 @@ using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Anim;
 using Herculan.Engine.Content;
-using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Sim;
-using Herculan.Engine.Terrain;
+using Herculan.Es2.Install;
+using Herculan.Es2.Sim;
+using Herculan.Es2.Terrain;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

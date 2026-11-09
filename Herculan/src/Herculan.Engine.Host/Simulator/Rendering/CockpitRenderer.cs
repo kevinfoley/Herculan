@@ -1,11 +1,14 @@
 using System.Numerics;
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Render;
-using Herculan.Engine.Render.Cockpit;
 using Herculan.Engine.Settings;
 using Herculan.Engine.View;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Content;
+using Herculan.Es2.Render.Cockpit;
+using Herculan.Es2.Render;
+using Herculan.Es2.View;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Host.Simulator.Rendering;

@@ -1,6 +1,7 @@
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
+using Herculan.Es2.Input;
 using Silk.NET.Input;
 
 namespace Herculan.Engine.Host.Simulator;

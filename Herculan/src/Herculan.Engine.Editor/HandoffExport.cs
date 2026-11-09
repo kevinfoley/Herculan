@@ -1,7 +1,7 @@
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Io;
-using Herculan.Engine.Shell;
-using Herculan.Engine.World;
+using Herculan.Es2.Shell;
+using Herculan.Es2.World;
 
 namespace Herculan.Engine.Editor;
 

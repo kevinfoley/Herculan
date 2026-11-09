@@ -3,7 +3,7 @@ using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Data.Struct.Herc;
 using HercWorks.Core.Data.Struct.Vshell.Sav;
 using HercWorks.Core.Io.Transform.Common;
-using Herculan.Engine.Install;
+using Herculan.Es2.Install;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

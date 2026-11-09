@@ -3,11 +3,12 @@ using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Shell.Tabs;
 using Herculan.Engine.Input;
-using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Shell;
-using Herculan.Engine.Sim;
-using Herculan.Engine.World;
+using Herculan.Es2.Content;
+using Herculan.Es2.Install;
+using Herculan.Es2.Shell;
+using Herculan.Es2.Sim;
+using Herculan.Es2.World;
 using Silk.NET.Input;
 using Silk.NET.OpenGL;
 
@@ -17,7 +18,7 @@ namespace Herculan.Engine.Host.Shell;
 /// Runs the front end, which the host does unless <c>--mission</c> asks for one mission alone. The same thin-host arrangement the
 /// mission loop uses (docs/herculan/planning.md, "Engine internal architecture"): everything here is
 /// wiring, and every rule about what the shell looks like and where its widgets are lives in
-/// <c>Herculan.Engine.Shell</c>. This class is the composition and the frame's order — what runs before what
+/// <c>Herculan.Es2.Shell</c>. This class is the composition and the frame's order — what runs before what
 /// each update and each render — and each step is the named component's. The window and the polled buttons are
 /// game-agnostic (<see cref="FrontEndWindow"/>, <see cref="PolledButtons"/>), and the menu bar over them is HERCULAN's
 /// own (<see cref="ShellMenus"/>); everything else under this namespace is VSHELL's.

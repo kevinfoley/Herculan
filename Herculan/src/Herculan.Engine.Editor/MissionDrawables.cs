@@ -1,8 +1,9 @@
 using System.Numerics;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Render;
-using Herculan.Engine.Scene;
-using Herculan.Engine.Sim;
+using Herculan.Es2.Render;
+using Herculan.Es2.Scene;
+using Herculan.Es2.Sim;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Editor;

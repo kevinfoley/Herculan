@@ -1,5 +1,5 @@
-using Herculan.Engine.Content;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Content;
+using Herculan.Es2.Shell;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

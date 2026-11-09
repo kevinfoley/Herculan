@@ -39,7 +39,7 @@ internal sealed class SquadTargetHandlingField {
 		foreach (var (condition, described, choice) in _editor.Variations) {
 			string what = described != null ? $" ({described})" : "";
 			EditorText.Note($"When condition {condition}{what} holds, it is \"{SquadTargetHandlingEditor.Label(choice)}\" instead. "
-				+ $"Choosing \"{SquadTargetHandlingEditor.Label(Sim.MechObject.SquadTargetHandlingAnnounce)}\" removes this, as it is "
+				+ $"Choosing \"{SquadTargetHandlingEditor.Label(Es2.Sim.MechObject.SquadTargetHandlingAnnounce)}\" removes this, as it is "
 				+ "what a mission has when no record sets one.");
 		}
 

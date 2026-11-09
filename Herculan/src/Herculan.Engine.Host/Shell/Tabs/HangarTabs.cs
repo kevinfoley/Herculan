@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.Struct.Vshell.Hercs;
 using Herculan.Engine.Content;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Content;
+using Herculan.Es2.Shell;
 
 namespace Herculan.Engine.Host.Shell.Tabs;
 

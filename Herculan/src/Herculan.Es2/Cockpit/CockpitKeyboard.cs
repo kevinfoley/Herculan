@@ -1,0 +1,457 @@
+using Herculan.Engine.Input;
+using Herculan.Engine;
+using Herculan.Es2.Audio;
+using Herculan.Es2.Scene;
+using Herculan.Es2.Sim.Ai;
+using Herculan.Es2.Sim;
+using Herculan.Es2.View;
+using static Herculan.Engine.Input.KeyChords;
+
+namespace Herculan.Es2.Cockpit;
+
+/// <summary>
+/// The cockpit displays' keys: the MFD's screens and buttons, FLASH COMM, the Heads-Down Display's two pages
+/// and their own keyboards, and the side glances. These are Sim_DispatchCommand's and
+/// CockpitWidgets_HandleCommand's cases, which no key reaches while a modal panel is up: the panel's own loop
+/// hands each key to the panel alone (docs/retail/simulation/preferences.md#preferences-and-controls-dbsimexe). So
+/// each block acts only while no modal is up, and an edged key still refreshes its latch under a panel, so a
+/// key held as the panel closes does not fire until its next auto-repeat.
+///
+/// <para>A key that commands something acts on each key-down event, auto-repeats included, as the original's
+/// dispatch does (docs/retail/simulation/cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes). The keys
+/// read as held state instead — [F1]-[F8], and [S]/[I]/[W] in the heads-down view — are the ones whose command,
+/// repeated, changes nothing.</para>
+/// </summary>
+/// <param name="keyMap">Where each key is read from.</param>
+public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, CockpitCommands commands,
+		MissionScene scene, GameAudio audio, KeyMap keyMap) {
+	// FLASH COMM's seven order keys, in the order MfdFlashComm_HandleAltKey (00446c10) and MfdDisplay_KeyDispatch (004469c0) both switch on their
+	// scancodes: the bare letter's action and the [Alt] one's, which row each selects, and — for the two rows that
+	// carry two orders — which verb has to be showing before [Alt] will transmit it. -1 means transmit whatever the
+	// row reads.
+	private static readonly (KeyAction Pick, KeyAction Send, int Row, int Verb)[] FlashCommKeys = {
+		(KeyAction.FlashCommAttackMyTarget, KeyAction.SendAttackMyTarget, 0, -1),
+		(KeyAction.FlashCommIgnoreMyTarget, KeyAction.SendIgnoreMyTarget, 1, -1),
+		(KeyAction.FlashCommHelpMeOut, KeyAction.SendHelpMeOut, 2, -1),
+		(KeyAction.FlashCommJoinOnMe, KeyAction.SendJoinOnMe, 3, -1),
+		(KeyAction.FlashCommScanForHostiles, KeyAction.SendScanForHostiles, 4, (int)SquadCommand.ScanForHostiles),
+		(KeyAction.FlashCommEmcon, KeyAction.SendEmcon, 4, (int)SquadCommand.Emcon),
+		(KeyAction.FlashCommFireAtWill, KeyAction.SendFireAtWill, 5, -1),   // FIRE AT WILL / HOLD YOUR FIRE
+	};
+
+	/// <summary>
+	/// The chord that transmits FLASH COMM's row <paramref name="row"/> from any screen while the row names
+	/// <paramref name="verb"/>; null when none does.
+	/// </summary>
+	public KeyChord? FlashCommKey(int row, int verb) {
+		foreach (var (_, send, keyRow, requiredVerb) in FlashCommKeys) {
+			if (keyRow == row && (requiredVerb < 0 || requiredVerb == verb)) {
+				return keyMap.Chord(send);
+			}
+		}
+
+		return null;
+	}
+
+	// A letter's bare press and its [Alt] one keep a latch each, as two bindings sharing a key do.
+	private readonly KeyLatch[] _flashCommPickKeys = FlashCommKeys.Select(_ => new KeyLatch()).ToArray();
+	private readonly KeyLatch[] _flashCommSendKeys = FlashCommKeys.Select(_ => new KeyLatch()).ToArray();
+	private readonly KeyLatch _flashCommTransmit = new();
+	private readonly KeyLatch _flashCommNextRow = new();
+	private readonly KeyLatch _flashCommPreviousRow = new();
+	private readonly KeyLatch _navMarker = new();
+
+	// [D], [Alt+R] and [Alt+T], which press the MFD's SELECT, RANGE and TARGET buttons.
+	private readonly KeyLatch _mfdSelect = new();
+	private readonly KeyLatch _mfdRange = new();
+	private readonly KeyLatch _mfdTarget = new();
+
+	private readonly KeyLatch _glanceLeft = new();
+	private readonly KeyLatch _glanceRight = new();
+
+	// The command display's order hotkeys are the manual's own, and they are not a table in the code: each
+	// STRINGS0 group 0 entry carries the index of its hotkey character within its own text, and the screen's
+	// scancode dispatch maps that character to the order. Listed here in order-list order.
+	private static readonly KeyAction[] HddCommandKeys = {
+		KeyAction.CommandDisengage, KeyAction.CommandAttackEnemy, KeyAction.CommandDefendPosition,
+		KeyAction.CommandPatrolGridpoint, KeyAction.CommandGotoGridpoint, KeyAction.CommandJoinOnMe,
+		KeyAction.CommandScanForHostiles, KeyAction.CommandEmcon,
+	};
+	private static readonly KeyAction[] HddPilotKeys = {
+		KeyAction.CommandSquadmate1, KeyAction.CommandSquadmate2, KeyAction.CommandSquadmate3,
+	};
+
+	// The four arrows on each page, in the order of the display's arrow buttons. Each action's second chord is the
+	// keypad's arrow, the same scancode to the original (Scancodes.KeysOf): with the axis keys off on the display, it
+	// reaches its key dispatch as the arrow does.
+	private static readonly KeyAction[] HddArrowKeys = {
+		KeyAction.CommandScrollUp, KeyAction.CommandScrollDown, KeyAction.CommandScrollLeft, KeyAction.CommandScrollRight,
+	};
+	private static readonly KeyAction[] HddDamageArrowKeys = {
+		KeyAction.DamageSystemsUp, KeyAction.DamageSystemsDown, KeyAction.DamageHercLeft, KeyAction.DamageHercRight,
+	};
+
+	private readonly KeyLatch[] _hddOrderKeys = HddCommandKeys.Select(_ => new KeyLatch()).ToArray();
+	private readonly KeyLatch[] _hddPilotKeys = HddPilotKeys.Select(_ => new KeyLatch()).ToArray();
+	private readonly KeyLatch[] _hddArrowKeys = HddArrowKeys.Select(_ => new KeyLatch()).ToArray();
+	private readonly KeyLatch[] _hddDamageArrowKeys = HddDamageArrowKeys.Select(_ => new KeyLatch()).ToArray();
+	private readonly KeyLatch _hddPreviousOrder = new();
+	private readonly KeyLatch _hddNextOrder = new();
+	private readonly KeyLatch _hddZoomIn = new();
+	private readonly KeyLatch _hddZoomOut = new();
+	private readonly KeyLatch _hddZoomInPad = new();
+	private readonly KeyLatch _hddZoomOutPad = new();
+	private readonly KeyLatch _hddRecentre = new();
+	private readonly KeyLatch _hddTransmit = new();
+	private readonly KeyLatch _hddCancel = new();
+	private readonly KeyLatch _hddPick = new();
+	private readonly KeyLatch _hddCycleUnit = new();
+
+	/// <summary>Every display key, in the order the frame reads them.</summary>
+	/// <param name="controls">The keyboard, or null while the debug panel has it.</param>
+	/// <param name="modalPanelUp">Whether a modal panel holds the keys.</param>
+	/// <param name="pilotInput">Whether the machine is being piloted, live or from a tape.</param>
+	/// <param name="pointer">The pointer in window pixels, for [Enter] on the command display's map.</param>
+	/// <param name="framebufferWidth">The window's framebuffer width, for the layout the pointer is read on.</param>
+	/// <param name="framebufferHeight">And its height.</param>
+	public void Read(IKeyState? controls, bool modalPanelUp, bool pilotInput, (float X, float Y) pointer,
+			int framebufferWidth, int framebufferHeight) {
+		// F1-F6 pick the MFD screen, the same keys and the same order as the original's own mode buttons
+		// — button i of the display's F-key column dispatches SetMode(i), and this sets the same value.
+		// Selecting one also pans back up to the cockpit, which is the manual's own rule for leaving the
+		// Heads-Down Display ("select an MFD screen [F1]-[F6], press [Esc], or click the top of the
+		// screen") and matches view command 1, the "up" half of the pair at 0042a3f4.
+		if (controls != null && !modalPanelUp && !view.CockpitWidgetsOff && ReadMfdMode(controls) is { } requestedMfdMode) {
+			displays.SetMfdMode(requestedMfdMode);
+			view.RequestHeadsDown(headsDown: false);
+		}
+
+		if (controls != null && scene.World is { } flashCommWorld) {
+			ReadFlashCommKeys(controls, flashCommWorld, modalPanelUp);
+		}
+
+		if (controls != null && pilotInput) {
+			ReadMfdButtonKeys(controls, modalPanelUp);
+		}
+
+		// F7 (Command Display) and F8 (Damage Detail) are the two HDD functions, and per the manual
+		// either one opens the display — so each both pans down and selects its own screen, which is
+		// what the display's own two page buttons dispatch (HddDisplay_SetPage (0044a5e4) with the button's index).
+		if (displays.Art?.HeadsDown != null && controls != null && !modalPanelUp && !view.CockpitWidgetsOff) {
+			if (controls.IsKeyPressed(keyMap.KeyOf(KeyAction.CommandDisplay))) {
+				displays.Hud = displays.Hud with { Hdd = HddPage.CommandDisplay };
+				view.RequestHeadsDown(headsDown: true);
+			} else if (controls.IsKeyPressed(keyMap.KeyOf(KeyAction.DamageDetail))) {
+				displays.Hud = displays.Hud with { Hdd = HddPage.DamageDetail };
+				view.RequestHeadsDown(headsDown: true);
+			}
+		}
+
+		// F9 and F10 are the manual's left and right windows, view commands 5 and 4. On each key-down
+		// event, not the key's level: from a glance the opposite key is a return, so a key read every frame
+		// would go on to start the other glance the moment the strip got back. A repeat toward the glance
+		// already out is refused by the glance's own gate.
+		if (displays.Art != null && controls != null) {
+			bool glanceLeft = _glanceLeft.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.LookLeft));
+			bool glanceRight = _glanceRight.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.LookRight));
+			if (glanceLeft && !modalPanelUp) {
+				view.CommandGlance(GlanceSide.Left);
+			} else if (glanceRight && !modalPanelUp) {
+				view.CommandGlance(GlanceSide.Right);
+			}
+		}
+
+		ReadHddDisplayKeys(controls, modalPanelUp);
+		ReadHddCommandKeys(controls, modalPanelUp, pointer, framebufferWidth, framebufferHeight);
+
+		// The four arrows press the display's own four arrow buttons, as HddDisplay_KeyDispatch (00449fcc)
+		// does on either page: here, up and down step the category and left and right the herc. One step per
+		// key-down event.
+		if (controls != null && displays.HddHasArrows && displays.Hud.Hdd == HddPage.DamageDetail) {
+			bool modified = CtrlHeld(controls) || AltHeld(controls) || modalPanelUp;
+			for (int i = 0; i < HddDamageArrowKeys.Length; i++) {
+				var arrow = HddDamageArrowKeys[i];
+				if ((_hddDamageArrowKeys[i].Press(keyMap.IsDown(controls, arrow)) | keyMap.IsRepeated(controls, arrow))
+						&& !modified) {
+					commands.PressHddButtonByKey(HddLayout.Widget.ArrowUp + i);
+				}
+			}
+		} else {
+			foreach (var latch in _hddDamageArrowKeys) {
+				latch.Reset();
+			}
+		}
+	}
+
+	// FLASH COMM's own keyboard, from the two dispatches that share it. The bare letters
+	// (MfdDisplay_KeyDispatch (004469c0)'s tail) only move the cursor and only while the page is up; the same letters with
+	// [Alt] (MfdFlashComm_HandleAltKey, 00446c10) select the row and transmit it in one go, from whichever screen is showing,
+	// which is why they are the shortcuts the manual gives. Each letter is the one its order's own
+	// attribute byte draws in red.
+	//
+	// Two of the six positions carry two orders, and the two keys that share them are not
+	// interchangeable: [C] SCAN FOR HOSTILES and [E] EMCON both select row 4, but each only transmits
+	// while that row is showing its own verb, so [Alt+C] on a row already reading EMCON selects and
+	// says nothing. [F] has no such partner — row 5 transmits whichever of FIRE AT WILL and HOLD YOUR
+	// FIRE it currently reads.
+	private void ReadFlashCommKeys(IKeyState controls, SimWorld flashCommWorld, bool modalPanelUp) {
+		var flashComm = displays.FlashComm;
+		bool flashCommUp = displays.FlashCommHasKeyboard;
+
+		// The widgets are off in the external view, which is where these letters would go through them.
+		bool alt = AltHeld(controls) && !view.CockpitWidgetsOff;
+
+		// Every key here is a bare or an [Alt] code. With [Ctrl] down the code is another one — [Ctrl+F],
+		// and the developer keys' [Ctrl+Alt+D], [.] and [,] — so none of them lands here.
+		bool ctrl = CtrlHeld(controls);
+
+		bool Transmit() {
+			bool accepted = flashComm.Transmit(flashCommWorld, flashCommWorld.PlayerMech?.Group);
+			audio.Director?.Play(SoundId.ButtonClick);
+			return accepted;
+		}
+
+		for (int i = 0; i < FlashCommKeys.Length; i++) {
+			var (pick, send, row, requiredVerb) = FlashCommKeys[i];
+			bool picked = _flashCommPickKeys[i].PressOrRepeat(controls, keyMap.KeyOf(pick));
+			bool sent = _flashCommSendKeys[i].PressOrRepeat(controls, keyMap.KeyOf(send));
+			if (!(alt ? sent : picked) || ctrl || modalPanelUp) {
+				continue;
+			}
+
+			if (!alt) {
+				if (flashCommUp) {
+					flashComm.Select(row, flashCommIsUp: true);
+				}
+
+				continue;
+			}
+
+			// The [Alt] arm writes the screen's own row first and only then tests the verb, so a key
+			// whose order is not the one showing still moves the cursor. MfdFlashComm_SelectRow (00447130) is what refuses
+			// to move the display's row from another screen.
+			flashComm.Select(row, flashCommIsUp: displays.Hud.Mfd == MfdMode.FlashComm);
+			if (requiredVerb < 0 || flashComm.SelectedVerb == requiredVerb) {
+				Transmit();
+			}
+		}
+
+		if (flashCommUp) {
+			// [X] presses XMIT, which is aux button 10 — the same press a click on the button makes.
+			if (_flashCommTransmit.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.FlashCommTransmit)) && !modalPanelUp) {
+				commands.PressMfdButtonByKey(MfdLayout.TransmitButton);
+			}
+
+			// [.] and [,] walk the list past any row the squad cannot take.
+			if (_flashCommNextRow.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.FlashCommNextOrder)) && !ctrl
+					&& !modalPanelUp) {
+				flashComm.StepRow(1);
+			}
+			if (_flashCommPreviousRow.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.FlashCommPreviousOrder)) && !ctrl
+					&& !modalPanelUp) {
+				flashComm.StepRow(-1);
+			}
+		}
+
+		// [Alt+D] is command 0x220, which the cockpit view claims in its own handler before the panel
+		// below it ever sees it: it drops a nav marker rather than transmitting DISENGAGE.
+		if (alt && _navMarker.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.DropNavMarker)) && !ctrl && !modalPanelUp
+				&& flashCommWorld.PlayerMech is { } marking) {
+			displays.NavMarker.Drop(marking.Position);
+		}
+	}
+
+	// The MFD's three button keys, from MfdDisplay_KeyDispatch (004469c0). Each presses its button only
+	// on a screen that shows it, the same press a click makes. The dispatch returns before its switch
+	// unless the MFD is on screen: with the Heads-Down Display down [D] is that display's order hotkey
+	// instead, and neither the external view nor this engine's free camera, where [D] strafes, shows
+	// the cockpit.
+	private void ReadMfdButtonKeys(IKeyState controls, bool modalPanelUp) {
+		bool selectKey = _mfdSelect.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.OtherHercsStatus));
+		bool rangeKey = _mfdRange.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.RadarRange));
+		bool targetKey = _mfdTarget.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.ScannerNextTarget));
+		bool mfdKeys = !modalPanelUp && !view.Pan.AtHeadsDown && !view.ExternalViewActive
+			&& !CtrlHeld(controls);
+		bool alt = AltHeld(controls);
+
+		// [D] (0x20) is SELECT: the manual's "status of the other HERCs" on F1, a target step on F5.
+		if (mfdKeys && !alt && selectKey) {
+			commands.PressMfdButtonByKey(MfdLayout.SelectButton);
+		}
+
+		// [Alt+R] (0x213) is RANGE on the scanner. Anywhere else it steps the range all the same,
+		// through MfdDisplay_CycleScannerRange rather than the button, so without a click.
+		if (mfdKeys && alt && rangeKey) {
+			if (!commands.PressMfdButtonByKey(MfdLayout.RangeButton)) {
+				displays.CycleScannerRange();
+			}
+		}
+
+		// [Alt+T] (0x214) is TARGET, which only the scanner shows.
+		if (mfdKeys && alt && targetKey) {
+			commands.PressMfdButtonByKey(MfdLayout.TargetButton);
+		}
+	}
+
+	// The keys HddDisplay_KeyDispatch (00449fcc) answers itself on either page, before it hands the rest to the page's
+	// own dispatch. [1]-[3] press the comm boxes, left to right, which is what the number under each says; from the
+	// damage detail that also switches back to the command display. Like the magnifiers and the arrows they go through
+	// the button's press, which is what holds them back while the sensor dropout has the display dark. [S]/[I]/[W]
+	// switch to the damage detail on that category, from either page, straight through HddDisplay_SetPage.
+	//
+	// Each key the display answers is spent there: in the heads-down view the cockpit's widget tree offers a code to
+	// the display alone and Sim_DispatchCommand stops at the first handler that takes it, so none of these reaches the
+	// weapon panel — see PilotKeys.
+	private void ReadHddDisplayKeys(IKeyState? controls, bool modalPanelUp) {
+		if (controls == null || !view.Pan.AtHeadsDown) {
+			foreach (var latch in _hddPilotKeys) {
+				latch.Reset();
+			}
+
+			return;
+		}
+
+		bool modified = CtrlHeld(controls) || AltHeld(controls) || modalPanelUp;
+		for (int slot = 0; slot < HddPilotKeys.Length; slot++) {
+			if (_hddPilotKeys[slot].PressOrRepeat(controls, keyMap.KeyOf(HddPilotKeys[slot])) && !modified) {
+				commands.PressHddButtonByKey(HddLayout.Widget.PilotBox0 + slot);
+			}
+		}
+
+		if (!modified && ReadHddDamageView(controls) is { } damageView) {
+			displays.Hud = displays.Hud with { Hdd = HddPage.DamageDetail, HddDamage = damageView };
+		}
+	}
+
+	// The command display's own keyboard, from the manual's COMMAND DISPLAY table and the screen's
+	// own key dispatch (0044cc40, which switches on scancodes and matches that table exactly). Gated
+	// on the screen actually being down: it is the page's dispatch, which the display hands only the codes
+	// it does not answer itself (ReadHddDisplayKeys), and most of these letters are also cockpit or camera
+	// bindings in this host.
+	//
+	// Everything here fires on each key-down event, auto-repeats included. The original's dispatch is a
+	// keydown handler.
+	private void ReadHddCommandKeys(IKeyState? controls, bool modalPanelUp, (float X, float Y) pointer,
+			int framebufferWidth, int framebufferHeight) {
+		if (controls == null || displays.HddCommand is not { } command
+			|| !view.Pan.AtHeadsDown || displays.Hud.Hdd != HddPage.CommandDisplay) {
+			foreach (var latch in _hddOrderKeys.Concat(_hddArrowKeys)) {
+				latch.Reset();
+			}
+
+			_hddPreviousOrder.Reset();
+			_hddNextOrder.Reset();
+			_hddZoomIn.Reset();
+			_hddZoomOut.Reset();
+			_hddZoomInPad.Reset();
+			_hddZoomOutPad.Reset();
+			_hddRecentre.Reset();
+			_hddTransmit.Reset();
+			_hddCancel.Reset();
+			_hddPick.Reset();
+			_hddCycleUnit.Reset();
+			return;
+		}
+
+		// The screen's dispatch matches bare scancodes, so a key under [Ctrl] or [Alt] — a developer
+		// key, most of the letters here — is not one of its own.
+		// An order key is a click on its row, HddCommandScreen_SynthesizeListClick (0044d598) queueing one at the
+		// row's corner, so the key for the order already armed leaves it armed, pick and all, as the click does.
+		bool modified = CtrlHeld(controls) || AltHeld(controls) || modalPanelUp;
+		for (int i = 0; i < HddCommandKeys.Length; i++) {
+			if (_hddOrderKeys[i].PressOrRepeat(controls, keyMap.KeyOf(HddCommandKeys[i])) && !modified
+					&& command.SelectedOrder != (HddOrder)i) {
+				command.SelectOrder((HddOrder)i);
+			}
+		}
+
+		// [,] and [.] walk the list without the pointer, and only once an order is already armed —
+		// both functions return immediately otherwise.
+		if (_hddPreviousOrder.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandPreviousOrder)) && !modified) {
+			command.StepOrder(-1);
+		}
+		if (_hddNextOrder.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandNextOrder)) && !modified) {
+			command.StepOrder(1);
+		}
+
+		// [+] and [-], the two magnifiers, on every key-down event, auto-repeats included: HddButton_OnClick
+		// (0044be50) latches only the page buttons, so each repeat is another zoom step.
+		// `|`, not `||`, so both of a pair's latches are refreshed every frame. The keypad's key is each action's
+		// second chord.
+		var zoomInKeys = keyMap.Chords(KeyAction.CommandZoomIn);
+		var zoomOutKeys = keyMap.Chords(KeyAction.CommandZoomOut);
+		if ((_hddZoomIn.PressOrRepeat(controls, zoomInKeys[0].Key)
+				| _hddZoomInPad.PressOrRepeat(controls, zoomInKeys[1].Key)) && !modalPanelUp) {
+			commands.PressHddButtonByKey(HddLayout.Widget.ZoomIn);
+		}
+		if ((_hddZoomOut.PressOrRepeat(controls, zoomOutKeys[0].Key)
+				| _hddZoomOutPad.PressOrRepeat(controls, zoomOutKeys[1].Key)) && !modalPanelUp) {
+			commands.PressHddButtonByKey(HddLayout.Widget.ZoomOut);
+		}
+
+		// The arrows press their own buttons, one pan step per key-down event, auto-repeats included —
+		// HddDisplay_KeyDispatch's scancodes 0x48, 0x50, 0x4b and 0x4d, each a single Widget_PressChild. Keypad [5]
+		// drops the scroll and puts the map back on the machine.
+		for (int i = 0; i < HddArrowKeys.Length; i++) {
+			var arrow = HddArrowKeys[i];
+			if ((_hddArrowKeys[i].Press(keyMap.IsDown(controls, arrow)) | keyMap.IsRepeated(controls, arrow))
+					&& !modified) {
+				commands.PressHddButtonByKey(HddLayout.Widget.ArrowUp + i);
+			}
+		}
+
+		if (_hddRecentre.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandRecenter)) && !modalPanelUp) {
+			command.View.Recentre();
+		}
+
+		// [X] and [Backspace] press XMIT and CANCEL — HddCommandScreen_KeyDispatch (0044cc40)'s 0x2d and 0x0e.
+		if (_hddTransmit.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandTransmit)) && !modalPanelUp) {
+			commands.PressHddButtonByKey(HddLayout.Widget.Transmit);
+		}
+		if (_hddCancel.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandCancel)) && !modalPanelUp) {
+			commands.PressHddButtonByKey(HddLayout.Widget.Cancel);
+		}
+
+		// [Enter] clicks the map for the armed order — on the unit last picked, or under the pointer.
+		if (_hddPick.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandPick)) && !modified) {
+			commands.PickOnHddMapByEnter(pointer.X, pointer.Y, framebufferWidth, framebufferHeight);
+		}
+
+		// [Tab] steps the pick through the units the armed order can take.
+		if (_hddCycleUnit.PressOrRepeat(controls, keyMap.KeyOf(KeyAction.CommandNextUnit)) && !modified) {
+			commands.CycleHddUnitByTab();
+		}
+	}
+
+	// The MFD screen the function keys are asking for, or null when none of them is down — returning null
+	// rather than a default keeps the display on whatever screen it was already showing.
+	private MfdMode? ReadMfdMode(IKeyState keyboard) {
+		for (int i = 0; i < MfdModeKeys.Length; i++) {
+			if (keyboard.IsKeyPressed(keyMap.KeyOf(MfdModeKeys[i]))) {
+				return (MfdMode)i;
+			}
+		}
+
+		return null;
+	}
+
+	// In MfdMode order.
+	private static readonly KeyAction[] MfdModeKeys = {
+		KeyAction.MfdStatus, KeyAction.MfdFlashComm, KeyAction.MfdNavMap,
+		KeyAction.MfdScanner, KeyAction.MfdTarget, KeyAction.MfdMissileCam,
+	};
+
+	// The Heads-Down damage screen's component category, or null when none of its three keys is down —
+	// same rule as ReadMfdMode: returning null leaves the screen on whatever it was already showing.
+	private HddDamageView? ReadHddDamageView(IKeyState keyboard) {
+		if (keyboard.IsKeyPressed(keyMap.KeyOf(KeyAction.DamageStructural))) {
+			return HddDamageView.Structural;
+		}
+
+		if (keyboard.IsKeyPressed(keyMap.KeyOf(KeyAction.DamageInternal))) {
+			return HddDamageView.Internal;
+		}
+
+		return keyboard.IsKeyPressed(keyMap.KeyOf(KeyAction.DamageWeapons)) ? HddDamageView.Weapons : null;
+	}
+}

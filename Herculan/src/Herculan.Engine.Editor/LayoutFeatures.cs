@@ -1,6 +1,6 @@
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.World;
+using Herculan.Es2.World;
 
 namespace Herculan.Engine.Editor;
 
@@ -25,7 +25,7 @@ internal sealed record PlannedRoute(short Guid, int Position, IReadOnlyList<Vec3
 
 	/// <summary>
 	/// Whether the route closes on itself, its last waypoint its first, and so is walked as a loop that never ends. Compared
-	/// by position, as the simulation's route cursor compares it (<see cref="Sim.MissionGroup.RouteCursor"/>).
+	/// by position, as the simulation's route cursor compares it (<see cref="Es2.Sim.MissionGroup.RouteCursor"/>).
 	/// </summary>
 	public bool Closed => Points.Count > 1 && Points[^1] == Points[0];
 

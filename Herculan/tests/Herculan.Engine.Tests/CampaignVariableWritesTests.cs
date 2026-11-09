@@ -1,7 +1,7 @@
 using Herculan.Engine.Editor;
-using Herculan.Engine.Sim;
-using Herculan.Engine.Terrain;
-using Herculan.Engine.World;
+using Herculan.Es2.Sim;
+using Herculan.Es2.Terrain;
+using Herculan.Es2.World;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

@@ -1,12 +1,13 @@
 using Herculan.Engine.Content;
-using Herculan.Engine.Host;
 using Herculan.Engine.Host.Install;
-using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Host.Localization;
-using Herculan.Engine.Install;
+using Herculan.Engine.Host.Shell;
+using Herculan.Engine.Host;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using Herculan.Es1.Host;
+using Herculan.Es2.Install;
+using Herculan.Es2.Settings;
 using HercWorks.Core.Io.Transform;
 
 // The thin front-end host from docs/herculan/planning.md's "Engine internal architecture" section:

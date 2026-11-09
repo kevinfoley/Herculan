@@ -2,7 +2,7 @@ using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Render;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Shell;
 
 namespace Herculan.Engine.Editor;
 

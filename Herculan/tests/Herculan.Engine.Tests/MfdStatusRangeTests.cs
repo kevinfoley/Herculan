@@ -1,6 +1,6 @@
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Sim;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Sim;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

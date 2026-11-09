@@ -1,8 +1,8 @@
-using Herculan.Engine.Install;
+using Herculan.Es2.Install;
 using System.Security.Cryptography;
-using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Content;
+using Herculan.Es2.Shell;
 using HercWorks.Core.Io.Transform.Common;
 using Xunit;
 

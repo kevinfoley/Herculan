@@ -1,7 +1,7 @@
 using System.Numerics;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
-using Herculan.Engine.Sim;
+using Herculan.Es2.Sim;
 
 namespace Herculan.Engine.Host.Debugging;
 

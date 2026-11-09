@@ -2,7 +2,7 @@ using System.Numerics;
 using HercWorks.Core.Data.File.Dat.Sim;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Shell;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;

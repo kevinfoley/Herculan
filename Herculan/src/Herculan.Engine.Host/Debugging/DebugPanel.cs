@@ -1,11 +1,12 @@
 using System.Numerics;
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
-using Herculan.Engine.Sim;
-using Herculan.Engine.Terrain;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Render;
+using Herculan.Es2.Sim;
+using Herculan.Es2.Terrain;
 using ImGuiNET;
 
 namespace Herculan.Engine.Host.Debugging;

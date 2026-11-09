@@ -6,6 +6,7 @@ using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using Herculan.Engine.Updates;
+using Herculan.Es2.Settings;
 using Herculan.Tests.Shared;
 using ImGuiNET;
 using Xunit;

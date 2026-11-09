@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\src\Herculan.Engine\Herculan.Engine.csproj" />
     <ProjectReference Include="..\..\src\Herculan.Es1\Herculan.Es1.csproj" />
     <ProjectReference Include="..\..\src\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj" />
+    <ProjectReference Include="..\..\src\Herculan.Es2\Herculan.Es2.csproj" />
   </ItemGroup>
 
 </Project>

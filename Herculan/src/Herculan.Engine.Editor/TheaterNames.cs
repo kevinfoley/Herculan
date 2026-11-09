@@ -1,5 +1,5 @@
 using Herculan.Engine.Content;
-using Herculan.Engine.World;
+using Herculan.Es2.World;
 
 namespace Herculan.Engine.Editor;
 

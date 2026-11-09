@@ -2,7 +2,9 @@ using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Input;
-using Herculan.Engine.Install;
+using Herculan.Es2.Content;
+using Herculan.Es2.Input;
+using Herculan.Es2.Install;
 
 namespace Herculan.Engine.Host;
 

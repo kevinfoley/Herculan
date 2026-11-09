@@ -2,7 +2,7 @@ using System.Numerics;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Content;
 using Herculan.Engine.Editor;
-using Herculan.Engine.Install;
+using Herculan.Es2.Install;
 using Herculan.Tests.Shared;
 using ImGuiNET;
 using Xunit;

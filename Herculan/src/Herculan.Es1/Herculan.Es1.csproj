@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Metaltech: Earthsiege's game assembly, beside the core as docs/herculan/planning.md's "How the two games
-       share code" sets out. It references the core's game-agnostic namespaces only; Es1BoundaryTests fails the
-       test run when it reaches into ES2's game code, which still shares the Herculan.Engine assembly. -->
+       share code" sets out. It references the core and nothing of ES2's; the core references neither game. -->
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

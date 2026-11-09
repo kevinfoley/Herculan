@@ -1,9 +1,10 @@
-using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Scene;
 using Herculan.Engine.Settings;
-using Herculan.Engine.Sim;
-using Herculan.Engine.World;
+using Herculan.Es2.Install;
+using Herculan.Es2.Scene;
+using Herculan.Es2.Settings;
+using Herculan.Es2.Sim;
+using Herculan.Es2.World;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

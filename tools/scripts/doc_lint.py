@@ -254,7 +254,7 @@ ENGINE_RULES: list[tuple[str, re.Pattern[str], str]] = [
 # (`Text` from `Text_LoadDataFile`), or an identifier in a retail binary — the 3Space class names the
 # HercWorks DTS model reuses are strings in DBSIM.EXE. The binaries are gitignored and read from the
 # main checkout, so a machine without them reports those few class names too.
-CSHARP_SOURCE_DIRS = [os.path.join("Herculan", "src", p) for p in ("HercWorks.Core", "Herculan.Engine")]
+CSHARP_SOURCE_DIRS = [os.path.join("Herculan", "src", p) for p in ("HercWorks.Core", "Herculan.Engine", "Herculan.Es2")]
 RETAIL_JSON_FILES = [os.path.join("tools", "ghidra_scripts", f"known_{k}.json")
                      for k in [f"symbols_{b.lower()}" for b in retail_binaries.IDS] + ["structs", "vtables"]]
 # Every binary the registry holds, read from the main checkout (retail_binaries.ASSETS).

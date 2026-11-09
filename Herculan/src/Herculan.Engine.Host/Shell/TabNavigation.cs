@@ -1,5 +1,5 @@
 using Herculan.Engine.Host.Shell.Tabs;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Shell;
 
 namespace Herculan.Engine.Host.Shell;
 

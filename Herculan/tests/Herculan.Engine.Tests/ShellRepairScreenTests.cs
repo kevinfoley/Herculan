@@ -6,8 +6,9 @@ using HercWorks.Core.Data.Struct.Vshell.Hercs;
 using HercWorks.Core.Data.Struct.Vshell.Sav;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Content;
-using Herculan.Engine.Install;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Content;
+using Herculan.Es2.Install;
+using Herculan.Es2.Shell;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

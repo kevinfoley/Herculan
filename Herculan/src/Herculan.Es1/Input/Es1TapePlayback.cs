@@ -151,7 +151,7 @@ public sealed class Es1TapePlayback {
 	}
 
 	/// <summary>
-	/// Where the host finds <c>--play</c>'s tape, as ES2's <c>--play</c> does (<see cref="Herculan.Engine.Input.InputTapePlayer"/>):
+	/// Where the host finds <c>--play</c>'s tape, as ES2's <c>--play</c> does (ES2's <c>InputTapePlayer</c>):
 	/// the first that exists of <paramref name="stem"/> as given, with the extension forced to <see cref="Extension"/>,
 	/// and that name in <paramref name="installRoot"/>, where retail's <c>-p</c> opens <c>&lt;name&gt;.tap</c> from the
 	/// simulator's own folder, and in its <see cref="TapesFolder"/>, matched ignoring case. None when none exists.

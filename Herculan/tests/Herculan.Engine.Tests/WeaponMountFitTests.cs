@@ -4,8 +4,8 @@ using HercWorks.Core.Data.Struct.Herc;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Sim;
-using Herculan.Engine.World;
+using Herculan.Es2.Sim;
+using Herculan.Es2.World;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

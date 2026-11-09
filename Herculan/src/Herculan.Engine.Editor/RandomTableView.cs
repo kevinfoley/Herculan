@@ -1,8 +1,8 @@
 using System.Numerics;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Scene;
-using Herculan.Engine.World;
+using Herculan.Es2.Scene;
+using Herculan.Es2.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
@@ -330,7 +330,7 @@ internal sealed class RandomTableView {
 	internal static string Noun(SceneObject placed) => placed.Placement.Kind switch {
 		MissionUnitKind.Mech => "HERC",
 		MissionUnitKind.Flyer => "flyer",
-		_ when placed.Object is Sim.BaseObject { Type.IsVehicle: true } => "ground vehicle",
+		_ when placed.Object is Es2.Sim.BaseObject { Type.IsVehicle: true } => "ground vehicle",
 		_ => "structure",
 	};
 }

@@ -2,10 +2,10 @@ using System.Numerics;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
-using Herculan.Engine.Scene;
-using Herculan.Engine.Sim;
-using Herculan.Engine.Terrain;
-using Herculan.Engine.World;
+using Herculan.Es2.Scene;
+using Herculan.Es2.Sim;
+using Herculan.Es2.Terrain;
+using Herculan.Es2.World;
 
 namespace Herculan.Engine.Editor;
 

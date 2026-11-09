@@ -19,6 +19,7 @@
     <ProjectReference Include="..\Herculan.Es1\Herculan.Es1.csproj" />
     <ProjectReference Include="..\HercWorks.Help\HercWorks.Help.csproj" />
     <ProjectReference Include="..\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj" />
+    <ProjectReference Include="..\Herculan.Es2\Herculan.Es2.csproj" />
   </ItemGroup>
 
   <ItemGroup>

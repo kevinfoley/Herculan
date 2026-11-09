@@ -3,7 +3,7 @@ using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Shell;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;

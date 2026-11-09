@@ -1,5 +1,5 @@
-using Herculan.Engine.Input;
-using Herculan.Engine.Sim;
+using Herculan.Es2.Input;
+using Herculan.Es2.Sim;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

@@ -1,15 +1,18 @@
 using HercWorks.Core.Io;
-using Herculan.Engine.Cockpit;
-using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Install;
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Data.Struct.Herc;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
-using Herculan.Engine.Scene;
-using Herculan.Engine.Shell;
-using Herculan.Engine.World;
+using Herculan.Es2.Audio;
+using Herculan.Es2.Content;
+using Herculan.Es2.Input;
+using Herculan.Es2.Scene;
+using Herculan.Es2.Shell;
+using Herculan.Es2.World;
 
 namespace Herculan.Engine.Host.Simulator;
 

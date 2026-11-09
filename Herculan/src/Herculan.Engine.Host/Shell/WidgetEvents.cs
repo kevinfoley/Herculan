@@ -1,4 +1,4 @@
-using Herculan.Engine.Shell;
+using Herculan.Es2.Shell;
 using Silk.NET.Input;
 
 namespace Herculan.Engine.Host.Shell;

@@ -4,8 +4,9 @@ using Herculan.Engine.Content;
 using Herculan.Engine.Host.Install;
 using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Shell;
-using Herculan.Engine.World;
+using Herculan.Es2.Content;
+using Herculan.Es2.Shell;
+using Herculan.Es2.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Host.Shell;

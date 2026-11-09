@@ -3,7 +3,7 @@ namespace HercWorks.Video;
 /// <summary>
 /// One decoded frame, RGBA8, top row first.
 ///
-/// <para>The layout matches <c>Herculan.Engine.Shell.ShellImage</c> so that a frame can be handed
+/// <para>The layout matches <c>Herculan.Es2.Shell.ShellImage</c> so that a frame can be handed
 /// straight to <c>GpuTexture</c> without a repack, and matches what <c>HercWorks.UI</c> wants for a
 /// preview. Alpha is always 255; none of these codecs carries transparency.</para>
 ///

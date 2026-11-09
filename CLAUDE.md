@@ -1,7 +1,8 @@
 # HERCULAN / HercWorks
 
 Reimplementation of Earthsiege 2 (1996) in C#, reverse-engineered from the retail `DBSIM.EXE` and
-`VSHELL.EXE`. `HercWorks.*` is the data-file toolkit; `Herculan.Engine` is the game engine.
+`VSHELL.EXE`. `HercWorks.*` is the data-file toolkit; `Herculan.Engine` is the game-agnostic engine core,
+`Herculan.Es2` is ES2's game code and `Herculan.Es1` is ES1's.
 
 - `Herculan/docs/retail/formats/` — file formats
 - `Herculan/docs/retail/simulation/` — simulation behaviour (DBSIM)
@@ -69,7 +70,7 @@ split it by topic), and runs automatically after any edit under
 `Herculan/docs/` or to a `known_*.json`. `/doc-lint` runs it over the whole set. It cannot catch 2,
 3, 5 or 7. It catches 9 by explicit markers ("HERCULAN", "this engine", `Herculan.*` namespaces,
 "Engine port" headings) and by C# names (`csharp-name`): a backticked token declared as a type or
-public member in `HercWorks.Core` or `Herculan.Engine` that is not also a retail name. Single-word
+public member in `HercWorks.Core`, `Herculan.Engine` or `Herculan.Es2` that is not also a retail name. Single-word
 names (`Height`) pass, as does anything a `known_*.json` names, the class prefix of such a name, or
 an identifier in the retail EXEs. Both checks also run over the `known_*.json` descriptions. A full
 run shows its findings as a per-file count (`--engine` lists each one), and the edit hook flags only

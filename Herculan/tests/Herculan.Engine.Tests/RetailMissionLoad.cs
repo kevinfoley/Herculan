@@ -1,10 +1,10 @@
 using HercWorks.Core.Io.Transform.Common;
-using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Scene;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Content;
+using Herculan.Es2.Scene;
+using Herculan.Es2.Shell;
 using Xunit;
-using Herculan.Engine.Install;
+using Herculan.Es2.Install;
 
 namespace Herculan.Engine.Tests;
 

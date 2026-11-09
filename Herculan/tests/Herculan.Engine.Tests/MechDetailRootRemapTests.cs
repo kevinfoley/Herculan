@@ -5,7 +5,8 @@ using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Anim;
 using Herculan.Engine.Content;
-using Herculan.Engine.Install;
+using Herculan.Es2.Content;
+using Herculan.Es2.Install;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

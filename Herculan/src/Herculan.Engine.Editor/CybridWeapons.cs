@@ -2,8 +2,8 @@ using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
-using Herculan.Engine.Shell;
-using Herculan.Engine.World;
+using Herculan.Es2.Shell;
+using Herculan.Es2.World;
 
 namespace Herculan.Engine.Editor;
 

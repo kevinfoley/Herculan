@@ -2,7 +2,7 @@ using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Content;
 using Herculan.Engine.Editor;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Shell;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

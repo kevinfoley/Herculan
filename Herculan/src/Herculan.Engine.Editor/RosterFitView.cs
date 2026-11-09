@@ -1,7 +1,7 @@
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Scene;
-using Herculan.Engine.World;
+using Herculan.Es2.Scene;
+using Herculan.Es2.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
@@ -44,7 +44,7 @@ internal sealed class RosterFitView {
 		}
 
 		var placement = placed.Placement;
-		bool isVehicle = placed.Object is Sim.BaseObject { Type.IsVehicle: true };
+		bool isVehicle = placed.Object is Es2.Sim.BaseObject { Type.IsVehicle: true };
 		var kind = UnitTypeCatalog.KindOf(placement.Kind, isVehicle);
 		var choices = _catalog.ChoicesFor(placement.Kind, isVehicle);
 		ImGui.PushID("fit");

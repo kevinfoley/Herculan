@@ -1,7 +1,7 @@
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
-using Herculan.Engine.Terrain;
+using Herculan.Es2.Terrain;
 
 namespace Herculan.Engine.Editor;
 

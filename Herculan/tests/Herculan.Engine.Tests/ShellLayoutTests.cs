@@ -1,4 +1,4 @@
-using Herculan.Engine.Shell;
+using Herculan.Es2.Shell;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

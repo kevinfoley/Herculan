@@ -2,7 +2,7 @@ using System.Numerics;
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
-using Herculan.Engine.World;
+using Herculan.Es2.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
@@ -127,7 +127,7 @@ internal sealed class UnusedPointRemover {
 		var now = PlayArea([]);
 		var after = PlayArea(removed);
 		string moves = "the heads-down map's red border, the edge where the player is warned APPROACHING MISSION ZONE BOUNDARY, "
-			+ $"and the line {MissionText.Metres(Sim.MissionObjectives.RulesOfEngagementMargin)} beyond it where the mission is "
+			+ $"and the line {MissionText.Metres(Es2.Sim.MissionObjectives.RulesOfEngagementMargin)} beyond it where the mission is "
 			+ "aborted";
 		return after.IsEmpty
 			? $"Removing them leaves the mission with no positions, and so no play area: no {moves}."

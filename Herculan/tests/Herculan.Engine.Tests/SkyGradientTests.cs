@@ -5,9 +5,9 @@ using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
-using Herculan.Engine.Install;
 using Herculan.Engine.Render;
-using Herculan.Engine.World;
+using Herculan.Es2.Install;
+using Herculan.Es2.World;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

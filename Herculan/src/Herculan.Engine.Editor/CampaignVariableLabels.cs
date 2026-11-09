@@ -97,30 +97,30 @@ internal static class CampaignVariableLabels {
 
 	/// <summary>
 	/// What the debrief does with variable <paramref name="flag"/> as the mission left it, in a campaign: pays the salvage bonus
-	/// (<see cref="Sim.MissionResults.SalvageBonusKilograms"/>), adds units of a weapon to the armory, or unlocks a weapon or a
-	/// chassis when it holds a set value (<see cref="Shell.ShellHangar.UnitGrantWeapon"/>, <see cref="Shell.ShellHangar.WeaponUnlock"/>,
-	/// <see cref="Shell.ShellHangar.ChassisUnlock"/>); null for a variable it does not read. A weapon is named as the armory
+	/// (<see cref="Es2.Sim.MissionResults.SalvageBonusKilograms"/>), adds units of a weapon to the armory, or unlocks a weapon or a
+	/// chassis when it holds a set value (<see cref="Es2.Shell.ShellHangar.UnitGrantWeapon"/>, <see cref="Es2.Shell.ShellHangar.WeaponUnlock"/>,
+	/// <see cref="Es2.Shell.ShellHangar.ChassisUnlock"/>); null for a variable it does not read. A weapon is named as the armory
 	/// names it, a chassis as the shell does. Flags 43 to 49, which the unit-grant loop reads past its table, are not named:
 	/// they name no weapon, and no retail mission writes them.
 	/// </summary>
 	public static string? Effect(int flag) {
-		if (flag == World.MissionLoader.SalvageBonusCounter) {
-			return $"Salvage paid at the debrief: {Sim.MissionResults.SalvageBonusKilograms / KilogramsPerTon} tons for each 1";
+		if (flag == Es2.World.MissionLoader.SalvageBonusCounter) {
+			return $"Salvage paid at the debrief: {Es2.Sim.MissionResults.SalvageBonusKilograms / KilogramsPerTon} tons for each 1";
 		}
 
 		if (flag is < FirstGrantFlag or > LastGrantFlag) {
 			return null;
 		}
 
-		if (Shell.ShellHangar.UnitGrantWeapon(flag) is { } weapon) {
+		if (Es2.Shell.ShellHangar.UnitGrantWeapon(flag) is { } weapon) {
 			return $"{WeaponName(weapon)} units the debrief adds to the armory";
 		}
 
-		if (Shell.ShellHangar.WeaponUnlock(flag) is { } unlock) {
+		if (Es2.Shell.ShellHangar.WeaponUnlock(flag) is { } unlock) {
 			return $"Unlocks {WeaponName(unlock.Weapon)} at the debrief when it holds {unlock.Value}";
 		}
 
-		return Shell.ShellHangar.ChassisUnlock(flag) is { } chassis
+		return Es2.Shell.ShellHangar.ChassisUnlock(flag) is { } chassis
 			? $"Unlocks the {HercLUT.GetById((short)chassis.Chassis)?.Name ?? $"chassis {chassis.Chassis}"} at the debrief when it holds {chassis.Value}"
 			: null;
 	}
@@ -137,7 +137,7 @@ internal static class CampaignVariableLabels {
 		>= FirstDrawnFlag and < FirstDrawnFlag + 3 => $"{Ordinals[flag - FirstDrawnFlag]} random number; the next mission's load sets it again",
 		8 => "Squad HERCs written off after the previous mission; the debrief replaces it",
 		9 => "Squadmates killed in the previous mission; the debrief replaces it",
-		World.MissionLoader.SquadmatesDownedCounter => "Squadmates the player has taken down in this mission",
+		Es2.World.MissionLoader.SquadmatesDownedCounter => "Squadmates the player has taken down in this mission",
 		_ => null,
 	};
 

@@ -1,7 +1,7 @@
 using System.Text;
 using HercWorks.Vol;
 using Herculan.Engine.Content;
-using Herculan.Engine.Install;
+using Herculan.Es2.Install;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

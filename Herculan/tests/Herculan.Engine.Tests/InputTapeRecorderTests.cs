@@ -1,5 +1,6 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
+using Herculan.Es2.Input;
 using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Xunit;

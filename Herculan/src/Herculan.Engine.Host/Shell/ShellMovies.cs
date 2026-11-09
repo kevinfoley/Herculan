@@ -1,9 +1,10 @@
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
-using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Content;
+using Herculan.Es2.Install;
+using Herculan.Es2.Shell;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Host.Shell;

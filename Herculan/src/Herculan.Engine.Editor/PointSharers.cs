@@ -147,7 +147,7 @@ internal sealed class PointSharers {
 	// A trigger area's corner, or a circle's center, by the area's name and the corner as the area view labels it.
 	private void CornerLink(short area, int corner) {
 		var name = Names.Area(area);
-		bool circle = _index.Area(area)?.Area.Shape == Herculan.Engine.World.MissionTriggerShape.Circle;
+		bool circle = _index.Area(area)?.Area.Shape == Herculan.Es2.World.MissionTriggerShape.Circle;
 		string part = circle ? "center" : $"corner {corner + 1}";
 		_links.Link(name with { Text = $"{name.Text}: {part}" }, new AreaSelection(area));
 	}

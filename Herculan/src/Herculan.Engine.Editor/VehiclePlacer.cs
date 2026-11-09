@@ -1,8 +1,8 @@
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Msn.Script;
-using Herculan.Engine.Scene;
-using Herculan.Engine.Sim;
-using Herculan.Engine.World;
+using Herculan.Es2.Scene;
+using Herculan.Es2.Sim;
+using Herculan.Es2.World;
 
 namespace Herculan.Engine.Editor;
 

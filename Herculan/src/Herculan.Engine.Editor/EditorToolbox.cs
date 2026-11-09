@@ -1,8 +1,8 @@
 using System.Numerics;
 using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Sim;
-using Herculan.Engine.World;
+using Herculan.Es2.Sim;
+using Herculan.Es2.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;

@@ -1,6 +1,6 @@
 using System.Numerics;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Sim;
+using Herculan.Es2.Sim;
 using ImGuiNET;
 
 namespace Herculan.Engine.Host.Debugging;

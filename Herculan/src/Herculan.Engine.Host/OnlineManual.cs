@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using HercWorks.Help;
 using HercWorks.Help.Html;
 using Herculan.Engine.Content;
-using Herculan.Engine.Install;
+using Herculan.Es2.Install;
 
 namespace Herculan.Engine.Host;
 

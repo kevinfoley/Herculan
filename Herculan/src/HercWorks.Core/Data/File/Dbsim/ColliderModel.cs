@@ -20,7 +20,7 @@ public readonly record struct ColliderSphere(short X, short Y, short Z, short Ra
 /// <c>Collision_ComputeBoundingSphere</c> (<c>0040c5d0</c>) derives it at load from the AABB of the
 /// children each inflated by its own radius. The derivation needs DBSIM's own distance
 /// approximation, which lives in the engine's <c>SimMath</c>, so this field is filled by
-/// <c>Herculan.Engine.World.CollisionModelReader</c> and left default by
+/// <c>Herculan.Es2.World.CollisionModelReader</c> and left default by
 /// <see cref="Io.Transform.Dbsim.HercColliderTransformer"/>. The write path ignores it either way.
 /// </param>
 public readonly record struct ColliderCluster(

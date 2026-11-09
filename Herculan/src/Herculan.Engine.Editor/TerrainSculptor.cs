@@ -4,8 +4,8 @@ using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
-using Herculan.Engine.Sim;
-using Herculan.Engine.Terrain;
+using Herculan.Es2.Sim;
+using Herculan.Es2.Terrain;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;

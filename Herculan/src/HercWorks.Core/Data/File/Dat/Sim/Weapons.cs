@@ -142,7 +142,7 @@ public class Weapons {
 		/// <para>The four are the same gun modelled for the four ways it can hang off a chassis, so
 		/// an autocannon reads four different shapes and a shoulder-mounted launcher reads the same
 		/// one four times. <b>The shape's flipbook is the muzzle flash</b> — see
-		/// <c>Herculan.Engine.Sim.WeaponMount.FlashCell</c>.</para>
+		/// <c>Herculan.Es2.Sim.WeaponMount.FlashCell</c>.</para>
 		///
 		/// <para>Code 4 is the invisible mounting and has no entry: nothing is drawn for it and the
 		/// base mount constructor loads no shape at all.</para>

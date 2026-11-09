@@ -1,7 +1,8 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Settings;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Settings;
+using Herculan.Es2.Shell;
 
 namespace Herculan.Engine.Host.Shell;
 

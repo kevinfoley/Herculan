@@ -3,7 +3,7 @@ using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
-using Herculan.Engine.World;
+using Herculan.Es2.World;
 using ImGui = ImGuiNET.ImGui;
 
 namespace Herculan.Engine.Editor;
@@ -53,12 +53,12 @@ internal sealed class GroupOverlay {
 	}
 
 	/// <summary>The objects the selection boxes: the selected object, a group's members, or an objective's subject.</summary>
-	private HashSet<Scene.SceneObject> HighlightedObjects(SelectionState selection) => selection.Current switch {
-		ObjectSelection selected when _index.ObjectOf(selected) is { } placed => new HashSet<Scene.SceneObject> { placed },
+	private HashSet<Es2.Scene.SceneObject> HighlightedObjects(SelectionState selection) => selection.Current switch {
+		ObjectSelection selected when _index.ObjectOf(selected) is { } placed => new HashSet<Es2.Scene.SceneObject> { placed },
 		GroupSelection { Guid: var guid } => _index.MembersOf(guid).ToHashSet(),
 		ObjectiveSelection selected when _index.Layout.Objectives.FirstOrDefault(objective => objective.Index == selected.Record)
 				is { } objective => _index.SubjectObjects(objective.Fields).ToHashSet(),
-		_ => new HashSet<Scene.SceneObject>()
+		_ => new HashSet<Es2.Scene.SceneObject>()
 	};
 
 	// The selected group, or null when a group is not selected or it is out of the scene.
@@ -188,7 +188,7 @@ internal sealed class GroupOverlay {
 
 	/// <summary>
 	/// An arrow on the ground from <paramref name="from"/> along <paramref name="heading"/>. A machine
-	/// faces <c>(-sin h, cos h)</c> in world XY — see <see cref="Scene.MissionScene.TransformOf"/>.
+	/// faces <c>(-sin h, cos h)</c> in world XY — see <see cref="Es2.Scene.MissionScene.TransformOf"/>.
 	/// </summary>
 	private void AddArrow(List<Vector3> into, Vec3i from, int heading) {
 		Vec3i Along(Vec3i origin, int angle, int length) {

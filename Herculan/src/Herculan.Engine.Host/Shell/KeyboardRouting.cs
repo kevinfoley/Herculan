@@ -2,7 +2,7 @@ using HercWorks.Core.Data.File.Cfg;
 using Herculan.Engine.Host.Shell.Tabs;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Shell;
 using Silk.NET.Input;
 
 namespace Herculan.Engine.Host.Shell;

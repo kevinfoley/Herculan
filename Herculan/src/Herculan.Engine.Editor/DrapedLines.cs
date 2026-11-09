@@ -1,8 +1,8 @@
 using System.Numerics;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
-using Herculan.Engine.Sim;
-using Herculan.Engine.Terrain;
+using Herculan.Es2.Sim;
+using Herculan.Es2.Terrain;
 
 namespace Herculan.Engine.Editor;
 

@@ -1,6 +1,6 @@
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.World;
+using Herculan.Es2.World;
 
 namespace Herculan.Engine.Editor;
 
@@ -80,14 +80,14 @@ internal static class MissionText {
 		: "It goes live where it stands when the trigger activates.";
 
 	/// <summary>
-	/// How far from the player a group arrives (<see cref="Sim.MissionGroup.PodDistance"/> and the two walk-on distances), in
+	/// How far from the player a group arrives (<see cref="Es2.Sim.MissionGroup.PodDistance"/> and the two walk-on distances), in
 	/// metres.
 	/// </summary>
 	public static string ArrivalDistance(short verb) {
 		int distance = verb switch {
-			MissionAction.VerbWalkBehind => Sim.MissionGroup.WalkOnDistanceBehind,
-			MissionAction.VerbWalkAhead => Sim.MissionGroup.WalkOnDistanceAhead,
-			_ => Sim.MissionGroup.PodDistance,
+			MissionAction.VerbWalkBehind => Es2.Sim.MissionGroup.WalkOnDistanceBehind,
+			MissionAction.VerbWalkAhead => Es2.Sim.MissionGroup.WalkOnDistanceAhead,
+			_ => Es2.Sim.MissionGroup.PodDistance,
 		};
 
 		return Metres(distance);
@@ -195,15 +195,15 @@ internal static class MissionText {
 				MissionOrder.VerbRam => "Has no effect on whom it rams: the group charges whatever enemy it picks, with no preference "
 					+ "for the target.",
 				MissionOrder.VerbGuard => "Sets where it stands and how far it reaches. With no target, it guards its route's first "
-					+ $"waypoint and attacks any hostile HERC it knows of within {Metres(Sim.Ai.AiTargeting.OpenDefenceRange)}, holding "
+					+ $"waypoint and attacks any hostile HERC it knows of within {Metres(Es2.Sim.Ai.AiTargeting.OpenDefenceRange)}, holding "
 					+ "until \"Ends when\" fires. With a target, it guards the target's position (a group's first member) and attacks "
-					+ $"within {Metres(Sim.Ai.AiTargeting.DefenceRange)}; the order also ends once the target is destroyed, or once no "
+					+ $"within {Metres(Es2.Sim.Ai.AiTargeting.DefenceRange)}; the order also ends once the target is destroyed, or once no "
 					+ "enemy group's order names the target.",
 				MissionOrder.VerbPatrol or MissionOrder.VerbTravel => "Doesn't change where it goes or whom it fights. A member "
 					+ $"already fighting the target keeps at it longer. {Holds}",
 				MissionOrder.VerbSleep => "Has no effect: a sleeping group stands still and doesn't fight back.",
 				MissionOrder.VerbFollow => "What it follows (a group's first member). It walks to it and stops "
-					+ $"{Metres(Sim.MechObject.FollowStandoffRange)} short, keeping up as the target moves. Reaching the target doesn't "
+					+ $"{Metres(Es2.Sim.MechObject.FollowStandoffRange)} short, keeping up as the target moves. Reaching the target doesn't "
 					+ "end the order.",
 				_ => "An order the AI has no case for.",
 			};
@@ -251,7 +251,7 @@ internal static class MissionText {
 			+ "has completed a data link, holding position facing the target of their order. Make sure \"Squad target handling\" is set " 
 			+ "to one of the \"data link\" options, or the mission can't be completed.",
 		MissionObjective.ConditionEngaged => (group ? "True once any member has been engaged: " : "True once it has been engaged: ")
-			+ $"an enemy within {Metres(Sim.Detection.EngagementRange)} has spotted it, or it has hit the target it is aiming at.",
+			+ $"an enemy within {Metres(Es2.Sim.Detection.EngagementRange)} has spotted it, or it has hit the target it is aiming at.",
 		MissionObjective.ConditionDisarmed => group
 			? "True once every member has no working weapon left; a group with no members counts as disarmed."
 			: "True once it has no working weapon left.",

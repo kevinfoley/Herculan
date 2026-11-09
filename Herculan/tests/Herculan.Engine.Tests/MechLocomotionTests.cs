@@ -2,11 +2,11 @@ using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Anim;
 using Herculan.Engine.Content;
-using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
-using Herculan.Engine.Sim;
-using Herculan.Engine.Terrain;
+using Herculan.Es2.Install;
+using Herculan.Es2.Sim;
+using Herculan.Es2.Terrain;
 using Xunit;
 
 namespace Herculan.Engine.Tests;
@@ -420,8 +420,8 @@ public class MechLocomotionTests {
 	/// </summary>
 	internal static void BecomePlayer(SimWorld world, MechObject mech) {
 		mech.IsPlayer = true;
-		var group = new MissionGroup(0, World.MissionUnitKind.Mech, World.MissionSide.Human,
-			System.Array.Empty<World.MissionOrder?>());
+		var group = new MissionGroup(0, Es2.World.MissionUnitKind.Mech, Es2.World.MissionSide.Human,
+			System.Array.Empty<Es2.World.MissionOrder?>());
 		group.Add(mech);
 		world.AddGroup(group);
 		world.PlayerMech = mech;

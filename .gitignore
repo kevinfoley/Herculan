@@ -5,9 +5,6 @@ herc-works-mdk-main/
 tools/*
 !tools/ghidra_scripts
 !tools/scripts
-!tools/BoundaryCheck
-tools/BoundaryCheck/bin/
-tools/BoundaryCheck/obj/
 Herculan/.vs/
 Herculan/src/HercWorks.UI/bin/
 Herculan/src/HercWorks.UI/obj/
@@ -73,6 +70,8 @@ Herculan/tests/HercWorks.Disc.Tests/bin/
 Herculan/tests/HercWorks.Disc.Tests/obj/
 Herculan/src/Herculan.Es1/bin/
 Herculan/src/Herculan.Es1/obj/
+Herculan/src/Herculan.Es2/bin/
+Herculan/src/Herculan.Es2/obj/
 MoreImages/
 Publishing.md
 Screenshots/

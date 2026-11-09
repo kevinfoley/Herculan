@@ -1,12 +1,12 @@
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Editor;
 using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Host.Simulator;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Shell;
-using Herculan.Engine.World;
-using Herculan.Engine.Install;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Install;
+using Herculan.Es2.Shell;
+using Herculan.Es2.World;
 
 namespace Herculan.Engine.Host;
 

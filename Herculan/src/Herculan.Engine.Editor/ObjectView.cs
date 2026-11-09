@@ -1,11 +1,12 @@
 using System.Numerics;
 using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Msn;
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
-using Herculan.Engine.Scene;
-using Herculan.Engine.World;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Render;
+using Herculan.Es2.Scene;
+using Herculan.Es2.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
@@ -271,7 +272,7 @@ internal sealed class ObjectView {
 
 		ImGui.Separator();
 		string? why = _actions.WhyNoObjectAction(key);
-		string near = MissionText.Metres(Sim.Detection.EngagementRange);
+		string near = MissionText.Metres(Es2.Sim.Detection.EngagementRange);
 		OwnAction("When engaged, activates", key, defeated: false, engaged, why,
 			$"A trigger set here activates when it is engaged: its own side spots an enemy within {near} of it (the player's own "
 				+ $"sightings don't count), it and an enemy within {near} each know the other is there, an enemy within {near} hits "

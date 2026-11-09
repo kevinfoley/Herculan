@@ -1,9 +1,9 @@
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.Struct.Dbsim;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Sim;
-using Herculan.Engine.Terrain;
-using Herculan.Engine.World;
+using Herculan.Es2.Sim;
+using Herculan.Es2.Terrain;
+using Herculan.Es2.World;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

@@ -1,6 +1,6 @@
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
-using Herculan.Engine.World;
+using Herculan.Es2.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
@@ -62,7 +62,7 @@ internal sealed class PointFields {
 	/// (<see cref="PointMover.LoadedBox"/>), which a block-1 point outside it grows: a test of the point's X and Y alone, as
 	/// the box is of the points alone (<see cref="MissionBox.Of"/>). The UI calls the box the play area: the heads-down map
 	/// frames it in red, the player is warned "APPROACHING MISSION ZONE BOUNDARY" once outside it, and the mission is aborted
-	/// <see cref="Sim.MissionObjectives.RulesOfEngagementMargin"/> past it (docs/retail/simulation/mission-objectives.md#the-status--mission_status-004135e8).
+	/// <see cref="Es2.Sim.MissionObjectives.RulesOfEngagementMargin"/> past it (docs/retail/simulation/mission-objectives.md#the-status--mission_status-004135e8).
 	/// </summary>
 	public static void BoxWarning(MissionBox box, Vec3i at) {
 		if (!box.IsEmpty && (at.X < box.MinX || at.X > box.MaxX || at.Y < box.MinY || at.Y > box.MaxY)) {
@@ -74,7 +74,7 @@ internal sealed class PointFields {
 	public static string PlayAreaWarning =>
 		"Outside the mission's play area: the play area grows to include it, and with it the heads-down map's red border, the "
 		+ "edge where the player is warned APPROACHING MISSION ZONE BOUNDARY, and the line "
-		+ $"{MissionText.Metres(Sim.MissionObjectives.RulesOfEngagementMargin)} beyond, where the mission is aborted.";
+		+ $"{MissionText.Metres(Es2.Sim.MissionObjectives.RulesOfEngagementMargin)} beyond, where the mission is aborted.";
 
 	private static bool Field(string label, ref int value, ref bool done) {
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(140f));

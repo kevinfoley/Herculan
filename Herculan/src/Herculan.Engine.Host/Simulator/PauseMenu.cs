@@ -1,8 +1,8 @@
 using System.Numerics;
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Host.Localization;
-using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Input;
 using ImGuiNET;
 
 namespace Herculan.Engine.Host.Simulator;

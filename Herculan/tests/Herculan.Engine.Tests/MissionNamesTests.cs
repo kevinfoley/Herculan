@@ -2,7 +2,7 @@ using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Editor;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Scene;
+using Herculan.Es2.Scene;
 using Xunit;
 using static Herculan.Engine.Tests.SyntheticMsn;
 

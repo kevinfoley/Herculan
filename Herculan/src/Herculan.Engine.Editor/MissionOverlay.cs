@@ -1,11 +1,11 @@
 using System.Numerics;
 using HercWorks.Core.Data.File.Msn;
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
-using Herculan.Engine.Sim;
-using Herculan.Engine.World;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Sim;
+using Herculan.Es2.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;

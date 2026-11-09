@@ -2,7 +2,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>A ready-made base the Toolbox's Bases tab offers: what it is called, its base formation, and what stands in each member slot.</summary>
 /// <param name="Name">The editor's own name for it; no retail file names a formation.</param>
-/// <param name="FormationId">Its <c>dat\BFORMS.DAT</c> formation, one with a pad layout (<see cref="World.BaseFormationTable.LayoutFor"/>).</param>
+/// <param name="FormationId">Its <c>dat\BFORMS.DAT</c> formation, one with a pad layout (<see cref="Es2.World.BaseFormationTable.LayoutFor"/>).</param>
 /// <param name="Types">The <c>dat\BASES.DAT</c> type of each member, by member slot from 0: structures, and the ground vehicles some retail bases hold among them.</param>
 internal sealed record BaseTemplate(string Name, int FormationId, IReadOnlyList<int> Types);
 

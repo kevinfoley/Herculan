@@ -1,6 +1,7 @@
 using HercWorks.Core.Io;
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Input;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Input;
 
 using Silk.NET.Input;
 
@@ -80,7 +81,7 @@ sealed class JoystickSource : IJoystickSource {
 
 	/// <summary>
 	/// What each control does in place of <c>prefs.cfg</c>'s CONTROLS settings
-	/// (<see cref="Content.SimulatorPreferences.ControlsOverride"/>): the file's gamepad settings while the device being
+	/// (<see cref="Es2.Content.SimulatorPreferences.ControlsOverride"/>): the file's gamepad settings while the device being
 	/// read is a gamepad, and null otherwise.
 	/// </summary>
 	public GamepadControls? ControlsOverride => Device is { IsGamepad: true } ? _controller.File.Gamepad : null;

@@ -1,6 +1,6 @@
 # Plan — differential testing against retail DBSIM
 
-A harness that runs retail `DBSIM.EXE` and `Herculan.Engine` over the same mission and compares simulation state tick by tick, so a divergence is found by diffing rather than by noticing it on screen.
+A harness that runs retail `DBSIM.EXE` and HERCULAN's `Herculan.Es2` over the same mission and compares simulation state tick by tick, so a divergence is found by diffing rather than by noticing it on screen.
 
 This is a plan, not a record of something built. Nothing here is implemented.
 

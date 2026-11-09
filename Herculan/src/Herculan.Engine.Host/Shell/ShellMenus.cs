@@ -3,6 +3,7 @@ using Herculan.Engine.Host.Settings;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
+using Herculan.Es2.Settings;
 using Silk.NET.Input;
 
 namespace Herculan.Engine.Host.Shell;

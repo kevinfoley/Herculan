@@ -1,5 +1,5 @@
 using HercWorks.Core.Data.File.Msn;
-using Herculan.Engine.Sim;
+using Herculan.Es2.Sim;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;

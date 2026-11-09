@@ -1,6 +1,7 @@
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
-using Herculan.Engine.Install;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Content;
+using Herculan.Es2.Install;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Xunit;
 

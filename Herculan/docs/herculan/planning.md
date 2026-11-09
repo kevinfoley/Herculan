@@ -80,12 +80,12 @@ So ES1 does not run on ES2's simulation code with ES1's data swapped in. Common 
 **A shared core with one assembly per game**, the shape ScummVM has: one application and one brand over many game engines that share almost no game logic, each in its own folder above a common backend.
 
 - **The core** holds what does not depend on which game is running: the HercWorks readers, the 3Space asset classes (`TS*`, `GL*`, `AN*`), the assembly math library and its tables, and the platform, GL, render back end, audio back end, input devices, settings, install detection and launcher.
-- **One assembly per game** holds that game's simulation, cockpit, shell, mission world and static `.DAT` tables. Today's `Sim`, `Cockpit`, `Shell` and `World` are ES2's; ES1's are ported fresh beside them. Host code that wires one game's screens goes with that game.
+- **One assembly per game** holds that game's simulation, cockpit, shell, mission world and static `.DAT` tables. ES2's is `Herculan.Es2`, ES1's `Herculan.Es1`, ported fresh beside it. Host code that wires one game's screens goes with that game.
 - **One application.** It finds which installs it has been given and runs the chosen game under that game's own title ("HERCULAN — Earthsiege 2", "HERCULAN — Metaltech: Earthsiege"), with the one logo.
 
 Three rules keep the boundary:
 
-1. **Project references enforce it.** A game assembly references the core and never the other game; the core references neither, so a dependency of asset-layer code (Content, Render, Gl, Platform, the audio back end) on game code is a build error. ES1's is `Herculan.Es1`. Until ES2's game code leaves `Herculan.Engine` ([Open](#open)), a test enforces the line instead: `Es1BoundaryTests` fails when `Herculan.Es1` references a type in ES2's `Sim`, `Cockpit`, `Shell`, `World`, `Scene` or `Terrain`.
+1. **Project references enforce it.** A game assembly references the core and never the other game; the core references neither, so a dependency of asset-layer code (Content, Render, Gl, Platform, the audio back end) on game code is a build error. The core is `Herculan.Engine`; the host and the tests reference both games, and the mission editor ES2's.
 2. **No game switches in the core.** A difference between the games lives in the game assemblies or behind a seam the core defines, never as a test of which game is running.
 3. **The shared-skeleton modules are ported twice.** `bullet`, `collide`, `damage`, `debris`, `flyersys` and `mechsys` keep each game's own layouts, sizes and rounding, so each game gets its own faithful port and the two link to each other's docs. One abstraction over both would break the retail-structure constraint for both games.
 
@@ -104,7 +104,3 @@ What crosses the core's seams is designed when ES1 code is ready to port, as [ph
 [`../../ROADMAP.md`](../../ROADMAP.md) is the single list of what the engine does not implement yet. Behavioural divergences — implemented but wrong — stay in [`../../KNOWN_ISSUES.md`](../../KNOWN_ISSUES.md).
 
 How divergences get *found* rather than recorded is [`plan-differential-harness.md`](plan-differential-harness.md): a proposal to run retail and this engine over the same mission and diff their state tick by tick, which reaches the classes of divergence playtesting cannot.
-
-## Open
-
-- **Open:** ES2's game code still sits in `Herculan.Engine`, and core files still use it, so it cannot yet leave for [its own assembly](#how-the-two-games-share-code). [`handoff-es2-assembly.md`](handoff-es2-assembly.md) tracks the work; `tools/BoundaryCheck` lists what is left.

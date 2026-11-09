@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The locomotion tests build a synthetic flat HeightGrid, whose constructor is internal. -->
+    <!-- The tests reach internal members such as PaintLayers.Face. -->
     <InternalsVisibleTo Include="Herculan.Engine.Tests" />
   </ItemGroup>
 

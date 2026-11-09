@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Content;
+using Herculan.Es2.Content;
 
 namespace Herculan.Engine.Editor;
 

@@ -1,7 +1,8 @@
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Input;
 using Silk.NET.Input;
 using static Herculan.Engine.Input.KeyChords;
 

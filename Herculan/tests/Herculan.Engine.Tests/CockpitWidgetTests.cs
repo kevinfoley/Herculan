@@ -1,5 +1,5 @@
-using Herculan.Engine.Cockpit;
-using Herculan.Engine.Content;
+using Herculan.Es2.Cockpit;
+using Herculan.Es2.Content;
 using Xunit;
 
 namespace Herculan.Engine.Tests;
@@ -12,7 +12,7 @@ namespace Herculan.Engine.Tests;
 /// </summary>
 public class CockpitWidgetTests {
 	private static CockpitWidget Widget(int x0 = 10, int y0 = 20, int x1 = 19, int y1 = 27) =>
-		new(CockpitWidgetId.Mfd(0), Herculan.Engine.Render.CockpitSurface.Forward, x0, y0, x1, y1, Lit: false);
+		new(CockpitWidgetId.Mfd(0), Herculan.Es2.Render.CockpitSurface.Forward, x0, y0, x1, y1, Lit: false);
 
 	/// <summary>
 	/// <c>Widget_HitTest</c>'s rectangular case is inclusive on all four edges, so the last pixel row

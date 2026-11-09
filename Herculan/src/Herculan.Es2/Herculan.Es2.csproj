@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Earthsiege 2's game assembly, beside the core as docs/herculan/planning.md's "How the two games share code"
+       sets out. It references the core and nothing of ES1's; the core references neither game. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Herculan.Es2</RootNamespace>
+    <AssemblyName>Herculan.Es2</AssemblyName>
+    <!-- BeamRenderer's vertex attributes take a void* offset and TerrainPaintRankBuffer uploads its ranks
+         through a pinned pointer; Silk.NET has no managed overload for either. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The game's own GLSL, read through ShaderSource as the core's is. -->
+    <EmbeddedResource Include="Render\Shaders\*.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The locomotion tests build a synthetic flat HeightGrid, whose constructor is internal. -->
+    <InternalsVisibleTo Include="Herculan.Engine.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Herculan.Engine\Herculan.Engine.csproj" />
+  </ItemGroup>
+
+</Project>

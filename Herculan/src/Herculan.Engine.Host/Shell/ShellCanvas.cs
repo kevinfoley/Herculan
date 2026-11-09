@@ -1,6 +1,6 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
-using Herculan.Engine.Shell;
+using Herculan.Es2.Shell;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Host.Shell;
