@@ -544,11 +544,18 @@ public sealed class Es1Cockpit {
 	/// That state does not matter: the update slots draw nothing in a glance, and the return to view 0
 	/// (<see cref="Es1ViewManager.SetView"/>) runs <see cref="InvalidateWidgets"/> on the display before they draw again.</para>
 	///
+	/// <para>Two slots are replaced by what the frame's update draws in view 0. The computer's ticker is painted
+	/// (<see cref="Es1MessageTicker.Paint"/>): its update paints it only while a line is up, but its take-down fills the
+	/// box as the paint does with no line. The gunsight draws its update's picture, the cockpit's current selection boxed
+	/// (<see cref="Es1Gunsight.RepaintForward"/>).</para>
+	///
 	/// <para>Left out: the clock's slot, which advances the clock, so its text is drawn without advancing
 	/// (<see cref="Es1CockpitClock.PaintText"/>); <see cref="RunTtmScripts"/>, which steps the scripts, so the <c>.TTM</c>
-	/// areas keep their last picture; and the Heads-Down Display, whose page's show changes its state, and of which view
-	/// 0's page holds only the top rows. The gunsight's paint draws the state its last update left, because its update
-	/// does nothing in a glance.</para>
+	/// areas keep their last picture; and the Heads-Down Display. View 0's page holds only that display's top rows, and
+	/// nothing of it draws there while view 0 is current: its update, its repaint and its comm boxes draw only while
+	/// <see cref="RectCornerVisible"/> passes its screen rect, which lies below view 0's rows
+	/// (docs/es1/simulation/heads-down-display.md#drawing-it), and its keys and its buttons' clicks reach it only in view
+	/// 1. So the rows the last frame in view 0 left are what view 0 shows.</para>
 	/// </summary>
 	internal void RepaintForward((int X, int Y) forwardOrigin) {
 		if (WidgetsOff) {
@@ -569,7 +576,8 @@ public sealed class Es1Cockpit {
 			Shields.Paint();
 			Throttle.Paint();
 			Mfd.Repaint();
-			Gunsight.Paint();
+			Ticker.Paint();
+			Gunsight.RepaintForward();
 			Clock.PaintText();
 		} finally {
 			_repaintingForward = false;

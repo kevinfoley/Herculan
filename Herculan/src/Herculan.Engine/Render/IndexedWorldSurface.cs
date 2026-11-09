@@ -245,6 +245,7 @@ public sealed class IndexedWorldSurface : IDisposable {
 		_shader.SetInt("uWindowWidth", width);
 		_shader.SetInt("uWindowRows", height);
 		_shader.SetInt("uCursorShown", 0);
+		_shader.SetInt("uCursorOnly", 0);
 		_gl.BindVertexArray(_vertexArray);
 		_gl.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
 		_gl.BindVertexArray(0);
@@ -446,7 +447,24 @@ public sealed class IndexedWorldSurface : IDisposable {
 	/// one cell wide repeating its cells across the placement's width.
 	/// </summary>
 	public void Draw(Vector2D<int> window, (int Left, int Top, int Width, int Height) placement, int start,
-			int windowWidth, int windowRows, int cellCount, (int X, int Y)? cursorAt = null) {
+			int windowWidth, int windowRows, int cellCount, (int X, int Y)? cursorAt = null) =>
+		DrawWindow(window, placement, start, windowWidth, windowRows, cellCount, cursorAt, false);
+
+	/// <summary>
+	/// The <see cref="SetCursor"/> sprite alone, its top-left at cell <paramref name="cursorAt"/> of a window of
+	/// <paramref name="windowWidth"/> × <paramref name="windowRows"/> cells at <paramref name="placement"/>, as
+	/// <see cref="Draw"/> would draw it there, over whatever the window already shows.
+	/// </summary>
+	public void DrawCursor(Vector2D<int> window, (int Left, int Top, int Width, int Height) placement, int windowWidth,
+			int windowRows, (int X, int Y) cursorAt) =>
+		DrawWindow(window, placement, 0, windowWidth, windowRows, 1, cursorAt, true);
+
+	private void DrawWindow(Vector2D<int> window, (int Left, int Top, int Width, int Height) placement, int start,
+			int windowWidth, int windowRows, int cellCount, (int X, int Y)? cursorAt, bool cursorOnly) {
+		if (cursorOnly && _cursorWidth <= 0) {
+			return;
+		}
+
 		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 		_gl.Disable(EnableCap.ScissorTest);
 		var (left, top, width, height) = placement;
@@ -472,6 +490,7 @@ public sealed class IndexedWorldSurface : IDisposable {
 		_shader.SetInt("uWindowRows", windowRows);
 		bool cursor = cursorAt != null && _cursorWidth > 0;
 		_shader.SetInt("uCursorShown", cursor ? 1 : 0);
+		_shader.SetInt("uCursorOnly", cursorOnly ? 1 : 0);
 		if (cursor) {
 			_shader.SetSamplerTexture("uCursor", _cursor, 3);
 			_shader.SetInt("uCursorX", cursorAt!.Value.X);

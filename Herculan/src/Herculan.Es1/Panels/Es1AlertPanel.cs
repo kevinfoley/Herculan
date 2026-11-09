@@ -247,7 +247,8 @@ public abstract class Es1AlertPanel {
 	/// source and draw pages made the page on the screen (<see cref="Es1AlertGlobals.PageOnScreen"/>);
 	/// <c>Cursor_FollowsMouse</c> kept and set; the enter hook; <c>dci\alert</c> loaded the first time; the cursor hidden;
 	/// the screen under the panel saved when it keeps it; the paint; the alert cursor made the drawn one and shown; and the
-	/// open count up by 1 where it is counted (<see cref="Es1AlertGlobals.CountsOpen"/>).
+	/// open count up by 1 where it is counted (<see cref="Es1AlertGlobals.CountsOpen"/>). Then, this engine's own, the rect
+	/// added to <see cref="Es1AlertGlobals.OpenRects"/>.
 	/// </summary>
 	public void Enter() {
 		var globals = Globals;
@@ -275,6 +276,8 @@ public abstract class Es1AlertPanel {
 		if (globals.CountsOpen) {
 			globals.OpenCount++;
 		}
+
+		globals.AddOpenRect(Rect);
 	}
 
 	/// <summary>
@@ -283,7 +286,8 @@ public abstract class Es1AlertPanel {
 	/// <c>Cursor_FollowsMouse</c> as it was, and the cursor shown when it is set; the leave hook; the draw page of the
 	/// panel's construction; the mouse handed back to the root it worked on; the input's step
 	/// (<see cref="Es1AlertInput.PutBack"/>: in the simulator <c>PlayerInputBlock</c> put back, and with a mouse device the
-	/// pointer and the drawn cursor moved to its pointer); and the open count down by 1 where it is counted.
+	/// pointer and the drawn cursor moved to its pointer); and the open count down by 1 where it is counted. Then, this
+	/// engine's own, the rect taken off <see cref="Es1AlertGlobals.OpenRects"/>.
 	/// </summary>
 	public void Leave() {
 		var globals = Globals;
@@ -311,6 +315,8 @@ public abstract class Es1AlertPanel {
 		if (globals.CountsOpen) {
 			globals.OpenCount--;
 		}
+
+		globals.RemoveOpenRect(Rect);
 	}
 
 	/// <summary>

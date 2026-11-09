@@ -56,6 +56,8 @@ uniform int uCursorWidth;
 uniform int uCursorRows;
 uniform int uCursorShown;
 uniform int uCursorOpaque;
+// Set to draw the sprite alone: every pixel it does not draw leaves the window's pixel.
+uniform int uCursorOnly;
 
 out vec4 FragColor;
 
@@ -72,6 +74,10 @@ void main() {
 				return;
 			}
 		}
+	}
+
+	if (uCursorOnly != 0) {
+		discard;
 	}
 
 	int address = (uStart + pixel.y * uWidth + pixel.x) % uCellCount;

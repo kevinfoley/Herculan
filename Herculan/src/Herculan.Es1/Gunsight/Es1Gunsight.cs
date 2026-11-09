@@ -226,8 +226,43 @@ public sealed class Es1Gunsight {
 			PickArmed = false;
 		}
 
-		// 2. The cockpit's selection +0x20c at offset 6, and with one its position, its shape's radius, 2000 and its heading;
-		// with none the block keeps the last selection's.
+		// 2.
+		TakeSelection();
+		// 3.
+		RepaintChildren();
+	}
+
+	/// <summary>
+	/// <b>This engine's own</b> (plan decision 30), for <see cref="Es1Cockpit.RepaintForward"/>: what
+	/// <see cref="UpdateAndPaint"/> draws in view 0, during a glance, where the update stops at the visibility test.
+	/// Unless the display is dark or <c>CockpitView_RectCornerVisible</c> refuses child 0's rect, the cockpit's selection
+	/// is taken into the block as step 2 takes it, each child repainted and the <c>ATT</c> legend written; then the block
+	/// is put back as it was.
+	///
+	/// <para>The dropout's tick and the pick are left out. The frame's update has ticked the dropout already, so
+	/// <see cref="Dark"/> is this frame's. The pick waits, armed, for the update back in view 0, as in retail. The block is
+	/// put back because <c>Player_PerFrameCockpitUpdate</c> makes its selection the machine's target, which retail's
+	/// glance leaves as it was.</para>
+	/// </summary>
+	internal void RepaintForward() {
+		if (Dark || !_cockpit.RectCornerVisible(ClickSurface.Rect)) {
+			return;
+		}
+
+		var saved = State.Copy();
+		try {
+			TakeSelection();
+			RepaintChildren();
+		} finally {
+			State.CopyFrom(saved);
+		}
+	}
+
+	/// <summary>
+	/// Step 2 of <see cref="UpdateAndPaint"/>: the cockpit's selection <c>+0x20c</c> at offset 6, and with one its position,
+	/// its shape's radius, 2000 and its heading; with none the block keeps the last selection's.
+	/// </summary>
+	private void TakeSelection() {
 		State.Selection = _cockpit.Selection;
 		if (State.Selection is { } selection) {
 			State.SelectionPosition = selection.Position;
@@ -235,8 +270,10 @@ public sealed class Es1Gunsight {
 			State.Literal2000 = SelectionLiteral;
 			State.SelectionHeading = selection.Heading;
 		}
+	}
 
-		// 3.
+	/// <summary>Step 3 of <see cref="UpdateAndPaint"/>: each child's repaint, then the <c>ATT</c> legend.</summary>
+	private void RepaintChildren() {
 		foreach (var child in _children) {
 			child.Repaint();
 		}

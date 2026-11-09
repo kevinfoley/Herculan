@@ -119,6 +119,27 @@ public sealed class Es1AlertGlobals {
 	/// <summary><c>AlertPanel_OpenCount</c> (<c>00094d78</c>, <c>int16</c>): the panels up.</summary>
 	public short OpenCount { get; set; }
 
+	private readonly List<Es1Rect> _openRects = [];
+
+	/// <summary>
+	/// <b>This engine's own:</b> the rects of the panels up, in the order they went up. <see cref="Es1AlertPanel.Enter"/>
+	/// adds one and <see cref="Es1AlertPanel.Leave"/> takes it off, whether or not <see cref="CountsOpen"/> is set. The
+	/// host reads them to draw the panels at the window's center while the 320 × 200 screen lies off it
+	/// (<see cref="View.Es1Monitor.Present"/>).
+	/// </summary>
+	public IReadOnlyList<Es1Rect> OpenRects => _openRects;
+
+	/// <summary>A panel's rect added to <see cref="OpenRects"/> as it goes up.</summary>
+	internal void AddOpenRect(Es1Rect rect) => _openRects.Add(rect);
+
+	/// <summary>The last of <see cref="OpenRects"/> equal to <paramref name="rect"/> taken off as its panel comes down.</summary>
+	internal void RemoveOpenRect(Es1Rect rect) {
+		int index = _openRects.LastIndexOf(rect);
+		if (index >= 0) {
+			_openRects.RemoveAt(index);
+		}
+	}
+
 	/// <summary><c>AlertPanel_CursorImage</c> (<c>00094d7c</c>), <c>dci\alert</c>, once a panel has loaded it.</summary>
 	public Es1CursorImage? CursorImage { get; private set; }
 

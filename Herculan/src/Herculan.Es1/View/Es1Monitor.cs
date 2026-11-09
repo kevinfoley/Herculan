@@ -200,7 +200,8 @@ public sealed class Es1Monitor : IDisposable {
 	/// hotspot, as retail's slot 30 draws it on the visible page (<see cref="Es1Cursor"/>). With a canvas layout
 	/// (<see cref="Es1CanvasLayout"/>), first the heads-down display's edge columns stretched out to the window's edges
 	/// beside view 0's page, as ES2's port stretches its heads-down art, then the canvas's three pages over them at the
-	/// monitor's canvas rows, and the monitor over those at its place.
+	/// monitor's canvas rows, and the monitor over those at its place, or in its stead the panels up lifted to the window's
+	/// center (<see cref="LiftedPanels"/>).
 	/// </summary>
 	public void Present(Vector2D<int> windowSize) {
 		Fit(windowSize);
@@ -244,8 +245,55 @@ public sealed class Es1Monitor : IDisposable {
 			}
 		}
 
-		_surface.Draw(windowSize, layout.MonitorFit.Placement, Display.MonitorStart, Es1VideoMemory.PageWidth,
-			Es1VideoMemory.PageHeight, Display.AddressCount, cursor.DrawnAt);
+		if (LiftedPanels(layout) is not { } panels) {
+			_surface.Draw(windowSize, layout.MonitorFit.Placement, Display.MonitorStart, Es1VideoMemory.PageWidth,
+				Es1VideoMemory.PageHeight, Display.AddressCount, cursor.DrawnAt);
+			return;
+		}
+
+		// The screen is not drawn at its place: the canvas's page there holds the frame the panels went up over.
+		var centered = new FrameFit(DisplayFrame, windowSize).Placement;
+		foreach (var panel in panels) {
+			int x0 = Math.Max(panel.X0, 0), y0 = Math.Max(panel.Y0, 0);
+			int x1 = Math.Min(panel.X1, Es1VideoMemory.PageWidth - 1), y1 = Math.Min(panel.Y1, Es1VideoMemory.PageHeight - 1);
+			if (x1 < x0 || y1 < y0) {
+				continue;
+			}
+
+			_surface.Draw(windowSize, ScreenRect(centered, x0, y0, x1 + 1, y1 + 1), Display.MonitorStart + y0 * Display.ScreenWidth + x0,
+				x1 - x0 + 1, y1 - y0 + 1, Display.AddressCount);
+		}
+
+		if (cursor.DrawnAt is { } at) {
+			_surface.DrawCursor(windowSize, centered, Es1VideoMemory.PageWidth, Es1VideoMemory.PageHeight, at);
+		}
+	}
+
+	/// <summary>
+	/// <b>This engine's own</b> (plan decision 30): the rects of the in-mission panels up
+	/// (<see cref="Panels.Es1AlertGlobals.OpenRects"/>) when <paramref name="layout"/> puts the 320 × 200 screen off the
+	/// window's center, after a glance; none otherwise. Such panels are lifted out of the screen: each one's rect is drawn
+	/// at the window's centered 4:3 placement, where a 4:3 window shows it, with the cursor over that placement and the
+	/// pointer mapped through it (<see cref="CockpitPointer"/>). The screen itself is not drawn, so the canvas's copy of
+	/// the glance's page shows at its place (<see cref="Es1Canvas.TakeDrawnPage"/>), the frame the panels went up over.
+	/// A panel's loop draws nothing else (<see cref="Panels.Es1AlertPanel"/>), so that copy stays the screen's picture
+	/// under the panels.
+	/// </summary>
+	private IReadOnlyList<Es1Rect>? LiftedPanels(Es1CanvasLayout layout) {
+		if (_views?.Cockpit.Panels is not { OpenRects.Count: > 0 } panels || layout.MonitorColumn == layout.WindowColumn
+				|| _views.PageView(Display.VisiblePage) is not (2 or 3)) {
+			return null;
+		}
+
+		return panels.OpenRects;
+	}
+
+	/// <summary>Where the screen's columns <paramref name="x0"/> up to <paramref name="x1"/> and rows <paramref name="y0"/> up to <paramref name="y1"/> land in the screen's <paramref name="placement"/>.</summary>
+	private static (int Left, int Top, int Width, int Height) ScreenRect((int Left, int Top, int Width, int Height) placement,
+			int x0, int y0, int x1, int y1) {
+		int X(int column) => placement.Left + (int)MathF.Round(column * placement.Width / (float)Es1VideoMemory.PageWidth);
+		int Y(int row) => placement.Top + (int)MathF.Round(row * placement.Height / (float)Es1VideoMemory.PageHeight);
+		return (X(x0), Y(y0), X(x1) - X(x0), Y(y1) - Y(y0));
 	}
 
 	/// <summary>The window's mapping between the host's pointer, in client coordinates of <paramref name="clientSize"/>, and the 320 × 200 screen at the monitor's 4:3 placement.</summary>
@@ -254,10 +302,13 @@ public sealed class Es1Monitor : IDisposable {
 
 	/// <summary>
 	/// <see cref="Pointer"/> at the monitor's place in the canvas layout when there is one (<see cref="Es1CanvasLayout.Pointer"/>),
-	/// so the pointer stays on the monitor's 320 columns as a glance moves them.
+	/// so the pointer stays on the monitor's 320 columns as a glance moves them; and at the window's center while panels are
+	/// lifted there (<see cref="LiftedPanels"/>).
 	/// </summary>
 	public ScreenPointer CockpitPointer(Vector2D<int> framebufferSize, Vector2D<int> clientSize) =>
-		CanvasLayout(framebufferSize)?.Pointer(clientSize) ?? Pointer(framebufferSize, clientSize);
+		CanvasLayout(framebufferSize) is { } layout && LiftedPanels(layout) == null
+			? layout.Pointer(clientSize)
+			: Pointer(framebufferSize, clientSize);
 
 	public void Dispose() {
 		if (ReferenceEquals(Display.Layer, _layer)) {
