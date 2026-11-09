@@ -39,7 +39,7 @@ namespace Herculan.Es2.Host.Settings;
 /// <para>Audio holds the music and sound-effects volumes (<see cref="AudioVolumes"/>), which retail has no control for.
 /// They change what is sounding at once, in a mission too, and are saved as a slider is let go.</para>
 ///
-/// <para>Updates holds the "Auto check for updates" setting and a Check for Updates button (<see cref="UpdateChecks"/>),
+/// <para>Updates holds the "Auto check for updates" setting and a Check for Updates button (<see cref="UpdateCheckRows"/>),
 /// which work in a mission too.</para>
 /// </summary>
 sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
@@ -69,8 +69,7 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 	private IReadOnlyList<RetailInstaller.Language>? _gameLanguages;
 	private readonly InterfaceLanguageCombo _interfaceLanguage;
 
-	// Check for Updates' check, from the press until the window closes.
-	private Task<ReleaseCheckResult>? _updateCheck;
+	private readonly UpdateCheckRows _updates;
 
 	/// <param name="restartShell">Brings the shell back up on the new folders; null in a mission. It is called
 	/// between this window's <c>Begin</c> and <c>End</c>, so it must not tear down the ImGui context there.</param>
@@ -78,6 +77,7 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 		_session = session;
 		_restartShell = restartShell;
 		_interfaceLanguage = new InterfaceLanguageCombo(session.Localization);
+		_updates = new UpdateCheckRows(session.Localization);
 	}
 
 	/// <summary>Whether the window, or the install window it opened, is up. Set by the menu bar.</summary>
@@ -94,7 +94,7 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 		_prompt = null;
 		_error = null;
 		_open = false;
-		_updateCheck = null;
+		_updates.Forget();
 		ForgetLanguages();
 		if (_install is { Busy: false }) {
 			_install.Dispose();
@@ -160,7 +160,7 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 			AudioRows();
 
 			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.updates"));
-			UpdatesRows();
+			_updates.Draw();
 
 			if (_error != null) {
 				ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1f, 0.45f, 0.4f, 1f));
@@ -182,7 +182,7 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 			_prompt = null;
 			_error = null;
 			_open = false;
-			_updateCheck = null;
+			_updates.Forget();
 			ForgetLanguages();
 		}
 	}
@@ -313,51 +313,6 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 		ImGui.SliderInt(_session.Localization.GetStringOrKey(key) + "###" + key, ref percent, 0, 100, "%d%%", ImGuiSliderFlags.AlwaysClamp);
 		done = ImGui.IsItemDeactivatedAfterEdit();
 		return percent / 100f;
-	}
-
-	// The automatic check's setting, which takes effect from the next start, and Check for Updates with what the last
-	// press found: a newer release with a button to its page, this build being the latest, or why the check failed.
-	private void UpdatesRows() {
-		bool automatic = UpdateChecks.Automatic;
-		if (ImGui.Checkbox(_session.Localization.GetStringOrKey("settings.auto_check_updates"), ref automatic)) {
-			UpdateChecks.Automatic = automatic;
-		}
-
-		bool checking = _updateCheck is { IsCompleted: false };
-		ImGui.BeginDisabled(checking);
-		if (ImGui.Button(_session.Localization.GetStringOrKey("settings.check_updates"))) {
-			_updateCheck = UpdateChecks.Check();
-		}
-		ImGui.EndDisabled();
-
-		if (_updateCheck == null) {
-			return;
-		}
-
-		if (checking) {
-			ImGui.TextDisabled(_session.Localization.GetStringOrKey("settings.checking_updates"));
-			return;
-		}
-
-		var result = _updateCheck.Result;
-		switch (result.Status) {
-			case ReleaseCheckStatus.NewerAvailable:
-				ImGui.TextWrapped(string.Format(_session.Localization.GetStringOrKey("update.message"),
-					ReleaseCheck.Display(result.Latest!), ReleaseCheck.Display(UpdateChecks.Current)));
-				if (ImGui.Button(_session.Localization.GetStringOrKey("update.view_release"))) {
-					UpdateChecks.OpenPage(result.Page!);
-				}
-				break;
-			case ReleaseCheckStatus.UpToDate:
-				ImGui.TextWrapped(string.Format(_session.Localization.GetStringOrKey("settings.up_to_date"),
-					ReleaseCheck.Display(UpdateChecks.Current)));
-				break;
-			default:
-				ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1f, 0.45f, 0.4f, 1f));
-				ImGui.TextWrapped(string.Format(_session.Localization.GetStringOrKey("settings.update_check_failed"), result.Error));
-				ImGui.PopStyleColor();
-				break;
-		}
 	}
 
 	/// <summary>

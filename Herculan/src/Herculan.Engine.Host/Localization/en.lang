@@ -227,6 +227,28 @@ settings.check_updates         Check for Updates
 settings.checking_updates      Checking...
 settings.up_to_date            You have the latest release, {0}.
 settings.update_check_failed   Could not check for updates: {0}
+es1_settings.folders           Metaltech: Earthsiege folders
+es1_settings.install_message   Choose the Metaltech: Earthsiege folder: the one that holds the {0} folder and {1}. The game restarts on the new install.
+es1_settings.disc              Disc (HERCULAN only)
+es1_settings.disc_note         The game plays its movies from the disc.
+es1_settings.alt_drive_overrides Not used while the {0} environment variable is set.
+es1_settings.choose_disc_folder Choose Folder...
+es1_settings.choose_disc_image Choose Image...
+es1_settings.save_failed       Could not save the disc in {0}.
+es1_settings.language          Language
+es1_disc_prompt.message        Choose the Metaltech: Earthsiege disc folder, such as the CD drive or a copy of the disc. HERCULAN keeps it, not the install, and the game restarts.
+es1_disc_prompt.path_hint      Disc folder
+es1_disc_prompt.picker_title   Choose the Metaltech: Earthsiege disc folder
+es1_disc_prompt.accept         Use This Folder
+es1_disc_prompt.no_path        Type or paste the path to the disc folder.
+es1_image_prompt.message       Choose a Metaltech: Earthsiege disc image (.iso, .bin or .cue). HERCULAN reads the disc from it and keeps it, not the install, and the game restarts.
+es1_image_prompt.path_hint     Disc image
+es1_image_prompt.picker_title  Choose a Metaltech: Earthsiege disc image
+es1_image_prompt.accept        Use This Image
+es1_image_prompt.no_path       Type or paste the path to the disc image.
+es1_disc.missing               {0} does not exist.
+es1_disc.unreadable            {0} cannot be read as a disc image: {1}
+es1_disc.not_es1               {0} is not a Metaltech: Earthsiege disc: it has no {1} or no {2}.
 update.title                   Update Available
 update.message                 HERCULAN {0} is available. You have {1}.
 update.view_release            View Release

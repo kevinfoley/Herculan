@@ -13,8 +13,9 @@ namespace Herculan.Es1.Host;
 /// <summary>
 /// Metaltech: Earthsiege's shell's menus over its <see cref="FrontEndWindow"/>: HERCULAN's own <see cref="HostMenuBar"/>
 /// with its "Game" menu, the windows that work the same in either game, Accessibility and About, its own Tweaks, and the
-/// <see cref="ErrorDialog"/>. Settings, Controller, Keys and Editor are greyed, since each is built on Earthsiege 2's
-/// install, controls or missions; Custom Missions is left out. There is no welcome and no automatic update check.
+/// <see cref="ErrorDialog"/>, and its own Settings (<see cref="Es1SettingsWindow"/>). Controller, Keys and Editor are greyed,
+/// since each is built on Earthsiege 2's controls or missions; Custom Missions is left out. There is no welcome and no
+/// automatic update check.
 /// </summary>
 public sealed class Es1ShellMenus : IFrontEndMenus {
 	// The accessibility settings ES1 honors: the larger font, which ScaledImGui reads for the bar's own windows. The damage
@@ -25,19 +26,27 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 	private readonly TweaksMenu _tweaks;
 	private readonly LocalizationTable _localization;
 
-	/// <summary>The Tweaks window edits <see cref="TweakSettings.Current"/>, which the host has loaded with ES1's catalog.</summary>
-	public Es1ShellMenus(LocalizationTable localization) {
+	/// <summary>
+	/// The Tweaks window edits <see cref="TweakSettings.Current"/>, which the host has loaded with ES1's catalog; the
+	/// Settings window shows <paramref name="installRoot"/>, the install the shell's turn runs on.
+	/// </summary>
+	public Es1ShellMenus(LocalizationTable localization, string installRoot) {
 		_localization = localization;
 		_tweaks = new TweaksMenu(TweakSettings.Current, localization, offered: Es1TweakSettingDefinitions.Offered);
 		var game = new GameMenu(localization, RetailGame.Earthsiege1, other => {
 			GameSwitch.Request(other);
 			CloseRequested?.Invoke();
 		});
-		_menuBar = new HostMenuBar(localization, keys: null, tweaks: _tweaks, settings: null, controller: null,
+		// A change of install or disc starts the launcher again, through the "Switch to" request to this same game.
+		var settings = new Es1SettingsWindow(localization, installRoot, root => {
+			GameSwitch.Request(RetailGame.Earthsiege1, root);
+			CloseRequested?.Invoke();
+		});
+		_menuBar = new HostMenuBar(localization, keys: null, tweaks: _tweaks, settings: settings, controller: null,
 			accessibilitySettings: Accessibility, game: game);
 	}
 
-	/// <summary>Raised by "Switch to", the one item that ends the shell's turn.</summary>
+	/// <summary>Raised by "Switch to" and by a change in Settings, the items that end the shell's turn.</summary>
 	public event Action? CloseRequested;
 
 	// Never raised: there is no Controller window to save the pad's settings.

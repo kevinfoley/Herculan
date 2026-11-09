@@ -5,7 +5,9 @@ using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Read;
 using HercWorks.Core.Io.Transform.Shell;
+using HercWorks.Disc;
 using Herculan.Engine.Audio;
+using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
 using Herculan.Es1.Input;
 using Herculan.Es1.Shell;
@@ -31,16 +33,37 @@ public static class Es1FlicHost {
 
 	private const string FlicPlayerSection = "FlicPlayer", PathFlicKey = "pathFlic";
 
+	/// <summary>The most a flic or a sound read from a disc may hold; the retail flics are under 6 MB.</summary>
+	public const long MaxFileBytes = 64L << 20;
+
 	/// <summary>
 	/// Plays the flic at <paramref name="path"/> with <paramref name="switches"/>, <c>PLAYFLIC.EXE</c>'s arguments after the
 	/// flic's name, in <paramref name="window"/>. Returns <c>Flic_Play</c>'s answer (<see cref="Es1FlicPlayer.Result"/>), or
 	/// the open's error. The install folder stands in for DOS's current folder, where <c>RESOURCE.CFG</c> is read
-	/// (<see cref="ReadPathFlic"/>); <paramref name="altDrive"/> is <c>ALT_DRIVE</c>, which a sound's path may be taken
-	/// under (<see cref="ReadSound"/>).
+	/// (<see cref="ReadPathFlic"/>); <paramref name="altDrive"/> is <c>ALT_DRIVE</c>, under whose path a sound's path on a
+	/// drive is taken (<see cref="ReadSound"/>).
 	/// </summary>
 	/// <param name="silent">The host's <c>--no-sound</c>: no audio device is opened, and the sounds are not heard.</param>
 	public static int Run(string path, IReadOnlyList<string> switches, HostWindow window, string installRoot, string? altDrive,
-			bool silent) {
+			bool silent) =>
+		Run(path, () => File.ReadAllBytes(path), switches, window, installRoot,
+			string.IsNullOrEmpty(altDrive) ? null : relative => ReadFile(CaseInsensitivePath.Combine(altDrive, relative)), silent);
+
+	/// <summary>
+	/// Plays the flic at <paramref name="relativePath"/> on <paramref name="disc"/>, the CD the Settings window names
+	/// (<see cref="Install.Es1Disc"/>), as <see cref="Run(string, IReadOnlyList{string}, HostWindow, string, string?, bool)"/>
+	/// plays one on <c>ALT_DRIVE</c>, a sound's path on a drive taken on the disc.
+	/// </summary>
+	public static int Run(GameDisc disc, string relativePath, IReadOnlyList<string> switches, HostWindow window,
+			string installRoot, bool silent) =>
+		Run(disc.Describe(relativePath), () => disc.ReadAllBytes(relativePath, MaxFileBytes)
+				?? throw new FileNotFoundException($"{disc.Describe(relativePath)} is missing or larger than {MaxFileBytes} bytes."),
+			switches, window, installRoot, relative => ReadDiscFile(disc, relative), silent);
+
+	// The flic, named for messages by path and read by readFlic; readOnCd reads a path relative to the CD's root, or is
+	// null when there is no CD.
+	private static int Run(string path, Func<byte[]> readFlic, IReadOnlyList<string> switches, HostWindow window,
+			string installRoot, Func<string, byte[]?>? readOnCd, bool silent) {
 		var parsed = ParseSwitches(switches);
 
 		// Machine_Open: the audio device for this turn, as the shell's and the simulator's turns open their own, closed with
@@ -58,8 +81,9 @@ public static class Es1FlicHost {
 		// not open or read, is the C library's text, which the host's stands in for.
 		Es1Flic? flic;
 		try {
-			flic = new Es1FlicTransformer().Parse(File.ReadAllBytes(path));
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) {
+			flic = new Es1FlicTransformer().Parse(readFlic());
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException
+				or DiscFormatException) {
 			Console.Error.WriteLine($"READFLIC had troubles with {path}.{Environment.NewLine}{ex.Message}.");
 			return -5;
 		} catch (InvalidDataException ex) {
@@ -74,7 +98,7 @@ public static class Es1FlicHost {
 			return -3;
 		}
 
-		using var sound = new Es1FlicSound(audio, ReadPathFlic(installRoot), dosPath => ReadSound(dosPath, installRoot, altDrive));
+		using var sound = new Es1FlicSound(audio, ReadPathFlic(installRoot), dosPath => ReadSound(dosPath, installRoot, readOnCd));
 		var player = new Es1FlicPlayer(flic, parsed, sound);
 		Play(player, window);
 		window.Hold(null);
@@ -134,12 +158,12 @@ public static class Es1FlicHost {
 
 	/// <summary>
 	/// The file a sound's DOS path names. A path on a drive, as <c>RESOURCE.CFG</c>'s <c>pathFlic</c> names the CD's, is
-	/// taken under <paramref name="altDrive"/>'s path, which stands for the CD as <c>ES.BAT</c>'s <c>ALT_DRIVE=D:</c> does,
+	/// taken on the CD by <paramref name="readOnCd"/>, which stands for the CD as <c>ES.BAT</c>'s <c>ALT_DRIVE=D:</c> does,
 	/// and failing that in the install folder, the CD's copy; a path with no drive is taken in the install folder, DOS's
 	/// current folder here. This mapping is the user's choice: retail opens the path as DOS resolves it. Null when no
 	/// candidate opens.
 	/// </summary>
-	private static byte[]? ReadSound(string dosPath, string installRoot, string? altDrive) {
+	private static byte[]? ReadSound(string dosPath, string installRoot, Func<string, byte[]?>? readOnCd) {
 		bool onDrive = dosPath.Length > 1 && dosPath[1] == ':';
 		string[] names = (onDrive ? dosPath[2..] : dosPath).Split('\\', '/').Where(n => n is not ("" or ".")).ToArray();
 		if (names.Length == 0) {
@@ -147,23 +171,25 @@ public static class Es1FlicHost {
 		}
 
 		string relative = string.Join('\\', names);
-		var candidates = new List<string>();
-		if (onDrive && !string.IsNullOrEmpty(altDrive)) {
-			candidates.Add(CaseInsensitivePath.Combine(altDrive, relative));
-		}
+		return (onDrive ? readOnCd?.Invoke(relative) : null) ?? ReadFile(CaseInsensitivePath.Combine(installRoot, relative));
+	}
 
-		candidates.Add(CaseInsensitivePath.Combine(installRoot, relative));
-		foreach (string candidate in candidates) {
-			try {
-				if (File.Exists(candidate)) {
-					return File.ReadAllBytes(candidate);
-				}
-			} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-				// This candidate does not open; the next is tried.
-			}
+	/// <summary>The file at <paramref name="path"/>, or null when it is not there or does not open.</summary>
+	private static byte[]? ReadFile(string path) {
+		try {
+			return File.Exists(path) ? File.ReadAllBytes(path) : null;
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			return null;
 		}
+	}
 
-		return null;
+	/// <summary><paramref name="relative"/> on <paramref name="disc"/>, or null when it is not there, too long or does not read.</summary>
+	private static byte[]? ReadDiscFile(GameDisc disc, string relative) {
+		try {
+			return disc.ReadAllBytes(relative, MaxFileBytes);
+		} catch (Exception ex) when (ex is IOException or DiscFormatException) {
+			return null;
+		}
 	}
 
 	/// <summary>The C library's <c>atoi</c>: leading white space, a sign, then digits up to the first that is not one.</summary>

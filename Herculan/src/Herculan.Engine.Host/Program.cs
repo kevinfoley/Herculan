@@ -75,7 +75,8 @@ WindowPlacement? placement = null;
 HostSession? es2Session = null;
 
 // Each game in turn: the one found, then, for as long as a shell's "Switch to" asks for one (GameSwitch), the game asked
-// for, its install found as at start-up without changing the saved start-up game. A game switched to runs its shell
+// for, on the install the request names (a game's Settings window restarting it) or with its install found as at start-up,
+// without changing the saved start-up game. A game switched to runs its shell
 // whatever the command line asked the first game for. Its install prompt opens a window of its own, so the shared one
 // closes while it is up; the prompt's Back goes back to the game switched from.
 try {
@@ -92,7 +93,7 @@ try {
 			return exit;
 		}
 
-		installRoot = StartupInstall.ForSwitch(next, options, localization, imguiFontPath, () => {
+		installRoot = next.Install ?? StartupInstall.ForSwitch(next.Game, options, localization, imguiFontPath, () => {
 			placement = window?.Placement;
 			window?.Dispose();
 			window = null;
@@ -135,7 +136,7 @@ int RunEs1(string root, bool switched) {
 		}
 
 		return Es1Launcher.Run(root, es1.ShellArguments, imguiFontPath, imguiItalicFontPath,
-			() => new Es1ShellMenus(localization), options.ScreenshotPath, SharedWindow(), options.SilentAudio);
+			() => new Es1ShellMenus(localization, root), options.ScreenshotPath, SharedWindow(), options.SilentAudio);
 	}
 
 	if (es1.ShellArguments.Count > 0) {

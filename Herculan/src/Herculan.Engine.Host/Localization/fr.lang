@@ -227,6 +227,28 @@ settings.check_updates         Rechercher des mises à jour
 settings.checking_updates      Recherche en cours...
 settings.up_to_date            Vous avez la dernière version, {0}.
 settings.update_check_failed   Impossible de rechercher des mises à jour : {0}
+es1_settings.folders           Dossiers de Metaltech: Earthsiege
+es1_settings.install_message   Choisissez le dossier de Metaltech: Earthsiege : celui qui contient le dossier {0} et le fichier {1}. Le jeu redémarre sur la nouvelle installation.
+es1_settings.disc              Disque (HERCULAN uniquement)
+es1_settings.disc_note         Le jeu lit ses vidéos depuis le disque.
+es1_settings.alt_drive_overrides Non utilisé tant que la variable d'environnement {0} est définie.
+es1_settings.choose_disc_folder Choisir un dossier...
+es1_settings.choose_disc_image Choisir une image...
+es1_settings.save_failed       Impossible d'enregistrer le disque dans {0}.
+es1_settings.language          Langue
+es1_disc_prompt.message        Choisissez le dossier du disque de Metaltech: Earthsiege, comme le lecteur de CD ou une copie du disque. HERCULAN l'enregistre, pas l'installation, et le jeu redémarre.
+es1_disc_prompt.path_hint      Dossier du disque
+es1_disc_prompt.picker_title   Choisissez le dossier du disque de Metaltech: Earthsiege
+es1_disc_prompt.accept         Utiliser ce dossier
+es1_disc_prompt.no_path        Tapez ou collez le chemin du dossier du disque.
+es1_image_prompt.message       Choisissez une image disque de Metaltech: Earthsiege (.iso, .bin ou .cue). HERCULAN lit le disque depuis cette image et l'enregistre, pas l'installation, et le jeu redémarre.
+es1_image_prompt.path_hint     Image disque
+es1_image_prompt.picker_title  Choisissez une image disque de Metaltech: Earthsiege
+es1_image_prompt.accept        Utiliser cette image
+es1_image_prompt.no_path       Tapez ou collez le chemin de l'image disque.
+es1_disc.missing               {0} n'existe pas.
+es1_disc.unreadable            {0} ne peut pas être lu comme une image disque : {1}
+es1_disc.not_es1               {0} n'est pas un disque de Metaltech: Earthsiege : il ne contient pas {1} ou pas {2}.
 update.title                   Mise à jour disponible
 update.message                 HERCULAN {0} est disponible. Vous avez la version {1}.
 update.view_release            Voir la version

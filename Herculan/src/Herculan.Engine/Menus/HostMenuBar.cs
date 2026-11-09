@@ -11,8 +11,8 @@ namespace Herculan.Engine.Menus;
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, and the pointer at the window's top left over the
 /// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's; its "Game" menu, the shell's alone and absent over
 /// a mission (<see cref="GameMenu"/>); and the panels it opens: Debug and Mission Scripting (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About,
-/// of which a host greys Settings, Controller, Keys and Tweaks by passing none (Metaltech: Earthsiege's shell, which has
-/// no counterpart of them yet); the
+/// of which a host greys Settings, Controller, Keys and Tweaks by passing none (Metaltech: Earthsiege's shell greys
+/// Controller and Keys, which have no counterpart there yet); the
 /// Editor item, which leaves the shell for the mission editor and is greyed over a mission; Custom Missions, the shell's
 /// alone and absent over a mission; and the
 /// first start's <see cref="WelcomeDialog"/>, the <see cref="UpdateDialog"/> and the <see cref="ErrorDialog"/>, which the shell raises without the bar; and a

@@ -1,7 +1,9 @@
 using HercWorks.Core.Io;
 using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
+using Herculan.Engine.Content;
 using Herculan.Es1.Flic;
+using Herculan.Es1.Install;
 using Herculan.Es1.Shell;
 using Herculan.Es1.Sim;
 
@@ -34,7 +36,10 @@ public static class Es1Launcher {
 	/// <summary>The free bytes <c>Launcher_HasDiskSpace</c> is asked for.</summary>
 	private const long DiskSpaceNeeded = 40_000;
 
-	private const string AltDriveVariable = "ALT_DRIVE", PreferAltVariable = "PREFER_ALT";
+	/// <summary>The environment variable naming the CD drive, which the installer's <c>ES.BAT</c> sets.</summary>
+	internal const string AltDriveVariable = "ALT_DRIVE";
+
+	private const string PreferAltVariable = "PREFER_ALT";
 	private const string ExitPath = @"data\exit.cfg", PrefsPath = @"data\prefs.cfg", DetectProgram = "detect.exe";
 	private const string FlicPlayer = "playflic.exe", IntroFlic = @"flic\intro3.dfl", EndFlic = @"flic\end.dfl";
 	private static readonly string[] FlicSwitches = ["-B1000000", "-S83"];
@@ -72,6 +77,11 @@ public static class Es1Launcher {
 		var prefixes = new Prefixes(installRoot, preferAlt ? altDrive! : "",
 			preferAlt && altDrive != null ? "" : altDrive ?? "");
 
+		// With no ALT_DRIVE, the disc the Settings window names stands in for the CD drive a full install's ES.BAT names,
+		// PREFER_ALT cleared (Es1Disc): both prefixes stay empty, so the data files are the install's, and the flic player
+		// and the flics are taken on the disc.
+		using var disc = altDrive == null ? Es1Disc.OpenRemembered() : null;
+
 		// 4. The disk check.
 		switch (HasDiskSpace(DiskSpaceNeeded, prefixes)) {
 			case null:
@@ -89,9 +99,10 @@ public static class Es1Launcher {
 		// 7. Launcher_SaveVideoMode, the BIOS's equipment byte and video mode, and at the end Launcher_RestoreVideoMode: this
 		// engine sets no DOS video mode, so there is nothing to save or restore.
 
-		// 8. The flics' command lines, only with ALT_DRIVE set; 9. the flic player looked for (docs/es1/shell/launcher.md#the-flics).
-		Flics? flics = altDrive != null ? new Flics(prefixes, altDrive) : null;
-		bool flicPlayerFound = FileReadable(flics?.Probe);
+		// 8. The flics' command lines, only with ALT_DRIVE set or the disc standing in for it; 9. the flic player looked for
+		// (docs/es1/shell/launcher.md#the-flics).
+		Flics? flics = altDrive != null ? new Flics(prefixes, altDrive) : disc != null ? new Flics(prefixes, disc) : null;
+		bool flicPlayerFound = flics?.PlayerFound() == true;
 
 		int state = InitialState;
 		bool firstShell = true;
@@ -101,7 +112,7 @@ public static class Es1Launcher {
 					// data\prefs.cfg opened rb to see that it is there. PLACEHOLDER: DETECT.EXE, which retail runs when it is
 					// not, is not ported; the shell then loads every option as 0 (Es1Preferences.FromFile of no file).
 					if (!Opens(prefixes.Path(PrefsPath))) {
-						string detect = flicPlayerFound ? prefixes.OtherPath(DetectProgram) : prefixes.Path(DetectProgram);
+						string detect = flicPlayerFound ? flics!.OtherPath(DetectProgram) : prefixes.Path(DetectProgram);
 						Console.Error.WriteLine($"PLACEHOLDER: data\\prefs.cfg is missing and {detect}{(flicPlayerFound ? " " + AltDriveSwitch : "")}, which ESCD.EXE runs then, is not ported.");
 					}
 
@@ -112,13 +123,13 @@ public static class Es1Launcher {
 					goto case 3;
 				case 3:
 				case 6:
-					flicPlayerFound = FileReadable(flics?.Probe);
+					flicPlayerFound = flics?.PlayerFound() == true;
 					RunShell(installRoot, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
 						shellMenus, firstShell ? screenshotPath : null, window, silent);
 					firstShell = false;
 					break;
 				case 4:
-					flicPlayerFound = FileReadable(flics?.Probe);
+					flicPlayerFound = flics?.PlayerFound() == true;
 					if (flicPlayerFound) {
 						flics!.Play(flics.End, window, silent);
 					}
@@ -129,7 +140,7 @@ public static class Es1Launcher {
 					break;
 				case 2:
 				case 5:
-					flicPlayerFound = FileReadable(flics?.Probe);
+					flicPlayerFound = flics?.PlayerFound() == true;
 					RunSimulator(installRoot, BuildArgs(arguments, state, flicPlayerFound), window, silent);
 					break;
 				default:
@@ -336,10 +347,14 @@ public static class Es1Launcher {
 
 	/// <summary>
 	/// The two flics' command lines <c>Launcher_Main</c> builds with <c>ALT_DRIVE</c> set, and the flic player's probe path
-	/// (docs/es1/shell/launcher.md#the-flics).
+	/// (docs/es1/shell/launcher.md#the-flics); or, with the disc the Settings window names standing in for
+	/// <c>ALT_DRIVE</c> (<see cref="Es1Disc"/>), the same files on that disc.
 	/// </summary>
 	private sealed class Flics {
-		private readonly string _installRoot, _altDrive;
+		private readonly Prefixes _prefixes;
+		private readonly string _installRoot;
+		private readonly string? _altDrive;
+		private readonly GameDisc? _disc;
 
 		/// <summary>The flic drive's paths for <c>PLAYFLIC.EXE</c> and its flic.</summary>
 		public (string Program, string File) Intro { get; }
@@ -355,6 +370,7 @@ public static class Es1Launcher {
 		/// the flics' sounds may be read under (<see cref="Es1FlicHost.Run"/>).
 		/// </summary>
 		public Flics(Prefixes prefixes, string altDrive) {
+			_prefixes = prefixes;
 			_installRoot = prefixes.InstallRoot;
 			_altDrive = altDrive;
 			string? root = Path.GetPathRoot(Path.GetFullPath(prefixes.InstallRoot));
@@ -366,14 +382,39 @@ public static class Es1Launcher {
 		}
 
 		/// <summary>
+		/// The flics on <paramref name="disc"/>, which stands for the CD drive as a full install's <c>ALT_DRIVE</c> does:
+		/// the paths are the same names on the disc's root, with no drive.
+		/// </summary>
+		public Flics(Prefixes prefixes, GameDisc disc) {
+			_prefixes = prefixes;
+			_installRoot = prefixes.InstallRoot;
+			_disc = disc;
+			Intro = (FlicPlayer, IntroFlic);
+			End = (FlicPlayer, EndFlic);
+			Probe = FlicPlayer;
+		}
+
+		/// <summary><c>Launcher_FileReadable</c>(the probe path), the probe taken on the disc when there is one.</summary>
+		public bool PlayerFound() => _disc != null ? _disc.FileExists(Probe) : FileReadable(Probe);
+
+		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_OtherPrefix</c>, <paramref name="path"/>), or where it is on the disc, for a message.</summary>
+		public string OtherPath(string path) => _disc != null ? _disc.Describe(path) : _prefixes.OtherPath(path);
+
+		/// <summary>
 		/// A flic played: <c>dos_setdrive</c>(the preferred drive), <c>spawnl</c>(0, program, program, file, <c>-B1000000</c>,
 		/// <c>-S83</c>) and <c>dos_setdrive</c>(the starting drive), its status not kept. The program is
 		/// <see cref="Es1FlicHost"/> in <paramref name="window"/>, opening no audio device when <paramref name="silent"/>.
 		/// The file's path is taken as the host's file system resolves it, a drive-relative one against the process's current
-		/// folder on that drive, as DOS's does, and one with no drive against the current folder. The preferred drive, DOS's
-		/// current one while the player runs, is where it reads <c>RESOURCE.CFG</c>, which the install folder stands in for.
+		/// folder on that drive, as DOS's does, and one with no drive against the current folder; with a disc it is taken
+		/// on the disc. The preferred drive, DOS's current one while the player runs, is where it reads <c>RESOURCE.CFG</c>,
+		/// which the install folder stands in for.
 		/// </summary>
 		public void Play((string Program, string File) flic, HostWindow window, bool silent) {
+			if (_disc != null) {
+				Es1FlicHost.Run(_disc, flic.File, FlicSwitches, window, _installRoot, silent);
+				return;
+			}
+
 			string path = flic.File.Length > 1 && flic.File[1] == ':'
 				? Path.GetFullPath(flic.File)
 				: CaseInsensitivePath.Combine(Directory.GetCurrentDirectory(), flic.File);

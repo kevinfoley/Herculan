@@ -227,6 +227,28 @@ settings.check_updates         Nach Updates suchen
 settings.checking_updates      Suche läuft...
 settings.up_to_date            Sie haben die neueste Version, {0}.
 settings.update_check_failed   Die Suche nach Updates ist fehlgeschlagen: {0}
+es1_settings.folders           Metaltech: Earthsiege-Ordner
+es1_settings.install_message   Wählen Sie den Ordner von Metaltech: Earthsiege: den Ordner, der den Ordner {0} und die Datei {1} enthält. Das Spiel startet mit der neuen Installation neu.
+es1_settings.disc              Datenträger (nur HERCULAN)
+es1_settings.disc_note         Das Spiel spielt seine Videos vom Datenträger ab.
+es1_settings.alt_drive_overrides Wird nicht verwendet, solange die Umgebungsvariable {0} gesetzt ist.
+es1_settings.choose_disc_folder Ordner wählen...
+es1_settings.choose_disc_image Abbild wählen...
+es1_settings.save_failed       Der Datenträger konnte nicht in {0} gespeichert werden.
+es1_settings.language          Sprache
+es1_disc_prompt.message        Wählen Sie den Ordner des Metaltech: Earthsiege-Datenträgers, etwa das CD-Laufwerk oder eine Kopie der CD. HERCULAN speichert ihn, nicht die Installation, und das Spiel startet neu.
+es1_disc_prompt.path_hint      Datenträgerordner
+es1_disc_prompt.picker_title   Ordner des Metaltech: Earthsiege-Datenträgers auswählen
+es1_disc_prompt.accept         Diesen Ordner verwenden
+es1_disc_prompt.no_path        Geben Sie den Pfad zum Datenträgerordner ein oder fügen Sie ihn ein.
+es1_image_prompt.message       Wählen Sie ein Metaltech: Earthsiege-Datenträgerabbild (.iso, .bin oder .cue). HERCULAN liest den Datenträger daraus und speichert es, nicht die Installation, und das Spiel startet neu.
+es1_image_prompt.path_hint     Datenträgerabbild
+es1_image_prompt.picker_title  Metaltech: Earthsiege-Datenträgerabbild auswählen
+es1_image_prompt.accept        Dieses Abbild verwenden
+es1_image_prompt.no_path       Geben Sie den Pfad zum Datenträgerabbild ein oder fügen Sie ihn ein.
+es1_disc.missing               {0} existiert nicht.
+es1_disc.unreadable            {0} kann nicht als Datenträgerabbild gelesen werden: {1}
+es1_disc.not_es1               {0} ist kein Metaltech: Earthsiege-Datenträger: Er enthält kein {1} oder kein {2}.
 update.title                   Update verfügbar
 update.message                 HERCULAN {0} ist verfügbar. Sie haben Version {1}.
 update.view_release            Version anzeigen
