@@ -3,10 +3,9 @@ using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
-using Herculan.Es2.Settings;
 using Silk.NET.Input;
 
-namespace Herculan.Engine.Host.Shell;
+namespace Herculan.Es1.Host;
 
 /// <summary>
 /// Metaltech: Earthsiege's shell's menus over its <see cref="FrontEndWindow"/>: HERCULAN's own <see cref="HostMenuBar"/>
@@ -14,7 +13,7 @@ namespace Herculan.Engine.Host.Shell;
 /// Settings, Controller, Keys, Tweaks and Editor are greyed, since each is built on Earthsiege 2's install, controls,
 /// tweaks or missions; Custom Missions is left out. There is no welcome and no automatic update check.
 /// </summary>
-sealed class Es1ShellMenus : IFrontEndMenus {
+public sealed class Es1ShellMenus : IFrontEndMenus {
 	// The accessibility settings ES1 honors: the larger font, which ScaledImGui reads for the bar's own windows. The damage
 	// flash and shake settings are read by Earthsiege 2's cockpit alone.
 	private static readonly A11ySettingDefinition<bool>[] Accessibility = [A11ySettingDefinitions.LargerFont];

@@ -1,7 +1,6 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Host;
-using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using Herculan.Es1.Host;
