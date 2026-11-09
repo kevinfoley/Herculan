@@ -1,9 +1,11 @@
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Io;
+using HercWorks.Core.Io.Transform;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Disc;
 using HercWorks.Vol;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
 using Herculan.Es2.Content;
 using Herculan.Es2.World;
@@ -16,63 +18,14 @@ namespace Herculan.Es2.Install;
 /// here means a directory containing a <c>VOL</c> folder with the game's archives in it.
 /// </summary>
 public static class GameInstall {
-	/// <summary>Environment variable checked first, so a developer can point at any install.</summary>
-	public const string PathVariable = "ES2_GAME_PATH";
+	/// <summary>Environment variable checked first, so a developer can point at any install (<see cref="RetailInstalls.Es2PathVariable"/>).</summary>
+	public const string PathVariable = RetailInstalls.Es2PathVariable;
 
-	/// <summary>
-	/// Where the last install used is remembered: <c>install-path.txt</c> in <see cref="UserConfig.Folder"/>. One line,
-	/// the path.
-	/// </summary>
-	public static string RememberedPathFile => UserConfig.PathOf("install-path.txt");
+	/// <summary>Earthsiege 2's install root as <see cref="RetailInstalls.Locate"/> resolves it.</summary>
+	public static string? Locate(string? explicitPath = null) => RetailInstalls.Locate(RetailGame.Earthsiege2, explicitPath);
 
-	/// <summary>
-	/// Resolves an install root, in order: an explicit <paramref name="explicitPath"/> (a command
-	/// line argument), the <c>ES2_GAME_PATH</c> environment variable, the install last used (see
-	/// <see cref="Remember"/>), then an <c>ES2</c> folder beside the running binary or any folder above
-	/// it, which covers a sibling install checked out beside this repo, reached from
-	/// <c>src/Herculan.Engine.Host/bin/...</c>.
-	/// Returns null when nothing matched, so the caller can ask the player or print something more
-	/// useful than a stack trace. An explicit path that is not an install is null too, without trying
-	/// the rest: a path the player typed is never silently swapped for another.
-	/// </summary>
-	public static string? Locate(string? explicitPath = null) {
-		if (!string.IsNullOrWhiteSpace(explicitPath)) {
-			return IsInstallRoot(explicitPath) ? Path.GetFullPath(explicitPath) : null;
-		}
-
-		string? fromEnvironment = Environment.GetEnvironmentVariable(PathVariable);
-		if (!string.IsNullOrWhiteSpace(fromEnvironment) && IsInstallRoot(fromEnvironment)) {
-			return Path.GetFullPath(fromEnvironment);
-		}
-
-		// A remembered install that has since moved or been deleted falls through to the search.
-		if (LoadRemembered() is { } remembered && IsInstallRoot(remembered)) {
-			return Path.GetFullPath(remembered);
-		}
-
-		// Walk up from the binary looking for a sibling ES2 folder — covers running straight out
-		// of the repo without any configuration, which is the normal development case.
-		var directory = new DirectoryInfo(AppContext.BaseDirectory);
-		while (directory != null) {
-			string candidate = CaseInsensitivePath.Combine(directory.FullName, "ES2");
-			if (IsInstallRoot(candidate)) {
-				return Path.GetFullPath(candidate);
-			}
-			directory = directory.Parent;
-		}
-
-		return null;
-	}
-
-	/// <summary>
-	/// Records <paramref name="installRoot"/> as the install last used, which <see cref="Locate"/> tries
-	/// before searching. A failed write is logged and otherwise ignored: the next launch searches again.
-	/// </summary>
-	public static void Remember(string installRoot) => UserConfig.Write(RememberedPathFile, Path.GetFullPath(installRoot));
-
-	/// <summary>Whether <paramref name="path"/> is an install root: a directory holding the archive directory.</summary>
-	public static bool IsInstallRoot(string path) =>
-		Directory.Exists(path) && Directory.Exists(GameContent.ArchiveDirectory(path));
+	/// <summary>Whether <paramref name="path"/> is an Earthsiege 2 install root (<see cref="RetailInstalls.IsInstallOf"/>).</summary>
+	public static bool IsInstallRoot(string path) => RetailInstalls.IsInstallOf(path, RetailGame.Earthsiege2);
 
 	/// <summary>What DBSIM mounts of the install and of the disc <see cref="OpenDisc"/> opens.</summary>
 	public static GameContent MountSimulator(string installRoot) {
@@ -99,28 +52,6 @@ public static class GameInstall {
 	/// </summary>
 	public static GameContent MountShell(string installRoot, GameDisc? disc) =>
 		GameContent.MountInstall(installRoot, disc, Voln.VshellProgram, LauncherLanguage.Shell(installRoot));
-
-	/// <summary>
-	/// Whether <paramref name="path"/> is on a CD or DVD, or a disc image mounted as one: the drive holding it, the
-	/// one with the longest root that contains it, reports <see cref="DriveType.CDRom"/>. A disc holds an install's
-	/// folders but takes no writes, and the game writes its saves and its mission handoff into the install, so a disc
-	/// is never the install. False when the drives cannot be read.
-	/// </summary>
-	public static bool IsOnDisc(string path) {
-		try {
-			string full = Path.GetFullPath(path);
-			var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-			bool Holds(DriveInfo drive) {
-				string root = drive.RootDirectory.FullName;
-				return full.Equals(root, comparison) || full.StartsWith(Path.EndsInDirectorySeparator(root)
-					? root : root + Path.DirectorySeparatorChar, comparison);
-			}
-
-			return DriveInfo.GetDrives().Where(Holds).MaxBy(drive => drive.RootDirectory.FullName.Length)?.DriveType == DriveType.CDRom;
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) {
-			return false;
-		}
-	}
 
 	/// <summary>
 	/// The directory the first token of the install's <c>data\drive.cfg</c> names, which on a retail
@@ -397,16 +328,6 @@ public static class GameInstall {
 			return disc.ArchiveNames().Contains(LauncherLanguage.V110ArchiveName, StringComparer.OrdinalIgnoreCase);
 		} catch (Exception ex) when (ex is DiscFormatException or IOException or UnauthorizedAccessException) {
 			return false;
-		}
-	}
-
-	private static string? LoadRemembered() {
-		string path = RememberedPathFile;
-		try {
-			return File.Exists(path) ? File.ReadAllText(path).Trim() : null;
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			Console.Error.WriteLine($"Could not read {path} ({ex.Message}); searching for the install instead.");
-			return null;
 		}
 	}
 }

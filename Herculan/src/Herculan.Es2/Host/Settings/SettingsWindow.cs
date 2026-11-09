@@ -2,6 +2,7 @@ using System.Numerics;
 using HercWorks.Core.Data.File.Cfg;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Es2.Host.Install;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Menus;
@@ -437,7 +438,7 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 				default:
 					_session.InstallRoot = path!;
 					if (_session.RememberInstall) {
-						GameInstall.Remember(path!);
+						RetailInstalls.Remember(path!);
 					}
 					break;
 			}

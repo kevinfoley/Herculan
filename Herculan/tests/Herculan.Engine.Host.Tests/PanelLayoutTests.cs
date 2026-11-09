@@ -1,6 +1,7 @@
 using System.Numerics;
 using Herculan.Es2.Host;
 using Herculan.Es2.Host.Install;
+using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
 using Herculan.Es2.Host.Settings;
 using Herculan.Engine.Menus;
@@ -44,8 +45,8 @@ public class PanelLayoutTests {
 	}
 
 	private static readonly Dictionary<string, Panel> Panels = new() {
-		["Install prompt"] = new(new(InstallPrompt.WindowWidth, InstallPrompt.WindowHeight), localization => StartupPrompt(localization, refuse: false)),
-		["Install prompt, path refused"] = new(new(InstallPrompt.WindowWidth, InstallPrompt.WindowHeight), localization => StartupPrompt(localization, refuse: true)),
+		["Install prompt"] = new(new(InstallPromptWindow.WindowWidth, InstallPromptWindow.WindowHeight), localization => StartupPrompt(localization, refuse: false)),
+		["Install prompt, path refused"] = new(new(InstallPromptWindow.WindowWidth, InstallPromptWindow.WindowHeight), localization => StartupPrompt(localization, refuse: true)),
 		["Install window"] = new(new(InstallWindow.WindowWidth, InstallWindow.WindowHeight), localization => {
 			var panel = new InstallPanel(localization);
 			return new Scene(() => InstallWindow.Draw(panel, 0), panel);
@@ -101,7 +102,7 @@ public class PanelLayoutTests {
 		}
 
 		var language = new InterfaceLanguageCombo(localization);
-		return new Scene(() => InstallPrompt.Draw(prompt, language, 0, out _));
+		return new Scene(() => InstallPromptWindow.Draw(prompt, language, 0, out _));
 	}
 
 	private static Scene SettingsPrompt(LocalizationTable localization, SettingsWindow.PromptKind kind, bool refuse) =>

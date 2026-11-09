@@ -1,5 +1,6 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Editor;
+using Herculan.Engine.Install;
 using Herculan.Es2.Install;
 
 // The mission editor on its own: find the install and run the editor (EditorHost) over it. The game runs the
@@ -15,11 +16,11 @@ if (installRoot == null) {
 		$"The path should be the folder containing the '{GameContent.ArchiveFolderName}' directory.");
 	return 1;
 }
-if (GameInstall.IsOnDisc(installRoot)) {
+if (RetailInstalls.IsOnDisc(installRoot)) {
 	Console.Error.WriteLine($"{installRoot}: The CD cannot be used as the install location because save files cannot be written to the CD.");
 	return 1;
 }
-GameInstall.Remember(installRoot);
+RetailInstalls.Remember(installRoot);
 
 GameContent? shellContent = null;
 EditorHost.Run(new EditorLaunch(installRoot, GameInstall.MountSimulator(installRoot),

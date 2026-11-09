@@ -1,6 +1,7 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Host;
+using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using Herculan.Es1.Host;
@@ -57,38 +58,18 @@ string imguiFontPath = Path.Combine(AppContext.BaseDirectory,
 string imguiItalicFontPath = Path.Combine(AppContext.BaseDirectory,
 	"Assets", "Fonts", "Open_Sans", "static", "OpenSans-Italic.ttf");
 
-// An install named on the command line is never second-guessed, and a --screenshot run has nobody to ask,
-// so only a search that came up empty, or --ask-install's skipped one, asks the player.
-string? installRoot = options.InstallPath != null ? GameInstall.Locate(options.InstallPath)
-	: options.AskForInstall ? null
-	: GameInstall.Locate();
-
-// A disc is never the install, however it was found: the prompt opens on it with the reason, and a command line or a
-// --screenshot run, with no prompt, stops with it.
-string? onDisc = installRoot != null && GameInstall.IsOnDisc(installRoot) ? installRoot : null;
-if (onDisc != null) {
-	installRoot = null;
-}
-if (installRoot == null && options.InstallPath == null && options.ScreenshotPath == null) {
-	installRoot = InstallPrompt.Run(localization, imguiFontPath, onDisc);
-	if (installRoot == null) {
-		return 1;
-	}
-}
-if (installRoot == null && onDisc != null) {
-	HostLog.Fail($"{onDisc}: {localization.GetStringOrKey("install_prompt.on_disc")}");
-	return 1;
-}
+// Which install runs, of which game (StartupInstall): one named on the command line, or the game the start-up chooser
+// picks, asking for its install when none is found. Each game's install is remembered for the next launch, unless
+// --ask-install asked for it.
+string? installRoot = StartupInstall.Find(options, localization, imguiFontPath);
 if (installRoot == null) {
-	HostLog.Fail(
-		"Could not find an Earthsiege 2 installation.\n" +
-		$"Pass its path as the first argument, or set {GameInstall.PathVariable}.\n" +
-		$"The path should be the folder containing the '{GameContent.ArchiveFolderName}' directory.");
 	return 1;
 }
+if (!options.AskForInstall) {
+	RetailInstalls.Remember(installRoot);
+}
 
-// A Metaltech: Earthsiege install is not remembered: the remembered install is the one a bare launch runs, and that is
-// still Earthsiege 2's front end. With no mission named and none of --play, --demo, --record and --sim it runs the
+// A Metaltech: Earthsiege install, with no mission named and none of --play, --demo, --record and --sim, runs the
 // launcher, ESCD.EXE, as ES.BAT does, with GO.EXE's switches as its own command line, which it hands on to the shell and
 // the simulator. A named mission loads as a single mission and runs the simulator alone; --sim
 // runs it on the install's data\ files, as DBSIM.EXE does; --play and --demo play a tape, as its -p and -D do, and
@@ -120,7 +101,7 @@ if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
 	return Es1ZoneViewer.Run(installRoot, options.MissionPath, es1.ToOverrides(), options.PlayTape, options.DemoTape,
 		options.RecordTape, silent: options.SilentAudio);
 }
-if (options.Es1.Staged || options.Es1.Simulator || options.Es1.ShellArguments.Count > 0) {
+if (StartupInstall.Es1Requested(options)) {
 	HostLog.Fail($"--theater, --world, {Es1Options.SimulatorFlag} and GO.EXE's switches are for a Metaltech: Earthsiege install.");
 	return 1;
 }
@@ -128,9 +109,6 @@ if (options.Es1.Staged || options.Es1.Simulator || options.Es1.ShellArguments.Co
 TweakSettings.Current = new TweakSettings(Es2TweakSettingDefinitions.All, Es2TweakSettingDefinitions.FileName);
 TweakSettings.Current.LoadFromDisk();
 
-if (!options.AskForInstall) {
-	GameInstall.Remember(installRoot);
-}
 using var session = new HostSession(installRoot, localization, imguiFontPath, imguiItalicFontPath) {
 	RememberInstall = !options.AskForInstall,
 };

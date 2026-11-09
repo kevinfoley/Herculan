@@ -1,18 +1,18 @@
 using System.Numerics;
-using Herculan.Engine;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using ImGuiNET;
 
-namespace Herculan.Es2.Host.Install;
+namespace Herculan.Engine.Install;
 
 /// <summary>
 /// The body of a "choose a folder" or "choose a file" prompt: a message, a path field with the platform's own
 /// picker beside it (<see cref="NativePathPicker"/>), the reason the last choice was refused, and an accept and
-/// a dismiss button at the foot, accept greyed while the refused choice is still in the field. It draws into whatever ImGui window is current, so <see cref="InstallPrompt"/>
-/// shows it as a window of its own and <see cref="Settings.SettingsWindow"/> as a modal.
+/// a dismiss button at the foot, accept greyed while the refused choice is still in the field. It draws into whatever
+/// ImGui window is current, so <see cref="InstallPromptWindow"/> shows it as a window of its own and a game's Settings
+/// window as a modal.
 /// </summary>
-sealed class PathPrompt {
+public sealed class PathPrompt {
 	/// <summary>What one frame of the prompt left it at.</summary>
 	public enum Outcome {
 		Open,
@@ -161,7 +161,7 @@ sealed class PathPrompt {
 	/// Takes the path field's path if <c>refusal</c> has nothing against it; otherwise says why not, and greys the accept
 	/// button until the field changes.
 	/// </summary>
-	internal bool Accept() {
+	public bool Accept() {
 		string path = _path.Trim().Trim('"');
 		_error = path.Length == 0 ? _localization.GetStringOrKey(_keyPrefix + ".no_path") : _refusal(path);
 		if (_error != null) {

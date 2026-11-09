@@ -1,5 +1,6 @@
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Input;
 using Herculan.Es2.Content;
@@ -51,7 +52,7 @@ public sealed class HostSession(string installRoot, LocalizationTable localizati
 
 	/// <summary>
 	/// Whether an install <see cref="Settings.SettingsWindow"/> switches to is remembered for the next launch
-	/// (<see cref="GameInstall.Remember"/>); <c>--ask-install</c> turns it off.
+	/// (<see cref="RetailInstalls.Remember"/>); <c>--ask-install</c> turns it off.
 	/// </summary>
 	public bool RememberInstall { get; init; } = true;
 

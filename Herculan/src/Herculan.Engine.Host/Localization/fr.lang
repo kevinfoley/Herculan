@@ -118,6 +118,22 @@ install_prompt.quit            Quitter
 install_prompt.no_path         Tapez ou collez le chemin du dossier d'Earthsiege 2.
 install_prompt.not_an_install  {0} n'est pas un dossier d'Earthsiege 2 : il ne contient aucun dossier {1}.
 install_prompt.on_disc         Le CD ne peut pas servir d'emplacement d'installation, car les sauvegardes ne peuvent pas être écrites sur le CD.
+install_prompt.back            Retour
+install_prompt.other_game      {0} est un dossier de Metaltech: Earthsiege, pas un dossier d'Earthsiege 2.
+es1_install_prompt.window_title HERCULAN Engine — Trouver Metaltech: Earthsiege
+es1_install_prompt.message     HERCULAN n'a pas trouvé Metaltech: Earthsiege. Choisissez le dossier de Metaltech: Earthsiege : celui qui contient le dossier {0} et le fichier {1}.
+es1_install_prompt.path_hint   Dossier de Metaltech: Earthsiege
+es1_install_prompt.picker_title Choisissez le dossier de Metaltech: Earthsiege
+es1_install_prompt.accept      Utiliser ce dossier
+es1_install_prompt.no_path     Tapez ou collez le chemin du dossier de Metaltech: Earthsiege.
+es1_install_prompt.not_an_install {0} n'est pas un dossier de Metaltech: Earthsiege : il ne contient aucun dossier {1}.
+es1_install_prompt.other_game  {0} n'est pas un dossier de Metaltech: Earthsiege : il ne contient aucun fichier {1}.
+chooser.window_title           HERCULAN Engine — Choisir un jeu
+chooser.message                À quel jeu voulez-vous jouer ?
+chooser.not_found              HERCULAN n'a pas trouvé ce jeu. Choisissez-le pour indiquer son dossier.
+chooser.dont_ask               Ne plus demander
+game.earthsiege2               Earthsiege 2
+game.earthsiege1               Metaltech: Earthsiege
 mission_load.window_title      HERCULAN Engine — Erreur
 mission_load.missing_file      La mission ne peut pas démarrer : {0} est manquant. Lancez la mission depuis les menus, qui écrivent ce fichier.
 save.auto_name                 {0} {1} Mission {2}

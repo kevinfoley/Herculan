@@ -67,8 +67,10 @@ static class HostArguments {
 	public const string Usage = """
 		Usage: Herculan.Engine.Host [<install>] [<mission>] [options]
 
-		  <install>   the Earthsiege 2 folder; default ES2_GAME_PATH, then the last one used, then an ES2 folder
-		              above the executable, then a window asking for it
+		  <install>   the Earthsiege 2 or Metaltech: Earthsiege folder, whichever game it holds runs; default a
+		              window asking which game, unless "Don't ask again" was ticked there, then that game's
+		              ES2_GAME_PATH or ES1_GAME_PATH, the last one used, an ES2 or ES1 folder above the
+		              executable, then a window asking for it; a Metaltech: Earthsiege option picks that game
 		  <mission>   a script.dat with its mission.var and player.mec, or a mission's .MSN name (C1_03); default DATA\script.dat in the install
 
 		What runs (default: the front end)
@@ -97,7 +99,7 @@ static class HostArguments {
 		  --cd-drive <drive>  --music-dir <dir>
 
 		Settings and input devices
-		  --ask-install               ask for the install at once, and remember none
+		  --ask-install               ask for the game's install at once, and remember none
 		  --windowed  --no-write-prefs  --joystick [0-8]  --joystick-probe  --write-joystick-map
 
 		Installing
