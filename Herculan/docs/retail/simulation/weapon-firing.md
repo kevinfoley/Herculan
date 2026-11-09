@@ -101,7 +101,7 @@ The ray record:
 | `+0x08` | a literal 200, slack the range check adds before rejecting a candidate |
 | `+0x0a` | the world-to-muzzle transform, cached by the sweep for every hit test to work in |
 
-What the power scale does to the two figures is in [`../formats/proj-dat.md`](../formats/proj-dat.md#layout); the difficulty scale, applied at the top of `Sim_RaycastObjectList` itself, is in [`difficulty.md`](difficulty.md#the-damage-scale-reaches-all-direct-fire-not-just-plasma).
+What the power scale does to the two figures is in [`../formats/proj-dat.md`](../formats/proj-dat.md#layout); the difficulty scale, applied at the top of `Sim_RaycastObjectList` itself, is in [`difficulty.md`](difficulty.md#the-damage-scale-reaches-all-direct-fire).
 
 ## Where the shot comes from — `WeaponMount_PrepareShot` (`0040e788`)
 

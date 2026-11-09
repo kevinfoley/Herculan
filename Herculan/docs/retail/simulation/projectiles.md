@@ -68,7 +68,7 @@ A walker adds `Q10(2000, speed scalar)` to every step, so an OUTLAW at its top s
 
 Subtype 9 is singled out by literal value. Before the raycast it stashes both damage figures in globals and then **empties the shot record** — armour, shield and splash factor alike — so the raycast reports contact and nothing more. Everything the round does it does through a `Damage_ExplosiveBlastSweep` at 4000 units, which **excludes nothing**: the object it touched stands in the blast like any other. A proximity fuze detonates it within 2000 units of the homing target once the bearing error exceeds a quarter turn.
 
-The blast figure is the record's **armour** damage, power-scaled — the two are equal on the one record this reaches — and then difficulty-scaled by a direct `Damage_ScaleByDifficulty` (`00426b04`) call, because the emptied record gives the raycast's own scaling nothing to scale ([`difficulty.md`](difficulty.md#the-damage-scale-reaches-all-direct-fire-not-just-plasma)). The stash is written before that scale, so it holds the power-scaled figures without the difficulty scale.
+The blast figure is the record's **armour** damage, power-scaled — the two are equal on the one record this reaches — and then difficulty-scaled by a direct `Damage_ScaleByDifficulty` (`00426b04`) call, because the emptied record gives the raycast's own scaling nothing to scale ([`difficulty.md`](difficulty.md#the-damage-scale-reaches-all-direct-fire)). The stash is written before that scale, so it holds the power-scaled figures without the difficulty scale.
 
 The one reader of the stash is a structure struck on its collision-volume path, which puts the armour figure back — see [`hit-detection.md`](hit-detection.md#base_directfirehittest--00405038).
 
