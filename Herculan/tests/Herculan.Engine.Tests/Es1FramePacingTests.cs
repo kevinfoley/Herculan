@@ -86,6 +86,34 @@ public class Es1FramePacingTests {
 		Assert.DoesNotContain(run.Ticks, tick => tick > slideTick && tick < slide[^1]);
 	}
 
+	/// <summary>
+	/// A tick whose loop waits for a retrace every pass, as the preferences panel's does, runs a pass on each of the 70
+	/// retraces a second under a 60 Hz host; a host frame of 100 ms, a stall, runs at most one, and the 60 Hz frames after
+	/// it are back to 70 a second. Catches every retrace in a stall replayed, each a pass that draws a frame, and a stall
+	/// threshold so low that a 60 Hz host misses retraces.
+	/// </summary>
+	[Fact]
+	public void ALoopWaitingEachRetraceRunsOncePerStall() {
+		var (_, frames) = Start();
+		var pacer = new RetraceLoopPacer();
+		while (pacer.Passes == 0) {
+			frames.Advance(TimeSpan.FromTicks(Second / 60), pacer);
+		}
+
+		Assert.InRange(PassesIn(60, Second / 60), 69, 71);
+		Assert.InRange(PassesIn(1, Second / 10), 0, 1);
+		Assert.InRange(PassesIn(60, Second / 60), 69, 71);
+
+		int PassesIn(int hostFrames, long step) {
+			int before = pacer.Passes;
+			for (int i = 0; i < hostFrames; i++) {
+				frames.Advance(TimeSpan.FromTicks(step), pacer);
+			}
+
+			return pacer.Passes - before;
+		}
+	}
+
 	/// <summary>The host time retrace <paramref name="index"/> starts at, 1/70 s apart from 0, rounded up to a tick.</summary>
 	private static long RetraceStart(long index) => (index * Second + 69) / 70;
 
@@ -153,6 +181,26 @@ public class Es1FramePacingTests {
 		public IEnumerable<Es1Wait> Tick(StrongBox<bool> ended) {
 			Deltas.Add(_clock.TickDelta);
 			return [];
+		}
+
+		public void Hold(TimeSpan elapsed) => _clock.Hold(elapsed);
+	}
+
+	/// <summary>A simulation clock as the pacer, whose first tick never ends: a loop that waits for a retrace each pass, counting its passes.</summary>
+	private sealed class RetraceLoopPacer : IEs1FramePacer {
+		private readonly Es1SimClock _clock = new();
+
+		public int Passes { get; private set; }
+
+		public bool Frozen => false;
+
+		public bool AdvanceClock(TimeSpan elapsed) => _clock.AdvanceHostFrame(elapsed);
+
+		public IEnumerable<Es1Wait> Tick(StrongBox<bool> ended) {
+			while (true) {
+				Passes++;
+				yield return Es1Wait.For(default);
+			}
 		}
 
 		public void Hold(TimeSpan elapsed) => _clock.Hold(elapsed);

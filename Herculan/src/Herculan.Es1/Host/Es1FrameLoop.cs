@@ -42,6 +42,15 @@ internal interface IEs1FramePacer {
 /// has run no tick runs and no input is taken, while the PC timer runs on (<see cref="Es1SimulationRunner.Hold"/>).
 /// Then the clock takes the rest of the host frame, as <c>Time_BeginSimTick</c> follows <c>Sim_EndFrame</c>.</para>
 ///
+/// <para><b>This engine's own:</b> a host frame longer than <see cref="StallRetraces"/> retraces is a stall, and the
+/// retraces in it before its last are missed: a wait for one of them waits for the last instead
+/// (<see cref="RunWork"/>). The frame's draw takes no host time here, where retail's took real time before its wait, so
+/// without this a host frame that draws slower than the monitor would resume the work once for every retrace its own
+/// draws took, each resume another draw, and the next host frame longer still: the preferences panel, which draws a frame
+/// every retrace (<see cref="Panels.Es1PreferencesRaise"/>), would sink to a few frames a second wherever one draw takes
+/// longer than a retrace, as under the "High resolution widescreen" tweak. A host that keeps up is untouched: a 60 Hz host
+/// still meets all 70 retraces a second.</para>
+///
 /// <para>The tick stands waiting the same way inside a panel's loop, which retail runs within <c>Sim_MainTick</c> (plan
 /// decision 11, <see cref="Es1Wait"/>): a pass of the loop that waits for no retrace ends with the next host frame, and
 /// the tick and the frame after it go on from there. So the frame's work from the tick on, the tick, the camera, the
@@ -56,6 +65,9 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// <c>VGA8_ShowPage</c> and <c>Vga_WaitVerticalRetrace</c> wait for (docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines).
 	/// </summary>
 	public const int RetracesPerSecond = 70;
+
+	/// <summary>The retraces a host frame may span before it counts as a stall, whose earlier retraces are missed.</summary>
+	internal const int StallRetraces = 2;
 
 	private readonly Action _camUpdate;
 	private readonly Action? _beginWorldPass;
@@ -263,7 +275,10 @@ public sealed class Es1FrameLoop : IEs1Frame {
 			WaitEnds = end;
 		}
 
-		if (!RunWork(pacer, end)) {
+		long? missedBefore = elapsed.Ticks > StallRetraces * TimeSpan.TicksPerSecond / RetracesPerSecond
+			? end - TimeSpan.TicksPerSecond / RetracesPerSecond
+			: null;
+		if (!RunWork(pacer, end, missedBefore)) {
 			return false;
 		}
 
@@ -284,19 +299,27 @@ public sealed class Es1FrameLoop : IEs1Frame {
 
 		_work = RunTickAndFrame(pacer).GetEnumerator();
 		Resume();
-		RunWork(pacer, end);
+		RunWork(pacer, end, missedBefore);
 		return _missionEnded;
 	}
 
 	/// <summary>
 	/// The frame's work held until each of its waits ends and run on from there, up to the host time
-	/// <paramref name="end"/>. Returns whether it has run to its end.
+	/// <paramref name="end"/>. In a stall, a wait for a retrace that starts before <paramref name="missedBefore"/>, one
+	/// retrace short of the host frame's end, waits instead for the first retrace from that time on, the host frame's
+	/// last. Returns whether it has run to its end.
 	/// </summary>
-	private bool RunWork(IEs1FramePacer? pacer, long end) {
+	private bool RunWork(IEs1FramePacer? pacer, long end, long? missedBefore = null) {
 		while (_work != null) {
 			if (_untilNextHostFrame || WaitEnds is not { } waitEnds || waitEnds > end) {
 				Hold(pacer, end);
 				return false;
+			}
+
+			if (waitEnds < missedBefore && _work.Current.Retrace is { } retrace) {
+				Hold(pacer, missedBefore.Value);
+				WaitEnds = WaitEnd(HostTime, retrace);
+				continue;
 			}
 
 			Hold(pacer, waitEnds);
