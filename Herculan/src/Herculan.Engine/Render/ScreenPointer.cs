@@ -25,6 +25,17 @@ public readonly record struct ScreenPointer(FrameFit Fit, Vector2D<int> Client, 
 		return (Math.Clamp(x, 0, Math.Max(Screen.X - 1, 0)), Math.Clamp(y, 0, Math.Max(Screen.Y - 1, 0)));
 	}
 
+	/// <summary>Whether the client position (<paramref name="clientX"/>, <paramref name="clientY"/>) is over the screen's frame, not over a bar beside it or outside the window.</summary>
+	public bool Over(float clientX, float clientY) {
+		var window = Fit.Window;
+		var (frameX, frameY) = Fit.ToFrame(clientX * window.X / Math.Max(Client.X, 1), clientY * window.Y / Math.Max(Client.Y, 1));
+		return frameX >= 0f && frameY >= 0f && frameX < Fit.Frame.X && frameY < Fit.Frame.Y;
+	}
+
+	/// <summary>Whether the client position (<paramref name="clientX"/>, <paramref name="clientY"/>) is inside the window's client area.</summary>
+	public bool InWindow(float clientX, float clientY) =>
+		clientX >= 0f && clientY >= 0f && clientX < Client.X && clientY < Client.Y;
+
 	/// <summary>The client position of the middle of screen pixel (<paramref name="x"/>, <paramref name="y"/>), which <see cref="ToScreen"/> maps back to it.</summary>
 	public (float X, float Y) ToClient(int x, int y) {
 		var frame = Fit.Frame;

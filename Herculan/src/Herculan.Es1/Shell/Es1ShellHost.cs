@@ -250,14 +250,16 @@ public static class Es1ShellHost {
 
 		/// <summary>
 		/// <b>This engine's own:</b> the system's pointer while the pointer is over the menu bar or one of its windows, where
-		/// the shell takes no mouse events and its own pointer stops; hidden over the shell, which draws its own.
+		/// the shell takes no mouse events and its own pointer stops, and while it is over the bars beside or above the
+		/// screen, where the shell's pointer stands at the screen's edge; hidden over the shell, which draws its own.
 		/// </summary>
 		private static void ShowSystemPointer(FrontEndWindow window) {
 			if (window.Mouse is not { } mouse) {
 				return;
 			}
 
-			var mode = window.ImGuiWantsMouse ? CursorMode.Normal : CursorMode.Hidden;
+			bool overScreen = Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize).Over(mouse.Position.X, mouse.Position.Y);
+			var mode = window.ImGuiWantsMouse || !overScreen ? CursorMode.Normal : CursorMode.Hidden;
 			if (mouse.Cursor.CursorMode != mode) {
 				mouse.Cursor.CursorMode = mode;
 			}

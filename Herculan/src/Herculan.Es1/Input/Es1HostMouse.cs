@@ -146,7 +146,11 @@ public sealed class Es1HostMouse {
 
 	/// <summary>
 	/// <c>Mouse_SetPosition</c> (<c>00055ab8</c>)(<i>x</i>, <i>y</i>): the point becomes the pointer's last position and
-	/// the host's pointer is moved onto that pixel of the screen.
+	/// the host's pointer is moved onto that pixel of the screen. <b>This engine's own:</b> a host pointer already on that
+	/// pixel stays where it is, so the shell's pointer sync of every frame does not snap it to the pixel's middle, nor pull
+	/// it in from the bars beside or above the screen, where it is held to the edge pixel the driver already has. Nor is a
+	/// host pointer outside the window moved, since the host reports no moves there and the driver's pointer stays where
+	/// the last one inside left it.
 	/// </summary>
 	public void SetPosition(int x, int y) {
 		X = x;
@@ -229,7 +233,13 @@ public sealed class Es1HostMouse {
 			return;
 		}
 
-		var (clientX, clientY) = Pointer().ToClient(X, Y);
+		var pointer = Pointer();
+		var host = _device.Position;
+		if (!pointer.InWindow(host.X, host.Y) || pointer.ToScreen(host.X, host.Y) == (X, Y)) {
+			return;
+		}
+
+		var (clientX, clientY) = pointer.ToClient(X, Y);
 		_device.Position = new Vector2(clientX, clientY);
 	}
 
