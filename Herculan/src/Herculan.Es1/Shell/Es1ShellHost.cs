@@ -147,6 +147,7 @@ public static class Es1ShellHost {
 						_devices.Sound.UpdateDriver();
 						_audio.Update();
 						_devices.HostKeyboard?.Advance(delta);
+						_devices.Mouse.TakeBackPointer();
 						Guard(() => _frame.AdvanceHostFrame(TimeSpan.FromSeconds(delta)));
 					}
 

@@ -1,6 +1,6 @@
 # HERCULAN Engine — Planning
 
-Living planning document for the engine port: architecture decisions and their rationale. This is a working document, not a spec — update it as decisions change.
+Living planning document for the Earthsiege 2 engine port: architecture decisions and their rationale. This is a working document, not a spec — update it as decisions change.
 
 Implementation history (what shipped, when, and why) is **not** kept here — it lives in git log and the per-topic docs under `docs/retail/simulation/`, `docs/retail/rendering/` and `docs/retail/formats/`, which are the canonical reference for any given subsystem's reverse-engineering and porting detail.
 
@@ -17,7 +17,7 @@ All behavior matches the original game exactly by default. The only exceptions a
 
 ## Settled decisions
 
-- Name: **HERCULAN Engine**, the one name for both games it runs: Earthsiege 2 and, as [Earthsiege 1](#earthsiege-1) sets out, *Metaltech: Earthsiege*. The brand promises each game played faithfully from its own data, not one simulation core under both.
+- Name: **HERCULAN Engine**
 
 - Language: **C#**, not C++. The deciding factor is that `HercWorks.Core` already represents substantial, hard-won reverse-engineering work (file formats, DBSIM sim math) and is directly reusable from C#. Performance is a non-issue on modern systems.
 
@@ -64,40 +64,6 @@ Primary development/testing target is **Windows**, but OS-specific code paths sh
 
 - **Library core + thin front-end host.** Engine subsystems (rendering, scene, etc.) should be built as libraries with no baked-in assumption that there's exactly one game loop consuming them. A separate, minimal host project wires those libraries into an actual real-time game loop.
 - Motivation: a possible future mission editor that renders the mission environment in-engine.
-
-## Earthsiege 1
-
-Three questions decide how much of the engine Earthsiege 1 can share with Earthsiege 2 ([the ES1 plan](plan-es1-support.md)). The answers:
-
-- **Compiler.** Symantec C++, not Borland ([`compiler.md`](../es1/formats/compiler.md)). Its objects are byte-packed with the vptr after the subobjects' data, so no ES2 object layout carries over as a layout.
-- **The modules both simulators name** (`bullet`, `collide`, `damage`, `debris`, `flyersys`, `mechsys`) share a skeleton, the same functions with the same order of operations, and differ in record and table sizes, instance layouts, features ES2 added to the skeleton, and one change of meaning, a bullet's age ([`shared-modules.md`](../es1/simulation/shared-modules.md)).
-- **The fixed-point math.** The hand-written assembly library and its trigonometry tables are ES2's; the fixed-point primitives beneath the simulation round where ES2's truncate ([`fixed-point-math.md`](../es1/simulation/fixed-point-math.md)).
-
-So ES1 does not run on ES2's simulation code with ES1's data swapped in. Common to both are the asset layer, the assembly math library and its tables.
-
-### How the two games share code
-
-**A shared core with one assembly per game**, the shape ScummVM has: one application and one brand over many game engines that share almost no game logic, each in its own folder above a common backend.
-
-- **The core** holds what does not depend on which game is running: the HercWorks readers, `RetailGameDetector` among them, which tells which game an install holds; the 3Space asset classes (`TS*`, `GL*`, `AN*`); the assembly math library and its tables; and the platform, GL, render back end, audio back end, input devices, settings, localization and the menu bar, which a game's own panels join through `IMenuBarPanel`.
-- **One assembly per game** holds that game's simulation, cockpit, shell, mission world and static `.DAT` tables. ES2's is `Herculan.Es2`, ES1's `Herculan.Es1`, ported fresh beside it. Host code that wires one game's screens goes with that game, in its `Host/` folder: ES2's launcher, session, options and settings panels, with its install lookup (`GameInstall`) beside them, and ES1's launcher, shell menus and options.
-- **One application.** It finds which installs it has been given and runs the chosen game under that game's own title ("HERCULAN — Earthsiege 2", "HERCULAN — Metaltech: Earthsiege"), with the one logo. `Herculan.Engine.Host` keeps only what is the application's own: the command-line parser, which fills each game's options, the log, the print-screen files, the window icon, and the mission editor's turn, which it hands ES2's launcher because the editor references `Herculan.Es2`.
-
-Three rules keep the boundary:
-
-1. **Project references enforce it.** A game assembly references the core and never the other game; the core references neither, so a dependency of asset-layer code (Content, Render, Gl, Platform, the audio back end) on game code is a build error. The core is `Herculan.Engine`; the host and the tests reference both games, and the mission editor ES2's.
-2. **No game switches in the core.** A difference between the games lives in the game assemblies or behind a seam the core defines, never as a test of which game is running.
-3. **The shared-skeleton modules are ported twice.** `bullet`, `collide`, `damage`, `debris`, `flyersys` and `mechsys` keep each game's own layouts, sizes and rounding, so each game gets its own faithful port and the two link to each other's docs. One abstraction over both would break the retail-structure constraint for both games.
-
-Rejected alternatives:
-
-| Alternative | Why not |
-|---|---|
-| A separate repository for ES1 under the same brand | The HercWorks readers, the RE tooling, the hooks and the doc rules would be duplicated or held together by submodules, and a reader fix made twice ([ES1 plan](plan-es1-support.md#decisions-to-make-before-phase-0), decision 1) |
-| Version branches inside one simulation | The compiler, object layout and fixed-point rounding all differ, so the shared code would fill with version switches |
-| ES1's data on ES2's simulation | Not ES1's behaviour; the answers above rule it out |
-
-What crosses the core's seams is designed when ES1 code is ready to port, as [phase 2](plan-es1-support.md#phase-2--the-engine) of the ES1 plan sets out.
 
 ## Where missing and divergent behaviour is tracked
 

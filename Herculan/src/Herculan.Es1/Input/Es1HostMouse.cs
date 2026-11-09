@@ -55,11 +55,17 @@ public sealed class Es1HostMouse {
 	/// <b>This engine's own:</b> whether the host's own layer over the game has the pointer, as HERCULAN's menu bar has it
 	/// while the pointer is over the bar or one of its windows. While it has, the host's moves and presses are not events
 	/// and the pointer keeps its last position. A release still is one for a button the word holds, so a button that went
-	/// down in the game does not stay down in it. With none, the game has the pointer throughout.
+	/// down in the game does not stay down in it. Nor does <see cref="SetPosition"/> or any other move of the driver's
+	/// pointer move the host's while the layer has it, so the shell's pointer sync of every frame does not pull it off the
+	/// bar; the host's last move is delivered by <see cref="TakeBackPointer"/> once the layer gives it back. With none, the
+	/// game has the pointer throughout.
 	/// </summary>
 	public Func<bool>? HostHasPointer { get; set; }
 
 	private bool HostHas => HostHasPointer?.Invoke() == true;
+
+	// A host move came while the host's layer had the pointer, so the driver's pointer is not where the host's is.
+	private bool _moveHeld;
 
 	/// <summary>
 	/// Whether the driver reports the mouse, which <see cref="DisableDriver"/> and <see cref="EnableDriver"/> turn off and
@@ -157,12 +163,29 @@ public sealed class Es1HostMouse {
 
 	/// <summary>One host move to the client position (<paramref name="clientX"/>, <paramref name="clientY"/>): a move event at the screen pixel under it.</summary>
 	internal void OnMove(float clientX, float clientY) {
-		if (Pointer == null || !DriverEnabled || HostHas) {
+		if (Pointer == null || !DriverEnabled) {
 			return;
 		}
 
+		if (HostHas) {
+			_moveHeld = true;
+			return;
+		}
+
+		_moveHeld = false;
 		var (x, y) = Pointer().ToScreen(clientX, clientY);
 		HandleEvent(Moved, x, y, Buttons);
+	}
+
+	/// <summary>
+	/// <b>This engine's own:</b> run with the host's other input, before the game's frame: once the host's layer has given
+	/// the pointer back (<see cref="HostHasPointer"/>), a host move it held is one move event at the host's pointer, so the
+	/// pointer goes on from where the host left it rather than the host's being put back where the game's stopped.
+	/// </summary>
+	public void TakeBackPointer() {
+		if (_moveHeld && _device != null && !HostHas) {
+			OnMove(_device.Position.X, _device.Position.Y);
+		}
 	}
 
 	/// <summary>One host button event: the button's bit set or cleared, and its press or release event at the pointer. Other buttons are not the driver's three.</summary>
@@ -202,7 +225,7 @@ public sealed class Es1HostMouse {
 	}
 
 	private void WarpHost() {
-		if (_device == null || Pointer == null) {
+		if (_device == null || Pointer == null || HostHas) {
 			return;
 		}
 
