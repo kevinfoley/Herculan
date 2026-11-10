@@ -323,9 +323,41 @@ controller.centre_idle_tip     The middle of the throttle's travel is idle, forw
 controller.centre_idle_gamepad_tip      Only for a joystick's throttle lever. A gamepad's left stick moves the throttle up and down and leaves it where it is, so this does nothing with one.
 controller.invert_razor_pitch  Invert RAZOR pitch
 controller.invert_razor_pitch_tip   Reverses which way the controls pitch the RAZOR's nose up and down, leaving a HERC's turret as the Invert column sets it. The keyboard is not affected.
-controller.actions_note        Use this window to choose which axis, hat or button on your controller the game reads for each row above. To choose what each row does in a HERC or RAZOR, press F12 during a mission and select "CONTROLS". On that panel, the "JOYSTICK", "THROTTLE", "RUDDER" and "HAT" settings are fixed for a gamepad. A gamepad's button settings are saved separately from a joystick's. Both games use these settings when you play them in HERCULAN. HERCULAN saves them in its own settings folder, not in the game's folder.
-controller.es1_actions_note    Use this window to choose which axis or button on your controller the game reads for each row above. The rows are the four axes and four buttons of the original joystick port. What each one does depends on the joystick type and the other settings on the "CONTROLS" panel. To open that panel, select "OPTIONS" and then "CONTROLS" in the menus, or press F12 during a mission and select "CONTROLS". Both games use these settings when you play them in HERCULAN. HERCULAN saves them in its own settings folder, not in the game's folder.
+controller.actions_note        In "Original" mode, button and axis functions are set on the in-game "CONTROLS" panel (press F12 during a mission). This window only remaps your controller's axes and buttons.
+controller.es1_actions_note    In "Original" mode, button and axis functions are set on the "CONTROLS" panel (select "OPTIONS", then "CONTROLS", or press F12 during a mission). This window only remaps your controller's axes and buttons.
 controller.defaults            Defaults
+controller.mode                Mode
+controller.mode_original       Original
+controller.mode_custom         Custom
+controller.mode_tip            In "Original", button and axis functions are configured with the game's original "CONTROLS" panel, and this window is used for remapping (e.g. if your joystick's throttle is recognized as rudder, you can fix that here). In "Custom" mode, all bindings are controlled through this window; the settings on the in-game "CONTROLS" panel are ignored.
+controller.custom_note         In "Custom" mode, all bindings are controlled by this window. The in-game "CONTROLS" panel is ignored.
+controller.herc                HERC
+controller.razor               RAZOR
+controller.axes                Axes
+controller.function            Function
+controller.deadzone_column     Deadzone
+controller.position            Position
+controller.function.steer      Steering
+controller.function.throttle   Throttle
+controller.function.turret_twist  Turret twist
+controller.function.turret_pitch  Turret pitch
+controller.function.razor_roll  Roll
+controller.function.razor_pitch  Pitch
+controller.function.razor_yaw  Yaw
+controller.function.razor_throttle  Throttle
+controller.throttle_reading    Throttle axis
+controller.reading_rate        Moves the throttle up and down
+controller.reading_lever       Lever, idle at one end
+controller.reading_bipolar     Lever, idle in the middle
+controller.throttle_reading_tip  How the throttle axis sets the throttle. "Moves the throttle up and down" suits a stick that springs back to the middle. The throttle stays where you leave it. The two lever settings suit a throttle lever. Where the lever is, the throttle is.
+controller.actions             Actions
+controller.action              Action
+controller.add                 Add
+controller.add_tip             Adds a row and waits for the control to put on it.
+controller.remove              Remove
+controller.hat_direction       Hat {0} {1}
+controller.detect_input        Press the button, push the hat or move the axis you want.
+controller.action_other_game_tip  This game does not have this action. The other game uses it.
 controller.action.throttle_forward  Throttle forward
 controller.action.throttle_back  Throttle back
 controller.action.steer_left   Steer left

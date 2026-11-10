@@ -12,7 +12,9 @@ namespace Herculan.Engine.Menus;
 /// stand for the stick, throttle, rudder, hat and buttons a game's bindings name, and the rows a game adds of its own
 /// (<see cref="ControllerRows"/>). It edits the player's <c>herculan-joystick.cfg</c> (<see cref="JoystickMapFile.PlayerPath"/>;
 /// docs/herculan/joystick-config.md), and is this engine's own: retail reads a stick's axes in a fixed order and has
-/// nothing to set. What each control does stays with the game's own controls panel. Above the device's own settings, and
+/// nothing to set. For a joystick, "Mode" chooses whether the game's own controls panel says what each control does
+/// (<see cref="ControllerMode.Original"/>, this class's rows) or the device's Custom profile does
+/// (<see cref="ControllerCustomView"/>); a gamepad has no "Mode" and always shows Custom. Above the device's own settings, and
 /// only while a gamepad is connected, "Mouse emulation" chooses the stick, its speed and the triggers a gamepad works the
 /// pointer with in the front end and the mission editor (<see cref="JoystickMapFile.Mouse"/>), which serve every gamepad
 /// whichever device is being edited.
@@ -51,6 +53,8 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	private readonly int _firstExtraRow;
 	private readonly int _rowCount;
 	private readonly (string key, Action callback)[] _closeButtons;
+	private readonly ControllerCustomView _custom;
+	private readonly string[] _modeKeys = ["controller.mode_original", "controller.mode_custom"];
 
 	private IInputContext? _input;
 	private string? _error;
@@ -78,6 +82,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		_firstExtraRow = FirstButtonRow + _buttonRows;
 		_rowCount = _firstExtraRow + rows.ExtraButtonRows.Count;
 		_closeButtons = [("controller.defaults", ApplyDefaults), ("general.save", Save), ("general.cancel", Cancel)];
+		_custom = new ControllerCustomView(localization, rows);
 	}
 
 	/// <summary>Whether the window is up.</summary>
@@ -87,7 +92,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	public event Action<JoystickMapFile>? Saved;
 
 	/// <summary>Whether Detect is listening for a control to bind.</summary>
-	public bool Listening => IsOpen && _detecting != NotDetecting;
+	public bool Listening => IsOpen && (_detecting != NotDetecting || _custom.Listening);
 
 	/// <summary>Takes the window's input context once it exists.</summary>
 	public void Attach(IInputContext input) => _input = input;
@@ -112,6 +117,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	public void Cancel() {
 		IsOpen = false;
 		_detecting = NotDetecting;
+		_custom.StopDetecting();
 	}
 
 	/// <summary>[Esc]'s step back, which discards the edit as <see cref="Cancel"/> does.</summary>
@@ -139,8 +145,15 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		if (ImGui.Begin(Text("controller.title") + "###controller", ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
 			var device = CurrentDevice();
 			DeviceRow(device);
+			bool custom = _custom.Mode == ControllerMode.Custom;
 			if (device != null) {
-				Detect(device);
+				if (!device.IsGamepad) {
+					ModeRow();
+				}
+
+				if (!custom) {
+					Detect(device);
+				}
 			} else {
 				ImGui.TextWrapped(Text("controller.none_connected"));
 			}
@@ -152,17 +165,21 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 			if (device != null) {
 				ImGui.SeparatorText(Text("controller.inputs"));
 				DeviceState(device);
-				ImGui.SeparatorText(Text("controller.controls"));
-				ControlRows(device);
-				if (_rows.ReadsDeadzone || _rows.HatLabelKey != null || _rows.Options.Count > 0) {
-					ImGui.SeparatorText(Text("controller.options"));
-					Options(device);
+				if (custom) {
+					_custom.Draw(device);
+				} else {
+					ImGui.SeparatorText(Text("controller.controls"));
+					ControlRows(device);
+					if (_rows.ReadsDeadzone || _rows.HatLabelKey != null || _rows.Options.Count > 0) {
+						ImGui.SeparatorText(Text("controller.options"));
+						Options(device);
+					}
 				}
 			}
 
 			ImGui.Spacing();
 			ImGui.PushTextWrapPos(0f);
-			ImGui.TextDisabled(Text(_rows.NoteKey));
+			ImGui.TextDisabled(Text(custom ? "controller.custom_note" : _rows.NoteKey));
 			ImGui.PopTextWrapPos();
 
 			if (_error != null) {
@@ -215,6 +232,24 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		}
 	}
 
+	// Original or Custom, for the device being edited. Changing it stops Detect, whose row the other mode does not show.
+	private void ModeRow() {
+		int mode = (int)_custom.Mode;
+		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.6f);
+		if (ImGui.BeginCombo(Text("controller.mode") + "###mode", Text(_modeKeys[mode]))) {
+			for (int i = 0; i < _modeKeys.Length; i++) {
+				if (ImGui.Selectable(Text(_modeKeys[i]), i == mode) && i != mode) {
+					_custom.Mode = (ControllerMode)i;
+					_detecting = NotDetecting;
+					_custom.StopDetecting();
+				}
+			}
+
+			ImGui.EndCombo();
+		}
+		Tooltip("controller.mode_tip");
+	}
+
 	// The device in the slot being edited. One unplugged since is replaced by the device a mission would read now.
 	private ControllerDevice? CurrentDevice() {
 		if (_input == null) {
@@ -233,19 +268,28 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		return next;
 	}
 
-	// Starts editing device: its map in the file being edited, else its defaults.
+	// Starts editing device: its map, mode and profile in the file being edited, else its defaults.
 	private void Edit(ControllerDevice? device) {
 		_detecting = NotDetecting;
 		_slot = device?.Slot ?? JoystickDeviceMap.Unmapped;
 		_draft = device?.MapIn(_file) ?? device?.Defaults() ?? new JoystickDeviceMap();
 		_loaded = _draft;
+		_custom.Load(_file, device);
 	}
 
 	// Puts the edit made to device into the file being edited, unless nothing was changed.
 	private void Keep(ControllerDevice? device) {
-		if (device != null && !ReferenceEquals(_draft, _loaded)) {
+		if (device == null) {
+			return;
+		}
+
+		if (!ReferenceEquals(_draft, _loaded)) {
 			_file.Set(device.IsGamepad, device.Guid, device.Name, _draft);
 			_loaded = _draft;
+		}
+
+		if (_custom.Changed) {
+			_custom.Store(_file, device);
 		}
 	}
 
@@ -652,9 +696,16 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		}
 	}
 
+	// The settings of the mode on screen go back to the device's defaults, and Mouse emulation to its own; the other
+	// mode's settings and the mode itself are kept.
 	private void ApplyDefaults() {
 		_detecting = NotDetecting;
-		_draft = CurrentDevice()?.Defaults() ?? new JoystickDeviceMap();
+		if (_custom.Mode == ControllerMode.Custom) {
+			_custom.Defaults(CurrentDevice());
+		} else {
+			_draft = CurrentDevice()?.Defaults() ?? new JoystickDeviceMap();
+		}
+
 		_file.Mouse = new GamepadMouseSettings();
 	}
 
@@ -662,6 +713,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		// The device on screen is saved as shown, even unedited, since Save is pressed for it.
 		if (CurrentDevice() is { } device) {
 			_file.Set(device.IsGamepad, device.Guid, device.Name, _draft);
+			_custom.Store(_file, device);
 		}
 
 		if (!_file.Save(JoystickMapFile.PlayerPath, out string? error)) {

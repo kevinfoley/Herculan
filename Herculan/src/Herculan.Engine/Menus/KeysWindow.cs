@@ -155,7 +155,8 @@ public sealed class KeysWindow {
 	// The sections in the order the map first gives each.
 	private static IEnumerable<KeySection> SectionsOf(KeyMap map) => map.Bindings.Select(binding => binding.Section).Distinct();
 
-	private static string SectionEntry(KeySection section) => section switch {
+	/// <summary>The <c>.lang</c> key of a section's heading, which the Controller window's action lists share.</summary>
+	internal static string SectionEntry(KeySection section) => section switch {
 		KeySection.Driving => "keys.section.driving",
 		KeySection.Weapons => "keys.section.weapons",
 		KeySection.TargetingAndShields => "keys.section.targeting",

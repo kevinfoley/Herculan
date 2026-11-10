@@ -56,6 +56,12 @@ public sealed record ControllerRows {
 	/// </summary>
 	public required IReadOnlySet<KeyAction> Actions { get; init; }
 
+	/// <summary>
+	/// Whether the game has a RAZOR, which gives the Custom view a RAZOR's axis functions and actions beside a HERC's. A game
+	/// without one shows the HERC's alone and leaves the RAZOR's in the file as they are.
+	/// </summary>
+	public bool HasRazor { get; init; }
+
 	/// <summary>Every offered action but <paramref name="lacking"/>, for <see cref="Actions"/>.</summary>
 	public static IReadOnlySet<KeyAction> OfferedExcept(IEnumerable<KeyAction> lacking) =>
 		ControllerActions.Offered.Select(entry => entry.Action).Except(lacking).ToHashSet();

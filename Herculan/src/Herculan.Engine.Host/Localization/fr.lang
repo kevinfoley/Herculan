@@ -323,9 +323,41 @@ controller.centre_idle_tip     Le milieu de la course de la manette des gaz est 
 controller.centre_idle_gamepad_tip      Seulement pour la manette des gaz d'un joystick. Le stick gauche d'une manette de jeu monte et baisse les gaz et les laisse où ils sont, donc ceci n'a aucun effet avec elle.
 controller.invert_razor_pitch  Inverser le tangage RAZOR
 controller.invert_razor_pitch_tip   Inverse le sens dans lequel les commandes lèvent et baissent le nez du RAZOR. La tourelle d'un HERC reste comme la colonne Inverser la règle. Le clavier n'est pas concerné.
-controller.actions_note        Dans cette fenêtre, choisissez l'axe, le chapeau ou le bouton de votre manette que le jeu lit pour chaque ligne ci-dessus. Pour choisir ce que fait chaque ligne dans un HERC ou un RAZOR, appuyez sur F12 en mission et sélectionnez « CONTROLS ». Pour une manette de jeu, les réglages « JOYSTICK », « THROTTLE », « RUDDER » et « HAT » y sont fixés. Les réglages des boutons d'une manette de jeu sont enregistrés à part de ceux d'un joystick. Les deux jeux utilisent ces réglages quand vous y jouez dans HERCULAN. HERCULAN les enregistre dans son propre dossier de réglages, pas dans le dossier du jeu.
-controller.es1_actions_note    Dans cette fenêtre, choisissez l'axe ou le bouton de votre manette que le jeu lit pour chaque ligne ci-dessus. Les lignes sont les quatre axes et les quatre boutons du port joystick d'origine. Ce que fait chacun dépend du type de joystick et des autres réglages du panneau « CONTROLS ». Pour ouvrir ce panneau, sélectionnez « OPTIONS » puis « CONTROLS » dans les menus, ou appuyez sur F12 en mission et sélectionnez « CONTROLS ». Les deux jeux utilisent ces réglages quand vous y jouez dans HERCULAN. HERCULAN les enregistre dans son propre dossier de réglages, pas dans le dossier du jeu.
+controller.actions_note        En mode « Original », les fonctions des boutons et des axes se règlent dans le panneau « CONTROLS » du jeu (appuyez sur F12 en mission). Cette fenêtre sert seulement à réaffecter les axes et les boutons de votre manette.
+controller.es1_actions_note    En mode « Original », les fonctions des boutons et des axes se règlent dans le panneau « CONTROLS » (sélectionnez « OPTIONS » puis « CONTROLS », ou appuyez sur F12 en mission). Cette fenêtre sert seulement à réaffecter les axes et les boutons de votre manette.
 controller.defaults            Par défaut
+controller.mode                Mode
+controller.mode_original       Original
+controller.mode_custom         Personnalisé
+controller.mode_tip            En « Original », les fonctions des boutons et des axes se règlent dans le panneau « CONTROLS » d'origine du jeu, et cette fenêtre sert à les réaffecter (par exemple, si la manette des gaz de votre joystick est reconnue comme palonnier, vous pouvez le corriger ici). En mode « Personnalisé », toutes les affectations se règlent dans cette fenêtre ; les réglages du panneau « CONTROLS » du jeu sont ignorés.
+controller.custom_note         En mode « Personnalisé », toutes les affectations se règlent dans cette fenêtre. Le panneau « CONTROLS » du jeu est ignoré.
+controller.herc                HERC
+controller.razor               RAZOR
+controller.axes                Axes
+controller.function            Fonction
+controller.deadzone_column     Zone morte
+controller.position            Position
+controller.function.steer      Direction
+controller.function.throttle   Régime
+controller.function.turret_twist  Rotation de la tourelle
+controller.function.turret_pitch  Inclinaison de la tourelle
+controller.function.razor_roll  Roulis
+controller.function.razor_pitch  Tangage
+controller.function.razor_yaw  Lacet
+controller.function.razor_throttle  Régime
+controller.throttle_reading    Axe du régime
+controller.reading_rate        Monte et baisse le régime
+controller.reading_lever       Manette, ralenti à une extrémité
+controller.reading_bipolar     Manette, ralenti au milieu
+controller.throttle_reading_tip  Comment l'axe du régime règle le régime. « Monte et baisse le régime » convient à un manche qui revient au centre. Le régime reste là où vous le laissez. Les deux réglages de manette conviennent à une manette des gaz. La position de la manette est le régime.
+controller.actions             Actions
+controller.action              Action
+controller.add                 Ajouter
+controller.add_tip             Ajoute une ligne et attend la commande à y placer.
+controller.remove              Supprimer
+controller.hat_direction       Chapeau {0} {1}
+controller.detect_input        Appuyez sur le bouton voulu, poussez le chapeau voulu ou déplacez l'axe voulu.
+controller.action_other_game_tip  Ce jeu n'a pas cette action. L'autre jeu l'utilise.
 controller.action.throttle_forward  Régime en avant
 controller.action.throttle_back  Régime en arrière
 controller.action.steer_left   Tourner à gauche

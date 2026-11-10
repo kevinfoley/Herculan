@@ -34,6 +34,7 @@ static class Es2ControllerRows {
 		ReadsFull = MechControls.AxisFull,
 		NoteKey = "controller.actions_note",
 		Actions = ControllerRows.OfferedExcept(ControllerActions.Es1Only),
+		HasRazor = true,
 		ExtraButtonRows = [
 			new ControllerButtonRow("controller.radar_toggle", "controller.radar_toggle_tip",
 				map => map.RadarToggle, (map, source) => map with { RadarToggle = source }),

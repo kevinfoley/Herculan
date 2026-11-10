@@ -323,9 +323,41 @@ controller.centre_idle_tip     Die Mitte des Schubreglerwegs ist Leerlauf, davor
 controller.centre_idle_gamepad_tip      Nur für den Schubhebel eines Joysticks. Der linke Stick eines Gamepads bewegt den Schub hoch und runter und lässt ihn dort, wo er ist, daher bewirkt dies damit nichts.
 controller.invert_razor_pitch  RAZOR-Nicken umkehren
 controller.invert_razor_pitch_tip   Kehrt um, in welche Richtung die Steuerung die Nase des RAZOR hebt und senkt. Der Turm eines HERC bleibt so, wie die Spalte „Umkehren“ ihn einstellt. Die Tastatur ist nicht betroffen.
-controller.actions_note        In diesem Fenster wählen Sie, welche Achse, welchen Coolie-Hat oder welche Taste Ihres Controllers das Spiel für jede Zeile oben liest. Was jede Zeile in einem HERC oder RAZOR tut, legen Sie in einer Mission fest: Drücken Sie F12 und wählen Sie „CONTROLS“. Für ein Gamepad sind dort die Einstellungen „JOYSTICK“, „THROTTLE“, „RUDDER“ und „HAT“ fest vorgegeben. Die Tastenbelegung eines Gamepads wird getrennt von der eines Joysticks gespeichert. Beide Spiele verwenden diese Einstellungen, wenn Sie sie in HERCULAN spielen. HERCULAN speichert sie in seinem eigenen Einstellungsordner, nicht im Spielordner.
-controller.es1_actions_note    In diesem Fenster wählen Sie, welche Achse oder welche Taste Ihres Controllers das Spiel für jede Zeile oben liest. Die Zeilen sind die vier Achsen und vier Tasten des ursprünglichen Joystick-Anschlusses. Was jede davon tut, hängt vom Joystick-Typ und den übrigen Einstellungen im Fenster „CONTROLS“ ab. Sie öffnen es in den Menüs über „OPTIONS“ und dann „CONTROLS“ oder in einer Mission mit F12 und dann „CONTROLS“. Beide Spiele verwenden diese Einstellungen, wenn Sie sie in HERCULAN spielen. HERCULAN speichert sie in seinem eigenen Einstellungsordner, nicht im Spielordner.
+controller.actions_note        Im Modus „Original“ werden die Funktionen der Tasten und Achsen im Feld „CONTROLS“ im Spiel eingestellt (drücken Sie F12 während einer Mission). Dieses Fenster ordnet nur die Achsen und Tasten Ihres Controllers neu zu.
+controller.es1_actions_note    Im Modus „Original“ werden die Funktionen der Tasten und Achsen im Feld „CONTROLS“ eingestellt (wählen Sie „OPTIONS“ und dann „CONTROLS“, oder drücken Sie F12 während einer Mission). Dieses Fenster ordnet nur die Achsen und Tasten Ihres Controllers neu zu.
 controller.defaults            Standard
+controller.mode                Modus
+controller.mode_original       Original
+controller.mode_custom         Benutzerdefiniert
+controller.mode_tip            Bei „Original“ werden die Funktionen der Tasten und Achsen im ursprünglichen Feld „CONTROLS“ des Spiels eingestellt, und dieses Fenster dient zum Neuzuordnen (wird z. B. der Schubregler Ihres Joysticks als Ruder erkannt, können Sie das hier beheben). Bei „Benutzerdefiniert“ wird die gesamte Belegung über dieses Fenster gesteuert; die Einstellungen im Feld „CONTROLS“ im Spiel werden ignoriert.
+controller.custom_note         Bei „Benutzerdefiniert“ wird die gesamte Belegung über dieses Fenster gesteuert. Das Feld „CONTROLS“ im Spiel wird ignoriert.
+controller.herc                HERC
+controller.razor               RAZOR
+controller.axes                Achsen
+controller.function            Funktion
+controller.deadzone_column     Totzone
+controller.position            Position
+controller.function.steer      Lenkung
+controller.function.throttle   Schub
+controller.function.turret_twist  Turm drehen
+controller.function.turret_pitch  Turm neigen
+controller.function.razor_roll  Rollen
+controller.function.razor_pitch  Nicken
+controller.function.razor_yaw  Gieren
+controller.function.razor_throttle  Schub
+controller.throttle_reading    Schubachse
+controller.reading_rate        Bewegt den Schub hoch und runter
+controller.reading_lever       Hebel, Leerlauf an einem Ende
+controller.reading_bipolar     Hebel, Leerlauf in der Mitte
+controller.throttle_reading_tip  Wie die Schubachse den Schub einstellt. „Bewegt den Schub hoch und runter“ passt zu einem Knüppel, der in die Mitte zurückfedert. Der Schub bleibt, wo Sie ihn lassen. Die beiden Hebel-Einstellungen passen zu einem Schubhebel. Die Stellung des Hebels ist der Schub.
+controller.actions             Aktionen
+controller.action              Aktion
+controller.add                 Hinzufügen
+controller.add_tip             Fügt eine Zeile hinzu und wartet auf das Steuerelement dafür.
+controller.remove              Entfernen
+controller.hat_direction       Coolie-Hat {0} {1}
+controller.detect_input        Drücken Sie die gewünschte Taste oder den Coolie-Hat, oder bewegen Sie die gewünschte Achse.
+controller.action_other_game_tip  Dieses Spiel hat diese Aktion nicht. Das andere Spiel verwendet sie.
 controller.action.throttle_forward  Schub vor
 controller.action.throttle_back  Schub zurück
 controller.action.steer_left   Nach links lenken

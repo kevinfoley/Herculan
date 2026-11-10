@@ -8,18 +8,19 @@ namespace Herculan.Engine.Input;
 
 /// <summary>
 /// How a device's controls reach the game: through the game's own controls panel, or through a
-/// <see cref="ControllerProfile"/>. <b>This engine's own</b>; each device in <see cref="JoystickMapFile"/> has one.
+/// <see cref="ControllerProfile"/>. <b>This engine's own</b>; each joystick in <see cref="JoystickMapFile"/> has one, and a
+/// gamepad is always <see cref="Custom"/>.
 /// </summary>
 public enum ControllerMode {
 	/// <summary>
 	/// The game's own controls panel says what each control does, over <see cref="JoystickDeviceMap"/>'s slots, as retail
-	/// reads a stick. A section of <see cref="JoystickMapFile"/> written before modes existed reads as this.
+	/// reads a stick. A joystick's section of <see cref="JoystickMapFile"/> written before modes existed reads as this.
 	/// </summary>
 	Original,
 
 	/// <summary>
-	/// <see cref="ControllerProfile"/> binds each axis to a game function and each input to an action. A device the file
-	/// has no section for starts in this mode.
+	/// <see cref="ControllerProfile"/> binds each axis to a game function and each input to an action. A gamepad is always
+	/// in this mode, and a joystick the file has no section for starts in it.
 	/// </summary>
 	Custom,
 }
