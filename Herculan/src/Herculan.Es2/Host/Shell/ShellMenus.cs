@@ -35,7 +35,7 @@ sealed class ShellMenus : IFrontEndMenus {
 	public ShellMenus(HostSession session, string dataDirectory, Action restartRequested, Action editorRequested,
 			CustomMissionsWindow? customMissions = null) {
 		_localization = session.Localization;
-		_controller = new ControllerWindow(session.Localization, () => dataDirectory);
+		_controller = new ControllerWindow(session.Localization, () => dataDirectory, Es2ControllerRows.Create());
 		_controller.Saved += file => PadPointerSettingsChanged?.Invoke(file.Mouse);
 		_tweaks = new TweaksMenu(TweakSettings.Current, session.Localization);
 		_settings = new SettingsWindow(session, () => RequestClose(restartRequested));

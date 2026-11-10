@@ -33,7 +33,7 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	public static Es1ControllerPort Over(MappedController controller) => new(
 		() => controller.Map,
 		index => controller.Device?.Axis(index) ?? 0f,
-		index => controller.Device is { } device && !device.Reserved(index) && device.Button(index));
+		index => controller.Device?.BindableButton(index) == true);
 
 	/// <inheritdoc/>
 	public bool AxisAnswers(int axis) => _map() is { } map && RoleAxis(map, axis) != JoystickDeviceMap.Unmapped;

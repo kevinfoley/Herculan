@@ -140,6 +140,15 @@ public sealed class ControllerDevice {
 	public bool Reserved(int index) =>
 		IsGamepad && index is GamepadBack or GamepadStart or GamepadLeftStick or GamepadRightStick;
 
+	/// <summary>Whether button <paramref name="index"/> is held for the bindings: a <see cref="Reserved"/> one reads as up.</summary>
+	public bool BindableButton(int index) => !Reserved(index) && Button(index);
+
+	/// <summary>One frame of the device read through <paramref name="map"/> (<see cref="JoystickDeviceMap.Read"/>), its hat the map's.</summary>
+	public JoystickReading Read(JoystickDeviceMap map) => map.Read(Axis, BindableButton, Hat(map.HatIndex));
+
+	/// <summary>Whether <paramref name="source"/>, a button the map binds outside its eight, is held on this device.</summary>
+	public bool Held(JoystickButtonSource source) => source.Pressed(Axis, BindableButton);
+
 	/// <summary>Whether any button is held.</summary>
 	public bool AnyButton() {
 		for (int i = 0; i < ButtonCount; i++) {

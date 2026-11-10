@@ -163,7 +163,7 @@ sealed class SimulatorHost : IDisposable {
 		// to reach its panels and every key from F1 to F12, [Esc] and [Tab] among the rest, is already retail's. A
 		// mission has no shell turn to restart, so Settings shows the folders greyed.
 		_tweaks = new TweaksMenu(TweakSettings.Current, session.Localization);
-		_controller = new ControllerWindow(session.Localization, () => _start.DataDirectory);
+		_controller = new ControllerWindow(session.Localization, () => _start.DataDirectory, Es2ControllerRows.Create());
 		_menuBar = new HostMenuBar(session.Localization, session.Keys, _tweaks, new SettingsWindow(session, restartShell: null),
 			_controller, developerMode ? _debugPanel : null, scripting: _scripting, manualOpening: () => OnlineManual.Opening);
 
@@ -336,7 +336,8 @@ sealed class SimulatorHost : IDisposable {
 		// what it can do is announced on the first frame that knows.
 		_joystick = JoystickSource.Open(input, _start.DataDirectory, _options.ProbeJoystick);
 		_frame.Pilot.Joystick = _joystick;
-		_controller.Attach(input, _joystick);
+		_controller.Attach(input);
+		_controller.Saved += _joystick.Configure;
 
 		// WinMain's toggle, after the pointer is known so it is confined and centred as Video_ToggleFullscreen's is.
 		_windowKeys.StartFullScreen(_start.StartFullScreen);

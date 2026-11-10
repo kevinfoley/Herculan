@@ -1,29 +1,27 @@
 using System.Numerics;
-using Herculan.Engine.Localization;
-using Herculan.Engine.Menus;
 using Herculan.Engine.Input;
+using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
-using Herculan.Es2.Sim;
 using ImGuiNET;
 using Silk.NET.Input;
 
-namespace Herculan.Es2.Host.Settings;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The floating "Controller" window opened from the menu bar: which axes, hat and buttons of a connected controller
-/// stand for the stick, throttle, rudder, hat and eight buttons the retail bindings name, and the radar toggle, which is
-/// this engine's own (<see cref="JoystickDeviceMap.RadarToggle"/>). It edits the player's
-/// <c>herculan-joystick.cfg</c> (<see cref="JoystickMapFile.PlayerPath"/>; docs/herculan/joystick-config.md), and is this
-/// engine's own: retail reads a stick's axes in a fixed order and has nothing to set. What each control does stays
-/// with retail's CONTROLS panel. Above the device's own settings, and only while a gamepad is connected, "Mouse emulation" chooses the stick, its speed and the triggers
-/// a gamepad works the pointer with in the front end and the mission editor (<see cref="JoystickMapFile.Mouse"/>), which
-/// serve every gamepad whichever device is being edited.
+/// stand for the stick, throttle, rudder, hat and buttons a game's bindings name, and the rows a game adds of its own
+/// (<see cref="ControllerRows"/>). It edits the player's <c>herculan-joystick.cfg</c> (<see cref="JoystickMapFile.PlayerPath"/>;
+/// docs/herculan/joystick-config.md), and is this engine's own: retail reads a stick's axes in a fixed order and has
+/// nothing to set. What each control does stays with the game's own controls panel. Above the device's own settings, and
+/// only while a gamepad is connected, "Mouse emulation" chooses the stick, its speed and the triggers a gamepad works the
+/// pointer with in the front end and the mission editor (<see cref="JoystickMapFile.Mouse"/>), which serve every gamepad
+/// whichever device is being edited.
 ///
-/// <para>What the player sees and does is docs/herculan/joystick-config.md, "Setting up a stick". Save hands the file to
-/// a mission's stick (<see cref="JoystickSource.Configure"/>); the front end reads no stick, and the next mission reads
-/// the file. Cancel, the title-bar close and [Esc] (<see cref="HostMenuBar.BackOut"/>) discard the edit.</para>
+/// <para>What the player sees and does is docs/herculan/joystick-config.md, "Setting up a stick". Save raises
+/// <see cref="Saved"/>, which a mission's stick and the front end read the file through. Cancel, the title-bar close and
+/// [Esc] (<see cref="HostMenuBar.BackOut"/>) discard the edit.</para>
 /// </summary>
-sealed class ControllerWindow : IDrawnMenuBarPanel {
+public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 600f;
 
@@ -31,21 +29,13 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 	// travel, so a stick brushed on the way to the throttle is not taken for it.
 	private const float DetectTravel = 0.5f;
 
-	// The rows, in the order drawn: the four axes, the hat, BUTTON 1-8, then the radar toggle.
+	// The rows, in the order drawn: the four axes, the hat, the BUTTON rows, then the game's own. The hat row keeps its
+	// number in a game without one, which draws nothing there.
 	private const int ThrottleRow = 2;
 	private const int AxisRows = 4;
 	private const int HatRow = AxisRows;
 	private const int FirstButtonRow = HatRow + 1;
-	private const int RadarRow = FirstButtonRow + JoystickCapabilities.MaxButtons;
 	private const int NotDetecting = -1;
-
-	private static readonly string[] AxisRowKeys =
-		["controller.stick_x", "controller.stick_y", "controller.throttle", "controller.rudder"];
-
-	// A gamepad's rows are named for what they do, which GamepadControls' fixed axis rows decide whatever axis fills
-	// them: the slots' own names would have the throttle slot aiming the turret.
-	private static readonly string[] GamepadAxisRowKeys =
-		["controller.gamepad_stick_x", "controller.gamepad_stick_y", "controller.gamepad_throttle", "controller.gamepad_rudder"];
 
 	private static readonly Vector4 LitColour = new(0.45f, 0.85f, 0.45f, 1f);
 	private static readonly Vector4 ErrorColour = new(1f, 0.45f, 0.4f, 1f);
@@ -56,10 +46,13 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 
 	private readonly LocalizationTable _localization;
 	private readonly Func<string?> _dataDirectory;
+	private readonly ControllerRows _rows;
+	private readonly int _buttonRows;
+	private readonly int _firstExtraRow;
+	private readonly int _rowCount;
 	private readonly (string key, Action callback)[] _closeButtons;
 
 	private IInputContext? _input;
-	private JoystickSource? _live;
 	private string? _error;
 
 	// The file as it will be saved, the device being edited (GLFW's slot), and its map. _loaded is the map as it came out
@@ -76,26 +69,28 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 
 	/// <param name="dataDirectory">The game's <c>data</c> folder, whose copy of the map file seeds the player's while the
 	/// player's is missing (<see cref="JoystickMapFile.LoadForPlayer(string?)"/>), or null when there is none.</param>
-	public ControllerWindow(LocalizationTable localization, Func<string?> dataDirectory) {
+	/// <param name="rows">What the game's bindings read, and its own rows and options.</param>
+	public ControllerWindow(LocalizationTable localization, Func<string?> dataDirectory, ControllerRows rows) {
 		_localization = localization;
 		_dataDirectory = dataDirectory;
+		_rows = rows;
+		_buttonRows = Math.Clamp(rows.ButtonRows, 0, JoystickCapabilities.MaxButtons);
+		_firstExtraRow = FirstButtonRow + _buttonRows;
+		_rowCount = _firstExtraRow + rows.ExtraButtonRows.Count;
 		_closeButtons = [("controller.defaults", ApplyDefaults), ("general.save", Save), ("general.cancel", Cancel)];
 	}
 
 	/// <summary>Whether the window is up.</summary>
 	public bool IsOpen { get; private set; }
 
-	/// <summary>Raised by Save with the file it wrote, for whatever reads it outside a mission.</summary>
+	/// <summary>Raised by Save with the file it wrote, for a mission's stick and whatever else reads it.</summary>
 	public event Action<JoystickMapFile>? Saved;
 
 	/// <summary>Whether Detect is listening for a control to bind.</summary>
 	public bool Listening => IsOpen && _detecting != NotDetecting;
 
-	/// <summary>Takes the window's input context once it exists, and a mission's stick, which Save reconfigures.</summary>
-	public void Attach(IInputContext input, JoystickSource? live = null) {
-		_input = input;
-		_live = live;
-	}
+	/// <summary>Takes the window's input context once it exists.</summary>
+	public void Attach(IInputContext input) => _input = input;
 
 	/// <summary>
 	/// Opens the window on the device a mission reads (<see cref="ControllerDevice.Pick"/>), with its saved map, or its
@@ -159,13 +154,15 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 				DeviceState(device);
 				ImGui.SeparatorText(Text("controller.controls"));
 				ControlRows(device);
-				ImGui.SeparatorText(Text("controller.options"));
-				Options(device);
+				if (_rows.ReadsDeadzone || _rows.HatLabelKey != null || _rows.Options.Count > 0) {
+					ImGui.SeparatorText(Text("controller.options"));
+					Options(device);
+				}
 			}
 
 			ImGui.Spacing();
 			ImGui.PushTextWrapPos(0f);
-			ImGui.TextDisabled(Text("controller.actions_note"));
+			ImGui.TextDisabled(Text(_rows.NoteKey));
 			ImGui.PopTextWrapPos();
 
 			if (_error != null) {
@@ -329,10 +326,10 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 		}
 	}
 
-	// One row per control the bindings name: which device input fills it, its invert, Detect, and what the simulator
-	// reads from it through the map being edited.
+	// One row per control the bindings name: which device input fills it, its invert, Detect, and what the game reads
+	// from it through the map being edited.
 	private void ControlRows(ControllerDevice device) {
-		var reading = JoystickSource.Read(_draft, device);
+		var reading = _rows.Reads(device, _draft);
 		var clashes = Clashes(device.IsGamepad);
 		if (!ImGui.BeginTable("##controls", 5, ImGuiTableFlags.SizingStretchProp | ImGuiTableFlags.RowBg)) {
 			return;
@@ -361,9 +358,8 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 			if (ImGui.Checkbox("##invert", ref invert)) {
 				_draft = WithInvert(row, invert);
 			}
-			// A gamepad's throttle slot is the right stick's up and down, which no lever reading applies to.
-			if (row == ThrottleRow) {
-				Tooltip(device.IsGamepad ? "controller.invert_throttle_gamepad_tip" : "controller.invert_throttle_tip");
+			if (row == ThrottleRow && (device.IsGamepad ? _rows.GamepadThrottleInvertTipKey : _rows.ThrottleInvertTipKey) is { } tip) {
+				Tooltip(tip);
 			}
 
 			ImGui.TableNextColumn();
@@ -371,28 +367,31 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 
 			ImGui.TableNextColumn();
 			int value = ValueOf(reading, row);
-			ImGui.ProgressBar((Math.Clamp((float)value / MechControls.AxisFull, -1f, 1f) + 1f) / 2f, new Vector2(-1f, 0f),
+			ImGui.ProgressBar((Math.Clamp((float)value / _rows.ReadsFull, -1f, 1f) + 1f) / 2f, new Vector2(-1f, 0f),
 				value.ToString(System.Globalization.CultureInfo.InvariantCulture));
 			ImGui.PopID();
 		}
 
-		ImGui.PushID(HatRow);
-		ImGui.TableNextRow();
-		ImGui.TableNextColumn();
-		ImGui.TextUnformatted(RowLabel(HatRow, device.IsGamepad));
-		ImGui.TableNextColumn();
-		if (InputCombo(_draft.HatIndex, device.HatCount, "controller.hat", clash: null) is { } hatIndex) {
-			_draft = _draft with { HatIndex = hatIndex };
+		if (_rows.HatLabelKey != null) {
+			ImGui.PushID(HatRow);
+			ImGui.TableNextRow();
+			ImGui.TableNextColumn();
+			ImGui.TextUnformatted(RowLabel(HatRow, device.IsGamepad));
+			ImGui.TableNextColumn();
+			if (InputCombo(_draft.HatIndex, device.HatCount, "controller.hat", clash: null) is { } hatIndex) {
+				_draft = _draft with { HatIndex = hatIndex };
+			}
+			ImGui.TableNextColumn();
+			ImGui.TableNextColumn();
+			DetectButton(HatRow, device);
+			ImGui.TableNextColumn();
+			Lit(reading.Hat != JoystickHat.None, HatText(reading.Hat));
+			ImGui.PopID();
 		}
-		ImGui.TableNextColumn();
-		ImGui.TableNextColumn();
-		DetectButton(HatRow, device);
-		ImGui.TableNextColumn();
-		Lit(reading.Hat != JoystickHat.None, HatText(reading.Hat));
-		ImGui.PopID();
 
-		for (int i = 0; i < JoystickCapabilities.MaxButtons; i++) {
+		for (int i = 0; i < _buttonRows; i++) {
 			int row = FirstButtonRow + i;
+			bool pressed = (reading.Buttons & (1 << i)) != 0;
 			ImGui.PushID(row);
 			ImGui.TableNextRow();
 			ImGui.TableNextColumn();
@@ -405,75 +404,83 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 			ImGui.TableNextColumn();
 			DetectButton(row, device);
 			ImGui.TableNextColumn();
-			Lit(reading.Button(i), Text(reading.Button(i) ? "controller.pressed" : "controller.released"));
+			Lit(pressed, Text(pressed ? "controller.pressed" : "controller.released"));
 			ImGui.PopID();
 		}
 
-		ImGui.PushID(RadarRow);
-		ImGui.TableNextRow();
-		ImGui.TableNextColumn();
-		ImGui.TextUnformatted(Text("controller.radar_toggle"));
-		Tooltip("controller.radar_toggle_tip");
-		ImGui.TableNextColumn();
-		if (ButtonCombo(_draft.RadarToggle, device, clashes[RadarRow]) is { } radar) {
-			_draft = _draft with { RadarToggle = radar };
+		for (int i = 0; i < _rows.ExtraButtonRows.Count; i++) {
+			var extra = _rows.ExtraButtonRows[i];
+			int row = _firstExtraRow + i;
+			ImGui.PushID(row);
+			ImGui.TableNextRow();
+			ImGui.TableNextColumn();
+			ImGui.TextUnformatted(Text(extra.LabelKey));
+			Tooltip(extra.TipKey);
+			ImGui.TableNextColumn();
+			if (ButtonCombo(extra.Get(_draft), device, clashes[row]) is { } source) {
+				_draft = extra.Set(_draft, source);
+			}
+			ImGui.TableNextColumn();
+			ImGui.TableNextColumn();
+			DetectButton(row, device);
+			ImGui.TableNextColumn();
+			bool held = device.Held(extra.Get(_draft));
+			Lit(held, Text(held ? "controller.pressed" : "controller.released"));
+			ImGui.PopID();
 		}
-		ImGui.TableNextColumn();
-		ImGui.TableNextColumn();
-		DetectButton(RadarRow, device);
-		ImGui.TableNextColumn();
-		bool radarHeld = JoystickSource.RadarToggleHeld(_draft, device);
-		Lit(radarHeld, Text(radarHeld ? "controller.pressed" : "controller.released"));
-		ImGui.PopID();
 
 		ImGui.EndTable();
 	}
 
-	// The map's options that are not a choice of input. Centre-idle reads a throttle lever, and a gamepad's controls
-	// read none (GamepadControls), so it is greyed for one.
+	// The map's options that are not a choice of input: the deadzone and hat diagonals where the game reads them, then the
+	// game's own, an option a gamepad has no use for greyed for one.
 	private void Options(ControllerDevice device) {
-		int deadzone = _draft.Deadzone;
-		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.5f);
-		if (ImGui.SliderInt(Text("controller.deadzone") + "###deadzone", ref deadzone, 0, JoystickReading.RawFull - 1)) {
-			_draft = _draft with { Deadzone = deadzone };
+		if (_rows.ReadsDeadzone) {
+			int deadzone = _draft.Deadzone;
+			ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.5f);
+			if (ImGui.SliderInt(Text("controller.deadzone") + "###deadzone", ref deadzone, 0, JoystickReading.RawFull - 1)) {
+				_draft = _draft with { Deadzone = deadzone };
+			}
+			Tooltip("controller.deadzone_tip");
 		}
-		Tooltip("controller.deadzone_tip");
 
-		bool diagonals = _draft.HatDiagonals;
-		if (ImGui.Checkbox(Text("controller.hat_diagonals") + "###diagonals", ref diagonals)) {
-			_draft = _draft with { HatDiagonals = diagonals };
+		if (_rows.HatLabelKey != null) {
+			bool diagonals = _draft.HatDiagonals;
+			if (ImGui.Checkbox(Text("controller.hat_diagonals") + "###diagonals", ref diagonals)) {
+				_draft = _draft with { HatDiagonals = diagonals };
+			}
+			Tooltip("controller.hat_diagonals_tip");
 		}
-		Tooltip("controller.hat_diagonals_tip");
 
-		bool bipolar = _draft.BipolarThrottle;
-		ImGui.BeginDisabled(device.IsGamepad);
-		if (ImGui.Checkbox(Text("controller.centre_idle") + "###bipolar", ref bipolar)) {
-			_draft = _draft with { BipolarThrottle = bipolar };
+		for (int i = 0; i < _rows.Options.Count; i++) {
+			var option = _rows.Options[i];
+			bool greyed = device.IsGamepad && option.GamepadGreyedTipKey != null;
+			bool value = option.Get(_draft);
+			ImGui.BeginDisabled(greyed);
+			if (ImGui.Checkbox(Text(option.LabelKey) + "###option" + i, ref value)) {
+				_draft = option.Set(_draft, value);
+			}
+			ImGui.EndDisabled();
+			Tooltip(greyed ? option.GamepadGreyedTipKey! : option.TipKey);
 		}
-		ImGui.EndDisabled();
-		Tooltip(device.IsGamepad ? "controller.centre_idle_gamepad_tip" : "controller.centre_idle_tip");
-
-		bool razorPitch = _draft.InvertRazorPitch;
-		if (ImGui.Checkbox(Text("controller.invert_razor_pitch") + "###razorpitch", ref razorPitch)) {
-			_draft = _draft with { InvertRazorPitch = razorPitch };
-		}
-		Tooltip("controller.invert_razor_pitch_tip");
 	}
 
 	// For each row, which other rows its device input also fills, as a sentence naming them, or null where it fills only
 	// its own. Two button rows on an axis's opposite directions do not share it; an axis row and a button row on either
 	// direction of its axis do, since moving the axis presses the button.
 	private string?[] Clashes(bool isGamepad) {
-		var bound = new Bound?[RadarRow + 1];
+		var bound = new Bound?[_rowCount];
 		for (int row = 0; row < AxisRows; row++) {
 			bound[row] = AxisOf(row) is var axis && axis != JoystickDeviceMap.Unmapped ? new Bound(true, axis, 0) : null;
 		}
 
-		for (int i = 0; i < JoystickCapabilities.MaxButtons; i++) {
+		for (int i = 0; i < _buttonRows; i++) {
 			bound[FirstButtonRow + i] = BoundOf(ButtonOf(i));
 		}
 
-		bound[RadarRow] = BoundOf(_draft.RadarToggle);
+		for (int i = 0; i < _rows.ExtraButtonRows.Count; i++) {
+			bound[_firstExtraRow + i] = BoundOf(_rows.ExtraButtonRows[i].Get(_draft));
+		}
 
 		var clashes = new string?[bound.Length];
 		for (int row = 0; row < bound.Length; row++) {
@@ -500,11 +507,10 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 	private static Bound? BoundOf(JoystickButtonSource source) =>
 		source.IsMapped ? new Bound(source.IsAxis, source.Index, source.AxisSign) : null;
 
-	// A gamepad's hat is fixed on VIEWS in both halves of the CONTROLS panel, as its axis rows are fixed.
 	private string RowLabel(int row, bool isGamepad) =>
-		row < AxisRows ? Text((isGamepad ? GamepadAxisRowKeys : AxisRowKeys)[row])
-		: row == HatRow ? Text(isGamepad ? "controller.gamepad_hat_row" : "controller.hat_row")
-		: row == RadarRow ? Text("controller.radar_toggle")
+		row < AxisRows ? Text(((isGamepad ? _rows.GamepadAxisLabelKeys : null) ?? _rows.AxisLabelKeys)[row])
+		: row == HatRow ? Text((isGamepad ? _rows.GamepadHatLabelKey : null) ?? _rows.HatLabelKey ?? "controller.hat_row")
+		: row >= _firstExtraRow ? Text(_rows.ExtraButtonRows[row - _firstExtraRow].LabelKey)
 		: Format("controller.button_row", row - FirstButtonRow + 1);
 
 	// Opens a Device input combo on preview. While clash names other rows the same input fills, the preview is red and
@@ -625,8 +631,8 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 				}
 			}
 		} else {
-			// A button row, or the radar toggle, takes a new button press, or an axis moved far enough, toward the end it
-			// moved to.
+			// A button row, or a row of the game's own, takes a new button press, or an axis moved far enough, toward the
+			// end it moved to.
 			for (int i = 0; i < device.ButtonCount && i < _restingButtons.Length; i++) {
 				if (device.Button(i) && !_restingButtons[i] && !device.Reserved(i)) {
 					_draft = WithSource(_detecting, JoystickButtonSource.Button(i));
@@ -663,7 +669,6 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 			return;
 		}
 
-		_live?.Configure(_file);
 		Saved?.Invoke(_file);
 		Cancel();
 	}
@@ -696,7 +701,7 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 		_ => _draft with { InvertRudder = invert },
 	};
 
-	private static int ValueOf(JoystickReading reading, int row) => row switch {
+	private static int ValueOf(ControllerReads reading, int row) => row switch {
 		0 => reading.StickX,
 		1 => reading.StickY,
 		2 => reading.Throttle,
@@ -706,10 +711,12 @@ sealed class ControllerWindow : IDrawnMenuBarPanel {
 	private JoystickButtonSource ButtonOf(int index) =>
 		index < _draft.Buttons.Count ? _draft.Buttons[index] : JoystickButtonSource.Unmapped;
 
-	// The map with row's button source changed: one of BUTTON 1-8, or the radar toggle.
+	// The map with row's button source changed: a BUTTON row, or a row of the game's own.
 	private JoystickDeviceMap WithSource(int row, JoystickButtonSource source) =>
-		row == RadarRow ? _draft with { RadarToggle = source } : WithButton(row - FirstButtonRow, source);
+		row >= _firstExtraRow ? _rows.ExtraButtonRows[row - _firstExtraRow].Set(_draft, source)
+		: WithButton(row - FirstButtonRow, source);
 
+	// The map with one BUTTON row changed. The rows a game does not show keep what the file has, for the other game.
 	private JoystickDeviceMap WithButton(int index, JoystickButtonSource button) {
 		var buttons = new JoystickButtonSource[JoystickCapabilities.MaxButtons];
 		for (int i = 0; i < buttons.Length; i++) {
