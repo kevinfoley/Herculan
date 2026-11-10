@@ -217,13 +217,16 @@ public sealed class MissionObjectives {
 	/// <see cref="IsClearOfThreats">clear</see>. A failure and a success share their not-clear value,
 	/// <see cref="MissionStatus.DecidedButEngaged"/>, so the mission does not conclude while the player
 	/// is still in a fight; an undecided mission answers <see cref="MissionStatus.InProgressEngaged"/>
-	/// there.</para>
+	/// there. With <see cref="Settings.Es2TweakSettingDefinitions.FailWhileEngaged"/> on, a failure whose condition
+	/// <see cref="StaysTrue">stays true</see> answers <see cref="MissionStatus.Failed"/> whether the player is clear or
+	/// not; that is this engine's, not retail's.</para>
 	///
 	/// <para>Besides <see cref="Evaluate"/>, <see cref="MissionResults.Write"/> calls it directly as the
 	/// mission ends, and <see cref="MissionStatus.Complete"/> is the only answer that wins.</para>
 	/// </summary>
 	internal MissionStatus EvaluateObjectives(SimWorld world, MechObject player) {
 		bool lost = false;
+		bool lostForGood = false;
 		bool allMet = true;
 		bool satisfied = false;
 
@@ -252,11 +255,16 @@ public sealed class MissionObjectives {
 				}
 			} else if (satisfied) {
 				lost = true;
+				lostForGood |= StaysTrue(objective.Record.ConditionCode);
 			}
 
 			if (satisfied) {
 				objective.ApplyCounters(world);
 			}
+		}
+
+		if (lostForGood && world.Tweaks.GetSettingValue(Settings.Es2TweakSettingDefinitions.FailWhileEngaged)) {
+			return MissionStatus.Failed;
 		}
 
 		bool clear = IsClearOfThreats(world, player);
@@ -314,6 +322,19 @@ public sealed class MissionObjectives {
 				return null;
 		}
 	}
+
+	/// <summary>
+	/// Whether a condition, once true, is true for the rest of the mission, so a failure it decides cannot be taken back
+	/// by a later evaluation. Each reads only flags that are set and never cleared: an order's completion, destroyed,
+	/// immobilised, engaged, disarmed, the player's data link; and a group's condition tier, which counts lost members
+	/// and accumulated damage. Clear of threats comes and goes, and conditions 8, 9 and 10 negate flags that only ever
+	/// rise. Code 5 and the codes past 10 carry the previous record's answer, so they are left out. Decides what
+	/// <see cref="Settings.Es2TweakSettingDefinitions.FailWhileEngaged"/> fails at once.
+	/// </summary>
+	private static bool StaysTrue(int conditionCode) => conditionCode is
+		MissionObjective.ConditionOrderComplete or MissionObjective.ConditionLost
+		or MissionObjective.ConditionDataLink or MissionObjective.ConditionDataLinkAlso
+		or MissionObjective.ConditionEngaged or MissionObjective.ConditionDisarmed;
 
 	/// <summary>
 	/// <c>Group_IsWrittenOff</c> (<c>00413920</c>) — the condition tier at which a group counts as written off, which is

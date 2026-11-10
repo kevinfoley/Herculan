@@ -71,6 +71,8 @@ tweak.reset_counters_on_replay.display_name  Fix "Replay Mission" flags
 tweak.reset_counters_on_replay.description   Fix mission flags not getting reset when you choose to replay a mission (after dying during the mission), which could cause unlocks to fail or other unexpected behavior.
 tweak.c5_05_squadmate_clear.display_name  Fix Luna Sector Mission 5
 tweak.c5_05_squadmate_clear.description   In the mission to defend the lunar outpost, your first squadmate starts a few meters clear of the base's supply transport, so it can move from the start. In retail it starts partly inside the transport and cannot move until the transport is destroyed.
+tweak.fail_while_engaged.display_name  Announce mission failure immediately
+tweak.fail_while_engaged.description   A mission is failed as soon as a failure condition comes true, even while you are still in a fight. In retail the mission is only failed once no enemy nearby is aware of you or hunting you. Completing a mission still waits until you are clear, and so does a failure that could still be undone, such as one that depends on a unit being clear of threats.
 tweak.auto_fill_save_name.display_name  Always auto-fill save name
 tweak.auto_fill_save_name.description   When you click SAVE, a name is auto-filled. You must still click accept. The name is always auto-filled while using a controller.
 tweak.auto_save_slot_10.display_name  Auto-save in slot 10

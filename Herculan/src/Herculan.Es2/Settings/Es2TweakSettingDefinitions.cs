@@ -270,6 +270,15 @@ public static class Es2TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> SquadmateClearOfTransport = new("tweak.c5_05_squadmate_clear", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
+	/// A failure condition that comes true fails the mission even while the player is still in a fight, when it is one
+	/// that cannot turn false again (an order finished, a subject destroyed or disarmed). Retail announces a failure,
+	/// like a success, only once the player is clear of threats, so a convoy that reaches its exit while the player
+	/// fights its escort fails the mission only after the escort is dealt with. A failure that can still be taken back,
+	/// and success, still wait. See <see cref="Sim.MissionObjectives.EvaluateObjectives"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FailWhileEngaged = new("tweak.fail_while_engaged", TweakCategory.Functional, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
 	/// SAVE starts the slot's new name filled in as the pilot's name, the sector and the mission number, for the player to
 	/// edit or ACCEPT, as it always does when clicked with a gamepad. Retail empties the name. See
 	/// <see cref="Shell.ShellSaveScreen.AutoName"/>.
@@ -291,7 +300,7 @@ public static class Es2TweakSettingDefinitions {
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, HddWeaponIconsOnTop, EverySquadmateReply, FixComputerMessagePreference,
 		MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
-		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay, SquadmateClearOfTransport,
+		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay, SquadmateClearOfTransport, FailWhileEngaged,
 		AutoFillSaveName, AutoSaveSlot10, PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue, PerPixelDepthSorting,
 	};
 }

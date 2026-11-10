@@ -71,6 +71,8 @@ tweak.reset_counters_on_replay.display_name  Corriger les indicateurs de « Rejo
 tweak.reset_counters_on_replay.description   Corrige les indicateurs de mission qui ne sont pas réinitialisés quand vous choisissez de rejouer une mission (après avoir été tué pendant la mission), ce qui pouvait faire échouer des déblocages ou causer d'autres comportements inattendus.
 tweak.c5_05_squadmate_clear.display_name  Corriger la mission Luna 5
 tweak.c5_05_squadmate_clear.description   Dans la mission de défense de l'avant-poste lunaire, votre premier coéquipier démarre à quelques mètres du transport de ravitaillement de la base, si bien qu'il peut se déplacer dès le début. Dans le jeu original, il démarre en partie à l'intérieur du transport et ne peut pas bouger tant que le transport n'est pas détruit.
+tweak.fail_while_engaged.display_name  Annoncer l'échec immédiatement
+tweak.fail_while_engaged.description   Une mission échoue dès qu'une condition d'échec est remplie, même si vous êtes encore en plein combat. Dans le jeu original, la mission n'échoue qu'une fois qu'aucun ennemi proche ne vous a repéré ni ne vous traque. La réussite d'une mission attend toujours que vous soyez hors de danger, tout comme un échec qui pourrait encore être annulé, par exemple un échec qui dépend de la présence de menaces autour d'une unité.
 tweak.auto_fill_save_name.display_name  Nommer les sauvegardes automatiquement
 tweak.auto_fill_save_name.description   Quand vous cliquez sur SAUVEGARDER, un nom est rempli automatiquement. Vous devez quand même cliquer sur ACCEPTER. Avec une manette, le nom est toujours rempli automatiquement.
 tweak.auto_save_slot_10.display_name  Sauvegarde automatique emplacement 10

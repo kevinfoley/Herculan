@@ -71,6 +71,8 @@ tweak.reset_counters_on_replay.display_name  Flags bei „Einsatz noch mal?“ k
 tweak.reset_counters_on_replay.description   Behebt, dass Einsatz-Flags nicht zurückgesetzt werden, wenn Sie einen Einsatz wiederholen (nachdem Sie im Einsatz getötet wurden). Das konnte Freischaltungen verhindern oder anderes unerwartetes Verhalten auslösen.
 tweak.c5_05_squadmate_clear.display_name  Luna-Einsatz 5 korrigieren
 tweak.c5_05_squadmate_clear.description   In der Mission zur Verteidigung des Mondaußenpostens startet Ihr erster Staffelkamerad einige Meter neben dem Versorgungstransporter der Basis und kann sich so von Beginn an bewegen. Im Originalspiel startet er teilweise im Transporter und kann sich nicht bewegen, bis der Transporter zerstört ist.
+tweak.fail_while_engaged.display_name  Scheitern sofort melden
+tweak.fail_while_engaged.description   Eine Mission scheitert, sobald eine Bedingung für ihr Scheitern eintritt, auch wenn Sie noch kämpfen. Im Originalspiel scheitert die Mission erst, wenn kein Feind in der Nähe Sie bemerkt hat oder Sie jagt. Der Erfolg einer Mission wartet weiterhin, bis Sie außer Gefahr sind, ebenso ein Scheitern, das noch rückgängig gemacht werden könnte, etwa eines, das davon abhängt, ob eine Einheit bedroht ist.
 tweak.auto_fill_save_name.display_name  Spielstandnamen immer vorschlagen
 tweak.auto_fill_save_name.description   Wenn Sie auf SPEICHERN klicken, wird ein Name automatisch ausgefüllt. Sie müssen trotzdem noch auf ANNEHMEN klicken. Mit einem Controller wird der Name immer automatisch ausgefüllt.
 tweak.auto_save_slot_10.display_name  Autospeichern in Platz 10
