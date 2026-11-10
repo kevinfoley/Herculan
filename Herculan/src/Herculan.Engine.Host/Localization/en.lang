@@ -324,6 +324,143 @@ controller.invert_razor_pitch_tip   Reverses which way the controls pitch the RA
 controller.actions_note        Use this window to choose which axis, hat or button on your controller the game reads for each row above. To choose what each row does in a HERC or RAZOR, press F12 during a mission and select "CONTROLS". On that panel, the "JOYSTICK", "THROTTLE", "RUDDER" and "HAT" settings are fixed for a gamepad. A gamepad's button settings are saved separately from a joystick's. Both games use these settings when you play them in HERCULAN. HERCULAN saves them in its own settings folder, not in the game's folder.
 controller.es1_actions_note    Use this window to choose which axis or button on your controller the game reads for each row above. The rows are the four axes and four buttons of the original joystick port. What each one does depends on the joystick type and the other settings on the "CONTROLS" panel. To open that panel, select "OPTIONS" and then "CONTROLS" in the menus, or press F12 during a mission and select "CONTROLS". Both games use these settings when you play them in HERCULAN. HERCULAN saves them in its own settings folder, not in the game's folder.
 controller.defaults            Defaults
+controller.action.throttle_forward  Throttle forward
+controller.action.throttle_back  Throttle back
+controller.action.steer_left   Steer left
+controller.action.steer_right  Steer right
+controller.action.all_stop     All stop
+controller.action.turret_left  Twist turret left
+controller.action.turret_right  Twist turret right
+controller.action.turret_up    Pitch turret up
+controller.action.turret_down  Pitch turret down
+controller.action.center_turret  Center turret
+controller.action.center_legs  Center legs
+controller.action.razor_throttle_up  RAZOR throttle up
+controller.action.razor_throttle_down  RAZOR throttle down
+controller.action.diagonal_forward_left  Forward and left
+controller.action.diagonal_forward_right  Forward and right
+controller.action.diagonal_back_left  Back and left
+controller.action.diagonal_back_right  Back and right
+controller.action.reverse_throttle_lever  Reverse the throttle lever
+controller.action.throttle_step_up  Throttle up a step
+controller.action.throttle_step_down  Throttle down a step
+controller.action.fire         Fire
+controller.action.weapon_row_1  Select weapon row 1
+controller.action.weapon_row_2  Select weapon row 2
+controller.action.weapon_row_3  Select weapon row 3
+controller.action.weapon_row_4  Select weapon row 4
+controller.action.weapon_row_5  Select weapon row 5
+controller.action.weapon_row_6  Select weapon row 6
+controller.action.weapon_row_7  Select weapon row 7
+controller.action.weapon_row_8  Select weapon row 8
+controller.action.weapon_row_9  Select weapon row 9
+controller.action.weapon_row_10  Select weapon row 10
+controller.action.toggle_chain_row_1  Add or remove weapon row 1 in the chain
+controller.action.toggle_chain_row_2  Add or remove weapon row 2 in the chain
+controller.action.toggle_chain_row_3  Add or remove weapon row 3 in the chain
+controller.action.toggle_chain_row_4  Add or remove weapon row 4 in the chain
+controller.action.toggle_chain_row_5  Add or remove weapon row 5 in the chain
+controller.action.toggle_chain_row_6  Add or remove weapon row 6 in the chain
+controller.action.toggle_chain_row_7  Add or remove weapon row 7 in the chain
+controller.action.toggle_chain_row_8  Add or remove weapon row 8 in the chain
+controller.action.toggle_chain_row_9  Add or remove weapon row 9 in the chain
+controller.action.toggle_chain_row_10  Add or remove weapon row 10 in the chain
+controller.action.next_weapon  Next weapon
+controller.action.previous_weapon  Previous weapon
+controller.action.link_weapon  Link weapon
+controller.action.next_chain   Next firing chain
+controller.action.previous_chain  Previous firing chain
+controller.action.power_up     Raise power level
+controller.action.power_down   Lower power level
+controller.action.next_target  Next target
+controller.action.nearest_target  Nearest target
+controller.action.clear_target  Clear target
+controller.action.next_target_component  Next target component
+controller.action.radar_mode   Radar active or passive
+controller.action.radar_range  Radar range
+controller.action.scanner_next_target  Next target on SCANNER
+controller.action.auto_turret_tracking  Automatic turret tracking
+controller.action.shields_rear  Shields to the rear
+controller.action.shields_front  Shields to the front
+controller.action.mfd_status   MFD: STATUS
+controller.action.mfd_flash_comm  MFD: FLASH COMM
+controller.action.mfd_nav_map  MFD: NAV MAP
+controller.action.mfd_scanner  MFD: SCANNER
+controller.action.mfd_target   MFD: TARGET
+controller.action.mfd_missile_cam  MFD: MISSILE CAM
+controller.action.mfd_next_screen  MFD: next screen
+controller.action.command_display  Command display
+controller.action.damage_detail  Damage detail
+controller.action.look_left    Left window, or back
+controller.action.look_right   Right window, or back
+controller.action.view_back    Heads-Down Display, or back
+controller.action.view_up      Forward view
+controller.action.view_down    Heads-Down Display
+controller.action.view_left    Left window
+controller.action.view_right   Right window
+controller.action.outside_view  Outside view
+controller.action.other_hercs_status  Other HERCs on STATUS
+controller.action.drop_nav_marker  Drop a nav marker
+controller.action.flash_comm_attack_my_target  Pick ATTACK MY TARGET
+controller.action.flash_comm_ignore_my_target  Pick IGNORE MY TARGET
+controller.action.flash_comm_help_me_out  Pick HELP ME OUT!
+controller.action.flash_comm_join_on_me  Pick JOIN ON ME
+controller.action.flash_comm_scan_for_hostiles  Pick SCAN FOR HOSTILES
+controller.action.flash_comm_emcon  Pick EMCON
+controller.action.flash_comm_fire_at_will  Pick FIRE AT WILL / HOLD YOUR FIRE
+controller.action.flash_comm_next_order  Next order
+controller.action.flash_comm_previous_order  Previous order
+controller.action.flash_comm_transmit  Transmit
+controller.action.send_attack_my_target  Send ATTACK MY TARGET
+controller.action.send_ignore_my_target  Send IGNORE MY TARGET
+controller.action.send_help_me_out  Send HELP ME OUT!
+controller.action.send_join_on_me  Send JOIN ON ME
+controller.action.send_scan_for_hostiles  Send SCAN FOR HOSTILES
+controller.action.send_emcon   Send EMCON
+controller.action.send_fire_at_will  Send FIRE AT WILL / HOLD YOUR FIRE
+controller.action.command_squadmate_1  Squadmate 1
+controller.action.command_squadmate_2  Squadmate 2
+controller.action.command_squadmate_3  Squadmate 3
+controller.action.command_disengage  Pick DISENGAGE
+controller.action.command_attack_enemy  Pick ATTACK ENEMY
+controller.action.command_defend_position  Pick DEFEND POSITION
+controller.action.command_patrol_gridpoint  Pick PATROL GRIDPOINT
+controller.action.command_goto_gridpoint  Pick GOTO GRIDPOINT
+controller.action.command_join_on_me  Pick JOIN ON ME
+controller.action.command_scan_for_hostiles  Pick SCAN FOR HOSTILES
+controller.action.command_emcon  Pick EMCON
+controller.action.command_previous_order  Previous order
+controller.action.command_next_order  Next order
+controller.action.command_next_unit  Next unit
+controller.action.command_pick  Pick on the map
+controller.action.command_zoom_in  Zoom in
+controller.action.command_zoom_out  Zoom out
+controller.action.command_scroll_up  Scroll up
+controller.action.command_scroll_down  Scroll down
+controller.action.command_scroll_left  Scroll left
+controller.action.command_scroll_right  Scroll right
+controller.action.command_recenter  Center the map on your HERC
+controller.action.command_transmit  Transmit
+controller.action.command_cancel  Cancel
+controller.action.damage_structural  Structural
+controller.action.damage_internal  Internal systems
+controller.action.damage_weapons  Weapon systems
+controller.action.damage_systems_up  Step up the list
+controller.action.damage_systems_down  Step down the list
+controller.action.damage_herc_left  Previous HERC
+controller.action.damage_herc_right  Next HERC
+controller.action.swap_camera_controls  Camera or HERC controls
+controller.action.view_next_squadmate  Next squadmate's HERC
+controller.action.mission_status  Mission status
+controller.action.pause        Pause
+controller.action.quit_game    Quit the game
+controller.action.objectives   Objectives
+controller.action.preferences  Preferences
+controller.action.online_manual  Online manual
+controller.action.menu_bar     Menu bar
+controller.action.pause_menu   Pause menu
+controller.action.squad_orders_wheel  Squad orders, while held
+controller.action.screens_wheel  Cockpit screens, while held
 keys.title                     Keys
 keys.filter_hint               Find a key or action
 keys.column_key                Key

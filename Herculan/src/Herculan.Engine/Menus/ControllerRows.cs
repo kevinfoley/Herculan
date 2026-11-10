@@ -49,6 +49,16 @@ public sealed record ControllerRows {
 
 	/// <summary>Options of the game's own, after the deadzone and hat diagonals.</summary>
 	public IReadOnlyList<ControllerOption> Options { get; init; } = [];
+
+	/// <summary>
+	/// Which of <see cref="ControllerActions.Offered"/> the game has. A Custom profile can bind any of them, and one the
+	/// running game lacks does nothing in it.
+	/// </summary>
+	public required IReadOnlySet<KeyAction> Actions { get; init; }
+
+	/// <summary>Every offered action but <paramref name="lacking"/>, for <see cref="Actions"/>.</summary>
+	public static IReadOnlySet<KeyAction> OfferedExcept(IEnumerable<KeyAction> lacking) =>
+		ControllerActions.Offered.Select(entry => entry.Action).Except(lacking).ToHashSet();
 }
 
 /// <summary>One frame as a game reads it, for the Controller window's "Game reads" column.</summary>

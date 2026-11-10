@@ -155,8 +155,18 @@ internal static class RetailKeyMap {
 		// PrintScreenCapture's hook takes it by its virtual-key code, ahead of the window's keys.
 		Bind(KeyAction.CopyFrame, Key.PrintScreen);
 
-		return new KeyMap(bindings);
+		return new KeyMap(bindings, Keyless);
 	}
+
+	/// <summary>
+	/// The actions ES2 has no key for: those a CONTROLS button or HERCULAN's gamepad reaches, and ES1's own, which ES2
+	/// lacks altogether (<see cref="ControllerActions"/>).
+	/// </summary>
+	private static readonly KeyAction[] Keyless = [
+		KeyAction.ReverseThrottleLever, KeyAction.ThrottleStepUp, KeyAction.ThrottleStepDown, KeyAction.PreviousChain,
+		KeyAction.MfdNextScreen, KeyAction.ViewUp, KeyAction.ViewDown, KeyAction.ViewLeft, KeyAction.ViewRight,
+		KeyAction.PauseMenu, KeyAction.SquadOrdersWheel, KeyAction.ScreensWheel,
+	];
 
 	private static Key NumberKey(int row) => row < 9 ? Key.Number1 + row : Key.Number0;
 }

@@ -3,7 +3,8 @@ namespace Herculan.Engine.Input;
 /// <summary>
 /// Everything a key does in the simulator, one value per thing, grouped as docs/retail/key-bindings.md groups them and
 /// then HERCULAN's own (docs/herculan/herculan-key-bindings.md). A numbered set is one value per member, in order, so a
-/// handler can count from its first. Which keys each takes is a <see cref="KeyMap"/>'s.
+/// handler can count from its first. Which keys each takes is a <see cref="KeyMap"/>'s; some have none in a game and are
+/// reached through a controller alone (<see cref="ControllerActions"/>).
 /// </summary>
 public enum KeyAction {
 	// Driving.
@@ -26,6 +27,13 @@ public enum KeyAction {
 	DiagonalForwardRight,
 	DiagonalBackLeft,
 	DiagonalBackRight,
+
+	/// <summary>Reverses which end of a throttle lever's travel is forward: ES2's CHANGE DIRECTION, ES1's Ctrl+1.</summary>
+	ReverseThrottleLever,
+
+	/// <summary>Steps the throttle up, as ES1's Ctrl+I does with "WCS" on.</summary>
+	ThrottleStepUp,
+	ThrottleStepDown,
 
 	// Weapons.
 	Fire,
@@ -55,6 +63,7 @@ public enum KeyAction {
 	PreviousWeapon,
 	LinkWeapon,
 	NextChain,
+	PreviousChain,
 
 	/// <summary>Raises the selected energy weapon's power level a step.</summary>
 	PowerUp,
@@ -81,6 +90,9 @@ public enum KeyAction {
 	MfdScanner,
 	MfdTarget,
 	MfdMissileCam,
+
+	/// <summary>Steps the MFD on to its next screen: ES2's MFD DISPLAYS, ES1's step button on the MFD.</summary>
+	MfdNextScreen,
 	CommandDisplay,
 	DamageDetail,
 	LookLeft,
@@ -90,6 +102,18 @@ public enum KeyAction {
 	/// From the forward view down to the Heads-Down Display; otherwise back to the forward view, or to the cockpit.
 	/// </summary>
 	ViewBack,
+
+	/// <summary>View command 1, up to the forward view, as a hat pushed up sends it.</summary>
+	ViewUp,
+
+	/// <summary>View command 0, down to the Heads-Down Display.</summary>
+	ViewDown,
+
+	/// <summary>View command 5, the left side window.</summary>
+	ViewLeft,
+
+	/// <summary>View command 4, the right side window.</summary>
+	ViewRight,
 	OutsideView,
 
 	/// <summary>The MFD's SELECT: the other HERCs' status on STATUS, the next target on TARGET STATUS.</summary>
@@ -176,6 +200,15 @@ public enum KeyAction {
 
 	// HERCULAN's own.
 	MenuBar,
+
+	/// <summary>Pauses the mission under HERCULAN's pause menu, or resumes from it, as a gamepad's Start does.</summary>
+	PauseMenu,
+
+	/// <summary>Holds FLASH COMM's orders round the middle of the screen, as a gamepad's left stick click does.</summary>
+	SquadOrdersWheel,
+
+	/// <summary>Holds the cockpit's screens round the middle of the screen, as a gamepad's right stick click does.</summary>
+	ScreensWheel,
 
 	/// <summary>Backs out of the menu bar or one of its windows while one is up.</summary>
 	MenuBack,

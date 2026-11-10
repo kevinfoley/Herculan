@@ -35,16 +35,22 @@ public sealed record KeyBinding(KeyAction Action, KeySection Section, ImmutableA
 /// to move those tests, and that order, onto the map.</para>
 /// </summary>
 public sealed class KeyMap {
-	private readonly KeyBinding[] _byAction;
+	private readonly KeyBinding?[] _byAction;
 
-	/// <param name="bindings">Every action once, in display order, each with at least one chord.</param>
-	public KeyMap(IEnumerable<KeyBinding> bindings) {
+	/// <param name="bindings">Every action once, in display order, each with at least one chord, but those in <paramref name="keyless"/>.</param>
+	/// <param name="keyless">The actions the game reaches through a controller alone, which take no key.</param>
+	public KeyMap(IEnumerable<KeyBinding> bindings, IEnumerable<KeyAction>? keyless = null) {
 		Bindings = bindings.ToImmutableArray();
+		var keylessSet = keyless?.ToHashSet() ?? [];
 		var actions = Enum.GetValues<KeyAction>();
 		var byAction = new KeyBinding?[actions.Max(action => (int)action) + 1];
 		foreach (var binding in Bindings) {
 			if (binding.Chords.IsDefaultOrEmpty) {
 				throw new ArgumentException($"{binding.Action} has no keys.", nameof(bindings));
+			}
+
+			if (keylessSet.Contains(binding.Action)) {
+				throw new ArgumentException($"{binding.Action} is keyless but bound.", nameof(bindings));
 			}
 
 			if (byAction[(int)binding.Action] != null) {
@@ -55,12 +61,12 @@ public sealed class KeyMap {
 		}
 
 		foreach (var action in actions) {
-			if (byAction[(int)action] == null) {
+			if (byAction[(int)action] == null && !keylessSet.Contains(action)) {
 				throw new ArgumentException($"{action} has no binding.", nameof(bindings));
 			}
 		}
 
-		_byAction = byAction!;
+		_byAction = byAction;
 	}
 
 	/// <summary>ES2's own keys (<see cref="RetailKeyMap"/>).</summary>
@@ -69,9 +75,12 @@ public sealed class KeyMap {
 	/// <summary>Every action's binding, in display order.</summary>
 	public ImmutableArray<KeyBinding> Bindings { get; }
 
-	public KeySection SectionOf(KeyAction action) => _byAction[(int)action].Section;
+	/// <summary>Whether the action takes a key at all, which a keyless one does not.</summary>
+	public bool HasKeys(KeyAction action) => _byAction[(int)action] != null;
 
-	public ImmutableArray<KeyChord> Chords(KeyAction action) => _byAction[(int)action].Chords;
+	public KeySection SectionOf(KeyAction action) => BindingOf(action).Section;
+
+	public ImmutableArray<KeyChord> Chords(KeyAction action) => BindingOf(action).Chords;
 
 	/// <summary>The action's primary chord, its first.</summary>
 	public KeyChord Chord(KeyAction action) => Chords(action)[0];
@@ -79,8 +88,12 @@ public sealed class KeyMap {
 	/// <summary>The key of the action's primary chord, which is the only one for most actions.</summary>
 	public Key KeyOf(KeyAction action) => Chord(action).Key;
 
-	/// <summary>Whether any of the action's keys is down, its modifiers left to the caller.</summary>
+	/// <summary>Whether any of the action's keys is down, its modifiers left to the caller; never, for a keyless one.</summary>
 	public bool IsDown(IKeyState keys, KeyAction action) {
+		if (!HasKeys(action)) {
+			return false;
+		}
+
 		foreach (var chord in Chords(action)) {
 			if (keys.IsKeyPressed(chord.Key)) {
 				return true;
@@ -92,6 +105,10 @@ public sealed class KeyMap {
 
 	/// <summary>Whether any of the action's keys repeats this frame (<see cref="IKeyState.IsKeyRepeated"/>).</summary>
 	public bool IsRepeated(IKeyState keys, KeyAction action) {
+		if (!HasKeys(action)) {
+			return false;
+		}
+
 		foreach (var chord in Chords(action)) {
 			if (keys.IsKeyRepeated(chord.Key)) {
 				return true;
@@ -100,4 +117,7 @@ public sealed class KeyMap {
 
 		return false;
 	}
+
+	private KeyBinding BindingOf(KeyAction action) =>
+		_byAction[(int)action] ?? throw new InvalidOperationException($"{action} takes no key.");
 }

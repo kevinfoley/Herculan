@@ -26,5 +26,6 @@ static class Es1ControllerRows {
 		},
 		ReadsFull = JoystickReading.RawFull,
 		NoteKey = "controller.es1_actions_note",
+		Actions = ControllerRows.OfferedExcept(ControllerActions.Es2Only),
 	};
 }

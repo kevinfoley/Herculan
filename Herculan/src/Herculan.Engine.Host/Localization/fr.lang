@@ -324,6 +324,143 @@ controller.invert_razor_pitch_tip   Inverse le sens dans lequel les commandes l�
 controller.actions_note        Dans cette fenêtre, choisissez l'axe, le chapeau ou le bouton de votre manette que le jeu lit pour chaque ligne ci-dessus. Pour choisir ce que fait chaque ligne dans un HERC ou un RAZOR, appuyez sur F12 en mission et sélectionnez « CONTROLS ». Pour une manette de jeu, les réglages « JOYSTICK », « THROTTLE », « RUDDER » et « HAT » y sont fixés. Les réglages des boutons d'une manette de jeu sont enregistrés à part de ceux d'un joystick. Les deux jeux utilisent ces réglages quand vous y jouez dans HERCULAN. HERCULAN les enregistre dans son propre dossier de réglages, pas dans le dossier du jeu.
 controller.es1_actions_note    Dans cette fenêtre, choisissez l'axe ou le bouton de votre manette que le jeu lit pour chaque ligne ci-dessus. Les lignes sont les quatre axes et les quatre boutons du port joystick d'origine. Ce que fait chacun dépend du type de joystick et des autres réglages du panneau « CONTROLS ». Pour ouvrir ce panneau, sélectionnez « OPTIONS » puis « CONTROLS » dans les menus, ou appuyez sur F12 en mission et sélectionnez « CONTROLS ». Les deux jeux utilisent ces réglages quand vous y jouez dans HERCULAN. HERCULAN les enregistre dans son propre dossier de réglages, pas dans le dossier du jeu.
 controller.defaults            Par défaut
+controller.action.throttle_forward  Régime en avant
+controller.action.throttle_back  Régime en arrière
+controller.action.steer_left   Tourner à gauche
+controller.action.steer_right  Tourner à droite
+controller.action.all_stop     Arrêt complet
+controller.action.turret_left  Pivoter la tourelle à gauche
+controller.action.turret_right  Pivoter la tourelle à droite
+controller.action.turret_up    Incliner la tourelle vers le haut
+controller.action.turret_down  Incliner la tourelle vers le bas
+controller.action.center_turret  Centrer la tourelle
+controller.action.center_legs  Centrer les jambes
+controller.action.razor_throttle_up  RAZOR : régime vers le haut
+controller.action.razor_throttle_down  RAZOR : régime vers le bas
+controller.action.diagonal_forward_left  En avant et à gauche
+controller.action.diagonal_forward_right  En avant et à droite
+controller.action.diagonal_back_left  En arrière et à gauche
+controller.action.diagonal_back_right  En arrière et à droite
+controller.action.reverse_throttle_lever  Inverser la manette des gaz
+controller.action.throttle_step_up  Régime d'un cran vers le haut
+controller.action.throttle_step_down  Régime d'un cran vers le bas
+controller.action.fire         Tirer
+controller.action.weapon_row_1  Sélectionner la rangée d'armes 1
+controller.action.weapon_row_2  Sélectionner la rangée d'armes 2
+controller.action.weapon_row_3  Sélectionner la rangée d'armes 3
+controller.action.weapon_row_4  Sélectionner la rangée d'armes 4
+controller.action.weapon_row_5  Sélectionner la rangée d'armes 5
+controller.action.weapon_row_6  Sélectionner la rangée d'armes 6
+controller.action.weapon_row_7  Sélectionner la rangée d'armes 7
+controller.action.weapon_row_8  Sélectionner la rangée d'armes 8
+controller.action.weapon_row_9  Sélectionner la rangée d'armes 9
+controller.action.weapon_row_10  Sélectionner la rangée d'armes 10
+controller.action.toggle_chain_row_1  Ajouter ou retirer la rangée d'armes 1 de la chaîne
+controller.action.toggle_chain_row_2  Ajouter ou retirer la rangée d'armes 2 de la chaîne
+controller.action.toggle_chain_row_3  Ajouter ou retirer la rangée d'armes 3 de la chaîne
+controller.action.toggle_chain_row_4  Ajouter ou retirer la rangée d'armes 4 de la chaîne
+controller.action.toggle_chain_row_5  Ajouter ou retirer la rangée d'armes 5 de la chaîne
+controller.action.toggle_chain_row_6  Ajouter ou retirer la rangée d'armes 6 de la chaîne
+controller.action.toggle_chain_row_7  Ajouter ou retirer la rangée d'armes 7 de la chaîne
+controller.action.toggle_chain_row_8  Ajouter ou retirer la rangée d'armes 8 de la chaîne
+controller.action.toggle_chain_row_9  Ajouter ou retirer la rangée d'armes 9 de la chaîne
+controller.action.toggle_chain_row_10  Ajouter ou retirer la rangée d'armes 10 de la chaîne
+controller.action.next_weapon  Arme suivante
+controller.action.previous_weapon  Arme précédente
+controller.action.link_weapon  Relier l'arme
+controller.action.next_chain   Chaîne de tir suivante
+controller.action.previous_chain  Chaîne de tir précédente
+controller.action.power_up     Augmenter la puissance
+controller.action.power_down   Baisser la puissance
+controller.action.next_target  Cible suivante
+controller.action.nearest_target  Cible la plus proche
+controller.action.clear_target  Annuler la cible
+controller.action.next_target_component  Composant suivant de la cible
+controller.action.radar_mode   Radar actif ou passif
+controller.action.radar_range  Portée du radar
+controller.action.scanner_next_target  Cible suivante sur SCANNER
+controller.action.auto_turret_tracking  Suivi automatique de la tourelle
+controller.action.shields_rear  Boucliers vers l'arrière
+controller.action.shields_front  Boucliers vers l'avant
+controller.action.mfd_status   MFD : STATUS
+controller.action.mfd_flash_comm  MFD : FLASH COMM
+controller.action.mfd_nav_map  MFD : NAV MAP
+controller.action.mfd_scanner  MFD : SCANNER
+controller.action.mfd_target   MFD : TARGET
+controller.action.mfd_missile_cam  MFD : MISSILE CAM
+controller.action.mfd_next_screen  MFD : écran suivant
+controller.action.command_display  Affichage des commandes
+controller.action.damage_detail  Détail des dégâts
+controller.action.look_left    Fenêtre de gauche, ou retour
+controller.action.look_right   Fenêtre de droite, ou retour
+controller.action.view_back    Affichage tête basse, ou retour
+controller.action.view_up      Vue avant
+controller.action.view_down    Affichage tête basse
+controller.action.view_left    Fenêtre de gauche
+controller.action.view_right   Fenêtre de droite
+controller.action.outside_view  Vue externe
+controller.action.other_hercs_status  Autres HERCs sur STATUS
+controller.action.drop_nav_marker  Poser une balise de navigation
+controller.action.flash_comm_attack_my_target  Choisir ATTACK MY TARGET
+controller.action.flash_comm_ignore_my_target  Choisir IGNORE MY TARGET
+controller.action.flash_comm_help_me_out  Choisir HELP ME OUT!
+controller.action.flash_comm_join_on_me  Choisir JOIN ON ME
+controller.action.flash_comm_scan_for_hostiles  Choisir SCAN FOR HOSTILES
+controller.action.flash_comm_emcon  Choisir EMCON
+controller.action.flash_comm_fire_at_will  Choisir FIRE AT WILL / HOLD YOUR FIRE
+controller.action.flash_comm_next_order  Ordre suivant
+controller.action.flash_comm_previous_order  Ordre précédent
+controller.action.flash_comm_transmit  Transmettre
+controller.action.send_attack_my_target  Envoyer ATTACK MY TARGET
+controller.action.send_ignore_my_target  Envoyer IGNORE MY TARGET
+controller.action.send_help_me_out  Envoyer HELP ME OUT!
+controller.action.send_join_on_me  Envoyer JOIN ON ME
+controller.action.send_scan_for_hostiles  Envoyer SCAN FOR HOSTILES
+controller.action.send_emcon   Envoyer EMCON
+controller.action.send_fire_at_will  Envoyer FIRE AT WILL / HOLD YOUR FIRE
+controller.action.command_squadmate_1  Coéquipier 1
+controller.action.command_squadmate_2  Coéquipier 2
+controller.action.command_squadmate_3  Coéquipier 3
+controller.action.command_disengage  Choisir DISENGAGE
+controller.action.command_attack_enemy  Choisir ATTACK ENEMY
+controller.action.command_defend_position  Choisir DEFEND POSITION
+controller.action.command_patrol_gridpoint  Choisir PATROL GRIDPOINT
+controller.action.command_goto_gridpoint  Choisir GOTO GRIDPOINT
+controller.action.command_join_on_me  Choisir JOIN ON ME
+controller.action.command_scan_for_hostiles  Choisir SCAN FOR HOSTILES
+controller.action.command_emcon  Choisir EMCON
+controller.action.command_previous_order  Ordre précédent
+controller.action.command_next_order  Ordre suivant
+controller.action.command_next_unit  Unité suivante
+controller.action.command_pick  Choisir sur la carte
+controller.action.command_zoom_in  Zoomer en avant
+controller.action.command_zoom_out  Zoomer en arrière
+controller.action.command_scroll_up  Défiler vers le haut
+controller.action.command_scroll_down  Défiler vers le bas
+controller.action.command_scroll_left  Défiler vers la gauche
+controller.action.command_scroll_right  Défiler vers la droite
+controller.action.command_recenter  Centrer la carte sur votre HERC
+controller.action.command_transmit  Transmettre
+controller.action.command_cancel  Annuler
+controller.action.damage_structural  Structure
+controller.action.damage_internal  Systèmes internes
+controller.action.damage_weapons  Systèmes d'armes
+controller.action.damage_systems_up  Monter dans la liste
+controller.action.damage_systems_down  Descendre dans la liste
+controller.action.damage_herc_left  HERC précédent
+controller.action.damage_herc_right  HERC suivant
+controller.action.swap_camera_controls  Commandes à la caméra ou au HERC
+controller.action.view_next_squadmate  HERC du coéquipier suivant
+controller.action.mission_status  État de la mission
+controller.action.pause        Pause
+controller.action.quit_game    Quitter le jeu
+controller.action.objectives   Objectifs
+controller.action.preferences  Préférences
+controller.action.online_manual  Manuel en ligne
+controller.action.menu_bar     Barre de menus
+controller.action.pause_menu   Menu de pause
+controller.action.squad_orders_wheel  Ordres d'escouade, tant que maintenu
+controller.action.screens_wheel  Écrans du cockpit, tant que maintenu
 keys.title                     Touches
 keys.filter_hint               Chercher une touche ou action
 keys.column_key                Touche
