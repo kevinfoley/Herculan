@@ -54,18 +54,24 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	}
 
 	/// <inheritdoc/>
-	public byte Buttons => Read() is { } positions ? (byte)(positions.Buttons & 0xf) : (byte)0;
+	public byte Buttons => Read() is { } positions ? positions.Buttons : (byte)0;
 
-	private JoystickPositions? Read() {
-		if (_map() is not { } map) {
-			return null;
-		}
-
+	/// <summary>
+	/// What the port reads through <paramref name="map"/>: each role's axis in <see cref="JoystickReading.RawFull"/> units
+	/// and buttons 0–3, the map's logical buttons 1–4.
+	/// </summary>
+	/// <param name="map">The map the device is read through.</param>
+	/// <param name="axis">A device axis as a fraction of its travel, −1 to +1, 0 for one it does not have.</param>
+	/// <param name="button">Whether a device button is held, false for one the host keeps.</param>
+	public static JoystickPositions Read(JoystickDeviceMap map, Func<int, float> axis, Func<int, bool> button) {
 		// PLACEHOLDER: the controller's hat is put on no port line. Which hat direction each of the record's bytes
 		// +0x14-+0x17 is stays Open (docs/es1/simulation/joystick.md#open), until the retail check it lists under
 		// DOSBox-X's joysticktype=fcs with option 7 at 3 and joysticktype=ch with option 7 at 5.
-		return map.ReadPositions(_axis, _button, JoystickHat.None);
+		var positions = map.ReadPositions(axis, button, JoystickHat.None);
+		return positions with { Buttons = (byte)(positions.Buttons & 0xf) };
 	}
+
+	private JoystickPositions? Read() => _map() is { } map ? Read(map, _axis, _button) : null;
 
 	/// <summary>The device axis the map gives the role port axis <paramref name="axis"/> carries.</summary>
 	private static int RoleAxis(JoystickDeviceMap map, int axis) => axis switch {

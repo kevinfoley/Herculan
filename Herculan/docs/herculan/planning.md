@@ -14,6 +14,8 @@ Long-term goal: a modern, cross-platform engine capable of running Earthsiege 2 
 
 All behavior matches the original game exactly by default. The only exceptions are purely cosmetic changes with no gameplay effect (e.g. resolution). Anything that changes behavior in the future — fixing bugs that exist in the original, raising limits, increasing mathematical precision, etc. — will be opt-in via a settings menu.
 
+Controllers are the one exception. Every controller starts in Custom mode, where the player's controller profile binds each axis, button and hat direction straight to a game function. Original mode, where the game's own controls panel says what each control does as retail's does, is chosen per device in the Controller window.
+
 
 ## Settled decisions
 

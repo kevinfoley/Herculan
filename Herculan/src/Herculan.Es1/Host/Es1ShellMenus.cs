@@ -1,3 +1,4 @@
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform;
 using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
@@ -6,15 +7,17 @@ using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using Herculan.Es1.Settings;
+using Herculan.Es1.Sim;
 using Silk.NET.Input;
 
 namespace Herculan.Es1.Host;
 
 /// <summary>
 /// Metaltech: Earthsiege's shell's menus over its <see cref="FrontEndWindow"/>: HERCULAN's own <see cref="HostMenuBar"/>
-/// with its "Game" menu, the windows that work the same in either game, Accessibility and About, its own Tweaks, and the
-/// <see cref="ErrorDialog"/>, and its own Settings (<see cref="Es1SettingsWindow"/>). Controller, Keys and Editor are greyed,
-/// since each is built on Earthsiege 2's controls or missions; Custom Missions is left out. There is no welcome and no
+/// with its "Game" menu, the windows that work the same in either game, Accessibility and About, its own Tweaks, the
+/// <see cref="ErrorDialog"/>, its own Settings (<see cref="Es1SettingsWindow"/>), and the Controller window over what the
+/// game port reads (<see cref="Es1ControllerRows"/>), whose save the next mission reads. Keys and Editor are greyed, since
+/// each is built on Earthsiege 2's controls or missions; Custom Missions is left out. There is no welcome and no
 /// automatic update check.
 /// </summary>
 public sealed class Es1ShellMenus : IFrontEndMenus {
@@ -24,6 +27,7 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 
 	private readonly HostMenuBar _menuBar;
 	private readonly TweaksMenu _tweaks;
+	private readonly ControllerWindow _controller;
 	private readonly LocalizationTable _localization;
 
 	/// <summary>
@@ -42,27 +46,29 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 			GameSwitch.Request(RetailGame.Earthsiege1, root);
 			CloseRequested?.Invoke();
 		});
-		_menuBar = new HostMenuBar(localization, keys: null, tweaks: _tweaks, settings: settings, controller: null,
+		// The install's copy of the controller map seeds the player's while it is missing, as at a mission start.
+		_controller = new ControllerWindow(localization,
+			() => CaseInsensitivePath.Combine(installRoot, Es1MissionFiles.DataFolder), Es1ControllerRows.Create());
+		_controller.Saved += file => PadPointerSettingsChanged?.Invoke(file.Mouse);
+		_menuBar = new HostMenuBar(localization, keys: null, tweaks: _tweaks, settings: settings, controller: _controller,
 			accessibilitySettings: Accessibility, game: game);
 	}
 
 	/// <summary>Raised by "Switch to" and by a change in Settings, the items that end the shell's turn.</summary>
 	public event Action? CloseRequested;
 
-	// Never raised: there is no Controller window to save the pad's settings.
-	public event Action<GamepadMouseSettings>? PadPointerSettingsChanged {
-		add { }
-		remove { }
-	}
+	public event Action<GamepadMouseSettings>? PadPointerSettingsChanged;
 
 	public bool Visible => _menuBar.Visible;
 
 	public bool PanelOpen => _menuBar.PanelOpen;
 
-	public bool PadNavigationSuspended => false;
+	/// <summary>While the Controller window's Detect is listening (<see cref="ControllerWindow.Listening"/>).</summary>
+	public bool PadNavigationSuspended => _controller.Listening;
 
 	public void Attach(ScaledImGui imgui, IInputContext input) {
 		_tweaks.Fonts = imgui;
+		_controller.Attach(input);
 	}
 
 	public void Show() => _menuBar.Show();
