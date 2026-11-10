@@ -21,11 +21,18 @@ namespace Herculan.Engine.Menus;
 /// buttons set those alone.</para>
 /// </summary>
 public sealed class TweaksMenu {
-	// In pixels on a 100% display (ScaledImGui.Scaled).
-	private const float PanelWidth = 440f;
+	// In pixels on a 100% display (ScaledImGui.Scaled). The panel is never narrower than this, whatever its columns need.
+	private const float MinimumPanelWidth = 440f;
+
+	// In pixels on a 100% display: the space between the two columns.
+	private const float ColumnGap = 24f;
 
 	// The visible settings in the order they are drawn, grouped once rather than every frame.
 	private readonly (TweakCategory Category, TweakSettingDefinition<bool>[] Settings)[] _visibleByCategory;
+
+	// How many of _visibleByCategory's categories go in the left column; the rest go in the right one. Equal to its
+	// length when the list is one column.
+	private readonly int _leftCategories;
 
 	// The offered settings, hidden ones included, which the preset buttons set.
 	private readonly TweakSettingDefinition<bool>[] _offered;
@@ -52,6 +59,30 @@ public sealed class TweaksMenu {
 		_closeButtons = [("general.save", Save), ("general.cancel", Cancel)];
 		_offered = settings.All.Where(d => offered == null || offered.Contains(d)).ToArray();
 		_visibleByCategory = _offered.Where(d => !d.Hidden).GroupBy(d => d.Category).Select(g => (g.Key, g.ToArray())).ToArray();
+		_leftCategories = BalancedSplit(_visibleByCategory.Select(c => c.Settings.Length + 1).ToArray());
+	}
+
+	/// <summary>
+	/// Where to split the categories between the two columns: the number that go in the left column, chosen so the
+	/// taller column is as short as it can be without splitting a category. <paramref name="rows"/> is each category's
+	/// height in rows, its heading included. A single category is the whole list, in one column.
+	/// </summary>
+	internal static int BalancedSplit(IReadOnlyList<int> rows) {
+		int total = rows.Sum();
+		int best = rows.Count;
+		int bestTallest = total;
+		int left = 0;
+
+		for (int split = 1; split < rows.Count; split++) {
+			left += rows[split - 1];
+			int tallest = Math.Max(left, total - left);
+			if (tallest < bestTallest) {
+				best = split;
+				bestTallest = tallest;
+			}
+		}
+
+		return best;
 	}
 
 	/// <summary>
@@ -63,9 +94,14 @@ public sealed class TweaksMenu {
 			return;
 		}
 
-		// A zero component means "fit the content", so the panel keeps a fixed width and grows to
-		// whatever height its settings need.
-		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), 0f));
+		// Each column is as wide as its widest row, so no label is cut off in any language. A zero height means "fit
+		// the content", so the panel grows to whatever height its taller column needs.
+		float leftWidth = ColumnWidth(0, _leftCategories);
+		float rightWidth = ColumnWidth(_leftCategories, _visibleByCategory.Length);
+		var style = ImGui.GetStyle();
+		float columnsWidth = leftWidth + (rightWidth > 0 ? ScaledImGui.Scaled(ColumnGap) + rightWidth : 0f);
+		float panelWidth = Math.Max(ScaledImGui.Scaled(MinimumPanelWidth), columnsWidth + style.WindowPadding.X * 2);
+		ImGui.SetNextWindowSize(new Vector2(panelWidth, 0f));
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), centre, new Vector2(0.5f, 0.5f));
 
 		bool stayOpen = true;
@@ -82,19 +118,15 @@ public sealed class TweaksMenu {
 				ImGui.TextWrapped(_localization.GetStringOrKey("tweaks.note"));
 			}
 
-			foreach (var (category, settings) in _visibleByCategory) {
-				ImGui.SeparatorText(_localization.GetStringOrKey(CategoryKey(category)));
-				foreach (var definition in settings) {
-					bool value = _settings.GetSettingValue(definition);
-					string displayName = _localization.GetString(definition.DisplayNameKey) ?? definition.ID;
-					if (ImGui.Checkbox(displayName, ref value)) {
-						_settings.SetSettingValue(definition, value);
-					}
-
-					if (ImGui.IsItemHovered() && _localization.GetString(definition.DescriptionKey) is { } description) {
-						ScaledImGui.Tooltip(description);
-					}
-				}
+			if (rightWidth > 0) {
+				ImGui.Columns(2, "tweak_columns", false);
+				ImGui.SetColumnWidth(0, leftWidth + ScaledImGui.Scaled(ColumnGap));
+				DrawCategories(0, _leftCategories);
+				ImGui.NextColumn();
+				DrawCategories(_leftCategories, _visibleByCategory.Length);
+				ImGui.Columns(1);
+			} else {
+				DrawCategories(0, _visibleByCategory.Length);
 			}
 
 			ImGui.Dummy(new Vector2(0, ScaledImGui.Scaled(10)));
@@ -111,6 +143,46 @@ public sealed class TweaksMenu {
 			Cancel();
 		}
 	}
+
+	// Draws the categories from first up to (not including) end, each a heading and its checkboxes.
+	private void DrawCategories(int first, int end) {
+		for (int i = first; i < end; i++) {
+			var (category, settings) = _visibleByCategory[i];
+			ImGui.SeparatorText(_localization.GetStringOrKey(CategoryKey(category)));
+			foreach (var definition in settings) {
+				bool value = _settings.GetSettingValue(definition);
+				if (ImGui.Checkbox(DisplayName(definition), ref value)) {
+					_settings.SetSettingValue(definition, value);
+				}
+
+				if (ImGui.IsItemHovered() && _localization.GetString(definition.DescriptionKey) is { } description) {
+					ScaledImGui.Tooltip(description);
+				}
+			}
+		}
+	}
+
+	// The width the categories from first up to (not including) end need: their widest checkbox or heading. Zero for none.
+	private float ColumnWidth(int first, int end) {
+		var style = ImGui.GetStyle();
+		float checkbox = ImGui.GetFrameHeight() + style.ItemInnerSpacing.X;
+		float width = 0f;
+
+		for (int i = first; i < end; i++) {
+			var (category, settings) = _visibleByCategory[i];
+			// SeparatorText draws a short rule either side of its text.
+			width = Math.Max(width, ImGui.CalcTextSize(_localization.GetStringOrKey(CategoryKey(category))).X
+				+ style.SeparatorTextPadding.X * 2);
+			foreach (var definition in settings) {
+				width = Math.Max(width, checkbox + ImGui.CalcTextSize(DisplayName(definition)).X);
+			}
+		}
+
+		return width;
+	}
+
+	private string DisplayName(TweakSettingDefinition<bool> definition) =>
+		_localization.GetString(definition.DisplayNameKey) ?? definition.ID;
 
 	private static string CategoryKey(TweakCategory category) => category switch {
 		TweakCategory.Cosmetic => "tweaks.category.cosmetic",
