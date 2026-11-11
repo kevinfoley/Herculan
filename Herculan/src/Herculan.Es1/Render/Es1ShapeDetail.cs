@@ -1,6 +1,8 @@
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
+using Herculan.Engine.Settings;
 using Herculan.Es1.Input;
+using Herculan.Es1.Settings;
 using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.Render;
@@ -89,20 +91,33 @@ public static class Es1ShapeDetail {
 	public const int FocalShift = 8;
 
 	/// <summary>
+	/// How many times further out every LOD switch lies: 3 while <see cref="Es1TweakSettingDefinitions.ExtendedDetailRange"/>
+	/// is on, else 1, retail's. This engine's invention. Read on each pick, so a change shows mid-mission. Both size scales
+	/// are multiplied by it, <c>g_ShapeDetailSizeScaleQ10</c> in <see cref="SelectRoot"/> and
+	/// <see cref="PartDetail.SizeScaleQ10"/> in <see cref="SelectLevel"/>. The projected size falls as one over the distance,
+	/// so each threshold is crossed at that many times its distance. The biases are untouched, so the finest level the
+	/// SHAPES setting allows stays the same.
+	/// </summary>
+	public static int RangeFactor =>
+		TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.ExtendedDetailRange) ? 3 : 1;
+
+	/// <summary>
 	/// The root drawn for a shape of root-0 radius <paramref name="radius"/> whose eye is <paramref name="distance"/>
 	/// away (<see cref="EyeDistance"/> in the model's frame): the projected size, ES1's rounding multiply by the scale, and
 	/// the walk from the bias down the thresholds. The threshold cursor is also bounded by the table, which retail's is
 	/// not; no retail root count reaches past it.
 	/// </summary>
 	/// <param name="focalShift">The installed projection's <c>Raster_FocalShift</c>, the main view's unless given.</param>
+	/// <param name="rangeFactor">The scale's multiplier, <see cref="RangeFactor"/> for a drawn frame.</param>
 	public static int SelectRoot(int rootCount, int radius, int distance, Es1DetailSetting setting,
-			IReadOnlyList<int> thresholds, int focalShift = FocalShift) {
+			IReadOnlyList<int> thresholds, int focalShift = FocalShift, int rangeFactor = 1) {
 		if (rootCount <= 0) {
 			return 0;
 		}
 
 		int size = ShapeDetail.ProjectedSize(radius, distance, 1 << focalShift);
-		int scaled = SimMath.Q10MultiplyRounded(size, (short)setting.SizeScaleQ10); // g_ShapeDetailSizeScaleQ10 is a word.
+		// g_ShapeDetailSizeScaleQ10 is a word; retail's 2000 tripled still fits one.
+		int scaled = SimMath.Q10MultiplyRounded(size, (short)(setting.SizeScaleQ10 * rangeFactor));
 		int root = Math.Min(setting.RootBias, rootCount - 1);
 		for (int j = 0; root < rootCount - 1 && j < thresholds.Count && scaled < thresholds[j]; j++) {
 			root++;
@@ -110,6 +125,14 @@ public static class Es1ShapeDetail {
 
 		return root;
 	}
+
+	/// <summary>
+	/// The level <paramref name="detail"/> draws with <paramref name="bias"/> for an eye <paramref name="eye"/> away in its
+	/// node (<see cref="EyeDistance"/>) under a focal length of 2^<paramref name="focalShift"/>, its switches moved out by
+	/// <see cref="RangeFactor"/>.
+	/// </summary>
+	public static int SelectLevel(PartDetail detail, int eye, int focalShift, int bias) =>
+		detail.Select(eye, 1 << focalShift, bias, PartDetail.SizeScaleQ10 * RangeFactor);
 
 	/// <summary>
 	/// <c>Math_FastMagnitude3D</c> of the eye in the space <paramref name="node"/> places in the world: what the LOD root

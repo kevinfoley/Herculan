@@ -83,6 +83,8 @@ tweak.es1_nearest_flyer_sound.display_name  Nächsten Flieger hören
 tweak.es1_nearest_flyer_sound.description  Alle Flieger teilen sich ein Geräusch, das vom nächsten Flieger kommt. Im Originalspiel kommt es von dem Flieger, der sich in jedem Bild als erster bewegt, und das ist nicht unbedingt der nächste.
 tweak.es1_stereo_sound.display_name  Stereoklang
 tweak.es1_stereo_sound.description  Jedes Geräusch in der Welt kommt von links oder rechts, je nachdem, wo es in Ihrer Sicht liegt, und folgt der Sicht, wenn sie sich dreht. Ausgeschaltet kommt jedes Geräusch aus der Mitte, wie im Originalspiel mit einer Mono-Soundkarte. Die Entfernung bestimmt die Lautstärke in beiden Fällen.
+tweak.es1_extended_detail_range.display_name  Erweiterte Detailreichweite
+tweak.es1_extended_detail_range.description  HERCs, Flieger und Gebäude behalten ihre feineren Modelle bis zur dreifachen üblichen Entfernung, sodass sie nicht mehr grob werden, solange sie noch nah genug sind, um sie deutlich zu sehen. Die Einstellung SHAPES bestimmt weiterhin die feinste gezeigte Detailstufe. Das Originalspiel wechselt schon in geringer Entfernung zu den gröberen Modellen, auch mit SHAPES auf dem höchsten Wert.
 tweak.es1_no_free_repair_level.display_name  Keine kostenlose Reparaturstufe
 tweak.es1_no_free_repair_level.description  Im Bildschirm SYSTEM REPAIR behält PROCEED nur die Reparaturen, die Sie mit + und − bezahlt haben. Das Originalspiel repariert das Teil bis zu der Stufe, die die Liste STATUS zeigt, und die ist nach einem + eine Stufe höher als bezahlt.
 tweaks.title                   Optimierungen

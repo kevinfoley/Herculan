@@ -38,6 +38,12 @@ public static class Es1TweakSettingDefinitions {
 	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Es1Sound.Stereo"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> Stereo = new("tweak.es1_stereo_sound", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);
+
+	/// <summary>
+	/// Every LOD switch, of a whole model's root and of each <c>TSDetailPart</c>'s level, lies three times further out than
+	/// retail's. This engine's invention. See <see cref="Es1ShapeDetail.RangeFactor"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> ExtendedDetailRange = new("tweak.es1_extended_detail_range", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -51,7 +57,7 @@ public static class Es1TweakSettingDefinitions {
 
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ProceedKeepsLevels,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels,
 	};
 
 	/// <summary>
@@ -65,6 +71,6 @@ public static class Es1TweakSettingDefinitions {
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> Offered = new[] {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming,
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ProceedKeepsLevels,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels,
 	};
 }

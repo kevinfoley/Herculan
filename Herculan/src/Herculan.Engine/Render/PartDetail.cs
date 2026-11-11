@@ -86,12 +86,13 @@ public sealed class PartDetail(short radius, short[] thresholds, int levelCount,
 	/// the whole scale moves toward the coarse end, and at bias 0 a close part reaches its finest
 	/// level.</para>
 	/// </summary>
-	public int Select(int viewDistance, int focalLengthPixels, int bias) {
+	/// <param name="sizeScaleQ10">The Q10 factor on the projected size, <see cref="SizeScaleQ10"/> unless a caller's tweak moves the switches.</param>
+	public int Select(int viewDistance, int focalLengthPixels, int bias, int sizeScaleQ10 = SizeScaleQ10) {
 		if (LevelCount <= 1) {
 			return 0;
 		}
 
-		int size = Numerics.SimMath.Q10Multiply(SizeScaleQ10,
+		int size = Numerics.SimMath.Q10Multiply(sizeScaleQ10,
 			ShapeDetail.ProjectedSize(Radius, viewDistance, focalLengthPixels));
 		int i = Math.Max(bias, 0);
 

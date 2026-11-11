@@ -147,7 +147,7 @@ public sealed class Es1FlyerDraw : IDisposable {
 			}
 
 			int eye = Es1ShapeDetail.EyeDistance(NodeFrame(detail.TransformId), camera.Position);
-			return detail.Select(eye, 1 << focalShift, bias) == gate.Level;
+			return Es1ShapeDetail.SelectLevel(detail, eye, focalShift, bias) == gate.Level;
 		}
 
 		/// <summary>A node's rest transform in front of the flyer's frame, in world units; the frame alone for -1.</summary>

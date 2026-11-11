@@ -92,8 +92,8 @@ public sealed class Es1DebrisDraw : IDisposable {
 			var frame = piece.Frame;
 			var transform = WorldScale.ToRenderMatrix(frame);
 			foreach (var (mesh, gate) in root.Pieces) {
-				if (gate.Detail is { } detail && detail.Select(Es1ShapeDetail.EyeDistance(PartFrame(frame, detail), camera.Position),
-						1 << focalShift, piece.DetailBias) != gate.Level) {
+				if (gate.Detail is { } detail && Es1ShapeDetail.SelectLevel(detail,
+						Es1ShapeDetail.EyeDistance(PartFrame(frame, detail), camera.Position), focalShift, piece.DetailBias) != gate.Level) {
 					continue;
 				}
 

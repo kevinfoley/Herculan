@@ -83,6 +83,8 @@ tweak.es1_nearest_flyer_sound.display_name  Hear the nearest flyer
 tweak.es1_nearest_flyer_sound.description  All flyers share one sound, which plays from the nearest flyer. Retail plays it from whichever flyer moves first in each frame, which need not be the nearest.
 tweak.es1_stereo_sound.display_name  Stereo sound
 tweak.es1_stereo_sound.description  Play each sound in the world from the left or the right by where it is in your view, following the view as it turns. Off, every sound plays from the center, as retail does on a mono sound card. Distance sets the volume either way.
+tweak.es1_extended_detail_range.display_name  Extended detail range
+tweak.es1_extended_detail_range.description  HERCs, flyers and structures keep their finer models out to three times the usual distance, so they no longer turn crude while still close enough to see clearly. The SHAPES setting still sets the finest detail shown. Retail switches to the cruder models a short way out, even with SHAPES at its highest.
 tweak.es1_no_free_repair_level.display_name  No free repair level
 tweak.es1_no_free_repair_level.description  On the SYSTEM REPAIR screen, PROCEED keeps only the repairs you paid for with + and −. Retail repairs the item to the level the STATUS list shows, which after a + is one level more than you paid for.
 tweaks.title                   Tweaks

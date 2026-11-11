@@ -265,7 +265,8 @@ public sealed class Es1WorldDraw {
 
 			var type = _mech.Type;
 			int root = Es1ShapeDetail.SelectRoot(type.Roots.Count, type.ShapeRadius,
-				Es1ShapeDetail.EyeDistance(_frame, camera.Position), detail, Es1MechType.DetailThresholds, focalShift);
+				Es1ShapeDetail.EyeDistance(_frame, camera.Position), detail, Es1MechType.DetailThresholds, focalShift,
+				Es1ShapeDetail.RangeFactor);
 
 			// Each cell-animation part shows the cell the damage set for its sequence (Es1Mech.CellFrame); a HERC body's
 			// detail parts draw with bias 0.
@@ -311,7 +312,7 @@ public sealed class Es1WorldDraw {
 			}
 
 			int eye = Es1ShapeDetail.EyeDistance(NodeFrame(node ?? detail.TransformId), camera.Position);
-			return detail.Select(eye, 1 << focalShift, bias) == gate.Level;
+			return Es1ShapeDetail.SelectLevel(detail, eye, focalShift, bias) == gate.Level;
 		}
 
 		/// <summary>A node's posed transform in front of the machine's frame, in world units; the frame alone for -1.</summary>

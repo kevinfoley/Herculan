@@ -166,7 +166,7 @@ public sealed class Es1BaseDraw : IDisposable {
 			}
 
 			int eye = Es1ShapeDetail.EyeDistance(NodeFrame(shape, detail.TransformId), camera.Position);
-			return detail.Select(eye, 1 << focalShift, bias) == gate.Level;
+			return Es1ShapeDetail.SelectLevel(detail, eye, focalShift, bias) == gate.Level;
 		}
 
 		/// <summary>

@@ -83,6 +83,8 @@ tweak.es1_nearest_flyer_sound.display_name  Son du volant proche
 tweak.es1_nearest_flyer_sound.description  Tous les volants partagent un même son, qui est joué depuis le volant le plus proche. Le jeu original le joue depuis le premier volant à bouger à chaque image, qui n'est pas forcément le plus proche.
 tweak.es1_stereo_sound.display_name  Son stéréo
 tweak.es1_stereo_sound.description  Fait entendre chaque son du monde à gauche ou à droite selon sa place dans votre vue, en suivant la vue quand elle tourne. Désactivé, chaque son est joué au centre, comme dans le jeu original avec une carte son mono. La distance règle le volume dans les deux cas.
+tweak.es1_extended_detail_range.display_name  Portée des détails étendue
+tweak.es1_extended_detail_range.description  Les HERC, les volants et les structures gardent leurs modèles détaillés jusqu'à trois fois la distance habituelle, pour qu'ils ne deviennent plus grossiers tant qu'ils sont assez proches pour être vus clairement. Le réglage SHAPES fixe toujours le niveau de détail le plus fin. Le jeu original passe aux modèles grossiers à faible distance, même avec SHAPES au maximum.
 tweak.es1_no_free_repair_level.display_name  Pas de réparation gratuite
 tweak.es1_no_free_repair_level.description  Sur l'écran SYSTEM REPAIR, PROCEED ne garde que les réparations payées avec + et −. Le jeu original répare l'élément jusqu'au niveau qu'affiche la liste STATUS, qui après un + est un niveau de plus que ce que vous avez payé.
 tweaks.title                   Ajustements
