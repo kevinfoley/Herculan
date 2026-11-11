@@ -258,7 +258,6 @@ controller.title               Manette
 controller.device              Périphérique
 controller.no_device           Aucun branché
 controller.gamepad_layout     Manette de jeu
-controller.gamepad_layout_tip Lue selon la disposition standard des manettes, la même sur tous les ordinateurs : les axes 0-3 sont les sticks gauche et droit, 4 et 5 les gâchettes ; les boutons 0-10 sont A, B, X, Y, les boutons de tranche, Back, Start, Guide et les clics des sticks, 11-14 la croix directionnelle, qui est aussi le chapeau 0.
 controller.saved_for_gamepads  Ces réglages sont enregistrés pour toutes les manettes de jeu.
 controller.saved_for_model     Ces réglages sont enregistrés pour ce modèle de joystick.
 controller.saved_for_joysticks Ces réglages sont enregistrés pour tous les joysticks sans réglages propres.
@@ -268,6 +267,10 @@ controller.mouse_emulation_note L'émulation de la souris sert dans l'interface 
 controller.cursor_control      Contrôle du curseur
 controller.left_stick          Stick gauche
 controller.right_stick         Stick droit
+controller.left_stick_x        Stick gauche X
+controller.left_stick_y        Stick gauche Y
+controller.right_stick_x       Stick droit X
+controller.right_stick_y       Stick droit Y
 controller.cursor_speed        Vitesse du curseur
 controller.cursor_speed_tip    La vitesse à laquelle le stick déplace le curseur, en pourcentage de la vitesse par défaut.
 controller.clicking            Clic
@@ -276,6 +279,7 @@ controller.left_trigger_clicks Gâchette gauche : clic gauche, gâchette droite 
 controller.inputs              Ce que le périphérique indique
 controller.axis                Axe {0}
 controller.axis_direction      Axe {0} {1}
+controller.named_axis_direction  {0} {1}
 controller.button              Bouton {0}
 controller.menu_bar_input      {0} sert à ouvrir la barre de menus d'HERCULAN et ne peut pas être réattribué.
 controller.dpad                Croix directionnelle {0}
@@ -308,7 +312,7 @@ controller.detect_button       Appuyez sur le bouton voulu, ou tirez la gâchett
 controller.invert_throttle_tip Pour une manette des gaz : manette au ralenti, « Lu par le jeu » doit afficher un nombre positif. Cochez Inverser s'il est négatif.
 controller.pressed             Appuyé
 controller.released            Relâché
-controller.centred             Centré
+controller.centered             Centré
 controller.up                  Haut
 controller.down                Bas
 controller.left                Gauche
@@ -318,8 +322,8 @@ controller.deadzone            Zone morte centrale
 controller.deadzone_tip        La distance, sur 127, dont un axe doit s'écarter du centre avant que le jeu le lise. Le jeu original utilise 25.
 controller.hat_diagonals       Diagonales du chapeau
 controller.hat_diagonals_tip   Un chapeau poussé en diagonale compte comme ses deux directions. Le jeu original ignore une diagonale.
-controller.centre_idle         Ralenti au centre
-controller.centre_idle_tip     Le milieu de la course de la manette des gaz est le ralenti, en avant c'est la marche avant et en arrière la marche arrière. Le jeu original lit la manette des gaz du ralenti à une extrémité jusqu'au plein régime à l'autre, et CHANGE DIRECTION choisit la marche avant ou arrière.
+controller.center_idle         Ralenti au centre
+controller.center_idle_tip     Le milieu de la course de la manette des gaz est le ralenti, en avant c'est la marche avant et en arrière la marche arrière. Le jeu original lit la manette des gaz du ralenti à une extrémité jusqu'au plein régime à l'autre, et CHANGE DIRECTION choisit la marche avant ou arrière.
 controller.invert_razor_pitch  Inverser le tangage RAZOR
 controller.invert_razor_pitch_tip   Inverse le sens dans lequel les commandes lèvent et baissent le nez du RAZOR. La tourelle d'un HERC reste comme la colonne Inverser la règle. Le clavier n'est pas concerné.
 controller.actions_note        En mode « Original », les fonctions des boutons et des axes se règlent dans le panneau « CONTROLS » du jeu (appuyez sur F12 en mission). Cette fenêtre sert seulement à réaffecter les axes et les boutons de votre manette.
@@ -351,6 +355,10 @@ controller.reading_bipolar     Manette, ralenti au milieu
 controller.throttle_reading_tip  Comment l'axe du régime règle le régime. « Monte et baisse le régime » convient à un manche qui revient au centre. Le régime reste là où vous le laissez. Les deux réglages de manette conviennent à une manette des gaz. La position de la manette est le régime.
 controller.actions             Actions
 controller.action              Action
+controller.action_list         Liste d'actions
+controller.action_list_common  Courantes
+controller.action_list_all     Toutes
+controller.action_list_tip     « Courantes » liste les actions qu'on attribue d'habitude à un bouton de manette. « Toutes » liste d'autres actions du clavier.
 controller.add                 Ajouter
 controller.add_tip             Ajoute une ligne et attend la commande à y placer.
 controller.remove              Supprimer
@@ -415,15 +423,15 @@ controller.action.scanner_next_target  Cible suivante sur SCANNER
 controller.action.auto_turret_tracking  Suivi automatique de la tourelle
 controller.action.shields_rear  Boucliers vers l'arrière
 controller.action.shields_front  Boucliers vers l'avant
-controller.action.mfd_status   MFD : STATUS
-controller.action.mfd_flash_comm  MFD : FLASH COMM
-controller.action.mfd_nav_map  MFD : NAV MAP
-controller.action.mfd_scanner  MFD : SCANNER
-controller.action.mfd_target   MFD : TARGET
-controller.action.mfd_missile_cam  MFD : MISSILE CAM
+controller.action.mfd_status   MFD : STATUS (F1)
+controller.action.mfd_flash_comm  MFD : FLASH COMM (F2)
+controller.action.mfd_nav_map  MFD : NAV MAP (F3)
+controller.action.mfd_scanner  MFD : SCANNER (F4)
+controller.action.mfd_target   MFD : TARGET (F5)
+controller.action.mfd_missile_cam  MFD : MISSILE CAM (F6)
 controller.action.mfd_next_screen  MFD : écran suivant
-controller.action.command_display  Affichage des commandes
-controller.action.damage_detail  Détail des dégâts
+controller.action.command_display  HDD : Carte (F7)
+controller.action.damage_detail  HDD : Relevé des dégâts (F8)
 controller.action.look_left    Fenêtre de gauche, ou retour
 controller.action.look_right   Fenêtre de droite, ou retour
 controller.action.view_back    Affichage tête basse, ou retour
@@ -492,14 +500,14 @@ controller.action.preferences  Préférences
 controller.action.online_manual  Manuel en ligne
 controller.action.menu_bar     Barre de menus
 controller.action.pause_menu   Menu de pause
-controller.action.squad_orders_wheel  Ordres d'escouade, tant que maintenu
-controller.action.screens_wheel  Écrans du cockpit, tant que maintenu
+controller.action.squad_orders_wheel  Menu radial des ordres d'escouade (maintenir)
+controller.action.screens_wheel  Menu radial des écrans du cockpit (maintenir)
 keys.title                     Touches
 keys.filter_hint               Chercher une touche ou action
 keys.column_key                Touche
 keys.column_action             Effet
 keys.no_match                  Aucune touche ne correspond.
-keys.section.driving           Pilotage
+keys.section.piloting          Pilotage
 keys.section.weapons           Armes
 keys.section.targeting         Ciblage et boucliers
 keys.section.displays          Écrans et vues

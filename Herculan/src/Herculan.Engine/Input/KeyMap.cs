@@ -7,7 +7,7 @@ namespace Herculan.Engine.Input;
 /// The groups a key list falls into: docs/retail/key-bindings.md's sections, in its order, then HERCULAN's own keys.
 /// </summary>
 public enum KeySection {
-	Driving,
+	Piloting,
 	Weapons,
 	TargetingAndShields,
 	DisplaysAndViews,

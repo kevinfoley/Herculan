@@ -258,7 +258,6 @@ controller.title               Controller
 controller.device              Gerät
 controller.no_device           Keines angeschlossen
 controller.gamepad_layout     Gamepad
-controller.gamepad_layout_tip Wird im Standard-Gamepad-Layout gelesen, auf jedem Computer gleich: Achsen 0-3 sind der linke und rechte Stick, 4 und 5 die Trigger; Tasten 0-10 sind A, B, X, Y, die Schultertasten, Back, Start, Guide und die Stick-Klicks, 11-14 das Steuerkreuz, das auch Coolie-Hat 0 ist.
 controller.saved_for_gamepads  Diese Einstellungen werden für jedes Gamepad gespeichert.
 controller.saved_for_model     Diese Einstellungen werden für dieses Joystick-Modell gespeichert.
 controller.saved_for_joysticks Diese Einstellungen werden für jeden Joystick ohne eigene Einstellungen gespeichert.
@@ -268,6 +267,10 @@ controller.mouse_emulation_note Die Mausemulation wird im Spielmenü und im Edit
 controller.cursor_control      Mauszeigersteuerung
 controller.left_stick          Linker Stick
 controller.right_stick         Rechter Stick
+controller.left_stick_x        Linker Stick X
+controller.left_stick_y        Linker Stick Y
+controller.right_stick_x       Rechter Stick X
+controller.right_stick_y       Rechter Stick Y
 controller.cursor_speed        Zeigergeschwindigkeit
 controller.cursor_speed_tip    Wie schnell der Stick den Mauszeiger bewegt, in Prozent der Standardgeschwindigkeit.
 controller.clicking            Klicken
@@ -276,6 +279,7 @@ controller.left_trigger_clicks Linker Trigger: Linksklick, rechter Trigger: Rech
 controller.inputs              Was das Gerät meldet
 controller.axis                Achse {0}
 controller.axis_direction      Achse {0} {1}
+controller.named_axis_direction  {0} {1}
 controller.button              Taste {0}
 controller.menu_bar_input      {0} öffnet die Menüleiste von HERCULAN und kann nicht neu belegt werden.
 controller.dpad                Steuerkreuz {0}
@@ -308,7 +312,7 @@ controller.detect_button       Drücken Sie die gewünschte Taste oder ziehen Si
 controller.invert_throttle_tip Für einen Schubhebel: Steht der Hebel im Leerlauf, sollte „Spiel liest“ eine positive Zahl zeigen. Zeigt es eine negative, setzen Sie „Umkehren“.
 controller.pressed             Gedrückt
 controller.released            Losgelassen
-controller.centred             Mitte
+controller.centered             Mitte
 controller.up                  Oben
 controller.down                Unten
 controller.left                Links
@@ -318,8 +322,8 @@ controller.deadzone            Totzone in der Mitte
 controller.deadzone_tip        Wie weit sich eine Achse von der Mitte bewegen muss (von 127), bevor das Spiel sie liest. Das Originalspiel verwendet 25.
 controller.hat_diagonals       Coolie-Hat-Diagonalen
 controller.hat_diagonals_tip   Ein diagonal gedrückter Coolie-Hat zählt als seine beiden Richtungen. Das Originalspiel ignoriert eine Diagonale.
-controller.centre_idle         Leerlauf in der Mitte
-controller.centre_idle_tip     Die Mitte des Schubreglerwegs ist Leerlauf, davor ist vorwärts und dahinter rückwärts. Das Originalspiel liest den Schubregler von Leerlauf am einen Ende bis Vollgas am anderen, und CHANGE DIRECTION wählt vorwärts oder rückwärts.
+controller.center_idle         Leerlauf in der Mitte
+controller.center_idle_tip     Die Mitte des Schubreglerwegs ist Leerlauf, davor ist vorwärts und dahinter rückwärts. Das Originalspiel liest den Schubregler von Leerlauf am einen Ende bis Vollgas am anderen, und CHANGE DIRECTION wählt vorwärts oder rückwärts.
 controller.invert_razor_pitch  RAZOR-Nicken umkehren
 controller.invert_razor_pitch_tip   Kehrt um, in welche Richtung die Steuerung die Nase des RAZOR hebt und senkt. Der Turm eines HERC bleibt so, wie die Spalte „Umkehren“ ihn einstellt. Die Tastatur ist nicht betroffen.
 controller.actions_note        Im Modus „Original“ werden die Funktionen der Tasten und Achsen im Feld „CONTROLS“ im Spiel eingestellt (drücken Sie F12 während einer Mission). Dieses Fenster ordnet nur die Achsen und Tasten Ihres Controllers neu zu.
@@ -351,6 +355,10 @@ controller.reading_bipolar     Hebel, Leerlauf in der Mitte
 controller.throttle_reading_tip  Wie die Schubachse den Schub einstellt. „Bewegt den Schub hoch und runter“ passt zu einem Knüppel, der in die Mitte zurückfedert. Der Schub bleibt, wo Sie ihn lassen. Die beiden Hebel-Einstellungen passen zu einem Schubhebel. Die Stellung des Hebels ist der Schub.
 controller.actions             Aktionen
 controller.action              Aktion
+controller.action_list         Aktionsliste
+controller.action_list_common  Häufige
+controller.action_list_all     Alle
+controller.action_list_tip     „Häufige“ zeigt die Aktionen, die meist auf einer Controllertaste liegen. „Alle“ zeigt weitere Aktionen der Tastatur.
 controller.add                 Hinzufügen
 controller.add_tip             Fügt eine Zeile hinzu und wartet auf das Steuerelement dafür.
 controller.remove              Entfernen
@@ -415,15 +423,15 @@ controller.action.scanner_next_target  Folgendes Ziel auf SCANNER
 controller.action.auto_turret_tracking  Automatische Zielverfolgung
 controller.action.shields_rear  Schilde nach hinten
 controller.action.shields_front  Schilde nach vorn
-controller.action.mfd_status   MFD: STATUS
-controller.action.mfd_flash_comm  MFD: FLASH COMM
-controller.action.mfd_nav_map  MFD: NAV MAP
-controller.action.mfd_scanner  MFD: SCANNER
-controller.action.mfd_target   MFD: TARGET
-controller.action.mfd_missile_cam  MFD: MISSILE CAM
+controller.action.mfd_status   MFD: STATUS (F1)
+controller.action.mfd_flash_comm  MFD: FLASH COMM (F2)
+controller.action.mfd_nav_map  MFD: NAV MAP (F3)
+controller.action.mfd_scanner  MFD: SCANNER (F4)
+controller.action.mfd_target   MFD: TARGET (F5)
+controller.action.mfd_missile_cam  MFD: MISSILE CAM (F6)
 controller.action.mfd_next_screen  MFD: nächster Bildschirm
-controller.action.command_display  Befehlsanzeige
-controller.action.damage_detail  Schadensanzeige
+controller.action.command_display  HDD: Karte (F7)
+controller.action.damage_detail  HDD: Schadensanzeige (F8)
 controller.action.look_left    Linkes Fenster, oder zurück
 controller.action.look_right   Rechtes Fenster, oder zurück
 controller.action.view_back    Heads-Down-Display, oder zurück
@@ -492,14 +500,14 @@ controller.action.preferences  Einstellungen
 controller.action.online_manual  Online-Handbuch
 controller.action.menu_bar     Menüleiste
 controller.action.pause_menu   Pausenmenü
-controller.action.squad_orders_wheel  Truppbefehle, solange gedrückt
-controller.action.screens_wheel  Cockpit-Bildschirme, solange gedrückt
+controller.action.squad_orders_wheel  Radialmenü Truppbefehle (halten)
+controller.action.screens_wheel  Radialmenü Cockpit-Bildschirme (halten)
 keys.title                     Tasten
 keys.filter_hint               Taste oder Aktion suchen
 keys.column_key                Taste
 keys.column_action             Wirkung
 keys.no_match                  Keine Taste passt.
-keys.section.driving           Fahren
+keys.section.piloting          Steuern
 keys.section.weapons           Waffen
 keys.section.targeting         Zielerfassung und Schilde
 keys.section.displays          Anzeigen und Ansichten

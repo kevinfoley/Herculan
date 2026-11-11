@@ -11,7 +11,7 @@ namespace Herculan.Engine.Input;
 internal static class RetailKeyMap {
 	public static KeyMap Build() {
 		var bindings = new List<KeyBinding>();
-		var section = KeySection.Driving;
+		var section = KeySection.Piloting;
 		void Bind(KeyAction action, params KeyChord[] chords) =>
 			bindings.Add(new KeyBinding(action, section, [.. chords]));
 

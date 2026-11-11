@@ -7,7 +7,7 @@ namespace Herculan.Engine.Input;
 /// reached through a controller alone (<see cref="ControllerActions"/>).
 /// </summary>
 public enum KeyAction {
-	// Driving.
+	// Piloting.
 	ThrottleForward,
 	ThrottleBack,
 	SteerLeft,
@@ -22,7 +22,7 @@ public enum KeyAction {
 	RazorThrottleUp,
 	RazorThrottleDown,
 
-	/// <summary>Throttle forward and steer left together, overriding the other driving keys of its group.</summary>
+	/// <summary>Throttle forward and steer left together, overriding the other piloting keys of its group.</summary>
 	DiagonalForwardLeft,
 	DiagonalForwardRight,
 	DiagonalBackLeft,

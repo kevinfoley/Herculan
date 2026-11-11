@@ -64,6 +64,9 @@ internal sealed class ControllerCustomView {
 	private ThrottleReading _razorThrottleReading;
 	private readonly List<Binding>[] _bindings = [[], []];
 
+	// Which actions the action lists show, "Common" each time a device is loaded.
+	private ControllerActionList _actionList;
+
 	// What Detect is listening for, and where the device's controls stood when it started.
 	private AxisFunction? _detectingAxis;
 	private Binding? _detectingBinding;
@@ -98,6 +101,7 @@ internal sealed class ControllerCustomView {
 		_loadedProfile = device == null ? null : file.ProfileFor(device.IsGamepad, device.Guid);
 		_edited = false;
 		_isDefault = _loadedProfile == null;
+		_actionList = ControllerActionList.Common;
 		Fill(_loadedProfile ?? Default(device));
 	}
 
@@ -152,7 +156,26 @@ internal sealed class ControllerCustomView {
 		AxisRows(machine, device, clashes);
 		ThrottleReadingCombo(machine);
 		ImGui.SeparatorText(Text("controller.actions"));
+		ActionListCombo();
 		BindingRows(machine, device, clashes);
+	}
+
+	// "Common" or "All", for both machines' action lists.
+	private void ActionListCombo() {
+		string Label(ControllerActionList list) =>
+			Text(list == ControllerActionList.Common ? "controller.action_list_common" : "controller.action_list_all");
+
+		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.6f);
+		if (ImGui.BeginCombo(Text("controller.action_list") + "###actionList", Label(_actionList))) {
+			foreach (var list in (ReadOnlySpan<ControllerActionList>)[ControllerActionList.Common, ControllerActionList.All]) {
+				if (ImGui.Selectable(Label(list), list == _actionList)) {
+					_actionList = list;
+				}
+			}
+
+			ImGui.EndCombo();
+		}
+		Tooltip("controller.action_list_tip");
 	}
 
 	// One row per game function: the device axis driving it, its invert and deadzone, Detect, and where the axis stands.
@@ -177,7 +200,7 @@ internal sealed class ControllerCustomView {
 			ImGui.TextUnformatted(FunctionLabel(function));
 
 			ImGui.TableNextColumn();
-			if (AxisCombo(axis.Index, device.AxisCount, clashes.GetValueOrDefault(function)) is { } index) {
+			if (AxisCombo(axis.Index, device, clashes.GetValueOrDefault(function)) is { } index) {
 				SetAxis(function, axis with { Index = index });
 			}
 
@@ -269,7 +292,7 @@ internal sealed class ControllerCustomView {
 				}
 
 				ImGui.TableNextColumn();
-				if (ActionCombo(binding.Action) is { } action) {
+				if (ActionCombo(binding.Action, machine, device) is { } action) {
 					binding.Action = action.IsMapped ? action.Action : null;
 					Touch();
 				}
@@ -358,14 +381,15 @@ internal sealed class ControllerCustomView {
 
 	/// <summary>An input's name on <paramref name="device"/> as the window shows it, a known gamepad's buttons by the names printed on them.</summary>
 	internal string InputLabel(ControllerInput input, ControllerDevice? device) => input.Kind switch {
-		ControllerInputKind.Button => GamepadButtonNames.Label(device, input.Index, Text),
-		ControllerInputKind.Axis => string.Format(Text("controller.axis_direction"), input.Index, input.AxisSign > 0 ? "+" : "-"),
-		_ => GamepadButtonNames.HatLabel(device, input.Index, input.Direction, Text),
+		ControllerInputKind.Button => GamepadControlNames.Label(device, input.Index, Text),
+		ControllerInputKind.Axis => GamepadControlNames.AxisDirectionLabel(device, input.Index, input.AxisSign, Text),
+		_ => GamepadControlNames.HatLabel(device, input.Index, input.Direction, Text),
 	};
 
-	// A combo of "None" and every offered action under its section's heading, an action the game lacks greyed. The action
-	// chosen, or null when nothing new was.
-	private ActionChoice? ActionCombo(KeyAction? current) {
+	// A combo of "None" and the machine's listed actions (ControllerActions.Listed) under their sections' headings, an
+	// action the game lacks greyed. An action bound already shows as itself, listed or not. The action chosen, or null
+	// when nothing new was.
+	private ActionChoice? ActionCombo(KeyAction? current, Machine machine, ControllerDevice device) {
 		ActionChoice? chosen = null;
 		ImGui.SetNextItemWidth(-1f);
 		bool lacking = current is { } shown && !_rows.Actions.Contains(shown);
@@ -388,7 +412,7 @@ internal sealed class ControllerCustomView {
 			}
 
 			KeySection? section = null;
-			foreach (var (entrySection, entry) in ControllerActions.Offered) {
+			foreach (var (entrySection, entry) in ControllerActions.Listed(_actionList, machine == Machine.Razor, device.IsGamepad)) {
 				if (entrySection != section) {
 					section = entrySection;
 					ImGui.SeparatorText(Text(KeysWindow.SectionEntry(entrySection)));
@@ -418,17 +442,19 @@ internal sealed class ControllerCustomView {
 
 	private string ActionLabel(KeyAction action) => Text(ControllerActions.LabelKey(action));
 
+	private string AxisLabel(int axis, ControllerDevice device) => GamepadControlNames.AxisLabel(device, axis, Text);
+
 	// A combo of "None" and each device axis; the axis chosen, or null when nothing new was. An index the device does not
 	// have, from a file written for another one, shows as itself until it is changed.
-	private int? AxisCombo(int current, int count, string? clash) {
+	private int? AxisCombo(int current, ControllerDevice device, string? clash) {
 		int? chosen = null;
-		if (BeginRedCombo("##axis", current == JoystickDeviceMap.Unmapped ? Text("controller.unmapped") : Format("controller.axis", current), clash)) {
+		if (BeginRedCombo("##axis", current == JoystickDeviceMap.Unmapped ? Text("controller.unmapped") : AxisLabel(current, device), clash)) {
 			if (ImGui.Selectable(Text("controller.unmapped"), current == JoystickDeviceMap.Unmapped)) {
 				chosen = JoystickDeviceMap.Unmapped;
 			}
 
-			for (int i = 0; i < count; i++) {
-				if (ImGui.Selectable(Format("controller.axis", i), i == current)) {
+			for (int i = 0; i < device.AxisCount; i++) {
+				if (ImGui.Selectable(AxisLabel(i, device) + "###axis" + i, i == current)) {
 					chosen = i;
 				}
 			}
@@ -651,6 +677,4 @@ internal sealed class ControllerCustomView {
 	}
 
 	private string Text(string key) => _localization.GetStringOrKey(key);
-
-	private string Format(string key, int value) => string.Format(Text(key), value);
 }

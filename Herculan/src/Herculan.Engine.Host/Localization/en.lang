@@ -10,7 +10,7 @@ tweak.show_correct_stats.description           Fix HERC and weapon stats that va
 tweak.show_accurate_speed.display_name         Show accurate speed
 tweak.show_accurate_speed.description          Show the HERC's true movement speed on the HUD. Retail shows about twice the real speed while walking. Running readings are unchanged.
 tweak.show_even_shield_balance.display_name    Round shield balance readout
-tweak.show_even_shield_balance.description     Each press of [ or ] moves the shield balance numbers by exactly 20, so one press forward from the centre reads 120/80. Retail rounds the front number down, and a press moves it slightly less than 20, so the same press reads 119/81.
+tweak.show_even_shield_balance.description     Each press of [ or ] moves the shield balance numbers by exactly 20, so one press forward from the center reads 120/80. Retail rounds the front number down, and a press moves it slightly less than 20, so the same press reads 119/81.
 tweak.fix_nacelle_impact_position.display_name Fix nacelle impact effect position
 tweak.fix_nacelle_impact_position.description  Draw the impact effect for a hit on the Razor's right nacelle at the correct side, instead of always at the left nacelle.
 tweak.preserve_sound_position.display_name     Preserve sound position
@@ -258,7 +258,6 @@ controller.title               Controller
 controller.device              Device
 controller.no_device           None connected
 controller.gamepad_layout     Gamepad
-controller.gamepad_layout_tip Read in the standard gamepad layout, the same on every computer: axes 0-3 are the left and right sticks, 4 and 5 the triggers; buttons 0-10 are A, B, X, Y, the bumpers, Back, Start, Guide and the stick clicks, 11-14 the d-pad, which is also hat 0.
 controller.saved_for_gamepads  These settings are saved for every gamepad.
 controller.saved_for_model     These settings are saved for this model of joystick.
 controller.saved_for_joysticks These settings are saved for every joystick without settings of its own.
@@ -268,6 +267,10 @@ controller.mouse_emulation_note Mouse emulation is used in the shell (menus) and
 controller.cursor_control      Cursor control
 controller.left_stick          Left stick
 controller.right_stick         Right stick
+controller.left_stick_x        Left Stick X
+controller.left_stick_y        Left Stick Y
+controller.right_stick_x       Right Stick X
+controller.right_stick_y       Right Stick Y
 controller.cursor_speed        Cursor speed
 controller.cursor_speed_tip    How fast the stick moves the pointer, as a percentage of the default speed.
 controller.clicking            Clicking
@@ -276,6 +279,7 @@ controller.left_trigger_clicks Left trigger: Left click, Right trigger: Right cl
 controller.inputs              Current input
 controller.axis                Axis {0}
 controller.axis_direction      Axis {0} {1}
+controller.named_axis_direction  {0} {1}
 controller.button              Button {0}
 controller.menu_bar_input      {0} is used to open the HERCULAN menu bar and cannot be rebound.
 controller.dpad                D-pad {0}
@@ -308,18 +312,18 @@ controller.detect_button       Press the button you want, or pull the trigger yo
 controller.invert_throttle_tip For a throttle lever: with the lever at idle, Game reads should show a positive number. Tick Invert if it shows a negative one.
 controller.pressed             Pressed
 controller.released            Released
-controller.centred             Centred
+controller.centered            Centered
 controller.up                  Up
 controller.down                Down
 controller.left                Left
 controller.right               Right
 controller.options             Options
-controller.deadzone            Centre deadzone
-controller.deadzone_tip        How far an axis moves from the centre, out of 127, before the game reads it. The original game uses 25.
+controller.deadzone            Center deadzone
+controller.deadzone_tip        How far an axis moves from the center, out of 127, before the game reads it. The original game uses 25.
 controller.hat_diagonals       Hat diagonals
 controller.hat_diagonals_tip   A hat pushed diagonally counts as its two directions. The original game ignores a diagonal.
-controller.centre_idle         Centre-idle throttle
-controller.centre_idle_tip     The middle of the throttle's travel is idle, forward of it is forward and back of it is reverse. The original game reads the throttle from idle at one end to full at the other, and CHANGE DIRECTION chooses forward or reverse.
+controller.center_idle         Center-idle throttle
+controller.center_idle_tip     The middle of the throttle's travel is idle, forward of it is forward and back of it is reverse. The original game reads the throttle from idle at one end to full at the other, and CHANGE DIRECTION chooses forward or reverse.
 controller.invert_razor_pitch  Invert RAZOR pitch
 controller.invert_razor_pitch_tip   Reverses which way the controls pitch the RAZOR's nose up and down, leaving a HERC's turret as the Invert column sets it. The keyboard is not affected.
 controller.actions_note        In "Original" mode, button and axis functions are set on the in-game "CONTROLS" panel (press F12 during a mission). This window only remaps your controller's axes and buttons.
@@ -351,6 +355,10 @@ controller.reading_bipolar     Lever, idle in the middle
 controller.throttle_reading_tip  How the throttle axis sets the throttle. "Moves the throttle up and down" suits a stick that springs back to the middle. The two lever settings suit a lever or slider.
 controller.actions             Actions
 controller.action              Action
+controller.action_list         Action list
+controller.action_list_common  Common
+controller.action_list_all     All
+controller.action_list_tip     Which actions show in the "Action" dropdown below.
 controller.add                 Add
 controller.add_tip             Adds a row and waits for the control to put on it.
 controller.remove              Remove
@@ -415,15 +423,15 @@ controller.action.scanner_next_target  Next target on SCANNER
 controller.action.auto_turret_tracking  Automatic turret tracking
 controller.action.shields_rear  Shields to the rear
 controller.action.shields_front  Shields to the front
-controller.action.mfd_status   MFD: STATUS
-controller.action.mfd_flash_comm  MFD: FLASH COMM
-controller.action.mfd_nav_map  MFD: NAV MAP
-controller.action.mfd_scanner  MFD: SCANNER
-controller.action.mfd_target   MFD: TARGET
-controller.action.mfd_missile_cam  MFD: MISSILE CAM
+controller.action.mfd_status   MFD: STATUS (F1)
+controller.action.mfd_flash_comm  MFD: FLASH COMM (F2)
+controller.action.mfd_nav_map  MFD: NAV MAP (F3)
+controller.action.mfd_scanner  MFD: SCANNER (F4)
+controller.action.mfd_target   MFD: TARGET (F5)
+controller.action.mfd_missile_cam  MFD: MISSILE CAM (F6)
 controller.action.mfd_next_screen  MFD: next screen
-controller.action.command_display  Command display
-controller.action.damage_detail  Damage detail
+controller.action.command_display  HDD: Map (F7)
+controller.action.damage_detail  HDD: Damage readout (F8)
 controller.action.look_left    Left window, or back
 controller.action.look_right   Right window, or back
 controller.action.view_back    Heads-Down Display, or back
@@ -492,14 +500,14 @@ controller.action.preferences  Preferences
 controller.action.online_manual  Online manual
 controller.action.menu_bar     Menu bar
 controller.action.pause_menu   Pause menu
-controller.action.squad_orders_wheel  Squad orders, while held
-controller.action.screens_wheel  Cockpit screens, while held
+controller.action.squad_orders_wheel  Squad orders radial (hold)
+controller.action.screens_wheel  Cockpit screens radial (hold)
 keys.title                     Keys
 keys.filter_hint               Find a key or action
 keys.column_key                Key
 keys.column_action             What it does
 keys.no_match                  No key matches.
-keys.section.driving           Driving
+keys.section.piloting          Piloting
 keys.section.weapons           Weapons
 keys.section.targeting         Targeting and shields
 keys.section.displays          Displays and views

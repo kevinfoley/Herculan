@@ -157,7 +157,7 @@ public sealed class KeysWindow {
 
 	/// <summary>The <c>.lang</c> key of a section's heading, which the Controller window's action lists share.</summary>
 	internal static string SectionEntry(KeySection section) => section switch {
-		KeySection.Driving => "keys.section.driving",
+		KeySection.Piloting => "keys.section.piloting",
 		KeySection.Weapons => "keys.section.weapons",
 		KeySection.TargetingAndShields => "keys.section.targeting",
 		KeySection.DisplaysAndViews => "keys.section.displays",

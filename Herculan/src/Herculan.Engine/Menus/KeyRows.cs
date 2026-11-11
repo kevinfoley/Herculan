@@ -32,14 +32,14 @@ sealed record KeyRow(KeySection Section, string Description, ImmutableArray<KeyR
 ///
 /// <para>Where the retail doc gives a line one key of several the map binds, as the arrows over their keypad twins, it
 /// shows that one. A line may restate another section's action with what it does there, as the outside view's arrows,
-/// which are the driving actions. Every action of <see cref="KeyMap.Retail"/> is on at least one line.</para>
+/// which are the piloting actions. Every action of <see cref="KeyMap.Retail"/> is on at least one line.</para>
 /// </summary>
 static class KeyRows {
 	public static readonly ImmutableArray<KeyRow> All = Build();
 
 	private static ImmutableArray<KeyRow> Build() {
 		var rows = new List<KeyRow>();
-		var section = KeySection.Driving;
+		var section = KeySection.Piloting;
 		void Row(string id, params KeyRowEntry[] keys) => rows.Add(new KeyRow(section, "keys.row." + id, [.. keys]));
 
 		Row("throttle", Key(KeyAction.ThrottleForward), Key(KeyAction.ThrottleBack));
@@ -118,7 +118,7 @@ static class KeyRows {
 		Row("damage_step", Key(KeyAction.DamageSystemsUp), Key(KeyAction.DamageSystemsDown));
 		Row("damage_herc", Key(KeyAction.DamageHercLeft), Key(KeyAction.DamageHercRight));
 
-		// The driving and firing actions, as the outside view takes them.
+		// The piloting and firing actions, as the outside view takes them.
 		section = KeySection.OutsideView;
 		Row("camera_swing", Key(KeyAction.ThrottleForward), Key(KeyAction.ThrottleBack), Key(KeyAction.SteerLeft),
 			Key(KeyAction.SteerRight));

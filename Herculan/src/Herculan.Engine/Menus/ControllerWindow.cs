@@ -24,8 +24,14 @@ namespace Herculan.Engine.Menus;
 /// [Esc] (<see cref="HostMenuBar.BackOut"/>) discard the edit.</para>
 /// </summary>
 public sealed class ControllerWindow : IDrawnMenuBarPanel {
-	// In pixels on a 100% display (ScaledImGui.Scaled).
-	private const float PanelWidth = 600f;
+	// In pixels on a 100% display (ScaledImGui.Scaled): the settings on the left, and the device's own readout in a
+	// column on the right.
+	private const float SettingsWidth = 600f;
+	private const float StateWidth = 220f;
+	private const float PanelWidth = SettingsWidth + StateWidth + 24f;
+
+	// How many buttons the readout shows to a line.
+	private const int ButtonColumns = 4;
 
 	// How far an axis has to move from where it rested when Detect was pressed to be the one meant: half its
 	// travel, so a stick brushed on the way to the throttle is not taken for it.
@@ -142,25 +148,33 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		}
 	}
 
-	void IDrawnMenuBarPanel.Draw(nint owner, ImGuiCond centre) => Draw(centre);
+	void IDrawnMenuBarPanel.Draw(nint owner, ImGuiCond center) => Draw(center);
 
 	/// <summary>
-	/// Draws the window, when it is up. Call once per frame inside the ImGui frame. <paramref name="centre"/> is when it
-	/// is centred on the window (<see cref="PanelCentring.Condition"/>).
+	/// Draws the window, when it is up. Call once per frame inside the ImGui frame. <paramref name="center"/> is when it
+	/// is centered on the window (<see cref="PanelCentring.Condition"/>).
 	/// </summary>
-	public void Draw(ImGuiCond centre) {
+	public void Draw(ImGuiCond center) {
 		if (!IsOpen) {
 			return;
 		}
 
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), 0f));
-		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), centre, new Vector2(0.5f, 0.5f));
+		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), center, new Vector2(0.5f, 0.5f));
 
 		bool stayOpen = true;
 		if (ImGui.Begin(Text("controller.title") + "###controller", ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
 			var device = CurrentDevice();
 			DeviceRow(device);
 			bool custom = _custom.Mode == ControllerMode.Custom;
+			bool columns = device != null && ImGui.BeginTable("##layout", 2, ImGuiTableFlags.None);
+			if (columns) {
+				ImGui.TableSetupColumn("##settings", ImGuiTableColumnFlags.WidthStretch);
+				ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, ScaledImGui.Scaled(StateWidth));
+				ImGui.TableNextRow();
+				ImGui.TableNextColumn();
+			}
+
 			if (device != null) {
 				if (!device.IsGamepad) {
 					ModeRow();
@@ -178,8 +192,6 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 			}
 
 			if (device != null) {
-				ImGui.SeparatorText(Text("controller.inputs"));
-				DeviceState(device);
 				if (custom) {
 					_custom.Draw(device);
 				} else {
@@ -190,6 +202,13 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 						Options();
 					}
 				}
+			}
+
+			if (columns) {
+				ImGui.TableNextColumn();
+				ImGui.SeparatorText(Text("controller.inputs"));
+				DeviceState(device!);
+				ImGui.EndTable();
 			}
 
 			ImGui.Spacing();
@@ -243,7 +262,6 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		if (device?.IsGamepad == true) {
 			ImGui.SameLine();
 			ImGui.TextDisabled(Text("controller.gamepad_layout"));
-			Tooltip("controller.gamepad_layout_tip");
 		}
 
 		if (device != null) {
@@ -360,34 +378,40 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		return chosen == current ? null : chosen;
 	}
 
-	// Every axis, button and hat the device reports, as it reports them.
+	// Every axis, button and hat the device reports, as it reports them: one bar per axis, the buttons in a grid lit while
+	// held, and each hat's direction. A known gamepad's controls go by their names (GamepadControlNames), and a gamepad's
+	// d-pad buttons are left to its hat 0, which they also are.
 	private void DeviceState(ControllerDevice device) {
-		const int Columns = 3;
-		float spacing = ImGui.GetStyle().ItemSpacing.X;
-		float width = (ImGui.GetContentRegionAvail().X - spacing * (Columns - 1)) / Columns;
 		for (int i = 0; i < device.AxisCount; i++) {
-			if (i % Columns != 0) {
-				ImGui.SameLine();
-			}
-
 			float position = device.Axis(i);
-			ImGui.ProgressBar((Math.Clamp(position, -1f, 1f) + 1f) / 2f, new Vector2(width, 0f),
-				$"{Format("controller.axis", i)}  {position:+0.00;-0.00}");
+			ImGui.ProgressBar((Math.Clamp(position, -1f, 1f) + 1f) / 2f, new Vector2(-1f, 0f),
+				$"{GamepadControlNames.AxisLabel(device, i, Text)}  {position:+0.00;-0.00}");
 		}
 
-		if (device.ButtonCount > 0) {
+		var buttons = Enumerable.Range(0, device.ButtonCount)
+			.Where(i => !(device.IsGamepad && i is >= ControllerDevice.GamepadDPadUp and <= ControllerDevice.GamepadDPadLeft))
+			.ToList();
+		if (buttons.Count > 0) {
+			ImGui.Spacing();
 			ImGui.TextUnformatted(Text("controller.buttons"));
-			for (int i = 0; i < device.ButtonCount; i++) {
-				ImGui.SameLine();
-				Lit(device.Button(i), i.ToString(System.Globalization.CultureInfo.InvariantCulture));
+			if (ImGui.BeginTable("##buttons", ButtonColumns, ImGuiTableFlags.SizingStretchSame)) {
+				foreach (int i in buttons) {
+					ImGui.TableNextColumn();
+					Lit(device.Button(i), GamepadControlNames.PrintedName(device, i, Text)
+						?? i.ToString(System.Globalization.CultureInfo.InvariantCulture));
+				}
+
+				ImGui.EndTable();
 			}
+		}
+
+		if (device.HatCount > 0) {
+			ImGui.Spacing();
 		}
 
 		for (int i = 0; i < device.HatCount; i++) {
 			var hat = device.Hat(i);
-			ImGui.TextUnformatted(Format("controller.hat", i));
-			ImGui.SameLine();
-			Lit(hat != JoystickHat.None, HatText(hat));
+			Lit(hat != JoystickHat.None, GamepadControlNames.HatState(device, i, HatText(hat), Text));
 		}
 	}
 
@@ -647,11 +671,11 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 
 	private string SourceLabel(JoystickButtonSource source, ControllerDevice? device) =>
 		!source.IsMapped ? Text("controller.unmapped")
-		: source.IsAxis ? string.Format(Text("controller.axis_direction"), source.Index, source.AxisSign > 0 ? "+" : "-")
-		: GamepadButtonNames.Label(device, source.Index, Text);
+		: source.IsAxis ? GamepadControlNames.AxisDirectionLabel(device, source.Index, source.AxisSign, Text)
+		: GamepadControlNames.Label(device, source.Index, Text);
 
 	// Detect, or Cancel while this row is listening. Pressing it notes where everything rests, so Detect takes what
-	// moves from there and not what is already held or off-centre, such as a trigger that rests at one end.
+	// moves from there and not what is already held or off-center, such as a trigger that rests at one end.
 	private void DetectButton(int row, ControllerDevice device) {
 		bool listening = _detecting == row;
 		if (ImGui.Button(Text(listening ? "controller.detecting" : "controller.detect") + "##detect")) {
@@ -796,10 +820,10 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		return _draft with { Buttons = buttons };
 	}
 
-	// The hat's directions as words, or "centred".
+	// The hat's directions as words, or "centered".
 	private string HatText(JoystickHat hat) {
 		if (hat == JoystickHat.None) {
-			return Text("controller.centred");
+			return Text("controller.centered");
 		}
 
 		var parts = new List<string>(2);

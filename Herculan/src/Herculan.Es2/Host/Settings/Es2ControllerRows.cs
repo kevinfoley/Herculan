@@ -31,7 +31,7 @@ static class Es2ControllerRows {
 				map => map.RadarToggle, (map, source) => map with { RadarToggle = source }),
 		],
 		Options = [
-			new ControllerOption("controller.centre_idle", "controller.centre_idle_tip",
+			new ControllerOption("controller.center_idle", "controller.center_idle_tip",
 				map => map.BipolarThrottle, (map, value) => map with { BipolarThrottle = value }),
 			new ControllerOption("controller.invert_razor_pitch", "controller.invert_razor_pitch_tip",
 				map => map.InvertRazorPitch, (map, value) => map with { InvertRazorPitch = value }),
