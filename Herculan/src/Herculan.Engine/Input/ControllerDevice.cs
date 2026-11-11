@@ -84,6 +84,9 @@ public sealed class ControllerDevice {
 		};
 	}
 
+	/// <summary>Where a gamepad's axis <paramref name="index"/> sits at rest: a stick centred at 0, a trigger let go at -1.</summary>
+	public static float GamepadAxisAtRest(int index) => index is 4 or 5 ? -1f : 0f;
+
 	/// <summary>Whether button <paramref name="index"/> is held; false for one it does not have.</summary>
 	public bool Button(int index) {
 		var buttons = _gamepad?.Buttons ?? _joystick!.Buttons;

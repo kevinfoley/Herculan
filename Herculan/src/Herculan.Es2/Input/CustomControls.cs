@@ -78,7 +78,7 @@ public sealed class CustomControls : IControlsOverride {
 	}
 
 	/// <summary>One frame of <paramref name="device"/> in the shape the retail bindings read, as the summary describes.</summary>
-	public JoystickReading Read(ControllerDevice device) {
+	public JoystickReading Read(ControllerState device) {
 		var (functions, flipped, _) = Layout(_razor);
 		int Slot(int slot) {
 			var axis = _profile.Axis(functions[slot]);
@@ -109,13 +109,13 @@ public sealed class CustomControls : IControlsOverride {
 	}
 
 	/// <summary>The actions held on <paramref name="device"/> that <see cref="Read"/> does not carry, for the host to send.</summary>
-	public IEnumerable<KeyAction> HeldActions(ControllerDevice device) => Held(device).Except(ThroughReading);
+	public IEnumerable<KeyAction> HeldActions(ControllerState device) => Held(device).Except(ThroughReading);
 
 	/// <summary>Whether an input bound to <paramref name="action"/> is held on <paramref name="device"/>.</summary>
-	public bool IsHeld(ControllerDevice device, KeyAction action) => HeldInput(device, action) != null;
+	public bool IsHeld(ControllerState device, KeyAction action) => HeldInput(device, action) != null;
 
 	/// <summary>The first input bound to <paramref name="action"/> that is held on <paramref name="device"/>, or null for none.</summary>
-	public ControllerInput? HeldInput(ControllerDevice device, KeyAction action) =>
+	public ControllerInput? HeldInput(ControllerState device, KeyAction action) =>
 		Bindings.Where(binding => binding.Value == action && Pressed(device, binding.Key))
 			.Select(binding => (ControllerInput?)binding.Key).OrderBy(input => input).FirstOrDefault();
 
@@ -142,10 +142,10 @@ public sealed class CustomControls : IControlsOverride {
 
 	private ImmutableDictionary<ControllerInput, KeyAction> Bindings => _razor ? _profile.RazorBindings : _profile.HercBindings;
 
-	private HashSet<KeyAction> Held(ControllerDevice device) =>
+	private HashSet<KeyAction> Held(ControllerState device) =>
 		[.. Bindings.Where(binding => Pressed(device, binding.Key)).Select(binding => binding.Value)];
 
-	private static bool Pressed(ControllerDevice device, ControllerInput input) =>
+	private static bool Pressed(ControllerState device, ControllerInput input) =>
 		input.Pressed(device.Axis, device.Button, device.Hat);
 
 	private void WriteBlock(int start, byte[] rows) {

@@ -263,7 +263,7 @@ controller.saved_for_model     Diese Einstellungen werden für dieses Joystick-M
 controller.saved_for_joysticks Diese Einstellungen werden für jeden Joystick ohne eigene Einstellungen gespeichert.
 controller.none_connected      Es ist kein Controller angeschlossen. Schließen Sie einen an, dann erscheint er hier.
 controller.mouse_emulation     Mausemulation
-controller.mouse_emulation_note Die Mausemulation wird im Spielmenü und im Editor verwendet. In diesem Fenster ist die Mausemulation nicht verfügbar; navigieren Sie in diesem Fenster mit dem Steuerkreuz.
+controller.mouse_emulation_note Die Mausemulation wird im Spielmenü, auf dem Heads-Down-Display und im Editor verwendet. In diesem Fenster ist die Mausemulation nicht verfügbar; navigieren Sie in diesem Fenster mit dem Steuerkreuz.
 controller.cursor_control      Mauszeigersteuerung
 controller.left_stick          Linker Stick
 controller.right_stick         Rechter Stick

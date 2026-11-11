@@ -246,6 +246,23 @@ public sealed class ModalPanels {
 	}
 
 	/// <summary>
+	/// A gamepad's focus step on the panel on top (<see cref="PanelPadFocus"/>), this engine's own. The objectives panel
+	/// has the one button, so a step there does nothing; the controls panel is on top of the preferences strip while it
+	/// is up. The pointer follows on <see cref="SyncPointer"/>, as for any focus change.
+	/// </summary>
+	public void PadFocusToward(PadDirection direction) {
+		if (StatusAlert is { IsOpen: true } alert) {
+			alert.PadFocusToward(direction);
+		} else if (Objectives is { IsOpen: true }) {
+			return;
+		} else if (Controls is { IsOpen: true } controls) {
+			controls.PadFocusToward(direction);
+		} else if (Preferences is { IsOpen: true } preferences) {
+			preferences.PadFocusToward(direction);
+		}
+	}
+
+	/// <summary>
 	/// Everything held while no panel is up counts as already acted on — <c>AlertPanel_Enter</c> latches buttons
 	/// 0-3 as a panel goes up, and the simulation's own latch holds any other it has acted on — so a button being
 	/// used for something else when a panel comes up does not also act on the panel. The mask then decays to the

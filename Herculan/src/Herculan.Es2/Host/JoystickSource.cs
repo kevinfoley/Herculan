@@ -146,6 +146,34 @@ sealed class JoystickSource : IJoystickSource {
 	}
 
 	/// <summary>
+	/// Whether a gamepad's sticks and triggers read as at rest, while its other buttons and its d-pad still work: set
+	/// while the Heads-Down Display has them (<see cref="Simulator.HddGamepad"/>). Every map slot and button row, and every
+	/// Custom function and action, filled from one of them reads centred or up. A joystick that is not a gamepad is read
+	/// as usual.
+	/// </summary>
+	public bool PadAxesMuted { get; set; }
+
+	/// <summary>
+	/// Whether a gamepad's A and B read as up, as they do while they work a retail panel (<see cref="Simulator.PanelGamepad"/>),
+	/// so what the profile binds to them does not also reach the panel, as <see cref="KeyAction.Fire"/> would as its
+	/// trigger. After it comes down they stay up until both are let go, so the press that answered a panel does not also
+	/// send its action in the mission. A joystick that is not a gamepad is read as usual.
+	/// </summary>
+	public bool PanelButtonsTaken {
+		get => _panelButtonsTaken;
+		set {
+			_panelButtonsAwaitRelease |= _panelButtonsTaken && !value;
+			_panelButtonsTaken = value;
+		}
+	}
+
+	private bool _panelButtonsTaken;
+	private bool _panelButtonsAwaitRelease;
+
+	/// <summary>How a gamepad works as the mouse, from the file the stick is read through.</summary>
+	public GamepadMouseSettings MouseSettings => _controller.File.Mouse;
+
+	/// <summary>
 	/// Reads the stick through <paramref name="file"/>'s maps from now on, as the Controller window saves it, picking the
 	/// device again, and says what it can do again on the next <see cref="Announce"/>, so the CONTROLS panel greys its rows
 	/// against the new map.
@@ -178,7 +206,10 @@ sealed class JoystickSource : IJoystickSource {
 			Probe(device);
 		}
 
-		return Custom is { } custom ? custom.Read(device) : device.Read(map);
+		var state = StateOf(device);
+		return Custom is { } custom
+			? custom.Read(state)
+			: map.Read(state.Axis, Bindable(device, state), device.Hat(map.HatIndex));
 	}
 
 	/// <summary>
@@ -187,14 +218,37 @@ sealed class JoystickSource : IJoystickSource {
 	/// <see cref="Read"/> reports the stick neutral (<see cref="Quiet"/>).
 	/// </summary>
 	public bool RadarToggleHeld() =>
-		!Quiet && Custom is null && Device is { } device && Map is { } map && device.Held(map.RadarToggle);
+		!Quiet && Custom is null && Device is { } device && Map is { } map
+		&& StateOf(device) is var state && map.RadarToggle.Pressed(state.Axis, Bindable(device, state));
+
+	// The device as the mission's controls read it: a gamepad's sticks and triggers at rest while PadAxesMuted, and its A
+	// and B up while PanelButtonsTaken has them and after it until both are let go. The host's own actions read the
+	// device unfiltered (HostActionInput).
+	private ControllerState StateOf(ControllerDevice device) {
+		bool panelButtons = device.IsGamepad && (_panelButtonsTaken || _panelButtonsAwaitRelease);
+		if (panelButtons && !_panelButtonsTaken
+				&& !device.Button(ControllerDevice.GamepadA) && !device.Button(ControllerDevice.GamepadB)) {
+			_panelButtonsAwaitRelease = false;
+			panelButtons = false;
+		}
+
+		Func<int, float> axis = PadAxesMuted && device.IsGamepad ? ControllerDevice.GamepadAxisAtRest : device.Axis;
+		Func<int, bool> button = panelButtons
+			? index => index is not (ControllerDevice.GamepadA or ControllerDevice.GamepadB) && device.Button(index)
+			: device.Button;
+		return new ControllerState(axis, button, device.Hat);
+	}
+
+	// A button as Original mode's map reads it: a button the host keeps reads as up (ControllerDevice.BindableButton).
+	private static Func<int, bool> Bindable(ControllerDevice device, ControllerState state) =>
+		index => !device.Reserved(index) && state.Button(index);
 
 	/// <summary>
 	/// The actions a Custom profile holds this frame that the reading does not carry (<see cref="CustomControls.HeldActions"/>),
 	/// for the host to send: none in Original mode, or while the stick is <see cref="Quiet"/>.
 	/// </summary>
 	public IEnumerable<KeyAction> HeldActions() =>
-		!Quiet && Custom is { } custom && Device is { } device ? custom.HeldActions(device) : [];
+		!Quiet && Custom is { } custom && Device is { } device ? custom.HeldActions(StateOf(device)) : [];
 
 	/// <summary>
 	/// Whether a Custom profile holds <paramref name="action"/>, whether or not the stick is <see cref="Quiet"/>: for the
@@ -204,7 +258,7 @@ sealed class JoystickSource : IJoystickSource {
 
 	/// <summary>The input holding <paramref name="action"/>, as <see cref="HostActionHeld"/> reads it, or null for none.</summary>
 	public ControllerInput? HostActionInput(KeyAction action) =>
-		Custom is { } custom && Device is { } device ? custom.HeldInput(device, action) : null;
+		Custom is { } custom && Device is { } device ? custom.HeldInput(ControllerState.Of(device), action) : null;
 
 	/// <summary>
 	/// Says what the stick can do, once — and not before it will answer. Silk.NET's GLFW backend publishes a

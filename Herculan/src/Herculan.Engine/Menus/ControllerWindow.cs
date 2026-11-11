@@ -16,8 +16,8 @@ namespace Herculan.Engine.Menus;
 /// (<see cref="ControllerMode.Original"/>, this class's rows) or the device's Custom profile does
 /// (<see cref="ControllerCustomView"/>); a gamepad has no "Mode" and always shows Custom. Above the device's own settings, and
 /// only while a gamepad is connected, "Mouse emulation" chooses the stick, its speed and the triggers a gamepad works the
-/// pointer with in the front end and the mission editor (<see cref="JoystickMapFile.Mouse"/>), which serve every gamepad
-/// whichever device is being edited.
+/// pointer with in the front end, on the Heads-Down Display and in the mission editor (<see cref="JoystickMapFile.Mouse"/>),
+/// which serve every gamepad whichever device is being edited.
 ///
 /// <para>What the player sees and does is docs/herculan/joystick-config.md, "Setting up a stick". Save raises
 /// <see cref="Saved"/>, which a mission's stick and the front end read the file through. Cancel, the title-bar close and

@@ -45,6 +45,13 @@ sealed class SimulatorInput : ISimulatorInput {
 	public ScaledImGui? ImGui { get; set; }
 
 	/// <summary>
+	/// A gamepad working as the mouse on the Heads-Down Display (<see cref="HddGamepad"/>): the triggers it holds as
+	/// buttons go into every mouse event beside the mouse's own, and its pointer stands for the mouse's where the
+	/// window's cursor could not follow it (<see cref="GamepadPointer.Override"/>).
+	/// </summary>
+	public HddGamepad? Pad { get; set; }
+
+	/// <summary>
 	/// A live mouse event, in pixels of the mission's frame, as it went into <see cref="Cockpit"/>, with the frame's
 	/// size: what a recording puts on its tape.
 	/// </summary>
@@ -84,16 +91,32 @@ sealed class SimulatorInput : ISimulatorInput {
 				}
 
 				var fit = _fit();
-				var (x, y) = ToFrame(m.Position, fit);
+				var (x, y) = ToFrame(PositionOf(m), fit);
 				Cockpit.Enqueue(x, y, buttons);
 				MouseQueued?.Invoke(x, y, buttons, fit.Frame.X, fit.Frame.Y);
 			}
+
+			_queue = Queue;
 
 			// The mask is built from the event's own button rather than read back off the device, so it
 			// does not depend on whether Silk.NET updates the held state before or after it raises.
 			Mouse.MouseMove += (m, _) => Queue(m, ButtonsHeld(m));
 			Mouse.MouseDown += (m, button) => Queue(m, ButtonsHeld(m) | ButtonFlag(button));
 			Mouse.MouseUp += (m, button) => Queue(m, ButtonsHeld(m) & ~ButtonFlag(button));
+		}
+	}
+
+	// The mouse event Attach builds, for a move or a button the gamepad makes, which raises no event of the mouse's.
+	private Action<IMouse, CockpitMouseButtons>? _queue;
+
+	/// <summary>
+	/// Queues a mouse event where the pointer is now, with every button held: what the gamepad's pointer does once it
+	/// moves or a trigger changes (<see cref="Pad"/>). The window's cursor may raise its own move for the same warp, which
+	/// changes nothing a second time.
+	/// </summary>
+	public void QueuePointer() {
+		if (Mouse != null) {
+			_queue?.Invoke(Mouse, ButtonsHeld(Mouse));
 		}
 	}
 
@@ -113,9 +136,12 @@ sealed class SimulatorInput : ISimulatorInput {
 			return (float.NaN, float.NaN, CockpitMouseButtons.None);
 		}
 
-		var (x, y) = ToFrame(Mouse.Position, _fit());
+		var (x, y) = ToFrame(PositionOf(Mouse), _fit());
 		return (x, y, ButtonsHeld(Mouse));
 	}
+
+	// The pointer in window coordinates: the gamepad's own where it has one, else the mouse's.
+	private System.Numerics.Vector2 PositionOf(IMouse mouse) => Pad?.Pointer.PositionOf(mouse) ?? mouse.Position;
 
 	/// <summary>
 	/// Puts the pointer on a pixel of the mission's frame — <c>Mouse_WarpCursorToPoint</c>'s (<c>004807d0</c>) conversion back to
@@ -158,10 +184,11 @@ sealed class SimulatorInput : ISimulatorInput {
 			position.Y * fit.Window.Y / Math.Max(client.Y, 1));
 	}
 
-	/// <summary>Every mouse button currently held, as the cockpit's own flag pair.</summary>
-	private static CockpitMouseButtons ButtonsHeld(IMouse mouse) =>
+	/// <summary>Every mouse button currently held, the gamepad's triggers among them, as the cockpit's own flag pair.</summary>
+	private CockpitMouseButtons ButtonsHeld(IMouse mouse) =>
 		(mouse.IsButtonPressed(MouseButton.Left) ? CockpitMouseButtons.Left : CockpitMouseButtons.None)
-		| (mouse.IsButtonPressed(MouseButton.Right) ? CockpitMouseButtons.Right : CockpitMouseButtons.None);
+		| (mouse.IsButtonPressed(MouseButton.Right) ? CockpitMouseButtons.Right : CockpitMouseButtons.None)
+		| (Pad?.Buttons ?? CockpitMouseButtons.None);
 
 	/// <summary>One button as its flag. Anything but left and right is <see cref="CockpitMouseButtons.None"/> — the original watches only those two.</summary>
 	private static CockpitMouseButtons ButtonFlag(MouseButton button) => button switch {

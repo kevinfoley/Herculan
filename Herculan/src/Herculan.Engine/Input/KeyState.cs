@@ -46,15 +46,23 @@ public sealed class LiveKeys : IKeyState {
 
 	/// <summary>
 	/// Keys the host holds down on another device's behalf, such as the [Alt] order key a gamepad's squad-order radial
-	/// stands for. Each reads as held to every handler and to a recording, as the key itself would, but never
-	/// auto-repeats. This engine's own.
+	/// stands for. Each reads as held to every handler and to a recording, as the key itself would, and auto-repeats only
+	/// through <see cref="RepeatedByHost"/>. This engine's own.
 	/// </summary>
 	public HashSet<Key> HeldByHost { get; } = [];
+
+	/// <summary>
+	/// Keys of <see cref="HeldByHost"/> whose auto-repeat the host says falls due this frame, such as the arrow a
+	/// gamepad's stick holds on the Heads-Down Display. Each reads as repeated to every handler and to a recording, as
+	/// the keyboard's own repeat does. This engine's own.
+	/// </summary>
+	public HashSet<Key> RepeatedByHost { get; } = [];
 
 	public bool IsKeyPressed(Key key) => Layout.IsDown(Device, key) || HeldByHost.Contains(key);
 
 	/// <summary>Windows repeats the physical key pressed last, so the repeat is kept by physical key and read as the key it makes.</summary>
-	public bool IsKeyRepeated(Key key) => _repeat.Repeated is { } physical && Layout.Translate(physical) == key;
+	public bool IsKeyRepeated(Key key) =>
+		_repeat.Repeated is { } physical && Layout.Translate(physical) == key || RepeatedByHost.Contains(key);
 
 	/// <summary>Moves the keyboard on by one host frame, before anything reads the keys: a layout switched since the last, then the auto-repeat.</summary>
 	public void AdvanceRepeat(double deltaSeconds) {
@@ -65,7 +73,7 @@ public sealed class LiveKeys : IKeyState {
 	private sealed class PositionalKeys(LiveKeys keys) : IKeyState {
 		public bool IsKeyPressed(Key key) => keys.Device.IsKeyPressed(key) || keys.HeldByHost.Contains(key);
 
-		public bool IsKeyRepeated(Key key) => keys._repeat.Repeated == key;
+		public bool IsKeyRepeated(Key key) => keys._repeat.Repeated == key || keys.RepeatedByHost.Contains(key);
 	}
 }
 

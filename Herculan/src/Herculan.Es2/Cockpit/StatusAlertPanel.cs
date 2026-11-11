@@ -302,6 +302,13 @@ public sealed class StatusAlertPanel {
 	public bool HandleStick(bool trigger, bool button2, long nowTicks) =>
 		IsOpen && _focus.AnswerStick(trigger, button2, button => PressWidget(button, nowTicks));
 
+	/// <summary>A gamepad's focus step, this engine's own — see <see cref="PanelPadFocus"/>.</summary>
+	public void PadFocusToward(PadDirection direction) {
+		if (IsOpen) {
+			PanelPadFocus.Step(_focus, direction);
+		}
+	}
+
 	// AlertPanel_PressWidget: the button's click, then its flash.
 	private void PressWidget(int button, long nowTicks) {
 		Choose(button);
