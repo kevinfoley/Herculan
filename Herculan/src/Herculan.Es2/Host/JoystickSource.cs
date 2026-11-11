@@ -59,7 +59,6 @@ sealed class JoystickSource : IJoystickSource {
 
 	private JoystickSource(IInputContext input, JoystickMapFile file, bool probe, bool razor) {
 		_controller = new MappedController(input, file);
-		PersistGamepadControls();
 		_probe = probe;
 		_razor = razor;
 
@@ -153,7 +152,6 @@ sealed class JoystickSource : IJoystickSource {
 	/// </summary>
 	public void Configure(JoystickMapFile file) {
 		_controller.Reset(file);
-		PersistGamepadControls();
 		_custom = null;
 		_announced = false;
 	}
@@ -290,12 +288,6 @@ sealed class JoystickSource : IJoystickSource {
 					? " — parked at a stop, so a lever rather than a self-centring control"
 					: string.Empty);
 		}
-	}
-
-	// The CONTROLS panel's DONE saves the gamepad's settings by writing the whole file, its other sections kept.
-	private void PersistGamepadControls() {
-		// A failed write is logged.
-		_controller.File.Gamepad.Persist = () => _controller.File.Save(JoystickMapFile.PlayerPath, out _);
 	}
 
 	/// <summary>Reports an axis that moved appreciably or a button that went down, once per change.</summary>

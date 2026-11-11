@@ -41,8 +41,6 @@ The d-pad is also hat 0, since a gamepad has no hat of its own. A trigger is an 
 
 Back raises the menu bar, Start the pause menu, the left stick's click the squad orders and the right stick's the cockpit's screens ([`herculan-key-bindings.md`](herculan-key-bindings.md)); in the front end, Back and Start do so whatever the profile says. The left stick moves a HERC's throttle at a rate ([`mech-locomotion.md`](../retail/simulation/mech-locomotion.md)). The right stick's up and down work the two machines in opposite senses: a HERC's turret like a shooter's view, a RAZOR's nose like a flight stick ([Open](#open)).
 
-`[Gamepad]`'s `HercControls` and `RazorControls`, eight CONTROLS action codes each, are what a gamepad's CONTROLS rows read in Original mode, which a gamepad no longer has; nothing reads them in an Earthsiege 2 mission.
-
 ## One file, many devices
 
 **The file is the player's, not an install's.** It is kept in HERCULAN's settings folder, `%APPDATA%\Herculan` on Windows and the platform's user-config directory elsewhere, and both games read and save the same one, so a controller set up for one game is set up for the other. While that file is missing, a game that finds a copy in its install's `data` folder, where earlier builds kept it, copies it there; an install's copy is read for nothing else.
@@ -103,7 +101,7 @@ An axis number, though, is the map's own and not the format's, so a slot can be 
 The three below are off by default.
 
 - **`HatDiagonals`** resolves a hat diagonal into its two cardinal directions. Retail drops a diagonal.
-- **`BipolarThrottle`** reads the throttle lever centre-zero: the middle of the travel is idle, forward of it is forward and aft of it is reverse, each half covering the whole range. Retail's lever is end-to-end, idle at one stop and full at the other, with the direction set by `CHANGE DIRECTION` and the cockpit slider. `CHANGE DIRECTION` still reverses the lever in this mode, which is of no use but costs nothing. The Razor needs neither mode, since its throttle is already signed across the whole range. Nor does a gamepad, whose controls read no lever ([A gamepad's own controls](#a-gamepads-own-controls)), and the Controller window greys the option for one.
+- **`BipolarThrottle`** reads the throttle lever centre-zero: the middle of the travel is idle, forward of it is forward and aft of it is reverse, each half covering the whole range. Retail's lever is end-to-end, idle at one stop and full at the other, with the direction set by `CHANGE DIRECTION` and the cockpit slider. `CHANGE DIRECTION` still reverses the lever in this mode, which is of no use but costs nothing. The Razor needs neither mode, since its throttle is already signed across the whole range. The option is Original mode's, so a gamepad, always in Custom, has no use for it; in Custom, a HERC's throttle axis can be read as a lever idle in the middle instead ([Setting up a stick](#setting-up-a-stick)).
 - **`InvertRazorPitch`** reverses the RAZOR's pitch from the device, whichever control the bindings route to it, on top of that control's own invert; the window's **Invert RAZOR pitch**. The per-axis inverts serve both machines, and with the gamepad defaults the right stick's up and down pitch a HERC's turret and a RAZOR's nose, so this is what gives the two separate senses. The keyboard's pitch keys are left alone. Retail has no invert of any kind.
 
 ## Open

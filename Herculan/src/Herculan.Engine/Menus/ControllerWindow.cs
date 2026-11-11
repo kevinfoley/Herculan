@@ -187,7 +187,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 					ControlRows(device);
 					if (_rows.ReadsDeadzone || _rows.HatLabelKey != null || _rows.Options.Count > 0) {
 						ImGui.SeparatorText(Text("controller.options"));
-						Options(device);
+						Options();
 					}
 				}
 			}
@@ -395,7 +395,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	// from it through the map being edited.
 	private void ControlRows(ControllerDevice device) {
 		var reading = _rows.Reads(device, _draft);
-		var clashes = Clashes(device.IsGamepad);
+		var clashes = Clashes();
 		if (!ImGui.BeginTable("##controls", 5, ImGuiTableFlags.SizingStretchProp | ImGuiTableFlags.RowBg)) {
 			return;
 		}
@@ -411,7 +411,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 			ImGui.PushID(row);
 			ImGui.TableNextRow();
 			ImGui.TableNextColumn();
-			ImGui.TextUnformatted(RowLabel(row, device.IsGamepad));
+			ImGui.TextUnformatted(RowLabel(row));
 
 			ImGui.TableNextColumn();
 			if (InputCombo(AxisOf(row), device.AxisCount, "controller.axis", clashes[row]) is { } axis) {
@@ -423,7 +423,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 			if (ImGui.Checkbox("##invert", ref invert)) {
 				_draft = WithInvert(row, invert);
 			}
-			if (row == ThrottleRow && (device.IsGamepad ? _rows.GamepadThrottleInvertTipKey : _rows.ThrottleInvertTipKey) is { } tip) {
+			if (row == ThrottleRow && _rows.ThrottleInvertTipKey is { } tip) {
 				Tooltip(tip);
 			}
 
@@ -441,7 +441,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 			ImGui.PushID(HatRow);
 			ImGui.TableNextRow();
 			ImGui.TableNextColumn();
-			ImGui.TextUnformatted(RowLabel(HatRow, device.IsGamepad));
+			ImGui.TextUnformatted(RowLabel(HatRow));
 			ImGui.TableNextColumn();
 			if (InputCombo(_draft.HatIndex, device.HatCount, "controller.hat", clash: null) is { } hatIndex) {
 				_draft = _draft with { HatIndex = hatIndex };
@@ -498,8 +498,8 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	}
 
 	// The map's options that are not a choice of input: the deadzone and hat diagonals where the game reads them, then the
-	// game's own, an option a gamepad has no use for greyed for one.
-	private void Options(ControllerDevice device) {
+	// game's own.
+	private void Options() {
 		if (_rows.ReadsDeadzone) {
 			int deadzone = _draft.Deadzone;
 			ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.5f);
@@ -519,21 +519,18 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 
 		for (int i = 0; i < _rows.Options.Count; i++) {
 			var option = _rows.Options[i];
-			bool greyed = device.IsGamepad && option.GamepadGreyedTipKey != null;
 			bool value = option.Get(_draft);
-			ImGui.BeginDisabled(greyed);
 			if (ImGui.Checkbox(Text(option.LabelKey) + "###option" + i, ref value)) {
 				_draft = option.Set(_draft, value);
 			}
-			ImGui.EndDisabled();
-			Tooltip(greyed ? option.GamepadGreyedTipKey! : option.TipKey);
+			Tooltip(option.TipKey);
 		}
 	}
 
 	// For each row, which other rows its device input also fills, as a sentence naming them, or null where it fills only
 	// its own. Two button rows on an axis's opposite directions do not share it; an axis row and a button row on either
 	// direction of its axis do, since moving the axis presses the button.
-	private string?[] Clashes(bool isGamepad) {
+	private string?[] Clashes() {
 		var bound = new Bound?[_rowCount];
 		for (int row = 0; row < AxisRows; row++) {
 			bound[row] = AxisOf(row) is var axis && axis != JoystickDeviceMap.Unmapped ? new Bound(true, axis, 0) : null;
@@ -557,7 +554,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 			for (int other = 0; other < bound.Length; other++) {
 				if (other != row && bound[other] is { } shared && shared.Axis == input.Axis && shared.Index == input.Index
 						&& (shared.Sign == 0 || input.Sign == 0 || shared.Sign == input.Sign)) {
-					others.Add(RowLabel(other, isGamepad));
+					others.Add(RowLabel(other));
 				}
 			}
 
@@ -572,9 +569,9 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	private static Bound? BoundOf(JoystickButtonSource source) =>
 		source.IsMapped ? new Bound(source.IsAxis, source.Index, source.AxisSign) : null;
 
-	private string RowLabel(int row, bool isGamepad) =>
-		row < AxisRows ? Text(((isGamepad ? _rows.GamepadAxisLabelKeys : null) ?? _rows.AxisLabelKeys)[row])
-		: row == HatRow ? Text((isGamepad ? _rows.GamepadHatLabelKey : null) ?? _rows.HatLabelKey ?? "controller.hat_row")
+	private string RowLabel(int row) =>
+		row < AxisRows ? Text(_rows.AxisLabelKeys[row])
+		: row == HatRow ? Text(_rows.HatLabelKey ?? "controller.hat_row")
 		: row >= _firstExtraRow ? Text(_rows.ExtraButtonRows[row - _firstExtraRow].LabelKey)
 		: Format("controller.button_row", row - FirstButtonRow + 1);
 

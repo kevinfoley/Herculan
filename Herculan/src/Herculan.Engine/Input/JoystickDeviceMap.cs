@@ -142,8 +142,8 @@ public sealed record JoystickDeviceMap {
 	}
 
 	/// <summary>
-	/// The map for a gamepad, read in GLFW's standard layout (docs/herculan/joystick-config.md, "Gamepads"), made to go
-	/// with <see cref="GamepadControls"/>' axis rows: the left stick in the stick slots, the right stick's X in the rudder
+	/// The map for a gamepad, read in GLFW's standard layout (docs/herculan/joystick-config.md, "Gamepads"): the left
+	/// stick in the stick slots, the right stick's X in the rudder
 	/// slot and its Y in the throttle slot, the d-pad as the hat, BUTTON 1-7 on the right trigger, A, the left trigger, X,
 	/// Y and the left and right bumpers, BUTTON 8 left unmapped, and B on <see cref="RadarToggle"/>. Back, Start and the
 	/// sticks' clicks are the host's, and are left out of the eight.

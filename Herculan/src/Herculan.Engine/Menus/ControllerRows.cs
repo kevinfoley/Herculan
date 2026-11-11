@@ -8,26 +8,17 @@ namespace Herculan.Engine.Menus;
 /// rows and options the game adds of its own. Every key is a localization key.
 /// </summary>
 public sealed record ControllerRows {
-	/// <summary>The four axis rows' labels for a joystick, in the map's slot order: stick X, stick Y, throttle, rudder.</summary>
+	/// <summary>The four axis rows' labels, in the map's slot order: stick X, stick Y, throttle, rudder.</summary>
 	public required IReadOnlyList<string> AxisLabelKeys { get; init; }
 
-	/// <summary>The four axis rows' labels for a gamepad, in the same order; null for <see cref="AxisLabelKeys"/>.</summary>
-	public IReadOnlyList<string>? GamepadAxisLabelKeys { get; init; }
-
-	/// <summary>The throttle row's Invert tooltip for a joystick, and for a gamepad; null for none.</summary>
+	/// <summary>The throttle row's Invert tooltip; null for none.</summary>
 	public string? ThrottleInvertTipKey { get; init; }
 
-	/// <inheritdoc cref="ThrottleInvertTipKey"/>
-	public string? GamepadThrottleInvertTipKey { get; init; }
-
 	/// <summary>
-	/// The hat row's label for a joystick, or null for a game that reads no hat, which shows neither the hat row nor the
-	/// hat diagonals option.
+	/// The hat row's label, or null for a game that reads no hat, which shows neither the hat row nor the hat diagonals
+	/// option.
 	/// </summary>
 	public string? HatLabelKey { get; init; }
-
-	/// <summary>The hat row's label for a gamepad; null for <see cref="HatLabelKey"/>.</summary>
-	public string? GamepadHatLabelKey { get; init; }
 
 	/// <summary>How many of the map's BUTTON rows the game reads, from BUTTON 1, at most <see cref="JoystickCapabilities.MaxButtons"/>.</summary>
 	public required int ButtonRows { get; init; }
@@ -87,8 +78,7 @@ public sealed record ControllerButtonRow(string LabelKey, string TipKey,
 /// <summary>A checkbox of a game's own under the Controller window's Options.</summary>
 /// <param name="LabelKey">The checkbox's label.</param>
 /// <param name="TipKey">Its tooltip.</param>
-/// <param name="GamepadGreyedTipKey">For an option a gamepad has no use for, the tooltip saying why it is greyed for one; null where a gamepad uses it.</param>
 /// <param name="Get">The option in a map.</param>
 /// <param name="Set">The map with the option changed.</param>
-public sealed record ControllerOption(string LabelKey, string TipKey, string? GamepadGreyedTipKey,
+public sealed record ControllerOption(string LabelKey, string TipKey,
 	Func<JoystickDeviceMap, bool> Get, Func<JoystickDeviceMap, bool, JoystickDeviceMap> Set);

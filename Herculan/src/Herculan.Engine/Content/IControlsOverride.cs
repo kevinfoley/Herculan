@@ -2,8 +2,8 @@ namespace Herculan.Engine.Content;
 
 /// <summary>
 /// CONTROLS settings that stand in for some of <c>prefs.cfg</c>'s while they apply, read and written through
-/// the simulator's preferences in their place, and saved somewhere other than <c>prefs.cfg</c>, or nowhere: a gamepad's
-/// in Original mode (<see cref="Input.GamepadControls"/>), and in Earthsiege 2 a Custom profile's fixed rows.
+/// the simulator's preferences in their place, and saved somewhere other than <c>prefs.cfg</c>, or nowhere: in
+/// Earthsiege 2, a Custom profile's fixed rows.
 /// </summary>
 public interface IControlsOverride {
 	/// <summary>Whether option <paramref name="index"/>, by its <c>prefs.cfg</c> offset, is one of these.</summary>

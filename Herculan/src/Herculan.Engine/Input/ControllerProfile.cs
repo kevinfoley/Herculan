@@ -128,9 +128,9 @@ public sealed record ControllerProfile {
 	public ControllerAxis Axis(AxisFunction function) => Axes.GetValueOrDefault(function, ControllerAxis.Unbound);
 
 	/// <summary>
-	/// A gamepad's default profile, read in GLFW's standard layout: what <see cref="JoystickDeviceMap.ForGamepad"/> and
-	/// <see cref="GamepadControls"/> give a gamepad in Original mode, in both machines, with Back, Start and the sticks'
-	/// clicks on the menu bar, the pause menu and the two radials, and the d-pad on the four views.
+	/// A gamepad's default profile, read in GLFW's standard layout, the same in both machines
+	/// (docs/herculan/joystick-config.md, "A gamepad's own controls"): Back, Start and the sticks' clicks on the menu bar,
+	/// the pause menu and the two radials, and the d-pad on the four views.
 	/// </summary>
 	public static ControllerProfile ForGamepad() {
 		var bindings = new Dictionary<ControllerInput, KeyAction>(HatViews(0)) {

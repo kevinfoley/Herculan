@@ -15,8 +15,7 @@ namespace Herculan.Engine.Input;
 /// player's while the player's is missing (<see cref="LoadForPlayer(string?)"/>) and is read for nothing else.</para>
 ///
 /// <para>Each map is an INI section. <c>[Gamepad]</c> serves every gamepad, since GLFW reads all of them in one
-/// layout, and also carries what each control does with one (<see cref="Gamepad"/>) and how one works as the mouse
-/// (<see cref="Mouse"/>). <c>[Joystick &lt;GUID&gt;]</c> serves one model of joystick, by the GUID GLFW gives it, and <c>[Joystick]</c>
+/// layout, and also carries how one works as the mouse (<see cref="Mouse"/>). <c>[Joystick &lt;GUID&gt;]</c> serves one model of joystick, by the GUID GLFW gives it, and <c>[Joystick]</c>
 /// any joystick without a section of its own, which is also the one section a file written before per-device sections
 /// has.</para>
 ///
@@ -42,9 +41,6 @@ public sealed class JoystickMapFile {
 	/// it was saved from, kept so the file stays readable.
 	/// </summary>
 	private sealed record Entry(string Section, JoystickDeviceMap Map, string? DeviceName, ControllerMode Mode, ControllerProfile? Profile);
-
-	/// <summary>What each control does while a gamepad is in use, from <c>[Gamepad]</c>, or the defaults.</summary>
-	public GamepadControls Gamepad { get; private set; } = new();
 
 	/// <summary>How a gamepad works as the mouse, from <c>[Gamepad]</c>, or the defaults.</summary>
 	public GamepadMouseSettings Mouse { get; set; } = new();
@@ -75,7 +71,6 @@ public sealed class JoystickMapFile {
 			file._sections[Normalise(section)] = new Entry(
 				Normalise(section), JoystickDeviceMap.FromValues(values), name, mode, ControllerProfile.FromValues(values));
 			if (Normalise(section) == GamepadSection) {
-				file.Gamepad = GamepadControls.FromValues(values);
 				file.Mouse = GamepadMouseSettings.FromValues(values);
 			}
 		}
@@ -179,9 +174,8 @@ public sealed class JoystickMapFile {
 	/// write fails.
 	/// </summary>
 	public bool Save(string path, out string? error) {
-		// Gamepad actions or mouse settings changed with no gamepad map saved yet: the section they go in, with the map it
-		// implies.
-		if ((!Gamepad.IsDefault || !Mouse.IsDefault) && !_sections.ContainsKey(GamepadSection)) {
+		// Mouse settings changed with no gamepad map saved yet: the section they go in, with the map it implies.
+		if (!Mouse.IsDefault && !_sections.ContainsKey(GamepadSection)) {
 			_sections[GamepadSection] = new Entry(GamepadSection, JoystickDeviceMap.ForGamepad(), null, ControllerMode.Custom, null);
 		}
 
@@ -212,8 +206,6 @@ public sealed class JoystickMapFile {
 			text.AppendLine(";; Original: which piece of hardware each control is.");
 			entry.Map.WriteValues(text);
 			if (entry.Section == GamepadSection) {
-				text.AppendLine();
-				Gamepad.WriteValues(text);
 				text.AppendLine();
 				Mouse.WriteValues(text);
 			}

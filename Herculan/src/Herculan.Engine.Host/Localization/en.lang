@@ -295,11 +295,6 @@ controller.stick_y             Stick forward/back
 controller.throttle            Throttle
 controller.rudder              Rudder
 controller.hat_row             Hat
-controller.gamepad_stick_x     Turn / Rudder
-controller.gamepad_stick_y     Throttle
-controller.gamepad_throttle    Turret elevation / Pitch
-controller.gamepad_rudder      Turret rotation / Roll
-controller.gamepad_hat_row     Views
 controller.button_row          BUTTON {0}
 controller.radar_toggle        Radar toggle
 controller.radar_toggle_tip    Switches the radar between active and passive, as R does. This control is HERCULAN's own: the original game has no button for it, and the CONTROLS panel does not show it.
@@ -311,7 +306,6 @@ controller.detect_axis         Move the control you want as far as it goes.
 controller.detect_hat          Push the hat you want in any direction.
 controller.detect_button       Press the button you want, or pull the trigger you want.
 controller.invert_throttle_tip For a throttle lever: with the lever at idle, Game reads should show a positive number. Tick Invert if it shows a negative one.
-controller.invert_throttle_gamepad_tip  On a gamepad this is the right stick's up and down. Tick Invert to reverse which way it aims a HERC's turret and pitches a RAZOR.
 controller.pressed             Pressed
 controller.released            Released
 controller.centred             Centred
@@ -326,7 +320,6 @@ controller.hat_diagonals       Hat diagonals
 controller.hat_diagonals_tip   A hat pushed diagonally counts as its two directions. The original game ignores a diagonal.
 controller.centre_idle         Centre-idle throttle
 controller.centre_idle_tip     The middle of the throttle's travel is idle, forward of it is forward and back of it is reverse. The original game reads the throttle from idle at one end to full at the other, and CHANGE DIRECTION chooses forward or reverse.
-controller.centre_idle_gamepad_tip      Only for a joystick's throttle lever. A gamepad's left stick moves the throttle up and down and leaves it where it is, so this does nothing with one.
 controller.invert_razor_pitch  Invert RAZOR pitch
 controller.invert_razor_pitch_tip   Reverses which way the controls pitch the RAZOR's nose up and down, leaving a HERC's turret as the Invert column sets it. The keyboard is not affected.
 controller.actions_note        In "Original" mode, button and axis functions are set on the in-game "CONTROLS" panel (press F12 during a mission). This window only remaps your controller's axes and buttons.
