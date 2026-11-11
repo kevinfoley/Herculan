@@ -121,8 +121,8 @@ HostWindow SharedWindow() {
 // runs it on the install's data\ files, as DBSIM.EXE does; --play and --demo play a tape, as its -p and -D do, and
 // --record records one, as its -r does.
 int RunEs1(string root, bool switched) {
-	// Loaded for both turns: the shell's SYSTEM REPAIR and Tweaks window read them, and so does the simulator, which has
-	// no menu bar of its own, for its textures and sounds.
+	// Loaded for both turns: the shell's SYSTEM REPAIR and the menu bar's Tweaks window read them, and so does the
+	// simulator, for its textures and sounds.
 	TweakSettings.Current = new TweakSettings(Es1TweakSettingDefinitions.All, Es1TweakSettingDefinitions.FileName);
 	TweakSettings.Current.LoadFromDisk();
 
@@ -136,7 +136,8 @@ int RunEs1(string root, bool switched) {
 		}
 
 		return Es1Launcher.Run(root, es1.ShellArguments, imguiFontPath, imguiItalicFontPath,
-			() => new Es1ShellMenus(localization, root), options.ScreenshotPath, SharedWindow(), options.SilentAudio);
+			inMission => new Es1ShellMenus(localization, root, inMission), options.ScreenshotPath, SharedWindow(),
+			options.SilentAudio);
 	}
 
 	if (es1.ShellArguments.Count > 0) {
@@ -144,8 +145,9 @@ int RunEs1(string root, bool switched) {
 		return 1;
 	}
 
-	return Es1ZoneViewer.Run(root, options.MissionPath, es1.ToOverrides(), options.PlayTape, options.DemoTape,
-		options.RecordTape, silent: options.SilentAudio);
+	return Es1ZoneViewer.Run(root, options.MissionPath, es1.ToOverrides(), imguiFontPath, imguiItalicFontPath,
+		new Es1ShellMenus(localization, root, inMission: true), options.PlayTape, options.DemoTape, options.RecordTape,
+		silent: options.SilentAudio);
 }
 
 int RunEs2(string root, bool switched) {

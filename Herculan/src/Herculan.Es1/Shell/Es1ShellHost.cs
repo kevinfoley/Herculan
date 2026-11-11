@@ -225,30 +225,8 @@ public static class Es1ShellHost {
 			if (window.Keyboard is { } keyboard && _devices.HostKeyboard is { } hostKeyboard) {
 				hostKeyboard.Attach(keyboard);
 				hostKeyboard.FullScreenKey = fullScreenKey;
-				hostKeyboard.HostTakes = key => MenuBarTakes(window, key);
-				hostKeyboard.HostHasKeyboard = () => window.ImGuiWantsKeyboard;
+				hostKeyboard.GiveMenuBarItsKeys(window);
 			}
-		}
-
-		/// <summary>
-		/// <b>This engine's own:</b> whether a key-down is the menu bar's, which it then has: [Shift+Esc] alone raises the bar
-		/// or backs out of it, and so does plain [Esc] while the bar or one of its windows is up, the keys Earthsiege 2's
-		/// shell gives the bar by default; and any key while a field of the bar's windows is typed into. [Esc] with Alt or
-		/// Ctrl, and any other [Esc], is the shell's.
-		/// </summary>
-		private static bool MenuBarTakes(FrontEndWindow window, Key key) {
-			if (key == Key.Escape) {
-				bool Held(Key modifier) => window.Keyboard?.IsKeyPressed(modifier) == true;
-				bool shift = Held(Key.ShiftLeft) || Held(Key.ShiftRight);
-				bool alt = Held(Key.AltLeft) || Held(Key.AltRight);
-				bool ctrl = Held(Key.ControlLeft) || Held(Key.ControlRight);
-				if (!alt && !ctrl && (shift || window.MenuBarUp)) {
-					window.MenuBarEscape();
-					return true;
-				}
-			}
-
-			return window.ImGuiWantsKeyboard;
 		}
 
 		/// <summary>

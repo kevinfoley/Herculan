@@ -10,7 +10,7 @@ using ImGuiNET;
 namespace Herculan.Es1.Host;
 
 /// <summary>
-/// Metaltech: Earthsiege's floating "Settings" window, opened from the shell's menu bar: where the install is, the disc
+/// Metaltech: Earthsiege's floating "Settings" window, opened from the menu bar: where the install is, the disc
 /// the game's movies are played from (<see cref="Es1Disc"/>), the interface language and the update check. Retail has no
 /// such screen: its installer wrote <c>ES.BAT</c>, and nothing changed it after. Earthsiege 2's window
 /// (<c>Herculan.Es2.Host.Settings.SettingsWindow</c>) is its counterpart; this one has no Install from a Disc, no game
@@ -19,7 +19,8 @@ namespace Herculan.Es1.Host;
 /// <para>The launcher reads the install and the disc once, as <c>ESCD.EXE</c> starts, so changing either ends the shell's
 /// turn and starts the launcher again on them (<see cref="GameSwitch"/>), as typing <c>ES</c> again would. The install is
 /// asked for with the start-up's own prompt (<see cref="InstallPromptWindow"/>), and the disc as a folder or an image.
-/// A disc is not used while the environment sets <c>ALT_DRIVE</c>, which the window says.</para>
+/// A disc is not used while the environment sets <c>ALT_DRIVE</c>, which the window says. A mission has no shell turn to
+/// end, and there the install and disc rows are greyed, as Earthsiege 2's are.</para>
 /// </summary>
 sealed class Es1SettingsWindow : IDrawnMenuBarPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
@@ -35,7 +36,7 @@ sealed class Es1SettingsWindow : IDrawnMenuBarPanel {
 
 	private readonly LocalizationTable _localization;
 	private readonly string _installRoot;
-	private readonly Action<string> _restart;
+	private readonly Action<string>? _restart;
 	private readonly InterfaceLanguageCombo _interfaceLanguage;
 	private readonly UpdateCheckRows _updates;
 	private PathPrompt? _prompt;
@@ -48,10 +49,11 @@ sealed class Es1SettingsWindow : IDrawnMenuBarPanel {
 	private string? _disc;
 	private bool _discRead;
 
-	/// <param name="installRoot">The install the shell's turn runs on.</param>
-	/// <param name="restart">Ends the shell's turn and starts the launcher again on the install it is given. It is called
-	/// between this window's <c>Begin</c> and <c>End</c>, so it must not tear down the ImGui context there.</param>
-	public Es1SettingsWindow(LocalizationTable localization, string installRoot, Action<string> restart) {
+	/// <param name="installRoot">The install the turn runs on.</param>
+	/// <param name="restart">Ends the shell's turn and starts the launcher again on the install it is given; null in a
+	/// mission. It is called between this window's <c>Begin</c> and <c>End</c>, so it must not tear down the ImGui context
+	/// there.</param>
+	public Es1SettingsWindow(LocalizationTable localization, string installRoot, Action<string>? restart) {
 		_localization = localization;
 		_installRoot = installRoot;
 		_restart = restart;
@@ -91,9 +93,13 @@ sealed class Es1SettingsWindow : IDrawnMenuBarPanel {
 			ImGui.SeparatorText(_localization.GetStringOrKey("es1_settings.folders"));
 			ImGui.TextUnformatted(_localization.GetStringOrKey("settings.install_folder"));
 			ImGui.TextDisabled(_installRoot);
+			ImGui.BeginDisabled(_restart == null);
 			if (ImGui.Button(_localization.GetStringOrKey("settings.change") + "##change_install")) {
 				OpenPrompt(PromptKind.Install);
 			}
+
+			ImGui.EndDisabled();
+			InMissionTooltip();
 
 			DiscRows();
 
@@ -139,15 +145,18 @@ sealed class Es1SettingsWindow : IDrawnMenuBarPanel {
 			ImGui.TextDisabled(string.Format(_localization.GetStringOrKey("es1_settings.alt_drive_overrides"), Es1Launcher.AltDriveVariable));
 		}
 
+		ImGui.BeginDisabled(_restart == null);
 		if (ImGui.Button(_localization.GetStringOrKey("es1_settings.choose_disc_folder"))) {
 			OpenPrompt(PromptKind.DiscFolder);
 		}
 
+		InMissionTooltip();
 		ImGui.SameLine();
 		if (ImGui.Button(_localization.GetStringOrKey("es1_settings.choose_disc_image"))) {
 			OpenPrompt(PromptKind.DiscImage);
 		}
 
+		InMissionTooltip();
 		if (disc != null) {
 			ImGui.SameLine();
 			if (ImGui.Button(_localization.GetStringOrKey("settings.remove") + "##remove_disc")) {
@@ -157,6 +166,17 @@ sealed class Es1SettingsWindow : IDrawnMenuBarPanel {
 					_error = string.Format(_localization.GetStringOrKey("es1_settings.save_failed"), Es1Disc.PathFile);
 				}
 			}
+
+			InMissionTooltip();
+		}
+
+		ImGui.EndDisabled();
+	}
+
+	// In a mission, where the item just drawn is greyed, the tooltip that says where it can be changed.
+	private void InMissionTooltip() {
+		if (_restart == null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+			ScaledImGui.Tooltip(_localization.GetStringOrKey("settings.in_mission"));
 		}
 	}
 
@@ -227,7 +247,7 @@ sealed class Es1SettingsWindow : IDrawnMenuBarPanel {
 
 	private void Restart(string installRoot) {
 		Close();
-		_restart(installRoot);
+		_restart?.Invoke(installRoot);
 	}
 
 	private string? DiscRefusal(string path) => Es1Disc.Check(path, out string? detail) switch {

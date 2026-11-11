@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Herculan.Engine.Input;
+using Herculan.Engine.Platform;
 using Silk.NET.Input;
 
 namespace Herculan.Es1.Input;
@@ -76,6 +77,37 @@ public sealed class Es1HostKeyboard {
 	/// while it is typed into; while it has, the characters the host types are not <see cref="Typed"/>.
 	/// </summary>
 	public Func<bool>? HostHasKeyboard { get; set; }
+
+	/// <summary>
+	/// <b>This engine's own:</b> makes HERCULAN's menu bar over <paramref name="window"/> the host's layer
+	/// (<see cref="HostTakes"/>, <see cref="HostHasKeyboard"/>), in the shell and in a mission alike: the bar takes the
+	/// keys <see cref="MenuBarTakes"/> gives it, and the keyboard while a field of its windows is typed into.
+	/// </summary>
+	public void GiveMenuBarItsKeys(FrontEndWindow window) {
+		HostTakes = key => MenuBarTakes(window, key);
+		HostHasKeyboard = () => window.ImGuiWantsKeyboard;
+	}
+
+	/// <summary>
+	/// <b>This engine's own:</b> whether a key-down is the menu bar's, which it then has: [Shift+Esc] alone raises the bar
+	/// or backs out of it, and so does plain [Esc] while the bar or one of its windows is up, the keys Earthsiege 2 gives
+	/// the bar by default; and any key while a field of the bar's windows is typed into. [Esc] with Alt or Ctrl, and any
+	/// other [Esc], is the game's.
+	/// </summary>
+	public static bool MenuBarTakes(FrontEndWindow window, Key key) {
+		if (key == Key.Escape) {
+			bool Held(Key modifier) => window.Keyboard?.IsKeyPressed(modifier) == true;
+			bool shift = Held(Key.ShiftLeft) || Held(Key.ShiftRight);
+			bool alt = Held(Key.AltLeft) || Held(Key.AltRight);
+			bool ctrl = Held(Key.ControlLeft) || Held(Key.ControlRight);
+			if (!alt && !ctrl && (shift || window.MenuBarUp)) {
+				window.MenuBarEscape();
+				return true;
+			}
+		}
+
+		return window.ImGuiWantsKeyboard;
+	}
 
 	/// <summary>
 	/// <b>This engine's own:</b> the window's [Alt+Enter], offered each host key-down and key-up before anything else, with

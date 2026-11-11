@@ -19,21 +19,38 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	private readonly Func<JoystickDeviceMap?> _map;
 	private readonly Func<int, float> _axis;
 	private readonly Func<int, bool> _button;
+	private readonly Func<bool> _anyButton;
+
+	// The port was muted at the last read, and since it came back every device button has not yet been let go.
+	private bool _wasMuted;
+	private bool _awaitingRelease;
 
 	/// <param name="map">The map in force, or null while no device is attached or its map is not known.</param>
 	/// <param name="axis">A device axis as a fraction of its travel, −1 to +1, 0 for one it does not have.</param>
 	/// <param name="button">Whether a device button is held, false for one the host keeps.</param>
-	public Es1ControllerPort(Func<JoystickDeviceMap?> map, Func<int, float> axis, Func<int, bool> button) {
+	/// <param name="anyButton">Whether any device button is held, the host's own among them; none answers false.</param>
+	public Es1ControllerPort(Func<JoystickDeviceMap?> map, Func<int, float> axis, Func<int, bool> button,
+			Func<bool>? anyButton = null) {
 		_map = map;
 		_axis = axis;
 		_button = button;
+		_anyButton = anyButton ?? (() => false);
 	}
 
 	/// <summary>The port over <paramref name="controller"/>'s device and map.</summary>
 	public static Es1ControllerPort Over(MappedController controller) => new(
 		() => controller.Map,
 		index => controller.Device?.Axis(index) ?? 0f,
-		index => controller.Device?.BindableButton(index) == true);
+		index => controller.Device?.BindableButton(index) == true,
+		() => controller.Device?.AnyButton() == true);
+
+	/// <summary>
+	/// <b>This engine's own:</b> whether the port reads every axis at 0 and every button up, as it does while the pad works
+	/// HERCULAN's menu bar or one of its windows, so that steering through them does not also drive the HERC. After it
+	/// comes down the port stays quiet until every device button has been let go, so the button that chose an item does
+	/// not fire as the bar closes. With none, the port is never muted.
+	/// </summary>
+	public Func<bool>? Muted { get; set; }
 
 	/// <inheritdoc/>
 	public bool AxisAnswers(int axis) => _map() is { } map && RoleAxis(map, axis) != JoystickDeviceMap.Unmapped;
@@ -71,7 +88,24 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 		return positions with { Buttons = (byte)(positions.Buttons & 0xf) };
 	}
 
-	private JoystickPositions? Read() => _map() is { } map ? Read(map, _axis, _button) : null;
+	private JoystickPositions? Read() => _map() is { } map && !Quiet() ? Read(map, _axis, _button) : null;
+
+	// Whether Muted holds the port, or its release wait does.
+	private bool Quiet() {
+		bool muted = Muted?.Invoke() == true;
+		_awaitingRelease |= _wasMuted && !muted;
+		_wasMuted = muted;
+		if (muted) {
+			return true;
+		}
+
+		if (_awaitingRelease && _anyButton()) {
+			return true;
+		}
+
+		_awaitingRelease = false;
+		return false;
+	}
 
 	/// <summary>The device axis the map gives the role port axis <paramref name="axis"/> carries.</summary>
 	private static int RoleAxis(JoystickDeviceMap map, int axis) => axis switch {

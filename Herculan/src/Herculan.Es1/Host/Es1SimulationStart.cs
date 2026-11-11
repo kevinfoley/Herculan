@@ -1,6 +1,7 @@
 using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
+using Herculan.Engine.Platform;
 using Herculan.Es1.Input;
 using Herculan.Es1.Sim;
 using Silk.NET.Input;
@@ -68,6 +69,13 @@ public sealed class Es1SimulationStart : IDisposable {
 	/// <summary>The runner, once built.</summary>
 	public Es1SimulationRunner? Runner { get; private set; }
 
+	/// <summary>
+	/// The window whose HERCULAN menu bar is over the mission: the runner's keyboard gives the bar its keys
+	/// (<see cref="Es1HostKeyboard.GiveMenuBarItsKeys"/>), and the port is muted while the bar or one of its windows is up
+	/// (<see cref="Es1ControllerPort.Muted"/>). With none, every key and the whole controller are the mission's.
+	/// </summary>
+	public FrontEndWindow? MenuBarWindow { get; init; }
+
 	/// <summary>Once a host frame, before the tick: builds the runner when the controller can be detected, and returns it once built.</summary>
 	public Es1SimulationRunner? Advance() {
 		if (Runner != null) {
@@ -82,6 +90,11 @@ public sealed class Es1SimulationStart : IDisposable {
 		var port = Es1ControllerPort.Over(_controller);
 		Runner = new Es1SimulationRunner(_world, _installRoot, _preferences, _keyboard, _mouse, port, _viewChain, _widgets,
 			_content, _tape, _recording, _fullScreenKey);
+		if (MenuBarWindow is { } window) {
+			port.Muted = () => window.MenuBarUp;
+			Runner.HostKeyboard.GiveMenuBarItsKeys(window);
+		}
+
 		Console.WriteLine(Describe(port));
 		return Runner;
 	}

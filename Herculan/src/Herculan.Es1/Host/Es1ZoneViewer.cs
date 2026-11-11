@@ -1,6 +1,7 @@
 using System.Numerics;
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Data.File.Dat.Sim;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Dbsim;
 using HercWorks.Vol;
 using Herculan.Engine.Audio;
@@ -61,6 +62,14 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// flash (docs/es1/simulation/main-loop.md#the-death-flash--sim_deathflash-00058414). A mission's end runs
 /// <see cref="Es1Shutdown.Run"/> before the window closes; closing the window, which retail has no counterpart of, runs
 /// nothing and writes no file, so <c>data\exit.cfg</c> keeps the 0 the start wrote.</para>
+///
+/// <para><b>This engine's own:</b> HERCULAN's menu bar is over the mission in the window the shell's turns use
+/// (<see cref="FrontEndWindow"/>), drawn over the monitor or the free camera, hidden until [Shift+Esc] or a gamepad's
+/// Back raises it (<see cref="Es1HostKeyboard.MenuBarTakes"/>, <see cref="FrontEndWindow.BeginFrame"/>); the pointer at
+/// the window's top does not. The mission runs on under it, as Earthsiege 2's does, the controller muted while the bar
+/// or one of its windows is up (<see cref="Es1SimulationStart.MenuBarWindow"/>); the cockpit takes no mouse events while
+/// the pointer is over the bar or one of its windows, where the system's pointer shows, and the engine aids' keys do
+/// nothing while a field of its windows is typed into.</para>
 /// </summary>
 public static class Es1ZoneViewer {
 	/// <summary>The clear colour when the theater's sky cannot be built: a mid grey, plainly not a retail sky.</summary>
@@ -87,6 +96,8 @@ public static class Es1ZoneViewer {
 	/// <c>data\</c> files; here a named mission's load writes them, so the bundle is packed after that load, from the files
 	/// the mission then runs on. Returns 1 when the tape does not open for writing.</para>
 	/// </summary>
+	/// <param name="imguiFontPath">The faces the menu bar's ImGui draws in (<see cref="FrontEndWindow"/>).</param>
+	/// <param name="menus">HERCULAN's menu bar and its windows over the mission, which the window disposes once the mission has run.</param>
 	/// <param name="window">
 	/// The window the launcher's turns share (<see cref="Es1Launcher"/>), which stays open after the mission; none for a
 	/// window of the simulator's own, closed with it.
@@ -96,8 +107,9 @@ public static class Es1ZoneViewer {
 	/// (<see cref="Es1Sound.MissionStartDevices"/>).
 	/// </param>
 	/// <param name="silent">The host's <c>--no-sound</c>: no audio device, so the sound manager plays into nothing.</param>
-	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides, string? playTape = null,
-			bool demo = false, string? recordTape = null, HostWindow? window = null, bool soundOn = true, bool silent = false) {
+	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides, string imguiFontPath,
+			string imguiItalicFontPath, IFrontEndMenus menus, string? playTape = null, bool demo = false,
+			string? recordTape = null, HostWindow? window = null, bool soundOn = true, bool silent = false) {
 		// Sim_Main's step 4, before the command line's parse (docs/es1/simulation/main-loop.md#starting--sim_main-00059350):
 		// an int16 0 to data\exit.cfg, so a run that ends before Sim_Shutdown leaves 0, which ends the launcher's loop.
 		// PLACEHOLDER: the heap's size to data\mem.got before it; this engine has no fixed heap to give the size of.
@@ -211,8 +223,12 @@ public static class Es1ZoneViewer {
 			"G textured/banded ground; close the window to quit" + (player == null ? " (or Esc)." : "."));
 		string source = tape != null ? Path.GetFileName(tape.FilePath) : missionName ?? "data\\script.dat";
 		return Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {source}, zone {header[1]}",
-			tape, recording, window, Es1Sound.MissionStartDevices(installRoot, soundOn), silent);
+			tape, recording, window, Es1Sound.MissionStartDevices(installRoot, soundOn), silent,
+			new MenuLayer(imguiFontPath, imguiItalicFontPath, menus));
 	}
+
+	/// <summary>The menu bar's faces and menus, which <see cref="Show"/> builds its <see cref="FrontEndWindow"/> with.</summary>
+	private sealed record MenuLayer(string FontPath, string ItalicFontPath, IFrontEndMenus Menus);
 
 	/// <summary>
 	/// The window, until it closes. Returns the exit code <see cref="Es1Shutdown.Run"/> wrote when the mission ended,
@@ -225,10 +241,13 @@ public static class Es1ZoneViewer {
 	/// <param name="host">The launcher's shared window, or none for one of this turn's own.</param>
 	/// <param name="devices">Step 3's six values from <c>resource.cfg</c>, which <c>Sound_Init</c> takes.</param>
 	/// <param name="silent">No audio device: the sound plays into nothing.</param>
+	/// <param name="menuLayer">The menu bar over the mission (the class summary).</param>
 	private static int Show(string installRoot, Es1Preferences preferences, GameContent content, Es1ZoneScene scene,
 			Es1World world, Es1CockpitViews? views, string title, Es1TapePlayback? tape, Es1TapeRecording? recording,
-			HostWindow? host, Es1SoundDevices devices, bool silent) {
-		using var window = host != null ? new EngineWindow(host, title) : new EngineWindow(title);
+			HostWindow? host, Es1SoundDevices devices, bool silent, MenuLayer menuLayer) {
+		using var owned = host == null ? new HostWindow() : null;
+		using var window = new FrontEndWindow(host ?? owned!, title, screenshotPath: null, menuLayer.FontPath,
+			menuLayer.ItalicFontPath, CaseInsensitivePath.Combine(installRoot, Es1MissionFiles.DataFolder), menuLayer.Menus);
 		int exitCode = 0;
 
 		// The audio device, opened for this turn as Earthsiege 2's shell opens its own, and closed with the window.
@@ -313,7 +332,10 @@ public static class Es1ZoneViewer {
 		bool freeKeyHeld = false;
 		Vector2 lastMousePos = Vector2.Zero;
 
+		bool escapeQuits = false;
+
 		window.Load += (gl, input) => {
+			window.Attach(gl, input);
 			glContext = gl;
 			if (scene.Horizon != null && scene.Palette != null) {
 				backdrop = new Es1Backdrop(gl, scene.Horizon, scene.Ground, scene.Skyline, scene.Clouds, scene.Specks,
@@ -420,19 +442,28 @@ public static class Es1ZoneViewer {
 			mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
 			hostMouse.Pointer = () => monitor?.CockpitPointer(window.FramebufferSize, window.ClientSize)
 				?? Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize);
+			hostMouse.HostHasPointer = () => window.ImGuiWantsMouse;
 			if (mouse != null) {
 				hostMouse.Attach(mouse);
 			}
 
 			// The window as ES1 last ran.
-			var fullScreenKey = Es1FullScreen.Start(window, () => mouse);
+			var fullScreenKey = Es1FullScreen.Start(window);
 			if (world.LocalPlayer != null) {
 				simulation = new Es1SimulationStart(world, installRoot, preferences, input, keyboard, hostMouse,
-					chain, widgets, content, tape, recording, fullScreenKey);
+					chain, widgets, content, tape, recording, fullScreenKey) {
+					MenuBarWindow = window,
+				};
 				disposables.Add(simulation);
 			} else if (keyboard is { } device) {
-				// With no simulator to take the keyboard, the toggle reads it itself.
-				device.KeyDown += (_, key, _) => fullScreenKey.KeyDown(key, device.IsKeyPressed);
+				// With no simulator to take the keyboard, the toggle and the menu bar read it themselves, and an [Esc] neither
+				// takes quits.
+				device.KeyDown += (_, key, _) => {
+					if (!fullScreenKey.KeyDown(key, device.IsKeyPressed) && !Es1HostKeyboard.MenuBarTakes(window, key)
+							&& key == Key.Escape) {
+						escapeQuits = true;
+					}
+				};
 				device.KeyUp += (_, key, _) => fullScreenKey.KeyUp(key);
 			}
 
@@ -441,7 +472,7 @@ public static class Es1ZoneViewer {
 
 			if (mouse != null) {
 				mouse.MouseDown += (m, button) => {
-					if (button == MouseButton.Right && free) {
+					if (button == MouseButton.Right && free && !window.ImGuiWantsMouse) {
 						looking = true;
 						lookNeedsResync = true;
 						m.Cursor.CursorMode = CursorMode.Disabled;
@@ -460,9 +491,11 @@ public static class Es1ZoneViewer {
 		window.Update += deltaSeconds => {
 			sound.UpdateDriver();
 			audio.Update();
+			hostMouse.TakeBackPointer();
 
-			// With a simulation running, Esc is the simulator's view key; the window's close quits.
-			if (simulation == null && keyboard?.IsKeyPressed(Key.Escape) == true) {
+			// With no simulation, an [Esc] the menu bar did not take quits; with one, Esc is the simulator's view key and the
+			// window's close quits.
+			if (escapeQuits) {
 				window.Close();
 				return;
 			}
@@ -492,14 +525,16 @@ public static class Es1ZoneViewer {
 
 			scene.Clouds?.Advance(deltaSeconds);
 
-			bool groundKey = keyboard?.IsKeyPressed(Key.G) == true;
+			// The engine aids' keys are the menu bar's while a field of its windows is typed into.
+			bool aidKeys = !window.ImGuiWantsKeyboard;
+			bool groundKey = aidKeys && keyboard?.IsKeyPressed(Key.G) == true;
 			if (groundKey && !groundKeyHeld) {
 				backdropOptions.ToggleGround();
 			}
 
 			groundKeyHeld = groundKey;
 
-			bool freeKey = keyboard?.IsKeyPressed(Key.F) == true;
+			bool freeKey = aidKeys && keyboard?.IsKeyPressed(Key.F) == true;
 			if (freeKey && !freeKeyHeld && manager != null) {
 				free = !free;
 				camera = new Camera();
@@ -522,36 +557,38 @@ public static class Es1ZoneViewer {
 			}
 
 			if (free) {
-				freeCamera.Update(deltaSeconds, keyboard, lookDelta, looking, acceptKeyboardInput: true);
+				freeCamera.Update(deltaSeconds, keyboard, lookDelta, looking, acceptKeyboardInput: aidKeys);
 				freeCamera.ApplyTo(camera);
 			}
 
-			// The host's pointer is hidden over the window while the cockpit's cursor stands in for it.
+			// The host's pointer is hidden over the window while the cockpit's cursor stands in for it, and shown over the
+			// menu bar and its windows.
 			if (mouse != null && !looking) {
-				var mode = !free && monitor != null ? CursorMode.Hidden : CursorMode.Normal;
+				var mode = !free && monitor != null && !window.ImGuiWantsMouse ? CursorMode.Hidden : CursorMode.Normal;
 				if (mouse.Cursor.CursorMode != mode) {
 					mouse.Cursor.CursorMode = mode;
 				}
 			}
 		};
 
-		window.Render += (_, _) => {
-			if (renderer == null || draw == null) {
-				return;
+		window.Render += (delta, _) => {
+			window.BeginFrame(delta);
+			if (renderer != null && draw != null) {
+				var size = window.FramebufferSize;
+				if (free || monitor == null) {
+					draw.Update(camera, null);
+					renderer.Clear();
+					DrawWorld(glContext!, renderer, sprites!, backdrop, draw, camera, 0, 0, size.X, size.Y);
+				} else {
+					monitor.Present(size);
+				}
 			}
 
-			var size = window.FramebufferSize;
-			if (free || monitor == null) {
-				draw.Update(camera, null);
-				renderer.Clear();
-				DrawWorld(glContext!, renderer, sprites!, backdrop, draw, camera, 0, 0, size.X, size.Y);
-				return;
-			}
-
-			monitor.Present(size);
+			window.DrawMenuBar(revealOnHover: false);
 		};
 
 		window.Closing += () => {
+			window.DisposeImGui();
 			hostMouse.Detach();
 			renderer?.Dispose();
 			foreach (var disposable in disposables) {

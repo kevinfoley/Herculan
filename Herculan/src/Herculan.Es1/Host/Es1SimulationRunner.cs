@@ -92,6 +92,9 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 
 	public Es1Simulation Simulation { get; }
 
+	/// <summary>The host's keyboard into ES1's, which the host's own layer over the mission takes its keys from first.</summary>
+	public Es1HostKeyboard HostKeyboard => _hostKeyboard;
+
 	/// <summary>The keyboard's axis keys, which <c>SimInput_SetEnabled</c> turns on and off.</summary>
 	public Es1AxisKeys AxisKeys { get; }
 

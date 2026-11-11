@@ -54,12 +54,15 @@ public static class Es1Launcher {
 	/// assert or the fault of a <c>PREFER_ALT</c> without <c>ALT_DRIVE</c>. Retail's <c>Launcher_Main</c> returns no value.
 	/// </summary>
 	/// <param name="imguiFontPath">The faces the shell's ImGui draws in (<see cref="Es1ShellHost.Run"/>).</param>
-	/// <param name="shellMenus">Builds each shell turn's menu bar and its windows (<see cref="Es1ShellHost.Run"/>).</param>
+	/// <param name="menus">
+	/// Builds each shell turn's and each mission's menu bar and its windows (<see cref="Es1ShellHost.Run"/>,
+	/// <see cref="Es1ZoneViewer.Run"/>), given whether the turn is a mission.
+	/// </param>
 	/// <param name="screenshotPath"><c>--screenshot</c>'s file, which the first shell turn captures; none for a play.</param>
 	/// <param name="window">The window every turn runs in, which the host owns.</param>
 	/// <param name="silent">The host's <c>--no-sound</c>: the flics', the shell's and the simulator's turns open no audio device.</param>
 	public static int Run(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath, string imguiItalicFontPath,
-			Func<IFrontEndMenus> shellMenus, string? screenshotPath, HostWindow window, bool silent = false) {
+			Func<bool, IFrontEndMenus> menus, string? screenshotPath, HostWindow window, bool silent = false) {
 		// 1. Mem_New(argc * 4 + 8), its answer not kept: no counterpart.
 		// 2. The memory check, X32_LargestFreeBlock() - 25,000 against 3,435,000: the extender's largest free block has no
 		// counterpart, so the check always passes, an engine choice, and its figure is not computed.
@@ -125,7 +128,7 @@ public static class Es1Launcher {
 				case 6:
 					flicPlayerFound = flics?.PlayerFound() == true;
 					RunShell(installRoot, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
-						shellMenus, firstShell ? screenshotPath : null, window, silent);
+						menus, firstShell ? screenshotPath : null, window, silent);
 					firstShell = false;
 					break;
 				case 4:
@@ -135,13 +138,14 @@ public static class Es1Launcher {
 					}
 
 					RunShell(installRoot, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
-						shellMenus, firstShell ? screenshotPath : null, window, silent);
+						menus, firstShell ? screenshotPath : null, window, silent);
 					firstShell = false;
 					break;
 				case 2:
 				case 5:
 					flicPlayerFound = flics?.PlayerFound() == true;
-					RunSimulator(installRoot, BuildArgs(arguments, state, flicPlayerFound), window, silent);
+					RunSimulator(installRoot, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
+						menus, window, silent);
 					break;
 				default:
 					// Any other state runs nothing, and the file is read again unchanged, so retail goes on reading it. The
@@ -169,8 +173,8 @@ public static class Es1Launcher {
 
 	/// <summary>A turn of the shell, <c>spawnv</c>(0, <c>go.exe</c>, ...), its status not kept, under menus <paramref name="menus"/> builds for it.</summary>
 	private static void RunShell(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath,
-			string imguiItalicFontPath, Func<IFrontEndMenus> menus, string? screenshotPath, HostWindow window, bool silent) {
-		Es1ShellHost.Run(installRoot, arguments, imguiFontPath, imguiItalicFontPath, menus(), screenshotPath, window, silent);
+			string imguiItalicFontPath, Func<bool, IFrontEndMenus> menus, string? screenshotPath, HostWindow window, bool silent) {
+		Es1ShellHost.Run(installRoot, arguments, imguiFontPath, imguiItalicFontPath, menus(false), screenshotPath, window, silent);
 		window.Hold(null);
 	}
 
@@ -183,9 +187,10 @@ public static class Es1Launcher {
 	/// when none was given before, and <c>-D</c>'s pick replacing any; <c>-c</c> (<c>Sim_PreParseCommandLine</c>) lets it
 	/// honor <c>ALT_DRIVE</c>, which the install's paths stand in for here; <c>-eggplant</c> is what step 6's refusal
 	/// tests, which <see cref="Es1ZoneViewer"/> does not make; and each <c>-s</c> toggles <c>000b5b68</c> from 1, which
-	/// clear makes no sound manager.
+	/// clear makes no sound manager. The mission's menu bar is one <paramref name="menus"/> builds, as a shell turn's is.
 	/// </summary>
-	private static void RunSimulator(string installRoot, IReadOnlyList<string> arguments, HostWindow window, bool silent) {
+	private static void RunSimulator(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath,
+			string imguiItalicFontPath, Func<bool, IFrontEndMenus> menus, HostWindow window, bool silent) {
 		bool demo = false, nameGiven = false, soundOn = true;
 		string? playTape = null, recordTape = null;
 		var notHanded = new List<string>();
@@ -228,8 +233,8 @@ public static class Es1Launcher {
 			Console.Error.WriteLine($"PLACEHOLDER: DBSIM.EXE's {string.Join(" ", notHanded)} not handed to the simulator.");
 		}
 
-		Es1ZoneViewer.Run(installRoot, null, new Es1HeaderOverrides(null, null, null), playTape, demo, recordTape, window,
-			soundOn, silent);
+		Es1ZoneViewer.Run(installRoot, null, new Es1HeaderOverrides(null, null, null), imguiFontPath, imguiItalicFontPath,
+			menus(true), playTape, demo, recordTape, window, soundOn, silent);
 		window.Hold(null);
 	}
 

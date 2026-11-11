@@ -13,12 +13,14 @@ using Silk.NET.Input;
 namespace Herculan.Es1.Host;
 
 /// <summary>
-/// Metaltech: Earthsiege's shell's menus over its <see cref="FrontEndWindow"/>: HERCULAN's own <see cref="HostMenuBar"/>
-/// with its "Game" menu, the windows that work the same in either game, Accessibility and About, its own Tweaks, the
-/// <see cref="ErrorDialog"/>, its own Settings (<see cref="Es1SettingsWindow"/>), and the Controller window over what the
-/// game port reads (<see cref="Es1ControllerRows"/>), whose save the next mission reads. Keys and Editor are greyed, since
-/// each is built on Earthsiege 2's controls or missions; Custom Missions is left out. There is no welcome and no
-/// automatic update check.
+/// Metaltech: Earthsiege's menus over its <see cref="FrontEndWindow"/>, over the shell and over a mission:
+/// HERCULAN's own <see cref="HostMenuBar"/> with its "Game" menu, the windows that work the same in either game,
+/// Accessibility and About, its own Tweaks, the <see cref="ErrorDialog"/>, its own Settings (<see cref="Es1SettingsWindow"/>),
+/// and the Controller window over what the game port reads (<see cref="Es1ControllerRows"/>), whose save the next mission
+/// reads, a mission in progress keeping the map it started with. Keys and Editor are greyed, since each is built on
+/// Earthsiege 2's controls or missions; Custom Missions is left out. There is no welcome and no automatic update check.
+/// Over a mission, as over Earthsiege 2's, the bar has no "Game" menu and Settings greys the install and the disc, since
+/// each would end the mission unfinished.
 /// </summary>
 public sealed class Es1ShellMenus : IFrontEndMenus {
 	// The accessibility settings ES1 honors: the larger font, which ScaledImGui reads for the bar's own windows. The damage
@@ -32,17 +34,18 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 
 	/// <summary>
 	/// The Tweaks window edits <see cref="TweakSettings.Current"/>, which the host has loaded with ES1's catalog; the
-	/// Settings window shows <paramref name="installRoot"/>, the install the shell's turn runs on.
+	/// Settings window shows <paramref name="installRoot"/>, the install the turn runs on.
 	/// </summary>
-	public Es1ShellMenus(LocalizationTable localization, string installRoot) {
+	/// <param name="inMission">Whether the bar is over a mission rather than the shell (the class summary).</param>
+	public Es1ShellMenus(LocalizationTable localization, string installRoot, bool inMission = false) {
 		_localization = localization;
 		_tweaks = new TweaksMenu(TweakSettings.Current, localization, offered: Es1TweakSettingDefinitions.Offered);
-		var game = new GameMenu(localization, RetailGame.Earthsiege1, other => {
+		var game = inMission ? null : new GameMenu(localization, RetailGame.Earthsiege1, other => {
 			GameSwitch.Request(other);
 			CloseRequested?.Invoke();
 		});
 		// A change of install or disc starts the launcher again, through the "Switch to" request to this same game.
-		var settings = new Es1SettingsWindow(localization, installRoot, root => {
+		var settings = new Es1SettingsWindow(localization, installRoot, inMission ? null : root => {
 			GameSwitch.Request(RetailGame.Earthsiege1, root);
 			CloseRequested?.Invoke();
 		});
