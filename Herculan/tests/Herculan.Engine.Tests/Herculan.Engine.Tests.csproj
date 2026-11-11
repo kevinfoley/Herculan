@@ -7,6 +7,9 @@
     <IsPackable>false</IsPackable>
     <!-- ImGuiLayoutCheck turns off ImGui's imgui.ini through its native IO struct. -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- xUnit runs test classes side by side, and under the workstation collector they slow each other down: with it the
+         assembly takes about 51 s, with the server collector about 39 s. -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>
