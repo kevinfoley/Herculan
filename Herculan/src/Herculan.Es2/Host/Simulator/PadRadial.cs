@@ -67,13 +67,16 @@ sealed class PadRadial(int clickButton, int xAxis, int count, float labelRadius)
 	/// <summary>
 	/// Reads the pads once a frame. The radial opens on a click pressed while <paramref name="allowed"/>, and closes
 	/// taking nothing when that stops being so. Returns the choice taken, on the frame the click is let go with one
-	/// picked.
+	/// picked. <paramref name="click"/>, when given, says whether a device holds what opens the radial, in place of its
+	/// stick's click on any gamepad; it is aimed by that device's stick either way.
 	/// </summary>
-	public int? Update(IInputContext input, bool allowed) {
+	public int? Update(IInputContext input, bool allowed, Func<ControllerDevice, bool>? click = null) {
+		bool Clicked(ControllerDevice device) => click?.Invoke(device) ?? (device.IsGamepad && device.Button(clickButton));
+
 		bool clickDown = false;
 		int clickSlot = -1;
 		foreach (var device in ControllerDevice.Connected(input)) {
-			if (device.IsGamepad && device.Button(clickButton)) {
+			if (Clicked(device)) {
 				clickDown = true;
 				clickSlot = device.Slot;
 				break;
@@ -98,7 +101,7 @@ sealed class PadRadial(int clickButton, int xAxis, int count, float labelRadius)
 			return null;
 		}
 
-		if (pad.Button(clickButton)) {
+		if (Clicked(pad)) {
 			_stick = new Vector2(pad.Axis(xAxis), pad.Axis(xAxis + 1));
 			Picked = Pick(_stick);
 			return null;

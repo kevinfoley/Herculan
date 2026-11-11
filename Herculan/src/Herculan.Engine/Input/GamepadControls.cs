@@ -45,6 +45,9 @@ public sealed class GamepadControls : IControlsOverride {
 	public bool AxisRowsFixed => true;
 
 	/// <inheritdoc/>
+	public bool ButtonRowsFixed => false;
+
+	/// <inheritdoc/>
 	public bool Covers(int index) => index >= Prefs.HercControlsBase && index < Prefs.HercControlsBase + Defaults.Length;
 
 	/// <inheritdoc/>

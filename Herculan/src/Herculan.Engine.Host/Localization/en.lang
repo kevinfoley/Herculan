@@ -273,10 +273,16 @@ controller.cursor_speed_tip    How fast the stick moves the pointer, as a percen
 controller.clicking            Clicking
 controller.right_trigger_clicks Right trigger: Left click, Left trigger: Right click
 controller.left_trigger_clicks Left trigger: Left click, Right trigger: Right click
-controller.inputs              What the device reports
+controller.inputs              Current input
 controller.axis                Axis {0}
 controller.axis_direction      Axis {0} {1}
 controller.button              Button {0}
+controller.menu_bar_input      {0} is used to open the HERCULAN menu bar and cannot be rebound.
+controller.dpad                D-pad {0}
+controller.ps_cross            Cross
+controller.ps_circle           Circle
+controller.ps_square           Square
+controller.ps_triangle         Triangle
 controller.buttons             Buttons
 controller.hat                 Hat {0}
 controller.controls            Controls
@@ -349,7 +355,7 @@ controller.throttle_reading    Throttle axis
 controller.reading_rate        Moves the throttle up and down
 controller.reading_lever       Lever, idle at one end
 controller.reading_bipolar     Lever, idle in the middle
-controller.throttle_reading_tip  How the throttle axis sets the throttle. "Moves the throttle up and down" suits a stick that springs back to the middle. The throttle stays where you leave it. The two lever settings suit a throttle lever. Where the lever is, the throttle is.
+controller.throttle_reading_tip  How the throttle axis sets the throttle. "Moves the throttle up and down" suits a stick that springs back to the middle. The two lever settings suit a lever or slider.
 controller.actions             Actions
 controller.action              Action
 controller.add                 Add

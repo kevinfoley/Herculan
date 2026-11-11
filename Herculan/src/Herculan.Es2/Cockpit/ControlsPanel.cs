@@ -254,10 +254,12 @@ public sealed class ControlsPanel {
 			: AlertPanelLayout.WidgetState.Option;
 	}
 
-	// The rows ControlsPanel_Run puts in state 2 before its loop starts, and the axis rows of settings that fix them.
+	// The rows ControlsPanel_Run puts in state 2 before its loop starts, and the rows of settings that fix them, with
+	// RECOMMEND when they fix every row.
 	private bool IsGreyed(int index) =>
 		index < ControlsPanelLayout.RowCount
-		&& (!RowEnabled(index) || index < ControlsPanelLayout.AxisRowCount && AxisRowsFixed);
+			? !RowEnabled(index) || (index < ControlsPanelLayout.AxisRowCount ? AxisRowsFixed : ButtonRowsFixed)
+			: index == ControlsPanelLayout.RecommendButton && ButtonRowsFixed;
 
 	/// <summary>
 	/// Whether row <paramref name="row"/> is live by <see cref="Capabilities"/>. Rows 0-3 are JOYSTICK, THROTTLE, RUDDER
@@ -285,6 +287,9 @@ public sealed class ControlsPanel {
 	/// (<see cref="SimulatorPreferences.ControlsOverride"/>). They still read out but take no click. This engine's own.
 	/// </summary>
 	private bool AxisRowsFixed => _preferences.ControlsOverride is { AxisRowsFixed: true } controls && controls.Covers(_optionBase);
+
+	/// <summary>Whether the button rows and RECOMMEND are fixed as well, by a Custom profile's settings. This engine's own.</summary>
+	private bool ButtonRowsFixed => _preferences.ControlsOverride is { ButtonRowsFixed: true } controls && controls.Covers(_optionBase);
 
 	// ControlsPanel_OnClick's and ControlsPanel_HandleEvent's highlight move: the row that had it back to state
 	// 3, the new one to 0.
@@ -654,7 +659,7 @@ public sealed class ControlsPanel {
 	/// </summary>
 	/// <param name="nowTicks"><c>Time_GetCoarseTicks</c>, on a clock that runs while the panel is up.</param>
 	public void PressButtonRow(int row, long nowTicks) {
-		if (!IsOpen || row < 0 || row >= JoystickCapabilities.MaxButtons) {
+		if (!IsOpen || row < 0 || row >= JoystickCapabilities.MaxButtons || ButtonRowsFixed) {
 			return;
 		}
 

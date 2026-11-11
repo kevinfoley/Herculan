@@ -59,6 +59,9 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	private IInputContext? _input;
 	private string? _error;
 
+	// RefuseMenuBarInput's message, shown until Detect listens again.
+	private string? _notice;
+
 	// The file as it will be saved, the device being edited (GLFW's slot), and its map. _loaded is the map as it came out
 	// of the file or the defaults, so a device only looked at, and not edited, gets no section of its own.
 	private JoystickMapFile _file = new();
@@ -94,6 +97,17 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	/// <summary>Whether Detect is listening for a control to bind.</summary>
 	public bool Listening => IsOpen && (_detecting != NotDetecting || _custom.Listening);
 
+	/// <summary>
+	/// What the menu bar's own control does while Detect is listening (<see cref="HostMenuBar.PadBack"/>): it stops Detect,
+	/// leaves the window up, and says <paramref name="input"/> opens the menu bar and cannot be rebound, until Detect is
+	/// pressed again or the window is opened again.
+	/// </summary>
+	public void RefuseMenuBarInput(ControllerInput input) {
+		_detecting = NotDetecting;
+		_custom.StopDetecting();
+		_notice = string.Format(Text("controller.menu_bar_input"), _custom.InputLabel(input, CurrentDevice()));
+	}
+
 	/// <summary>Takes the window's input context once it exists.</summary>
 	public void Attach(IInputContext input) => _input = input;
 
@@ -109,6 +123,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		_file = JoystickMapFile.LoadForPlayer(_dataDirectory());
 		Edit(_input == null ? null : ControllerDevice.Pick(_input, _file));
 		_error = null;
+		_notice = null;
 		_detecting = NotDetecting;
 		IsOpen = true;
 	}
@@ -182,10 +197,16 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 			ImGui.TextDisabled(Text(custom ? "controller.custom_note" : _rows.NoteKey));
 			ImGui.PopTextWrapPos();
 
-			if (_error != null) {
-				ImGui.PushStyleColor(ImGuiCol.Text, ErrorColour);
-				ImGui.TextWrapped(_error);
-				ImGui.PopStyleColor();
+			if (Listening) {
+				_notice = null;
+			}
+
+			foreach (string? message in (string?[])[_notice, _error]) {
+				if (message != null) {
+					ImGui.PushStyleColor(ImGuiCol.Text, ErrorColour);
+					ImGui.TextWrapped(message);
+					ImGui.PopStyleColor();
+				}
 			}
 
 			ImGui.Separator();
@@ -600,14 +621,14 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	// InputCombo for a button row, which takes each device button and then each axis in either direction.
 	private JoystickButtonSource? ButtonCombo(JoystickButtonSource current, ControllerDevice device, string? clash) {
 		JoystickButtonSource? chosen = null;
-		if (BeginInputCombo(SourceLabel(current), clash)) {
+		if (BeginInputCombo(SourceLabel(current, device), clash)) {
 			if (ImGui.Selectable(Text("controller.unmapped"), !current.IsMapped)) {
 				chosen = JoystickButtonSource.Unmapped;
 			}
 
 			for (int i = 0; i < device.ButtonCount; i++) {
 				var button = JoystickButtonSource.Button(i);
-				if (!device.Reserved(i) && ImGui.Selectable(SourceLabel(button), button == current)) {
+				if (!device.Reserved(i) && ImGui.Selectable(SourceLabel(button, device), button == current)) {
 					chosen = button;
 				}
 			}
@@ -615,7 +636,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 			for (int i = 0; i < device.AxisCount; i++) {
 				foreach (int sign in (ReadOnlySpan<int>)[1, -1]) {
 					var axis = JoystickButtonSource.Axis(i, sign);
-					if (ImGui.Selectable(SourceLabel(axis), axis == current)) {
+					if (ImGui.Selectable(SourceLabel(axis, device), axis == current)) {
 						chosen = axis;
 					}
 				}
@@ -627,10 +648,10 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 		return chosen == current ? null : chosen;
 	}
 
-	private string SourceLabel(JoystickButtonSource source) =>
+	private string SourceLabel(JoystickButtonSource source, ControllerDevice? device) =>
 		!source.IsMapped ? Text("controller.unmapped")
 		: source.IsAxis ? string.Format(Text("controller.axis_direction"), source.Index, source.AxisSign > 0 ? "+" : "-")
-		: Format("controller.button", source.Index);
+		: GamepadButtonNames.Label(device, source.Index, Text);
 
 	// Detect, or Cancel while this row is listening. Pressing it notes where everything rests, so Detect takes what
 	// moves from there and not what is already held or off-centre, such as a trigger that rests at one end.

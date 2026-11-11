@@ -178,8 +178,17 @@ public sealed class HostMenuBar : IEscapeMenu {
 	/// <summary>
 	/// A gamepad's Back: <see cref="BackOut"/>, or <see cref="Show"/> when there was nothing to back out of; and while the
 	/// bar is still up, the bar takes the focus with the highlight on its first item, so the pad can go on from there.
+	/// While the Controller window's Detect is listening it does none of that: Detect stops and the window says
+	/// <paramref name="input"/>, the control pressed, opens the menu bar and cannot be rebound
+	/// (<see cref="ControllerWindow.RefuseMenuBarInput"/>).
 	/// </summary>
-	public void PadBack() {
+	/// <param name="input">The control pressed: a Custom profile's menu bar input, or by default a gamepad's Back.</param>
+	public void PadBack(ControllerInput? input = null) {
+		if (Controller is ControllerWindow { Listening: true } controller) {
+			controller.RefuseMenuBarInput(input ?? ControllerInput.Button(ControllerDevice.GamepadBack));
+			return;
+		}
+
 		if (!BackOut()) {
 			Show();
 		}

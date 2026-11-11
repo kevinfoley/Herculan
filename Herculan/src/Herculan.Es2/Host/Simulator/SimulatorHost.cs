@@ -62,6 +62,7 @@ sealed class SimulatorHost : IDisposable {
 	private readonly TapePlayback _tape;
 	private readonly PauseMenu _pauseMenu;
 	private readonly GamepadHostButtons _padButtons = new();
+	private readonly CustomHostActions _customHost;
 
 	// The left stick's click: FLASH COMM's six orders. The right stick's: the MFD's six screens, then the Heads-Down
 	// Display's two pages. Each label radius keeps its ring's neighbouring labels apart.
@@ -123,6 +124,7 @@ sealed class SimulatorHost : IDisposable {
 		_ports = start.Ports;
 		_preferences = start.Preferences;
 		_keyMap = session.Keys;
+		_customHost = new CustomHostActions(_keyMap);
 		var mission = start.Mission;
 
 		_art = LoadCockpitArt(start);
@@ -334,7 +336,7 @@ sealed class SimulatorHost : IDisposable {
 		_inputContext = input;
 		// Nothing is read off the device yet: GLFW publishes a stick's shape a frame late (see JoystickSource), so
 		// what it can do is announced on the first frame that knows.
-		_joystick = JoystickSource.Open(input, _start.DataDirectory, _options.ProbeJoystick);
+		_joystick = JoystickSource.Open(input, _start.DataDirectory, _options.ProbeJoystick, _start.PilotingRazor);
 		_frame.Pilot.Joystick = _joystick;
 		_controller.Attach(input);
 		_controller.Saved += _joystick.Configure;
@@ -367,7 +369,7 @@ sealed class SimulatorHost : IDisposable {
 
 		_imgui?.Update((float)deltaSeconds);
 
-		// A gamepad's own CONTROLS settings stand in for prefs.cfg's while it is the stick being read.
+		// A Custom profile's fixed CONTROLS settings stand in for prefs.cfg's while its device is the stick being read.
 		_preferences.ControlsOverride = _joystick?.ControlsOverride;
 
 		// Before the hold, which the pause menu's Start ends.
@@ -379,7 +381,7 @@ sealed class SimulatorHost : IDisposable {
 			_joystick.Muted = _menuBar.Up || _pauseMenu.Showing || _orderRadial.MutesStick || _screenRadial.MutesStick;
 		}
 
-		ReadRadarToggle();
+		ReadStickKeys();
 
 		if (_frame.Held) {
 			return;
@@ -424,17 +426,23 @@ sealed class SimulatorHost : IDisposable {
 			return;
 		}
 
+		// A device in Custom mode says what works the menus and the radials (CustomHostActions); in Original, a gamepad's
+		// Back, Start and clicks do.
 		_padButtons.Update(_inputContext);
-		if (_padButtons.BackPressed) {
-			_menuBar.PadBack();
+		_customHost.Update(_joystick);
+		var custom = _joystick?.Custom != null ? _joystick : null;
+		if (custom != null ? _customHost.MenuBarPressed : _padButtons.BackPressed) {
+			_menuBar.PadBack(custom?.HostActionInput(KeyAction.MenuBar));
 		}
 
-		if (_padButtons.StartPressed) {
+		if (custom != null ? _customHost.PauseMenuPressed : _padButtons.StartPressed) {
 			_pauseMenu.Start();
 		}
 
 		var liveKeys = _input.LiveKeys;
-		if (_orderRadial.Update(_inputContext, RadialAllowed() && !_screenRadial.IsOpen) is { } row && liveKeys != null
+		var orderClick = custom != null ? CustomHostActions.WheelClick(custom, KeyAction.SquadOrdersWheel) : null;
+		var screenClick = custom != null ? CustomHostActions.WheelClick(custom, KeyAction.ScreensWheel) : null;
+		if (_orderRadial.Update(_inputContext, RadialAllowed() && !_screenRadial.IsOpen, orderClick) is { } row && liveKeys != null
 				&& _frame.Keyboard.FlashCommKey(row, _displays.FlashComm.VerbOf(row)) is { } orderKey) {
 			if (orderKey.Modifiers.HasFlag(KeyModifiers.Alt)) {
 				liveKeys.HeldByHost.Add(Key.AltLeft);
@@ -443,18 +451,29 @@ sealed class SimulatorHost : IDisposable {
 			liveKeys.HeldByHost.Add(orderKey.Key);
 		}
 
-		if (_screenRadial.Update(_inputContext, RadialAllowed() && !_orderRadial.IsOpen) is { } screen && liveKeys != null) {
+		if (_screenRadial.Update(_inputContext, RadialAllowed() && !_orderRadial.IsOpen, screenClick) is { } screen
+				&& liveKeys != null) {
 			liveKeys.HeldByHost.Add(_keyMap.KeyOf(ScreenKeys[screen]));
 		}
 	}
 
 	// The device map's radar toggle (docs/herculan/joystick-config.md, "The radar toggle"), held as [R] for the frame the
-	// way a radial's choice goes in, so the cockpit's own [R] decides what it does and a recording takes the key. After
-	// the mute is set for the frame, so it is quiet whenever the stick is; a replay's keys are the tape's.
-	private void ReadRadarToggle() {
-		if (_inputContext != null && _options.ScreenshotPath == null && !_frame.Suspended && !_tape.Playing
-				&& _joystick?.RadarToggleHeld() == true) {
-			_input.LiveKeys?.HeldByHost.Add(_keyMap.KeyOf(KeyAction.RadarMode));
+	// way a radial's choice goes in, so the cockpit's own [R] decides what it does and a recording takes the key; in
+	// Custom mode, the profile's keyed actions the same way (CustomHostActions), and not while a modal panel is up, which
+	// reads the stick's trigger alone. After the mute is set for the frame, so both are quiet whenever the stick is; a
+	// replay's keys are the tape's.
+	private void ReadStickKeys() {
+		if (_inputContext == null || _options.ScreenshotPath != null || _frame.Suspended || _tape.Playing
+				|| _joystick == null || _input.LiveKeys is not { } liveKeys) {
+			return;
+		}
+
+		if (_joystick.RadarToggleHeld()) {
+			liveKeys.HeldByHost.Add(_keyMap.KeyOf(KeyAction.RadarMode));
+		}
+
+		if (!_panels.AnyOpen) {
+			_customHost.HoldKeys(liveKeys, _joystick);
 		}
 	}
 

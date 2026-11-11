@@ -277,6 +277,12 @@ controller.inputs              Was das Gerät meldet
 controller.axis                Achse {0}
 controller.axis_direction      Achse {0} {1}
 controller.button              Taste {0}
+controller.menu_bar_input      {0} öffnet die Menüleiste von HERCULAN und kann nicht neu belegt werden.
+controller.dpad                Steuerkreuz {0}
+controller.ps_cross            Kreuz
+controller.ps_circle           Kreis
+controller.ps_square           Quadrat
+controller.ps_triangle         Dreieck
 controller.buttons             Tasten
 controller.hat                 Coolie-Hat {0}
 controller.controls            Steuerung

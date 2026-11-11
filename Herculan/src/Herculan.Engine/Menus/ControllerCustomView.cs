@@ -311,17 +311,18 @@ internal sealed class ControllerCustomView {
 
 	private readonly record struct ActionChoice(bool IsMapped, KeyAction Action);
 
-	// A combo of "None" and every input the device has: its buttons, but a gamepad's d-pad, which is its hat; each axis
-	// toward either end; and each hat's four directions. The input chosen, or null when nothing new was.
+	// A combo of "None" and every input the device has: its buttons, but a gamepad's d-pad, which is its hat, and its Back,
+	// which opens the menu bar (HostMenuBar.PadBack); each axis toward either end; and each hat's four directions. The input
+	// chosen, or null when nothing new was.
 	private InputChoice? InputCombo(ControllerInput? current, ControllerDevice device, string? clash) {
 		InputChoice? chosen = null;
-		if (BeginRedCombo("##input", current is { } shown ? InputLabel(shown) : Text("controller.unmapped"), clash)) {
+		if (BeginRedCombo("##input", current is { } shown ? InputLabel(shown, device) : Text("controller.unmapped"), clash)) {
 			if (ImGui.Selectable(Text("controller.unmapped"), current == null)) {
 				chosen = new InputChoice(false, default);
 			}
 
 			foreach (var input in InputsOf(device)) {
-				if (ImGui.Selectable(InputLabel(input), input == current)) {
+				if (ImGui.Selectable(InputLabel(input, device), input == current)) {
 					chosen = new InputChoice(true, input);
 				}
 			}
@@ -335,7 +336,7 @@ internal sealed class ControllerCustomView {
 
 	private static IEnumerable<ControllerInput> InputsOf(ControllerDevice device) {
 		for (int i = 0; i < device.ButtonCount; i++) {
-			if (!IsDPadButton(device, i)) {
+			if (!IsDPadButton(device, i) && !(device.IsGamepad && i == ControllerDevice.GamepadBack)) {
 				yield return ControllerInput.Button(i);
 			}
 		}
@@ -355,15 +356,11 @@ internal sealed class ControllerCustomView {
 	private static bool IsDPadButton(ControllerDevice device, int button) =>
 		device.IsGamepad && button is >= FirstDPadButton and <= LastDPadButton;
 
-	private string InputLabel(ControllerInput input) => input.Kind switch {
-		ControllerInputKind.Button => Format("controller.button", input.Index),
+	/// <summary>An input's name on <paramref name="device"/> as the window shows it, a known gamepad's buttons by the names printed on them.</summary>
+	internal string InputLabel(ControllerInput input, ControllerDevice? device) => input.Kind switch {
+		ControllerInputKind.Button => GamepadButtonNames.Label(device, input.Index, Text),
 		ControllerInputKind.Axis => string.Format(Text("controller.axis_direction"), input.Index, input.AxisSign > 0 ? "+" : "-"),
-		_ => string.Format(Text("controller.hat_direction"), input.Index, Text(input.Direction switch {
-			JoystickHat.North => "controller.up",
-			JoystickHat.South => "controller.down",
-			JoystickHat.West => "controller.left",
-			_ => "controller.right",
-		})),
+		_ => GamepadButtonNames.HatLabel(device, input.Index, input.Direction, Text),
 	};
 
 	// A combo of "None" and every offered action under its section's heading, an action the game lacks greyed. The action

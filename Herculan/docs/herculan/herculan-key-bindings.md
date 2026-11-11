@@ -30,10 +30,8 @@ The menu bar and its windows work with a gamepad alone, in a mission and in the 
 | D-pad | Move between items. Left and right also step a slider. |
 | A | Press the item, open a list, tick a box. |
 | B | Close a list, leave the menu bar for the window under it, or step out of a scrolling area. With no window open, hide the menu bar. |
-| X, held | With the bumpers, bring another window to the front; with the left stick, move the window. |
 | Bumpers | Held while stepping a slider: slower (left) or faster (right). |
 | Left stick | Scroll the window. |
-| Y | Type into a text field, which needs a keyboard, or Steam's on-screen keyboard on a Steam Deck. |
 
 The front end's notice that something failed, such as a mission that could not be loaded, comes up with the highlight on its OK, so A takes it down. For its first 0.75 seconds OK ignores A and clicks, so a press already on its way does not close it unread; Back and `Esc` close it at once. Closing a window with one of its own buttons also puts the highlight back on the bar's first item. While the menu bar or one of its windows is up, a mission's stick drives nothing, and after they close it stays quiet until every button is let go, so a button pressed to choose an item does not also fire its action. While the Controller window's Detect is listening, the pad moves nothing in the window, so the control moved to bind it is only bound.
 

@@ -1,3 +1,4 @@
+using Herculan.Engine.Content;
 using Herculan.Engine.Input;
 using Herculan.Es2.Cockpit;
 using Herculan.Es2.Input;
@@ -49,10 +50,18 @@ sealed class JoystickSource : IJoystickSource {
 	// Set when Muted comes down, and cleared once the device holds no button: see Muted.
 	private bool _awaitingRelease;
 
-	private JoystickSource(IInputContext input, JoystickMapFile file, bool probe) {
+	// Whether the mission pilots a RAZOR, whose half of a Custom profile is read.
+	private readonly bool _razor;
+
+	// The device's Custom profile as read, and the device and shape it was built for: see Custom.
+	private CustomControls? _custom;
+	private (int Slot, int Axes, int Buttons, int Hats) _customFor;
+
+	private JoystickSource(IInputContext input, JoystickMapFile file, bool probe, bool razor) {
 		_controller = new MappedController(input, file);
 		PersistGamepadControls();
 		_probe = probe;
+		_razor = razor;
 
 		if (probe) {
 			_lastAxes = new float[64];
@@ -69,15 +78,44 @@ sealed class JoystickSource : IJoystickSource {
 	/// a following frame, and until then <see cref="Capabilities"/> reads
 	/// <see cref="JoystickCapabilities.None"/>.</para>
 	/// </summary>
-	public static JoystickSource Open(IInputContext input, string? dataDirectory, bool probe) =>
-		new(input, JoystickMapFile.LoadForPlayer(dataDirectory), probe);
+	/// <param name="razor">Whether the mission pilots a RAZOR, whose half of a Custom profile is read.</param>
+	public static JoystickSource Open(IInputContext input, string? dataDirectory, bool probe, bool razor) =>
+		new(input, JoystickMapFile.LoadForPlayer(dataDirectory), probe, razor);
 
 	/// <summary>
 	/// What each control does in place of <c>prefs.cfg</c>'s CONTROLS settings
-	/// (<see cref="Es2.Content.SimulatorPreferences.ControlsOverride"/>): the file's gamepad settings while the device being
-	/// read is a gamepad, and null otherwise.
+	/// (<see cref="Es2.Content.SimulatorPreferences.ControlsOverride"/>): <see cref="Custom"/>'s fixed rows while the device
+	/// being read is in Custom mode, and null while it is in Original.
 	/// </summary>
-	public GamepadControls? ControlsOverride => Device is { IsGamepad: true } ? _controller.File.Gamepad : null;
+	public IControlsOverride? ControlsOverride => Custom;
+
+	/// <summary>
+	/// The device's Custom profile, read for the mission's machine, while it is in Custom mode
+	/// (<see cref="JoystickMapFile.ModeFor"/>), as a gamepad always is: its section's profile, or the device's default for
+	/// the counts it reports (<see cref="ControllerProfile.ForDevice"/>). Null in Original mode, and until the device has
+	/// reported its shape.
+	/// </summary>
+	public CustomControls? Custom {
+		get {
+			if (Device is not { } device || Map is null
+					|| _controller.File.ModeFor(device.IsGamepad, device.Guid) != ControllerMode.Custom) {
+				return null;
+			}
+
+			var shape = (device.Slot, device.AxisCount, device.ButtonCount, device.HatCount);
+			if (_custom is null || shape != _customFor) {
+				var profile = _controller.File.ProfileFor(device.IsGamepad, device.Guid)
+					?? ControllerProfile.ForDevice(device.IsGamepad, device.AxisCount, device.ButtonCount, device.HatCount);
+				_custom = new CustomControls(profile, _razor);
+				_customFor = shape;
+			}
+
+			return _custom;
+		}
+	}
+
+	/// <summary>Whether the stick is quiet, as <see cref="Read"/> reports it: while <see cref="Muted"/>, and after it until every button is let go.</summary>
+	public bool Quiet => Muted || _awaitingRelease;
 
 	/// <inheritdoc cref="MappedController.Device"/>
 	public ControllerDevice? Device => _controller.Device;
@@ -91,7 +129,7 @@ sealed class JoystickSource : IJoystickSource {
 	/// the same thing retail shows for a stick it cannot enumerate.
 	/// </summary>
 	public JoystickCapabilities Capabilities =>
-		Device is null || Map is not { } map ? JoystickCapabilities.None : map.Capabilities();
+		Device is null || Map is not { } map ? JoystickCapabilities.None : Custom?.Capabilities ?? map.Capabilities();
 
 	/// <summary>
 	/// Whether <see cref="Read"/> reports the stick centred and every button up, which it does while the pad is working
@@ -116,6 +154,7 @@ sealed class JoystickSource : IJoystickSource {
 	public void Configure(JoystickMapFile file) {
 		_controller.Reset(file);
 		PersistGamepadControls();
+		_custom = null;
 		_announced = false;
 	}
 
@@ -141,15 +180,33 @@ sealed class JoystickSource : IJoystickSource {
 			Probe(device);
 		}
 
-		return device.Read(map);
+		return Custom is { } custom ? custom.Read(device) : device.Read(map);
 	}
 
 	/// <summary>
-	/// Whether the map's radar toggle is held (<see cref="JoystickDeviceMap.RadarToggle"/>). It is quiet whenever
-	/// <see cref="Read"/> reports the stick neutral: while <see cref="Muted"/>, and after it until every button is let go.
+	/// Whether the map's radar toggle is held (<see cref="JoystickDeviceMap.RadarToggle"/>), in Original mode; in Custom
+	/// the radar is <see cref="KeyAction.RadarMode"/>, one of <see cref="HeldActions"/>. It is quiet whenever
+	/// <see cref="Read"/> reports the stick neutral (<see cref="Quiet"/>).
 	/// </summary>
 	public bool RadarToggleHeld() =>
-		!Muted && !_awaitingRelease && Device is { } device && Map is { } map && device.Held(map.RadarToggle);
+		!Quiet && Custom is null && Device is { } device && Map is { } map && device.Held(map.RadarToggle);
+
+	/// <summary>
+	/// The actions a Custom profile holds this frame that the reading does not carry (<see cref="CustomControls.HeldActions"/>),
+	/// for the host to send: none in Original mode, or while the stick is <see cref="Quiet"/>.
+	/// </summary>
+	public IEnumerable<KeyAction> HeldActions() =>
+		!Quiet && Custom is { } custom && Device is { } device ? custom.HeldActions(device) : [];
+
+	/// <summary>
+	/// Whether a Custom profile holds <paramref name="action"/>, whether or not the stick is <see cref="Quiet"/>: for the
+	/// host's own actions, which work the menus that mute it. False in Original mode.
+	/// </summary>
+	public bool HostActionHeld(KeyAction action) => HostActionInput(action) != null;
+
+	/// <summary>The input holding <paramref name="action"/>, as <see cref="HostActionHeld"/> reads it, or null for none.</summary>
+	public ControllerInput? HostActionInput(KeyAction action) =>
+		Custom is { } custom && Device is { } device ? custom.HeldInput(device, action) : null;
 
 	/// <summary>
 	/// Says what the stick can do, once — and not before it will answer. Silk.NET's GLFW backend publishes a
@@ -171,8 +228,10 @@ sealed class JoystickSource : IJoystickSource {
 		// The lever's mode and the RAZOR's pitch sense live in the map but are read through the bindings, the
 		// control law having no route to the map. Derived maps never set them, so this only ever carries a file's
 		// own choice.
-		bindings.BipolarThrottle = map.BipolarThrottle;
-		bindings.InvertRazorPitch = map.InvertRazorPitch;
+		// A Custom profile's axes carry their own senses, so the map's RAZOR pitch is Original's alone.
+		var custom = Custom;
+		bindings.BipolarThrottle = custom?.BipolarThrottle ?? map.BipolarThrottle;
+		bindings.InvertRazorPitch = custom is null && map.InvertRazorPitch;
 
 		// Only when a stick really answered: with none attached the panel keeps whatever --joystick staged,
 		// which is the whole point of that flag.

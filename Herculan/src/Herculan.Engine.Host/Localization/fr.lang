@@ -277,6 +277,12 @@ controller.inputs              Ce que le périphérique indique
 controller.axis                Axe {0}
 controller.axis_direction      Axe {0} {1}
 controller.button              Bouton {0}
+controller.menu_bar_input      {0} sert à ouvrir la barre de menus d'HERCULAN et ne peut pas être réattribué.
+controller.dpad                Croix directionnelle {0}
+controller.ps_cross            Croix
+controller.ps_circle           Rond
+controller.ps_square           Carré
+controller.ps_triangle         Triangle
 controller.buttons             Boutons
 controller.hat                 Chapeau {0}
 controller.controls            Commandes
