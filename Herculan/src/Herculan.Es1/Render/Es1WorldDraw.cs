@@ -235,7 +235,7 @@ public sealed class Es1WorldDraw {
 		public IEnumerable<SceneItem> Items => _pieces.Select(entry => entry.Item).Concat(_mountPieces.Select(entry => entry.Item));
 
 		private SceneItem NewItem(Es1MechPiece piece, uint? texture) {
-			var item = new SceneItem(piece.Mesh, Matrix4x4.Identity, texture) { TextureWalk = piece.TextureWalk };
+			var item = new SceneItem(piece.Mesh, Matrix4x4.Identity, texture);
 			if (piece.Leaf is { } leaf) {
 				if (!_groups.TryGetValue(leaf.Tree, out var group)) {
 					group = new BspDrawGroup(leaf.Tree, FrameToWorld);
@@ -271,8 +271,10 @@ public sealed class Es1WorldDraw {
 			// detail parts draw with bias 0.
 			// The effect lights are picked once for the machine, by its position and slot +0x14's radius.
 			var anchor = (_mech.Position, (int)_mech.ShapeRadius);
+			bool perspective = Es1MechModels.PerspectiveTextureMapping;
 			foreach (var (item, piece, pieceRoot) in _pieces) {
 				item.Transform = FrameToWorld(piece.TransformId);
+				item.TextureWalk = Es1MechModels.WalkOf(piece, perspective);
 				item.RampBlock = block;
 				item.LightAnchor = anchor;
 				item.Visible = drawn && pieceRoot == root
@@ -284,6 +286,7 @@ public sealed class Es1WorldDraw {
 			var mounts = _mech.Mounts?.Mounts ?? [];
 			foreach (var (item, piece, hardpoint, transformId) in _mountPieces) {
 				item.Transform = FrameToWorld(transformId);
+				item.TextureWalk = Es1MechModels.WalkOf(piece, perspective);
 				item.RampBlock = block;
 				item.LightAnchor = anchor;
 				// A destroyed mount's model is cleared, and the hardpoint draws nothing (WeaponMount_Destroy).

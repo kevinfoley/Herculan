@@ -46,8 +46,9 @@ public sealed class Es1MechModels : IDisposable {
 	/// <summary>
 	/// Whether the HERCs' textured faces are mapped with perspective, through the mesh's own homogeneous mapping
 	/// (<see cref="MeshVertex.UvWeight"/>), in place of retail's row walk in screen space
-	/// (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7). Off: the pieces carry the walk's face
-	/// tables. Read when the pieces are uploaded, from <see cref="Es1TweakSettingDefinitions.PerspectiveTextureMapping"/>.
+	/// (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7). The pieces always carry the walk's face
+	/// tables, and every frame's placement hands an item its piece's table only while this is off (<see cref="WalkOf"/>),
+	/// so a change in <see cref="Es1TweakSettingDefinitions.PerspectiveTextureMapping"/> shows mid-mission.
 	/// </summary>
 	public static bool PerspectiveTextureMapping =>
 		TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.PerspectiveTextureMapping);
@@ -107,7 +108,9 @@ public sealed class Es1MechModels : IDisposable {
 			return known;
 		}
 
-		var pieces = mount.Model != null ? Upload(gl, DtsMeshBuilder.BuildSegments(mount.Model, WeaponAtlas, scene.Shading.Surfaces)) : [];
+		var pieces = mount.Model != null
+			? UploadPieces(gl, DtsMeshBuilder.BuildSegments(mount.Model, WeaponAtlas, scene.Shading.Surfaces), _owned)
+			: [];
 		_mountPieces[mount] = pieces;
 		return pieces;
 	}
@@ -129,11 +132,15 @@ public sealed class Es1MechModels : IDisposable {
 		// A crude root's transform ids are root 0's once renumbered, so its rest pose is root 0's animation list's.
 		var hidden = DtsMeshBuilder.AttachmentPartIds(type.GunLayout);
 		var rootPoses = ShapeAnimation.FirstAnimList(type.Roots[0]);
-		_pieces[type.Type] = type.Roots.Select((root, index) => Upload(gl,
-			DtsMeshBuilder.BuildSegments(root, atlas, scene.Shading.Surfaces, hidden, index > 0 ? rootPoses : null))).ToArray();
+		_pieces[type.Type] = type.Roots.Select((root, index) => UploadPieces(gl,
+			DtsMeshBuilder.BuildSegments(root, atlas, scene.Shading.Surfaces, hidden, index > 0 ? rootPoses : null), _owned)).ToArray();
 	}
 
-	private IReadOnlyList<Es1MechPiece> Upload(GL gl, IEnumerable<MeshSegment> segments) {
+	/// <summary>
+	/// A piece for each of <paramref name="segments"/> with geometry, its walk table built whenever it has textured faces;
+	/// the GPU objects go into <paramref name="owned"/>. The HERCs', the flyers' and the structures' pieces are all built here.
+	/// </summary>
+	internal static IReadOnlyList<Es1MechPiece> UploadPieces(GL gl, IEnumerable<MeshSegment> segments, List<IDisposable> owned) {
 		var pieces = new List<Es1MechPiece>();
 		foreach (var segment in segments) {
 			if (segment.Vertices.Length == 0) {
@@ -141,12 +148,12 @@ public sealed class Es1MechModels : IDisposable {
 			}
 
 			var mesh = new GpuMesh(gl, segment.Vertices, segment.TriangleVertexCount, segment.PointVertexCount);
-			_owned.Add(mesh);
+			owned.Add(mesh);
 
 			GpuTextureWalkTable? walk = null;
-			if (!PerspectiveTextureMapping && segment.WalkFaces is { } faces) {
+			if (segment.WalkFaces is { } faces) {
 				walk = new GpuTextureWalkTable(gl, TextureWalkTable.Pack(faces));
-				_owned.Add(walk);
+				owned.Add(walk);
 			}
 
 			pieces.Add(new Es1MechPiece(mesh, segment.TransformId, segment.Gate, segment.Leaf, segment.Layer, walk));
@@ -154,6 +161,12 @@ public sealed class Es1MechModels : IDisposable {
 
 		return pieces;
 	}
+
+	/// <summary>
+	/// The walk table an item drawing <paramref name="piece"/> takes this frame: the piece's own, or null for the mesh's own
+	/// mapping while <paramref name="perspective"/> (<see cref="PerspectiveTextureMapping"/>, read once per placement).
+	/// </summary>
+	internal static GpuTextureWalkTable? WalkOf(Es1MechPiece piece, bool perspective) => perspective ? null : piece.TextureWalk;
 
 	public void Dispose() {
 		foreach (var owned in _owned) {

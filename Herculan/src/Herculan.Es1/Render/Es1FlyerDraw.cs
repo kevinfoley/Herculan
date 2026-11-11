@@ -74,23 +74,7 @@ public sealed class Es1FlyerDraw : IDisposable {
 			texture = uploaded.Handle;
 		}
 
-		var pieces = new List<Es1MechPiece>();
-		foreach (var segment in DtsMeshBuilder.BuildSegments(type.Shape, atlas, _scene.Shading.Surfaces)) {
-			if (segment.Vertices.Length == 0) {
-				continue;
-			}
-
-			var mesh = new GpuMesh(gl, segment.Vertices, segment.TriangleVertexCount, segment.PointVertexCount);
-			_owned.Add(mesh);
-			GpuTextureWalkTable? walk = null;
-			if (!Es1MechModels.PerspectiveTextureMapping && segment.WalkFaces is { } faces) {
-				walk = new GpuTextureWalkTable(gl, TextureWalkTable.Pack(faces));
-				_owned.Add(walk);
-			}
-
-			pieces.Add(new Es1MechPiece(mesh, segment.TransformId, segment.Gate, segment.Leaf, segment.Layer, walk));
-		}
-
+		var pieces = Es1MechModels.UploadPieces(gl, DtsMeshBuilder.BuildSegments(type.Shape, atlas, _scene.Shading.Surfaces), _owned);
 		return new TypePieces(pieces, type.Animation != null ? new ShapeInstance(type.Animation) : null, texture);
 	}
 
@@ -111,7 +95,7 @@ public sealed class Es1FlyerDraw : IDisposable {
 			Flyer = flyer;
 			_type = type;
 			foreach (var piece in type.Pieces) {
-				var item = new SceneItem(piece.Mesh, Matrix4x4.Identity, type.Texture) { TextureWalk = piece.TextureWalk };
+				var item = new SceneItem(piece.Mesh, Matrix4x4.Identity, type.Texture);
 				if (piece.Leaf is { } leaf) {
 					if (!_groups.TryGetValue(leaf.Tree, out var group)) {
 						group = new BspDrawGroup(leaf.Tree, FrameToWorld);
@@ -139,8 +123,10 @@ public sealed class Es1FlyerDraw : IDisposable {
 			int? block = flat ? shading.FlatBlock : shading.Block((byte)Es1Flyer.TypeTag, distance);
 			// The effect lights are picked by its position and slot +0x14's radius.
 			var anchor = (Flyer.Position, (int)Flyer.ShapeRadius);
+			bool perspective = Es1MechModels.PerspectiveTextureMapping;
 			foreach (var (item, piece) in _pieces) {
 				item.Transform = FrameToWorld(piece.TransformId);
+				item.TextureWalk = Es1MechModels.WalkOf(piece, perspective);
 				item.RampBlock = block;
 				item.LightAnchor = anchor;
 				item.Visible = drawn && OnScreen(piece.Gate, camera, focalShift, bias);

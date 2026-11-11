@@ -93,24 +93,7 @@ public sealed class Es1BaseDraw : IDisposable {
 			}
 		}
 
-		var pieces = new List<Es1MechPiece>();
-		foreach (var segment in DtsMeshBuilder.BuildSegments(geometry, atlas, _scene.Shading.Surfaces)) {
-			if (segment.Vertices.Length == 0) {
-				continue;
-			}
-
-			var mesh = new GpuMesh(gl, segment.Vertices, segment.TriangleVertexCount, segment.PointVertexCount);
-			_owned.Add(mesh);
-			GpuTextureWalkTable? walk = null;
-			if (!Es1MechModels.PerspectiveTextureMapping && segment.WalkFaces is { } faces) {
-				walk = new GpuTextureWalkTable(gl, TextureWalkTable.Pack(faces));
-				_owned.Add(walk);
-			}
-
-			pieces.Add(new Es1MechPiece(mesh, segment.TransformId, segment.Gate, segment.Leaf, segment.Layer, walk));
-		}
-
-		return pieces;
+		return Es1MechModels.UploadPieces(gl, DtsMeshBuilder.BuildSegments(geometry, atlas, _scene.Shading.Surfaces), _owned);
 	}
 
 	public void Dispose() {
@@ -131,7 +114,7 @@ public sealed class Es1BaseDraw : IDisposable {
 
 		public void Add(Es1BaseShape shape, IReadOnlyList<Es1MechPiece> pieces, uint? texture) {
 			foreach (var piece in pieces) {
-				var item = new SceneItem(piece.Mesh, Matrix4x4.Identity, texture) { TextureWalk = piece.TextureWalk };
+				var item = new SceneItem(piece.Mesh, Matrix4x4.Identity, texture);
 				if (piece.Leaf is { } leaf) {
 					if (!_groups.TryGetValue((shape, leaf.Tree), out var group)) {
 						group = new BspDrawGroup(leaf.Tree, id => FrameToWorld(shape, id));
@@ -158,8 +141,10 @@ public sealed class Es1BaseDraw : IDisposable {
 			// The effect lights are picked by its position and slot +0x14's radius.
 			var anchor = (Structure.Position, (int)Structure.ShapeRadius);
 			var held = Structure.Shape;
+			bool perspective = Es1MechModels.PerspectiveTextureMapping;
 			foreach (var (item, piece, shape) in _pieces) {
 				item.Transform = FrameToWorld(shape, piece.TransformId);
+				item.TextureWalk = Es1MechModels.WalkOf(piece, perspective);
 				item.RampBlock = block;
 				item.LightAnchor = anchor;
 				item.Visible = drawn && ReferenceEquals(shape, held) && OnScreen(shape, piece.Gate, camera, focalShift, bias);
