@@ -85,6 +85,14 @@ public sealed class Es1InputBuild {
 	/// </summary>
 	public Es1PlayerInputBlock? PlayerInputBlock { get; set; }
 
+	/// <summary>
+	/// <b>This engine's own:</b> the controller's Custom profile this frame (<see cref="Es1CustomControls"/>), or null while
+	/// it is in Original mode, when option 7's configuration reads the stick as retail does. While it answers a frame, a
+	/// live build takes the stick's axes, its trigger and buttons 4–7 from it in place of the live block's and the
+	/// configuration's (steps 3, 6 and 7). Every profile throttle reads as a rate.
+	/// </summary>
+	public Func<Es1CustomFrame?>? Custom { get; set; }
+
 	/// <summary>The preferences the build reads, <c>data\prefs.cfg</c>'s options.</summary>
 	public Es1Preferences Preferences => _preferences;
 
@@ -133,8 +141,14 @@ public sealed class Es1InputBuild {
 			TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FasterKeyboardAiming),
 			firstPairAims: modeAtEntry == 1 && !camera && !missileFlown);
 		int[] kb = keys is { } built ? [built.FirstX, built.FirstY, built.SecondX, built.SecondY] : new int[4];
-		int[] stick = live.StickAxes;
-		byte[] sourceButtons = playing ? tapeSources! : live.StickButtons;
+
+		// A Custom profile's stick is steering, throttle, twist and pitch in that order, and its source buttons the trigger
+		// alone.
+		var custom = playing ? null : Custom?.Invoke();
+		int[] stick = custom is { } read ? [read.Steering, read.Throttle, read.Twist, read.Pitch] : live.StickAxes;
+		byte[] sourceButtons = playing ? tapeSources!
+			: custom is { } held ? [held.Fire ? (byte)1 : (byte)0, 0, 0, 0]
+			: live.StickButtons;
 
 		// 4. The frame's mouse events on the cockpit's widgets, which step 8 records; none with no cockpit.
 		var mouseEvents = CockpitMouse?.ProcessQueue() ?? [];
@@ -180,17 +194,18 @@ public sealed class Es1InputBuild {
 				kb[1] = -kb[1];
 			}
 
+			// The stick's X and Y steer the camera or the missile; a Custom profile's turret twist and pitch do.
+			int from = custom != null ? 2 : 0;
 			for (int axis = 0; axis < 2; axis++) {
-				if (stick[axis] != 0) {
-					kb[axis] = stick[axis];
-					stick[axis] = 0;
+				if (stick[from + axis] != 0) {
+					kb[axis] = stick[from + axis];
+					stick[from + axis] = 0;
 				}
 			}
 
 			kb[2] = 0;
 			kb[3] = 0;
-			stick[2] = 0;
-			stick[3] = 0;
+			Array.Clear(stick);
 		}
 
 		if (_keyjoy.TiltReversed) {
@@ -202,16 +217,18 @@ public sealed class Es1InputBuild {
 		// 7. Live, the configuration's sources, the latches, then the pointer, mouse, buttons 4-7 and command word. In
 		// playback the pointer and the mouse bytes stay 0.
 		if (keys is { } live7) {
-			byte[] stickButtons = live.StickButtons[..4];
-			var sources = new Es1InputSources(kb, stick, [live7.Button(0), live7.Button(1), live7.Button(2), live7.Button(3)], stickButtons);
-			var (axes, buttons) = Es1StickConfigurations.Choose(_preferences.StickConfiguration, mode, _preferences.ThirdAxis, throttleKeys, sources);
+			byte[] keyButtons = [live7.Button(0), live7.Button(1), live7.Button(2), live7.Button(3)];
+			var (axes, buttons) = custom != null
+				? ChooseCustom(kb, stick, keyButtons, sourceButtons[0], throttleKeys)
+				: Es1StickConfigurations.Choose(_preferences.StickConfiguration, mode, _preferences.ThirdAxis, throttleKeys,
+					new Es1InputSources(kb, stick, keyButtons, live.StickButtons[..4]));
 			latches.Apply(buttons);
 			Array.Copy(axes, block.Axes, 4);
 			Array.Copy(buttons, block.Buttons, 4);
 			block.PointerX = live.PointerX;
 			block.PointerY = live.PointerY;
 			Array.Copy(live.MouseButtons, block.MouseButtons, 3);
-			Array.Copy(live.StickButtons, 4, block.Buttons, 4, 4);
+			Array.Copy(custom?.Views ?? live.StickButtons[4..8], 0, block.Buttons, 4, 4);
 			block.CommandWord = live.CommandWord;
 		}
 
@@ -244,6 +261,25 @@ public sealed class Es1InputBuild {
 
 		PlayerInputBlock = block;
 		return block;
+	}
+
+	/// <summary>
+	/// <b>This engine's own:</b> step 7's choice for a Custom profile (<see cref="Custom"/>), in place of option 7's
+	/// configuration: each of the profile's four functions on its own axis whatever the stick mode, the keyboard's pair
+	/// where the function reads 0, as every configuration takes the keyboard's; option 10 keeps the throttle on the keys
+	/// as it does there. Button 0 is the profile's trigger or <c>Space</c>, and buttons 1–3 the keyboard's.
+	/// </summary>
+	private static (short[] Axes, byte[] Buttons) ChooseCustom(int[] kb, int[] stick, byte[] keyButtons, byte trigger,
+			bool throttleKeys) {
+		static int Or(int stick, int keyboard) => stick != 0 ? stick : keyboard;
+		short[] axes = [
+			(short)Or(stick[Es1PlayerInputBlock.Steering], kb[0]),
+			(short)(throttleKeys ? kb[1] : Or(stick[Es1PlayerInputBlock.Throttle], kb[1])),
+			(short)Or(stick[Es1PlayerInputBlock.Twist], kb[2]),
+			(short)Or(stick[Es1PlayerInputBlock.Pitch], kb[3]),
+		];
+		byte[] buttons = [trigger != 0 ? trigger : keyButtons[0], keyButtons[1], keyButtons[2], keyButtons[3]];
+		return (axes, buttons);
 	}
 
 	/// <summary>

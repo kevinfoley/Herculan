@@ -90,6 +90,8 @@ public sealed class Es1SimulationStart : IDisposable {
 		var port = Es1ControllerPort.Over(_controller);
 		Runner = new Es1SimulationRunner(_world, _installRoot, _preferences, _keyboard, _mouse, port, _viewChain, _widgets,
 			_content, _tape, _recording, _fullScreenKey);
+		Runner.Simulation.Input.Custom = port.ReadCustom;
+		Runner.CustomKeyActions = port.CustomKeyActions;
 		if (MenuBarWindow is { } window) {
 			port.Muted = () => window.MenuBarUp;
 			Runner.HostKeyboard.GiveMenuBarItsKeys(window);

@@ -35,6 +35,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	private static readonly double MaxTapeHeldSeconds = Es1TapePlayback.SecondsOf(0x1c2);
 
 	private readonly Es1HostKeyboard _hostKeyboard;
+	private readonly Es1CustomKeys _customKeys;
 
 	// The host time held towards the tape's next frame.
 	private double _tapeHeld;
@@ -59,6 +60,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 			Es1FullScreenKey? fullScreenKey = null) {
 		var keyboardInput = new Es1KeyboardInput(Es1HostKeyboard.ReadBiosShiftFlags(keyboard));
 		_hostKeyboard = new Es1HostKeyboard(keyboardInput.Keyboard) { FullScreenKey = fullScreenKey };
+		_customKeys = new Es1CustomKeys(_hostKeyboard);
 		if (keyboard != null) {
 			_hostKeyboard.Attach(keyboard);
 		}
@@ -99,6 +101,13 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	public Es1AxisKeys AxisKeys { get; }
 
 	/// <summary>
+	/// <b>This engine's own:</b> the controller's Custom profile's actions held this host frame that go in as keys
+	/// (<see cref="Es1ControllerPort.CustomKeyActions"/>), pressed and let go as keys each host frame before the keyboard's
+	/// typematic (<see cref="Es1CustomKeys"/>); none while a tape plays, whose keys are the tape's. With none, nothing.
+	/// </summary>
+	public Func<IEnumerable<Engine.Input.KeyAction>>? CustomKeyActions { get; set; }
+
+	/// <summary>
 	/// One host frame of <paramref name="elapsed"/> where nothing shows the monitor, as with no display: the clock and,
 	/// when a tick is due, the whole tick. With no display no panel is raised, so the tick never waits.
 	/// </summary>
@@ -129,7 +138,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// a frame a panel's loop reads is not held, the loop running one pass a host frame (decision 11).</para>
 	/// </summary>
 	public bool AdvanceClock(TimeSpan elapsed) {
-		_hostKeyboard.Advance(elapsed.TotalSeconds);
+		AdvanceKeyboard(elapsed);
 
 		// Subsystem phase 4 calls no function (docs/es1/simulation/main-loop.md#the-subsystem-phases).
 		if (Simulation.Input.Tape is not { Playing: true } tape) {
@@ -199,11 +208,17 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// holds the time towards its next frame (<see cref="AdvanceClock"/>).
 	/// </summary>
 	public void Hold(TimeSpan elapsed) {
-		_hostKeyboard.Advance(elapsed.TotalSeconds);
+		AdvanceKeyboard(elapsed);
 		Simulation.Globals.Clock.Hold(elapsed);
 		if (Simulation.Input.TapePlayback) {
 			HoldTowardsTape(elapsed);
 		}
+	}
+
+	// The profile's keys, then the typematic.
+	private void AdvanceKeyboard(TimeSpan elapsed) {
+		_customKeys.Update(Simulation.Input.TapePlayback ? [] : CustomKeyActions?.Invoke() ?? []);
+		_hostKeyboard.Advance(elapsed.TotalSeconds);
 	}
 
 	/// <summary>The time held towards the tape's next frame, up to <see cref="MaxTapeHeldSeconds"/>.</summary>
@@ -213,5 +228,8 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// <inheritdoc/>
 	public bool Frozen => Simulation.Frozen;
 
-	public void Dispose() => _hostKeyboard.Detach();
+	public void Dispose() {
+		_customKeys.Release();
+		_hostKeyboard.Detach();
+	}
 }

@@ -20,6 +20,11 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	private readonly Func<int, float> _axis;
 	private readonly Func<int, bool> _button;
 	private readonly Func<bool> _anyButton;
+	private readonly MappedController? _controller;
+
+	// The Custom profile read for the device, and the device and shape it was read for.
+	private Es1CustomControls? _custom;
+	private (int Slot, int Axes, int Buttons, int Hats) _customFor;
 
 	// The port was muted at the last read, and since it came back every device button has not yet been let go.
 	private bool _wasMuted;
@@ -29,20 +34,70 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	/// <param name="axis">A device axis as a fraction of its travel, −1 to +1, 0 for one it does not have.</param>
 	/// <param name="button">Whether a device button is held, false for one the host keeps.</param>
 	/// <param name="anyButton">Whether any device button is held, the host's own among them; none answers false.</param>
+	/// <param name="controller">The controller whose Custom profile <see cref="Custom"/> reads; none reads none.</param>
 	public Es1ControllerPort(Func<JoystickDeviceMap?> map, Func<int, float> axis, Func<int, bool> button,
-			Func<bool>? anyButton = null) {
+			Func<bool>? anyButton = null, MappedController? controller = null) {
 		_map = map;
 		_axis = axis;
 		_button = button;
 		_anyButton = anyButton ?? (() => false);
+		_controller = controller;
 	}
 
-	/// <summary>The port over <paramref name="controller"/>'s device and map.</summary>
+	/// <summary>The port over <paramref name="controller"/>'s device and map, and its Custom profile.</summary>
 	public static Es1ControllerPort Over(MappedController controller) => new(
 		() => controller.Map,
 		index => controller.Device?.Axis(index) ?? 0f,
 		index => controller.Device?.BindableButton(index) == true,
-		() => controller.Device?.AnyButton() == true);
+		() => controller.Device?.AnyButton() == true,
+		controller);
+
+	/// <summary>
+	/// <b>This engine's own:</b> the device's Custom profile while it is in Custom mode
+	/// (<see cref="JoystickMapFile.ModeFor"/>), as a gamepad always is: its section's profile, or the device's default for
+	/// the counts it reports (<see cref="ControllerProfile.ForDevice"/>). Null in Original mode, and until the device has
+	/// reported its shape.
+	/// </summary>
+	public Es1CustomControls? Custom {
+		get {
+			if (_controller is not { Device: { } device, Map: not null } controller
+					|| controller.File.ModeFor(device.IsGamepad, device.Guid) != ControllerMode.Custom) {
+				return null;
+			}
+
+			var shape = (device.Slot, device.AxisCount, device.ButtonCount, device.HatCount);
+			if (_custom is null || shape != _customFor) {
+				_custom = new Es1CustomControls(controller.File.ProfileFor(device.IsGamepad, device.Guid)
+					?? ControllerProfile.ForDevice(device.IsGamepad, device.AxisCount, device.ButtonCount, device.HatCount));
+				_customFor = shape;
+			}
+
+			return _custom;
+		}
+	}
+
+	/// <summary>
+	/// The Custom profile's frame for the input build (<see cref="Es1InputBuild.Custom"/>): null in Original mode, and
+	/// while the port is quiet a frame with nothing held.
+	/// </summary>
+	public Es1CustomFrame? ReadCustom() {
+		if (Custom is not { } custom || _controller?.Device is not { } device) {
+			return null;
+		}
+
+		return Quiet() ? new Es1CustomFrame(0, 0, 0, 0, false, new byte[4]) : custom.Read(ControllerState.Of(device));
+	}
+
+	/// <summary>The Custom profile's actions held this frame that go in as keys (<see cref="Es1CustomControls.KeyActions"/>); none while quiet.</summary>
+	public IEnumerable<KeyAction> CustomKeyActions() =>
+		Custom is { } custom && _controller?.Device is { } device && !Quiet() ? custom.KeyActions(ControllerState.Of(device)) : [];
+
+	/// <summary>
+	/// The input holding <paramref name="action"/> in the Custom profile, whether or not the port is quiet, for the host's
+	/// own actions, which work the menus that quiet it; null in Original mode or with none held.
+	/// </summary>
+	public ControllerInput? HostActionInput(KeyAction action) =>
+		Custom is { } custom && _controller?.Device is { } device ? custom.HeldInput(ControllerState.Of(device), action) : null;
 
 	/// <summary>
 	/// <b>This engine's own:</b> whether the port reads every axis at 0 and every button up, as it does while the pad works

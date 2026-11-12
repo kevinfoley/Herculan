@@ -133,6 +133,21 @@ public sealed record ControllerProfile {
 	/// <summary>The axis driving <paramref name="function"/>, or <see cref="ControllerAxis.Unbound"/>.</summary>
 	public ControllerAxis Axis(AxisFunction function) => Axes.GetValueOrDefault(function, ControllerAxis.Unbound);
 
+	/// <summary>The action each input sends in a RAZOR when <paramref name="razor"/> is set, else in a HERC.</summary>
+	public ImmutableDictionary<ControllerInput, KeyAction> Bindings(bool razor) => razor ? RazorBindings : HercBindings;
+
+	/// <summary>The actions an input held on <paramref name="device"/> is bound to, in the machine <paramref name="razor"/> picks.</summary>
+	public HashSet<KeyAction> Held(ControllerState device, bool razor) =>
+		[.. Bindings(razor).Where(binding => Pressed(device, binding.Key)).Select(binding => binding.Value)];
+
+	/// <summary>The first input bound to <paramref name="action"/> that is held on <paramref name="device"/>, or null for none.</summary>
+	public ControllerInput? HeldInput(ControllerState device, KeyAction action, bool razor) =>
+		Bindings(razor).Where(binding => binding.Value == action && Pressed(device, binding.Key))
+			.Select(binding => (ControllerInput?)binding.Key).OrderBy(input => input).FirstOrDefault();
+
+	private static bool Pressed(ControllerState device, ControllerInput input) =>
+		input.Pressed(device.Axis, device.Button, device.Hat);
+
 	/// <summary>
 	/// A gamepad's default profile, read in GLFW's standard layout, the same in both machines
 	/// (docs/herculan/joystick-config.md, "A gamepad's own controls"): Back, Start and the sticks' clicks on the menu bar,

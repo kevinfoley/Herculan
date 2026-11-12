@@ -115,9 +115,7 @@ public sealed class CustomControls : IControlsOverride {
 	public bool IsHeld(ControllerState device, KeyAction action) => HeldInput(device, action) != null;
 
 	/// <summary>The first input bound to <paramref name="action"/> that is held on <paramref name="device"/>, or null for none.</summary>
-	public ControllerInput? HeldInput(ControllerState device, KeyAction action) =>
-		Bindings.Where(binding => binding.Value == action && Pressed(device, binding.Key))
-			.Select(binding => (ControllerInput?)binding.Key).OrderBy(input => input).FirstOrDefault();
+	public ControllerInput? HeldInput(ControllerState device, KeyAction action) => _profile.HeldInput(device, action, _razor);
 
 	/// <inheritdoc/>
 	public bool AxisRowsFixed => true;
@@ -140,13 +138,7 @@ public sealed class CustomControls : IControlsOverride {
 	/// <inheritdoc/>
 	public void Save() { }
 
-	private ImmutableDictionary<ControllerInput, KeyAction> Bindings => _razor ? _profile.RazorBindings : _profile.HercBindings;
-
-	private HashSet<KeyAction> Held(ControllerState device) =>
-		[.. Bindings.Where(binding => Pressed(device, binding.Key)).Select(binding => binding.Value)];
-
-	private static bool Pressed(ControllerState device, ControllerInput input) =>
-		input.Pressed(device.Axis, device.Button, device.Hat);
+	private HashSet<KeyAction> Held(ControllerState device) => _profile.Held(device, _razor);
 
 	private void WriteBlock(int start, byte[] rows) {
 		int at = start - Prefs.HercControlsBase;
