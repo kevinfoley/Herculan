@@ -39,8 +39,8 @@ public interface IFrontEndMenus : IDisposable {
 	/// <summary>[Esc]'s step back: takes down whichever window is up, else hides the bar. False when neither was up.</summary>
 	bool BackOut();
 
-	/// <summary>A gamepad's Back (<see cref="GamepadHostButtons.BackPressed"/>), which backs out of the menus or raises the bar.</summary>
-	void PadBack();
+	/// <summary>Backs out of the menus, or raises the bar when there was nothing to back out of; the front end calls it for <see cref="GamepadHostButtons.BackPressed"/>.</summary>
+	void RaiseOrBackOut();
 
 	/// <summary>What the menus raise at the front end's start; the frame skips it in a <c>--screenshot</c> capture.</summary>
 	void OfferWelcome();

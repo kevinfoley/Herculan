@@ -104,7 +104,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	public bool Listening => IsOpen && (_detecting != NotDetecting || _custom.Listening);
 
 	/// <summary>
-	/// What the menu bar's own control does while Detect is listening (<see cref="HostMenuBar.PadBack"/>): it stops Detect,
+	/// What the menu bar's own control does while Detect is listening (<see cref="HostMenuBar.RaiseOrBackOut"/>): it stops Detect,
 	/// leaves the window up, and says <paramref name="input"/> opens the menu bar and cannot be rebound, until Detect is
 	/// pressed again or the window is opened again.
 	/// </summary>

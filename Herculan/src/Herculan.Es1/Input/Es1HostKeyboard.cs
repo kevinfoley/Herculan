@@ -101,7 +101,7 @@ public sealed class Es1HostKeyboard {
 			bool alt = Held(Key.AltLeft) || Held(Key.AltRight);
 			bool ctrl = Held(Key.ControlLeft) || Held(Key.ControlRight);
 			if (!alt && !ctrl && (shift || window.MenuBarUp)) {
-				window.MenuBarEscape();
+				window.RaiseOrBackOut();
 				return true;
 			}
 		}

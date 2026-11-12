@@ -424,9 +424,11 @@ sealed class SimulatorHost : IDisposable {
 		_debugProbes.Sample(_view.PilotMech);
 	}
 
-	// A gamepad's own buttons, which a mission's stick never sees (ControllerDevice.Reserved). Back raises the menu bar or
-	// backs out of it, as [Shift+Esc] does, and puts ImGui's navigation on the bar it leaves up; Start raises the pause
-	// menu or resumes from it (GamepadHostButtons); and the sticks' clicks work the two radials. A radial's choice goes
+	// The host's own actions: the menu bar, the pause menu and the two radials, on the inputs a Custom profile binds them
+	// to (CustomHostActions), or in Original mode on a gamepad's Select/Back, Start and stick clicks (GamepadHostButtons),
+	// which an Original map never reads (ControllerDevice.Reserved). The menu bar's input raises the bar or backs out of
+	// it, as [Shift+Esc] does, and puts ImGui's navigation on the bar it leaves up; the pause menu's raises the menu or
+	// resumes from it; and the radials' work the radials. A radial's choice goes
 	// in as its key, held in the live keyboard for this one frame before the frame reads its keys, so the cockpit takes
 	// it through its own keys and a recording takes the key itself: an order as its [Alt] key on FLASH COMM, a screen
 	// as its function key. Nothing is read while the window is out of focus.
@@ -445,7 +447,7 @@ sealed class SimulatorHost : IDisposable {
 		_customHost.Update(_joystick);
 		var custom = _joystick?.Custom != null ? _joystick : null;
 		if (custom != null ? _customHost.MenuBarPressed : _padButtons.BackPressed) {
-			_menuBar.PadBack(custom?.HostActionInput(KeyAction.MenuBar));
+			_menuBar.RaiseOrBackOut(custom?.HostActionInput(KeyAction.MenuBar));
 		}
 
 		if (custom != null ? _customHost.PauseMenuPressed : _padButtons.StartPressed) {

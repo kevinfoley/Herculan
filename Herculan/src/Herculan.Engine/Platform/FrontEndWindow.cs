@@ -187,7 +187,7 @@ public sealed class FrontEndWindow : IDisposable {
 	public void StartFullScreen(bool fullScreen) => _window.StartFullScreen(fullScreen, Mouse);
 
 	/// <summary>A menu-bar key press: closes whichever of its windows is open, else hides an empty bar, else raises it.</summary>
-	public void MenuBarEscape() {
+	public void RaiseOrBackOut() {
 		if (!_menus.BackOut()) {
 			_menus.Show();
 		}
@@ -224,7 +224,7 @@ public sealed class FrontEndWindow : IDisposable {
 
 	/// <summary>
 	/// The top of a frame: ImGui's, and a gamepad's Back, which raises the menu bar or backs out of it as [Shift+Esc]
-	/// does (<see cref="GamepadHostButtons"/>, <see cref="IFrontEndMenus.PadBack"/>). The front end has no pause, so
+	/// does (<see cref="GamepadHostButtons"/>, <see cref="IFrontEndMenus.RaiseOrBackOut"/>). The front end has no pause, so
 	/// Start does nothing here.
 	/// </summary>
 	public void BeginFrame(double delta) {
@@ -236,7 +236,7 @@ public sealed class FrontEndWindow : IDisposable {
 		if (_input != null && _screenshotPath == null) {
 			_padButtons.Update(_input);
 			if (_padButtons.BackPressed) {
-				_menus.PadBack();
+				_menus.RaiseOrBackOut();
 			}
 		}
 	}

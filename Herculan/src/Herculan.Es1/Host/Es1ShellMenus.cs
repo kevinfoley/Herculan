@@ -78,7 +78,7 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 
 	public bool BackOut() => _menuBar.BackOut();
 
-	public void PadBack() => _menuBar.PadBack();
+	public void RaiseOrBackOut() => _menuBar.RaiseOrBackOut();
 
 	public void OfferWelcome() {
 	}

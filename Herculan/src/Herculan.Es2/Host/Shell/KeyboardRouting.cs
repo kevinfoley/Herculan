@@ -44,7 +44,7 @@ sealed class KeyboardRouting {
 			_escapeIsMenuBars = MenuBarTakesEscape(menuBarKey, menuBackKey);
 			_menuBarKey = key;
 			if (_escapeIsMenuBars) {
-				_window.MenuBarEscape();
+				_window.RaiseOrBackOut();
 				return;
 			}
 		}

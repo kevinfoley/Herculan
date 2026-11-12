@@ -111,10 +111,10 @@ public sealed class ControllerDevice {
 	/// <inheritdoc cref="GamepadLeftBumper"/>
 	public const int GamepadRightBumper = 5;
 
-	/// <summary>A gamepad's Back and Start, buttons 6 and 7 of the standard layout.</summary>
+	/// <summary>AKA "Select", "View", "-", "Share", "Create"</summary>
 	public const int GamepadBack = 6;
 
-	/// <inheritdoc cref="GamepadBack"/>
+	/// <summary>AKA "Menu", "Options", "+"</summary>
 	public const int GamepadStart = 7;
 
 	/// <summary>A gamepad's left and right stick clicks, buttons 9 and 10 of the standard layout.</summary>
@@ -136,9 +136,10 @@ public sealed class ControllerDevice {
 	public const int GamepadDPadLeft = 14;
 
 	/// <summary>
-	/// Whether button <paramref name="index"/> is kept off the eight the bindings name: a gamepad's Back and Start, which
-	/// are the host's own, and its sticks' clicks, which open the host's radials. A map that names one, written before it
-	/// was kept, reads it as never pressed.
+	/// Whether button <paramref name="index"/> is kept out of an Original-mode map (<see cref="JoystickDeviceMap"/>): a
+	/// gamepad's Select/Back, Start, and its sticks' clicks. A map that names one reads it
+	/// as never pressed. A Custom profile (<see cref="ControllerProfile"/>) reads every button, and its own bindings decide
+	/// what these do.
 	/// </summary>
 	public bool Reserved(int index) =>
 		IsGamepad && index is GamepadBack or GamepadStart or GamepadLeftStick or GamepadRightStick;

@@ -286,6 +286,12 @@ internal sealed class ControllerCustomView {
 				ImGui.PushID(i);
 				ImGui.TableNextRow();
 				ImGui.TableNextColumn();
+				if (device.IsGamepad && binding.Input == ControllerProfile.GamepadMenuBarInput) {
+					MenuBarRow(device);
+					ImGui.PopID();
+					continue;
+				}
+
 				if (InputCombo(binding.Input, device, clashes.GetValueOrDefault(binding)) is { } input) {
 					binding.Input = input.IsMapped ? input.Input : null;
 					Touch();
@@ -329,13 +335,32 @@ internal sealed class ControllerCustomView {
 		Tooltip("controller.add_tip");
 	}
 
+	// A gamepad's Select/Back and the menu bar, which every gamepad profile has (ControllerProfile.WithGamepadMenuBar): shown, not
+	// edited, with no Detect or Remove.
+	private void MenuBarRow(ControllerDevice device) {
+		string input = InputLabel(ControllerProfile.GamepadMenuBarInput, device);
+		ImGui.AlignTextToFramePadding();
+		ImGui.TextDisabled(input);
+		Tooltip(input);
+		ImGui.TableNextColumn();
+		ImGui.AlignTextToFramePadding();
+		ImGui.TextDisabled(ActionLabel(KeyAction.MenuBar));
+		Tooltip(input);
+
+		void Tooltip(string name) {
+			if (ImGui.IsItemHovered()) {
+				ScaledImGui.Tooltip(string.Format(Text("controller.menu_bar_input"), name));
+			}
+		}
+	}
+
 	// A choice from a combo: Mapped false for "None".
 	private readonly record struct InputChoice(bool IsMapped, ControllerInput Input);
 
 	private readonly record struct ActionChoice(bool IsMapped, KeyAction Action);
 
 	// A combo of "None" and every input the device has: its buttons, but a gamepad's d-pad, which is its hat, and its Back,
-	// which opens the menu bar (HostMenuBar.PadBack); each axis toward either end; and each hat's four directions. The input
+	// which opens the menu bar (HostMenuBar.RaiseOrBackOut); each axis toward either end; and each hat's four directions. The input
 	// chosen, or null when nothing new was.
 	private InputChoice? InputCombo(ControllerInput? current, ControllerDevice device, string? clash) {
 		InputChoice? chosen = null;
@@ -387,7 +412,7 @@ internal sealed class ControllerCustomView {
 	};
 
 	// A combo of "None" and the machine's listed actions (ControllerActions.Listed) under their sections' headings, an
-	// action the game lacks greyed. An action bound already shows as itself, listed or not. The action chosen, or null
+	// action the game lacks greyed, and for a gamepad without the menu bar, which is its Back's (MenuBarRow). An action bound already shows as itself, listed or not. The action chosen, or null
 	// when nothing new was.
 	private ActionChoice? ActionCombo(KeyAction? current, Machine machine, ControllerDevice device) {
 		ActionChoice? chosen = null;
@@ -413,6 +438,10 @@ internal sealed class ControllerCustomView {
 
 			KeySection? section = null;
 			foreach (var (entrySection, entry) in ControllerActions.Listed(_actionList, machine == Machine.Razor, device.IsGamepad)) {
+				if (device.IsGamepad && entry == KeyAction.MenuBar) {
+					continue;
+				}
+
 				if (entrySection != section) {
 					section = entrySection;
 					ImGui.SeparatorText(Text(KeysWindow.SectionEntry(entrySection)));
@@ -573,7 +602,8 @@ internal sealed class ControllerCustomView {
 		}
 
 		for (int i = 0; i < device.ButtonCount && i < _restingButtons.Length && input == null; i++) {
-			if (device.Button(i) && !_restingButtons[i] && !IsDPadButton(device, i)) {
+			if (device.Button(i) && !_restingButtons[i] && !IsDPadButton(device, i)
+					&& !(device.IsGamepad && i == ControllerDevice.GamepadBack)) {
 				input = ControllerInput.Button(i);
 			}
 		}

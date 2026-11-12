@@ -7,9 +7,7 @@ namespace Herculan.Es2.Host.Simulator;
 /// A Custom profile's actions that the stick's reading does not carry (<see cref="Input.CustomControls"/>), as the host
 /// sends them. <b>This engine's own</b> (docs/herculan/plan-controller-profiles.md, step 2.4). An action with a key goes in
 /// as its primary chord, held in the live keyboard for the frame as a radial's choice is, so the cockpit's own key
-/// decides what it does and a recording takes the key. The menu bar, the pause menu and the two radials are the host's,
-/// and answer the profile's inputs in place of a gamepad's Back, Start and stick clicks: the menu bar as Back raises it,
-/// so the pad's navigation goes onto it.
+/// decides what it does and a recording takes the key.
 /// </summary>
 sealed class CustomHostActions(KeyMap keyMap) {
 	private bool _menuBarHeld;
