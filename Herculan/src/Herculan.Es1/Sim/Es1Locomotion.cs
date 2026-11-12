@@ -107,6 +107,34 @@ public sealed class Es1Locomotion {
 	}
 
 	/// <summary>
+	/// <b>This engine's own:</b> the throttle axis that moves <paramref name="throttle"/> toward a lever's
+	/// <paramref name="target"/> through <see cref="ApplyThrottleInput"/>'s rate, for a Custom profile's lever
+	/// (<see cref="Input.Es1InputBuild.Custom"/>); retail reads every throttle axis as a rate. The target is cut to the
+	/// lever mode's range, the step to what an axis of <see cref="SteerByThrottleDeflection"/> gives, so the steer's sign
+	/// stays the throttle's while the lever moves, and the axis is the one whose step is that, negated for a negative
+	/// mode as <see cref="ApplyThrottleInput"/> negates it back.
+	/// </summary>
+	/// <param name="target">Where the lever puts the throttle, −<see cref="ThrottleFull"/> to <see cref="ThrottleFull"/>.</param>
+	public static short LeverAxis(short throttle, int target, short throttleLeverMode) {
+		int upper = throttleLeverMode < 0 ? 0 : ThrottleFull;
+		int lower = throttleLeverMode < 1 ? -ThrottleFull : 0;
+		int most = SimMath.Q8MultiplyRounded(SteerByThrottleDeflection, ThrottleRate);
+		int step = Math.Clamp(Math.Clamp(target, lower, upper) - throttle, -most, most);
+
+		// The rate is under 1, so every step up to the largest has an axis; the nearest by division, then walked onto it.
+		int opening = step * 0x100 / ThrottleRate;
+		while (SimMath.Q8MultiplyRounded(opening, ThrottleRate) < step) {
+			opening++;
+		}
+
+		while (SimMath.Q8MultiplyRounded(opening, ThrottleRate) > step) {
+			opening--;
+		}
+
+		return (short)(throttleLeverMode < 0 ? opening : -opening);
+	}
+
+	/// <summary>
 	/// <c>Mech_LocomotionTick</c> (<c>00012038</c>): the speed, the gait machine and the turn
 	/// (docs/es1/simulation/mech-locomotion.md#the-control-law--mech_locomotiontick-00012038).
 	/// </summary>

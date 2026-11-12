@@ -89,9 +89,17 @@ public sealed class Es1InputBuild {
 	/// <b>This engine's own:</b> the controller's Custom profile this frame (<see cref="Es1CustomControls"/>), or null while
 	/// it is in Original mode, when option 7's configuration reads the stick as retail does. While it answers a frame, a
 	/// live build takes the stick's axes, its trigger and buttons 4–7 from it in place of the live block's and the
-	/// configuration's (steps 3, 6 and 7). Every profile throttle reads as a rate.
+	/// configuration's (steps 3, 6 and 7). A throttle the profile reads as a lever (<see cref="Es1CustomFrame.LeverTarget"/>)
+	/// goes in as the rate that takes <see cref="PlayerThrottle"/> to the lever's position
+	/// (<see cref="Sim.Es1Locomotion.LeverAxis"/>), so the simulation and a recording take a rate, as retail's do.
 	/// </summary>
 	public Func<Es1CustomFrame?>? Custom { get; set; }
+
+	/// <summary>
+	/// <b>This engine's own:</b> the player's machine's throttle <c>+0x226</c>, which a Custom profile's lever is moved
+	/// toward (<see cref="Custom"/>); with none a lever moves nothing.
+	/// </summary>
+	public Func<short>? PlayerThrottle { get; set; }
 
 	/// <summary>The preferences the build reads, <c>data\prefs.cfg</c>'s options.</summary>
 	public Es1Preferences Preferences => _preferences;
@@ -218,8 +226,16 @@ public sealed class Es1InputBuild {
 		// playback the pointer and the mouse bytes stay 0.
 		if (keys is { } live7) {
 			byte[] keyButtons = [live7.Button(0), live7.Button(1), live7.Button(2), live7.Button(3)];
+			// A lever waits while the camera has the controls or a missile is flown, as step 6 zeroes a stick's throttle.
+			int? lever = camera || missileFlown || PlayerThrottle == null ? null : custom?.LeverTarget;
+			// An end-to-end lever runs the way ThrottleLeverMode says, reverse under Ctrl+1's −1; a bipolar lever's own sign
+			// is its direction, which the mode's range then cuts.
+			short leverMode = Controls.ThrottleLeverMode;
+			short? leverAxis = lever is { } target
+				? Sim.Es1Locomotion.LeverAxis(PlayerThrottle!(), leverMode < 0 && !custom!.BipolarLever ? -target : target, leverMode)
+				: null;
 			var (axes, buttons) = custom != null
-				? ChooseCustom(kb, stick, keyButtons, sourceButtons[0], throttleKeys)
+				? ChooseCustom(kb, stick, keyButtons, sourceButtons[0], throttleKeys, leverAxis)
 				: Es1StickConfigurations.Choose(_preferences.StickConfiguration, mode, _preferences.ThirdAxis, throttleKeys,
 					new Es1InputSources(kb, stick, keyButtons, live.StickButtons[..4]));
 			latches.Apply(buttons);
@@ -267,14 +283,16 @@ public sealed class Es1InputBuild {
 	/// <b>This engine's own:</b> step 7's choice for a Custom profile (<see cref="Custom"/>), in place of option 7's
 	/// configuration: each of the profile's four functions on its own axis whatever the stick mode, the keyboard's pair
 	/// where the function reads 0, as every configuration takes the keyboard's; option 10 keeps the throttle on the keys
-	/// as it does there. Button 0 is the profile's trigger or <c>Space</c>, and buttons 1–3 the keyboard's.
+	/// as it does there. Button 0 is the profile's trigger or <c>Space</c>, and buttons 1–3 the keyboard's. A lever's
+	/// <paramref name="leverAxis"/> is the throttle axis alone, the keyboard's throttle keys dropped, as Earthsiege 2's
+	/// lever zeroes its axis; option 10 turns the lever off as it turns a stick's throttle off.
 	/// </summary>
 	private static (short[] Axes, byte[] Buttons) ChooseCustom(int[] kb, int[] stick, byte[] keyButtons, byte trigger,
-			bool throttleKeys) {
+			bool throttleKeys, short? leverAxis) {
 		static int Or(int stick, int keyboard) => stick != 0 ? stick : keyboard;
 		short[] axes = [
 			(short)Or(stick[Es1PlayerInputBlock.Steering], kb[0]),
-			(short)(throttleKeys ? kb[1] : Or(stick[Es1PlayerInputBlock.Throttle], kb[1])),
+			(short)(throttleKeys ? kb[1] : leverAxis ?? Or(stick[Es1PlayerInputBlock.Throttle], kb[1])),
 			(short)Or(stick[Es1PlayerInputBlock.Twist], kb[2]),
 			(short)Or(stick[Es1PlayerInputBlock.Pitch], kb[3]),
 		];

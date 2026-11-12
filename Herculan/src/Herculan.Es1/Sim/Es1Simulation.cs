@@ -63,6 +63,7 @@ public sealed class Es1Simulation {
 		globals.PlayerMech = _playerMech;
 		ViewChain = viewChain ?? new Es1ViewChain(localPlayer, null);
 		Input = input;
+		input.PlayerThrottle = () => localPlayer.Throttle;
 		// The electro-optical hold's two globals, which the player's weapon manager reads and writes.
 		if (localPlayer.Mounts != null) {
 			localPlayer.Mounts.ChainHold = input.Controls;
