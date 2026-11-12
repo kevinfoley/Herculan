@@ -4,10 +4,11 @@ using Silk.NET.Input;
 namespace Herculan.Es2.Host.Simulator;
 
 /// <summary>
-/// A Custom profile's actions that the stick's reading does not carry (<see cref="Input.CustomControls"/>), as the host
-/// sends them. <b>This engine's own</b> (docs/herculan/plan-controller-profiles.md, step 2.4). An action with a key goes in
-/// as its primary chord, held in the live keyboard for the frame as a radial's choice is, so the cockpit's own key
-/// decides what it does and a recording takes the key.
+/// Sends the actions in a Custom profile that can't reach the game through retail's joystick input, which has room only
+/// for the axes, the eight CONTROLS buttons and the hat (<see cref="Input.CustomControls"/>). The host's own actions
+/// are detected for the host to act on. Every other action with a key binding is sent by holding that binding's keys for
+/// the frame (<see cref="KeyMap.Chord"/>), so the cockpit does what the key does and a recording captures the key.
+/// <b>This engine's own.</b>
 /// </summary>
 sealed class CustomHostActions(KeyMap keyMap) {
 	private bool _menuBarHeld;

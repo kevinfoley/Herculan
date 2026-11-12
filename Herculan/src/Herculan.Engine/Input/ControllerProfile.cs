@@ -107,7 +107,7 @@ public sealed record ControllerProfile {
 	private static readonly ImmutableHashSet<KeyAction> Offered = [.. ControllerActions.Offered.Select(entry => entry.Action)];
 
 	/// <summary>
-	/// A gamepad's Select/Back, which opens the menu bar in every profile (<see cref="WithGamepadMenuBar"/>), as it does over the
+	/// A gamepad's Select/Back, which opens the menu bar in every gamepad profile (<see cref="JoystickMapFile.ProfileFor"/>), as it does over the
 	/// front end, where no profile is read (<see cref="Platform.GamepadHostButtons"/>).
 	/// </summary>
 	public static readonly ControllerInput GamepadMenuBarInput = ControllerInput.Button(ControllerDevice.GamepadBack);
@@ -221,17 +221,18 @@ public sealed record ControllerProfile {
 	}
 
 	/// <summary>
-	/// This profile as a gamepad reads it: <see cref="GamepadMenuBarInput"/> on the menu bar in both machines, whatever the
-	/// file says, and no other input on it, so a gamepad's Select/Back opens the menu bar in a mission as it does everywhere else.
+	/// Returns a copy of this profile in which <paramref name="input"/> opens the menu bar. The copy binds it in both the
+	/// HERC's bindings and the RAZOR's, and takes the menu bar off any other input that was bound to it.
 	/// </summary>
-	public ControllerProfile WithGamepadMenuBar() => this with {
-		HercBindings = Fixed(HercBindings),
-		RazorBindings = Fixed(RazorBindings),
+	public ControllerProfile WithMenuBarPinnedTo(ControllerInput input) => this with {
+		HercBindings = PinMenuBar(HercBindings, input),
+		RazorBindings = PinMenuBar(RazorBindings, input),
 	};
 
-	private static ImmutableDictionary<ControllerInput, KeyAction> Fixed(ImmutableDictionary<ControllerInput, KeyAction> bindings) =>
+	private static ImmutableDictionary<ControllerInput, KeyAction> PinMenuBar(
+			ImmutableDictionary<ControllerInput, KeyAction> bindings, ControllerInput input) =>
 		bindings.Where(entry => entry.Value != KeyAction.MenuBar).ToImmutableDictionary()
-			.SetItem(GamepadMenuBarInput, KeyAction.MenuBar);
+			.SetItem(input, KeyAction.MenuBar);
 
 	/// <summary>The default profile for a device: <see cref="ForGamepad"/> or <see cref="ForJoystick"/>.</summary>
 	public static ControllerProfile ForDevice(bool isGamepad, int axisCount, int buttonCount, int hatCount) =>

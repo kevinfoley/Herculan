@@ -335,7 +335,7 @@ internal sealed class ControllerCustomView {
 		Tooltip("controller.add_tip");
 	}
 
-	// A gamepad's Select/Back and the menu bar, which every gamepad profile has (ControllerProfile.WithGamepadMenuBar): shown, not
+	// A gamepad's Select/Back and the menu bar, which every gamepad profile has (JoystickMapFile.ProfileFor): shown, not
 	// edited, with no Detect or Remove.
 	private void MenuBarRow(ControllerDevice device) {
 		string input = InputLabel(ControllerProfile.GamepadMenuBarInput, device);

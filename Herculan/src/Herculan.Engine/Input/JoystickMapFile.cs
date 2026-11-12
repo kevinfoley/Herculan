@@ -6,7 +6,7 @@ using Herculan.Engine.Platform;
 namespace Herculan.Engine.Input;
 
 /// <summary>
-/// <c>herculan-joystick.cfg</c>: a <see cref="JoystickDeviceMap"/> for every kind of device the player has set up,
+/// <c>herculan-joystick.cfg</c>: the controller settings for every kind of device the player has set up,
 /// so that switching controllers does not mean mapping again (docs/herculan/joystick-config.md, "One file, many
 /// devices"). This engine's own file; retail never reads it.
 ///
@@ -19,10 +19,10 @@ namespace Herculan.Engine.Input;
 /// any joystick without a section of its own, which is also the one section a file written before per-device sections
 /// has.</para>
 ///
-/// <para>A joystick's section also says which <see cref="ControllerMode"/> it runs in; a gamepad always runs in Custom.
-/// A section may hold the device's Custom
-/// <see cref="ControllerProfile"/> beside Original's map, so switching modes loses neither
-/// (docs/herculan/plan-controller-profiles.md).</para>
+/// <para>A joystick's section also says which <see cref="ControllerMode"/> it runs in, and may hold its Custom
+/// <see cref="ControllerProfile"/> beside Original's <see cref="JoystickDeviceMap"/>, so switching modes loses neither
+/// (docs/herculan/plan-controller-profiles.md). A gamepad always runs in Custom, so its section holds its Custom profile
+/// and no Original map.</para>
 /// </summary>
 public sealed class JoystickMapFile {
 	/// <summary>The file's name, in the player's settings folder and in an install's <c>data</c> folder alike.</summary>
@@ -68,8 +68,9 @@ public sealed class JoystickMapFile {
 					&& Enum.IsDefined(parsed) && !char.IsDigit(modeText.Trim()[0])
 				? parsed
 				: ControllerMode.Original;
-			file._sections[Normalise(section)] = new Entry(
-				Normalise(section), JoystickDeviceMap.FromValues(values), name, mode, ControllerProfile.FromValues(values));
+			// A gamepad is always Custom, so its section keeps no Original map; the gamepad default stands in for it.
+			var map = Normalise(section) == GamepadSection ? JoystickDeviceMap.ForGamepad() : JoystickDeviceMap.FromValues(values);
+			file._sections[Normalise(section)] = new Entry(Normalise(section), map, name, mode, ControllerProfile.FromValues(values));
 			if (Normalise(section) == GamepadSection) {
 				file.Mouse = GamepadMouseSettings.FromValues(values);
 			}
@@ -116,14 +117,15 @@ public sealed class JoystickMapFile {
 	public bool IsEmpty => _sections.Count == 0;
 
 	/// <summary>
-	/// The map for a device: <c>[Gamepad]</c> for a gamepad; for a joystick its model's section, else <c>[Joystick]</c>.
-	/// Null when the file has none, and the device's own defaults (<see cref="JoystickDeviceMap.ForDevice"/>) apply.
+	/// The device's Original-mode map, from the section that serves it. Returns null when no section does; the caller then
+	/// uses the device's defaults (<see cref="JoystickDeviceMap.ForDevice"/>).
 	/// </summary>
 	public JoystickDeviceMap? For(bool isGamepad, string? guid) => Find(isGamepad, guid)?.Map;
 
 	/// <summary>
-	/// Stores <paramref name="map"/> as the device's own: <c>[Gamepad]</c> for a gamepad, its model's section for a
-	/// joystick GLFW gives a GUID, and <c>[Joystick]</c> for one it does not.
+	/// Stores the device's Original-mode map in the device's own section, creating that section if the file has none. A new
+	/// section starts from the settings of the section that served the device. The change stays in memory until
+	/// <see cref="Save"/>.
 	/// </summary>
 	public void Set(bool isGamepad, string? guid, string? deviceName, JoystickDeviceMap map) =>
 		Update(isGamepad, guid, deviceName, entry => entry with { Map = map });
@@ -137,17 +139,20 @@ public sealed class JoystickMapFile {
 		isGamepad ? ControllerMode.Custom : Find(isGamepad, guid)?.Mode ?? ControllerMode.Custom;
 
 	/// <summary>
-	/// The device's Custom profile from its section, or null when the section has none or there is no section, and the
-	/// device's default (<see cref="ControllerProfile.ForDevice"/>) applies.
+	/// The Custom profile saved in the device's section. Returns null when the section has no Custom settings, or when the
+	/// file has no section for the device; the caller then uses the device's default (<see cref="ControllerProfile.ForDevice"/>).
+	/// For a gamepad, <see cref="ControllerProfile.GamepadMenuBarInput"/> always opens the menu bar, whatever the file binds
+	/// to it (<see cref="ControllerProfile.WithMenuBarPinnedTo"/>).
 	/// </summary>
-	public ControllerProfile? ProfileFor(bool isGamepad, string? guid) => Find(isGamepad, guid)?.Profile;
+	public ControllerProfile? ProfileFor(bool isGamepad, string? guid) {
+		var profile = Find(isGamepad, guid)?.Profile;
+		return isGamepad ? profile?.WithMenuBarPinnedTo(ControllerProfile.GamepadMenuBarInput) : profile;
+	}
 
 	/// <summary>
-	/// Stores the device's mode and Custom profile in the section <see cref="Set"/> names, keeping its map; a gamepad's
-	/// mode is Custom whatever <paramref name="mode"/> says, and a null <paramref name="profile"/> writes no Custom
-	/// settings, so the device's default applies. A joystick getting a section
-	/// of its own keeps the map <c>[Joystick]</c> gave it, and a device the file has no section for gets
-	/// <see cref="JoystickDeviceMap.ForGamepad"/> or <see cref="JoystickDeviceMap"/>'s own defaults.
+	/// Stores the device's mode and Custom profile in the device's own section, as <see cref="Set"/> does, keeping its map.
+	/// A gamepad's mode is always Custom, whatever <paramref name="mode"/> says. A null <paramref name="profile"/> removes
+	/// the Custom settings, so the device falls back to its default profile.
 	/// </summary>
 	public void SetProfile(bool isGamepad, string? guid, string? deviceName, ControllerMode mode, ControllerProfile? profile) =>
 		Update(isGamepad, guid, deviceName, entry => entry with { Mode = isGamepad ? ControllerMode.Custom : mode, Profile = profile });
@@ -157,8 +162,9 @@ public sealed class JoystickMapFile {
 		: (guid is null ? null : _sections.GetValueOrDefault(Normalise(ModelSection(guid))))
 			?? _sections.GetValueOrDefault(JoystickSection);
 
-	// A section made for a joystick that [Joystick] served starts from that one's settings; one made for a device without
-	// a section starts from the defaults, in Custom mode.
+	// Applies a change to the device's own section and records the device's name there. If the device has no section of
+	// its own yet, the new section starts as a copy of the section that serves the device. If no section serves it either,
+	// the new section starts with the default map, Custom mode and no Custom profile.
 	private void Update(bool isGamepad, string? guid, string? deviceName, Func<Entry, Entry> change) {
 		string section = Normalise(isGamepad ? GamepadSection : guid is null ? JoystickSection : ModelSection(guid));
 		var entry = _sections.GetValueOrDefault(section)
@@ -170,24 +176,24 @@ public sealed class JoystickMapFile {
 
 	/// <summary>
 	/// Writes every section to <paramref name="path"/>, gamepads first, then the shared joystick section, then each
-	/// model's, through <see cref="UserConfig.TryWrite"/>; false, with the reason in <paramref name="error"/>, when the
-	/// write fails.
+	/// model's, through <see cref="UserConfig.TryWrite"/>; returns false, with the reason in <paramref name="error"/>, 
+	/// when the write fails.
 	/// </summary>
 	public bool Save(string path, out string? error) {
-		// Mouse settings changed with no gamepad map saved yet: the section they go in, with the map it implies.
+		// Mouse settings changed with no gamepad section yet: the section they go in.
 		if (!Mouse.IsDefault && !_sections.ContainsKey(GamepadSection)) {
 			_sections[GamepadSection] = new Entry(GamepadSection, JoystickDeviceMap.ForGamepad(), null, ControllerMode.Custom, null);
 		}
 
 		var text = new StringBuilder();
-		text.AppendLine(";; Herculan's own file. The simulator's own prefs.cfg still says what each");
-		text.AppendLine(";; control DOES; this says which piece of hardware each control IS, which is");
-		text.AppendLine(";; the one thing a 1996 gameport stick did not need to be told.");
+		text.AppendLine(";; HERCULAN's own controller settings, read by every game.");
 		text.AppendLine(";;");
 		text.AppendLine(";; One section per kind of device: [Gamepad] for every gamepad, [Joystick <GUID>]");
 		text.AppendLine(";; for one model of joystick, and [Joystick] for any other joystick.");
+		text.AppendLine(";; A joystick section's Mode says how its controls reach the game: Original reads");
+		text.AppendLine(";; the game's own controls panel over the map below it, and Custom reads the");
+		text.AppendLine(";; Custom settings instead. A gamepad always uses Custom.");
 		text.AppendLine(";; Axes and buttons are zero-based indices into what the device reports.");
-		text.AppendLine(";; -1 leaves a control unmapped, which greys its row on the CONTROLS panel.");
 
 		foreach (var entry in _sections.Values.OrderBy(Order).ThenBy(entry => entry.Section, StringComparer.OrdinalIgnoreCase)) {
 			text.AppendLine();
@@ -197,16 +203,14 @@ public sealed class JoystickMapFile {
 				text.AppendLine($"Name = {entry.DeviceName.Replace(';', ',')}");
 			}
 
-			// A gamepad is always Custom, so its section has no Mode to set.
+			// A gamepad is always Custom, so its section has no Mode and no Original map.
 			if (entry.Section != GamepadSection) {
 				text.AppendLine($"{$"Mode = {entry.Mode}",-28} ;; Original: the game's CONTROLS panel; Custom: below");
 				text.AppendLine();
-			}
-
-			text.AppendLine(";; Original: which piece of hardware each control is.");
-			entry.Map.WriteValues(text);
-			if (entry.Section == GamepadSection) {
-				text.AppendLine();
+				text.AppendLine(";; Original: which piece of hardware each control is. -1 leaves a control");
+				text.AppendLine(";; unmapped, which greys its row on the game's controls panel.");
+				entry.Map.WriteValues(text);
+			} else {
 				Mouse.WriteValues(text);
 			}
 

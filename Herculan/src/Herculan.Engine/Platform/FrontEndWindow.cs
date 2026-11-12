@@ -223,9 +223,8 @@ public sealed class FrontEndWindow : IDisposable {
 	}
 
 	/// <summary>
-	/// The top of a frame: ImGui's, and a gamepad's Back, which raises the menu bar or backs out of it as [Shift+Esc]
-	/// does (<see cref="GamepadHostButtons"/>, <see cref="IFrontEndMenus.RaiseOrBackOut"/>). The front end has no pause, so
-	/// Start does nothing here.
+	/// The start of each frame: updates ImGui, then polls the gamepad's Select/Back button, which raises the menu bar or backs out
+	/// of it (<see cref="IFrontEndMenus.RaiseOrBackOut"/>). The front end has no pause, so it ignores Start.
 	/// </summary>
 	public void BeginFrame(double delta) {
 		if (_padNav != null) {
