@@ -111,6 +111,9 @@ public sealed class FrontEndWindow : IDisposable {
 	/// <summary>Whether a field of the menu bar's windows is being typed into.</summary>
 	public bool ImGuiWantsKeyboard => _imgui != null && ImGui.GetIO().WantCaptureKeyboard;
 
+	/// <summary>The large font a <see cref="Menus.PadRadial"/> labels its choices in; none before <see cref="Attach"/>.</summary>
+	public ImFontPtr? RadialFont => _imgui?.RadialFont;
+
 	/// <summary>Takes the window's devices once its input context exists, and builds ImGui on its GL context.</summary>
 	public void Attach(GL gl, IInputContext input) {
 		_imgui = new ScaledImGui(gl, _window, input, _imguiFontPath, _imguiItalicFontPath) {

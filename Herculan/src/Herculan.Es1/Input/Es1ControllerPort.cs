@@ -100,6 +100,13 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 		Custom is { } custom && _controller?.Device is { } device ? custom.HeldInput(ControllerState.Of(device), action) : null;
 
 	/// <summary>
+	/// Whether <paramref name="device"/> is the port's controller and holds <paramref name="action"/> in its Custom profile
+	/// (<see cref="HostActionInput"/>): what opens a radial (<see cref="Engine.Menus.PadRadial.Update"/>).
+	/// </summary>
+	public bool HostActionHeldOn(ControllerDevice device, KeyAction action) =>
+		_controller?.Device is { } read && read.Slot == device.Slot && HostActionInput(action) != null;
+
+	/// <summary>
 	/// <b>This engine's own:</b> whether the port reads every axis at 0 and every button up, as it does while the pad works
 	/// HERCULAN's menu bar or one of its windows, so that steering through them does not also drive the HERC. After it
 	/// comes down the port stays quiet until every device button has been let go, so the button that chose an item does

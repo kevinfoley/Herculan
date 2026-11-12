@@ -341,9 +341,14 @@ public static class Es1ZoneViewer {
 		var pauseMenu = new PauseMenu(menuLayer.Menus.Localization, pauseHost);
 		bool pauseInputHeld = false;
 
+		// The squad orders and the screens round the middle of the screen, which the controller's wheel inputs raise.
+		var radials = new Es1PadRadials(() => simulation?.Runner, () => simulation?.Port);
+		IInputContext? inputContext = null;
+
 		window.Load += (gl, input) => {
 			window.Attach(gl, input);
 			glContext = gl;
+			inputContext = input;
 			if (scene.Horizon != null && scene.Palette != null) {
 				backdrop = new Es1Backdrop(gl, scene.Horizon, scene.Ground, scene.Skyline, scene.Clouds, scene.Specks,
 						scene.Palette) {
@@ -460,7 +465,7 @@ public static class Es1ZoneViewer {
 				simulation = new Es1SimulationStart(world, installRoot, preferences, input, keyboard, hostMouse,
 					chain, widgets, content, tape, recording, fullScreenKey) {
 					MenuBarWindow = window,
-					PauseMenuShowing = () => pauseMenu.Showing,
+					HostMenusMute = () => pauseMenu.Showing || radials.MutesStick,
 				};
 				disposables.Add(simulation);
 			} else if (keyboard is { } device) {
@@ -517,6 +522,18 @@ public static class Es1ZoneViewer {
 			}
 
 			pauseInputHeld = pauseInput;
+
+			// A radial opens only where its choice's key would be heard: in the cockpit view with its widgets on, since the
+			// [Alt] order keys and the function keys go through them, and with nothing else holding the input. A replay's keys
+			// are the tape's. Not Es1FrameLoop.Waiting, which also holds while the frame's work waits on a retrace past the
+			// host frame, as it does most host frames.
+			if (inputContext != null) {
+				bool radialsAllowed = window.HasFocus && !free && runner is { Simulation: var running }
+					&& !running.TapePlayback && (running.Panels?.OpenCount ?? 0) == 0 && running.Cockpit is { WidgetsOff: false }
+					&& !pauseMenu.IsOpen && !window.MenuBarUp;
+				radials.Update(inputContext, radialsAllowed);
+			}
+
 			bool ended;
 			try {
 				ended = frameLoop != null
@@ -603,6 +620,10 @@ public static class Es1ZoneViewer {
 			}
 
 			pauseMenu.Draw();
+			if (window.RadialFont is { } radialFont) {
+				radials.Draw(radialFont);
+			}
+
 			window.DrawMenuBar(revealOnHover: false);
 		};
 

@@ -5,14 +5,14 @@ using Herculan.Engine.Platform;
 using ImGuiNET;
 using Silk.NET.Input;
 
-namespace Herculan.Es2.Host.Simulator;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// A ring of choices round the centre of the screen, worked by one of a gamepad's sticks while that stick's click is
 /// held: leaning the stick picks the nearest choice, centring it picks none, and letting go of the click takes the one
-/// picked. The squad orders and the cockpit's screens are one each (docs/herculan/herculan-key-bindings.md, "Squad
-/// orders on a gamepad" and "Screens on a gamepad"). This engine's own. It picks and draws; the host acts on the choice
-/// and mutes the mission's stick while <see cref="MutesStick"/>.
+/// picked. Each game has two, the squad orders and the cockpit's screens (docs/herculan/herculan-key-bindings.md, "Squad
+/// orders on a gamepad" and "Screens on a gamepad"). This engine's own. It picks and draws; the game's host acts on the
+/// choice and mutes the mission's stick while <see cref="MutesStick"/>.
 /// </summary>
 /// <param name="clickButton">The stick's click, in the standard gamepad layout.</param>
 /// <param name="xAxis">The stick's X axis; its Y is the next.</param>
@@ -21,7 +21,7 @@ namespace Herculan.Es2.Host.Simulator;
 /// How far from the centre the labels are centred, in pixels on a 100% display (<see cref="ScaledImGui.Scaled(float)"/>),
 /// far enough apart for neighbouring labels of <see cref="LabelWidth"/> not to meet.
 /// </param>
-sealed class PadRadial(int clickButton, int xAxis, int count, float labelRadius) {
+public sealed class PadRadial(int clickButton, int xAxis, int count, float labelRadius) {
 	/// <summary>The widest a label runs before it wraps onto another line, in pixels on a 100% display.</summary>
 	public const float LabelWidth = 200f;
 

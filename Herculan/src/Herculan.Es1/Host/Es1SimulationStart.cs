@@ -76,8 +76,11 @@ public sealed class Es1SimulationStart : IDisposable {
 	/// </summary>
 	public FrontEndWindow? MenuBarWindow { get; init; }
 
-	/// <summary>Whether HERCULAN's pause menu is on screen, which mutes the port as the menu bar does; none never is.</summary>
-	public Func<bool>? PauseMenuShowing { get; init; }
+	/// <summary>
+	/// Whether HERCULAN's own menus over the mission hold the controller, which mutes the port as the menu bar does: the
+	/// pause menu on screen, or a radial up or settling (<see cref="Engine.Menus.PadRadial.MutesStick"/>); none never do.
+	/// </summary>
+	public Func<bool>? HostMenusMute { get; init; }
 
 	/// <summary>The game port over the host's controller, once the runner is built.</summary>
 	public Es1ControllerPort? Port { get; private set; }
@@ -99,12 +102,12 @@ public sealed class Es1SimulationStart : IDisposable {
 		Runner.Simulation.Input.Custom = port.ReadCustom;
 		Runner.CustomKeyActions = port.CustomKeyActions;
 		Port = port;
-		var pauseMenu = PauseMenuShowing;
+		var hostMenus = HostMenusMute;
 		if (MenuBarWindow is { } window) {
-			port.Muted = () => window.MenuBarUp || pauseMenu?.Invoke() == true;
+			port.Muted = () => window.MenuBarUp || hostMenus?.Invoke() == true;
 			Runner.HostKeyboard.GiveMenuBarItsKeys(window);
-		} else if (pauseMenu != null) {
-			port.Muted = pauseMenu;
+		} else if (hostMenus != null) {
+			port.Muted = hostMenus;
 		}
 
 		Console.WriteLine(Describe(port));

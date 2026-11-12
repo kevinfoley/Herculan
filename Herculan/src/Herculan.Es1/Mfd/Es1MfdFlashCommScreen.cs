@@ -124,7 +124,10 @@ public sealed class Es1MfdFlashCommScreen : Es1MfdScreen {
 	}
 
 	/// <summary><c>MfdFlashComm_SelectedVerb</c> (<c>00035f4c</c>)(screen): <see cref="ScreenRow"/>'s order, the row + 3 while it shows its second.</summary>
-	public int SelectedVerb() => Order(ScreenRow);
+	public int SelectedVerb() => OrderOf(ScreenRow);
+
+	/// <summary>The order <paramref name="row"/> shows: the row, + 3 while it shows its second (<see cref="SecondOrder"/>).</summary>
+	public int OrderOf(int row) => (_states[row] & SecondOrder) != 0 ? row + SecondOrderOffset : row;
 
 	/// <summary>
 	/// <c>MfdFlashComm_SetScreenRow</c> (<c>00035f80</c>)(screen, <paramref name="row"/>): <see cref="ScreenRow"/>'s low
@@ -172,7 +175,7 @@ public sealed class Es1MfdFlashCommScreen : Es1MfdScreen {
 	/// </summary>
 	private void WriteRow(Es1PanelCanvas canvas, int row) {
 		var orders = _strings?.Group(OrderGroup) ?? [];
-		int order = Order(row);
+		int order = OrderOf(row);
 		if (order >= orders.Count) {
 			return;
 		}
@@ -180,8 +183,6 @@ public sealed class Es1MfdFlashCommScreen : Es1MfdScreen {
 		var entry = orders[order];
 		_rows[row].SetTextWithHotkey(canvas, entry.Attributes.Length > 0 ? entry.Attributes[0] : int.MaxValue, entry.Text);
 	}
-
-	private int Order(int row) => (_states[row] & SecondOrder) != 0 ? row + SecondOrderOffset : row;
 
 	private HudFont? Font(int index) => index < _fonts.Count ? _fonts[index] : null;
 }
