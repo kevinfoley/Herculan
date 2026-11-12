@@ -253,8 +253,10 @@ internal static class MissionText {
 		MissionObjective.ConditionEngaged => (group ? "True once any member has been engaged: " : "True once it has been engaged: ")
 			+ $"an enemy within {Metres(Es2.Sim.Detection.EngagementRange)} has spotted it, or it has hit the target it is aiming at.",
 		MissionObjective.ConditionDisarmed => group
-			? "True once every member has no working weapon left; a group with no members counts as disarmed."
-			: "True once it has no working weapon left.",
+			? "True once every member has no working weapon left. A destroyed member still counts as armed unless it ran out of "
+				+ "weapons first, so a wiped-out group is not disarmed. Use \"Are written off\" for that. A group with no members at "
+				+ "all counts as disarmed."
+			: "True once it has no working weapon left. Being destroyed does not make it disarmed.",
 		MissionObjective.ConditionUnengaged => group
 			? "True while no member has been engaged, the opposite of Have a member engaged."
 			: "True while it has not been engaged, the opposite of Is engaged.",
