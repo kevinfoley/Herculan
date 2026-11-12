@@ -8,19 +8,31 @@ using ImGuiNET;
 namespace Herculan.Engine.Menus;
 
 /// <summary>
-/// The menu bar [Shift+Esc] raises over the shell and over a mission, and the pointer at the window's top left over the
-/// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's; its "Game" menu, the shell's alone and absent over
-/// a mission (<see cref="GameMenu"/>); and the panels it opens: Debug and Mission Scripting (a mission's only, and only under <c>--developer</c>), Settings, Controller, Keys, Tweaks, Accessibility and About,
-/// of which a host greys Settings, Controller, Keys and Tweaks by passing none (Metaltech: Earthsiege's shell greys
-/// Controller and Keys, which have no counterpart there yet); the
-/// Editor item, which leaves the shell for the mission editor and is greyed over a mission; Custom Missions, the shell's
-/// alone and absent over a mission; and the
-/// first start's <see cref="WelcomeDialog"/>, the <see cref="UpdateDialog"/> and the <see cref="ErrorDialog"/>, which the shell raises without the bar; and a
-/// notice while the on-line manual opens. The game's own panels (Debug, Mission Scripting, Settings, Controller, Custom
-/// Missions) come in as <see cref="IMenuBarPanel"/>s. Hidden until <see cref="Show"/>, and never
-/// drawn into a <c>--screenshot</c> capture. Plain [Esc] is retail's in a mission, where it pans to and from the
-/// Heads-Down Display, so which key reaches the bar is each host's to decide: over a mission
-/// the game's simulator frame, over the shell <c>KeyboardRouting</c>.
+/// The menu bar over the shell and over a mission, and the panels and dialogs it owns. It is a HERCULAN addition, not a
+/// retail feature. It is hidden until <see cref="Show"/>, and is never drawn into a <c>--screenshot</c> capture.
+///
+/// <para>[Shift+Esc] raises the bar over the shell and over a mission. Over the shell, so does the pointer at the
+/// window's top left (<see cref="ShowOnHover"/>). Plain [Esc] belongs to retail in a mission, where it pans to and from
+/// the Heads-Down Display, so each host decides which key reaches the bar. In an ES2 mission that is the cockpit's
+/// keyboard handling (<c>SimulatorFrame</c>), and over ES2's shell it is the shell's key router
+/// (<c>KeyboardRouting</c>).</para>
+///
+/// <para>The bar's items, in order (<see cref="Items"/>):</para>
+/// <list type="bullet">
+/// <item>"Game", a menu over the shell only (<see cref="GameMenu"/>).</item>
+/// <item>Debug and Mission Scripting, over a mission only and only under <c>--developer</c>.</item>
+/// <item>Settings, Controller, Keys and Tweaks. A host greys any of these by passing none. ES1's shell greys Keys, which
+/// has no ES1 counterpart yet.</item>
+/// <item>Accessibility.</item>
+/// <item>Editor, which leaves the shell for the mission editor, and is greyed over a mission.</item>
+/// <item>Custom Missions, over the shell only.</item>
+/// <item>About.</item>
+/// </list>
+///
+/// <para>The game's own panels (Debug, Mission Scripting, Settings, Controller, Custom Missions) come in as
+/// <see cref="IMenuBarPanel"/>s. The bar also owns the first start's <see cref="WelcomeDialog"/>, the
+/// <see cref="UpdateDialog"/> and the <see cref="ErrorDialog"/>, which the shell raises without the bar, and a notice
+/// shown while the on-line manual opens.</para>
 /// </summary>
 public sealed class HostMenuBar : IEscapeMenu {
 	// The height of the zone ShowOnHover watches, in pixels on a 100% display (ScaledImGui.Scaled). Its width is the
@@ -114,9 +126,9 @@ public sealed class HostMenuBar : IEscapeMenu {
 
 	/// <summary>
 	/// Raises the bar while the pointer is within <see cref="HoverHeight"/> of the window's top edge and over the width
-	/// the bar's items come up in (<see cref="ItemsWidth"/>). A host that wants the zone calls this
-	/// each frame inside the ImGui frame, before <see cref="Draw"/>; when to skip it is the host's to decide. The bar
-	/// hides again as it does however it was raised, by a click outside it.
+	/// the bar's items come up in (<see cref="ItemsWidth"/>). A host that wants the zone calls this each frame inside the
+	/// ImGui frame, before <see cref="Draw"/>, and may skip the call when it wants. However the bar was raised, a click
+	/// outside it hides the bar.
 	/// </summary>
 	public void ShowOnHover() {
 		// ImGui's pointer is in its own frame's units, which ScaledImGui.Scaled converts to. One it has lost reads
@@ -144,10 +156,15 @@ public sealed class HostMenuBar : IEscapeMenu {
 	}
 
 	/// <summary>
-	/// The bar's items in order, each its label's localization key, whether it can be chosen, and what choosing it does,
-	/// or for a menu the items drawn while it is open: the one list <see cref="Draw"/> draws and <see cref="ItemsWidth"/>
-	/// measures, ImGui laying a menu out in the bar as it does an item. A bare item per panel, no checkmark, since each
-	/// panel closes itself.
+	/// The bar's items in order: the one list that <see cref="Draw"/> draws and <see cref="ItemsWidth"/> measures. ImGui
+	/// lays out a menu in the bar the same way as an item, so both can share the list.
+	/// <list type="bullet">
+	/// <item><c>Key</c>: the label's localization key.</item>
+	/// <item><c>Enabled</c>: whether the item can be chosen; a greyed item cannot.</item>
+	/// <item><c>Choose</c>: what choosing the item does.</item>
+	/// <item><c>MenuItems</c>: for a menu, draws its items while it is open; null for a plain item.</item>
+	/// </list>
+	/// Each panel's item is a plain item with no checkmark, since the panel has its own way to close.
 	/// </summary>
 	private IEnumerable<(string Key, bool Enabled, Action Choose, Action? MenuItems)> Items() {
 		if (_game != null) {
@@ -176,11 +193,12 @@ public sealed class HostMenuBar : IEscapeMenu {
 	}
 
 	/// <summary>
-	/// The menu bar input: <see cref="BackOut"/>, or <see cref="Show"/> when there was nothing to back out of; and while the
-	/// bar is still up, the bar takes the focus with the highlight on its first item, so the pad can go on from there.
-	/// While the Controller window's Detect is listening it does none of that: Detect stops and the window says
-	/// <paramref name="input"/>, the control pressed, opens the menu bar and cannot be rebound
-	/// (<see cref="ControllerWindow.RefuseMenuBarInput"/>).
+	/// Handles the menu bar input. It calls <see cref="BackOut"/>, or <see cref="Show"/> when there was nothing to back out
+	/// of. If the bar is still up afterwards, the bar takes the focus with the highlight on its first item, so the pad can
+	/// go on from there.
+	/// <para>While the Controller window is listening for a control to bind (<see cref="ControllerWindow.Listening"/>), the
+	/// press does none of that. Listening stops, and the window says that <paramref name="input"/> is reserved for the menu bar and cannot be bound
+	/// to anything else (<see cref="ControllerWindow.RefuseMenuBarInput"/>).</para>
 	/// </summary>
 	/// <param name="input">The control pressed: a Custom profile's menu bar input, or by default a gamepad's Back.</param>
 	public void RaiseOrBackOut(ControllerInput? input = null) {
@@ -197,10 +215,11 @@ public sealed class HostMenuBar : IEscapeMenu {
 	}
 
 	/// <summary>
-	/// [Esc]'s step back: takes down whichever panel is up, else hides the bar. Returns false when neither
-	/// was up, leaving the key to the host. Tweaks and Accessibility go through their Cancel, so an edit made but not saved is
-	/// discarded rather than left applied but unpersisted. The welcome and the error notice go as their OK does, the update notice
-	/// as its Close does. The game's panels go through their own <see cref="IMenuBarPanel.BackOut"/>.
+	/// [Esc]'s step back: closes every open panel, or, when none is open, hides the bar. Returns false when neither was
+	/// up, leaving the key to the host. Tweaks and Accessibility close through their Cancel, so an edit made but not saved
+	/// is discarded rather than left applied but unsaved. The welcome and the error notice are dismissed the way their OK
+	/// button does, and the update notice the way its Close button does. The game's panels close through their own
+	/// <see cref="IMenuBarPanel.BackOut"/>.
 	/// </summary>
 	public bool BackOut() {
 		if (PanelOpen) {
@@ -236,10 +255,10 @@ public sealed class HostMenuBar : IEscapeMenu {
 	}
 
 	/// <summary>
-	/// Draws the bar, when it is up, and its panels, when they are; a host with a Debug panel or a Mission Scripting window
-	/// draws those itself, since they need the host's state. <paramref name="owner"/> is the native window a folder
-	/// picker belongs to, and <paramref name="fullScreen"/> whether that window is full screen, which
-	/// <see cref="PanelCentring"/> watches. Call once per frame inside the ImGui frame.
+	/// Draws the bar, when it is up, and its open panels, except the Debug panel and the Mission Scripting window, which
+	/// the host draws itself since they need the host's state. <paramref name="owner"/> is the native window a folder
+	/// picker belongs to. <paramref name="fullScreen"/> is whether that window is full screen, and
+	/// <see cref="PanelCentring"/> watches it. Call once per frame inside the ImGui frame.
 	/// </summary>
 	public void Draw(nint owner, bool fullScreen) {
 		_centring.Update(fullScreen);

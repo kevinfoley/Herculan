@@ -11,13 +11,14 @@ namespace Herculan.Engine.Input;
 /// devices"). This engine's own file; retail never reads it.
 ///
 /// <para>The player keeps one, in <see cref="UserConfig.Folder"/>, which every game reads and writes
-/// (<see cref="PlayerPath"/>). An install's <c>data</c> folder may hold one an earlier build kept there, which seeds the
-/// player's while the player's is missing (<see cref="LoadForPlayer(string?)"/>) and is read for nothing else.</para>
+/// (<see cref="PlayerPath"/>). An install's <c>data</c> folder may hold one an earlier build kept there. That copy
+/// supplies the initial copy of the player's file when that file is missing (<see cref="LoadForPlayer(string?)"/>), and
+/// is read for nothing else.</para>
 ///
 /// <para>Each map is an INI section. <c>[Gamepad]</c> serves every gamepad, since GLFW reads all of them in one
-/// layout, and also carries how one works as the mouse (<see cref="Mouse"/>). <c>[Joystick &lt;GUID&gt;]</c> serves one model of joystick, by the GUID GLFW gives it, and <c>[Joystick]</c>
-/// any joystick without a section of its own, which is also the one section a file written before per-device sections
-/// has.</para>
+/// layout. It also carries how a gamepad works as the mouse (<see cref="Mouse"/>). <c>[Joystick &lt;GUID&gt;]</c> serves
+/// one model of joystick, by the GUID GLFW gives it. <c>[Joystick]</c> serves any joystick without a section of its own,
+/// and it is the only section that a file written before per-device sections contains.</para>
 ///
 /// <para>A joystick's section also says which <see cref="ControllerMode"/> it runs in, and may hold its Custom
 /// <see cref="ControllerProfile"/> beside Original's <see cref="JoystickDeviceMap"/>, so switching modes loses neither
@@ -38,7 +39,7 @@ public sealed class JoystickMapFile {
 
 	/// <summary>
 	/// A section: Original's map, the device's mode, its Custom profile when the section has one, and the name of the device
-	/// it was saved from, kept so the file stays readable.
+	/// it was saved from. The name is written so a person reading the file can tell which device a section belongs to.
 	/// </summary>
 	private sealed record Entry(string Section, JoystickDeviceMap Map, string? DeviceName, ControllerMode Mode, ControllerProfile? Profile);
 
@@ -80,17 +81,17 @@ public sealed class JoystickMapFile {
 	}
 
 	/// <summary>
-	/// Reads the player's file (<see cref="PlayerPath"/>), seeding it first from the copy in the running game's
-	/// <paramref name="installDataDirectory"/> while it is missing, as <see cref="LoadForPlayer(string, string?)"/> says.
+	/// Reads the player's file (<see cref="PlayerPath"/>). When it is missing, it is first copied from the running game's
+	/// <paramref name="installDataDirectory"/>, as <see cref="LoadForPlayer(string, string?)"/> says.
 	/// </summary>
 	public static JoystickMapFile LoadForPlayer(string? installDataDirectory) => LoadForPlayer(PlayerPath,
 		installDataDirectory is null ? null : CaseInsensitivePath.Combine(installDataDirectory, FileName));
 
 	/// <summary>
 	/// Reads <paramref name="playerPath"/>. While it is missing and <paramref name="installPath"/> exists, the install's
-	/// copy is written there first, so the maps a player set up for one game serve every game from then on; with no
-	/// install copy nothing is written, which leaves the seeding to the next game that has one. A seed that cannot be
-	/// written reads the install's copy for this run.
+	/// copy is first written to <paramref name="playerPath"/>, so the maps a player set up for one game serve every game
+	/// from then on. With no install copy nothing is written, which leaves that to the next game that has one. If the copy
+	/// cannot be written, this run reads the install's copy instead.
 	/// </summary>
 	public static JoystickMapFile LoadForPlayer(string playerPath, string? installPath) {
 		if (File.Exists(playerPath)) {
@@ -124,7 +125,7 @@ public sealed class JoystickMapFile {
 
 	/// <summary>
 	/// Stores the device's Original-mode map in the device's own section, creating that section if the file has none. A new
-	/// section starts from the settings of the section that served the device. The change stays in memory until
+	/// section starts as a copy of the section that serves the device. The change stays in memory until
 	/// <see cref="Save"/>.
 	/// </summary>
 	public void Set(bool isGamepad, string? guid, string? deviceName, JoystickDeviceMap map) =>
@@ -132,8 +133,8 @@ public sealed class JoystickMapFile {
 
 	/// <summary>
 	/// The device's mode: <see cref="ControllerMode.Custom"/> for a gamepad, always; for a joystick what its section says,
-	/// <see cref="ControllerMode.Original"/> for a section written before modes existed, and Custom when the file has no
-	/// section for it.
+	/// <see cref="ControllerMode.Original"/> for a section with no valid Mode (one written before modes existed, or one
+	/// whose Mode is misspelled or a number), and Custom when the file has no section for it.
 	/// </summary>
 	public ControllerMode ModeFor(bool isGamepad, string? guid) =>
 		isGamepad ? ControllerMode.Custom : Find(isGamepad, guid)?.Mode ?? ControllerMode.Custom;
@@ -141,8 +142,8 @@ public sealed class JoystickMapFile {
 	/// <summary>
 	/// The Custom profile saved in the device's section. Returns null when the section has no Custom settings, or when the
 	/// file has no section for the device; the caller then uses the device's default (<see cref="ControllerProfile.ForDevice"/>).
-	/// For a gamepad, <see cref="ControllerProfile.GamepadMenuBarInput"/> always opens the menu bar, whatever the file binds
-	/// to it (<see cref="ControllerProfile.WithMenuBarPinnedTo"/>).
+	/// For a gamepad, <see cref="ControllerProfile.GamepadMenuBarInput"/> is always pinned to the menu bar, whatever the
+	/// file binds (<see cref="ControllerProfile.WithMenuBarPinnedTo"/>).
 	/// </summary>
 	public ControllerProfile? ProfileFor(bool isGamepad, string? guid) {
 		var profile = Find(isGamepad, guid)?.Profile;
@@ -176,8 +177,9 @@ public sealed class JoystickMapFile {
 
 	/// <summary>
 	/// Writes every section to <paramref name="path"/>, gamepads first, then the shared joystick section, then each
-	/// model's, through <see cref="UserConfig.TryWrite"/>; returns false, with the reason in <paramref name="error"/>, 
-	/// when the write fails.
+	/// model's, through <see cref="UserConfig.TryWrite"/>; returns false, with the reason in <paramref name="error"/>,
+	/// when the write fails. When <see cref="Mouse"/> differs from the defaults and the file has no <c>[Gamepad]</c>
+	/// section, this creates one to hold the mouse settings.
 	/// </summary>
 	public bool Save(string path, out string? error) {
 		// Mouse settings changed with no gamepad section yet: the section they go in.

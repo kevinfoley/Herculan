@@ -4,10 +4,10 @@ using Silk.NET.Input;
 namespace Herculan.Engine.Input;
 
 /// <summary>
-/// One connected controller as the joystick layer reads it, positional axes, buttons and hats, from whichever of
+/// One connected controller as the joystick layer reads it: axes (as positions), buttons and hats, from whichever of
 /// Silk.NET's two device lists it is in.
 ///
-/// <para><b>Silk.NET's GLFW backend puts a device in one list or the other.</b> A device GLFW recognises as a gamepad,
+/// <para><b>Silk.NET's GLFW backend puts a device in one list or the other.</b> A device GLFW recognizes as a gamepad,
 /// which is every Xbox-compatible pad and Steam Input's virtual one, is an <see cref="IGamepad"/>, and the
 /// <see cref="IJoystick"/> in the same slot reports itself disconnected. Anything else, such as a stick or a HOTAS, is an
 /// <see cref="IJoystick"/> only. Both lists hold all sixteen of GLFW's slots, and a slot number names the same device in
@@ -45,7 +45,7 @@ public sealed class ControllerDevice {
 
 	/// <summary>
 	/// GLFW's GUID for the device's model, which picks its section of <see cref="JoystickMapFile"/>; null when GLFW gives
-	/// none. Two of the same model share it, and which port it is plugged into does not change it.
+	/// none. Two devices of the same model share a GUID, and which port a device is plugged into does not change it.
 	/// </summary>
 	public string? Guid {
 		get {
@@ -58,8 +58,8 @@ public sealed class ControllerDevice {
 	public string Name => (_gamepad?.Name ?? _joystick!.Name) is { } name && !string.IsNullOrWhiteSpace(name) ? name : "?";
 
 	/// <summary>
-	/// How many axes it reports. A joystick reports none until the first input update after it connects, a frame after
-	/// it is published; a gamepad always reports its six.
+	/// How many axes it reports. A joystick reports none until the first input update after it connects; a gamepad always
+	/// reports its six.
 	/// </summary>
 	public int AxisCount => _gamepad != null ? GamepadAxes : _joystick!.Axes.Count;
 
@@ -84,10 +84,10 @@ public sealed class ControllerDevice {
 		};
 	}
 
-	/// <summary>Where a gamepad's axis <paramref name="index"/> sits at rest: a stick centred at 0, a trigger let go at -1.</summary>
+	/// <summary>Where a gamepad's axis <paramref name="index"/> sits at rest: a stick centered at 0, a trigger let go at -1.</summary>
 	public static float GamepadAxisAtRest(int index) => index is 4 or 5 ? -1f : 0f;
 
-	/// <summary>Whether button <paramref name="index"/> is held; false for one it does not have.</summary>
+	/// <summary>Whether button <paramref name="index"/> is pressed; false for one it does not have.</summary>
 	public bool Button(int index) {
 		var buttons = _gamepad?.Buttons ?? _joystick!.Buttons;
 		return index >= 0 && index < buttons.Count && buttons[index].Pressed;
@@ -144,13 +144,13 @@ public sealed class ControllerDevice {
 	public bool Reserved(int index) =>
 		IsGamepad && index is GamepadBack or GamepadStart or GamepadLeftStick or GamepadRightStick;
 
-	/// <summary>Whether button <paramref name="index"/> is held for the bindings: a <see cref="Reserved"/> one reads as up.</summary>
+	/// <summary>Whether button <paramref name="index"/> is pressed, as a map's bindings see it: a <see cref="Reserved"/> one is never pressed.</summary>
 	public bool BindableButton(int index) => !Reserved(index) && Button(index);
 
-	/// <summary>One frame of the device read through <paramref name="map"/> (<see cref="JoystickDeviceMap.Read"/>), its hat the map's.</summary>
+	/// <summary>One frame of the device read through <paramref name="map"/> (<see cref="JoystickDeviceMap.Read"/>), using the hat that the map names.</summary>
 	public JoystickReading Read(JoystickDeviceMap map) => map.Read(Axis, BindableButton, Hat(map.HatIndex));
 
-	/// <summary>Whether <paramref name="source"/>, a button the map binds outside its eight, is held on this device.</summary>
+	/// <summary>Whether <paramref name="source"/>, a control the map binds outside the eight CONTROLS buttons, is pressed on this device.</summary>
 	public bool Held(JoystickButtonSource source) => source.Pressed(Axis, BindableButton);
 
 	/// <summary>Whether any button is held.</summary>
@@ -164,7 +164,7 @@ public sealed class ControllerDevice {
 		return false;
 	}
 
-	/// <summary>Which directions hat <paramref name="index"/> is pushed in, a gamepad's being its d-pad's buttons.</summary>
+	/// <summary>Which directions hat <paramref name="index"/> is pushed in. For a gamepad, hat 0 is the d-pad's four buttons.</summary>
 	public JoystickHat Hat(int index) {
 		if (_gamepad == null) {
 			return index >= 0 && index < _joystick!.Hats.Count ? HatOf(_joystick.Hats[index].Position) : JoystickHat.None;
@@ -192,7 +192,7 @@ public sealed class ControllerDevice {
 
 	/// <summary>
 	/// The device in <paramref name="slot"/>, or null when nothing is connected there. Silk's own deadzone is turned off:
-	/// the original's band is applied in <see cref="JoystickDeviceMap.Read"/>, and two stacked deadzones would eat a fifth
+	/// retail's deadzone is applied in <see cref="JoystickDeviceMap.Read"/>, and two stacked deadzones would eat a fifth
 	/// of the travel twice over.
 	/// </summary>
 	public static ControllerDevice? At(IInputContext input, int slot) {
@@ -221,8 +221,8 @@ public sealed class ControllerDevice {
 	}
 
 	/// <summary>
-	/// The device a mission reads: the first connected one <paramref name="file"/> has a map for, else the first connected
-	/// one; null when none is.
+	/// The device a mission reads: the first connected device that <paramref name="file"/> has a map for, else the first
+	/// connected device; null when none is connected.
 	/// </summary>
 	public static ControllerDevice? Pick(IInputContext input, JoystickMapFile file) =>
 		Connected(input).FirstOrDefault(device => device.MapIn(file) != null) ?? Connected(input).FirstOrDefault();
@@ -231,8 +231,8 @@ public sealed class ControllerDevice {
 	public JoystickDeviceMap? MapIn(JoystickMapFile file) => file.For(IsGamepad, Guid);
 
 	/// <summary>
-	/// The map for this device's reported counts that applies when the file has none; null until a joystick has
-	/// reported them (see <see cref="AxisCount"/>).
+	/// The default map for the device's reported counts, used when the file has none; null until a joystick has reported
+	/// its counts (see <see cref="AxisCount"/>).
 	/// </summary>
 	public JoystickDeviceMap? Defaults() =>
 		IsGamepad ? JoystickDeviceMap.ForGamepad()
@@ -240,8 +240,8 @@ public sealed class ControllerDevice {
 		: JoystickDeviceMap.ForDevice(AxisCount, ButtonCount, HatCount);
 
 	/// <summary>
-	/// Silk's own eight-way hat position, cut back to the four the format has bytes for.
-	/// <see cref="JoystickDeviceMap"/> decides what happens to a diagonal — retail drops it.
+	/// Silk's eight hat positions as combinations of the four direction flags, a diagonal setting two.
+	/// <see cref="JoystickDeviceMap"/> decides what happens to a diagonal; retail ignores one.
 	/// </summary>
 	private static JoystickHat HatOf(Position2D position) => position switch {
 		Position2D.Up => JoystickHat.North,
