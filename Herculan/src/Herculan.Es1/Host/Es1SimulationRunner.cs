@@ -9,7 +9,7 @@ namespace Herculan.Es1.Host;
 
 /// <summary>
 /// The simulator in a host window: the host's keyboard and the mouse driver into ES1's input (<see cref="Es1HostKeyboard"/>,
-/// <see cref="Es1HostMouse"/>), the input build (<see cref="Es1InputBuild"/>), and once a host frame the clock and,
+/// <see cref="Es1HostMouse"/>), the input read (<see cref="Es1PlayerInputReader"/>), and once a host frame the clock and,
 /// when it answers a tick, <see cref="Es1Simulation.MainTick"/>, in the order of <c>Sim_Main</c>'s frame
 /// (docs/es1/simulation/main-loop.md#the-frame). It is built once the window's devices are known, since the keyboard
 /// seeds its modifiers from the host's.
@@ -47,11 +47,11 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// <param name="widgets">What <c>Widget_LoadStylesAndFonts</c> loaded at the mission start, which the panels draw with.</param>
 	/// <param name="content">The volumes the panels' own files are read from.</param>
 	/// <param name="tape">
-	/// The tape <c>-p</c> or <c>-D</c> opened, which the input build plays and whose <c>DemoMode</c> the axis keys take;
+	/// The tape <c>-p</c> or <c>-D</c> opened, which the input read plays and whose <c>DemoMode</c> the axis keys take;
 	/// <c>Keyjoy_LoadConfig</c> then reads the tape's <c>tapes\keyjoy.cfg</c>.
 	/// </param>
 	/// <param name="recording">
-	/// The tape <c>-r</c> started, to which the input build appends each frame with the tick's <c>SimTickDelta</c>.
+	/// The tape <c>-r</c> started, to which the input read appends each frame with the tick's <c>SimTickDelta</c>.
 	/// </param>
 	/// <param name="fullScreenKey">The window's [Alt+Enter], which takes its keys before the simulator sees them.</param>
 	public Es1SimulationRunner(Es1World world, string installRoot, Es1Preferences preferences, IKeyboard? keyboard,
@@ -66,7 +66,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 		}
 
 		keyboardInput.AxisKeys.DemoMode = tape?.DemoMode == true;
-		var input = new Es1InputBuild(keyboardInput, mouse ?? new Es1HostMouse(), preferences,
+		var input = new Es1PlayerInputReader(keyboardInput, mouse ?? new Es1HostMouse(), preferences,
 			Es1KeyjoyConfig.Load(installRoot, tape?.Playing == true), new Es1ControlsState(preferences), port) {
 			CockpitMouse = viewChain?.Manager?.Mouse,
 			Tape = tape,

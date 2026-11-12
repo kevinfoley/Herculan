@@ -606,7 +606,7 @@ public sealed class ModalPanels {
 	}
 
 	// The stick as AlertPanel_HandleEvent reads it, for every panel but the CONTROLS panel. The trigger is the
-	// input build's +0x0d, the button on the walker's first FIRE row (JoystickBindings.TriggerScanRow) after the
+	// input read's +0x0d, the button on the walker's first FIRE row (JoystickBindings.TriggerScanRow) after the
 	// latch; button 2 is +0x17, the second button's own byte, which that build zeroes when it is the trigger's.
 	// Answering one latches it: Input_LatchButton(2, 1) for button 2, and (1, 1) for the trigger, which latches
 	// button 0 wherever the trigger is bound — the same button on every binding the CONTROLS panel can set.
@@ -651,7 +651,7 @@ public sealed class ModalPanels {
 		}
 	}
 
-	// The device's eight with the latch applied. Retail latches the button it acts on and the next input build
+	// The device's eight with the latch applied. Retail latches the button it acts on and the next input read
 	// masks it to zero until it is let go, so a held button acts once and no more, and a panel sees a latched
 	// button as not pressed at all.
 	private byte LiveStickButtons(IJoystickSource joystick) {

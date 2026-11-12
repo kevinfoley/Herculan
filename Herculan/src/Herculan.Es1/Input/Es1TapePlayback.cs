@@ -10,9 +10,9 @@ namespace Herculan.Es1.Input;
 /// open the tape as <c>TapeFile</c> (<c>000b5b82</c>), set <c>TapePlayback</c> (<c>000b5b76</c>) and unpack the bundle
 /// over the install's files (docs/es1/simulation/main-loop.md#the-command-line,
 /// docs/es1/formats/tap-input-tape.md#the-bundle); <c>DemoTape_PickRandom</c> (<c>0005771c</c>), <c>-D</c>'s name
-/// (docs/es1/formats/tap-input-tape.md#the-demo-tape); and the frame reads <c>Input_BuildPlayerDevice</c> makes, with
+/// (docs/es1/formats/tap-input-tape.md#the-demo-tape); and the frame reads <c>Input_ReadPlayerInput</c> makes, with
 /// <c>Input_CursorPos</c> and its first frame's latch (docs/es1/simulation/input.md#recording-and-playback). The
-/// input build reads the frames (<see cref="Es1InputBuild"/>); <see cref="Playing"/> is <c>TapePlayback</c> for every
+/// input read takes the frames (<see cref="Es1PlayerInputReader"/>); <see cref="Playing"/> is <c>TapePlayback</c> for every
 /// other reader.
 ///
 /// <para>The tape is read whole through HercWorks.Core (<see cref="Es1InputTapeTransformer"/>), and each frame read
@@ -66,7 +66,7 @@ public sealed class Es1TapePlayback {
 	/// </summary>
 	public bool DemoMode { get; }
 
-	/// <summary><c>TapePlayback</c> (<c>000b5b76</c>): set from the open until the input build ends the tape.</summary>
+	/// <summary><c>TapePlayback</c> (<c>000b5b76</c>): set from the open until the input read ends the tape.</summary>
 	public bool Playing { get; private set; } = true;
 
 	/// <summary>The index of the next frame <see cref="Read"/> takes.</summary>
@@ -87,7 +87,7 @@ public sealed class Es1TapePlayback {
 	/// <summary>The next frame, without taking it; none past the last.</summary>
 	public Es1InputTape.Frame? Peek() => Position < Tape.Frames.Count ? Tape.Frames[Position] : null;
 
-	/// <summary>The input build's two <c>fread</c>s of a frame: the next frame, or none for a short read.</summary>
+	/// <summary>The input read's two <c>fread</c>s of a frame: the next frame, or none for a short read.</summary>
 	public Es1InputTape.Frame? Read() {
 		var frame = Peek();
 		if (frame != null) {
@@ -97,7 +97,7 @@ public sealed class Es1TapePlayback {
 		return frame;
 	}
 
-	/// <summary>The input build's end of the tape: <c>fclose</c>(<c>TapeFile</c>) and <c>TapePlayback</c> = 0.</summary>
+	/// <summary>The input read's end of the tape: <c>fclose</c>(<c>TapeFile</c>) and <c>TapePlayback</c> = 0.</summary>
 	public void Close() => Playing = false;
 
 	/// <summary>

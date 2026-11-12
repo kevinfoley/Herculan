@@ -438,7 +438,7 @@ public sealed class Es1WeaponMount {
 	/// <c>GrenadeMount_TriggerHeld</c>, the hold-to-throw: a press starts the throw at <see cref="ThrowStart"/> and does not
 	/// fire; held, the distance grows <see cref="ThrowGrowth"/> a call and does not fire until it passes
 	/// <see cref="ThrowLimit"/>; a release, or passing the limit, fires, and still held latches the trigger,
-	/// <c>Input_LatchButton</c> (<c>0004d8c8</c>)(1, 1), so the next build reads it released.
+	/// <c>Input_LatchButton</c> (<c>0004d8c8</c>)(1, 1), so the next read takes it released.
 	/// </summary>
 	private bool GrenadeTriggerHeld(byte trigger, Es1ButtonLatches? latches) {
 		if (!Charging) {

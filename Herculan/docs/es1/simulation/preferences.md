@@ -90,7 +90,7 @@ The readers of options 3 to 6 read the byte every frame, so the outside view beh
 1. With no sound manager (`Sound_Manager` (`000959ac`), [the sound manager](../formats/sound-samples.md)) it puts MUSIC, SOUNDS and RADIO, widgets 0 to 2, in state 2, which the mouse's hit test and `AlertPanel_PressWidget` pass over ([press, release and drag](cockpit-mouse.md#press-release-and-drag), [keys](alert-panels.md#keys--alertpanel_handleevent-00046670)); ES2's greys its first four rows.
 2. Clears the action `+0x340` (−1); `AlertPanel_Enter`, which draws the panel on the page on the screen ([putting a panel up](alert-panels.md#putting-a-panel-up-and-taking-it-down)); `AlertPanel_SetFocus`(panel, 0), MUSIC.
 3. Copies the panel's region from the page on the screen to the display's `+0x8c` at the same place (`Region_CopyBetweenPages`, the cursor hidden around it), so both pages hold it, and makes `+0x88` the draw page again.
-4. Until the close byte `+0x2b9` is set: `Input_BuildPlayerDevice` and the block to slot `+0x14`, `PreferencesPanel_HandleEvent`; a click on a button, through `PanelButton_OnClick`, reaches slot `+0x10`, `PreferencesPanel_OnClick`, which stores the widget's index at `+0x340` and bit 1 of the click's flags, the right button, at `+0x2e7` ([the panel's buttons](alert-panels.md#the-panels-buttons)). Then, for an action other than −1:
+4. Until the close byte `+0x2b9` is set: `Input_ReadPlayerInput` and the block to slot `+0x14`, `PreferencesPanel_HandleEvent`; a click on a button, through `PanelButton_OnClick`, reaches slot `+0x10`, `PreferencesPanel_OnClick`, which stores the widget's index at `+0x340` and bit 1 of the click's flags, the right button, at `+0x2e7` ([the panel's buttons](alert-panels.md#the-panels-buttons)). Then, for an action other than −1:
 
    | Action | Does |
    |---|---|
@@ -161,7 +161,7 @@ In panel coordinates, which the screen has 48 columns right and 45 rows lower:
 
 1. Copies options 7, 8, 10, 9 and 11 to `+0x39c` to `+0x3a0`, and keeps: `+0x3a1` 2 when option 7 is 2 and 0 otherwise; `+0x3a2` option 8, or 1 when that is 0; `+0x3a3` option 9; and `+0x3a4` and `+0x3a5`, options 7 and 9 as last applied to the devices.
 2. `AlertPanel_Enter`, `AlertPanel_SetFocus`(panel, 0), JOYSTICK.
-3. Until the close byte is set: `Input_BuildPlayerDevice` and the block to `AlertPanel_HandleEvent`; for an action other than 0, the case below, each row it changes redrawn with `ControlsPanel_RefreshRow`; the action back to 0; then each widget's per-frame slot `+0x10`.
+3. Until the close byte is set: `Input_ReadPlayerInput` and the block to `AlertPanel_HandleEvent`; for an action other than 0, the case below, each row it changes redrawn with `ControlsPanel_RefreshRow`; the action back to 0; then each widget's per-frame slot `+0x10`.
 4. `AlertPanel_Leave`; returns bit 0 of the close byte, 1.
 
 The loop calls no draw hook, so the outside view stands still under it, and it draws on the page on the screen alone; the panel keeps the screen under itself and puts it back on leaving ([putting a panel up](alert-panels.md#putting-a-panel-up-and-taking-it-down)).

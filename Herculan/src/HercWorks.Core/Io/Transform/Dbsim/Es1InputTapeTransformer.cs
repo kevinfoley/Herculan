@@ -5,7 +5,7 @@ namespace HercWorks.Core.Io.Transform.Dbsim;
 /// <summary>
 /// Transforms byte[] data to and from ES1's .TAP input tapes (see <see cref="Es1InputTape"/> for the model and
 /// docs/es1/formats/tap-input-tape.md#the-frames for the format). New: no Java equivalent — read from ES1DBSIM's own
-/// writer and reader, <c>Input_BuildPlayerDevice</c> (<c>0004cb14</c>).
+/// writer and reader, <c>Input_ReadPlayerInput</c> (<c>0004cb14</c>).
 ///
 /// <para>The frame stream has no count and no terminator: playback reads a frame's 14 bytes and its mouse-event count
 /// and stops when either read comes up short. A trailing record whose bytes run short is dropped here, as

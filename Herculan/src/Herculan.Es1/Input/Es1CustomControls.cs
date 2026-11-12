@@ -5,7 +5,7 @@ using Silk.NET.Input;
 namespace Herculan.Es1.Input;
 
 /// <summary>
-/// One frame of a Custom profile as the input build takes it (<see cref="Es1CustomControls.Read"/>).
+/// One frame of a Custom profile as the input read takes it (<see cref="Es1CustomControls.Read"/>).
 /// </summary>
 /// <param name="Steering">The steering function, in the port's calibrated ±128 (<see cref="IEs1GamePort"/>).</param>
 /// <param name="Throttle">The throttle function, the same.</param>
@@ -24,8 +24,8 @@ public sealed record Es1CustomFrame(int Steering, int Throttle, int Twist, int P
 /// <summary>
 /// <b>This engine's own:</b> a Custom profile (<see cref="ControllerProfile"/>) as <i>Metaltech: Earthsiege</i> reads it, the
 /// HERC's half (docs/herculan/joystick-config.md, "Setting up a stick"). In place of option 7's configuration
-/// (<see cref="Es1StickConfigurations"/>) the input build takes each axis function straight onto its own axis of the input
-/// block, Fire onto the trigger and the four views onto the block's buttons 4–7 (<see cref="Es1InputBuild.Custom"/>); every
+/// (<see cref="Es1StickConfigurations"/>) the input read takes each axis function straight onto its own axis of the input
+/// block, Fire onto the trigger and the four views onto the block's buttons 4–7 (<see cref="Es1PlayerInputReader.Custom"/>); every
 /// other action goes in as the key ES1 gives it (<see cref="ChordOf"/>, <see cref="Es1CustomKeys"/>).
 ///
 /// <para>An axis reads as the port gives a calibrated stick: the device's travel as ±128, inverted as the profile says,
@@ -33,7 +33,7 @@ public sealed record Es1CustomFrame(int Steering, int Throttle, int Twist, int P
 /// band leaves it (docs/es1/simulation/joystick.md#normalising-an-axis).</para>
 ///
 /// <para>A throttle the profile reads as a lever (<see cref="ControllerProfile.ThrottleReading"/>) gives a throttle
-/// position instead (<see cref="LeverTarget"/>), which the input build turns into the rate that takes the throttle
+/// position instead (<see cref="LeverTarget"/>), which the input read turns into the rate that takes the throttle
 /// there: ES1's throttle reads every axis as a rate
 /// (docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc), so the lever is carried
 /// over from Earthsiege 2's (docs/retail/simulation/mech-locomotion.md#control-law-mech_locomotiontick).</para>

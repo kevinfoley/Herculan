@@ -26,7 +26,7 @@ Sixty-two `PUSH 0x4d261d` in the image besides the seeding one hand the simulati
 
 **The zone's roll comes first.** DBSIM plays one mission per run: `Sim_Run` (`0045f144`) calls `Sim_InitMissionSession` once. That loads the zone inside `DBSim_LoadScriptDat` (`Terrain_LoadZone` at `004252f7`) before `DBSim_SpawnMissionObjects` (`0046171f`) builds the first object, and every caller `es2_xref.py` finds for the functions below is a pass of the tick, a method of a live object, the spawn or the zone loader. So the zone's material roll ([`../rendering/terrain-texturing.md`](../rendering/terrain-texturing.md#retail-numbers)) takes the head of the stream, and a zone scatters the same way on every load ([Open](#open)). The spawn's `Mech_ApplyStartingCondition` draws next.
 
-**Everything else draws inside `Sim_MainTick` (`0045f464`)**, whose passes run in the fixed order [the tick](main-loop.md#the-tick) lists: the input build, the effect, projectile and structure pools, the group pass, the player's input poll, the triggers and the per-machine pass, and the status poll.
+**Everything else draws inside `Sim_MainTick` (`0045f464`)**, whose passes run in the fixed order [the tick](main-loop.md#the-tick) lists: the input read, the effect, projectile and structure pools, the group pass, the player's input poll, the triggers and the per-machine pass, and the status poll.
 
 The 62 sites, by function, with the callers `es2_xref.py` finds:
 

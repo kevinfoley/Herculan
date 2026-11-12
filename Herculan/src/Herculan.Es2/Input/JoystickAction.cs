@@ -11,7 +11,7 @@ namespace Herculan.Es2.Input;
 /// <para>The codes are dispatched by <c>Sim_PollPlayerInput</c> (<c>00460764</c>), whose switch runs
 /// over <c>SimOptions[ControlsOptionBase + 4 + button]</c>. <see cref="Fire"/> never reaches that
 /// switch: the button bound to it is pulled out one step earlier, in
-/// <c>Input_BuildPlayerDevice</c>, and copied into the device struct's held trigger byte at
+/// <c>Input_ReadPlayerInput</c>, and copied into the device struct's held trigger byte at
 /// <c>+0x0d</c> — its own byte is zeroed on the way, so
 /// the dispatch loop never sees it.</para>
 ///

@@ -149,7 +149,7 @@ public sealed class CockpitView {
 	public bool ControlsDriveCamera => Chain is { InputDrivesCamera: true } && !MouseOutsideView;
 
 	// The controls go to a camera or to an electro-optical round: InputDrivesCamera or DAT_004d25aa, the
-	// pair Input_BuildPlayerDevice tests together.
+	// pair Input_ReadPlayerInput tests together.
 	public bool ControlsOnCamera => ControlsDriveCamera || _scene.World.PlayerMissile.Flown;
 
 	// The two view changes share CockpitView_QueueViewCommand's gate on the current view: the pan down

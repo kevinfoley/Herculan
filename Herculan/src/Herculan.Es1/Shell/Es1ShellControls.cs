@@ -169,7 +169,7 @@ public sealed class Es1ShellAlertInput : Es1AlertInput {
 	/// buttons, and its eight buttons from <c>+0x1d</c>, which <c>AlertPanel_HandleEvent</c> and the controls panel's
 	/// JOYSTICK read where the simulator's read <c>+0x15</c>.
 	/// </summary>
-	public override Es1PlayerInputBlock Build() {
+	public override Es1PlayerInputBlock Read() {
 		var live = _poll();
 		var block = new Es1PlayerInputBlock {
 			CommandWord = live.CommandWord,

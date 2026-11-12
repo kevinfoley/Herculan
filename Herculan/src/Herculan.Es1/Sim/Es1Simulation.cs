@@ -42,7 +42,7 @@ public sealed class Es1Simulation {
 	/// <summary>The simulation of <paramref name="world"/>, whose <c>LocalPlayerMech</c> it requires.</summary>
 	/// <param name="viewChain">The views and cameras the mission start built on the player's machine; with none, a chain with no view manager.</param>
 	/// <exception cref="ArgumentException">The world has no player's machine.</exception>
-	public Es1Simulation(Es1World world, Es1InputBuild input, Es1ViewChain? viewChain = null)
+	public Es1Simulation(Es1World world, Es1PlayerInputReader input, Es1ViewChain? viewChain = null)
 		: this(world.Globals, world.Groups,
 			world.LocalPlayer ?? throw new ArgumentException("The world has no player's machine.", nameof(world)),
 			world.PlayerMech, input, viewChain, world.MechPool) {
@@ -51,7 +51,7 @@ public sealed class Es1Simulation {
 	/// <param name="playerMech"><c>PlayerMech</c>, the all-stop's machine; <paramref name="localPlayer"/> when null.</param>
 	/// <param name="mechPool"><c>g_MechPool</c>'s machines in build order, which the systems tick walks; none runs no systems tick.</param>
 	internal Es1Simulation(Es1SimGlobals globals, IReadOnlyList<Es1MissionGroup> groups,
-			Es1Mech localPlayer, Es1Mech? playerMech, Es1InputBuild input, Es1ViewChain? viewChain = null,
+			Es1Mech localPlayer, Es1Mech? playerMech, Es1PlayerInputReader input, Es1ViewChain? viewChain = null,
 			IReadOnlyList<Es1Mech>? mechPool = null) {
 		Globals = globals;
 		_groups = groups;
@@ -78,10 +78,10 @@ public sealed class Es1Simulation {
 
 	public Es1SimGlobals Globals { get; }
 
-	/// <summary>The input build the tick runs first.</summary>
-	public Es1InputBuild Input { get; }
+	/// <summary>The input read the tick runs first.</summary>
+	public Es1PlayerInputReader Input { get; }
 
-	/// <inheritdoc cref="Es1InputBuild.Controls"/>
+	/// <inheritdoc cref="Es1PlayerInputReader.Controls"/>
 	public Es1ControlsState Controls => Input.Controls;
 
 	/// <summary><c>LocalPlayerMech</c> (<c>000b5b86</c>).</summary>
@@ -105,11 +105,11 @@ public sealed class Es1Simulation {
 		set => Globals.CenterTurretMode = value;
 	}
 
-	/// <inheritdoc cref="Es1InputBuild.TapePlayback"/>
+	/// <inheritdoc cref="Es1PlayerInputReader.TapePlayback"/>
 	/// <remarks><c>Alt+S</c>'s freeze tests it, and the tick takes the frame's recorded delta while it is set.</remarks>
 	public bool TapePlayback => Input.TapePlayback;
 
-	/// <inheritdoc cref="Es1InputBuild.TapeRecording"/>
+	/// <inheritdoc cref="Es1PlayerInputReader.TapeRecording"/>
 	/// <remarks><c>Alt+S</c>'s freeze tests it.</remarks>
 	public bool TapeRecording => Input.TapeRecording;
 
@@ -143,7 +143,7 @@ public sealed class Es1Simulation {
 
 		// 1. The input block; during playback the tick's length is the block's +0x29, the frame's recorded delta. A build
 		// that ends the tape has cleared TapePlayback, and the delta stays the frame before's.
-		var block = Input.Build();
+		var block = Input.Read();
 		if (Input.TapePlayback) {
 			Globals.Clock.SetRecordedTickDelta(block.ReplayTickDelta);
 		}

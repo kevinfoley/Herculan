@@ -9,7 +9,7 @@ namespace Herculan.Es1.Panels;
 /// <c>AlertPanel_OpenCount</c> (<c>ES1DBSIM 00094d78</c>), <c>AlertPanel_CursorImage</c> (<c>00094d7c</c>) and the two
 /// hooks <c>AlertPanel_EnterHook</c> and <c>AlertPanel_LeaveHook</c> (<c>00094d80</c>, <c>00094d84</c>); the resources
 /// <c>Widget_LoadStylesAndFonts</c> loaded; and the simulator's state a panel takes and puts back as it goes up and
-/// down: the display and its pages, the cockpit's mouse with its root and <c>Cursor_FollowsMouse</c>, the input build
+/// down: the display and its pages, the cockpit's mouse with its root and <c>Cursor_FollowsMouse</c>, the input read
 /// with <c>PlayerInputBlock</c> and the button latches, and the mouse driver.
 ///
 /// <para>In this engine the files a panel loads as it is built come through <see cref="Content"/>; none, as in a test,
@@ -22,16 +22,16 @@ namespace Herculan.Es1.Panels;
 public sealed class Es1AlertGlobals {
 	/// <param name="display">The display the panels draw on, <c>000bdd28</c>.</param>
 	/// <param name="mouse">The cockpit's mouse, whose active root a panel takes and whose cursor it changes.</param>
-	/// <param name="input">The input build each pass of a panel's loop runs.</param>
+	/// <param name="input">The input read each pass of a panel's loop runs.</param>
 	/// <param name="widgets">What <c>Widget_LoadStylesAndFonts</c> loaded; none draws no frame and no text.</param>
 	/// <param name="content">The volumes the panels' own files are read from; none reads nothing.</param>
-	public Es1AlertGlobals(Es1VideoMemory display, Es1CockpitMouse mouse, Es1InputBuild input, Es1WidgetResources? widgets,
+	public Es1AlertGlobals(Es1VideoMemory display, Es1CockpitMouse mouse, Es1PlayerInputReader input, Es1WidgetResources? widgets,
 			GameContent? content)
 		: this(display, mouse, new Es1SimAlertInput(input), widgets, content) {
 	}
 
 	/// <param name="input">The binary's input and options.</param>
-	/// <inheritdoc cref="Es1AlertGlobals(Es1VideoMemory, Es1CockpitMouse, Es1InputBuild, Es1WidgetResources, GameContent)"/>
+	/// <inheritdoc cref="Es1AlertGlobals(Es1VideoMemory, Es1CockpitMouse, Es1PlayerInputReader, Es1WidgetResources, GameContent)"/>
 	public Es1AlertGlobals(Es1VideoMemory display, Es1CockpitMouse mouse, Es1AlertInput input, Es1WidgetResources? widgets,
 			GameContent? content) {
 		Display = display;

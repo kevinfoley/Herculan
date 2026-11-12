@@ -26,7 +26,7 @@ public readonly record struct PilotAxes(short Steer = 0, short Throttle = 0,
 
 	/// <summary>
 	/// This set where it is off centre, <paramref name="fallback"/> where it is not — the arbitration
-	/// <c>Input_BuildPlayerDevice</c> runs per axis when it combines its sources, testing each for
+	/// <c>Input_ReadPlayerInput</c> runs per axis when it combines its sources, testing each for
 	/// non-zero in turn and taking the first that has moved.
 	/// </summary>
 	public PilotAxes Or(PilotAxes fallback) => new(

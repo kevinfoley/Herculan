@@ -240,7 +240,7 @@ public static class Es1ZoneViewer {
 	/// writes no file.
 	/// </summary>
 	/// <param name="tape">The tape playing, which the cockpit's mouse and the simulation read; none with no tape.</param>
-	/// <param name="recording">The tape recording, which the simulation's input build appends to; none with no recording.</param>
+	/// <param name="recording">The tape recording, which the simulation's input read appends to; none with no recording.</param>
 	/// <param name="host">The launcher's shared window, or none for one of this turn's own.</param>
 	/// <param name="devices">Step 3's six values from <c>resource.cfg</c>, which <c>Sound_Init</c> takes.</param>
 	/// <param name="silent">No audio device: the sound plays into nothing.</param>

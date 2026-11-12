@@ -15,7 +15,7 @@ public abstract class Es1AlertInput {
 	/// The input a panel's pass reads: the block's command word, pointer and buttons 0 and 1 at <see
 	/// cref="Es1PlayerInputBlock.Buttons"/>, the press and the next-widget buttons.
 	/// </summary>
-	public abstract Es1PlayerInputBlock Build();
+	public abstract Es1PlayerInputBlock Read();
 
 	/// <summary><c>AlertPanel_HandleEvent</c>'s latch of <paramref name="button"/>, 1 to 4, with the value 1.</summary>
 	public abstract void LatchButton(int button);
@@ -54,31 +54,31 @@ public abstract class Es1AlertInput {
 	public virtual bool StickOptionsOverridden => false;
 }
 
-/// <summary>The simulator's (docs/es1/simulation/alert-panels.md): the input build (<see cref="Es1InputBuild"/>) and the simulator's <c>prefs.cpp</c>.</summary>
+/// <summary>The simulator's (docs/es1/simulation/alert-panels.md): the input read (<see cref="Es1PlayerInputReader"/>) and the simulator's <c>prefs.cpp</c>.</summary>
 public sealed class Es1SimAlertInput : Es1AlertInput {
-	public Es1SimAlertInput(Es1InputBuild build) {
-		InputBuild = build;
+	public Es1SimAlertInput(Es1PlayerInputReader reader) {
+		InputReader = reader;
 	}
 
-	/// <summary>The input build each pass of a panel's loop runs.</summary>
-	public Es1InputBuild InputBuild { get; }
+	/// <summary>The input read each pass of a panel's loop runs.</summary>
+	public Es1PlayerInputReader InputReader { get; }
 
-	public override Es1Preferences Preferences => InputBuild.Preferences;
+	public override Es1Preferences Preferences => InputReader.Preferences;
 
-	/// <summary><c>Input_BuildPlayerDevice</c> (<see cref="Es1InputBuild.Build"/>).</summary>
-	public override Es1PlayerInputBlock Build() => InputBuild.Build();
+	/// <summary><c>Input_ReadPlayerInput</c> (<see cref="Es1PlayerInputReader.Read"/>).</summary>
+	public override Es1PlayerInputBlock Read() => InputReader.Read();
 
 	/// <summary>The button latched with state 1 on the controls' latches (<see cref="Es1ButtonLatches.Latch"/>).</summary>
-	public override void LatchButton(int button) => InputBuild.Controls.Latches.Latch(1, button);
+	public override void LatchButton(int button) => InputReader.Controls.Latches.Latch(1, button);
 
 	/// <summary>
-	/// <c>PlayerInputBlock</c> kept, and buttons 0–3 latched with state 1. Each input build fills a new block
-	/// (<see cref="Es1InputBuild.PlayerInputBlock"/>), so the block itself is kept rather than a copy of its bytes.
+	/// <c>PlayerInputBlock</c> kept, and buttons 0–3 latched with state 1. Each input read fills a new block
+	/// (<see cref="Es1PlayerInputReader.PlayerInputBlock"/>), so the block itself is kept rather than a copy of its bytes.
 	/// </summary>
 	public override Es1PlayerInputBlock? Keep() {
-		var kept = InputBuild.PlayerInputBlock;
+		var kept = InputReader.PlayerInputBlock;
 		for (int button = 1; button <= Es1ButtonLatches.Count; button++) {
-			InputBuild.Controls.Latches.Latch(1, button);
+			InputReader.Controls.Latches.Latch(1, button);
 		}
 
 		return kept;
@@ -86,7 +86,7 @@ public sealed class Es1SimAlertInput : Es1AlertInput {
 
 	/// <summary><c>PlayerInputBlock</c> put back, and with a mouse device the pointer and the drawn cursor moved to its pointer.</summary>
 	public override void PutBack(Es1AlertGlobals globals, Es1PlayerInputBlock? kept) {
-		InputBuild.PlayerInputBlock = kept;
+		InputReader.PlayerInputBlock = kept;
 		if (globals.MouseDevice is { } mouse) {
 			int x = kept?.PointerX ?? 0, y = kept?.PointerY ?? 0;
 			mouse.SetPosition(x, y);
@@ -106,11 +106,11 @@ public sealed class Es1SimAlertInput : Es1AlertInput {
 	public override void CommitAll() => Preferences.CommitOptions(true);
 
 	/// <summary><see cref="Es1JoystickDevices.Rebuild"/>, whose doc comment gives this engine's departure for <c>NONE</c> (plan decision 14).</summary>
-	public override void RebuildJoysticks() => InputBuild.Joysticks.Rebuild(Preferences);
+	public override void RebuildJoysticks() => InputReader.Joysticks.Rebuild(Preferences);
 
-	/// <summary>While the controller's Custom profile drives the input build in place of option 7's configuration (<see cref="Es1InputBuild.Custom"/>).</summary>
-	public override bool StickOptionsOverridden => InputBuild.Custom?.Invoke() != null;
+	/// <summary>While the controller's Custom profile drives the input read in place of option 7's configuration (<see cref="Es1PlayerInputReader.Custom"/>).</summary>
+	public override bool StickOptionsOverridden => InputReader.Custom?.Invoke() != null;
 
-	/// <summary><see cref="Es1InputBuild.MouseDeviceEnabled"/>.</summary>
-	public override void SetMouseDeviceEnabled(bool enabled) => InputBuild.MouseDeviceEnabled = enabled;
+	/// <summary><see cref="Es1PlayerInputReader.MouseDeviceEnabled"/>.</summary>
+	public override void SetMouseDeviceEnabled(bool enabled) => InputReader.MouseDeviceEnabled = enabled;
 }

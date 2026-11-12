@@ -10,9 +10,9 @@ namespace Herculan.Es1.Input;
 /// <c>Prefs_PreviousOptions</c> (<c>000bd586</c>); the handler table <c>Prefs_HandlerTable</c> (<c>000bd598</c>); the
 /// writes the panels make through <c>Prefs_SetOption</c>; and the save back to the file. The shell keeps the same 17
 /// options with <c>ES1GO</c>'s own <c>Prefs_*</c> functions, the <c>Shell</c>-prefixed methods where they differ from the
-/// simulator's, its <c>Prefs_Committed</c> held as the load-time copy. The options the input build
+/// simulator's, its <c>Prefs_Committed</c> held as the load-time copy. The options the input read
 /// reads are named here; <see cref="Es1ControlsState"/> registers the handlers of options 8 and 10,
-/// <see cref="Es1InputBuild"/> that of option 11, and this type those of options 0, 1, 2 and 6
+/// <see cref="Es1PlayerInputReader"/> that of option 11, and this type those of options 0, 1, 2 and 6
 /// (docs/es1/simulation/input.md#the-preferences-start-up).
 /// </summary>
 public sealed class Es1Preferences {
@@ -28,7 +28,7 @@ public sealed class Es1Preferences {
 	/// <summary>Options 4 to 6 (<c>000bd566</c>–<c>000bd568</c>): SKY, GROUND and SHAPES, 0 to 255; option 6 is the detail setting.</summary>
 	public const int SkyOption = 4, GroundOption = 5, DetailOption = 6;
 
-	/// <summary>Option 7 (<c>000bd569</c>): which of the six joystick configurations the input build uses.</summary>
+	/// <summary>Option 7 (<c>000bd569</c>): which of the six joystick configurations the input read uses.</summary>
 	public const int StickConfigurationOption = 7;
 
 	/// <summary>Option 8 (<c>000bd56a</c>): the stick mode, and whether <c>Input_ToggleStickMode</c> may change it.</summary>
@@ -97,7 +97,7 @@ public sealed class Es1Preferences {
 	/// which runs each registered handler with its option; <c>VoiceArchivePresent</c> from
 	/// <paramref name="voiceArchivePresent"/>, and option 2 set to 0 (<c>Prefs_SetOption</c>(1, 0, 2)) when it is clear;
 	/// <c>PrefsInitInProgress</c> cleared. The handlers of options 8 and 10 run when <see cref="Es1ControlsState"/>
-	/// registers them, and the joystick devices are built by the input build (<see cref="Es1InputBuild"/>). Under
+	/// registers them, and the joystick devices are built by the input read (<see cref="Es1PlayerInputReader"/>). Under
 	/// <paramref name="demoMode"/> the load runs twice, <c>Prefs_Load</c>(1) and then <c>Prefs_Load</c>(0), and
 	/// <c>Prefs_RevertSelectedOptions</c> (<c>0004aaf0</c>) puts options 0–6, the list at <c>0009570c</c>, back to their
 	/// loaded values. Both loads read <c>data\prefs.cfg</c>, whatever a tape plays, so the second reads the bytes the first

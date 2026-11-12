@@ -1,7 +1,7 @@
 namespace Herculan.Es1.Input;
 
 /// <summary>
-/// The sources the input build chooses from: the keyboard's two pairs and four buttons (the source table's
+/// The sources the input read chooses from: the keyboard's two pairs and four buttons (the source table's
 /// <c>000b1800</c>–<c>000b180c</c> and <c>000b1820</c>–<c>000b182c</c>), and the live block's four stick axes and
 /// first four stick buttons (<c>000b1810</c>–<c>000b181c</c>, <c>000b1830</c>–<c>000b183c</c>)
 /// (docs/es1/simulation/input.md#setting-up--input_buildsourcetable-0004c95c).
@@ -13,7 +13,7 @@ namespace Herculan.Es1.Input;
 public readonly record struct Es1InputSources(int[] Keyboard, int[] Stick, byte[] KeyboardButtons, byte[] StickButtons);
 
 /// <summary>
-/// The six joystick configurations of preferences option 7, the switch of <c>Input_BuildPlayerDevice</c>
+/// The six joystick configurations of preferences option 7, the switch of <c>Input_ReadPlayerInput</c>
 /// (<c>ES1DBSIM 0004cb14</c>) that picks a source for each of the four axes and four buttons
 /// (docs/es1/simulation/input.md#the-joystick-configurations). A stick source is taken where it is not 0 and the
 /// keyboard's otherwise. Retail picks pointers and copies through them at once, so picking the values is the same.
@@ -85,7 +85,7 @@ public static class Es1StickConfigurations {
 				break;
 			default:
 				// PLACEHOLDER: above 5 retail's switch has no case and copies through eight stack slots it never set
-				// (ES1DBSIM decompile, Input_BuildPlayerDevice's switch); this reads 0 for them. No plan step retires it.
+				// (ES1DBSIM decompile, Input_ReadPlayerInput's switch); this reads 0 for them. No plan step retires it.
 				break;
 		}
 

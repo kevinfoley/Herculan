@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Herculan.Engine.Tests;
 
-public class Es1InputBuildTests {
+public class Es1PlayerInputReaderTests {
 	private const byte Keypad8 = 0x48, Keypad9 = 0x49, Keypad3 = 0x51, Space = 0x39, I = 0x17, Ctrl = 0x1d, Break = 0x80;
 
 	/// <summary>
@@ -27,10 +27,10 @@ public class Es1InputBuildTests {
 	[Fact]
 	public void StickModeOneMovesTheKeyboardsFirstPairOntoTheSecondWithItsPitchNegated() {
 		var input = new Es1KeyboardInput(0);
-		var build = NewBuild(input, Prefs((Es1Preferences.StickModeOption, 1)));
+		var reader = NewReader(input, Prefs((Es1Preferences.StickModeOption, 1)));
 
 		Type(input, Keypad8);
-		var block = build.Build();
+		var block = reader.Read();
 
 		Assert.Equal(0, block.ThrottleAxis);
 		Assert.Equal(0x40, block.PitchAxis);
@@ -44,12 +44,12 @@ public class Es1InputBuildTests {
 	[Fact]
 	public void BackturnNegatesTheSteeringOnlyWhileTheThrottleAxisIsPositive() {
 		var input = new Es1KeyboardInput(0);
-		var build = NewBuild(input, Prefs(), "BACKTURN = REVERSE");
+		var reader = NewReader(input, Prefs(), "BACKTURN = REVERSE");
 
 		Type(input, Keypad3);
-		var backing = build.Build();
+		var backing = reader.Read();
 		Type(input, Keypad3 | Break, Keypad9);
-		var forward = build.Build();
+		var forward = reader.Read();
 
 		Assert.True(backing.ThrottleAxis > 0);
 		Assert.Equal(-0x100, backing.SteeringAxis);
@@ -58,20 +58,20 @@ public class Es1InputBuildTests {
 	}
 
 	/// <summary>
-	/// With option 10 on, <c>Ctrl+I</c>'s step reaches the throttle axis on the next build and not the one after, and
+	/// With option 10 on, <c>Ctrl+I</c>'s step reaches the throttle axis on the next read and not the one after, and
 	/// the option's handler sets <c>ThrottleLeverMode</c> to 1 for any value but 0. Catches the step not put on the
 	/// throttle, the step not cleared once taken, and the handler storing the option's value.
 	/// </summary>
 	[Fact]
 	public void ThrottleKeysPutTheStepOnTheThrottleAxisOnce() {
 		var input = new Es1KeyboardInput(0);
-		var build = NewBuild(input, Prefs((Es1Preferences.ThrottleKeysOption, 5)));
+		var reader = NewReader(input, Prefs((Es1Preferences.ThrottleKeysOption, 5)));
 
 		Type(input, Ctrl, I, I | Break, Ctrl | Break);
 
-		Assert.Equal(1, build.Controls.ThrottleLeverMode);
-		Assert.Equal(-0x40, build.Build().ThrottleAxis);
-		Assert.Equal(0, build.Build().ThrottleAxis);
+		Assert.Equal(1, reader.Controls.ThrottleLeverMode);
+		Assert.Equal(-0x40, reader.Read().ThrottleAxis);
+		Assert.Equal(0, reader.Read().ThrottleAxis);
 	}
 
 	/// <summary>
@@ -81,21 +81,21 @@ public class Es1InputBuildTests {
 	[Fact]
 	public void LatchedButtonReadsTheOppositeOfItsStateUntilItDiffers() {
 		var input = new Es1KeyboardInput(0);
-		var build = NewBuild(input, Prefs());
-		build.Controls.Latches.Latch(1, 1);
+		var reader = NewReader(input, Prefs());
+		reader.Controls.Latches.Latch(1, 1);
 
 		Type(input, Space);
-		Assert.Equal(0, build.Build().Buttons[0]);
-		Assert.True(build.Controls.Latches.IsLatched(0));
+		Assert.Equal(0, reader.Read().Buttons[0]);
+		Assert.True(reader.Controls.Latches.IsLatched(0));
 
-		// No build marks Space seen, so its release is pending through one more build, which still reads it held.
+		// No read marks Space seen, so its release is pending through one more read, which still reads it held.
 		Type(input, Space | Break);
-		build.Build();
-		Assert.Equal(0, build.Build().Buttons[0]);
-		Assert.False(build.Controls.Latches.IsLatched(0));
+		reader.Read();
+		Assert.Equal(0, reader.Read().Buttons[0]);
+		Assert.False(reader.Controls.Latches.IsLatched(0));
 
 		Type(input, Space);
-		Assert.Equal(1, build.Build().Buttons[0]);
+		Assert.Equal(1, reader.Read().Buttons[0]);
 	}
 
 	/// <summary>
@@ -113,7 +113,7 @@ public class Es1InputBuildTests {
 	}
 
 	/// <summary>
-	/// The host's right button reads at <c>+0xb</c> on every build from its press to its release. Catches the button
+	/// The host's right button reads at <c>+0xb</c> on every read from its press to its release. Catches the button
 	/// read as a one-tick event, and the right button put at the left's byte.
 	/// </summary>
 	[Fact]
@@ -122,17 +122,17 @@ public class Es1InputBuildTests {
 		var mouse = new Es1HostMouse();
 		// Option 11 on, or Prefs_ApplyMouseOption turns the driver off at the start.
 		var prefs = Prefs((Es1Preferences.MouseOption, 1));
-		var build = new Es1InputBuild(input, mouse, prefs, Es1KeyjoyConfig.Parse(""), new Es1ControlsState(prefs), Es1NoStickPort.Instance);
+		var reader = new Es1PlayerInputReader(input, mouse, prefs, Es1KeyjoyConfig.Parse(""), new Es1ControlsState(prefs), Es1NoStickPort.Instance);
 
 		mouse.OnButton(MouseButton.Right, true);
-		Assert.Equal(new byte[] { 0, 1, 0 }, build.Build().MouseButtons);
-		Assert.Equal(new byte[] { 0, 1, 0 }, build.Build().MouseButtons);
+		Assert.Equal(new byte[] { 0, 1, 0 }, reader.Read().MouseButtons);
+		Assert.Equal(new byte[] { 0, 1, 0 }, reader.Read().MouseButtons);
 
 		mouse.OnButton(MouseButton.Right, false);
-		Assert.Equal(new byte[] { 0, 0, 0 }, build.Build().MouseButtons);
+		Assert.Equal(new byte[] { 0, 0, 0 }, reader.Read().MouseButtons);
 	}
 
-	private static Es1InputBuild NewBuild(Es1KeyboardInput input, Es1Preferences prefs, string keyjoy = "") =>
+	private static Es1PlayerInputReader NewReader(Es1KeyboardInput input, Es1Preferences prefs, string keyjoy = "") =>
 		new(input, new Es1HostMouse(), prefs, Es1KeyjoyConfig.Parse(keyjoy), new Es1ControlsState(prefs), Es1NoStickPort.Instance);
 
 	private static Es1Preferences Prefs(params (int Option, byte Value)[] options) {

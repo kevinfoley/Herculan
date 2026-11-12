@@ -6,8 +6,8 @@ namespace Herculan.Es2.Input;
 
 /// <summary>
 /// Turns a <see cref="JoystickReading"/> into pilot input according to the twelve binding bytes of a
-/// <c>prefs.cfg</c> controls block — the joystick arm of <c>Input_BuildPlayerDevice</c>, the
-/// per-frame input build, plus the button dispatch <c>Sim_PollPlayerInput</c> (<c>00460764</c>) runs off it.
+/// <c>prefs.cfg</c> controls block — the joystick arm of <c>Input_ReadPlayerInput</c>, the
+/// per-frame input read, plus the button dispatch <c>Sim_PollPlayerInput</c> (<c>00460764</c>) runs off it.
 ///
 /// <para><b>The bindings name no hardware.</b> Four bytes say which pair of game axes each control
 /// feeds and eight say which action each button fires; nothing in the file identifies a device, an
@@ -17,7 +17,7 @@ namespace Herculan.Es2.Input;
 ///
 /// <para>Held state (the axes and the trigger) is recomputed every tick; the eight buttons are
 /// <b>press-once</b>. <c>Input_LatchButton</c> (<c>0045b718</c>) latches a button the moment its action fires and
-/// <c>Input_BuildPlayerDevice</c> masks it to zero on every following tick until the player lets go,
+/// <c>Input_ReadPlayerInput</c> masks it to zero on every following tick until the player lets go,
 /// so holding a button repeats nothing. This class keeps that latch, which is why it is an instance rather than
 /// a static.</para>
 /// </summary>
@@ -194,7 +194,7 @@ public sealed class JoystickBindings {
 
 	/// <summary>
 	/// The four axes while the controls drive a camera rather than the machine —
-	/// <c>Input_BuildPlayerDevice</c>'s <c>InputDrivesCamera</c> arm, short of Backturn. The stick stops
+	/// <c>Input_ReadPlayerInput</c>'s <c>InputDrivesCamera</c> arm, short of Backturn. The stick stops
 	/// feeding its bound axes: wherever it has moved, its X and Y replace the keyboard's first pair,
 	/// which stays on the steering and throttle axes rather than moving to the turret, and the keyboard's
 	/// second pair is zeroed. A lever and a rudder go on feeding their bindings, but only on a stick that
@@ -327,7 +327,7 @@ public sealed class JoystickBindings {
 		ApplyBackturn(CombineBeforeBackturn(input, keyboard));
 
 	/// <summary>
-	/// <see cref="Combine"/> short of <c>Backturn</c>: the four axes as <c>Input_BuildPlayerDevice</c>
+	/// <see cref="Combine"/> short of <c>Backturn</c>: the four axes as <c>Input_ReadPlayerInput</c>
 	/// holds them at the point it records a tape frame, which is before Backturn is applied.
 	/// </summary>
 	public PilotAxes CombineBeforeBackturn(JoystickPilotInput input, PilotAxes keyboard) {

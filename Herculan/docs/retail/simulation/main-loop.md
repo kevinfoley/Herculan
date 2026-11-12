@@ -20,7 +20,7 @@ The loop ends when `DemoAbort` or the quit flag `004d2582` is set, or `Sim_MainT
 
 `Sim_MainTick` (`0045f464`) runs its passes in a fixed order:
 
-1. `Input_BuildPlayerDevice` ([`joystick-input.md`](joystick-input.md#applying-the-bindings--input_buildplayerdevice-0045a7f4)); during tape playback it copies the frame's delta from the input block's `+0x2e` into `SimTickDelta`.
+1. `Input_ReadPlayerInput` ([`joystick-input.md`](joystick-input.md#applying-the-bindings--input_readplayerinput-0045a7f4)); during tape playback it copies the frame's delta from the input block's `+0x2e` into `SimTickDelta`.
 2. Unless the freeze `004d2576` is set: the effect pools — explosions, smoke balls, smoke, fire, debris, meteors — then the projectiles (vtable `+0x14`), then every structure whose group has entered the mission (vtable `+0x18`), each pool walked oldest first with `Pool_Prev` ([walking a pool](sim-object-layout.md#walking-a-pool--oldest-first)) and an object that answers non-zero queued for deletion.
 3. The same gate: the mission's groups in order, `Group_DeploymentCheck` for one still to arrive and otherwise `Group_OrderTick`, which runs `Mech_AiTick` (`00411cec`) on each member in turn: reassess, move, then think ([`ai-dispatch.md`](ai-dispatch.md)).
 4. A set `004d2580` (`Alt+keypad +`) moves into the freeze, so one tick runs ([the developer keys](../command-line.md#-sprunknown-the-developer-keys)).

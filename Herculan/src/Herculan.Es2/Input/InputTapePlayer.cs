@@ -40,7 +40,7 @@ public sealed class InputTapePlayer {
 
 	/// <summary>
 	/// How long a frame recorded while a modal panel was up is held for — <b>this engine's estimate</b>.
-	/// A panel's loop calls <c>Input_BuildPlayerDevice</c> without the frame wait, so those frames
+	/// A panel's loop calls <c>Input_ReadPlayerInput</c> without the frame wait, so those frames
 	/// came as fast as the recording machine could repaint the panel, and their <c>SimTickDelta</c> is
 	/// the stale value of the frame that raised it. The retail tapes' mouse timestamps put that loop
 	/// at 5-7 ms a frame: 71 frames across 22 coarse ticks in <c>DEMO1</c>, 27 across 11 and 29
@@ -49,7 +49,7 @@ public sealed class InputTapePlayer {
 	public const double PanelFrameSeconds = 0.006;
 
 	/// <summary>
-	/// <c>SimCommandMask</c> (<c>0049eae0</c>), which <c>Input_BuildPlayerDevice</c> ANDs into every
+	/// <c>SimCommandMask</c> (<c>0049eae0</c>), which <c>Input_ReadPlayerInput</c> ANDs into every
 	/// queued command before dispatch.
 	/// </summary>
 	public const int CommandMask = 0x47ff;

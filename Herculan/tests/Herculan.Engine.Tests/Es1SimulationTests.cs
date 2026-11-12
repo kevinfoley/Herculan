@@ -117,7 +117,7 @@ public class Es1SimulationTests {
 
 	private (Es1Simulation Simulation, Es1Mech Player) NewSimulation() {
 		var prefs = Es1Preferences.Default;
-		var input = new Es1InputBuild(Keyboard, new Es1HostMouse(), prefs, Es1KeyjoyConfig.Parse(""), new Es1ControlsState(prefs), Es1NoStickPort.Instance);
+		var input = new Es1PlayerInputReader(Keyboard, new Es1HostMouse(), prefs, Es1KeyjoyConfig.Parse(""), new Es1ControlsState(prefs), Es1NoStickPort.Instance);
 		var globals = new Es1SimGlobals();
 		var player = NewMech(globals);
 		player.IsPlayer = true;

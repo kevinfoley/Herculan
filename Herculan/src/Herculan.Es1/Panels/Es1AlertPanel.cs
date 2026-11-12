@@ -339,7 +339,7 @@ public abstract class Es1AlertPanel {
 
 	/// <summary>
 	/// <c>AlertPanel_SetFocus</c> (<c>00046470</c>)(panel, <paramref name="index"/>) (docs/es1/simulation/alert-panels.md#focus):
-	/// for −1, with a mouse device, an input build, and the first widget whose rect holds the block's pointer, the
+	/// for −1, with a mouse device, an input read, and the first widget whose rect holds the block's pointer, the
 	/// pointer in the screen's pixels and the rect in the panel's, edges included; −1 when none does or there is no mouse
 	/// device. For any other index the pointer goes to the widget's center plus the panel's corner, the driver's with a
 	/// mouse device and the drawn cursor's either way. The index becomes the focus. An index past the list, where retail
@@ -350,7 +350,7 @@ public abstract class Es1AlertPanel {
 		var mouse = globals.MouseDevice;
 		if (index == -1) {
 			if (mouse != null) {
-				var block = globals.Input.Build();
+				var block = globals.Input.Read();
 				for (int i = 0; i < _widgets.Count; i++) {
 					if (_widgets[i].Rect.Contains(block.PointerX, block.PointerY)) {
 						index = i;
@@ -408,7 +408,7 @@ public abstract class Es1AlertPanel {
 	/// <summary>
 	/// <c>StatusAlertPanel_RunModal</c> (<c>0004730c</c>), which <c>ObjectivesPanel_RunModal</c> (<c>0004a4ec</c>) repeats
 	/// (docs/es1/simulation/alert-panels.md#the-loop): <see cref="Enter"/>; the focus on widget 0; until the close byte
-	/// is set, a pass: the input build, its block to <see cref="HandleEvent"/>, and each widget's per-frame call; then
+	/// is set, a pass: the input read, its block to <see cref="HandleEvent"/>, and each widget's per-frame call; then
 	/// <see cref="Leave"/>, and the close byte's bit 0 the answer. Retail's loop goes round with no wait; here a pass that
 	/// leaves the close byte clear waits for the next host frame, the tick standing there (plan decision 11).
 	/// </summary>
@@ -416,7 +416,7 @@ public abstract class Es1AlertPanel {
 		Enter();
 		SetFocus(0);
 		while (Close == 0) {
-			var block = Globals.Input.Build();
+			var block = Globals.Input.Read();
 			HandleEvent(block);
 			for (int i = 0; i < _widgets.Count; i++) {
 				_widgets[i].Tick();

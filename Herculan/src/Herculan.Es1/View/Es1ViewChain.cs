@@ -11,7 +11,7 @@ namespace Herculan.Es1.View;
 /// <c>ViewObjectPtr</c> (<c>ES1DBSIM 000b5b8a</c>), the squad cameras (<c>000bda9e</c>) and the spare
 /// (<c>ViewChain_SpareCamera</c>, <c>000b5d38</c>); and <c>ViewChain_Apply</c>, <c>ViewChain_ViewObject</c>,
 /// <c>ViewChain_ToggleCameraControl</c> and <c>ViewChain_DrawCaption</c>. <c>InputDrivesCamera</c> is the controls'
-/// (<see cref="Es1ControlsState.InputDrivesCamera"/>), which the input build also reads.
+/// (<see cref="Es1ControlsState.InputDrivesCamera"/>), which the input read also takes.
 ///
 /// <para>ES1's chain has views 1 (the free camera, camera mode 0), 2 (the cockpit, mode 2 on the player) and 3 (the
 /// outside view, mode 1 on <see cref="Chosen"/>); no chase view, no lock.</para>

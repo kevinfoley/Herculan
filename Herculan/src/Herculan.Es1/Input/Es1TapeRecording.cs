@@ -10,8 +10,8 @@ namespace Herculan.Es1.Input;
 /// <c>000590cb</c>), which opens <c>&lt;TapeStem&gt;.tap</c> (<c>TapeStem</c>, <c>000b5b7a</c>) in mode <c>wb</c>,
 /// packs the bundle with <c>Tape_PackFile</c> (<c>000574a0</c>), closes it and sets <c>TapeRecording</c>
 /// (<c>000b5b78</c>) (docs/es1/simulation/main-loop.md#the-command-line, docs/es1/formats/tap-input-tape.md#the-bundle);
-/// and the input build's step 8, which appends each frame (docs/es1/simulation/input.md#recording-and-playback,
-/// docs/es1/formats/tap-input-tape.md#the-frames). The input build writes the frames (<see cref="Es1InputBuild"/>);
+/// and the input read's step 8, which appends each frame (docs/es1/simulation/input.md#recording-and-playback,
+/// docs/es1/formats/tap-input-tape.md#the-frames). The input read writes the frames (<see cref="Es1PlayerInputReader"/>);
 /// <c>TapeRecording</c> is never cleared once set, so a recording runs to the simulator's end. The bundle and the frames
 /// are written through HercWorks.Core (<see cref="Es1InputTapeTransformer"/>).
 /// </summary>
@@ -26,7 +26,7 @@ public sealed class Es1TapeRecording {
 		["data", "restore.dat"], ["data", "object.str"], ["keyjoy.cfg"],
 	];
 
-	/// <summary>The assert the input build raises when the tape does not open for appending: <c>appinput.cpp</c> line <c>0x2bd</c>, severity 5.</summary>
+	/// <summary>The assert the input read raises when the tape does not open for appending: <c>appinput.cpp</c> line <c>0x2bd</c>, severity 5.</summary>
 	public const int AppendAssertLine = 0x2bd;
 
 	private readonly Es1InputTapeTransformer _transformer = new();
@@ -40,7 +40,7 @@ public sealed class Es1TapeRecording {
 	public int FrameCount { get; private set; }
 
 	/// <summary>
-	/// <c>SimTickDelta</c> (<c>000bdbd0</c>) as it stands when the input build runs, which each frame records; the runner
+	/// <c>SimTickDelta</c> (<c>000bdbd0</c>) as it stands when the input read runs, which each frame records; the runner
 	/// wires it to the tick's clock. 0 with none.
 	/// </summary>
 	public Func<short>? TickDelta { get; set; }
@@ -79,14 +79,14 @@ public sealed class Es1TapeRecording {
 	}
 
 	/// <summary>
-	/// The input build's step 8: <paramref name="block"/>'s command word and four axes, <see cref="TickDelta"/>, the
+	/// The input read's step 8: <paramref name="block"/>'s command word and four axes, <see cref="TickDelta"/>, the
 	/// button word (<see cref="ButtonWord"/>), the count of <paramref name="mouseEvents"/>, what
 	/// <c>CockpitMouse_ProcessQueue</c> returned, and the events, appended to the tape, which is opened in mode
 	/// <c>ab</c> and closed again. A tape that does not open is retail's severity-5 assert (<see cref="AppendAssertLine"/>),
 	/// which ends the program (docs/es1/simulation/asserts.md): thrown as <see cref="Es1FatalAssertException"/>, nothing
 	/// after it running.
 	/// </summary>
-	/// <param name="sourceButtons">The four source buttons the build read: the live block's <c>+0x1d</c>–<c>+0x20</c>, or the playing tape's bits 8–11.</param>
+	/// <param name="sourceButtons">The four source buttons the read took: the live block's <c>+0x1d</c>–<c>+0x20</c>, or the playing tape's bits 8–11.</param>
 	public void Append(Es1PlayerInputBlock block, IReadOnlyList<byte> sourceButtons, IReadOnlyList<Es1MouseEvent> mouseEvents) {
 		var frame = new Es1InputTape.Frame {
 			CommandWord = (short)block.CommandWord,

@@ -2,11 +2,11 @@ namespace HercWorks.Core.Data.File.Dbsim;
 
 /// <summary>
 /// FILE - TAPES\&lt;name&gt;.TAP — DBSIM's input tape: a bundle of the seven files a mission starts
-/// from, the recording machine's joystick capability block, then one record per input build of
+/// from, the recording machine's joystick capability block, then one record per input read of
 /// everything the player did. Loose files beside the install, not VOL entries.
 ///
 /// The layout is DBSIM's own writer and reader,
-/// <c>Tape_PackFile</c> (<c>0045cc88</c>) for the bundle and <c>Input_BuildPlayerDevice</c>
+/// <c>Tape_PackFile</c> (<c>0045cc88</c>) for the bundle and <c>Input_ReadPlayerInput</c>
 /// (<c>0045a7f4</c>) for the rest. See docs/retail/formats/tap-input-tape.md for what each field is and how
 /// the simulator consumes it.
 /// </summary>
@@ -27,10 +27,10 @@ public class InputTape {
 	/// <summary>The eight bytes <c>Input_QueryCapabilities</c> (<c>004777f8</c>) returned on the recording machine.</summary>
 	public byte[] Capabilities { get; set; } = new byte[CapabilityBlockSize];
 
-	/// <summary>One record per input build, in the order they were written.</summary>
+	/// <summary>One record per input read, in the order they were written.</summary>
 	public List<Frame> Frames { get; set; } = new();
 
-	/// <summary>One input build — a 24-byte header, its mouse events and its command codes.</summary>
+	/// <summary>One input read — a 24-byte header, its mouse events and its command codes.</summary>
 	public class Frame {
 		/// <summary>
 		/// The command word at the head of <c>PlayerInputBlock</c> (<c>004d234a</c>): the one key event

@@ -11,7 +11,7 @@ namespace Herculan.Es1.Panels;
 /// <c>PrefsAlertVtable</c> (<c>000951ae</c>) (docs/es1/simulation/preferences.md#the-preferences-panel--preferencespanel_ctor-00047578):
 /// a strip 320 × 89 along the bottom of the screen on the plate <c>dba\prf_alrt</c>, the title and captions of
 /// <c>str\PRF_ALRT.STR</c>, MUSIC, SOUNDS, RADIO and HORIZON with their values in words, SKY, GROUND and SHAPES with LED
-/// bars, and CONTROLS and DONE. Its loop changes options 0 to 6 of <see cref="Es1Preferences"/> (the input build's) and
+/// bars, and CONTROLS and DONE. Its loop changes options 0 to 6 of <see cref="Es1Preferences"/> (the input read's) and
 /// draws a frame of the outside view through its draw hook each pass (<see cref="Es1PreferencesRaise"/>).
 /// </summary>
 public sealed class Es1PreferencesPanel : Es1AlertPanel {
@@ -152,7 +152,7 @@ public sealed class Es1PreferencesPanel : Es1AlertPanel {
 	/// <summary><c>+0x388</c>–<c>+0x38e</c>: each row's repaint counter, the passes still to refresh it on.</summary>
 	public IReadOnlyList<byte> RepaintCounters => _repaint;
 
-	/// <summary>The options the rows show and the loop changes, the input build's.</summary>
+	/// <summary>The options the rows show and the loop changes, the input read's.</summary>
 	private Es1Preferences Options => Globals.Input.Preferences;
 
 	/// <summary>
@@ -160,7 +160,7 @@ public sealed class Es1PreferencesPanel : Es1AlertPanel {
 	/// (docs/es1/simulation/preferences.md#the-loop--preferencespanel_run-00047a88): with no sound manager, MUSIC, SOUNDS
 	/// and RADIO greyed; the action cleared; <see cref="Es1AlertPanel.Enter"/> and the focus on MUSIC; the panel copied
 	/// from the page on the screen to the other page, the cursor hidden around it, and the page on the screen drawn on
-	/// again. Then until the close byte is set, a pass: the input build, its block to <see cref="HandleEvent"/>, the
+	/// again. Then until the close byte is set, a pass: the input read, its block to <see cref="HandleEvent"/>, the
 	/// action's case, and <see cref="CallDrawHook"/>, which yields its wait for the monitor; then
 	/// <see cref="Es1AlertPanel.Leave"/>, and bit 0 of the close byte the answer. A pass that waits for no retrace, with
 	/// no draw hook, ends with the next host frame instead, the tick standing there (plan decision 11). The step after
@@ -185,7 +185,7 @@ public sealed class Es1PreferencesPanel : Es1AlertPanel {
 		display.DrawPage = display.PairVisible;
 
 		while (Close == 0) {
-			HandleEvent(Globals.Input.Build());
+			HandleEvent(Globals.Input.Read());
 			if (Action == Controls) {
 				foreach (var wait in RunControls()) {
 					yield return wait;

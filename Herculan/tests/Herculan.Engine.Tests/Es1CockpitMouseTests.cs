@@ -151,7 +151,7 @@ public class Es1CockpitMouseTests {
 		Assert.Equal((0, 100), glanced.ToScreen(500, 300));
 	}
 
-	/// <summary>A left press and release at (<paramref name="x"/>, <paramref name="y"/>), handled as the input build's step 4 handles them.</summary>
+	/// <summary>A left press and release at (<paramref name="x"/>, <paramref name="y"/>), handled as the input read's step 4 handles them.</summary>
 	private static void Click(Es1CockpitMouse mouse, int x, int y) {
 		mouse.Push(1, new Es1MouseRecord(x, y, Es1HostMouse.LeftBit));
 		mouse.Push(2, new Es1MouseRecord(x, y, 0));

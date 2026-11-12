@@ -137,7 +137,7 @@ The eye `+0x3e` through the object's vtable `+0x24` node composed with its frame
 
 Each "→" is `Math_RateLimitedMoveToward`: the rate moves towards the target by at most the step each frame. Nothing is scaled by the frame's length, so the camera turns at a rate per frame.
 
-The steering and throttle axes are the stick's and keyboard's, re-pointed at the camera by the input build, which leaves the machine none of them: [While the camera has the controls](joystick-input.md#while-the-camera-has-the-controls).
+The steering and throttle axes are the stick's and keyboard's, re-pointed at the camera by the input read, which leaves the machine none of them: [While the camera has the controls](joystick-input.md#while-the-camera-has-the-controls).
 
 ## One camera per squadmate — `ViewChain_ViewObject`
 

@@ -19,7 +19,7 @@ namespace Herculan.Es2.Cockpit;
 /// <summary>
 /// The pilot's input to the machine: the keyboard's axis pairs and the stick combined into MechControls each
 /// frame, the stick's buttons dispatched, and what a replaying tape holds in their place. Sim_PollPlayerInput
-/// and Input_BuildPlayerDevice's share of the frame.
+/// and Input_ReadPlayerInput's share of the frame.
 /// </summary>
 public sealed class PilotControls {
 	private readonly CockpitView _view;
@@ -219,7 +219,7 @@ public sealed class PilotControls {
 
 		// What a missile the player is flying reads out of the input block: the two axes its camera-axis
 		// pointers address and the trigger. While the controls are on a camera, or on the missile, they are
-		// the steering and throttle axes; otherwise they follow the JOYSTICK row, as Input_BuildPlayerDevice
+		// the steering and throttle axes; otherwise they follow the JOYSTICK row, as Input_ReadPlayerInput
 		// sets them at its tail. Built from the controls just made, before the machine is handed none of
 		// them below.
 		if (pilotInput && pilotMech != null) {

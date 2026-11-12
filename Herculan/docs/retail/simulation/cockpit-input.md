@@ -121,7 +121,7 @@ MFD buttons 7 and 10 share a rect but never contest it: no mode shows both ([`mf
 `Video_ToggleFullscreen` is a display mode switch, not a window maximize. From windowed it sets `004d25e2`, takes DirectDraw exclusive with an 8-bit display mode the size of the 3D view (`004d25c2`/`004d25c6`, 640x480 in the 640-wide modes), puts the window topmost over it, `ClipCursor`s the pointer to the screen and centres it; failing DirectDraw or the mode, it kills the main timer and posts `WM_QUIT`. From fullscreen it releases DirectDraw, which gives the desktop its mode back, and restores the window rect saved on the way in. Either way it repaints the shield gauge. Its other callers:
 
 - `Help_Show`, first, when the flag is set, so raising the manual drops the game out of fullscreen.
-- `Sim_HandleWindowKey` (`0045fd60`) on `Alt+Enter`, command `0x21c`, which `Sim_DispatchCommand` offers it after the widget tree; during a replay `Input_BuildPlayerDevice` also offers it the live keyboard's command, and `-B` stops either toggling ([`../command-line.md`](../command-line.md#dbsim)). It toggles on every `0x21c`, so a held `Alt+Enter` toggles once per [auto-repeat](#how-a-keystroke-becomes-one-of-those-codes).
+- `Sim_HandleWindowKey` (`0045fd60`) on `Alt+Enter`, command `0x21c`, which `Sim_DispatchCommand` offers it after the widget tree; during a replay `Input_ReadPlayerInput` also offers it the live keyboard's command, and `-B` stops either toggling ([`../command-line.md`](../command-line.md#dbsim)). It toggles on every `0x21c`, so a held `Alt+Enter` toggles once per [auto-repeat](#how-a-keystroke-becomes-one-of-those-codes).
 - `Video_LeaveFullscreen` (`004668b0`), which runs it only when the flag is set: from the key hook (§7), the assert reporter, and `Sim_Run`'s refusal without `-eggplant`.
 - `WinMain` (`00465288`) at startup, when option 6 or `-Z1` set the flag ([`preferences.md`](preferences.md#the-video-mode-and-full-screen-bytes)).
 
@@ -307,7 +307,7 @@ The `0x400` bank is fixed by the manual: `0x410` raises the `EXIT EARTHSIEGE?` p
 | `Input_KeyjoyAxisKey` (`0045a308`) | 30 bytes at `0049eb33`: `47 48 49 4b 4d 4f 50 51 32 24 25 17 4a 4e 39`, then the same fifteen with `0x80` set | The keypad, `M`, `J`, `K`, `I` and `Space` held as axes, into the three 15-byte key-state blocks at `004d2418` |
 | `SimCommandQueue_Push` (`0045a47c`) | 7 bytes at `0049eb5d`: `1c 0c 0d 1a 1b 4e 4a` | `Enter`, `-`, `=`, `[`, `]`, keypad `+` and `-` — appended to the command queue at `004d2148` |
 
-`Input_BuildPlayerDevice` (`0045a7f4`) drains that queue once per frame, masking each code with `0049eae0` = **`0x47ff`** before handing it to `Sim_DispatchCommand` and then resetting the count. Everything not on those two lists reaches `Sim_DispatchCommand` as the single command word at the head of the player input block, which `Sim_PollPlayerInput` (`00460764`) dispatches first thing each frame, and which the build masks the same way as it reads it. That mask is why there is no `[Shift]` bank: bit `0x800` is discarded, folding a shifted key onto the plain one, for the cockpit and for the alert panels, whose loops read the same word ([`alert-panels.md`](alert-panels.md#keys-and-the-press-flash)).
+`Input_ReadPlayerInput` (`0045a7f4`) drains that queue once per frame, masking each code with `0049eae0` = **`0x47ff`** before handing it to `Sim_DispatchCommand` and then resetting the count. Everything not on those two lists reaches `Sim_DispatchCommand` as the single command word at the head of the player input block, which `Sim_PollPlayerInput` (`00460764`) dispatches first thing each frame, and which the read masks the same way as it reads it. That mask is why there is no `[Shift]` bank: bit `0x800` is discarded, folding a shifted key onto the plain one, for the cockpit and for the alert panels, whose loops read the same word ([`alert-panels.md`](alert-panels.md#keys-and-the-press-flash)).
 
 That same function records and replays both queues to a `.TAP` input tape — the mouse queue of §3 and this command queue are the two halves of a frame's record. See [`../formats/tap-input-tape.md`](../formats/tap-input-tape.md).
 
@@ -495,7 +495,7 @@ A dash is a click that hits no strip at all. The heads-down view is the one plac
 | `Input_KeyjoyAxisKey` | `0045a308` | The sim's axis-key subscriber; 30 codes at `0049eb33` into the key-state blocks |
 | `SimCommandQueue_Push` | `0045a47c` | The sim's command subscriber; 7 codes at `0049eb5d` into the queue at `004d2148` |
 | `SimInput_SetEnabled` | `0045b670` | Registers both of the above, or clears the key-state blocks |
-| `Input_BuildPlayerDevice` | `0045a7f4` | Builds the frame's input block; drains `004d2148` through `Sim_DispatchCommand`; records and replays |
+| `Input_ReadPlayerInput` | `0045a7f4` | Builds the frame's input block; drains `004d2148` through `Sim_DispatchCommand`; records and replays |
 | `Input_ReadDeviceEvent` | `0045c084` | Pops the unclaimed-key ring at `006bb734` |
 | `VkToScancode` | `004a1104` | 223 int32: Win32 virtual key to set-1 scancode |
 | `KeyListenerTable` | `006bb93c` | Ten `{enabled, wantedCodes, callback}` keyboard subscribers |
@@ -509,7 +509,7 @@ A dash is a click that hits no strip at all. The heads-down view is the one plac
 ## Open
 
 - **Open:** whether a button that `MfdDisplay_SetMode` leaves unhidden ([The press flash](#the-press-flash)) shows on the new screen in retail, or something else hides it before the next screen change.
-- **Open:** whether the system buttons show and take clicks in the external view. `SystemButtons_PaintForPointer` runs at the end of every `Sim_RenderFrame` and `CockpitMouse_ProcessQueue` from every `Input_BuildPlayerDevice`, neither gated on view 4, but where view 4's canvas context puts a blit has not been traced.
+- **Open:** whether the system buttons show and take clicks in the external view. `SystemButtons_PaintForPointer` runs at the end of every `Sim_RenderFrame` and `CockpitMouse_ProcessQueue` from every `Input_ReadPlayerInput`, neither gated on view 4, but where view 4's canvas context puts a blit has not been traced.
 - **Deferred:** whether anything draws the `.DCI` cursor slots (§9). A search for the displacements `+0x226`, `+0x236` and `+0x23a` finds only the cursor-slot functions and `ColorSchemePanels_LoadAll`, and the image-change hooks they call are empty in driver 3.
 - **Deferred:** whether anything reaches `Widget_SetHitShape` (`0045234c`), the circular hit form's setter (§6), or `Widget_NotifySelfAndChildren_Thunk` (`00452bac`); `es2_xref.py` finds no caller of either.
 - **Open:** whether other sim-driven HUD elements (weapon damage fill, hardpoint state boxes) use the shield rocker's flag-then-dirty-bit handoff between the sim tick and the paint pass (§8).

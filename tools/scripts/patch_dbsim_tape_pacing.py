@@ -2,7 +2,7 @@
 
 Retail's mission loop skips Time_BeginSimTick (004677bc) while a tape plays, so frames come as fast
 as the machine draws them (docs: Herculan/docs/retail/formats/tap-input-tape.md#timing). This patch hooks
-the playback branch of Input_BuildPlayerDevice (0045a7f4) where it stores the frame's recorded
+the playback branch of Input_ReadPlayerInput (0045a7f4) where it stores the frame's recorded
 SimTickDelta, and spins on GetTickCount until that frame's time has passed:
 
 - called from Sim_MainTick (return address 0045f47c): wait round(delta * 125 / 256) ms
@@ -52,7 +52,7 @@ def build_cave():
     emit('6bdb7d')                     # imul ebx,ebx,125
     emit('83eb80')                     # sub ebx,-128           ; round
     emit('c1fb08')                     # sar ebx,8              ; ebx = ms
-    # return address of Input_BuildPlayerDevice: [esp + 0x20 (pushad) + 0xc8 (locals) + 0x10 (4 pushes)]
+    # return address of Input_ReadPlayerInput: [esp + 0x20 (pushad) + 0xc8 (locals) + 0x10 (4 pushes)]
     # Its six callers' return addresses end in 7c only for Sim_MainTick's (0045f47c).
     emit('80bc24f80000007c')           # cmp byte [esp+0xf8],0x7c
     emit('7403')                       # je +3

@@ -309,7 +309,7 @@ public class Es1TargetSelectionTests {
 		return mech;
 	}
 
-	/// <summary>A left press and release at (<paramref name="x"/>, <paramref name="y"/>), handled as the input build handles them.</summary>
+	/// <summary>A left press and release at (<paramref name="x"/>, <paramref name="y"/>), handled as the input read handles them.</summary>
 	private static void Click(Es1CockpitMouse mouse, int x, int y) {
 		mouse.Push(1, new Es1MouseRecord(x, y, Es1HostMouse.LeftBit));
 		mouse.Push(2, new Es1MouseRecord(x, y, 0));

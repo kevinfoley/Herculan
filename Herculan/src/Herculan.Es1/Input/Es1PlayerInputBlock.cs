@@ -10,7 +10,7 @@ public enum Es1CameraAxes {
 }
 
 /// <summary>
-/// <c>PlayerInputBlock</c> (<c>ES1DBSIM 000b17ac</c>, <c>0x2b</c> bytes), what <c>Input_BuildPlayerDevice</c> returns
+/// <c>PlayerInputBlock</c> (<c>ES1DBSIM 000b17ac</c>, <c>0x2b</c> bytes), what <c>Input_ReadPlayerInput</c> returns
 /// each tick (docs/es1/simulation/input.md#the-input-block).
 /// </summary>
 public sealed class Es1PlayerInputBlock {

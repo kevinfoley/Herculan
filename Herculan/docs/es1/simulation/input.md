@@ -1,6 +1,6 @@
-# DBSIM.EXE — appinput.cpp, the input build
+# DBSIM.EXE — appinput.cpp, the player's input
 
-**ES1's simulator turns the keyboard, mouse and joystick into ES2's input block once a tick, from a fixed choice of six joystick configurations where ES2's reads a binding byte per control ([ES2's](../../retail/simulation/joystick-input.md#applying-the-bindings--input_buildplayerdevice-0045a7f4)).** What a player would see differently:
+**ES1's simulator turns the keyboard, mouse and joystick into ES2's input block once a tick, from a fixed choice of six joystick configurations where ES2's reads a binding byte per control ([ES2's](../../retail/simulation/joystick-input.md#applying-the-bindings--input_readplayerinput-0045a7f4)).** What a player would see differently:
 
 - the keypad's eight keys move a stick's full travel, and a quarter of it while the stick drives the HERC and the keypad aims the turret; `M`, `J`, `K` and `I` move a quarter; `Alt` held makes every key full travel; ES2's keys move half;
 - the stick has two modes, movement and turret, which keypad 0 and the stick's second button swap while preferences option 8 is on; its third button is the all-stop in movement mode and centers the turret in turret mode ([the player's controls](main-loop.md#the-players-controls--sim_pollplayerinput-0005a0c0));
@@ -63,7 +63,7 @@ Every `SimInput_SetEnabled`(1) after a (0) registers `Input_KeyjoyAxisKey` again
 
 ### The command word
 
-`Input_PollDeviceBlock` ([the live block](#the-live-block--input_polldeviceblock-0004c2d0)) reads one word a tick: `Input_ReadKeyboardCommand` (`0004c458`)(1, out) answers 0 while the keyboard device is disabled and otherwise stores `Input_ReadDeviceEvent` (`0004b51c`)'s word. In mode `0x10000` that is `KeyQueue_Pop` while status bit `2` is set and 0 otherwise; with the device's drain flag set, which `KeyboardInputDevice_Ctor` clears, it then empties the queue. Modes `0x20000` and `0x40000` read DOS as well: `Dos_KeyAvailable` (`0006c52c`, `INT 21h` function `0x0b`), then `Dos_ReadKeyNoEcho` (`0006c538`, function 8), read again with `0x8000` set when it gives 0, and `0x4000` set. The live block clears `0x1000` and `0x2000` from the word, and `Input_BuildPlayerDevice` masks it with `0x47ff`, dropping `0x800`, so a shifted key is the plain key, as in ES2. Keys typed faster than the tick wait their turn, 127 at most.
+`Input_PollDeviceBlock` ([the live block](#the-live-block--input_polldeviceblock-0004c2d0)) reads one word a tick: `Input_ReadKeyboardCommand` (`0004c458`)(1, out) answers 0 while the keyboard device is disabled and otherwise stores `Input_ReadDeviceEvent` (`0004b51c`)'s word. In mode `0x10000` that is `KeyQueue_Pop` while status bit `2` is set and 0 otherwise; with the device's drain flag set, which `KeyboardInputDevice_Ctor` clears, it then empties the queue. Modes `0x20000` and `0x40000` read DOS as well: `Dos_KeyAvailable` (`0006c52c`, `INT 21h` function `0x0b`), then `Dos_ReadKeyNoEcho` (`0006c538`, function 8), read again with `0x8000` set when it gives 0, and `0x4000` set. The live block clears `0x1000` and `0x2000` from the word, and `Input_ReadPlayerInput` masks it with `0x47ff`, dropping `0x800`, so a shifted key is the plain key, as in ES2. Keys typed faster than the tick wait their turn, 127 at most.
 
 **Modifiers.** The command word carries `0x200` for either `Alt` and `0x400` for either `Ctrl`, as they stood when the key's byte arrived; `Input_KeyjoyAxisKey` sees the same bits.
 
@@ -111,11 +111,11 @@ ES2's registry ([ES2's](../../retail/simulation/joystick-input.md#sources-and-de
 
 **`Prefs_ClearHandlersAndInit` (`0004a724`)** zeroes the 17 handlers of `Prefs_HandlerTable` (`000bd598`) and runs **`Prefs_Init` (`0004afe8`)**, ES2's ([ES2's](../../retail/simulation/preferences.md#dataprefscfg--the-option-array)) with ES1's options. In order: `PrefsInitInProgress` (`000b1734`) = 1; the handlers, through `Prefs_SetHandler`, `0004ad0c` for option 0, `0004acfc` for 1, `0004ad30` for 2, `0004ad54` for `0xb`, `Input_SetStickMode` for 8, `Input_SetThrottleLeverMode` for 10 and `Prefs_LimitDetailInLowMemory` for 6; `Prefs_Load`(1), or under `DemoMode` `Prefs_Load`(1) with `DemoMode` cleared for it, then `Prefs_Load`(0) and `Prefs_RevertSelectedOptions` (`0004aaf0`)(`0009570c`, 7), which puts options 0 to 6, the seven the list names, back to the values the first load left ([the option array](preferences.md#the-option-array)); `VoiceArchivePresent` (`000956bf`) = `Voice_ArchiveExists` (`0004aed8`), and option 2 set to 0 (`Prefs_SetOption`(1, 0, 2)) when that is 0; the joystick devices (`Input_CreateJoystickDevices`, [building the devices](joystick.md#building-the-devices)); `000956be` = 240 ([the ground](../rendering/ground-and-sky.md)); `PrefsInitInProgress` = 0. Since `Input_BuildSourceTable` calls it, each mission start reloads `data\prefs.cfg` and builds the joystick devices again.
 
-`Prefs_Load` (`0004a744`) opens `Path_ApplyAltDrive`(`data\prefs.cfg`) whatever `TapePlayback` holds, so a tape plays on the install's preferences ([the bundle](../formats/tap-input-tape.md#the-bundle)), and `DemoMode`'s two loads read the same file through the same handlers: the revert copies back values equal to those the second load left, and what the branch changes is that each registered handler runs twice. `es2_xref.py --decode` finds `DemoMode` read in `Prefs_Init`, `Input_KeyjoyAxisKey`, `Input_BuildPlayerDevice` and `Sim_Shutdown`, none of them a handler.
+`Prefs_Load` (`0004a744`) opens `Path_ApplyAltDrive`(`data\prefs.cfg`) whatever `TapePlayback` holds, so a tape plays on the install's preferences ([the bundle](../formats/tap-input-tape.md#the-bundle)), and `DemoMode`'s two loads read the same file through the same handlers: the revert copies back values equal to those the second load left, and what the branch changes is that each registered handler runs twice. `es2_xref.py --decode` finds `DemoMode` read in `Prefs_Init`, `Input_KeyjoyAxisKey`, `Input_ReadPlayerInput` and `Sim_Shutdown`, none of them a handler.
 
 ## The live block — `Input_PollDeviceBlock` (`0004c2d0`)
 
-No arguments; `Input_BuildPlayerDevice` calls it first each tick and `Input_BuildSourceTable` once. It zeroes `Input_LiveBlock` (`000b1774`, `0x29` bytes), fills it and returns it:
+No arguments; `Input_ReadPlayerInput` calls it first each tick and `Input_BuildSourceTable` once. It zeroes `Input_LiveBlock` (`000b1774`, `0x29` bytes), fills it and returns it:
 
 | Offset | Holds |
 |---|---|
@@ -134,7 +134,7 @@ In order: the keyboard; `Input_PollJoysticks` (`0004bd90`); for each of the two 
 
 ## The input block
 
-`PlayerInputBlock` (`000b17ac`), `0x2b` bytes, what `Input_BuildPlayerDevice` returns:
+`PlayerInputBlock` (`000b17ac`), `0x2b` bytes, what `Input_ReadPlayerInput` returns:
 
 | Offset | Holds |
 |---|---|
@@ -148,7 +148,7 @@ In order: the keyboard; `Input_PollJoysticks` (`0004bd90`); for each of the two 
 
 ES2's block holds the trigger apart at `+0x0d` and its axes from `+0x0e` ([sources and destinations](../../retail/simulation/joystick-input.md#sources-and-destinations--input_buildsourcetable-0045a5c0)).
 
-## The input build — `Input_BuildPlayerDevice` (`0004cb14`)
+## Reading the player's input — `Input_ReadPlayerInput` (`0004cb14`)
 
 No arguments; `Sim_MainTick` calls it first each tick ([the tick](main-loop.md#the-tick--sim_maintick-00059700)). In order:
 
@@ -182,20 +182,20 @@ Preferences option 7 (`000bd569`) chooses one of six; it also picks the joystick
 
 The tape's bundle and its frame record are [`tap-input-tape.md`](../formats/tap-input-tape.md#the-frames)'s.
 
-**Playback**, the build's step 2, while `TapePlayback` is set:
+**Playback**, the read's step 2, while `TapePlayback` is set:
 
 1. While the latch `Input_PlaybackCursorPending` (`000958be`) is set, 1 in the image, `Cursor_GetPosition`(`&Input_CursorPos`), and the latch cleared; `es2_xref.py --decode` finds that read and that clear alone, so the first playback frame reads the cursor's position.
 2. It reads the 14 bytes (`fread`(·, `0xe`, 1)) and the count (`fread`(·, 4, 1)) from `TapeFile` before the command word is tested, so the frame that ends the tape still takes a record off it.
 3. Under `DemoMode` a live command word sets `DemoAbort`; `Sim_HandleWindowKey` gets the word and its answer is dropped. Both read the live block's word, the keyboard's, never the tape's.
-4. **The end.** When either read comes up short (the two counts' AND is 0) or the live word is `0x412` (`Ctrl+E`), it sets `DemoAbort` whatever `DemoMode` holds, closes the tape, clears `TapePlayback`, sets `CockpitMouseLive` and zeroes the live word. `TapeFile` keeps the closed handle, which `Sim_Shutdown` finds set and closes again ([the end](main-loop.md#the-end--sim_shutdown-0005b568)). With `TapePlayback` clear, the build's live steps 3 and 7 run on the same call, so the frame that ends the tape is built from the keyboard, with command word 0, and `Sim_Main` leaves its loop at the next pass's `DemoAbort` test ([the frame](main-loop.md#the-frame)): a tape played with `-p` ends the mission when it ends, where ES2's raises its abort under `-D` alone ([ES2's](../../retail/formats/tap-input-tape.md#where-it-runs)).
+4. **The end.** When either read comes up short (the two counts' AND is 0) or the live word is `0x412` (`Ctrl+E`), it sets `DemoAbort` whatever `DemoMode` holds, closes the tape, clears `TapePlayback`, sets `CockpitMouseLive` and zeroes the live word. `TapeFile` keeps the closed handle, which `Sim_Shutdown` finds set and closes again ([the end](main-loop.md#the-end--sim_shutdown-0005b568)). With `TapePlayback` clear, the read's live steps 3 and 7 run on the same call, so the frame that ends the tape is built from the keyboard, with command word 0, and `Sim_Main` leaves its loop at the next pass's `DemoAbort` test ([the frame](main-loop.md#the-frame)): a tape played with `-p` ends the mission when it ends, where ES2's raises its abort under `-D` alone ([ES2's](../../retail/formats/tap-input-tape.md#where-it-runs)).
 5. **The events.** Otherwise, while *i* is below the count, a signed compare, so a negative count plays the frame with no events, it reads each 14-byte event (`fread`(·, 1, `0xe`), its count unchecked), queues it on the cockpit's mouse queue with its recorded time, the event's `+0xa` (`CockpitMouseQueue_Push`, `00044830`, [the callback and the queue](cockpit-mouse.md#the-callback-and-the-queue)), for step 4 to press and release with, and makes its *x* `Input_CursorPos` (`000b17d8`) and its *y* `000b17dc`. A record whose 18 fixed bytes are whole is played even when its events run past the end of the tape, the short ones queued with whatever the buffer held, and the next frame's read ends the tape. `es2_xref.py --decode` finds `Input_CursorPos` read only through `Input_GetCursorPos`, whose one caller is `Cockpit_PickEdgeCursor` (`0002dcc8`), and no reference to `000b17dc` of its own.
-6. **The record** fills the command word, the four axes, buttons 0–7 from bits 0–7 and `+0x29`; bits 8–11 become the source buttons, four bytes on the stack, of which the build reads only source button 1 (bit 9), step 4's stick-mode toggle, and the recording all four.
+6. **The record** fills the command word, the four axes, buttons 0–7 from bits 0–7 and `+0x29`; bits 8–11 become the source buttons, four bytes on the stack, of which the read takes only source button 1 (bit 9), step 4's stick-mode toggle, and the recording all four.
 
 In playback the block's pointer (`+2`, `+6`) and mouse bytes (`+0xa`–`+0xc`) stay 0 from step 1's `memset`, the live step 7 alone copying them, and buttons 4–7 come from the tape. `Input_BuildKeyboardAxes` is not called; steps 5 and 6 still move and zero the keyboard's pairs and the live block's stick axes, which only the live step 7 reads. Steps 9 and 10 run on the tape's axes: the latched-row zeroing, option 10's `Input_KeyThrottleStep` as the throttle, which the axis keys still step under `-p`, where `DemoMode` is clear, and `Backturn`.
 
 **Recording**, step 8, tests `TapeRecording` alone, so it records in playback as in live play. Each frame it opens `Path_WithExtension`(`tap`, `TapeStem`) in mode `ab`; when that fails it calls `Assert_Report` with the tape's name as the condition, `appinput.cpp` line `0x2bd`, severity 5, which under `-B` returns ([severities](asserts.md#severities)), and the writes go on through the null stream. It writes the record in one `fwrite` of 14 bytes: the block's command word, its four axes as step 7 left them, `SimTickDelta` (`000bdbd0`) as it stands, and the button word, whose source buttons are the tape's bits 8–11 in playback and the live block's `+0x1d`–`+0x20` otherwise. Then the count, the first dword of what `CockpitMouse_ProcessQueue` answers, a pointer to {`int32` count, pointer to the 14-byte records}, with `fwrite`(·, 1, 4), and when it is not 0 the records with `fwrite`(records, count, `0xe`); then it closes the file.
 
-Every caller of the build records a frame. `es2_xref.py` finds seven: `Sim_MainTick` and six panels' loops, `AlertPanel_SetFocus`, `StatusAlertPanel_RunModal`, `PreferencesPanel_Run`, `ControlsPanel_Run`, `000496f0` and `ObjectivesPanel_RunModal`. `es2_xref.py --decode` finds `SimTickDelta` written only by `Time_InitSimClock`, `Time_BeginSimTick` and `Sim_MainTick`'s playback store, and `Time_BeginSimTick` called once, from `Sim_Main`, so a frame built in a panel's loop records the `SimTickDelta` of the tick that raised the panel, as ES2's does ([ES2's](../../retail/formats/tap-input-tape.md#where-it-runs)), and in playback no panel's pass sets it.
+Every caller of the read records a frame. `es2_xref.py` finds seven: `Sim_MainTick` and six panels' loops, `AlertPanel_SetFocus`, `StatusAlertPanel_RunModal`, `PreferencesPanel_Run`, `ControlsPanel_Run`, `000496f0` and `ObjectivesPanel_RunModal`. `es2_xref.py --decode` finds `SimTickDelta` written only by `Time_InitSimClock`, `Time_BeginSimTick` and `Sim_MainTick`'s playback store, and `Time_BeginSimTick` called once, from `Sim_Main`, so a frame built in a panel's loop records the `SimTickDelta` of the tick that raised the panel, as ES2's does ([ES2's](../../retail/formats/tap-input-tape.md#where-it-runs)), and in playback no panel's pass sets it.
 
 ## `keyjoy.cfg` — `Keyjoy_LoadConfig` (`0004d918`)
 
@@ -252,7 +252,7 @@ Opens `Config_BuildPath`(`keyjoy.cfg`) in mode `rt`, so `tapes\keyjoy.cfg` durin
 | ES1 | Address | ES2 |
 |---|---|---|
 | `HeapPtr_DtorAppInputCopy`, `ConfigPart_DtorAppInputCopy`, `ConfigPart_GetClassTagAppInputCopy`, `TSPartBase_DtorAppInputCopy` | `0004c650`, `0004c678`, `0004c6b7`, `0004c6c0` | |
-| `Input_KeyjoyAxisKey`, `Input_BuildKeyboardAxes`, `Input_BuildSourceTable`, `Input_BuildPlayerDevice` | `0004c6ec`, `0004c818`, `0004c95c`, `0004cb14` | `0045a308`, `0045a4b0`, `0045a5c0`, `0045a7f4` |
+| `Input_KeyjoyAxisKey`, `Input_BuildKeyboardAxes`, `Input_BuildSourceTable`, `Input_ReadPlayerInput` | `0004c6ec`, `0004c818`, `0004c95c`, `0004cb14` | `0045a308`, `0045a4b0`, `0045a5c0`, `0045a7f4` |
 | `Input_ReadMaskedKeyboardCommand`, `SimInput_SetEnabled`, `Input_LatchButton`, `Input_ToggleStickMode` | `0004d7f8`, `0004d82c`, `0004d8c8`, `0004d8e1` | `0045b640`, `0045b670`, `0045b718` |
 | `Input_GetCursorPos`, `Keyjoy_LoadConfig`, `Input_InitKeyboardAxisTable`, `AppInput_ExitNoOp` | `0004d910`, `0004d918`, `0004da7c`, `0004db10` | `0045b734`, `0045b78c`, `0045b888` |
 

@@ -1,7 +1,7 @@
 namespace Herculan.Es1.Input;
 
 /// <summary>
-/// The simulator's keyboard as the input build reads it: the keyboard <c>Input_BuildSourceTable</c>
+/// The simulator's keyboard as the input read takes it: the keyboard <c>Input_BuildSourceTable</c>
 /// (<c>ES1DBSIM 0004c95c</c>) sets up, with its two subscribers, the command queue and the axis keys
 /// (docs/es1/simulation/input.md#the-simulators-two-subscribers). The host's key events reach it through
 /// <see cref="Es1HostKeyboard"/>.

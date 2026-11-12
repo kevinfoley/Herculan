@@ -2,7 +2,7 @@ namespace Herculan.Es1.Input;
 
 /// <summary>
 /// <c>Input_LiveBlock</c> (<c>ES1DBSIM 000b1774</c>, <c>0x29</c> bytes), what the devices gave this tick
-/// (docs/es1/simulation/input.md#the-live-block--input_polldeviceblock-0004c2d0). The input build stores the masked
+/// (docs/es1/simulation/input.md#the-live-block--input_polldeviceblock-0004c2d0). The input read stores the masked
 /// command word back and zeroes stick axes it takes, so the block is mutable.
 /// </summary>
 public sealed class Es1LiveBlock {

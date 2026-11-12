@@ -175,7 +175,7 @@ public class Es1ViewChainTests {
 		var (views, frames) = Views(player);
 		var chain = new Es1ViewChain(player, views);
 		var prefs = Es1Preferences.Default;
-		var input = new Es1InputBuild(new Es1KeyboardInput(0), new Es1HostMouse(), prefs, Es1KeyjoyConfig.Parse(""),
+		var input = new Es1PlayerInputReader(new Es1KeyboardInput(0), new Es1HostMouse(), prefs, Es1KeyjoyConfig.Parse(""),
 			new Es1ControlsState(prefs), Es1NoStickPort.Instance);
 		return new TestWorld(new Es1Simulation(globals, [], player, null, input, chain), frames, player, mate);
 	}

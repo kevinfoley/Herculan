@@ -84,7 +84,7 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 		&& controller.File.ModeFor(device.IsGamepad, device.Guid) == ControllerMode.Custom;
 
 	/// <summary>
-	/// The Custom profile's frame for the input build (<see cref="Es1InputBuild.Custom"/>): null in Original mode, and
+	/// The Custom profile's frame for the input read (<see cref="Es1PlayerInputReader.Custom"/>): null in Original mode, and
 	/// while the port is quiet a frame with nothing held.
 	/// </summary>
 	public Es1CustomFrame? ReadCustom() {

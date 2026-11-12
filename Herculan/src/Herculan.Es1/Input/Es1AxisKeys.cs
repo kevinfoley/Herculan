@@ -41,10 +41,10 @@ public sealed class Es1AxisKeys {
 	/// <summary><c>Input_KeyHeld</c> (<c>000b1844</c>): the key is held, or was pressed since the last build.</summary>
 	internal byte[] Held { get; } = new byte[KeyCount];
 
-	/// <summary>The release-pending block (<c>000b1854</c>): the key went up before a build saw it held.</summary>
+	/// <summary>The release-pending block (<c>000b1854</c>): the key went up before a read saw it held.</summary>
 	internal byte[] ReleasePending { get; } = new byte[KeyCount];
 
-	/// <summary>The seen block (<c>000b1864</c>): a build has counted the key since it was pressed.</summary>
+	/// <summary>The seen block (<c>000b1864</c>): a read has counted the key since it was pressed.</summary>
 	internal byte[] Seen { get; } = new byte[KeyCount];
 
 	/// <summary><c>SimInput_Enabled</c> (<c>00095818</c>): the axis keys hold keys rather than passing them on.</summary>
@@ -55,13 +55,13 @@ public sealed class Es1AxisKeys {
 
 	/// <summary>
 	/// <c>Input_KeyThrottleStep</c> (<c>00095896</c>): what option 10's <c>Ctrl</c>+<c>I</c> and <c>Ctrl</c>+<c>M</c> have
-	/// stepped since the input build last took it as the throttle axis and cleared it.
+	/// stepped since the input read last took it as the throttle axis and cleared it.
 	/// </summary>
 	public short ThrottleStep { get; set; }
 
 	/// <summary>
 	/// Where preferences option 10 (<c>000bd56c</c>) is read from at each key, as retail reads the byte, so the controls
-	/// panel's WCS row takes effect at once; the input build points it at its options. None reads the option as off.
+	/// panel's WCS row takes effect at once; the input read points it at its options. None reads the option as off.
 	/// </summary>
 	public Func<bool>? ThrottleKeysOption { get; set; }
 

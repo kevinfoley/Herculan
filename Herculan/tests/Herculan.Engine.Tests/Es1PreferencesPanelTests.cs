@@ -200,7 +200,7 @@ public class Es1PreferencesPanelTests {
 
 			preferences ??= Es1Preferences.Default;
 			var keys = new Es1KeyboardInput(0);
-			var input = new Es1InputBuild(keys, new Es1HostMouse(), preferences, Es1KeyjoyConfig.Parse(""),
+			var input = new Es1PlayerInputReader(keys, new Es1HostMouse(), preferences, Es1KeyjoyConfig.Parse(""),
 				new Es1ControlsState(preferences), Es1NoStickPort.Instance) {
 				CockpitMouse = views.Mouse,
 			};

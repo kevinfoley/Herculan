@@ -213,7 +213,7 @@ public sealed class Es1ShellDevices {
 	}
 
 	/// <summary>
-	/// <c>Prefs_ApplyMouseOption</c> (<c>0000868c</c>), option 11's handler, the simulator's statements (<see cref="Es1InputBuild.ApplyMouseOption"/>):
+	/// <c>Prefs_ApplyMouseOption</c> (<c>0000868c</c>), option 11's handler, the simulator's statements (<see cref="Es1PlayerInputReader.ApplyMouseOption"/>):
 	/// when <paramref name="value"/> differs from <see cref="MouseOptionApplied"/>, it is kept there and, with the mouse
 	/// device the shell always builds, the driver turned off for 0 (<c>Mouse_DisableDriver</c>) and on otherwise
 	/// (<c>Mouse_EnableDriver</c>). CONTROLS' MOUSE runs it at each click.

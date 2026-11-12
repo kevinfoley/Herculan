@@ -9,7 +9,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// ES1's controls panel (docs/es1/simulation/preferences.md#the-controls-panel--controlspanel_ctor-00048408) on a
-/// constructed display and input build, with no files loaded, keys pushed onto the command queue, a constructed game
+/// constructed display and input read, with no files loaded, keys pushed onto the command queue, a constructed game
 /// port, and the options saved to a temporary folder.
 /// </summary>
 public class Es1ControlsPanelTests {
@@ -89,7 +89,7 @@ public class Es1ControlsPanelTests {
 		Assert.False(stick.InputEnabled);
 		rig.Port.Axes[0] = 128;
 		rig.Port.Buttons = 1;
-		var live = rig.Input.Build();
+		var live = rig.Input.Read();
 		Assert.Equal([0, 0, 0, 0], rig.Input.LiveBlock.StickAxes);
 		Assert.Equal(0, live.Buttons[0]);
 	}
@@ -198,8 +198,8 @@ public class Es1ControlsPanelTests {
 		return Es1Preferences.FromFile(bytes);
 	}
 
-	/// <summary>The panels' globals on a display, the cockpit's mouse and an input build on a port with every axis answering.</summary>
-	private sealed record Rig(Es1AlertGlobals Panels, Es1InputBuild Input, Es1KeyboardInput Keys, TestPort Port) {
+	/// <summary>The panels' globals on a display, the cockpit's mouse and an input read on a port with every axis answering.</summary>
+	private sealed record Rig(Es1AlertGlobals Panels, Es1PlayerInputReader Input, Es1KeyboardInput Keys, TestPort Port) {
 		public Es1Preferences Options => Input.Preferences;
 
 		public static Rig Start(Es1Preferences preferences) {
@@ -209,7 +209,7 @@ public class Es1ControlsPanelTests {
 			mouse.Init(hostMouse);
 			var keys = new Es1KeyboardInput(0);
 			var port = new TestPort();
-			var input = new Es1InputBuild(keys, hostMouse, preferences, Es1KeyjoyConfig.Parse(""),
+			var input = new Es1PlayerInputReader(keys, hostMouse, preferences, Es1KeyjoyConfig.Parse(""),
 				new Es1ControlsState(preferences), port);
 			return new Rig(new Es1AlertGlobals(display, mouse, input, null, null), input, keys, port);
 		}

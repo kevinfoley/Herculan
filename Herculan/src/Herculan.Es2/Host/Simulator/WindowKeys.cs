@@ -80,7 +80,7 @@ sealed class WindowKeys : ISystemButtonActions {
 	/// <summary>
 	/// The simulator's two full-screen key paths. [Alt+Enter] is command 0x21c, which Sim_DispatchCommand
 	/// offers Sim_HandleWindowKey (0045fd60) after the widget tree, so it comes through the dispatcher's
-	/// own input — a replaying tape's keys during a replay. During a replay Input_BuildPlayerDevice also
+	/// own input — a replaying tape's keys during a replay. During a replay Input_ReadPlayerInput also
 	/// offers Sim_HandleWindowKey the live keyboard's command, so the player's own [Alt+Enter] works too.
 	/// Retail's -B stops a replay toggling; this host has no -B. [Alt+Enter] also toggles here while a modal
 	/// panel (the pause panel among them) holds the input, which is this engine's choice, made without

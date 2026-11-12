@@ -1,7 +1,7 @@
 namespace Herculan.Es1.Input;
 
 /// <summary>
-/// The controls' state the input build reads and the simulation also writes: the stick mode, which keypad 0 toggles,
+/// The controls' state the input read takes and the simulation also writes: the stick mode, which keypad 0 toggles,
 /// <c>ThrottleLeverMode</c>, which <c>Ctrl+1</c> flips, whether the camera has the controls, and the four press-once
 /// latches the weapons and panels set. The simulation owns one; preferences options 8 and 10 seed it as
 /// <c>Prefs_Load</c> (<c>ES1DBSIM 0004a744</c>) runs their handlers.
@@ -79,8 +79,8 @@ public sealed class Es1ControlsState {
 
 /// <summary>
 /// The four press-once latches: <c>Input_ButtonLatch</c> (<c>ES1DBSIM 000bd634</c>) and <c>Input_ButtonLatchState</c>
-/// (<c>000bd638</c>), four bytes each, which <c>Input_BuildSourceTable</c> clears and <c>Input_BuildPlayerDevice</c>
-/// applies to the input block's buttons 0–3 (docs/es1/simulation/input.md#the-input-build--input_buildplayerdevice-0004cb14;
+/// (<c>000bd638</c>), four bytes each, which <c>Input_BuildSourceTable</c> clears and <c>Input_ReadPlayerInput</c>
+/// applies to the input block's buttons 0–3 (docs/es1/simulation/input.md#reading-the-players-input--input_readplayerinput-0004cb14;
 /// ES2's docs/retail/simulation/joystick-input.md#a-latched-first-row-holds-the-axes).
 /// </summary>
 public sealed class Es1ButtonLatches {
@@ -111,7 +111,7 @@ public sealed class Es1ButtonLatches {
 	internal bool FirstHeld => _latched[0] && _state[0] != 0;
 
 	/// <summary>
-	/// The input build's pass over buttons 0–3: a latched button reading its latched state reads the opposite
+	/// The input read's pass over buttons 0–3: a latched button reading its latched state reads the opposite
 	/// (the state xor 1), and one reading anything else drops its latch.
 	/// </summary>
 	internal void Apply(byte[] buttons) {

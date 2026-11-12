@@ -12,7 +12,7 @@ namespace Herculan.Es1.Panels;
 /// <c>ControlsAlertVtable</c> (<c>000952c6</c>) (docs/es1/simulation/preferences.md#the-controls-panel--controlspanel_ctor-00048408):
 /// 222 × 109 over the middle of the screen on the plate <c>dba\ctl_alrt</c>, the title and captions of
 /// <c>str\CTL_ALRT.STR</c>, JOYSTICK, JOY1 CONTROL, WCS, RCS and MOUSE with their values in words, CALIBRATE and DONE. It
-/// keeps its own copies of options 7, 8, 10, 9 and 11 of <see cref="Es1Preferences"/> (the input build's), changes the
+/// keeps its own copies of options 7, 8, 10, 9 and 11 of <see cref="Es1Preferences"/> (the input read's), changes the
 /// options at each click, and on DONE rebuilds the joystick devices and saves the five. It takes the family's keys alone
 /// and calls no draw hook, so the view behind it stands still.
 ///
@@ -161,7 +161,7 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 	/// options 7, 8, 10, 9 and 11 copied to the panel, with <see cref="RudderSwappedModel"/> 2 for option 7 at 2,
 	/// <see cref="KeptStickControl"/> option 8 or 1 for 0, <see cref="KeptRudder"/> option 9, and the applied pair options
 	/// 7 and 9; <see cref="Es1AlertPanel.Enter"/> and the focus on JOYSTICK. Then until the close byte is set, a pass: the
-	/// input build (the shell's <c>Shell_PollInput</c>), its block to the family's keys
+	/// input read (the shell's <c>Shell_PollInput</c>), its block to the family's keys
 	/// (<see cref="Es1AlertPanel.HandleEvent"/>), the action's case with each row it changes refreshed, the action cleared,
 	/// and each widget's per-frame call; then <see cref="Es1AlertPanel.Leave"/>, and bit 0 of the close byte the answer.
 	/// Retail's loop goes round with no wait; here a pass that leaves the close byte clear waits for the next host frame,
@@ -188,7 +188,7 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 		Enter();
 		SetFocus(StickRowsLocked ? Wcs : Joystick);
 		while (Close == 0) {
-			var block = Globals.Input.Build();
+			var block = Globals.Input.Read();
 			HandleEvent(block);
 			if (Action != 0) {
 				TakeAction(Action, block);

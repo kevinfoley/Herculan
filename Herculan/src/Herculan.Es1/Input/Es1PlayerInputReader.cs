@@ -3,12 +3,12 @@ using Herculan.Engine.Settings;
 namespace Herculan.Es1.Input;
 
 /// <summary>
-/// The input build: <c>Input_BuildSourceTable</c> (<c>ES1DBSIM 0004c95c</c>)'s set-up and
-/// <c>Input_BuildPlayerDevice</c> (<c>0004cb14</c>), which turns the keyboard, the mouse and the joysticks into the
-/// input block once a tick (docs/es1/simulation/input.md#the-input-build--input_buildplayerdevice-0004cb14). The tick
-/// calls <see cref="Build"/> first.
+/// The input read: <c>Input_BuildSourceTable</c> (<c>ES1DBSIM 0004c95c</c>)'s set-up and
+/// <c>Input_ReadPlayerInput</c> (<c>0004cb14</c>), which turns the keyboard, the mouse and the joysticks into the
+/// input block once a tick (docs/es1/simulation/input.md#reading-the-players-input--input_readplayerinput-0004cb14). The tick
+/// calls <see cref="Read"/> first.
 /// </summary>
-public sealed class Es1InputBuild {
+public sealed class Es1PlayerInputReader {
 	/// <summary><c>SimCommandMask</c> (<c>000958b8</c>): drops <c>0x800</c>, so a shifted key is the plain key.</summary>
 	public const ushort SimCommandMask = 0x47ff;
 
@@ -32,7 +32,7 @@ public sealed class Es1InputBuild {
 	/// <paramref name="keyjoy"/>, <c>Keyjoy_LoadConfig</c>'s read. The axis keys read option 10 from
 	/// <paramref name="preferences"/> for <c>Ctrl+I</c> and <c>Ctrl+M</c>.
 	/// </summary>
-	public Es1InputBuild(Es1KeyboardInput keyboard, Es1HostMouse mouse, Es1Preferences preferences,
+	public Es1PlayerInputReader(Es1KeyboardInput keyboard, Es1HostMouse mouse, Es1Preferences preferences,
 		Es1KeyjoyConfig keyjoy, Es1ControlsState controls, IEs1GamePort port) {
 		_keyboard = keyboard;
 		Mouse = mouse;
@@ -76,19 +76,19 @@ public sealed class Es1InputBuild {
 	/// <summary>The cockpit's mouse, whose queue step 4 drains (<c>CockpitMouse_ProcessQueue</c>); none with no cockpit.</summary>
 	public Es1CockpitMouse? CockpitMouse { get; set; }
 
-	/// <summary><c>Input_LiveBlockPtr</c> (<c>000b1840</c>): the last poll, as the build left it.</summary>
+	/// <summary><c>Input_LiveBlockPtr</c> (<c>000b1840</c>): the last poll, as the read left it.</summary>
 	public Es1LiveBlock LiveBlock { get; private set; }
 
 	/// <summary>
-	/// <c>PlayerInputBlock</c> (<c>000b17ac</c>), the block the last <see cref="Build"/> filled and returned; none before
-	/// the first. Each build fills a new block here, so a block a caller holds is never changed by a later build.
+	/// <c>PlayerInputBlock</c> (<c>000b17ac</c>), the block the last <see cref="Read"/> filled and returned; none before
+	/// the first. Each read fills a new block here, so a block a caller holds is never changed by a later read.
 	/// </summary>
 	public Es1PlayerInputBlock? PlayerInputBlock { get; set; }
 
 	/// <summary>
 	/// <b>This engine's own:</b> the controller's Custom profile this frame (<see cref="Es1CustomControls"/>), or null while
 	/// it is in Original mode, when option 7's configuration reads the stick as retail does. While it answers a frame, a
-	/// live build takes the stick's axes, its trigger and buttons 4–7 from it in place of the live block's and the
+	/// live read takes the stick's axes, its trigger and buttons 4–7 from it in place of the live block's and the
 	/// configuration's (steps 3, 6 and 7). A throttle the profile reads as a lever (<see cref="Es1CustomFrame.LeverTarget"/>)
 	/// goes in as the rate that takes <see cref="PlayerThrottle"/> to the lever's position
 	/// (<see cref="Sim.Es1Locomotion.LeverAxis"/>), so the simulation and a recording take a rate, as retail's do.
@@ -101,7 +101,7 @@ public sealed class Es1InputBuild {
 	/// </summary>
 	public Func<short>? PlayerThrottle { get; set; }
 
-	/// <summary>The preferences the build reads, <c>data\prefs.cfg</c>'s options.</summary>
+	/// <summary>The preferences the read takes, <c>data\prefs.cfg</c>'s options.</summary>
 	public Es1Preferences Preferences => _preferences;
 
 	/// <summary>The tape <c>-p</c> or <c>-D</c> opened, whose frames step 2 reads; none with no tape.</summary>
@@ -117,10 +117,10 @@ public sealed class Es1InputBuild {
 	public bool TapeRecording => Recording != null;
 
 	/// <summary>
-	/// <c>Input_BuildPlayerDevice</c>: one tick's input block, in retail's order. The stick mode read at entry decides
+	/// <c>Input_ReadPlayerInput</c>: one tick's input block, in retail's order. The stick mode read at entry decides
 	/// the keyboard's slow keys and whether source button 1 may toggle it; the mode after that toggle decides the rest.
 	/// </summary>
-	public Es1PlayerInputBlock Build() {
+	public Es1PlayerInputBlock Read() {
 		var block = new Es1PlayerInputBlock();
 		byte modeAtEntry = Controls.StickMode;
 		byte mode = modeAtEntry;

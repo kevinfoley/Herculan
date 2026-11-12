@@ -10,7 +10,7 @@ public readonly record struct Es1MouseEvent(Es1MouseRecord Record, uint Time);
 /// The cockpit's mouse (docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue): the driver's callback,
 /// <c>CockpitMouse_OnEvent</c> (<c>ES1DBSIM 00044464</c>), which queues each change of the pointer or its buttons, a
 /// move at most once a count of the 60-a-second clock and a button change always; and
-/// <c>CockpitMouse_ProcessQueue</c> (<c>000444d0</c>), which the input build runs once a tick to press, release and drag
+/// <c>CockpitMouse_ProcessQueue</c> (<c>000444d0</c>), which the input read runs once a tick to press, release and drag
 /// the active root's widgets with them (docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0).
 /// It holds the UI library's globals the two share (<see cref="Widgets"/>) and <c>Cursor_FollowsMouse</c>.
 /// </summary>

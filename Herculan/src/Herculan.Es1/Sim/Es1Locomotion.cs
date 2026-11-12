@@ -109,7 +109,7 @@ public sealed class Es1Locomotion {
 	/// <summary>
 	/// <b>This engine's own:</b> the throttle axis that moves <paramref name="throttle"/> toward a lever's
 	/// <paramref name="target"/> through <see cref="ApplyThrottleInput"/>'s rate, for a Custom profile's lever
-	/// (<see cref="Input.Es1InputBuild.Custom"/>); retail reads every throttle axis as a rate. The target is cut to the
+	/// (<see cref="Input.Es1PlayerInputReader.Custom"/>); retail reads every throttle axis as a rate. The target is cut to the
 	/// lever mode's range, the step to what an axis of <see cref="SteerByThrottleDeflection"/> gives, so the steer's sign
 	/// stays the throttle's while the lever moves, and the axis is the one whose step is that, negated for a negative
 	/// mode as <see cref="ApplyThrottleInput"/> negates it back.

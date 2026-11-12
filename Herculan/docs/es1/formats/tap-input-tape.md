@@ -9,7 +9,7 @@
 - the demo pick never repeats the name it picked last, and since a run of the simulator plays one mission, `-D` never picks the first name on `tapes\demolist.str`'s list when the list holds more than one ([the demo tape](#the-demo-tape));
 - in playback the checkpoint flush formats a `Playback error. Frame #%ld` message each frame and discards it, where ES2's does nothing ([the checkpoint file](#the-checkpoint-file)).
 
-Addresses are `ES1DBSIM` image addresses ([the X-32 executable](x32-executable.md#the-image)); ES2's are DBSIM's. The game's functions here remove their own arguments, so argument lists are in stack order ([calling conventions](compiler.md#calling-conventions)); the runtime's take theirs in the C convention. What the input build does with a frame is [`input.md`](../simulation/input.md#recording-and-playback)'s.
+Addresses are `ES1DBSIM` image addresses ([the X-32 executable](x32-executable.md#the-image)); ES2's are DBSIM's. The game's functions here remove their own arguments, so argument lists are in stack order ([calling conventions](compiler.md#calling-conventions)); the runtime's take theirs in the C convention. What the input read does with a frame is [`input.md`](../simulation/input.md#recording-and-playback)'s.
 
 ## The bundle
 
@@ -31,20 +31,20 @@ Both are ES2's, ES2's arguments in the other order. Where the bundle's handling 
 
 ## The frames
 
-After the bundle, one record a frame, which `Input_BuildPlayerDevice` (`0004cb14`) writes while recording and reads in playback ([recording and playback](../simulation/input.md#recording-and-playback)):
+After the bundle, one record a frame, which `Input_ReadPlayerInput` (`0004cb14`) writes while recording and reads in playback ([recording and playback](../simulation/input.md#recording-and-playback)):
 
 | Offset | Type | Field |
 |---|---|---|
 | `+0x00` | `int16` | the command word |
-| `+0x02` | `int16` × 4 | the four axes, steering, throttle, twist and pitch, as step 7 of the build leaves them: before the camera-axis step and `Backturn`, which playback runs again on them |
+| `+0x02` | `int16` × 4 | the four axes, steering, throttle, twist and pitch, as step 7 of the read leaves them: before the camera-axis step and `Backturn`, which playback runs again on them |
 | `+0x0a` | `int16` | `SimTickDelta` |
 | `+0x0c` | `uint16` | bit 0 set when button 0 (the input block's `+0x15`) is not 0, bits 1–7 the same for buttons 1–7, bits 8–11 for the four source buttons; bits 12–15 0 |
 | `+0x0e` | `int32` | the mouse-event count *n* |
 | `+0x12` | 14 × *n* | the mouse events, in `CockpitMouseQueue_Push`'s record ([the callback and the queue](../simulation/cockpit-mouse.md#the-callback-and-the-queue)) |
 
-Where ES2's differs ([ES2's stream](../../retail/formats/tap-input-tape.md#the-stream)): ES2's tape carries the eight-byte joystick capability block once after the bundle; its 24-byte header holds the trigger, the hat and the stick's own eight buttons in bytes of their own and a command count; and the command codes follow the mouse events. ES1's frame carries the one command word the build took from the keyboard ([the command word](../simulation/input.md#the-command-word)) and no list.
+Where ES2's differs ([ES2's stream](../../retail/formats/tap-input-tape.md#the-stream)): ES2's tape carries the eight-byte joystick capability block once after the bundle; its 24-byte header holds the trigger, the hat and the stick's own eight buttons in bytes of their own and a command count; and the command codes follow the mouse events. ES1's frame carries the one command word the read took from the keyboard ([the command word](../simulation/input.md#the-command-word)) and no list.
 
-**The pointer and the mouse bytes are not recorded**, as in ES2 ([ES2's stream](../../retail/formats/tap-input-tape.md#the-stream)): the input block's `+2`–`+0xc` are on no record, and playback leaves them 0, the build copying them from the live block only in its live step ([recording and playback](../simulation/input.md#recording-and-playback)). [The gunsight drag](../simulation/main-loop.md#the-players-controls--sim_pollplayerinput-0005a0c0) reads them, so a replay never arms it. The mouse events replay through the cockpit's queue.
+**The pointer and the mouse bytes are not recorded**, as in ES2 ([ES2's stream](../../retail/formats/tap-input-tape.md#the-stream)): the input block's `+2`–`+0xc` are on no record, and playback leaves them 0, the read copying them from the live block only in its live step ([recording and playback](../simulation/input.md#recording-and-playback)). [The gunsight drag](../simulation/main-loop.md#the-players-controls--sim_pollplayerinput-0005a0c0) reads them, so a replay never arms it. The mouse events replay through the cockpit's queue.
 
 ### The page parity
 
@@ -113,7 +113,7 @@ The class tag has no Ghidra function. `time` reads DOS's date and time (`INT 21h
 
 ## Open
 
-- **Open:** a caller of `Vcr_Checkpoint` (`00000bd4`). `es2_xref.py` finds no branch to it, the same sweep finding `Input_BuildPlayerDevice`'s seven callers. The two stored dwords it lists, `00000bd2` at `0002f350` and `00000bd3` at `00073eeb`, which reach the padding before it, are bytes of other instructions: `0002f350` is the imm32 tail of `MOV byte ptr [0x000bd222],0x0` at `0002f34d` in `MessagePort_StepToVariant`, and `00073eeb` the rel32 of `CALL 0x00074ac2` at `00073eea` in `00073ee8`.
+- **Open:** a caller of `Vcr_Checkpoint` (`00000bd4`). `es2_xref.py` finds no branch to it, the same sweep finding `Input_ReadPlayerInput`'s seven callers. The two stored dwords it lists, `00000bd2` at `0002f350` and `00000bd3` at `00073eeb`, which reach the padding before it, are bytes of other instructions: `0002f350` is the imm32 tail of `MOV byte ptr [0x000bd222],0x0` at `0002f34d` in `MessagePort_StepToVariant`, and `00073eeb` the rel32 of `CALL 0x00074ac2` at `00073eea` in `00073ee8`.
 - **Open:** a reader of `Vcr_MismatchFlag`; `es2_xref.py --decode` finds `Vcr_Checkpoint`'s write and no read.
 - **Open:** a retail check of the demo pick, and whether the shell's demo runs the simulator with `-D`. Run `DBSIM -eggplant -D` eight times and note each tape's opening scene, then `DBSIM -eggplant -ptapes\demo1` once: its opening scene is not among the eight.
 - **Open:** a reader of the unpacked `tapes\prefs.cfg`. `es2_xref.py` finds four calls of `Config_BuildPath`, `Keyjoy_LoadConfig`'s and three in `Sim_ParseCommandLine`, and a grep of the decompile for `tapes` finds only `tapes\demolist.str` and `Config_BuildPath`'s prefix.

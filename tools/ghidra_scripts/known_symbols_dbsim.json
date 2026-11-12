@@ -20921,7 +20921,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_SetFocus",
-      "description": "Moves the panel's focus to widget index, storing it at +0x2f7. Focus is the pointer: it warps the cursor to the widget's centre (Mouse_WarpCursorToPoint when there is a mouse device) and stores that position with Cursor_SyncPosition. Index -1 instead adopts the first widget whose rect contains the pointer position the input build reports, and stays -1 when none does or there is no mouse device.",
+      "description": "Moves the panel's focus to widget index, storing it at +0x2f7. Focus is the pointer: it warps the cursor to the widget's centre (Mouse_WarpCursorToPoint when there is a mouse device) and stores that position with Cursor_SyncPosition. Index -1 instead adopts the first widget whose rect contains the pointer position the input read reports, and stays -1 when none does or there is no mouse device.",
       "source": "docs/retail/simulation/alert-panels.md",
       "signature": "void __cdecl AlertPanel_SetFocus(int panel, int index)",
       "verified": {
@@ -21001,7 +21001,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_HandleEvent",
-      "description": "The alert panels' shared vtable slot +0x10. Joystick button 1 (+0x0d) presses the focused widget (+0x2f7) through AlertPanel_PressWidget, or focuses widget 0 when the focus is -1, and latches the button. Otherwise joystick button 2 (+0x17) focuses the next widget and latches it. Otherwise the key code: [Return] (0x1c) does what button 1 does; [Esc] (0x01) presses the cancel widget at +0x2fb when it is set; [Tab] (0x0f) and scancode 0x52 focus the next widget and 0x80f, Shift+Tab, the previous -- a code the loops' input build has already masked to 0x0f with SimCommandMask. Returns 1 when it acted and 0 for any other code.",
+      "description": "The alert panels' shared vtable slot +0x10. Joystick button 1 (+0x0d) presses the focused widget (+0x2f7) through AlertPanel_PressWidget, or focuses widget 0 when the focus is -1, and latches the button. Otherwise joystick button 2 (+0x17) focuses the next widget and latches it. Otherwise the key code: [Return] (0x1c) does what button 1 does; [Esc] (0x01) presses the cancel widget at +0x2fb when it is set; [Tab] (0x0f) and scancode 0x52 focus the next widget and 0x80f, Shift+Tab, the previous -- a code the loops' input read has already masked to 0x0f with SimCommandMask. Returns 1 when it acted and 0 for any other code.",
       "source": "docs/retail/simulation/alert-panels.md",
       "signature": "undefined4 __cdecl AlertPanel_HandleEvent(int panel, ushort *input)",
       "verified": {
@@ -21528,7 +21528,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PreferencesPanel_Run",
-      "description": "The preferences panel's modal loop and its action switch. Greys widgets 0-3 to state 2 when SfxManager is null, clears the queued action (+0x356), enters, focuses widget 0, and copies the panel's region between display pages. Each pass hands the input build to the slot +0x10 handler, acts on a queued widget index, then calls PreferencesPanel_CallDrawHook and PreferencesPanel_Present. Cases 0, 1 and 5 toggle options 0, 1 and 8; cases 4 and 6 step options 7 and 9 forward on a left click and back on a right; cases 7 and 8 (options 10 and 11) call the FORWARD step down both arms of their right-button test, so STRUCTURE DETAIL and EFFECTS DETAIL cannot be stepped backwards; cases 2 and 3 step options 2 and 3 forward only, and only while VoiceArchivePresent is set. A case that steps an option sets that row's refresh count to 2. Case 9 constructs ctl_alrt and runs it inline, then repaints this panel and focuses its cancel widget (+0x2fb). Case 10 calls PreferencesPanel_Save and sets the close flag to 3. Returns the close flag & 1.",
+      "description": "The preferences panel's modal loop and its action switch. Greys widgets 0-3 to state 2 when SfxManager is null, clears the queued action (+0x356), enters, focuses widget 0, and copies the panel's region between display pages. Each pass hands the input read to the slot +0x10 handler, acts on a queued widget index, then calls PreferencesPanel_CallDrawHook and PreferencesPanel_Present. Cases 0, 1 and 5 toggle options 0, 1 and 8; cases 4 and 6 step options 7 and 9 forward on a left click and back on a right; cases 7 and 8 (options 10 and 11) call the FORWARD step down both arms of their right-button test, so STRUCTURE DETAIL and EFFECTS DETAIL cannot be stepped backwards; cases 2 and 3 step options 2 and 3 forward only, and only while VoiceArchivePresent is set. A case that steps an option sets that row's refresh count to 2. Case 9 constructs ctl_alrt and runs it inline, then repaints this panel and focuses its cancel widget (+0x2fb). Case 10 calls PreferencesPanel_Save and sets the close flag to 3. Returns the close flag & 1.",
       "source": "docs/retail/simulation/preferences.md",
       "verified": {
         "bytes": "00456d4c+913",
@@ -21797,7 +21797,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ControlsPanel_HandleEvent",
-      "description": "The controls panel's own event handler, vtable slot +0x10, in place of the family's AlertPanel_HandleEvent. Copies the device block's trigger byte (+0x0d) back over button state 0 so BUTTON 1 is live on the panel although the input build zeroes it, then takes the first of the eight button states that is set: a press on the selected row (+0x476) runs ControlsPanel_StepButton and flashes the row's widget (row + 4) on the panel's root (+0x285); a press on another row, when there is a capability block (+0x47a) and the row is under its button count (+2), runs ControlsPanel_ShowOptionList for it, flashes its widget, and moves the highlight (+0x472) to it, the old one to state 3 and this one to 0; in every case Input_LatchButton(row + 1) holds the button. Then the keys: [Return] (0x1c) presses the focus +0x2f7 through AlertPanel_PressWidget, or focuses widget 0 when it is -1; [Esc] (0x01) presses the cancel widget +0x2fb when it is set; [Tab] (0x0f) and scancode 0x52 focus the next widget and 0x80f, Shift+Tab, the previous -- a code the loop's input build has already masked to 0x0f with SimCommandMask. Any other code returns 0.",
+      "description": "The controls panel's own event handler, vtable slot +0x10, in place of the family's AlertPanel_HandleEvent. Copies the device block's trigger byte (+0x0d) back over button state 0 so BUTTON 1 is live on the panel although the input read zeroes it, then takes the first of the eight button states that is set: a press on the selected row (+0x476) runs ControlsPanel_StepButton and flashes the row's widget (row + 4) on the panel's root (+0x285); a press on another row, when there is a capability block (+0x47a) and the row is under its button count (+2), runs ControlsPanel_ShowOptionList for it, flashes its widget, and moves the highlight (+0x472) to it, the old one to state 3 and this one to 0; in every case Input_LatchButton(row + 1) holds the button. Then the keys: [Return] (0x1c) presses the focus +0x2f7 through AlertPanel_PressWidget, or focuses widget 0 when it is -1; [Esc] (0x01) presses the cancel widget +0x2fb when it is set; [Tab] (0x0f) and scancode 0x52 focus the next widget and 0x80f, Shift+Tab, the previous -- a code the loop's input read has already masked to 0x0f with SimCommandMask. Any other code returns 0.",
       "source": "docs/retail/simulation/preferences.md",
       "verified": {
         "bytes": "00458f9c+399",
@@ -22285,7 +22285,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimCommandQueue_Push",
-      "description": "Appends one command code to the queue at DAT_004d2148 that Input_BuildPlayerDevice drains into Sim_DispatchCommand and returns 1, or returns 2 when the queue is closed (DAT_0049eacc). Registered as a keyboard subscriber by SimInput_SetEnabled, after Input_KeyjoyAxisKey, against the 7-byte wanted-code list at 0049eb5d -- 1c 0c 0d 1a 1b 4e 4a, i.e. Enter, -, =, [, ], keypad + and keypad -.",
+      "description": "Appends one command code to the queue at DAT_004d2148 that Input_ReadPlayerInput drains into Sim_DispatchCommand and returns 1, or returns 2 when the queue is closed (DAT_0049eacc). Registered as a keyboard subscriber by SimInput_SetEnabled, after Input_KeyjoyAxisKey, against the 7-byte wanted-code list at 0049eb5d -- 1c 0c 0d 1a 1b 4e 4a, i.e. Enter, -, =, [, ], keypad + and keypad -.",
       "source": "docs/retail/simulation/cockpit-input.md",
       "signature": "undefined4 __cdecl SimCommandQueue_Push(undefined2 command)",
       "verified": {
@@ -22330,8 +22330,8 @@
       "binary": "DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "Input_BuildPlayerDevice",
-      "description": "The per-frame input build: reads the twelve controls-block bytes at ControlsOptionBase and routes the joystick's four normalised axes, hat and eight buttons into the device struct at PlayerInputBlock that Sim_PollPlayerInput consumes. Pumps messages first (WM_QUIT raises DemoAbort), zeroes the block's 0x30 bytes and polls the live device block through Input_PollDeviceBlock. Each axis row's byte selects a DESTINATION pair (0 unassigned, 1 the movement pair, 2 the turret pair), not a source; a control whose destination is taken falls to a second rank that wins when both have moved, and the keyboard pairs are the last fallback. Also: pulls the first FIRE-bound button of the walker's block out to +0x0d and zeroes its byte (using a hardcoded 0x11 rather than ControlsOptionBase+4, so a RAZOR finds its trigger through the walker's block), applies the press-once button latch Input_LatchButton sets (a latched button reading its latched state is masked to zero, one reading anything else drops the latch), writes the hat over the turret pair at 0xc0 under HAT=2, and applies keyjoy.cfg's Tilt, Missile, Rudder and Backturn reversals. It also owns the command queue at DAT_004d2148: it drains each code through Sim_DispatchCommand after masking with SimCommandMask = 0x47ff (which discards the Shift bank, folding a shifted key onto the plain one) and then resets the count. It is the input-tape record and playback point too: during playback it reads the frame record into the block, and jumps (0045aeda to 0045b2ae) past the source combine, the latch-release loop, the trigger extraction and the copy of the live block's pointer and mouse bytes (+0x02..+0x0c, left zero). The tail runs either way, after the recording write: outside the camera arm it zeroes the camera-axis pair while button 1's latch (004d237a) and its state (004d2382) are set, points +0x22/+0x26 at that pair, and applies Backturn -- see docs/retail/formats/tap-input-tape.md.",
+      "name": "Input_ReadPlayerInput",
+      "description": "The per-frame input read: reads the twelve controls-block bytes at ControlsOptionBase and routes the joystick's four normalised axes, hat and eight buttons into the device struct at PlayerInputBlock that Sim_PollPlayerInput consumes. Pumps messages first (WM_QUIT raises DemoAbort), zeroes the block's 0x30 bytes and polls the live device block through Input_PollDeviceBlock. Each axis row's byte selects a DESTINATION pair (0 unassigned, 1 the movement pair, 2 the turret pair), not a source; a control whose destination is taken falls to a second rank that wins when both have moved, and the keyboard pairs are the last fallback. Also: pulls the first FIRE-bound button of the walker's block out to +0x0d and zeroes its byte (using a hardcoded 0x11 rather than ControlsOptionBase+4, so a RAZOR finds its trigger through the walker's block), applies the press-once button latch Input_LatchButton sets (a latched button reading its latched state is masked to zero, one reading anything else drops the latch), writes the hat over the turret pair at 0xc0 under HAT=2, and applies keyjoy.cfg's Tilt, Missile, Rudder and Backturn reversals. It also owns the command queue at DAT_004d2148: it drains each code through Sim_DispatchCommand after masking with SimCommandMask = 0x47ff (which discards the Shift bank, folding a shifted key onto the plain one) and then resets the count. It is the input-tape record and playback point too: during playback it reads the frame record into the block, and jumps (0045aeda to 0045b2ae) past the source combine, the latch-release loop, the trigger extraction and the copy of the live block's pointer and mouse bytes (+0x02..+0x0c, left zero). The tail runs either way, after the recording write: outside the camera arm it zeroes the camera-axis pair while button 1's latch (004d237a) and its state (004d2382) are set, points +0x22/+0x26 at that pair, and applies Backturn -- see docs/retail/formats/tap-input-tape.md.",
       "source": "docs/retail/simulation/joystick-input.md",
       "verified": {
         "bytes": "0045a7f4+3659",
@@ -22377,7 +22377,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_LatchButton",
-      "description": "(button 1-8, state): marks a joystick button as acted on, setting the byte at 004d2379 + button to 1 and storing state at 004d2381 + button. Input_BuildPlayerDevice then masks that button to zero until the player releases it, which is the whole of the press-once rule (docs/retail/simulation/joystick-input.md, The buttons). Read callers: AlertPanel_HandleEvent latches buttons 1 and 2 as it answers them, and ControlsPanel_HandleEvent the pressed row's button.",
+      "description": "(button 1-8, state): marks a joystick button as acted on, setting the byte at 004d2379 + button to 1 and storing state at 004d2381 + button. Input_ReadPlayerInput then masks that button to zero until the player releases it, which is the whole of the press-once rule (docs/retail/simulation/joystick-input.md, The buttons). Read callers: AlertPanel_HandleEvent latches buttons 1 and 2 as it answers them, and ControlsPanel_HandleEvent the pressed row's button.",
       "source": "docs/retail/simulation/joystick-input.md",
       "verified": {
         "bytes": "0045b718+28",
@@ -22449,7 +22449,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_ReadKeyboardCommand",
-      "description": "(out, kind): for kind 1 with the keyboard device enabled, stores Input_ReadDeviceEvent's next code at out; returns 0 only when the device is disabled. Any other kind writes nothing and returns 1. Input_PollDeviceBlock fills the device block's head word with it, and Input_BuildPlayerDevice calls it.",
+      "description": "(out, kind): for kind 1 with the keyboard device enabled, stores Input_ReadDeviceEvent's next code at out; returns 0 only when the device is disabled. Any other kind writes nothing and returns 1. Input_PollDeviceBlock fills the device block's head word with it, and Input_ReadPlayerInput calls it.",
       "source": "DBSIM decompile at 0045bba8"
     },
     {
@@ -23457,7 +23457,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_MainTick",
-      "description": "DBSIM's per-frame simulation tick, called once a frame by Sim_Run. Runs Input_BuildPlayerDevice and, during tape playback, copies the frame record's delta (block +0x2e) into SimTickDelta; otherwise it leaves SimTickDelta to Time_BeginSimTick. Unless 004d2576 is set it then ticks, each pool walked last to first through Pool_Prev and each object that returns nonzero queued for deletion: g_ExplosionPool (Explosion_TickUpdate), g_SmokeBallPool (Effect_DriftAndAnimate), g_SmokePool (Smoke_Tick), g_FirePool (FireEffect_TickUpdate), g_DebrisPool (Debris_TickUpdate), g_MeteorPool (Meteor_Tick); clears DAT_004d25aa; ticks g_ProjectilePool through vtable +0x14 and every g_StructurePool object whose group +0x14 is null through vtable +0x18; then walks MissionGroups in order, Group_DeploymentCheck for a group whose +0x14 is set and Group_OrderTick otherwise. A set 004d2580 is then moved into 004d2576. Sim_PollPlayerInput follows; a nonzero return ends the tick returning 1. Otherwise: ActionTimers_Tick and Actions_EvaluateTriggers(LocalPlayerMech) unless 004d2576; ViewChain_Apply; unless 004d2576, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each GlobalMechList mech (last to first) whose group +0x14 is null and that is not destroyed. With the player not destroyed (+0x99) it runs Mission_PollStatus and, for a status of 0 or more other than 2, first runs Group_ApplyOutnumberedDamage on the player's group when the status is 3 (showing status 0x12 instead if that destroys the player), then runs a StatusAlertPanel for it and returns 1 when the answer equals AlertPanel_EndsMissionButton[status]. With the player destroyed and 004d2576 clear it runs StatusAlertPanel(2) once ViewChain_PlayerDeathCamera answers nonzero and returns 1. Returns 0 otherwise.",
+      "description": "DBSIM's per-frame simulation tick, called once a frame by Sim_Run. Runs Input_ReadPlayerInput and, during tape playback, copies the frame record's delta (block +0x2e) into SimTickDelta; otherwise it leaves SimTickDelta to Time_BeginSimTick. Unless 004d2576 is set it then ticks, each pool walked last to first through Pool_Prev and each object that returns nonzero queued for deletion: g_ExplosionPool (Explosion_TickUpdate), g_SmokeBallPool (Effect_DriftAndAnimate), g_SmokePool (Smoke_Tick), g_FirePool (FireEffect_TickUpdate), g_DebrisPool (Debris_TickUpdate), g_MeteorPool (Meteor_Tick); clears DAT_004d25aa; ticks g_ProjectilePool through vtable +0x14 and every g_StructurePool object whose group +0x14 is null through vtable +0x18; then walks MissionGroups in order, Group_DeploymentCheck for a group whose +0x14 is set and Group_OrderTick otherwise. A set 004d2580 is then moved into 004d2576. Sim_PollPlayerInput follows; a nonzero return ends the tick returning 1. Otherwise: ActionTimers_Tick and Actions_EvaluateTriggers(LocalPlayerMech) unless 004d2576; ViewChain_Apply; unless 004d2576, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each GlobalMechList mech (last to first) whose group +0x14 is null and that is not destroyed. With the player not destroyed (+0x99) it runs Mission_PollStatus and, for a status of 0 or more other than 2, first runs Group_ApplyOutnumberedDamage on the player's group when the status is 3 (showing status 0x12 instead if that destroys the player), then runs a StatusAlertPanel for it and returns 1 when the answer equals AlertPanel_EndsMissionButton[status]. With the player destroyed and 004d2576 clear it runs StatusAlertPanel(2) once ViewChain_PlayerDeathCamera answers nonzero and returns 1. Returns 0 otherwise.",
       "source": "docs/retail/simulation/random-generator.md#the-simulations-draws",
       "signature": "short __cdecl Sim_MainTick(void)",
       "verified": {
@@ -23537,7 +23537,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_HandleWindowKey",
-      "description": "(code): 0x21c ([Alt+Enter]) runs Video_ToggleFullscreen unless a tape is playing back with 004d25b0 set; 0x430 ([Ctrl+B]) calls __break (INT3) when 004d25b0 is set. Returns 1 for either code, 0 otherwise. It keeps no state, so every 0x21c toggles, an auto-repeat's included. Callers found by es2_xref: Input_BuildPlayerDevice and Sim_DispatchCommand.",
+      "description": "(code): 0x21c ([Alt+Enter]) runs Video_ToggleFullscreen unless a tape is playing back with 004d25b0 set; 0x430 ([Ctrl+B]) calls __break (INT3) when 004d25b0 is set. Returns 1 for either code, 0 otherwise. It keeps no state, so every 0x21c toggles, an auto-repeat's included. Callers found by es2_xref: Input_ReadPlayerInput and Sim_DispatchCommand.",
       "source": "DBSIM decompile and disassembly at 0045fd60",
       "verified": {
         "bytes": "0045fd60+75",
@@ -35711,7 +35711,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cursor_GetPosition",
-      "description": "(out): copies the pointer position at 004a3638/004a363c -- the slot Cursor_SyncPosition writes when 004a365e is set -- into out. Gunsight_ClickSurface_Paint, HddCommandScreen_SynthesizeListClick and Input_BuildPlayerDevice read it.",
+      "description": "(out): copies the pointer position at 004a3638/004a363c -- the slot Cursor_SyncPosition writes when 004a365e is set -- into out. Gunsight_ClickSurface_Paint, HddCommandScreen_SynthesizeListClick and Input_ReadPlayerInput read it.",
       "source": "DBSIM disassembly at 00486dc2"
     },
     {
@@ -42841,7 +42841,7 @@
       "type": "data",
       "confidence": "high",
       "name": "SimCommandMask",
-      "description": "0x47ff. Input_BuildPlayerDevice ANDs the input block's head command word and every queued command code with this, which discards the 0x800 Shift bit Key_WndProcHook sets -- so a shifted key folds onto the plain one, in the cockpit and in the alert panels' loops, which read the same word.",
+      "description": "0x47ff. Input_ReadPlayerInput ANDs the input block's head command word and every queued command code with this, which discards the 0x800 Shift bit Key_WndProcHook sets -- so a shifted key folds onto the plain one, in the cockpit and in the alert panels' loops, which read the same word.",
       "source": "docs/retail/simulation/cockpit-input.md"
     },
     {
@@ -44866,7 +44866,7 @@
       "type": "data",
       "confidence": "high",
       "name": "PlayerInputBlock",
-      "description": "The global player input block Input_BuildPlayerDevice fills each frame and returns. Head word is the frame's command code, which Sim_PollPlayerInput dispatches first thing; the four axes follow at +0x0e. A .TAP frame record is a snapshot of its first sixteen bytes.",
+      "description": "The global player input block Input_ReadPlayerInput fills each frame and returns. Head word is the frame's command code, which Sim_PollPlayerInput dispatches first thing; the four axes follow at +0x0e. A .TAP frame record is a snapshot of its first sixteen bytes.",
       "source": "docs/retail/formats/tap-input-tape.md"
     },
     {
@@ -44875,8 +44875,8 @@
       "type": "data",
       "confidence": "high",
       "name": "Input_CursorPos",
-      "description": "The cursor position Input_BuildPlayerDevice keeps: from Cursor_GetPosition, or from the mouse record it pushes on CockpitMouseQueue_Push. Input_GetCursorPos returns its address.",
-      "source": "DBSIM decompile at 0045b734 and Input_BuildPlayerDevice"
+      "description": "The cursor position Input_ReadPlayerInput keeps: from Cursor_GetPosition, or from the mouse record it pushes on CockpitMouseQueue_Push. Input_GetCursorPos returns its address.",
+      "source": "DBSIM decompile at 0045b734 and Input_ReadPlayerInput"
     },
     {
       "address": "004d24ec",
@@ -45028,7 +45028,7 @@
       "type": "data",
       "confidence": "high",
       "name": "InputDrivesCamera",
-      "description": "Word, block 004d2540+0x34. Set: the controls steer a camera, not the machine -- every reader tests it together with the missile-camera flag 004d25aa. Input_BuildPlayerDevice re-points the axis sources (+0x22/+0x26 to +0x0e/+0x10), Sim_PollPlayerInput reads the camera axes and skips Mech_PlayerFireTick, Mech_ApplyThrottleInput ignores the lever, ViewChain_DrawCaption picks label 2 rather than 3 from the table at 004d1724. Writers: ViewChain_Apply (0045de14) on every change of view and, in the outside view on the player, from the preference 004d259c ([Enter]/[Tab] in view 4); ViewChain_ViewObject (0045df18), 1 for any object but the player and 004d259c for the player; the developer keys Ctrl+T (0x414), which toggles it, and Ctrl+N/P (0x431/0x419), which set it.",
+      "description": "Word, block 004d2540+0x34. Set: the controls steer a camera, not the machine -- every reader tests it together with the missile-camera flag 004d25aa. Input_ReadPlayerInput re-points the axis sources (+0x22/+0x26 to +0x0e/+0x10), Sim_PollPlayerInput reads the camera axes and skips Mech_PlayerFireTick, Mech_ApplyThrottleInput ignores the lever, ViewChain_DrawCaption picks label 2 rather than 3 from the table at 004d1724. Writers: ViewChain_Apply (0045de14) on every change of view and, in the outside view on the player, from the preference 004d259c ([Enter]/[Tab] in view 4); ViewChain_ViewObject (0045df18), 1 for any object but the player and 004d259c for the player; the developer keys Ctrl+T (0x414), which toggles it, and Ctrl+N/P (0x431/0x419), which set it.",
       "source": "docs/retail/command-line.md"
     },
     {

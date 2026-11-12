@@ -119,8 +119,8 @@ public class Es1KeyboardTests {
 	}
 
 	/// <summary>
-	/// A key pressed and released between two builds moves the axis in the first and not the second. Catches the
-	/// key-up clearing the held byte before a build has seen it, and the build leaving a released key held.
+	/// A key pressed and released between two reads moves the axis in the first and not the second. Catches the
+	/// key-up clearing the held byte before a read has seen it, and the read leaving a released key held.
 	/// </summary>
 	[Fact]
 	public void TapBetweenBuildsCountsForOneBuild() {

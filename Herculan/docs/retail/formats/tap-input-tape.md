@@ -19,7 +19,7 @@ The extension is forced to `tap` in the first three cases, so `<name>` is a bare
 
 `DemoTape_PickRandom` (`0045ce9c`) loads the first group of `tapes\demolist.str`, with room for 20 names (`StringTable_LoadGroup`'s capacity `0x14`, which it does not read), and returns entry `time() % count`, or entry 0 when the table holds one name. The retail table holds `DEMO1`, `DEMO2`, `DEMO3`.
 
-Demo mode is playback plus an abort: with `004d25b4` set, any key the player presses that makes a command code, the first axis key (`Input_KeyjoyAxisKey`'s opening test) or closing the window (`WM_CLOSE` in the window procedure) raises `004d25b6`, as does the tape running out ([below](#where-it-runs)); a `WM_QUIT` reaching the input build raises it in any mission, demo or not. The flag is what the mission loop and `StatusAlertPanel_RunModal` read to leave the mission. That is attract-mode behaviour — run until somebody touches something. The command-code test reads the live keyboard's command word, which `Input_PollDeviceBlock` (`0045ba8c`) builds at `004d247a` each frame, not the tape's — see [Rejected readings](#rejected-readings).
+Demo mode is playback plus an abort: with `004d25b4` set, any key the player presses that makes a command code, the first axis key (`Input_KeyjoyAxisKey`'s opening test) or closing the window (`WM_CLOSE` in the window procedure) raises `004d25b6`, as does the tape running out ([below](#where-it-runs)); a `WM_QUIT` reaching the input read raises it in any mission, demo or not. The flag is what the mission loop and `StatusAlertPanel_RunModal` read to leave the mission. That is attract-mode behaviour — run until somebody touches something. The command-code test reads the live keyboard's command word, which `Input_PollDeviceBlock` (`0045ba8c`) builds at `004d247a` each frame, not the tape's — see [Rejected readings](#rejected-readings).
 
 ## File layout
 
@@ -69,17 +69,17 @@ Then one 24-byte header per frame, plus its variable tail:
 | `+0x18` | 14 x n | The mouse events, in `CockpitMouseQueue_Push`'s own record layout ([`../simulation/cockpit-input.md`](../simulation/cockpit-input.md#3-the-cockpits-one-listener-queues-it-doesnt-act)) |
 | — | int16 x n | The command codes, in the layout of the queue at `004d2148` ([`../simulation/cockpit-input.md`](../simulation/cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes)) |
 
-**Buttons 5-8 are not recorded.** Only `004d2360`-`004d2363` reach the header, and playback's `memset` of the input block leaves the other four zero. The four bits are written after the press-once latch has masked the build ([`../simulation/joystick-input.md`](../simulation/joystick-input.md#the-buttons)), so each is set on the one frame its action fires, and the trigger's own button is zero because the trigger is extracted from it. The hat bytes are zero under HAT = 2, which writes the hat onto the turret axes and clears them before they are recorded.
+**Buttons 5-8 are not recorded.** Only `004d2360`-`004d2363` reach the header, and playback's `memset` of the input block leaves the other four zero. The four bits are written after the press-once latch has masked the read ([`../simulation/joystick-input.md`](../simulation/joystick-input.md#the-buttons)), so each is set on the one frame its action fires, and the trigger's own button is zero because the trigger is extracted from it. The hat bytes are zero under HAT = 2, which writes the hat onto the turret axes and clears them before they are recorded.
 
-**Nor is the block's pointer.** Its `+0x02`..`+0x0c` — the pointer position and the mouse buttons the live build copies in — are on no record, and playback leaves them zero. The [gunsight drag](../simulation/gunsight-drag.md) reads them, so a replay never arms it.
+**Nor is the block's pointer.** Its `+0x02`..`+0x0c` — the pointer position and the mouse buttons the live read copies in — are on no record, and playback leaves them zero. The [gunsight drag](../simulation/gunsight-drag.md) reads them, so a replay never arms it.
 
 The raw bank at `+0x0d` is read back into locals that only the recording branch reads. In the retail tapes its bit 0, the stick's trigger button, is set on 180, 116 and 185 frames, every one of them a frame whose trigger bit is set; the trigger bit is set on 180, 200 and 204.
 
-The command word is the one key event the build took off the keyboard ring, releases included: a press and its `0x80` release sit in two different frames, and a held key's auto-repeat arrives as a run of presses with one release at the end. The command queue carries presses of its seven keys only, their releases reaching the ring and so the command word. The three retail tapes run 1499, 1901 and 3660 frames. The only codes in their queues are `0x0c`, `0x0d` and `0x1b` — `-`, `=` and `]`, three of the seven scancodes on `SimCommandWantedCodes`.
+The command word is the one key event the read took off the keyboard ring, releases included: a press and its `0x80` release sit in two different frames, and a held key's auto-repeat arrives as a run of presses with one release at the end. The command queue carries presses of its seven keys only, their releases reaching the ring and so the command word. The three retail tapes run 1499, 1901 and 3660 frames. The only codes in their queues are `0x0c`, `0x0d` and `0x1b` — `-`, `=` and `]`, three of the seven scancodes on `SimCommandWantedCodes`.
 
 ## Where it runs
 
-Both directions live in `Input_BuildPlayerDevice` (`0045a7f4`), the per-frame input build, around the point where the live device would otherwise be read.
+Both directions live in `Input_ReadPlayerInput` (`0045a7f4`), the per-frame input read, around the point where the live device would otherwise be read.
 
 **Recording** reopens the tape in append mode every frame, writes the capability block if it has not yet, writes the header and the two arrays, and closes the file again. A failed open reports through the error logger as `APPINPUT.CPP:834` rather than stopping the mission. The mouse events it writes are the front buffer `CockpitMouse_ProcessQueue` returns — which is the only reason that function returns anything.
 
@@ -87,7 +87,7 @@ Both directions live in `Input_BuildPlayerDevice` (`0045a7f4`), the per-frame in
 
 **Live mouse input is shut off while a tape plays.** `CockpitMouse_OnEvent` queues nothing unless `004d1e5a` is set, and that byte is clear for the duration, so the tape's recorded events are the only ones the cockpit sees. The end of the tape sets it. A mouse event's position is in the game's screen space: `Mouse_DispatchEvent` (`0048083c`) scales a client position by `(backBufferWidth << 15) / clientWidth` through a Q16 multiply, which is half the back buffer and so the viewport — 640x480, or 320x240 in the low-resolution mode.
 
-**A modal panel reads the tape too.** `Sim_MainTick` is not the only caller of `Input_BuildPlayerDevice`: all four alert-panel modal loops call it once per pass — `StatusAlertPanel_RunModal` (`00455fe4`, which the pause panel runs too), `ObjectivesPanel_RunModal` (`00457ae4`), `PreferencesPanel_Run` (`00456d4c`) and `ControlsPanel_Run` (`00458650`) — and so does `AlertPanel_SetFocus` (`00454c7c`) when it adopts the widget under the pointer. So a recording goes on writing frames while a panel is up, and a playback goes on reading them: the keystrokes and clicks that answered the panel are on the tape and answer it again. A panel's loop never calls `Time_BeginSimTick`, so its frames come at the loop's own rate and carry the stale `SimTickDelta` of the frame before the panel; the retail tapes' mouse timestamps put that rate at 5-7 ms a frame.
+**A modal panel reads the tape too.** `Sim_MainTick` is not the only caller of `Input_ReadPlayerInput`: all four alert-panel modal loops call it once per pass — `StatusAlertPanel_RunModal` (`00455fe4`, which the pause panel runs too), `ObjectivesPanel_RunModal` (`00457ae4`), `PreferencesPanel_Run` (`00456d4c`) and `ControlsPanel_Run` (`00458650`) — and so does `AlertPanel_SetFocus` (`00454c7c`) when it adopts the widget under the pointer. So a recording goes on writing frames while a panel is up, and a playback goes on reading them: the keystrokes and clicks that answered the panel are on the tape and answer it again. A panel's loop never calls `Time_BeginSimTick`, so its frames come at the loop's own rate and carry the stale `SimTickDelta` of the frame before the panel; the retail tapes' mouse timestamps put that rate at 5-7 ms a frame.
 
 A panel raised by a frame's own command runs from inside that frame's tick. `Sim_MainTick` builds the input, ticks the effect pools and the groups, and then calls `Sim_PollPlayerInput`, which dispatches the command word first — so the panel comes up there, and the rest of the tick, the machines included, waits for it. `AlertPanel_Enter` (`00454630`) saves the input block's `0x30` bytes as the panel opens and `AlertPanel_Leave` (`004548ac`) writes them back as it closes, so after it the control laws read the frame that raised the panel. The button latches the panel set lie outside those bytes and outlast it ([`../simulation/joystick-input.md`](../simulation/joystick-input.md#a-latched-first-row-holds-the-axes)). The mission's own status alert comes up at the very end of a tick, after `Mission_PollStatus`.
 
@@ -147,7 +147,7 @@ The main menu's `VIEW DEMO` button (`MainMenu_OnViewDemo`, `0043156f`, VSHELL) e
 | `Sim_ParseCommandLine` | `0045e73c` | DBSIM's argument parser; owns `-r`, `-p` and `-D` |
 | `DemoTape_PickRandom` | `0045ce9c` | Picks a tape name from `tapes\demolist.str` |
 | `Tape_PackFile` / `Tape_UnpackFile` | `0045cc88` / `0045cd40` | One bundle block out and in |
-| `Input_BuildPlayerDevice` | `0045a7f4` | Per-frame input build; both the record and the playback point |
+| `Input_ReadPlayerInput` | `0045a7f4` | Per-frame input read; both the record and the playback point |
 | `PlayerInputBlock` | `004d234a` | The input block a frame record is a snapshot of |
 | `TapeRecording` / `TapePlayback` | `004d255c` / `004d255a` | The two mode flags |
 | `TapeFile` | `004d2566` | The open tape's `FILE*` |
@@ -168,7 +168,7 @@ The main menu's `VIEW DEMO` button (`MainMenu_OnViewDemo`, `0043156f`, VSHELL) e
 
 | Reading | Why it is wrong |
 |---|---|
-| The `-D` abort and the `Ctrl+E` stop test the tape's own command word, so a recorded `Ctrl+E` ends playback and a retail demo aborts itself at its first command. | `Input_BuildPlayerDevice` tests `*DAT_004d2414`, which `Input_PollDeviceBlock` points at the live device block `004d247a`, and it tests it before the frame record is copied into `PlayerInputBlock`. The tape's command word never reaches either test. |
+| The `-D` abort and the `Ctrl+E` stop test the tape's own command word, so a recorded `Ctrl+E` ends playback and a retail demo aborts itself at its first command. | `Input_ReadPlayerInput` tests `*DAT_004d2414`, which `Input_PollDeviceBlock` points at the live device block `004d247a`, and it tests it before the frame record is copied into `PlayerInputBlock`. The tape's command word never reaches either test. |
 
 ## Open
 

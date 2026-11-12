@@ -26200,7 +26200,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitMouse_ProcessQueue",
-      "description": "No arguments: swaps the queue pointers CockpitMouseQueue_Back (000bd530) and CockpitMouseQueue_Front (000bd534), zeroes the count of the one CockpitMouseQueue_Back (000bd530) now holds and, for each 14-byte record {x, y, buttons, time} of the one CockpitMouseQueue_Front (000bd534) holds, with r the root Widget_ActiveRoot (00094c54): Widget_ClickButtons (00094b84) = the buttons; when the point differs from CockpitMouse_LastPoint (000b16c0)/000b16c4, stores it there, calls Cursor_SyncPosition (000669dc) while TapePlayback (000b5b76) and Cursor_FollowsMouse (00094c5b) are set, stores the point less r's +0x227/+0x22b in CockpitMouse_CanvasPoint (000b16d4)/000b16d8 and, with Widget_DragCapture (00094c5a) clear, calls Widget_TrackPressedWidget (00043f68)(r, point) when Widget_HitTest (000437d0)(r, point) passes, or with it set calls slot +0x1c of the captured entry (index Widget_PressedIndex (00094c58) of r's list +0x252) with the point less r's +0/+4 and Widget_Repaint (0004410c); clears CockpitMouse_DoubleClick (00094c5c); a left press (bit 0 set, the byte CockpitMouse_LeftHeld (000bd50e) clear) sets CockpitMouse_LeftHeld (000bd50e) and calls Widget_OnMouseDown (00043e00)(r, point); a right press sets CockpitMouse_RightHeld (000bd510); a left release clears CockpitMouse_LeftHeld (000bd50e), sets CockpitMouse_DoubleClick (00094c5c) when time - the dword CockpitMouse_LastLeftRelease (00094c60) is below CockpitMouse_DoubleClickTicks (000bd518), stores time in CockpitMouse_LastLeftRelease (00094c60) and the buttons | 1 in Widget_ClickButtons (00094b84); a right release the same with CockpitMouse_RightHeld (000bd510), CockpitMouse_LastRightRelease (00094c64) and | 2; after a release calls Widget_OnMouseUp (00043eac)(r, point) with Widget_DragCapture (00094c5a) clear, or else sets the captured entry's +0x17 to 0, repaints it, clears Widget_DragCapture (00094c5a), calls its slot +0xc with what its slot +0x14 returns and sets Widget_PressedIndex (00094c58) to -1. Returns the queue CockpitMouseQueue_Front (000bd534) holds. ES2's CockpitMouse_ProcessQueue (DBSIM 00452d18), which clears its button word after each record. es2_xref finds one call, from Input_BuildPlayerDevice (0004cb14).",
+      "description": "No arguments: swaps the queue pointers CockpitMouseQueue_Back (000bd530) and CockpitMouseQueue_Front (000bd534), zeroes the count of the one CockpitMouseQueue_Back (000bd530) now holds and, for each 14-byte record {x, y, buttons, time} of the one CockpitMouseQueue_Front (000bd534) holds, with r the root Widget_ActiveRoot (00094c54): Widget_ClickButtons (00094b84) = the buttons; when the point differs from CockpitMouse_LastPoint (000b16c0)/000b16c4, stores it there, calls Cursor_SyncPosition (000669dc) while TapePlayback (000b5b76) and Cursor_FollowsMouse (00094c5b) are set, stores the point less r's +0x227/+0x22b in CockpitMouse_CanvasPoint (000b16d4)/000b16d8 and, with Widget_DragCapture (00094c5a) clear, calls Widget_TrackPressedWidget (00043f68)(r, point) when Widget_HitTest (000437d0)(r, point) passes, or with it set calls slot +0x1c of the captured entry (index Widget_PressedIndex (00094c58) of r's list +0x252) with the point less r's +0/+4 and Widget_Repaint (0004410c); clears CockpitMouse_DoubleClick (00094c5c); a left press (bit 0 set, the byte CockpitMouse_LeftHeld (000bd50e) clear) sets CockpitMouse_LeftHeld (000bd50e) and calls Widget_OnMouseDown (00043e00)(r, point); a right press sets CockpitMouse_RightHeld (000bd510); a left release clears CockpitMouse_LeftHeld (000bd50e), sets CockpitMouse_DoubleClick (00094c5c) when time - the dword CockpitMouse_LastLeftRelease (00094c60) is below CockpitMouse_DoubleClickTicks (000bd518), stores time in CockpitMouse_LastLeftRelease (00094c60) and the buttons | 1 in Widget_ClickButtons (00094b84); a right release the same with CockpitMouse_RightHeld (000bd510), CockpitMouse_LastRightRelease (00094c64) and | 2; after a release calls Widget_OnMouseUp (00043eac)(r, point) with Widget_DragCapture (00094c5a) clear, or else sets the captured entry's +0x17 to 0, repaints it, clears Widget_DragCapture (00094c5a), calls its slot +0xc with what its slot +0x14 returns and sets Widget_PressedIndex (00094c58) to -1. Returns the queue CockpitMouseQueue_Front (000bd534) holds. ES2's CockpitMouse_ProcessQueue (DBSIM 00452d18), which clears its button word after each record. es2_xref finds one call, from Input_ReadPlayerInput (0004cb14).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0",
       "verified": {
         "bytes": "000444d0+861",
@@ -26215,7 +26215,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitMouseQueue_Push",
-      "description": "(time, record) in stack order, its arguments removed by this function, entered also at its padding 0004482d: returns 0 when the count of the queue CockpitMouseQueue_Back (000bd530) points at is 99; otherwise appends a 14-byte entry to its buffer, the record's x and y dwords, its buttons word and the time dword at +0xa, raises the count and returns 1. ES2's CockpitMouseQueue_Push (DBSIM 00453034). es2_xref finds calls from CockpitMouse_OnEvent (00044464) and Input_BuildPlayerDevice (0004cb14), whose playback passes each recorded record with its recorded time.",
+      "description": "(time, record) in stack order, its arguments removed by this function, entered also at its padding 0004482d: returns 0 when the count of the queue CockpitMouseQueue_Back (000bd530) points at is 99; otherwise appends a 14-byte entry to its buffer, the record's x and y dwords, its buttons word and the time dword at +0xa, raises the count and returns 1. ES2's CockpitMouseQueue_Push (DBSIM 00453034). es2_xref finds calls from CockpitMouse_OnEvent (00044464) and Input_ReadPlayerInput (0004cb14), whose playback passes each recorded record with its recorded time.",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue",
       "verified": {
         "bytes": "00044830+76",
@@ -26770,7 +26770,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_SetFocus",
-      "description": "(panel, index) in stack order, its arguments removed by this function, also entered at its padding 0004646e: for index -1, with a mouse device (Input_GetMouseDevice_Thunk), runs Input_BuildPlayerDevice (0004cb14) and takes the first of the +0x2b5 widgets at +0x28d whose rect holds the block's pointer (+2, +6), edges included, else -1: the pointer in screen pixels against the widgets' panel-local rects, without the panel's corner; for another index, puts the pointer on the widget's centre plus the panel's origin (x0 + ((x1 - x0) >> 1) + panel x0, likewise y) with Mouse_SetPosition when there is a mouse device and Cursor_SyncPosition either way. Stores the index at +0x2df. ES2's AlertPanel_SetFocus (DBSIM 00454c7c).",
+      "description": "(panel, index) in stack order, its arguments removed by this function, also entered at its padding 0004646e: for index -1, with a mouse device (Input_GetMouseDevice_Thunk), runs Input_ReadPlayerInput (0004cb14) and takes the first of the +0x2b5 widgets at +0x28d whose rect holds the block's pointer (+2, +6), edges included, else -1: the pointer in screen pixels against the widgets' panel-local rects, without the panel's corner; for another index, puts the pointer on the widget's centre plus the panel's origin (x0 + ((x1 - x0) >> 1) + panel x0, likewise y) with Mouse_SetPosition when there is a mouse device and Cursor_SyncPosition either way. Stores the index at +0x2df. ES2's AlertPanel_SetFocus (DBSIM 00454c7c).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#focus",
       "verified": {
         "bytes": "00046470+275",
@@ -27310,7 +27310,7 @@
       "type": "function",
       "confidence": "high",
       "name": "StatusAlertPanel_RunModal",
-      "description": "(panel), its argument removed by this function: the status panel's slot +0xc, entered at its padding 00047309. AlertPanel_Enter (00045f00), AlertPanel_SetFocus (00046470)(panel, 0), then until the close byte +0x2b9 is set: Input_BuildPlayerDevice (0004cb14), its block to the panel's slot +0x14, and slot +0x10 of each widget's +0x1c table; then AlertPanel_Leave (000460b8), and returns bit 0 of the close byte. The same code as ObjectivesPanel_RunModal (0004a4ec). ES2's StatusAlertPanel_RunModal (DBSIM 00455fe4), less its DemoAbort test and its present.",
+      "description": "(panel), its argument removed by this function: the status panel's slot +0xc, entered at its padding 00047309. AlertPanel_Enter (00045f00), AlertPanel_SetFocus (00046470)(panel, 0), then until the close byte +0x2b9 is set: Input_ReadPlayerInput (0004cb14), its block to the panel's slot +0x14, and slot +0x10 of each widget's +0x1c table; then AlertPanel_Leave (000460b8), and returns bit 0 of the close byte. The same code as ObjectivesPanel_RunModal (0004a4ec). ES2's StatusAlertPanel_RunModal (DBSIM 00455fe4), less its DemoAbort test and its present.",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#the-loop",
       "verified": {
         "bytes": "0004730c+184",
@@ -27400,7 +27400,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PreferencesPanel_Run",
-      "description": "(panel), slot +0xc of PrefsAlertVtable (000951ae): the preferences panel's loop. With no sound manager (Sound_Manager (000959ac) 0) puts widgets 0, 1 and 2 in state 2; clears the action +0x340; AlertPanel_Enter (00045f00); AlertPanel_SetFocus (00046470)(panel, 0); copies the panel from the page on the screen to the display's +0x8c (Region_CopyBetweenPages (00066914), the cursor hidden around it) and makes +0x88 the draw page again. Until the close byte +0x2b9 is set: Input_BuildPlayerDevice (0004cb14), the block to slot +0x14; then for an action: 0 Prefs_ToggleOption (0004a94c)(1, 0), 1 the same on option 1, 2 Prefs_StepOption (0004a988)(1, 3, 2) while VoiceArchivePresent (000956bf) is set, 3 Prefs_ToggleOption(1, 3), 4 to 6 Prefs_IncreaseOption (0004aa18)(1, 0x20, option 4 to 6), or Prefs_DecreaseOption (0004aa78) with the right-button byte +0x2e7 set, each of those setting its row's repaint counter +0x388 + row to 2, case 2 only when it steps; 7, CONTROLS, paints widget 7 at once through slot +4 of its +0x1c table, builds the controls panel on the stack (ControlsPanel_Ctor (00048408)(that, 0, 1)), runs it (ControlsPanel_Run (00048810)), repaints this panel through slot +4, focuses the cancel widget and destroys the controls panel (ControlsPanel_Dtor (000487b4), 2); 8, DONE, PreferencesPanel_Save (000483a0, by its padding 0004839d) and the close byte 3; the action back to -1; then PreferencesPanel_CallDrawHook (00048198, by its padding 00048195). AlertPanel_Leave (000460b8); with a draw hook and a screen buffer +0x28, copies the panel's region onto +0x8c under its own render context and sets the draw page back. Returns bit 0 of the close byte. ES2's PreferencesPanel_Run (DBSIM 00456d4c) with ES1's nine buttons.",
+      "description": "(panel), slot +0xc of PrefsAlertVtable (000951ae): the preferences panel's loop. With no sound manager (Sound_Manager (000959ac) 0) puts widgets 0, 1 and 2 in state 2; clears the action +0x340; AlertPanel_Enter (00045f00); AlertPanel_SetFocus (00046470)(panel, 0); copies the panel from the page on the screen to the display's +0x8c (Region_CopyBetweenPages (00066914), the cursor hidden around it) and makes +0x88 the draw page again. Until the close byte +0x2b9 is set: Input_ReadPlayerInput (0004cb14), the block to slot +0x14; then for an action: 0 Prefs_ToggleOption (0004a94c)(1, 0), 1 the same on option 1, 2 Prefs_StepOption (0004a988)(1, 3, 2) while VoiceArchivePresent (000956bf) is set, 3 Prefs_ToggleOption(1, 3), 4 to 6 Prefs_IncreaseOption (0004aa18)(1, 0x20, option 4 to 6), or Prefs_DecreaseOption (0004aa78) with the right-button byte +0x2e7 set, each of those setting its row's repaint counter +0x388 + row to 2, case 2 only when it steps; 7, CONTROLS, paints widget 7 at once through slot +4 of its +0x1c table, builds the controls panel on the stack (ControlsPanel_Ctor (00048408)(that, 0, 1)), runs it (ControlsPanel_Run (00048810)), repaints this panel through slot +4, focuses the cancel widget and destroys the controls panel (ControlsPanel_Dtor (000487b4), 2); 8, DONE, PreferencesPanel_Save (000483a0, by its padding 0004839d) and the close byte 3; the action back to -1; then PreferencesPanel_CallDrawHook (00048198, by its padding 00048195). AlertPanel_Leave (000460b8); with a draw hook and a screen buffer +0x28, copies the panel's region onto +0x8c under its own render context and sets the draw page back. Returns bit 0 of the close byte. ES2's PreferencesPanel_Run (DBSIM 00456d4c) with ES1's nine buttons.",
       "source": "Herculan/docs/es1/simulation/preferences.md#the-loop--preferencespanel_run-00047a88",
       "verified": {
         "bytes": "00047a88+1029",
@@ -27595,7 +27595,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ControlsPanel_Run",
-      "description": "(panel), slot +0xc of ControlsAlertVtable (000952c6): the controls panel's loop. Copies options 7, 8, 10, 9 and 11 to +0x39c to +0x3a0; +0x3a1 = 2 when option 7 is 2, else 0; +0x3a2 = option 8, or 1 for 0; +0x3a3 = option 9; +0x3a4 and +0x3a5 = options 7 and 9 as applied. AlertPanel_Enter (00045f00), AlertPanel_SetFocus (00046470)(panel, 0); until the close byte +0x2b9 is set: Input_BuildPlayerDevice (0004cb14), the block to slot +0x14; for the action +0x398 (the button index plus 1): 1 steps option 7 modulo 6, Prefs_StepOption (0004a988) or with the right-button byte +0x2e7 Prefs_StepOptionBack (0004a9d0), once more forward when that gives 0 with the block's button 0 (+0x15) held; for 0, with the panel's option 8 +0x39d not 0, it keeps that at +0x3a2 and sets option 8 to 0 (Prefs_SetOption (0004a914)), leaving the RCS byte +0x39f alone; for any other model it puts option 8 back from +0x3a2 when it is 0, and then at 2 keeps the RCS byte +0x39f, when set, at +0x3a3 and XORs it with 1, and at any other model sets it from +0x3a3 when that is set; 2, with option 7 not 0, steps option 8 modulo 3 forward or back until it is not 0; 3 toggles option 10 (Prefs_ToggleOption (0004a94c)); 4 toggles option 9 and, turned on with option 7 at 2, sets option 7 to 1 with +0x3a1 = 2, or turned off with +0x3a1 at 2, sets option 7 back to 2 and +0x3a1 = 0; 5 toggles option 11; 6, CALIBRATE, with option 9 set or option 7 not 0, ControlsPanel_ApplyDevices (00048e98), the calibration panel on the stack (00049154(that, panel, 1)), its loop 000496f0, the focus to the cancel widget, and its destructor 00049678(that, 2); 7, DONE, ControlsPanel_ApplyDevices and Prefs_CommitOptions (0004a83c)(1). Each changed row is redrawn with ControlsPanel_RefreshRow (00048ce4). Then each widget's per-frame slot +0x10. AlertPanel_Leave (000460b8); returns bit 0 of the close byte. ES2's ControlsPanel_Run (DBSIM 00458650) binds stick buttons.",
+      "description": "(panel), slot +0xc of ControlsAlertVtable (000952c6): the controls panel's loop. Copies options 7, 8, 10, 9 and 11 to +0x39c to +0x3a0; +0x3a1 = 2 when option 7 is 2, else 0; +0x3a2 = option 8, or 1 for 0; +0x3a3 = option 9; +0x3a4 and +0x3a5 = options 7 and 9 as applied. AlertPanel_Enter (00045f00), AlertPanel_SetFocus (00046470)(panel, 0); until the close byte +0x2b9 is set: Input_ReadPlayerInput (0004cb14), the block to slot +0x14; for the action +0x398 (the button index plus 1): 1 steps option 7 modulo 6, Prefs_StepOption (0004a988) or with the right-button byte +0x2e7 Prefs_StepOptionBack (0004a9d0), once more forward when that gives 0 with the block's button 0 (+0x15) held; for 0, with the panel's option 8 +0x39d not 0, it keeps that at +0x3a2 and sets option 8 to 0 (Prefs_SetOption (0004a914)), leaving the RCS byte +0x39f alone; for any other model it puts option 8 back from +0x3a2 when it is 0, and then at 2 keeps the RCS byte +0x39f, when set, at +0x3a3 and XORs it with 1, and at any other model sets it from +0x3a3 when that is set; 2, with option 7 not 0, steps option 8 modulo 3 forward or back until it is not 0; 3 toggles option 10 (Prefs_ToggleOption (0004a94c)); 4 toggles option 9 and, turned on with option 7 at 2, sets option 7 to 1 with +0x3a1 = 2, or turned off with +0x3a1 at 2, sets option 7 back to 2 and +0x3a1 = 0; 5 toggles option 11; 6, CALIBRATE, with option 9 set or option 7 not 0, ControlsPanel_ApplyDevices (00048e98), the calibration panel on the stack (00049154(that, panel, 1)), its loop 000496f0, the focus to the cancel widget, and its destructor 00049678(that, 2); 7, DONE, ControlsPanel_ApplyDevices and Prefs_CommitOptions (0004a83c)(1). Each changed row is redrawn with ControlsPanel_RefreshRow (00048ce4). Then each widget's per-frame slot +0x10. AlertPanel_Leave (000460b8); returns bit 0 of the close byte. ES2's ControlsPanel_Run (DBSIM 00458650) binds stick buttons.",
       "source": "Herculan/docs/es1/simulation/preferences.md#its-loop--controlspanel_run-00048810",
       "verified": {
         "bytes": "00048810+1094",
@@ -28930,7 +28930,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_PollDeviceBlock",
-      "description": "No arguments: zeroes Input_LiveBlock (000b1774, 0x29 bytes) and refills it, returning it. With the keyboard's kind recorded (000bd60e), Input_ReadKeyboardCommand (0004c458)(kind, block+0), then clears bits 0x1000 and 0x2000 of the word; +0x25 = that answer (0 otherwise). Input_PollJoysticks (0004bd90). For each joystick kind recorded (000bd616, 000bd61a), Input_ReadJoystickState (0004c4ac)(kind, record) and, when it answers non-zero, Input_MergeJoystickRecord (0004c3cc)(record). With the mouse's kind recorded (000bd612), +0x28 = Input_ReadMouseState (0004c51c)(kind, record), and when it is non-zero the record's two dwords go to +2 and +6 and its button bits 0, 1 and 2 set +0xa, +0xb and +0xc to 1. es2_xref finds calls from Input_BuildPlayerDevice and Input_BuildSourceTable. ES2's Input_PollDeviceBlock (DBSIM 0045ba8c), which reads one joystick.",
+      "description": "No arguments: zeroes Input_LiveBlock (000b1774, 0x29 bytes) and refills it, returning it. With the keyboard's kind recorded (000bd60e), Input_ReadKeyboardCommand (0004c458)(kind, block+0), then clears bits 0x1000 and 0x2000 of the word; +0x25 = that answer (0 otherwise). Input_PollJoysticks (0004bd90). For each joystick kind recorded (000bd616, 000bd61a), Input_ReadJoystickState (0004c4ac)(kind, record) and, when it answers non-zero, Input_MergeJoystickRecord (0004c3cc)(record). With the mouse's kind recorded (000bd612), +0x28 = Input_ReadMouseState (0004c51c)(kind, record), and when it is non-zero the record's two dwords go to +2 and +6 and its button bits 0, 1 and 2 set +0xa, +0xb and +0xc to 1. es2_xref finds calls from Input_ReadPlayerInput and Input_BuildSourceTable. ES2's Input_PollDeviceBlock (DBSIM 0045ba8c), which reads one joystick.",
       "source": "Herculan/docs/es1/simulation/input.md#the-live-block--input_polldeviceblock-0004c2d0",
       "verified": {
         "bytes": "0004c2d0+251",
@@ -28960,7 +28960,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_ReadKeyboardCommand",
-      "description": "(kind, out) in stack order, its arguments removed by this function: for kind 1, takes Input_DeviceSlot (0004b2d0)(1) less 4 (0 for a 0 slot), returns 0 when InputDevice_IsEnabled (0004b2c0) on its +4 answers 0, and otherwise stores Input_ReadDeviceEvent (0004b51c)'s word at out. Returns 1 otherwise, any other kind writing nothing. es2_xref finds calls from Input_PollDeviceBlock (0004c2d0), Input_BuildPlayerDevice and Input_ReadMaskedKeyboardCommand, some entering at 0004c455, the 0x90 byte before it. ES2's Input_ReadKeyboardCommand (DBSIM 0045bba8), whose arguments are (out, kind).",
+      "description": "(kind, out) in stack order, its arguments removed by this function: for kind 1, takes Input_DeviceSlot (0004b2d0)(1) less 4 (0 for a 0 slot), returns 0 when InputDevice_IsEnabled (0004b2c0) on its +4 answers 0, and otherwise stores Input_ReadDeviceEvent (0004b51c)'s word at out. Returns 1 otherwise, any other kind writing nothing. es2_xref finds calls from Input_PollDeviceBlock (0004c2d0), Input_ReadPlayerInput and Input_ReadMaskedKeyboardCommand, some entering at 0004c455, the 0x90 byte before it. ES2's Input_ReadKeyboardCommand (DBSIM 0045bba8), whose arguments are (out, kind).",
       "source": "Herculan/docs/es1/simulation/input.md#the-command-word",
       "verified": {
         "bytes": "0004c458+81",
@@ -29169,9 +29169,9 @@
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "Input_BuildPlayerDevice",
-      "description": "No arguments: the per-tick input build into PlayerInputBlock (000b17ac, 0x2b bytes), which it returns. Reads the live block's command word, skipping zero-scancode words through Input_ReadKeyboardCommand (0004c458)(1, word), masks it with SimCommandMask (000958b8). During playback reads a 14-byte record and an int32 count from TapeFile, sets DemoAbort under DemoMode for a live command, passes the word to Sim_HandleWindowKey, and on a short read or command 0x412 sets DemoAbort, closes the tape, clears TapePlayback and sets CockpitMouseLive; otherwise feeds each 14-byte mouse event to CockpitMouseQueue_Push (00044830) with its point to Input_CursorPos, and fills the command word, axes +0xd-+0x13, buttons +0x15-+0x1c from bit 0-7 and +0x29 (the delta), bits 8-11 being the source buttons. Live: Input_BuildKeyboardAxes (0004c818)(slow, 000b188c), slow in Input_StickMode 1 without InputDrivesCamera or under maybe_WeaponChain_EoHold. CockpitMouse_ProcessQueue (000444d0) gives the mouse events; source button 1 pressed with a mode set calls Input_ToggleStickMode once (latch 000958bc). The missile arm 000958bf, the keyboard pair moves and the Tilt and Missile reversals are ES2's; then, live, preferences option 7 (000bd569) picks each axis's and button's source (options 9 and 10, 000bd56b and 000bd56c, adding the third axis and dropping the stick's Y), the copy, and the latches Input_ButtonLatch/Input_ButtonLatchState (000bd634, Input_ButtonLatchState (000bd638)), and the pointer, mouse bytes, buttons 4-7 and command word from the live block. Recording appends the frame to <TapeStem>.tap (mode ab, assert appinput.cpp 0x2bd). The camera-axis pointers +0x1d/+0x21, the latched-row zeroing, option 10's Input_KeyThrottleStep as the throttle, and Backturn. ES2's Input_BuildPlayerDevice (DBSIM 0045a7f4).",
-      "source": "Herculan/docs/es1/simulation/input.md#the-input-build--input_buildplayerdevice-0004cb14; ES1DBSIM decompile at 0004cb14",
+      "name": "Input_ReadPlayerInput",
+      "description": "No arguments: the per-tick input read into PlayerInputBlock (000b17ac, 0x2b bytes), which it returns. Reads the live block's command word, skipping zero-scancode words through Input_ReadKeyboardCommand (0004c458)(1, word), masks it with SimCommandMask (000958b8). During playback reads a 14-byte record and an int32 count from TapeFile, sets DemoAbort under DemoMode for a live command, passes the word to Sim_HandleWindowKey, and on a short read or command 0x412 sets DemoAbort, closes the tape, clears TapePlayback and sets CockpitMouseLive; otherwise feeds each 14-byte mouse event to CockpitMouseQueue_Push (00044830) with its point to Input_CursorPos, and fills the command word, axes +0xd-+0x13, buttons +0x15-+0x1c from bit 0-7 and +0x29 (the delta), bits 8-11 being the source buttons. Live: Input_BuildKeyboardAxes (0004c818)(slow, 000b188c), slow in Input_StickMode 1 without InputDrivesCamera or under maybe_WeaponChain_EoHold. CockpitMouse_ProcessQueue (000444d0) gives the mouse events; source button 1 pressed with a mode set calls Input_ToggleStickMode once (latch 000958bc). The missile arm 000958bf, the keyboard pair moves and the Tilt and Missile reversals are ES2's; then, live, preferences option 7 (000bd569) picks each axis's and button's source (options 9 and 10, 000bd56b and 000bd56c, adding the third axis and dropping the stick's Y), the copy, and the latches Input_ButtonLatch/Input_ButtonLatchState (000bd634, Input_ButtonLatchState (000bd638)), and the pointer, mouse bytes, buttons 4-7 and command word from the live block. Recording appends the frame to <TapeStem>.tap (mode ab, assert appinput.cpp 0x2bd). The camera-axis pointers +0x1d/+0x21, the latched-row zeroing, option 10's Input_KeyThrottleStep as the throttle, and Backturn. ES2's Input_ReadPlayerInput (DBSIM 0045a7f4).",
+      "source": "Herculan/docs/es1/simulation/input.md#reading-the-players-input--input_readplayerinput-0004cb14; ES1DBSIM decompile at 0004cb14",
       "verified": {
         "bytes": "0004cb14+3299",
         "sha1": "0d33338ac5da",
@@ -34015,7 +34015,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_MainTick",
-      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92), each pool walked oldest first with Pool_Prev (00063a20) from 0: each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools g_SmokeBallPool (000aef68) (Effect_DriftAndAnimate (0000693c)), g_SmokePool (000aefd4) (Smoke_Tick (00006b28)) and g_DebrisPool (000aeef8) (Debris_TickUpdate (000064b8)), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool g_ProjectilePool (000af0b4) through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick once and then Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls Sim_DeathFlash (00058414) and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals Mission_EndingAnswer (00097158)[the poll's status, 3 for a panel showing 0x12], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
+      "description": "No arguments: the simulation tick. The input block from Input_ReadPlayerInput (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92), each pool walked oldest first with Pool_Prev (00063a20) from 0: each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools g_SmokeBallPool (000aef68) (Effect_DriftAndAnimate (0000693c)), g_SmokePool (000aefd4) (Smoke_Tick (00006b28)) and g_DebrisPool (000aeef8) (Debris_TickUpdate (000064b8)), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool g_ProjectilePool (000af0b4) through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick once and then Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls Sim_DeathFlash (00058414) and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel StatusAlertPanel_Ctor (00046efc)(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals Mission_EndingAnswer (00097158)[the poll's status, 3 for a panel showing 0x12], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700; ES1DBSIM decompile and disassembly at 00059700",
       "verified": {
         "bytes": "00059700+931",
@@ -47584,7 +47584,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Input_KeyThrottleStep",
-      "description": "int16: Ctrl+I and Ctrl+M's throttle steps, which Input_BuildPlayerDevice gives the throttle axis under option 10 and clears.",
+      "description": "int16: Ctrl+I and Ctrl+M's throttle steps, which Input_ReadPlayerInput gives the throttle axis under option 10 and clears.",
       "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -47593,7 +47593,7 @@
       "type": "data",
       "confidence": "high",
       "name": "SimCommandMask",
-      "description": "word 0x47ff, which Input_BuildPlayerDevice ANDs the command word with. ES2's SimCommandMask.",
+      "description": "word 0x47ff, which Input_ReadPlayerInput ANDs the command word with. ES2's SimCommandMask.",
       "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -47602,7 +47602,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Input_PlaybackCursorPending",
-      "description": "byte, 1 in the image: while it is set, Input_BuildPlayerDevice (0004cb14)'s playback reads the cursor's position into Input_CursorPos (000b17d8) with Cursor_GetPosition and clears it, so the first playback frame does. es2_xref --decode finds that read and that clear and no other access.",
+      "description": "byte, 1 in the image: while it is set, Input_ReadPlayerInput (0004cb14)'s playback reads the cursor's position into Input_CursorPos (000b17d8) with Cursor_GetPosition and clears it, so the first playback frame does. es2_xref --decode finds that read and that clear and no other access.",
       "source": "Herculan/docs/es1/simulation/input.md#recording-and-playback; ES1DBSIM decompile at 0004cb14"
     },
     {
@@ -49519,7 +49519,7 @@
       "type": "data",
       "confidence": "high",
       "name": "PlayerInputBlock",
-      "description": "The 0x2b-byte input block Input_BuildPlayerDevice fills and returns: +0 command word, +2/+6 pointer, +0xa-+0xc mouse bytes, +0xd/+0xf/+0x11/+0x13 the four axes, +0x15-+0x1c eight buttons, +0x1d/+0x21 the camera-axis pointers, +0x29 a replay's delta. ES2's PlayerInputBlock.",
+      "description": "The 0x2b-byte input block Input_ReadPlayerInput fills and returns: +0 command word, +2/+6 pointer, +0xa-+0xc mouse bytes, +0xd/+0xf/+0x11/+0x13 the four axes, +0x15-+0x1c eight buttons, +0x1d/+0x21 the camera-axis pointers, +0x29 a replay's delta. ES2's PlayerInputBlock.",
       "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -49537,7 +49537,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Input_LiveBlockPtr",
-      "description": "The live device block Input_PollDeviceBlock (0004c2d0) returns, which Input_BuildSourceTable and Input_BuildPlayerDevice store.",
+      "description": "The live device block Input_PollDeviceBlock (0004c2d0) returns, which Input_BuildSourceTable and Input_ReadPlayerInput store.",
       "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -49726,7 +49726,7 @@
       "type": "data",
       "confidence": "high",
       "name": "TapePlayback",
-      "description": "int16: 1 while a tape plays (-p, -D); Config_BuildPath gives tapes\\ and Input_BuildPlayerDevice reads the tape while it is set. ES2's TapePlayback.",
+      "description": "int16: 1 while a tape plays (-p, -D); Config_BuildPath gives tapes\\ and Input_ReadPlayerInput reads the tape while it is set. ES2's TapePlayback.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -49735,7 +49735,7 @@
       "type": "data",
       "confidence": "high",
       "name": "TapeRecording",
-      "description": "int16: 1 after -r packed the tape; Input_BuildPlayerDevice appends a frame on each call while it is set, in playback and in the panels' loops as in the tick; es2_xref --decode finds one write, -r's. ES2's TapeRecording.",
+      "description": "int16: 1 after -r packed the tape; Input_ReadPlayerInput appends a frame on each call while it is set, in playback and in the panels' loops as in the tick; es2_xref --decode finds one write, -r's. ES2's TapeRecording.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -49762,7 +49762,7 @@
       "type": "data",
       "confidence": "high",
       "name": "TapeFile",
-      "description": "FILE *: the tape -p or -D opens for reading, which -p stores whatever fopen answers. Input_BuildPlayerDevice closes it at the tape's end without clearing it, and Sim_Shutdown (0005b568) finds it set and closes it again. ES2's TapeFile.",
+      "description": "FILE *: the tape -p or -D opens for reading, which -p stores whatever fopen answers. Input_ReadPlayerInput closes it at the tape's end without clearing it, and Sim_Shutdown (0005b568) finds it set and closes it again. ES2's TapeFile.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
@@ -49798,7 +49798,7 @@
       "type": "data",
       "confidence": "high",
       "name": "InputDrivesCamera",
-      "description": "int16: while set Sim_PollPlayerInput gives the camera the controls and Input_BuildPlayerDevice points the camera axes at the movement pair. ES2's InputDrivesCamera.",
+      "description": "int16: while set Sim_PollPlayerInput gives the camera the controls and Input_ReadPlayerInput points the camera axes at the movement pair. ES2's InputDrivesCamera.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {

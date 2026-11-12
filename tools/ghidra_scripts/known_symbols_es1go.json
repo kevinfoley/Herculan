@@ -907,7 +907,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_SetFocus",
-      "description": "(panel, index), its arguments removed by this function: ES1DBSIM's AlertPanel_SetFocus (00046470) with Shell_PollInput (0004de3a) where that has Input_BuildPlayerDevice; the same statements in different code.",
+      "description": "(panel, index), its arguments removed by this function: ES1DBSIM's AlertPanel_SetFocus (00046470) with Shell_PollInput (0004de3a) where that has Input_ReadPlayerInput; the same statements in different code.",
       "source": "Herculan/docs/es1/shell/options.md#the-panel-base--alertpanel_ctorbase-0000222d; ES1GO decompile at 00002fa2, diffed against ES1DBSIM's twin",
       "verified": {
         "bytes": "00002fa2+347",
@@ -1837,7 +1837,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ControlsPanel_Run",
-      "description": "(panel), its argument removed by this function, slot +0xc of ControlsAlertVtable (0007dddc): ES1DBSIM's ControlsPanel_Run (00048810) with its copies at +0x399 to +0x3a2, Shell_PollInput (0004de3a) for the input build, the trigger at the block's +0x1d, and Prefs_CommitAll (000082b0) where ES1DBSIM's calls Prefs_CommitOptions; CALIBRATE builds 00006f15 and runs 00007631, destroying it with 00007561; the same statements in different code.",
+      "description": "(panel), its argument removed by this function, slot +0xc of ControlsAlertVtable (0007dddc): ES1DBSIM's ControlsPanel_Run (00048810) with its copies at +0x399 to +0x3a2, Shell_PollInput (0004de3a) for the input read, the trigger at the block's +0x1d, and Prefs_CommitAll (000082b0) where ES1DBSIM's calls Prefs_CommitOptions; CALIBRATE builds 00006f15 and runs 00007631, destroying it with 00007561; the same statements in different code.",
       "source": "Herculan/docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050; ES1GO decompile and disassembly at 000064c4, diffed against ES1DBSIM's twin",
       "verified": {
         "bytes": "000064c4+1179",

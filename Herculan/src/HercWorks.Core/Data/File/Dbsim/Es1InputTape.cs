@@ -2,10 +2,10 @@ namespace HercWorks.Core.Data.File.Dbsim;
 
 /// <summary>
 /// FILE - TAPES\&lt;name&gt;.TAP — ES1DBSIM's input tape: a bundle of the seven files a mission starts from, then one
-/// record per input build of everything the player did. Loose files in the install's <c>TAPES</c> folder, not VOL entries.
+/// record per input read of everything the player did. Loose files in the install's <c>TAPES</c> folder, not VOL entries.
 ///
 /// <para>The layout is ES1DBSIM's own writer and reader, <c>Tape_PackFile</c> (<c>000574a0</c>) for the bundle and
-/// <c>Input_BuildPlayerDevice</c> (<c>0004cb14</c>) for the frames. See docs/es1/formats/tap-input-tape.md#the-bundle and
+/// <c>Input_ReadPlayerInput</c> (<c>0004cb14</c>) for the frames. See docs/es1/formats/tap-input-tape.md#the-bundle and
 /// docs/es1/formats/tap-input-tape.md#the-frames for what each field is and how the simulator consumes it. The bundle is
 /// ES2's (<see cref="InputTape"/>); what follows it differs.</para>
 /// </summary>
@@ -13,13 +13,13 @@ public class Es1InputTape {
 	/// <inheritdoc cref="InputTape.Bundle"/>
 	public byte[][] Bundle { get; set; } = new byte[InputTape.BundleFileCount][];
 
-	/// <summary>One record per input build, in the order they were written.</summary>
+	/// <summary>One record per input read, in the order they were written.</summary>
 	public List<Frame> Frames { get; set; } = new();
 
-	/// <summary>One input build — an 18-byte fixed part and its mouse events.</summary>
+	/// <summary>One input read — an 18-byte fixed part and its mouse events.</summary>
 	public class Frame {
 		/// <summary>
-		/// The command word at the head of <c>PlayerInputBlock</c> (<c>000b17ac</c>): the one key event the build took
+		/// The command word at the head of <c>PlayerInputBlock</c> (<c>000b17ac</c>): the one key event the read took
 		/// off the keyboard, a set-1 scancode with <c>0x200</c> for Alt, <c>0x400</c> for Ctrl and <c>0x80</c> on a
 		/// release, masked with <c>SimCommandMask</c> (<c>000958b8</c>, <c>0x47ff</c>). Zero on a frame with none.
 		/// </summary>
