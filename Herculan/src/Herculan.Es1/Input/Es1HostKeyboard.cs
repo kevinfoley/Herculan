@@ -170,6 +170,41 @@ public sealed class Es1HostKeyboard {
 		Send(key, (byte)(make | Es1Keyboard.BreakBit));
 	}
 
+	/// <summary>
+	/// <b>This engine's own:</b> <paramref name="chord"/> pressed and let go at once, its modifiers down around it, past the
+	/// host's layer (<see cref="HostTakes"/>), for an item of the host's own menus that sends a key: the menu's focus
+	/// would otherwise take it. It holds nothing and starts no typematic.
+	/// </summary>
+	public void Tap(KeyChord chord) {
+		var modifiers = ModifierKeys(chord).ToList();
+		foreach (var modifier in modifiers) {
+			Send(modifier, MakeCodes[modifier]);
+		}
+
+		byte make = MakeCodes[chord.Key];
+		Pressed?.Invoke(make);
+		Send(chord.Key, make);
+		Send(chord.Key, (byte)(make | Es1Keyboard.BreakBit));
+		foreach (var modifier in Enumerable.Reverse(modifiers)) {
+			Send(modifier, (byte)(MakeCodes[modifier] | Es1Keyboard.BreakBit));
+		}
+	}
+
+	/// <summary>The left-hand modifier keys <paramref name="chord"/> holds: <c>Ctrl</c>, <c>Alt</c>, <c>Shift</c>, in that order.</summary>
+	internal static IEnumerable<Key> ModifierKeys(KeyChord chord) {
+		if (chord.Modifiers.HasFlag(KeyModifiers.Ctrl)) {
+			yield return Key.ControlLeft;
+		}
+
+		if (chord.Modifiers.HasFlag(KeyModifiers.Alt)) {
+			yield return Key.AltLeft;
+		}
+
+		if (chord.Modifiers.HasFlag(KeyModifiers.Shift)) {
+			yield return Key.ShiftLeft;
+		}
+	}
+
 	/// <summary>One host frame of the typematic: each repeat that fell due sends the repeating key's make byte.</summary>
 	public void Advance(double deltaSeconds) {
 		if (_repeating is not { } key) {

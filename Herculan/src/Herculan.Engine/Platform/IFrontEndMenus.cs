@@ -1,4 +1,5 @@
 using Herculan.Engine.Input;
+using Herculan.Engine.Localization;
 using Silk.NET.Input;
 
 namespace Herculan.Engine.Platform;
@@ -17,6 +18,9 @@ public interface IFrontEndMenus : IDisposable {
 
 	/// <summary>Raised when the menus save new settings for the gamepad's pointer (<see cref="GamepadPointer.Settings"/>).</summary>
 	event Action<GamepadMouseSettings>? PadPointerSettingsChanged;
+
+	/// <summary>The language the menus speak, which the host's own layers over the front end, such as the <see cref="Menus.PauseMenu"/>, speak too.</summary>
+	LocalizationTable Localization { get; }
 
 	/// <summary>Whether the bar is up.</summary>
 	bool Visible { get; }

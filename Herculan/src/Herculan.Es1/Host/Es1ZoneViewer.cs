@@ -7,6 +7,8 @@ using HercWorks.Vol;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
+using Herculan.Engine.Input;
+using Herculan.Engine.Menus;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using Herculan.Engine.View;
@@ -334,6 +336,11 @@ public static class Es1ZoneViewer {
 
 		bool escapeQuits = false;
 
+		// HERCULAN's pause menu over the mission, which the controller's PauseMenu input raises (Start by default).
+		var pauseHost = new Es1PauseMenuHost(() => simulation?.Runner, () => frameLoop);
+		var pauseMenu = new PauseMenu(menuLayer.Menus.Localization, pauseHost);
+		bool pauseInputHeld = false;
+
 		window.Load += (gl, input) => {
 			window.Attach(gl, input);
 			glContext = gl;
@@ -453,6 +460,7 @@ public static class Es1ZoneViewer {
 				simulation = new Es1SimulationStart(world, installRoot, preferences, input, keyboard, hostMouse,
 					chain, widgets, content, tape, recording, fullScreenKey) {
 					MenuBarWindow = window,
+					PauseMenuShowing = () => pauseMenu.Showing,
 				};
 				disposables.Add(simulation);
 			} else if (keyboard is { } device) {
@@ -501,6 +509,14 @@ public static class Es1ZoneViewer {
 			}
 
 			var runner = simulation?.Advance();
+
+			// The pause menu's input raises the menu or resumes from it as it goes down, read while the window has the focus.
+			bool pauseInput = window.HasFocus && simulation?.Port?.HostActionInput(KeyAction.PauseMenu) != null;
+			if (pauseInput && !pauseInputHeld) {
+				pauseMenu.Start();
+			}
+
+			pauseInputHeld = pauseInput;
 			bool ended;
 			try {
 				ended = frameLoop != null
@@ -514,6 +530,8 @@ public static class Es1ZoneViewer {
 				window.Close();
 				return;
 			}
+
+			pauseHost.Update();
 
 			// Sim_Main leaves its loop for Sim_Shutdown; only a tick ends the mission, so the runner is there.
 			if (ended && runner != null) {
@@ -584,6 +602,7 @@ public static class Es1ZoneViewer {
 				}
 			}
 
+			pauseMenu.Draw();
 			window.DrawMenuBar(revealOnHover: false);
 		};
 

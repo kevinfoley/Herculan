@@ -183,7 +183,7 @@ sealed class SimulatorHost : IDisposable {
 		_frame = new SimulatorFrame(start, _art, _view, _displays, _panels, tape, _recording, _developerKeys, staging,
 			_outcome, _input, _windowKeys, _menuBar, () => Fit().Frame, _keyMap);
 		_frame.Stepper.Ticked += () => _debugProbes.SampleBeams(_scene.World);
-		_pauseMenu = new PauseMenu(session.Localization, _frame, _panels, _outcome, cockpitInput);
+		_pauseMenu = new PauseMenu(session.Localization, new PauseMenuHost(_frame, _panels, _outcome, cockpitInput));
 		_input.MouseQueued += (x, y, buttons, width, height) =>
 			_recording.AddMouse(x, y, buttons, width, height, _panels.AnyOpen, _view.Piloting, _input.ImGuiWantsMouse);
 

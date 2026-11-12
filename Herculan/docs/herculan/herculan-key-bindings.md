@@ -49,6 +49,8 @@ The mission editor takes a gamepad as the mouse too, and nothing else of it: the
 
 A gamepad's Start pauses a mission and puts up a menu over it: **Resume**, and **Objectives**, **Preferences** and **Quit**, which raise retail's own objectives panel (`F11`), preferences panel (`F12`) and mission status (`Q`). Each of those three is greyed where its key would do nothing, as Objectives is in the outside view, and when its panel comes down the menu is back. Up and down on the d-pad or the left stick move, A chooses, and B or Start resumes; the pointer works it too. While the menu is up the mission holds as it does while the window is out of focus, with every sound stopped. The menu bar still comes up over it, with the highlight on the bar; B on the bar hands the pad back to the pause menu.
 
+In *Metaltech: Earthsiege* the input a controller's profile binds to the pause menu, Start by default, raises the same menu with the same items. Objectives is greyed in the outside view, where the cockpit answers no key. Each item sends its key, `F11`, `F12` or `Q`, into the game, so a recording takes the key, and the menu is back once the game has finished with it, whether or not a panel came up. While the menu is up the mission holds, but its sounds go on playing ([Open](#open)).
+
 ## Squad orders on a gamepad
 
 Holding the left stick's click puts FLASH COMM's six orders round the middle of the screen, ATTACK MY TARGET at the top and the rest clockwise in FLASH COMM's order, in the game's own words. Leaning the stick picks the nearest order and centring it picks none. Letting go of the click on an order transmits it as that order's `Alt` key does from any screen ([`../retail/key-bindings.md`](../retail/key-bindings.md#displays-and-views)), and a recording takes it as that key; letting go with none picked sends nothing. The fifth and sixth show whichever of SCAN FOR HOSTILES and EMCON, and of FIRE AT WILL and HOLD YOUR FIRE, FLASH COMM is showing. While the orders are up, and for half a second after one is sent, the left stick does not steer, so it springing back to the centre as it is let go does not turn the HERC. They do not come up in the outside view, where the `Alt` order keys do nothing, nor over a panel, the pause menu or the menu bar.
@@ -73,4 +75,5 @@ The input bound to Fire, the right trigger by default, still presses the focused
 
 ## Open
 
+- **Open:** In *Metaltech: Earthsiege* the pause menu holds the mission but leaves its sounds playing, where Earthsiege 2's stops every sound.
 - **Open:** A recording takes a gamepad's A and B on retail's panels as `Return` and `Esc`, but not its focus moves, so a replay of a panel answered from the pad can press a different button from the one chosen.

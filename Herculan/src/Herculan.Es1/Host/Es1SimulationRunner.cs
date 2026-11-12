@@ -127,7 +127,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 
 	/// <summary>
 	/// Host time of <paramref name="elapsed"/> with nothing waiting: the keyboard's typematic, then the frame's steps
-	/// before the draw, the frame's sounds and the clock. Returns whether a tick is due.
+	/// before the draw, the frame's sounds and the clock. Returns whether a tick is due; never while <see cref="HostHeld"/>.
 	///
 	/// <para>While a tape plays <c>Sim_Main</c> skips <c>Time_BeginSimTick</c>, so the PC timer runs on and the clock
 	/// measures no tick. <b>Not retail:</b> retail's playback then ticks as fast as its frames are drawn; this one holds
@@ -138,6 +138,30 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// a frame a panel's loop reads is not held, the loop running one pass a host frame (decision 11).</para>
 	/// </summary>
 	public bool AdvanceClock(TimeSpan elapsed) {
+		if (HostHeld) {
+			Hold(elapsed);
+			return false;
+		}
+
+		if (!AdvanceClockUnheld(elapsed)) {
+			return false;
+		}
+
+		Ticks++;
+		return true;
+	}
+
+	/// <summary>
+	/// <b>This engine's own:</b> whether the host holds the mission, as HERCULAN's pause menu does while it is up: each
+	/// host frame is then held time (<see cref="Hold"/>), the PC timer running on, and the clock answers no tick. A tick
+	/// already under way, a panel's loop among it, runs on.
+	/// </summary>
+	public bool HostHeld { get; set; }
+
+	/// <summary><b>This engine's own:</b> the ticks the clock has answered (<see cref="AdvanceClock"/>), which the host counts a tick by.</summary>
+	public long Ticks { get; private set; }
+
+	private bool AdvanceClockUnheld(TimeSpan elapsed) {
 		AdvanceKeyboard(elapsed);
 
 		// Subsystem phase 4 calls no function (docs/es1/simulation/main-loop.md#the-subsystem-phases).

@@ -49,6 +49,9 @@ sealed class ShellMenus : IFrontEndMenus {
 
 	public event Action<GamepadMouseSettings>? PadPointerSettingsChanged;
 
+	/// <inheritdoc/>
+	public LocalizationTable Localization => _localization;
+
 	public bool Visible => _menuBar.Visible;
 
 	public bool PanelOpen => _menuBar.PanelOpen;

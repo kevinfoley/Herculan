@@ -45,17 +45,5 @@ public sealed class Es1CustomKeys(Es1HostKeyboard keyboard) {
 	/// <summary>Lets go of everything held, as the mission's end or a lost focus does.</summary>
 	public void Release() => Update([]);
 
-	private static IEnumerable<Key> Modifiers(KeyChord chord) {
-		if (chord.Modifiers.HasFlag(KeyModifiers.Ctrl)) {
-			yield return Key.ControlLeft;
-		}
-
-		if (chord.Modifiers.HasFlag(KeyModifiers.Alt)) {
-			yield return Key.AltLeft;
-		}
-
-		if (chord.Modifiers.HasFlag(KeyModifiers.Shift)) {
-			yield return Key.ShiftLeft;
-		}
-	}
+	private static IEnumerable<Key> Modifiers(KeyChord chord) => Es1HostKeyboard.ModifierKeys(chord);
 }

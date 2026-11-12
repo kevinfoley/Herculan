@@ -1,70 +1,65 @@
 using System.Numerics;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
-using Herculan.Es2.Cockpit;
-using Herculan.Es2.Input;
 using ImGuiNET;
 
-namespace Herculan.Es2.Host.Simulator;
+namespace Herculan.Engine.Menus;
 
 /// <summary>
 /// The menu a gamepad's Start raises over a mission (docs/herculan/herculan-key-bindings.md, "The pause menu"). This
-/// engine's own. It holds the mission through <see cref="SimulatorFrame.Pause"/>, and its last three items raise
-/// retail's panels as [F11], [F12] and [Q] do, greyed where those keys would raise nothing.
+/// engine's own. It holds the mission through its <see cref="IPauseMenuHost"/>, and its last three items raise retail's
+/// panels as [F11], [F12] and [Q] do, greyed where those keys would raise nothing.
 ///
 /// <para>The pad works it directly rather than through ImGui's navigation, under which the highlight stays hidden, and
 /// the first press of A does nothing, until the d-pad has moved it. It works it while the menu has ImGui's focus, or
 /// nothing has: not while the menu bar or one of its windows has it, and B there hands it back.</para>
 /// </summary>
-sealed class PauseMenu {
+public sealed class PauseMenu {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 260f;
 
 	// The scene behind the menu is dimmed by this, as ABGR.
 	private const uint DimColour = 0x80000000;
 
-	private static readonly string[] ItemKeys = ["pause.resume", "pause.objectives", "pause.preferences", "pause.quit"];
+	// The rows in order: Resume, then the items that raise a panel.
+	private static readonly (string Key, PauseMenuItem? Item)[] Rows = [
+		("pause.resume", null),
+		("pause.objectives", PauseMenuItem.Objectives),
+		("pause.preferences", PauseMenuItem.Preferences),
+		("pause.quit", PauseMenuItem.Quit),
+	];
+
 	private const int Resume = 0;
-	private const int Objectives = 1;
-	private const int Preferences = 2;
-	private const int Quit = 3;
 
 	private readonly LocalizationTable _localization;
-	private readonly SimulatorFrame _frame;
-	private readonly ModalPanels _panels;
-	private readonly MissionOutcome _outcome;
-	private readonly CockpitInput _cockpit;
+	private readonly IPauseMenuHost _host;
 
 	private int _selected;
 
 	// Whether the pad worked the menu last frame. A press that brought the focus here was taken where the focus was.
 	private bool _hadPad;
 
-	public PauseMenu(LocalizationTable localization, SimulatorFrame frame, ModalPanels panels, MissionOutcome outcome,
-			CockpitInput cockpit) {
+	public PauseMenu(LocalizationTable localization, IPauseMenuHost host) {
 		_localization = localization;
-		_frame = frame;
-		_panels = panels;
-		_outcome = outcome;
-		_cockpit = cockpit;
+		_host = host;
 	}
 
 	/// <summary>Whether the menu is up, including while a retail panel it raised is over it.</summary>
 	public bool IsOpen { get; private set; }
 
 	/// <summary>Whether the menu is on screen: up, and no retail panel over it.</summary>
-	public bool Showing => IsOpen && !_panels.AnyOpen;
+	public bool Showing => IsOpen && !_host.PanelUp;
 
 	/// <summary>
-	/// Start: raises the menu, unless the mission is over or a retail panel already holds the input, or with the menu
-	/// showing resumes. While a panel the menu raised is up, Start leaves it to be closed its own way.
+	/// Start: raises the menu when the host allows it (<see cref="IPauseMenuHost.CanOpen"/>), or with the menu showing
+	/// resumes. While a panel the menu raised is up, Start leaves it to be closed its own way.
 	/// </summary>
 	public void Start() {
 		if (!IsOpen) {
-			if (!_panels.AnyOpen && !_outcome.Over) {
+			if (_host.CanOpen) {
 				IsOpen = true;
 				_selected = Resume;
-				_frame.Pause();
+				_host.Hold();
 			}
 		} else if (Showing) {
 			Close();
@@ -108,9 +103,9 @@ sealed class PauseMenu {
 
 			_hadPad = pad;
 			ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
-			for (int i = 0; i < ItemKeys.Length; i++) {
+			for (int i = 0; i < Rows.Length; i++) {
 				bool enabled = Enabled(i);
-				if (ImGui.Selectable(Text(ItemKeys[i]), i == _selected,
+				if (ImGui.Selectable(Text(Rows[i].Key), i == _selected,
 						enabled ? ImGuiSelectableFlags.None : ImGuiSelectableFlags.Disabled)) {
 					chosen = i;
 				}
@@ -127,47 +122,26 @@ sealed class PauseMenu {
 
 		if (resume) {
 			Close();
-		} else if (chosen is { } item && Enabled(item)) {
-			Choose(item);
-		}
-	}
-
-	private void Choose(int item) {
-		switch (item) {
-			case Resume:
+		} else if (chosen is { } row && Enabled(row)) {
+			if (Rows[row].Item is { } item) {
+				_host.Raise(item);
+			} else {
 				Close();
-				break;
-			case Objectives:
-				_panels.Objectives?.Open();
-				break;
-			case Preferences:
-				_panels.Preferences?.Open();
-				break;
-			case Quit:
-				_panels.RaiseStatusAlertForQuit();
-				break;
+			}
 		}
 	}
 
-	// Mouse events go on being queued for the cockpit while the frame is held, so a click on the menu would land on the
-	// console behind it once the mission runs on; they are dropped as it resumes.
 	private void Close() {
 		IsOpen = false;
-		_frame.Unpause();
-		_cockpit.Reset();
+		_host.Resume();
 	}
 
-	private bool Enabled(int item) => item switch {
-		Objectives => _panels.CanRaiseObjectives,
-		Preferences => _panels.CanRaisePreferences,
-		Quit => _panels.CanRaiseStatusAlert(_outcome.Over),
-		_ => true,
-	};
+	private bool Enabled(int row) => Rows[row].Item is not { } item || _host.CanRaise(item);
 
-	// Moves the highlight past any greyed item, wrapping. Resume is never greyed, so the walk always ends.
+	// Moves the highlight past any greyed row, wrapping. Resume is never greyed, so the walk always ends.
 	private void Step(int direction) {
 		do {
-			_selected = (_selected + direction + ItemKeys.Length) % ItemKeys.Length;
+			_selected = (_selected + direction + Rows.Length) % Rows.Length;
 		} while (!Enabled(_selected));
 	}
 
