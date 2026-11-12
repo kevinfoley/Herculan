@@ -43,8 +43,13 @@ public interface IFrontEndMenus : IDisposable {
 	/// <summary>[Esc]'s step back: takes down whichever window is up, else hides the bar. False when neither was up.</summary>
 	bool BackOut();
 
-	/// <summary>Backs out of the menus, or raises the bar when there was nothing to back out of; the front end calls it for <see cref="GamepadHostButtons.BackPressed"/>.</summary>
-	void RaiseOrBackOut();
+	/// <summary>
+	/// Backs out of the menus, or raises the bar when there was nothing to back out of; the front end calls it for
+	/// <see cref="GamepadHostButtons.BackPressed"/> and for a joystick's menu bar input
+	/// (<see cref="FrontEndWindow.MenuBarInputPressed"/>).
+	/// </summary>
+	/// <param name="input">The control pressed (<see cref="Menus.HostMenuBar.RaiseOrBackOut"/>); none is a gamepad's Back.</param>
+	void RaiseOrBackOut(ControllerInput? input = null);
 
 	/// <summary>What the menus raise at the front end's start; the frame skips it in a <c>--screenshot</c> capture.</summary>
 	void OfferWelcome();

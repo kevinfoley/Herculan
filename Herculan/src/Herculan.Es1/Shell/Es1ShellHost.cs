@@ -1,6 +1,7 @@
 using HercWorks.Core.Io;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
+using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Es1.Input;
 using Herculan.Es1.Shell.Menus;
@@ -214,6 +215,11 @@ public static class Es1ShellHost {
 			_screens.UploadPalette = _monitor.SetPalette;
 			_devices.Mouse.Pointer = () => Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize);
 			_devices.Mouse.HostHasPointer = () => window.ImGuiWantsMouse;
+
+			// The player's maps as last saved, read each time CONTROLS opens, since the Controller window may have saved since.
+			string dataDirectory = CaseInsensitivePath.Combine(_installRoot, Es1MissionFiles.DataFolder);
+			_screens.StickOptionsOverridden = () => Es1ControllerPort.InCustomMode(
+				new MappedController(input, JoystickMapFile.LoadForPlayer(dataDirectory)));
 
 			_frame.Start(Main(Es1HostKeyboard.ReadBiosShiftFlags(window.Keyboard)));
 

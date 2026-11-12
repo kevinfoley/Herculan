@@ -143,6 +143,16 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 
 	public byte AppliedRudder { get; private set; }
 
+	/// <summary>
+	/// <b>This engine's own:</b> whether JOYSTICK, JOY1 CONTROL, RCS and CALIBRATE are locked, as they are while a
+	/// controller's Custom profile says what the stick does (<see cref="Es1AlertInput.StickOptionsOverridden"/>), read as
+	/// the panel runs. Locked, the four buttons are in state 2, greyed, which neither a click nor a key presses
+	/// (<see cref="Es1AlertPanel.PressWidget"/>), as the preferences panel's MUSIC, SOUNDS and RADIO are with no sound
+	/// manager; the readouts of options 7, 8 and 9 are filled and show no word, retail having none for a profile; the
+	/// focus starts on WCS; and WCS, MOUSE and DONE work as ever, DONE saving the three options as they stand.
+	/// </summary>
+	public bool StickRowsLocked { get; private set; }
+
 	/// <summary>The options the rows show and the loop changes, the binary's.</summary>
 	private Es1Preferences Options => Globals.Input.Preferences;
 
@@ -170,8 +180,13 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 		AppliedStickModel = StickModel;
 		AppliedRudder = Rudder;
 
+		StickRowsLocked = Globals.Input.StickOptionsOverridden;
+		foreach (int widget in (int[])[Joystick, Joy1Control, Rcs, Calibrate]) {
+			Widgets[widget].State = StickRowsLocked ? Es1Widget.Hidden : Es1Widget.Up;
+		}
+
 		Enter();
-		SetFocus(Joystick);
+		SetFocus(StickRowsLocked ? Wcs : Joystick);
 		while (Close == 0) {
 			var block = Globals.Input.Build();
 			HandleEvent(block);
@@ -236,23 +251,24 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 	/// <see cref="StickControl"/> on readout 1, rows 3 and 4 <c>NO</c> or <c>YES</c> by <see cref="ThrottleKeys"/> and
 	/// <see cref="Rudder"/> on readouts 2 and 3, and row 5 <c>OFF</c> or <c>ON</c> by <see cref="MouseOn"/> on readout
 	/// 4. A value past its group's words, where retail reads past the table, draws no text, and a readout the variant
-	/// lacks, where retail reads past the panel's five, draws nothing: engine guards.
+	/// lacks, where retail reads past the panel's five, draws nothing: engine guards. Rows 1, 2 and 4 show no word while
+	/// <see cref="StickRowsLocked"/>.
 	/// </summary>
 	public void RefreshRow(int row) {
 		var cursor = Globals.Display.Cursor;
 		cursor.Hide();
 		switch (row) {
 			case 1:
-				SetReadout(0, Strings?.Text(StickModelGroup, StickModel));
+				SetReadout(0, StickRowsLocked ? "" : Strings?.Text(StickModelGroup, StickModel));
 				break;
 			case 2:
-				SetReadout(1, Strings?.Text(StickControlGroup, StickControl));
+				SetReadout(1, StickRowsLocked ? "" : Strings?.Text(StickControlGroup, StickControl));
 				break;
 			case 3:
 				SetReadout(2, Strings?.Text(NoYesGroup, ThrottleKeys));
 				break;
 			case 4:
-				SetReadout(3, Strings?.Text(NoYesGroup, Rudder));
+				SetReadout(3, StickRowsLocked ? "" : Strings?.Text(NoYesGroup, Rudder));
 				break;
 			case 5:
 				SetReadout(4, Strings?.Text(OffOnGroup, MouseOn));

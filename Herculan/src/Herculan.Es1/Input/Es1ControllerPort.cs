@@ -60,8 +60,7 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	/// </summary>
 	public Es1CustomControls? Custom {
 		get {
-			if (_controller is not { Device: { } device, Map: not null } controller
-					|| controller.File.ModeFor(device.IsGamepad, device.Guid) != ControllerMode.Custom) {
+			if (_controller is not { Device: { } device } controller || !InCustomMode(controller)) {
 				return null;
 			}
 
@@ -75,6 +74,14 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 			return _custom;
 		}
 	}
+
+	/// <summary>
+	/// Whether <paramref name="controller"/> has a device with a known map that is in Custom mode: what <see cref="Custom"/>
+	/// answers a profile for, and what the shell's CONTROLS panel asks of the device the next mission would read.
+	/// </summary>
+	public static bool InCustomMode(MappedController controller) =>
+		controller is { Device: { } device, Map: not null }
+		&& controller.File.ModeFor(device.IsGamepad, device.Guid) == ControllerMode.Custom;
 
 	/// <summary>
 	/// The Custom profile's frame for the input build (<see cref="Es1InputBuild.Custom"/>): null in Original mode, and
@@ -98,6 +105,13 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	/// </summary>
 	public ControllerInput? HostActionInput(KeyAction action) =>
 		Custom is { } custom && _controller?.Device is { } device ? custom.HeldInput(ControllerState.Of(device), action) : null;
+
+	/// <summary>
+	/// The input a joystick's Custom profile holds on the menu bar (<see cref="HostActionInput"/>); null on a gamepad,
+	/// whose Select/Back the front-end window reads itself (<see cref="Engine.Platform.FrontEndWindow.BeginFrame"/>).
+	/// </summary>
+	public ControllerInput? JoystickMenuBarInput =>
+		_controller?.Device is { IsGamepad: false } ? HostActionInput(KeyAction.MenuBar) : null;
 
 	/// <summary>
 	/// Whether <paramref name="device"/> is the port's controller and holds <paramref name="action"/> in its Custom profile

@@ -50,6 +50,13 @@ public sealed class Es1ShellScreens {
 	/// <summary><c>Input_LatchButton</c>, which CONTROLS' panel latches with; the host sets it to the frame's (<see cref="Es1ShellFrame.LatchButton"/>).</summary>
 	public Action<byte, int>? LatchButton { get; set; }
 
+	/// <summary>
+	/// <b>This engine's own:</b> whether the controller the next mission would read is in Custom mode, which locks CONTROLS'
+	/// stick rows as the mission's panel does (<see cref="Es1AlertInput.StickOptionsOverridden"/>); the host sets it, and
+	/// none never locks.
+	/// </summary>
+	public Func<bool>? StickOptionsOverridden { get; set; }
+
 	private readonly Es1ShellControls _controls;
 
 	/// <summary>The target the case of <see cref="OpenScreenCase"/> leaves, which the menu opens as and the screens move on to.</summary>

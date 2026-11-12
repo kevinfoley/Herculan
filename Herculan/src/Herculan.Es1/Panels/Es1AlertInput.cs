@@ -46,6 +46,12 @@ public abstract class Es1AlertInput {
 
 	/// <summary><c>ControlsPanel_ApplyDevices</c>' enable or disable of the mouse input device, when there is one.</summary>
 	public abstract void SetMouseDeviceEnabled(bool enabled);
+
+	/// <summary>
+	/// <b>This engine's own:</b> whether something other than options 7, 8 and 9 says what the stick does, so the controls
+	/// panel locks their rows (<see cref="Es1ControlsPanel.StickRowsLocked"/>). Never, unless a binary's input says so.
+	/// </summary>
+	public virtual bool StickOptionsOverridden => false;
 }
 
 /// <summary>The simulator's (docs/es1/simulation/alert-panels.md): the input build (<see cref="Es1InputBuild"/>) and the simulator's <c>prefs.cpp</c>.</summary>
@@ -101,6 +107,9 @@ public sealed class Es1SimAlertInput : Es1AlertInput {
 
 	/// <summary><see cref="Es1JoystickDevices.Rebuild"/>, whose doc comment gives this engine's departure for <c>NONE</c> (plan decision 14).</summary>
 	public override void RebuildJoysticks() => InputBuild.Joysticks.Rebuild(Preferences);
+
+	/// <summary>While the controller's Custom profile drives the input build in place of option 7's configuration (<see cref="Es1InputBuild.Custom"/>).</summary>
+	public override bool StickOptionsOverridden => InputBuild.Custom?.Invoke() != null;
 
 	/// <summary><see cref="Es1InputBuild.MouseDeviceEnabled"/>.</summary>
 	public override void SetMouseDeviceEnabled(bool enabled) => InputBuild.MouseDeviceEnabled = enabled;

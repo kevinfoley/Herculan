@@ -66,8 +66,9 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// nothing and writes no file, so <c>data\exit.cfg</c> keeps the 0 the start wrote.</para>
 ///
 /// <para><b>This engine's own:</b> HERCULAN's menu bar is over the mission in the window the shell's turns use
-/// (<see cref="FrontEndWindow"/>), drawn over the monitor or the free camera, hidden until [Shift+Esc] or a gamepad's
-/// Back raises it (<see cref="Es1HostKeyboard.MenuBarTakes"/>, <see cref="FrontEndWindow.BeginFrame"/>); the pointer at
+/// (<see cref="FrontEndWindow"/>), drawn over the monitor or the free camera, hidden until [Shift+Esc], a gamepad's
+/// Back or a joystick's Custom menu bar input raises it (<see cref="Es1HostKeyboard.MenuBarTakes"/>,
+/// <see cref="FrontEndWindow.BeginFrame"/>, <see cref="Es1ControllerPort.JoystickMenuBarInput"/>); the pointer at
 /// the window's top does not. The mission runs on under it, as Earthsiege 2's does, the controller muted while the bar
 /// or one of its windows is up (<see cref="Es1SimulationStart.MenuBarWindow"/>); the cockpit takes no mouse events while
 /// the pointer is over the bar or one of its windows, where the system's pointer shows, and the engine aids' keys do
@@ -340,6 +341,7 @@ public static class Es1ZoneViewer {
 		var pauseHost = new Es1PauseMenuHost(() => simulation?.Runner, () => frameLoop);
 		var pauseMenu = new PauseMenu(menuLayer.Menus.Localization, pauseHost);
 		bool pauseInputHeld = false;
+		bool menuBarInputHeld = false;
 
 		// The squad orders and the screens round the middle of the screen, which the controller's wheel inputs raise.
 		var radials = new Es1PadRadials(() => simulation?.Runner, () => simulation?.Port);
@@ -522,6 +524,14 @@ public static class Es1ZoneViewer {
 			}
 
 			pauseInputHeld = pauseInput;
+
+			// A joystick's menu bar input raises the bar or backs out of it as it goes down, as a gamepad's Select/Back does.
+			var menuBarInput = window.HasFocus ? simulation?.Port?.JoystickMenuBarInput : null;
+			if (menuBarInput is { } pressed && !menuBarInputHeld) {
+				window.MenuBarInputPressed(pressed);
+			}
+
+			menuBarInputHeld = menuBarInput != null;
 
 			// A radial opens only where its choice's key would be heard: in the cockpit view with its widgets on, since the
 			// [Alt] order keys and the function keys go through them, and with nothing else holding the input. A replay's keys

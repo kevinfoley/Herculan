@@ -116,7 +116,10 @@ public sealed class Es1ShellControls {
 			Corners = data.Corners,
 		};
 
-		var input = new Es1ShellAlertInput(_screens.PollInput!, _screens.LatchButton!, preferences, devices);
+		var screens = _screens;
+		var input = new Es1ShellAlertInput(_screens.PollInput!, _screens.LatchButton!, preferences, devices) {
+			StickOptionsLocked = () => screens.StickOptionsOverridden?.Invoke() == true,
+		};
 		return new Es1AlertGlobals(devices.Display, _screens.MapMouse.Queue, input, widgets, content) {
 			PageOnScreen = () => devices.PairA,
 			CountsOpen = false,
@@ -155,6 +158,11 @@ public sealed class Es1ShellAlertInput : Es1AlertInput {
 	}
 
 	public override Es1Preferences Preferences => _preferences;
+
+	/// <summary>What <see cref="StickOptionsOverridden"/> answers (<see cref="Es1ShellScreens.StickOptionsOverridden"/>); none never locks.</summary>
+	public Func<bool>? StickOptionsLocked { get; init; }
+
+	public override bool StickOptionsOverridden => StickOptionsLocked?.Invoke() == true;
 
 	/// <summary>
 	/// <c>Shell_PollInput</c> (<c>0004de3a</c>), the block the shell's panel reads: its command word, pointer and mouse

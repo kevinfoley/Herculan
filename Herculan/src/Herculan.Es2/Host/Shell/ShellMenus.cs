@@ -68,7 +68,7 @@ sealed class ShellMenus : IFrontEndMenus {
 
 	public bool BackOut() => _menuBar.BackOut();
 
-	public void RaiseOrBackOut() => _menuBar.RaiseOrBackOut();
+	public void RaiseOrBackOut(ControllerInput? input = null) => _menuBar.RaiseOrBackOut(input);
 
 	/// <summary>
 	/// Raises the first start's <see cref="WelcomeDialog"/>, unless it has been dismissed before, and starts the

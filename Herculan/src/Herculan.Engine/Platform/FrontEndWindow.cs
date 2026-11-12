@@ -196,6 +196,18 @@ public sealed class FrontEndWindow : IDisposable {
 		}
 	}
 
+	/// <summary>
+	/// A joystick's menu bar input going down, which a mission reads from the device's Custom profile: what a gamepad's
+	/// Select/Back does in <see cref="BeginFrame"/> (<see cref="IFrontEndMenus.RaiseOrBackOut"/>), never in a
+	/// <c>--screenshot</c> capture.
+	/// </summary>
+	/// <param name="input">The control the profile binds to the menu bar.</param>
+	public void MenuBarInputPressed(ControllerInput input) {
+		if (_screenshotPath == null) {
+			_menus.RaiseOrBackOut(input);
+		}
+	}
+
 	/// <summary>Whether the menu bar or one of its windows is up.</summary>
 	public bool MenuBarUp => _menus.Visible || _menus.PanelOpen;
 
