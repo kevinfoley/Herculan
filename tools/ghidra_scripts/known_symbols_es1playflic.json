@@ -68,18 +68,48 @@
       }
     },
     {
+      "address": "00000acc",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Profile_Load",
+      "description": "(file name): ES1DBSIM's Profile_Load (00050e20), the same after normalisation by es2_naming diff. Copies the name to 00024d34 and clears 000159d8; opens the file, takes its size plus 2000 bytes from malloc (00004038) into 00024d30 and reads the file into them; then splits the text into a list at 00024d42 of 0xc-byte nodes, +0 the line, +4 the next node and +8 the previous. Bytes outside 0x20-0x7e before a line are skipped, a line runs while its bytes are 0x20-0x7e, and the byte after it is set to 0; every compare is signed, so 0x80-0xff count as outside. A file that does not open leaves an empty 2000-byte buffer and an empty list.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile and disassembly at 00000acc; es2_naming diff ES1PLAYFLIC 00000acc ES1DBSIM 00050e20",
+      "verified": {
+        "bytes": "00000acc+475",
+        "sha1": "cf9db7278e7c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00000e58",
       "binary": "ES1PLAYFLIC",
       "type": "function",
       "confidence": "high",
       "name": "Profile_GetString",
-      "description": "(file, size, buffer, default, key, section): ES1DBSIM's Profile_GetString (000511a4) by es2_naming diff, with two differences: a key's value, after its first =, passes through 000017d4 before it is copied, and an empty one is passed over for a later line of the key in the section, then the default. The calls are the C library's strcat (00005484) and strchr (000053dc) and the same load, save and compare steps.",
+      "description": "(file, size, buffer, default, key, section): ES1DBSIM's Profile_GetString (000511a4) by es2_naming diff, with two differences: a key's value, after its first =, passes through Str_SkipControlChars (000017d4) before it is copied, and an empty one is passed over for a later line of the key in the section, then the default. The calls are the C library's strcat (00005484) and strchr (000053dc) and the same load, save and compare steps.",
       "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile at 00000e58",
       "verified": {
         "bytes": "00000e58+711",
         "sha1": "9d925a3dfec7",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000017d4",
+      "binary": "ES1PLAYFLIC",
+      "type": "function",
+      "confidence": "high",
+      "name": "Str_SkipControlChars",
+      "description": "(text): steps past the leading bytes below 0x20, compared signed, so 0x80-0xff as well, and returns the address of the first other byte or of the terminating 0. A space is kept. Entered at 000017d3 through its padding. Profile_GetString (00000e58) runs a value through it; the lines Profile_Load (00000acc) splits hold 0x20-0x7e alone, so there it returns the value as it is.",
+      "source": "Herculan/docs/es1/formats/dfl-flic.md#the-sound; ES1PLAYFLIC decompile and disassembly at 000017d4",
+      "verified": {
+        "bytes": "000017d4+35",
+        "sha1": "307ad32bf56c",
+        "scope": "body",
+        "via": "both"
       }
     },
     {

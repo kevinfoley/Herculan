@@ -82,8 +82,7 @@ public sealed class Es1Preferences {
 	public static Es1Preferences FromFile(byte[]? file, string? path = null, Es1Sound? sound = null) {
 		var options = new byte[OptionCount];
 
-		// PLACEHOLDER: what FileRStream_Read leaves in the bytes past a short file's end is unread, so they read 0 here;
-		// no plan step retires it.
+		// What FileRStream_Read leaves in the bytes past a short file's end is unread, so they read 0 here.
 		if (file != null) {
 			Array.Copy(file, options, Math.Min(file.Length, OptionCount));
 		}
@@ -509,7 +508,7 @@ public sealed class Es1Preferences {
 			return;
 		}
 
-		// PLACEHOLDER: outside the load, Prefs_UndoSetOption (0004a900)(6), which puts option 6 back to its value before
+		// Outside the load, Prefs_UndoSetOption (0004a900)(6), which puts option 6 back to its value before
 		// its last write and runs no handler, then StatusAlertPanel_Ctor(0, 0, 1, 0x11) run through its slot +0xc and
 		// destroyed with GeneralAlert_Dtor(panel, 3); never reached while LowMemory is clear, and no plan step ports the
 		// low-memory mode.

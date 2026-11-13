@@ -84,8 +84,8 @@ public static class Es1StickConfigurations {
 
 				break;
 			default:
-				// PLACEHOLDER: above 5 retail's switch has no case and copies through eight stack slots it never set
-				// (ES1DBSIM decompile, Input_ReadPlayerInput's switch); this reads 0 for them. No plan step retires it.
+				// Above 5 retail's switch has no case and copies through eight stack slots it never set
+				// (ES1DBSIM decompile, Input_ReadPlayerInput's switch); this reads 0 for them.
 				break;
 		}
 

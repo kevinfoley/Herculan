@@ -57,7 +57,7 @@ public static class Es1FlyerAi {
 			flyer.Behaviour.SetState(Es1FlyerBehaviour.States[state], globals.DwellJitter);
 		}
 
-		// PLACEHOLDER: an order with no case installs what ESI holds, the address of this function's own code, as the
+		// An order with no case installs what ESI holds, the address of this function's own code, as the
 		// descriptor (docs/es1/simulation/flyers.md#orders--flyer_aiselectbehaviour-0001c46c). No retail flyer group has
 		// such an order (HercWorks.Query orders: the 325 flyer group records carry 1, 6, 8, 10 or 11); here the flyer stays
 		// in its state.

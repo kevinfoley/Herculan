@@ -349,11 +349,10 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 				if (Rudder != 0 || StickModel != 0) {
 					ApplyDevices();
 
-					// PLACEHOLDER: the calibration panel, built on the stack with 00049154(that, this panel, 1), run through
-					// its loop 000496f0 and destroyed with 00049678(that, 2) (the shell's 00006f15, 00007631 and 00007561),
-					// is not ported: what it shows and writes is docs/es1/simulation/preferences.md's Open item, and the
-					// slice leaves the joystick's calibration out (plan, "What the slice leaves out"); a modern controller
-					// gives calibrated values (plan decision 9). No plan step retires it.
+					// Engine departure, by design (plan decision 9): retail raises the calibration panel here, built on the
+					// stack with 00049154(that, this panel, 1), run through its loop 000496f0 and destroyed with
+					// 00049678(that, 2) (the shell's 00006f15, 00007631 and 00007561). A modern controller gives calibrated
+					// values, so no panel is raised and CALIBRATE only rebuilds the devices.
 					SetFocus(Cancel);
 				}
 

@@ -175,7 +175,7 @@ public static partial class DtsMeshBuilder {
 			return;
 		}
 
-		// PLACEHOLDER: a borrowed corner the group's own polys do not settle comes from whatever the
+		// A borrowed corner the group's own polys do not settle comes from whatever the
 		// original drew before the group, which this build cannot know; the triangle keeps its own
 		// corners. No retail shape reaches it.
 		if (textureSlot.Candidates() is not { } candidates) {

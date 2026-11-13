@@ -185,12 +185,15 @@ public sealed class Es1ShellDevices {
 			preferences.ShellSetOption(true, 0, Es1Preferences.RadioOption);
 		}
 
-		// PLACEHOLDER: the shell's Input_CreateJoystickDevices (000087ff): the devices option 7 names, and with option 9 the
-		// rudder pedals or option 9 cleared under option 7 = 2, each loaded with Joystick_LoadCalibration (000086d6) from
-		// Shell_FileNames lines 1 and 2 through Path_ApplyAltDrive and enabled, as the simulator's Es1JoystickDevices.Create
-		// builds them. The shell has no game port here (the simulator's waits for the host's controller,
-		// Es1SimulationStart), so it builds no device, Input_PollDeviceBlock reads none (Es1ShellFrame.PollDeviceBlock) and
-		// CONTROLS rebuilds none (Es1ShellAlertInput.RebuildJoysticks). No plan step retires it yet.
+		// PLACEHOLDER: retail ends here with Input_CreateJoystickDevices (000087ff), which builds the joystick devices as the
+		// simulator's Es1JoystickDevices does. The first is the stick configuration option 7 names. The second is the RCS
+		// rudder pedals when option 9 is set, except under option 7 = 2, whose second device is a second stick; there option
+		// 9 is cleared instead. In the shell, the sticks' first two buttons act as Enter and Tab in the open dialog
+		// (docs/es1/shell/startup.md#the-input), which Es1ShellFrame ports.
+		// The shell has no game port over the host's controller, as the simulator's start builds (Es1SimulationStart), so it
+		// builds no devices: the poll reads no joystick (Es1ShellFrame.PollDeviceBlock), the buttons never press, and
+		// CONTROLS rebuilds nothing (Es1ShellControls.RebuildJoysticks). The calibration files each device would load are
+		// left out by design (plan decision 9).
 		// With no sound manager, Prefs_SetOption(1, 0, i) for options 0, 1 and 2.
 		if (!SoundManagerPresent) {
 			for (int option = Es1Preferences.MusicOption; option <= Es1Preferences.RadioOption; option++) {

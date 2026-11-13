@@ -145,8 +145,11 @@ public sealed class Es1MfdScannerScreen : Es1MfdScreen {
 
 	/// <summary>
 	/// One object of the paint's walk (docs/es1/simulation/mfd-scanner.md#the-contacts): none while it is immobilized
-	/// (<c>+0x9e</c>) or destroyed (<c>+0x93</c>) or its group holds an action (<c>+0x16</c>). Its position is its own
-	/// when it is radar-visible (<c>+0x8f</c>) or its side is not 1, else <see cref="LastKnownPosition"/>. With
+	/// (<c>+0x9e</c>) or destroyed (<c>+0x93</c>) or its group holds an action (<c>+0x16</c>), or while it is on side 1
+	/// and not radar-visible (<c>+0x8f</c>). Retail has one more case for that last object: a blinking contact at its
+	/// last-known point, drawn only while its byte <c>+0xa1</c> is 0. Every constructor stores 1 in that byte and no
+	/// store of 0 has been found, so that case does not run and this port leaves it out. Any other object is plotted
+	/// from its own position. With
 	/// <i>d</i> its <c>Math_FastMagnitude2D</c> distance from the machine, 1 for 0, it is plotted only within
 	/// <see cref="ScaledRange"/>: <i>d</i> negated when the offset's <i>y</i> is positive, <i>a</i> = <c>0x4000</c> −
 	/// <c>Math_AsinBam</c>((<i>dx</i> &lt;&lt; 14) / <i>d</i>) + <paramref name="heading"/>, and the pixel at the
@@ -161,10 +164,11 @@ public sealed class Es1MfdScannerScreen : Es1MfdScreen {
 		}
 
 		sbyte side = (sbyte)group.Side;
-		if ((other.RadarVisible || side != 1 ? other.Position : LastKnownPosition(other)) is not { } position) {
+		if (!other.RadarVisible && side == 1) {
 			return null;
 		}
 
+		var position = other.Position;
 		int dx = position.X - machine.Position.X, dy = position.Y - machine.Position.Y;
 		int d = SimMath.FastMagnitude2D(dx, dy);
 		if (d == 0) {
@@ -190,20 +194,6 @@ public sealed class Es1MfdScannerScreen : Es1MfdScreen {
 		};
 		canvas.Plot(x, y, color);
 		return (x, y, d);
-	}
-
-	/// <summary>
-	/// The blinking last-known position of a side-1 object the radar has not shown up: none while the clock
-	/// (<c>000981c4</c>) has bit <c>0x20</c> set; otherwise the point <c>+0x164</c> when the byte <c>+0xa1</c> is clear,
-	/// and none when it is set. PLACEHOLDER: the port holds neither field, and answers none.
-	/// <c>Mech_Constructor</c> and <c>Flyer_Constructor</c> set <c>+0xa1</c> (docs/es1/simulation/mech.md#construction,
-	/// docs/es1/simulation/flyers.md#construction--flyer_constructor-0001ac58) and no ported code clears it, so a HERC or
-	/// a flyer, the objects the port builds, takes none either way; what clears it and what <c>+0x164</c>
-	/// holds is docs/es1/simulation/mfd-scanner.md#open.
-	/// </summary>
-	private static Vec3i? LastKnownPosition(IEs1SimObject other) {
-		_ = other;
-		return null;
 	}
 
 	/// <summary><c>ltoa</c> in base 10, right-aligned and zero-padded in <see cref="FieldWidth"/> characters.</summary>

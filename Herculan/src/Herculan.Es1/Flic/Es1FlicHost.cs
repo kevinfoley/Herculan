@@ -140,8 +140,9 @@ public static class Es1FlicHost {
 	/// <summary>
 	/// <c>Flic_DecodeSound</c>'s read of <c>RESOURCE.CFG</c>'s <c>[FlicPlayer]</c> <c>pathFlic</c> through
 	/// <c>Profile_GetString</c> (<c>00000e58</c>): <see cref="DefaultPathFlic"/> when the file, the section or the key is
-	/// missing. An empty value, which retail passes over for a later line of the same key, is taken as missing.
-	/// PLACEHOLDER: the value goes through <c>000017d4</c>, which is not read (dfl-flic.md#open); it is taken as written. Retail reads the file again for each load; it is read once here, as
+	/// missing. An empty value, which retail passes over for a later line of the same key, is taken as missing. The
+	/// value is taken as written: retail's <c>Str_SkipControlChars</c> (<c>000017d4</c>) leaves every value as it is
+	/// (docs/es1/formats/dfl-flic.md#the-sound). Retail reads the file again for each load; it is read once here, as
 	/// nothing writes it while a flic plays.
 	/// </summary>
 	private static string ReadPathFlic(string installRoot) {

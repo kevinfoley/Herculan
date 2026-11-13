@@ -149,7 +149,7 @@ public sealed class Es1ObjectivesPanel : Es1AlertPanel {
 
 	/// <summary>
 	/// <c>data\object.str</c> read with <c>StringTable_LoadFromFile</c> as a string table, and its group 0 taken with
-	/// <c>StringTable_LoadGroup</c>. PLACEHOLDER: with no install, or with the file missing or not a string table, no
+	/// <c>StringTable_LoadGroup</c>. With no install, or with the file missing or not a string table, no
 	/// lines: what retail shows with the file missing is docs/es1/simulation/alert-panels.md#open's item on a missing
 	/// <c>data\object.str</c>, and a file that does not parse is not read there.
 	/// </summary>

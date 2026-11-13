@@ -115,7 +115,6 @@ public static class Es1ZoneViewer {
 			string? recordTape = null, HostWindow? window = null, bool soundOn = true, bool silent = false) {
 		// Sim_Main's step 4, before the command line's parse (docs/es1/simulation/main-loop.md#starting--sim_main-00059350):
 		// an int16 0 to data\exit.cfg, so a run that ends before Sim_Shutdown leaves 0, which ends the launcher's loop.
-		// PLACEHOLDER: the heap's size to data\mem.got before it; this engine has no fixed heap to give the size of.
 		if (!Es1Shutdown.WriteExitCode(installRoot, 0)) {
 			Console.Error.WriteLine($"data\\{Es1Shutdown.ExitName} does not open for writing in {installRoot} (main.cpp line 0xf9 asserts here).");
 			return Es1Shutdown.AssertExitStatus;
@@ -205,8 +204,8 @@ public static class Es1ZoneViewer {
 				? new Es1CockpitScheme(cockpit, world.LocalPlayer!.Type.Type)
 				: (Es1CockpitScheme?)null;
 			scene = Es1ZoneScene.Load(content, theater, header[1], scheme);
-			world.Globals.ImpactPalette.Load(scene.ImpactPalette);
 			world.Globals.ZoneShapes = scene.ZoneShapes;
+			world.Globals.ImpactPalette.Load(scene.ImpactPalette);
 			// The ground shapes FlatObj_LoadResources loads, which the impact effects lay, by the world file's selector.
 			world.Globals.FlatObjects.LoadShapes(content, scene.World?.FlatSetSelector ?? 0);
 		} catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException) {
@@ -411,11 +410,11 @@ public static class Es1ZoneViewer {
 				// The cockpit script's palette commands upload to the same live palette, and the shield display's rings are
 				// installed into it.
 				manager.Cockpit.Scripts.UploadPalette = monitor.SetPalette;
+				manager.Cockpit.Shields.InstallPaletteRange = monitor.InstallRange;
 				// The hit shake's palette switches make whole palettes live on it.
 				var impactMonitor = monitor;
 				world.Globals.ImpactPalette.LivePalette = () => impactMonitor.Palette;
 				world.Globals.ImpactPalette.SetLivePalette = monitor.SetPalette;
-				manager.Cockpit.Shields.InstallPaletteRange = monitor.InstallRange;
 				monitor.Fit(window.FramebufferSize);
 				var worldDraw = draw;
 				var sceneRenderer = renderer;
@@ -706,9 +705,9 @@ public static class Es1ZoneViewer {
 			_ => [],
 		};
 
-		// PLACEHOLDER: the faces take the sun alone. Retail draws the view outside the object list's per-object light
-		// selection (docs/es1/rendering/polygon-shading.md#effect-lights), and which effect lights its faces then take
-		// is not settled; this engine's ES1 draw lights nothing else either.
+		// The faces take the sun alone, a divergence (KNOWN_ISSUES.md): retail's NAV MAP and command-screen map faces also
+		// take the effect lights chosen for the last object a world pass drew, as they were then
+		// (docs/es1/rendering/polygon-shading.md#effect-lights). The rect views' items carry no light anchor.
 		renderer.Backdrop = null;
 		renderer.Render(camera, items, viewport.X, viewport.Y, viewport.Width, viewport.Height);
 	}

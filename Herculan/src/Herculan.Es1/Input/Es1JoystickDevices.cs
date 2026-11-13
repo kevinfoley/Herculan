@@ -94,10 +94,9 @@ public sealed class Es1JoystickDevices {
 				continue;
 			}
 
-			// PLACEHOLDER: Joystick_LoadCalibration (0004ae0c) reads data\joy1.cal or data\joy2.cal (or its default block)
-			// into the joystick object's calibration block, which the calibration panel (00049a7c and its neighbours,
-			// 00048e98, 00049bbc, 00049f30, 0004a0e8) measures and saves; the port gives calibrated values instead, so
-			// only the loader's shift 7 is set. No plan step retires the panel or the files.
+			// Engine departure, by design (plan decision 9): retail's Joystick_LoadCalibration (0004ae0c) loads
+			// data\joy1.cal or data\joy2.cal, which the calibration panel saves, into the joystick object's calibration
+			// block. The port already gives calibrated values, so the files are not read and only the loader's shift 7 is set.
 			device.Joystick.Shift = CalibratedShift;
 			device.Enable();
 		}
