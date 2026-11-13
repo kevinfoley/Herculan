@@ -455,21 +455,26 @@ public sealed class Es1HddMap {
 	}
 
 	/// <summary>
-	/// One marker of <see cref="DrawMap"/>'s walk, <paramref name="marker"/> and <i>o</i> its object: a route marker at
-	/// its point; an object on a side other than 0 that is immobilized or destroyed skipped; any other at its position
-	/// while radar-visible, or on side 0 with its group holding no action; and otherwise at its last-known point on a
-	/// paint with bit <c>0x20</c> of the clock clear and its <c>+0xa1</c> clear, else skipped. PLACEHOLDER: the port holds
-	/// neither <c>+0xa1</c> nor the point <c>+0x164</c>; every constructor sets <c>+0xa1</c> and no ported code clears
-	/// it, so the last case skips the object, as the scanner's does
-	/// (<see cref="Es1MfdScannerScreen"/>, docs/es1/simulation/mfd-scanner.md#open). The point, projected, less the
-	/// half-size and through <see cref="ToViewport"/>, becomes the rect's top-left (<see cref="Es1HddMarker.MoveTo"/>),
-	/// the old one kept. For the selected squadmate's machine, the link line from the marker's center: to the current
-	/// pick in <c>HudColorTable_Get</c>(slot) while it is held, else to the saved pick in that less 1 while it is held,
-	/// each the pick's point or its unit's position, projected at its own height, drawn when the color is not 0; then,
-	/// with a squadmate selected and the blink phase set, the marker is not painted. Otherwise, a ranged marker's
-	/// <see cref="Es1HddMarker.Distance"/> the <c>Math_FastMagnitude3D</c> of its point from the camera, then its paint.
-	/// Answers whether <i>o</i> is the chosen unit. An object with no group, and a pick whose kind is neither or whose
-	/// unit is none, where retail reads through a null pointer or draws to a stale point, are skipped, engine guards.
+	/// Places and paints <paramref name="marker"/>, one step of <see cref="DrawMap"/>'s walk
+	/// (docs/es1/simulation/hdd-command-screen.md#drawing-the-map). Returns whether the marker's object is the chosen unit.
+	/// <para>Where the marker goes:</para>
+	/// <list type="bullet">
+	/// <item>A route marker, which has no object, goes at its route point.</item>
+	/// <item>An object on a side other than 0 is skipped once it is immobilized or destroyed.</item>
+	/// <item>Any other object goes at its position while it is radar-visible, or, on side 0, while its group has no
+	/// action. Otherwise it is skipped. Retail has one more case here: a blinking marker at the object's last-known
+	/// point, drawn only while the object's byte <c>+0xa1</c> is 0. Every constructor stores 1 in that byte and no
+	/// store of 0 has been found, so that case does not run and this port leaves it out
+	/// (docs/es1/simulation/mfd-scanner.md#the-contacts).</item>
+	/// </list>
+	/// <para>The point is projected, offset by the marker's half-size and taken through <see cref="ToViewport"/> to give
+	/// the rect's new top-left (<see cref="Es1HddMarker.MoveTo"/>); the old top-left is kept in
+	/// <see cref="Es1HddMarker.LastTopLeft"/>.</para>
+	/// <para>The selected squadmate's machine gets its link line (<see cref="DrawLinkLine"/>). While a squadmate is
+	/// selected and <see cref="Es1HddCommandScreen.BlinkPhase"/> is set, that marker is not painted, so it blinks.</para>
+	/// <para>Before painting, a ranged marker's <see cref="Es1HddMarker.Distance"/> is set to the
+	/// <c>Math_FastMagnitude3D</c> of its point from the camera.</para>
+	/// <para>Engine guard: an object with no group is skipped, where retail reads through a null pointer.</para>
 	/// </summary>
 	private bool PlaceMarker(Es1PanelCanvas map, Es1HddMarker marker) {
 		Vec3i point;
@@ -515,7 +520,14 @@ public sealed class Es1HddMap {
 		return chosen;
 	}
 
-	/// <summary>The link line of <see cref="PlaceMarker"/>, from <paramref name="marker"/>'s center to the selected squadmate's held pick.</summary>
+	/// <summary>
+	/// Draws the line from <paramref name="marker"/>'s center to the selected squadmate's pick, for
+	/// <see cref="PlaceMarker"/>. The pick is the current one while it is held, in <c>HudColorTable_Get</c>(slot); else
+	/// the saved one while it is held, in that color less 1; else nothing is drawn. The line ends at the pick's point, or
+	/// at its unit's position, projected at its own height. A color of 0 draws nothing.
+	/// <para>Engine guard: a pick whose kind is neither a point nor a unit, or whose unit is missing, draws nothing, where
+	/// retail draws to a stale point or reads through a null pointer.</para>
+	/// </summary>
 	private void DrawLinkLine(Es1PanelCanvas map, Es1HddMarker marker) {
 		int slot = Screen.SelectedSlot;
 		var pick = Screen.Picks[slot];
