@@ -261,13 +261,18 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>
 	/// <c>0007fcdc</c>, the render context the animations' scripts are opened on (<see cref="Es1AnimationControl.OpenScripts"/>):
-	/// clip mode 1 to the rect <see cref="DrawMenu"/> last set, origin (0, 0), no translation; none (0) before the first
-	/// draw with a menu, which leaves a script on the default context. Retail's scripts hold the one object, so a later
-	/// draw's rect also moves what they draw through; the context is made afresh for each use from the rect as it then
-	/// stands, to the same effect.
+	/// clip mode 1 to the rect <see cref="DrawMenu"/> last set, origin (0, 0), translation flag 0, so a script draws in
+	/// the screen's coordinates cut to the window; none (0) before the first draw with a menu, which leaves a script on
+	/// the default context. The canvas's origin is the rect's corner, which cancels its translation, as
+	/// <see cref="Es1ShellRenderContext.Canvas"/> does with <see cref="Es1ShellRenderContext.Translate"/> clear. Retail's
+	/// scripts hold the one object, so a later draw's rect also moves what they draw through; the context is made afresh
+	/// for each use from the rect as it then stands, to the same effect.
 	/// </summary>
 	public Func<Es1PanelCanvas>? WindowContext =>
-		_windowContextRect == null ? null : () => new Es1PanelCanvas(_devices.Display, _windowContextRect ?? FullScreen);
+		_windowContextRect == null ? null : () => {
+			var rect = _windowContextRect ?? FullScreen;
+			return new Es1PanelCanvas(_devices.Display, rect, (rect.X0, rect.Y0));
+		};
 
 	/// <summary>
 	/// <c>RenderContext_GetFullScreen</c> (<c>0004c716</c>): <c>00083bc4</c> set to clip mode 1 with no regions, and returned
