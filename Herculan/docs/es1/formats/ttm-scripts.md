@@ -197,7 +197,7 @@ Some commands act only on a page's first run, while `+0x42` is 0 ("first run"), 
 | Opcode | Name | Arguments | In the files | What it does |
 |---|---|---|---|---|
 | `0xc102` | `TOKEN_VOLUME_SX` | two words | yes | Nothing. |
-| `0xc21f` | `TOKEN_HDS_LOAD` | name | yes | Destroys the sound object `+0x1a8`; puts the name through `TtmScript_BuildPath` and, when the sound manager `00082768` exists and `SoundManager_SetSampleName`(manager, `0xe`, path) succeeds, stores `SoundManager_CreateObject`(manager, 2, 0, `0xe`) at `+0x1a8`. |
+| `0xc21f` | `TOKEN_HDS_LOAD` | name | yes | Destroys the sound object `+0x1a8`; puts the name through `TtmScript_BuildPath` and, when the sound manager `00082768` exists and `SoundManager_SetSampleName`(manager, `0xe`, path) succeeds, stores `SoundManager_CreateObject`(manager, 2, 0, `0xe`) at `+0x1a8`. It does not load the sample: `0xc220`'s play does ([playing](sound-samples.md#playing)). |
 | `0xc220` | `TOKEN_HDS_PLAY` | — | yes | With a sound object: calls its `+0x2c` slot with `Math_RandomBelow`(`0009aec0`, 25) + 10, as a byte, and its `+0x10` slot, and sets `+0x41`. |
 
 `TtmScript_FixRect` (`000472a2`), given a script and a rect, calls `Display_CopyRectToPage` (`0004c17c`)(`Ttm_Configure`'s *a*, the display's draw page `+0x38`, rect), which copies the rect into the background page and queues it for the other page ([fixing a rect](../rendering/screen-pages.md#fixing-a-rect)).

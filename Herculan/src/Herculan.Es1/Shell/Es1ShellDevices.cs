@@ -25,6 +25,7 @@ public sealed class Es1ShellDevices {
 
 	public Es1ShellDevices() {
 		NavKeySubscriber = OnNavKey;
+		Sound = new Es1ShellSound(WaitTicks);
 	}
 
 	/// <summary><c>Shell_NavKeySubscriber</c> (<c>00012b4e</c>) as the one delegate the keyboard is given and CONTROLS takes off and gives back.</summary>
@@ -97,7 +98,7 @@ public sealed class Es1ShellDevices {
 	public Es1HostKeyboard? HostKeyboard { get; private set; }
 
 	/// <summary>The shell's sound manager and its click, which <see cref="Init"/> makes and <see cref="Shutdown"/> destroys.</summary>
-	public Es1ShellSound Sound { get; } = new();
+	public Es1ShellSound Sound { get; }
 
 	/// <summary>Whether the dword <c>ShellSound_Manager</c> (<c>00082768</c>) is set: <see cref="Init"/> made a sound manager.</summary>
 	public bool SoundManagerPresent => Sound.Manager != null;

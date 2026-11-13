@@ -323,12 +323,12 @@ It sets no hearing range. `Shell_ShutdownDevices` destroys the click and then th
 | Index | Name | Plays |
 |---|---|---|
 | 0 | `res32\xxxxxxxx.sfx` | a talking head's line: `ShellSnc_OpenSound` renames index 0 `snc\` followed by the line's `.RAW` for each line and makes a sound on it ([loading a line](../shell/message-box.md#loading-a-line)) |
-| 1–8 | `res32\menu.hmp` twice, `res32\shella.hmp`, `res32\shellb.hmp`, `res32\shellc.hmp`, `res32\shella.hmp`, `res32\death.hmp`, `res32\win2.hmp` | songs, by the track `ShellMusic_Play` is given ([the backdrop](../shell/menus.md#the-backdrop)) |
+| 1–8 | `res32\menu.hmp` twice, `res32\shella.hmp`, `res32\shellb.hmp`, `res32\shellc.hmp`, `res32\shella.hmp`, `res32\death.hmp`, `res32\win2.hmp` | songs, by the track `ShellMusic_Play` is given: 1, 3 and 4 the backdrop groups' ([the backdrop](../shell/menus.md#the-backdrop)), 7 the lost pilot's ending ([the first screen](../shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47)) |
 | 9 | `res32\button.sfx` | the buttons' click |
 | 10, 11 | `res32\menuclsa.raw`, `res32\menuopn2.raw` | the animations' sounds ([playing](anm-animation.md#playing)) |
-| 12, 13 | `res32\intro1.hmp`, `res32\intro2.hmp` | songs |
+| 12, 13 | `res32\intro1.hmp`, `res32\intro2.hmp` | songs: the intro's ([the start-up](../shell/startup.md#the-start-up)), 13 the won career's ending too |
 | 14 | `res32\xxxxxxxx.raw` | a script's sound: `TOKEN_HDS_LOAD` renames index `0xe` to the script's path for its name and makes a sound on it ([the commands](ttm-scripts.md#the-commands)) |
-| 15–19 | `res32\rubble.hmp`, `res32\ice.hmp`, `res32\desert.hmp`, `res32\volcano.hmp`, `res32\losing.hmp` | songs |
+| 15–19 | `res32\rubble.hmp`, `res32\ice.hmp`, `res32\desert.hmp`, `res32\volcano.hmp`, `res32\losing.hmp` | songs: 15–18 a campaign's opening lines' ([the kinds](../shell/message-box.md#the-kinds)), 19 the lost career's ending |
 
 A 0 dword at `ES1GO 00082910` ends the table. `SHELL0.VOL` holds all 20 files, the placeholders `RES32\XXXXXXXX.SFX` and `RES32\XXXXXXXX.RAW` 804 bytes each, so `SoundManager_SetSampleNames` takes every name, `+0x502` is 19, and the click's index 9 passes `SoundManager_CreateObject`'s test.
 
@@ -360,7 +360,7 @@ The functions the sections above give an `ES1GO` address beside their own are co
 - **Open:** the code that loads a digital driver out of `SOS\HMIDRV.386`.
 - **Open:** the sample format the driver mixes the data as. The bytes centre on `0x80`, as unsigned 8-bit samples would, and many files open on a run of `0x7f`–`0x81`.
 - **Open:** how device `0xa005`'s driver, reached through the in-image table `HmiMidi_InitDriver` calls, opens the digital driver from the manager's blocks, and so whether 11,025 Hz is the rate the samples play at; and what the block's `0x78`, 8, 1, `0x1000`, 1 and `0x13` are.
-- **Open:** what plays `ROSEY1.SFX` and the eleven `res32\` `.RAW` files the shell's table does not name. `ES1GO`'s resource name builder, the function holding the reference at `ES1GO 00047170`, rewrites a `.RAW` extension, and is a lead.
+- **Open:** what plays `ROSEY1.SFX` and the eleven `res32\` `.RAW` files the shell's table does not name. A lead for the `.RAW` files: a script's `TOKEN_HDS_LOAD` names index `0xe` with its string put through `TtmScript_BuildPath` (`ES1GO 00047138`), which leaves a `.RAW` name as it is ([the commands](ttm-scripts.md#the-commands)), so the `0xc21f` strings of the shell's `.TTM` scripts name the files the scripts play; no census of them has been run.
 - **Open:** what the start block's fields mean to the digital driver: `+0x0c`, the repeat count (does 0 play once, and 255 loop 255 times?); `+0x10`, 2 for every digital sound; `+0x38`, the `+0x43` slot `+0x20` sets; `+0x40`, the pan, and which of `0x000f` and `0xffff` is left; and the flags. And what `MidiSound_LoopCallback`'s answer and its flags' bit `0x80` mean to the song player.
 - **Open:** the vtables' slots `+0x18`–`+0x24`, through which the scan of both images finds no call ([the vtables](#the-vtables)): whether `+0x18` and `+0x1c` resume and pause, as the `maybe_` names read them, and `+0x20` sets a pitch.
 - **Open:** the HMI calls `SoundManager_DetectDigitalCard`'s helpers make (`0007235d`, `00072573`, `00072901`, `00072ce9`, `00072517`) and the buffer's fields they fill, for module E.

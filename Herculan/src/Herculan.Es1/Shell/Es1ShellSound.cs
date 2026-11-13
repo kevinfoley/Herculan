@@ -11,10 +11,31 @@ namespace Herculan.Es1.Shell;
 /// (<c>ES1GO 00082768</c>), which <see cref="Init"/> makes from <c>resource.cfg</c> at start-up with the 20 names of
 /// <see cref="Names"/> and no catalog, and the one sound it makes, the buttons' click <c>ShellSound_ButtonSound</c>
 /// (<c>0007fd00</c>), which the menus' buttons (<see cref="Menus.Es1MTButton"/>) and the shell's panels
-/// (<see cref="PlayClick"/>) play. The manager is <see cref="Es1SoundManager"/>, the simulator's, as the shell's copies
-/// hold the simulator's statements.
+/// (<see cref="PlayClick"/>) play, and the song of the screen, <c>ShellMusic_Object</c> (<c>0007fcfc</c>)
+/// (docs/es1/shell/menus.md#the-backdrop), which <see cref="PlayMusic"/> makes. The manager is
+/// <see cref="Es1SoundManager"/>, the simulator's, as the shell's copies hold the simulator's statements.
 /// </summary>
 public sealed class Es1ShellSound {
+	/// <summary>The tracks the screens start themselves, name indexes of <see cref="Names"/>: <c>res32\death.hmp</c>,
+	/// <c>res32\intro1.hmp</c>, <c>res32\intro2.hmp</c> and <c>res32\losing.hmp</c>.</summary>
+	public const short DeathTrack = 7, Intro1Track = 0xc, Intro2Track = 0xd, LosingTrack = 0x13;
+
+	private readonly Func<short, IEnumerable<Es1ShellWait>> _waitTicks;
+
+	/// <param name="waitTicks"><c>Shell_WaitTicks</c> (<see cref="Es1ShellDevices.WaitTicks"/>), which the song's fade waits through.</param>
+	public Es1ShellSound(Func<short, IEnumerable<Es1ShellWait>> waitTicks) {
+		_waitTicks = waitTicks;
+	}
+
+	/// <summary>
+	/// <c>Shell_MusicOption</c> (<see cref="Es1ShellData.MusicOption"/>), which the host wires once the shared data
+	/// exists; 0 before, the byte's value in the image.
+	/// </summary>
+	public Func<byte> MusicOption { get; set; } = () => 0;
+
+	/// <summary><c>ShellMusic_Object</c> (<c>0007fcfc</c>): the song <see cref="PlayMusic"/> made, none until then and after <see cref="StopMusic"/>.</summary>
+	public Es1SoundObject? MusicObject { get; private set; }
+
 	/// <summary>The master volume <c>ShellSound_Init</c> sets, where the simulator's stays 90.</summary>
 	public const sbyte MasterVolume = 95;
 
@@ -112,6 +133,85 @@ public sealed class Es1ShellSound {
 	}
 
 	/// <summary>
+	/// <c>ShellMusic_Play</c> (<c>00020a70</c>)(<paramref name="track"/>): nothing with no manager; otherwise
+	/// <see cref="StopMusic"/>, then <see cref="MusicObject"/> made with <see cref="Es1SoundManager.CreateObject"/>(2, 0,
+	/// track), loaded, its slot <c>+0x28</c> called with (−1, −1, <c>0xffff</c>), the endless repeat, and played through
+	/// slot <c>+0x10</c> while <see cref="MusicOption"/> is set. The object is made and loaded with the option off, so
+	/// that the MUSIC box (<see cref="SetMusicPlaying"/>) has one to play. An object not made is not loaded or played, an
+	/// engine guard where retail calls through a null object.
+	/// </summary>
+	public IEnumerable<Es1ShellWait> PlayMusic(short track) {
+		if (Manager is not { } manager) {
+			yield break;
+		}
+
+		foreach (var wait in StopMusic()) {
+			yield return wait;
+		}
+
+		MusicObject = manager.CreateObject(2, 0, track);
+		if (MusicObject is not { } music) {
+			yield break;
+		}
+
+		music.LoadSample();
+		music.SetRepeats(-1, -1, -1);
+		if (MusicOption() != 0) {
+			music.Play();
+		}
+	}
+
+	/// <summary>
+	/// <c>ShellMusic_Stop</c> (<c>00020a18</c>): with <see cref="MusicObject"/> set, <see cref="FadeOut"/> of it, its slot
+	/// <c>+0x14</c> (stop), its slot <c>+8</c> with 3 (destroyed), and the object cleared. The fade runs whether or not the
+	/// song plays.
+	/// </summary>
+	public IEnumerable<Es1ShellWait> StopMusic() {
+		if (MusicObject is not { } music) {
+			yield break;
+		}
+
+		foreach (var wait in FadeOut(music)) {
+			yield return wait;
+		}
+
+		music.Stop();
+		music.Destroy();
+		MusicObject = null;
+	}
+
+	/// <summary>
+	/// <c>ShellMusic_FadeOut</c> (<c>000209e0</c>)(<paramref name="sound"/>): for each value from the low byte of
+	/// <c>SoundObject_GetVolume</c>, signed, down to 1, the object's slot <c>+0x2c</c> with the value, then
+	/// <c>Shell_WaitTicks</c>(1): a volume of 100 fades over 100 ticks.
+	/// </summary>
+	public IEnumerable<Es1ShellWait> FadeOut(Es1SoundObject sound) {
+		for (sbyte volume = unchecked((sbyte)sound.GetVolume()); volume > 0; volume--) {
+			sound.SetVolume(volume);
+			foreach (var wait in _waitTicks(1)) {
+				yield return wait;
+			}
+		}
+	}
+
+	/// <summary>
+	/// The MUSIC box's and CANCEL's step in <c>PrefsMenu_OnMessage</c> (docs/es1/shell/options.md#the-buttons--prefsmenu_onmessage-0002b82b):
+	/// with <see cref="MusicObject"/> set, its slot <c>+0x10</c> (play) for a <paramref name="setting"/> of 1 and
+	/// <c>+0x14</c> (stop) for 0.
+	/// </summary>
+	public void SetMusicPlaying(byte setting) {
+		if (MusicObject is not { } music) {
+			return;
+		}
+
+		if (setting == 0) {
+			music.Stop();
+		} else {
+			music.Play();
+		}
+	}
+
+	/// <summary>
 	/// The digital driver's service of its voices (<see cref="Es1DigitalDriver.Update"/>), which retail's runs from the
 	/// timer: called once a host frame, an engine choice, as the simulator's (<see cref="Es1Sound.UpdateDriver"/>).
 	/// Nothing with no manager.
@@ -122,8 +222,14 @@ public sealed class Es1ShellSound {
 	/// <c>Shell_ShutdownDevices</c>' first steps (docs/es1/shell/startup.md#the-shutdown): <see cref="ButtonSound"/>
 	/// destroyed through its slot <c>+8</c> with 3 and cleared, then the manager destroyed
 	/// (<see cref="Es1SoundManager.Destroy"/>) and cleared. <c>Shell_AssertCleanupHook</c> destroys the manager alone.
+	/// Retail's <c>Shell_FreeData</c> has stopped the song by then (<see cref="StopMusic"/>, which the host runs as the
+	/// frame loop ends); a song left by a window closed before that is stopped and destroyed first with no fade, an
+	/// engine guard.
 	/// </summary>
 	public void Shutdown() {
+		MusicObject?.Stop();
+		MusicObject?.Destroy();
+		MusicObject = null;
 		ButtonSound?.Destroy();
 		ButtonSound = null;
 		DestroyManager();

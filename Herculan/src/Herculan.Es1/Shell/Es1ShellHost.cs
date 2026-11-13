@@ -257,6 +257,7 @@ public static class Es1ShellHost {
 			// 7. FileNames_Load.
 			var data = Es1ShellData.LoadFileNames(_content);
 			data.Sound = _devices.Sound;
+			_devices.Sound.MusicOption = () => data.MusicOption;
 			_data = data;
 
 			// Step 5's Map_LoadBnd, ShellMap_LoadBnd and CtlAlert_LoadBnd, here once the shared data exists; nothing between
@@ -306,6 +307,12 @@ public static class Es1ShellHost {
 				foreach (var wait in _frame.Pass()) {
 					yield return wait;
 				}
+			}
+
+			// Shell_FreeData's last call, ShellMusic_Stop, whose fade waits on the timer: run here, before the shutdown's
+			// steps 1 to 3 where retail runs it in step 4, an engine order; nothing between draws or sounds.
+			foreach (var wait in _devices.Sound.StopMusic()) {
+				yield return wait;
 			}
 		}
 

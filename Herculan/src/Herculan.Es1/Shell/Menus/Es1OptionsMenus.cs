@@ -197,13 +197,9 @@ public sealed class Es1PrefsMenu : Es1Menu {
 
 	/// <summary>
 	/// With the backdrop's music <c>ShellMusic_Object</c> (<c>0007fcfc</c>) set, its slot <c>+0x10</c> (play) for a
-	/// setting of 1 and <c>+0x14</c> (stop) for 0, through its vtable at <c>+0x3b</c>. PLACEHOLDER: <c>ShellMusic_Play</c>, which
-	/// makes the object, is item 7's module C, part C3, so there is none and nothing plays or stops, as in retail with the
-	/// object not set.
+	/// setting of 1 and <c>+0x14</c> (stop) for 0, through its vtable at <c>+0x3b</c> (<see cref="Es1ShellSound.SetMusicPlaying"/>).
 	/// </summary>
-	private static void PlayOrStopMusic(byte setting) {
-		_ = setting;
-	}
+	private void PlayOrStopMusic(byte setting) => Context.Data.Sound?.SetMusicPlaying(setting);
 
 	/// <summary>Slot <c>+4</c>, <c>PrefsMenu_Dtor</c> (<c>000402d2</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
 	public override void Dtor() {

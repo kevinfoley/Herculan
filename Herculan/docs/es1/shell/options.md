@@ -109,7 +109,7 @@ The shell's panel is the simulator's ([the controls panel](../simulation/prefere
 - **`AlertPanel_Leave` (`00002b0a`)** calls the hook `AlertPanel_LeaveHook` (`0007d850`) when it is set, puts back the draw page at `+0x38`, the one kept at `+0x289` when the panel was built, and the `0x29` bytes, and does not move the mouse back to the pointer saved with the block; it keeps no open count.
 - **`AlertPanel_SetFocus` (`00002fa2`)** reads the pointer from `Shell_PollInput`.
 - **`AlertPanel_HandleEvent` (`000031fe`)** reads buttons 0 and 1 at the shell's block `+0x1d` and `+0x1e` and latches them with the shell's `Input_LatchButton` (`0004de18`); its table `0007d9f0` holds six codes, the simulator's five and `0x42e`, [Ctrl+C], whose case calls `Screenshot_Save` (`00014ac7`)(`CAPTURE`) and returns 1 ([the capture](#the-capture--screenshot_save-00014ac7)). Keypad 0 still reads option 10, the shell's (`000aa258`).
-- **The buttons and the slider** (`PanelButton_*`, `AlertSliderGadget_*`) are the simulator's, through this file's tables (`0007da34`, `0007da90`, `0007dac2`, `AlertSelectGadgetVtable` `0007daec`; the slider's `0007db22`, `0007db8a`, `0007dbc8`, `0007dbf0`); the slider takes its knob's length from `ALERT.BND` (`AlertSlider_KnobLength`, `0009a31c`, 7, the simulator's constant), and `es2_xref.py` finds no reference to `AlertSliderGadget_Ctor` (`00003684`). The no-op slots load their arguments into registers and return, where the simulator's are `NOP`s and a `RET`.
+- **The buttons and the slider** (`PanelButton_*`, `AlertSliderGadget_*`) are the simulator's, through this file's tables (`0007da34`, `0007da90`, `0007dac2`, `AlertSelectGadgetVtable` `0007daec`; the slider's `0007db22`, `0007db8a`, `0007dbc8`, `0007dbf0`); the mixin table `0007dac2` holds 0, `00003528`, `00003532` and `Widget_ClickSoundAlertCopy` (`00008954`), and `0007da66` three 0 dwords and the same click ([the click](../formats/sound-samples.md#the-click); `es2_peek.py ES1GO 0007da66 4`); the slider takes its knob's length from `ALERT.BND` (`AlertSlider_KnobLength`, `0009a31c`, 7, the simulator's constant), and `es2_xref.py` finds no reference to `AlertSliderGadget_Ctor` (`00003684`). The no-op slots load their arguments into registers and return, where the simulator's are `NOP`s and a `RET`.
 - **`AlertPanel_SetTitleText` (`00002c25`)** blits the corners of the bank the dword `000ab4ee` holds.
 - **The hooks** `AlertPanel_EnterHook` and `AlertPanel_LeaveHook` are 0 in the image, and `es2_xref.py --decode` finds only `AlertPanel_Enter`'s and `AlertPanel_Leave`'s tests and calls of them, where the simulator's mission start stores two functions there ([the in-mission panels](../simulation/alert-panels.md)).
 
@@ -162,8 +162,15 @@ The shell's panel is the simulator's ([the controls panel](../simulation/prefere
 | `PlayerInputBlock`, `0x29` bytes | `000a0ba4` |
 | `CtlAlert_Bnd`, `CTL_ALRT.BND`; `AlertSlider_KnobLength`, `ALERT.BND`'s word | `0009a34c`; `0009a31c` |
 
+## Rejected readings
+
+| Reading | Why it is wrong |
+|---|---|
+| SOUND and DETAIL change parts of the music setting: Ghidra's decompile of `PrefsMenu_OnMessage` and of `MTButton_Draw` (`0001d200`) prints them as `Shell_MusicOption._1_1_` and `Shell_MusicOption._2_2_` | Those are the byte and the word after `Shell_MusicOption` (`0007fcb8`): `Shell_SoundOption` (`0007fcb9`) and `Shell_DetailOption` (`0007fcba`), each a setting of its own ([the globals](#globals)). |
+
 ## Open
 
+- **Open:** which class stores the mixin table `0007da66` ([the panel base](#the-panel-base--alertpanel_ctorbase-0000222d)); the panel button's is `0007dac2`.
 - **Open:** DETAIL's MEDIUM read back as HIGH ([DETAIL after a restart](#detail-after-a-restart)). A retail check: in PREFERENCES set DETAIL to MEDIUM, ACCEPT, quit to DOS, start the game again and open PREFERENCES: the box shows MEDIUM or HIGH.
 - **Open:** what `Shell_ScanKeySubscriber` does to the menus once CONTROLS has registered it ([the case](#the-case)): it hands `Space`, the arrows, `Backspace`, `Home`, `End`, `Esc` and `Del` to `Shell_ForwardKeyToDialog` with no edit box up; and what `Keyboard_AddSubscriber` does when a name box registers it a second time. A retail check: open CONTROLS, press DONE, go back to the main menu and see whether `Space` and the arrows still move and press its buttons as before.
 - **Open:** what the capture's writers `00014461` and `000147b9` write ([the capture](#the-capture--screenshot_save-00014ac7)), by position ES2's `Screenshot_WriteScr` and `Screenshot_WritePal`. A retail check: [Ctrl+C] on CONTROLS, then look for a new `CAPTURE*.SCR` and `.PAL` in the game's folder.
