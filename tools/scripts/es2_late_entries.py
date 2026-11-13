@@ -76,7 +76,7 @@ def early(img: X.Image, binary: str, va: int, first: bytes, known, dump, xref: b
     if not 0 < k < 16:
         return 0
     true = va + k
-    if X.rel32_sites(img, va) or (img.binary.container != retail_binaries.X32 and X.dword_sites(img, va)):
+    if X.rel32_sites(img, va) or (not img.binary.flat and X.dword_sites(img, va)):
         return 0
     if not (X.rel32_sites(img, true) or X.dword_sites(img, true)):
         return 0

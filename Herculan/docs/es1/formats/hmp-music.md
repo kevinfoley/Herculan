@@ -69,7 +69,7 @@ The loader reads only each track's first delta time, with `HmiMidi_ReadDelta` (`
 | `0xa004` | MT-32 | `0xa004` |
 | `0xa008` | AWE 32 | `0xa000` |
 
-The drivers themselves are `SOS\HMIMDRV.386`'s `.com` images: `fmmidi.com`, `fmmidi3.com`, `awemidi.com`, `smii.com`, `mpu401.com`, `mt32.com`, `gusmidi.com` and `intspkr.com`. `0xa005`, which `SoundManager_LoadDrivers` opens with `sos\drum32.dig` and the digital driver's blocks, is none of them.
+The drivers themselves are [`SOS\HMIMDRV.386`'s images](hmi-driver-container.md#layout), which also hold a driver for `0xa009` (OPL3, answering a track that lists `0xa002`), `0xa00a` (Gravis UltraSound) and `0xa006` (the PC speaker). `0xa005`, which `SoundManager_LoadDrivers` opens with `sos\drum32.dig` and the digital driver's blocks, is none of them, and neither is `0xa003`: `HmiMidi_InitDriver` (`00071076`) takes those two devices' functions from tables in the program itself, and loads any other device's image with `00081365` unless its caller's block already holds one.
 
 Track 0 of each of the 19 songs lists no device and goes to slot 0. Of the others, every melodic track lists `0xa002` first, `0xa000` after it or not at all, except `ICE`'s tracks 13–15, `INTRO1`'s 10–14 and `INTRO2`'s 14–17, which list `0xa000` first (`INTRO2`'s 17 then `0xa00a`, `0xa002` and `0xa007`); the rest list `0xa005` alone, and most songs have one track listing `0xa003` alone. `DESERT`'s eleven tracks and every melodic track of `RUBBLE`, `VOLCANO`, `WIN2` and `LOSING` list `0xa002` alone. No track lists `0xa004`. So by step 6 of `HmiMidi_InitSong`, with `0xa005` always open beside the setup's device:
 
@@ -83,6 +83,6 @@ Track 0 of each of the 19 songs lists no device and goes to slot 0. Of the other
 - **Open:** the branch entries' `+0x00`–`+0x07` and `+0x10`–`+0x17`, and what the data they point to does.
 - **Open:** the event encoding past the first delta, and what reads the events.
 - **Open:** `0006eeae`, `0006ea6b` and `0006ee87`, which `MidiSound_Play` calls after the song is ready, and when the song player calls the two callbacks.
-- **Open:** what `0xa003`, `0xa007`, `0xa009` and `0xa00a` stand for, which `SOUNDSET.INI` does not list.
-- **Open:** the code that loads a driver out of `SOS\HMIMDRV.386`; both images hold the file's name.
+- **Open:** what `0xa003` and `0xa007` stand for, which neither `SOUNDSET.INI` nor `HMIMDRV.386` lists.
+- **Open:** `00081365`, which pushes the name `hmimdrv.386`: how it finds a device's image in the file and where it puts it.
 - **Open:** [the devices](#the-devices)' routing in the running game. A retail check: with the setup's MIDI device set to MPU 401 under DOSBox-X, `DESERT`'s song is silent and `RUBBLE`'s plays only its `0xa005` track, where FM plays both whole.

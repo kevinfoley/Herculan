@@ -1,10 +1,11 @@
 // Pre-analysis setup for an ES1 X-32 program image imported raw at base 0 by
-// tools/scripts/es1_x32_extract.py. Makes the file block read/write/execute (code and data share
+// tools/scripts/es1_x32_extract.py, or an HMI driver image by tools/scripts/es1_hmi_extract.py. Makes the file block read/write/execute (code and data share
 // one segment), adds an uninitialised block from the end of the file bytes up to the memory size
 // the kernel allocates, and marks the entry point the kernel jumps to, so auto-analysis starts there.
 // Layout: Herculan/docs/es1/formats/x32-executable.md.
 //
-// Args: memSize entry, both hex.
+// Args: memSize entry [entry...], all hex. The further entries are a driver image's functions that
+// are reached only through pointers the image holds.
 //@category ES1
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
@@ -15,8 +16,8 @@ public class ES1SetupX32Image extends GhidraScript {
     @Override
     public void run() throws Exception {
         String[] args = getScriptArgs();
-        if (args.length != 2) {
-            throw new IllegalArgumentException("usage: ES1SetupX32Image memSize entry (hex)");
+        if (args.length < 2) {
+            throw new IllegalArgumentException("usage: ES1SetupX32Image memSize entry [entry...] (hex)");
         }
         long memSize = Long.parseLong(args[0], 16);
         long entry = Long.parseLong(args[1], 16);
@@ -49,6 +50,9 @@ public class ES1SetupX32Image extends GhidraScript {
 
         Address ep = toAddr(entry);
         currentProgram.getSymbolTable().addExternalEntryPoint(ep);
+        for (int i = 2; i < args.length; i++) {
+            currentProgram.getSymbolTable().addExternalEntryPoint(toAddr(Long.parseLong(args[i], 16)));
+        }
         println(String.format("image %08x..%08x, entry %08x", 0L, fileEnd, entry));
     }
 }

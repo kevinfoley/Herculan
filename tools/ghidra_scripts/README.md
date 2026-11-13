@@ -1,8 +1,8 @@
 # Ghidra scripts
 
-Headless scripts driving the `ES2Recon` Ghidra project over `DBSIM.EXE` and `VSHELL.EXE`, and the `ES1Recon` project over ES1's `ES1DBSIM` and `ES1GO` images.
+Headless scripts driving the `ES2Recon` Ghidra project over `DBSIM.EXE` and `VSHELL.EXE`, and the `ES1Recon` project over ES1's `ES1DBSIM` and `ES1GO` images and its FM MIDI driver's, `ES1FMMIDI`.
 
-`tools/scripts/retail_binaries.py` is the registry of those four binaries: for each, its identifier, the file the tools read, its container format (PE, or the flat X-32 image `es1_x32_extract.py` writes), its compiler (Borland C++ or Symantec C++), its Ghidra project and program name, its known-symbols file and its `analysis_out/` dumps. Every Python tool that takes a binary takes it from there, and a tool that depends on one container or compiler refuses a binary of another with an error rather than returning nothing for it. The gitignored files (the retail binaries, the dumps, the Ghidra install and projects) are read from the main checkout, which the registry finds from a worktree's `.git` file, so the tools run the same from a worktree.
+`tools/scripts/retail_binaries.py` is the registry of those binaries: for each, its identifier, the file the tools read, its container format (PE, the flat X-32 image `es1_x32_extract.py` writes, or the HMI driver image `es1_hmi_extract.py` writes), its compiler (Borland C++, Symantec C++, or none for hand-written assembly), its Ghidra project and program name, its known-symbols file and its `analysis_out/` dumps. Every Python tool that takes a binary takes it from there, and a tool that depends on one container or compiler refuses a binary of another with an error rather than returning nothing for it. The gitignored files (the retail binaries, the dumps, the Ghidra install and projects) are read from the main checkout, which the registry finds from a worktree's `.git` file, so the tools run the same from a worktree.
 
 ## Running one
 
@@ -178,11 +178,11 @@ Code Ghidra never made a function of is listed by `es2_naming.py stats BIN --lis
 
 ### ES1 import
 
-`tools/scripts/es1_x32_extract.py --import` runs both, around Ghidra's auto-analysis, when it imports an ES1 image raw at base 0 (`Herculan/docs/es1/formats/x32-executable.md`). After it, `ES1PaddingThunks` (Repairing the database) brings the functions Ghidra starts on padding to their prologues, and `ghidra_full_decomp.py --binary ID` writes the dumps.
+`tools/scripts/es1_x32_extract.py --import` runs both, around Ghidra's auto-analysis, when it imports an ES1 image raw at base 0 (`Herculan/docs/es1/formats/x32-executable.md`). After it, `ES1PaddingThunks` (Repairing the database) brings the functions Ghidra starts on padding to their prologues, and `ghidra_full_decomp.py --binary ID` writes the dumps. `tools/scripts/es1_hmi_extract.py --import` imports a driver image out of `SOS\HMIMDRV.386` or `SOS\HMIDRV.386` the same way (`Herculan/docs/es1/formats/hmi-driver-container.md`), with `ES1SetupX32Image` alone: a driver's functions are reached through pointers the image holds, so its `--seed` passes their addresses as further entry points.
 
 | Script | Args | Does |
 | --- | --- | --- |
-| `ES1SetupX32Image` | `memSize` `entry` | Pre-analysis: makes the image block read/write/execute, adds the uninitialised block up to the memory size, marks the entry point, and turns off the reference analyzers' subroutine option, which at base 0 disassembles at any constant that falls in the code. |
+| `ES1SetupX32Image` | `memSize` `entry` `[entry...]` | Pre-analysis: makes the image block read/write/execute, adds the uninitialised block up to the memory size, marks the entry points, and turns off the reference analyzers' subroutine option, which at base 0 disassembles at any constant that falls in the code. |
 | `ES1SeedFunctionStarts` | — | Post-analysis: creates a function at every `push ebp / mov ebp,esp` or `enter` prologue that follows a `ret` or `jmp`, clearing a pointer Ghidra typed over one, and re-runs analysis. Reports seeds that fall inside an existing function rather than creating them. |
 
 ### ES1 naming

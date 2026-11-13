@@ -12,11 +12,15 @@ like a real negative.
 |---|---|---|---|
 | `DBSIM`, `VSHELL` | ES2 | PE | Borland C++ |
 | `ES1DBSIM`, `ES1GO`, `ES1ESCD`, `ES1PLAYFLIC` | ES1 | X-32 flat image | Symantec C++ |
+| `ES1FMMIDI` | ES1 | HMI driver image | assembly |
 
 The PE files are read as shipped from `ES2/`. The X-32 executables are read as the flat image
 `es1_x32_extract.py` writes to `tools/analysis_out/<ID>` with `<ID>_layout.json` beside it
 (Herculan/docs/es1/formats/x32-executable.md): loaded at address 0, no relocations and no section
-table, so the image is one block of code and data together. The compilers' conventions are in
+table, so the image is one block of code and data together. An HMI driver image is one `.com` image of a driver container
+(`SOS/HMIMDRV.386`'s `fmmidi.com` for `ES1FMMIDI`), written with its layout the same way by
+`es1_hmi_extract.py` (Herculan/docs/es1/formats/hmi-driver-container.md): flat as well, and
+hand-written assembly, so a tool that depends on a compiler's idioms refuses it. The compilers' conventions are in
 Herculan/docs/retail/formats/borland-rtti.md and Herculan/docs/es1/formats/compiler.md.
 
 The retail files, the dumps and the Ghidra install and projects are gitignored, so they exist only in
@@ -63,8 +67,10 @@ GHIDRA = os.path.join(ASSETS, "tools", "ghidra_12.1.2_PUBLIC", "support", "analy
 GHIDRA_PROJECTS = os.path.join(ASSETS, "tools", "ghidra_project")
 GHIDRA_SCRIPTS = os.path.join(REPO, "tools", "ghidra_scripts")
 
-PE, X32 = "pe", "x32"
-BORLAND, SYMANTEC = "borland", "symantec"
+PE, X32, HMI = "pe", "x32", "hmi"
+BORLAND, SYMANTEC, ASSEMBLY = "borland", "symantec", "assembly"
+CONTAINER_NAMES = {PE: "PE", X32: "X-32 image", HMI: "HMI driver image"}
+EXTRACTORS = {X32: "es1_x32_extract.py", HMI: "es1_hmi_extract.py"}
 
 
 @dataclass(frozen=True)
@@ -85,6 +91,11 @@ class Binary:
     def symbols(self) -> str:
         return os.path.join(GHIDRA_SCRIPTS, f"known_symbols_{self.id.lower()}.json")
 
+    @property
+    def flat(self) -> bool:
+        """Whether the file is one block at address 0 with no section table, code and data together."""
+        return self.container != PE
+
     def dump(self, suffix: str) -> str:
         """`analysis_out/<ID>_<suffix>`, e.g. dump("disasm_full.txt")."""
         return os.path.join(ANALYSIS, f"{self.id}_{suffix}")
@@ -100,6 +111,7 @@ REGISTRY = {b.id: b for b in (
     Binary("ES1GO", "ES1", X32, SYMANTEC, os.path.join("tools", "analysis_out", "ES1GO"), "ES1Recon", "ES1GO"),
     Binary("ES1ESCD", "ES1", X32, SYMANTEC, os.path.join("tools", "analysis_out", "ES1ESCD"), "ES1Recon", "ES1ESCD"),
     Binary("ES1PLAYFLIC", "ES1", X32, SYMANTEC, os.path.join("tools", "analysis_out", "ES1PLAYFLIC"), "ES1Recon", "ES1PLAYFLIC"),
+    Binary("ES1FMMIDI", "ES1", HMI, ASSEMBLY, os.path.join("tools", "analysis_out", "ES1FMMIDI"), "ES1Recon", "ES1FMMIDI"),
 )}
 IDS = tuple(REGISTRY)
 
@@ -118,7 +130,7 @@ def require(binary: str | Binary, tool: str, why: str, *, container: str | None 
     b = binary if isinstance(binary, Binary) else get(binary)
     if (container and b.container != container) or (compiler and b.compiler != compiler):
         raise SystemExit("%s cannot read %s (%s, %s): %s"
-                         % (tool, b.id, {PE: "PE", X32: "X-32 image"}[b.container], b.compiler, why))
+                         % (tool, b.id, CONTAINER_NAMES[b.container], b.compiler, why))
     return b
 
 
@@ -126,21 +138,21 @@ class Image:
     """A binary's bytes, with the mapping between file offsets and virtual addresses.
 
     `sections` holds (name, va, vsize, raw_off, raw_size). A PE contributes its section table. An
-    X-32 image has none, so it is one section, `image`, at address 0, whose file bytes are the
+    X-32 image or an HMI driver image has none, so it is one section, `image`, at address 0, whose file bytes are the
     image's first `raw_size` bytes of memory and whose memory runs on, zero-filled, to `vsize`."""
 
     def __init__(self, binary: Binary | str):
         self.binary = binary if isinstance(binary, Binary) else get(binary)
         self.path = self.binary.path
         if not os.path.exists(self.path):
-            hint = " (run tools/scripts/es1_x32_extract.py)" if self.binary.container == X32 else ""
+            hint = " (run tools/scripts/%s)" % EXTRACTORS[self.binary.container] if self.binary.flat else ""
             raise SystemExit("no %s at %s%s" % (self.binary.id, self.path, hint))
         with open(self.path, "rb") as f:
             self.data = f.read()
         if self.binary.container == PE:
             self._read_pe()
         else:
-            self._read_x32()
+            self._read_flat()
 
     def _read_pe(self) -> None:
         d = self.data
@@ -160,13 +172,13 @@ class Image:
         # Named CODE by Borland, .text by everything else.
         self.code = [s for s in self.sections if s[0] in ("CODE", ".text")]
 
-    def _read_x32(self) -> None:
+    def _read_flat(self) -> None:
         layout_path = self.path + "_layout.json"
         try:
             with open(layout_path, encoding="utf-8") as f:
                 layout = json.load(f)
         except OSError:
-            raise SystemExit("no layout at %s (run tools/scripts/es1_x32_extract.py)" % layout_path)
+            raise SystemExit("no layout at %s (run tools/scripts/%s)" % (layout_path, EXTRACTORS[self.binary.container]))
         if layout["image_file_size"] != len(self.data) or layout["image_base"] != 0:
             raise SystemExit("%s does not match %s: %d bytes at base %x, layout says %d at %x"
                              % (self.path, layout_path, len(self.data), 0, layout["image_file_size"],
