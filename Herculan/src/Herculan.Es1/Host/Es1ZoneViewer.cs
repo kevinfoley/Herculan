@@ -205,6 +205,7 @@ public static class Es1ZoneViewer {
 				? new Es1CockpitScheme(cockpit, world.LocalPlayer!.Type.Type)
 				: (Es1CockpitScheme?)null;
 			scene = Es1ZoneScene.Load(content, theater, header[1], scheme);
+			world.Globals.ImpactPalette.Load(scene.ImpactPalette);
 			world.Globals.ZoneShapes = scene.ZoneShapes;
 			// The ground shapes FlatObj_LoadResources loads, which the impact effects lay, by the world file's selector.
 			world.Globals.FlatObjects.LoadShapes(content, scene.World?.FlatSetSelector ?? 0);
@@ -410,6 +411,10 @@ public static class Es1ZoneViewer {
 				// The cockpit script's palette commands upload to the same live palette, and the shield display's rings are
 				// installed into it.
 				manager.Cockpit.Scripts.UploadPalette = monitor.SetPalette;
+				// The hit shake's palette switches make whole palettes live on it.
+				var impactMonitor = monitor;
+				world.Globals.ImpactPalette.LivePalette = () => impactMonitor.Palette;
+				world.Globals.ImpactPalette.SetLivePalette = monitor.SetPalette;
 				manager.Cockpit.Shields.InstallPaletteRange = monitor.InstallRange;
 				monitor.Fit(window.FramebufferSize);
 				var worldDraw = draw;

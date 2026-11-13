@@ -37,8 +37,8 @@ public sealed class Es1PitchGradient {
 	public bool Built { get; private set; }
 
 	/// <summary>
-	/// <c>000928eb</c>, set while the impact palette shows. Its writers are the impact palette's switches, which are
-	/// PLACEHOLDERs in <see cref="Es1HitShake"/> since no impact palette is loaded, so it stays clear.
+	/// <c>000928eb</c>, set while the impact palette shows. Its writers are the impact palette's switches
+	/// (<see cref="Es1ImpactPalette"/>).
 	/// </summary>
 	public bool ImpactShowing { get; set; }
 

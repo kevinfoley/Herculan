@@ -73,6 +73,13 @@ public sealed class Es1ZoneScene {
 	/// </summary>
 	public DynamixPalette? Palette { get; }
 
+	/// <summary>
+	/// <c>dpl\</c> of <see cref="World"/>'s third string as loaded, the palette a hit on the cockpit flashes to
+	/// (docs/es1/formats/wld-world.md#the-load); null without a world file, for one whose third string is empty, or when
+	/// the install lacks the palette, which retail's load asserts on.
+	/// </summary>
+	public DynamixPalette? ImpactPalette { get; private init; }
+
 	/// <summary>How the shapes are coloured, from <see cref="Palette"/>, <see cref="World"/> and <c>datshades</c>.</summary>
 	public Es1Shading Shading { get; }
 
@@ -164,6 +171,10 @@ public sealed class Es1ZoneScene {
 					? Es1Clouds.From(world, new DynamixBitmapArrayTransformer().Parse(cloudBytes))
 					: null,
 			Specks = world != null ? Es1GroundSpecks.From(world) : null,
+			ImpactPalette = world is { ImpactPalette.Length: > 0 }
+				&& content.Read("dpl", world.ImpactPalette + ".DPL") is { } impactBytes
+					? new DynamixPaletteTransformer().Parse(impactBytes)
+					: null,
 		};
 	}
 

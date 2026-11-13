@@ -101,7 +101,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	/// through the live palette as it shows every other (docs/es1/rendering/palette.md#installing-colors). A band whose
 	/// entry <paramref name="palette"/> lacks leaves the bands as they were.
 	/// <para>PLACEHOLDER: the sky's bands, the skyline and the clouds keep the colours of the palette the backdrop was
-	/// built in, where retail's screen shows them through the live palette too; the plan's hit flash
+	/// built in, where retail's screen shows them through the live palette too; the plan's sky's colors
 	/// (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out) covers them.</para>
 	/// </summary>
 	public void ShowIn(DynamixPalette palette) {

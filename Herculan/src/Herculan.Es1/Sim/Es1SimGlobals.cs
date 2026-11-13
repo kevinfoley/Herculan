@@ -140,6 +140,9 @@ public sealed class Es1SimGlobals {
 	/// <summary>The pitch gradient's colors and flags (<see cref="View.Es1PitchGradient"/>).</summary>
 	public View.Es1PitchGradient PitchGradient { get; } = new();
 
+	/// <summary>The impact palette and its switches (<see cref="View.Es1ImpactPalette"/>).</summary>
+	public View.Es1ImpactPalette ImpactPalette { get; } = new();
+
 	/// <summary><c>LiftStart_Pending</c> (<c>000b5bb0</c>), which <c>Sim_StartMission</c>'s step 14 sets (<see cref="Host.Es1LiftStart"/>).</summary>
 	public bool LiftStartPending { get; set; }
 

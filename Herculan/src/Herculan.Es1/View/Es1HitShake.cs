@@ -6,8 +6,9 @@ namespace Herculan.Es1.View;
 /// The hit shake (docs/es1/simulation/cockpit-panel.md#the-hit-shake): <c>Cockpit_StartHitShake</c>
 /// (<c>ES1DBSIM 0002e17c</c>) and <c>Cockpit_HitShakeTick</c> (<c>0002e1d8</c>) on <c>HitShakeEndTick</c>
 /// (<c>00092d74</c>) and <c>HitShakeNextToggleTick</c> (<c>00092d78</c>), which step the view shake
-/// (<see cref="Es1ViewManager.StepShake"/>) and flash the palette. Its clock is <c>000981c4</c>, 60 counts a second, and
-/// its random numbers the low word of <see cref="Es1SimGlobals.PresentationRandom"/>.
+/// (<see cref="Es1ViewManager.StepShake"/>) and flash the palette (<see cref="Es1SimGlobals.ImpactPalette"/>). Its clock
+/// is <c>000981c4</c>, 60 counts a second, and its random numbers the low word of
+/// <see cref="Es1SimGlobals.PresentationRandom"/>.
 /// </summary>
 public sealed class Es1HitShake {
 	/// <summary>How long a hit shakes, in clock counts.</summary>
@@ -35,8 +36,8 @@ public sealed class Es1HitShake {
 
 	/// <summary>
 	/// <c>Cockpit_StartHitShake</c>, outside view 4: the end <see cref="Length"/> counts from now; and when no shake runs
-	/// (<see cref="NextToggleTick"/> 0), the first toggle 0 to 9 counts from now, the impact palette made active and the
-	/// view shake armed with <see cref="Band"/> (<see cref="Es1ViewManager.SetShakeBand"/>). So a hit while the shake runs
+	/// (<see cref="NextToggleTick"/> 0), the first toggle 0 to 9 counts from now, the impact palette made active
+	/// (<see cref="Es1ImpactPalette.Activate"/>) and the view shake armed with <see cref="Band"/> (<see cref="Es1ViewManager.SetShakeBand"/>). So a hit while the shake runs
 	/// only makes it last longer.
 	/// </summary>
 	public void Start() {
@@ -48,20 +49,18 @@ public sealed class Es1HitShake {
 		EndTick = now + Length;
 		if (NextToggleTick == 0) {
 			NextToggleTick = (uint)((ushort)_globals.PresentationRandom.Next() % ToggleSpread) + now;
-			// PLACEHOLDER: Palette_ActivateImpact (00025ed0), which with ImpactPaletteObject (000928f0) loaded makes it the
-			// active palette (Palette_SetActive, 00027e7c), keeps the one it replaces for the toggles and the restore and
-			// sets the pitch gradient's 000928eb; this engine loads no impact palette (docs/es1/formats/wld-world.md#the-load)
-			// and switches no whole palette, so the flash is not shown.
+			_globals.ImpactPalette.Activate(_globals.PitchGradient);
 			_views.SetShakeBand(Band);
 		}
 	}
 
 	/// <summary>
 	/// <c>Cockpit_HitShakeTick</c>, once a frame from <c>Cockpit_DrawFrame</c>: view 4 ends the shake. While it runs and
-	/// the clock is short of its end, each time the clock has passed <see cref="NextToggleTick"/> the palette toggles and
-	/// the next toggle comes 0 to 9 counts on, and every frame the view shake steps by 0 to 4
-	/// (<see cref="Es1ViewManager.StepShake"/>); at its end the end is cleared; either way it answers 1. Once ended with a
-	/// toggle pending, the theater's palette is put back, the toggle cleared and the view shake cleared
+	/// the clock is short of its end, each time the clock has passed <see cref="NextToggleTick"/> the palette toggles
+	/// (<see cref="Es1ImpactPalette.Toggle"/>) and the next toggle comes 0 to 9 counts on, and every frame the view shake
+	/// steps by 0 to 4 (<see cref="Es1ViewManager.StepShake"/>); at its end the end is cleared; either way it answers 1.
+	/// Once ended with a toggle pending, the theater's palette is put back (<see cref="Es1ImpactPalette.Restore"/>), the
+	/// toggle cleared and the view shake cleared
 	/// (<see cref="Es1ViewManager.ClearShake"/>), answering 1; otherwise 0. The clock's compares are unsigned.
 	/// </summary>
 	public short Tick() {
@@ -73,8 +72,7 @@ public sealed class Es1HitShake {
 		if (EndTick != 0) {
 			if (now < EndTick) {
 				if (NextToggleTick < now) {
-					// PLACEHOLDER: Palette_ToggleImpact (00025ef8), the active palette swapped with the one kept and
-					// 000928eb flipped, while ImpactPaletteObject is loaded; see Start.
+					_globals.ImpactPalette.Toggle(_globals.PitchGradient);
 					NextToggleTick = (uint)((ushort)_globals.PresentationRandom.Next() % ToggleSpread) + now;
 				}
 
@@ -87,8 +85,7 @@ public sealed class Es1HitShake {
 		}
 
 		if (NextToggleTick != 0) {
-			// PLACEHOLDER: Palette_RestoreFromImpact (00025f1c), the palette Start replaced made active again and 000928eb
-			// cleared, while ImpactPaletteObject is loaded; see Start.
+			_globals.ImpactPalette.Restore(_globals.PitchGradient);
 			NextToggleTick = 0;
 			_views.ClearShake();
 			return 1;
