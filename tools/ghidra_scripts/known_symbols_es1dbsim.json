@@ -29816,7 +29816,7 @@
       "confidence": "high",
       "name": "SoundManager_TimerCallback",
       "description": "Frameless: a far call through the far pointer 000b1ed0, which the static initialiser SoundManager_InitTimerPointer (00050d18) sets to HmiTimer_Dispatch (0006da51), then RET. SoundManager_LoadDrivers registers it with Timer_AddCallback at a count of the timer's interrupts a second over 120.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-librarys-timer; ES1DBSIM disassembly at 0004e710",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-librarys-timer; ES1DBSIM disassembly at 0004e710",
       "verified": {
         "bytes": "0004e710+7",
         "sha1": "86ad3f128da0",
@@ -30581,7 +30581,7 @@
       "confidence": "high",
       "name": "MidiSound_Play",
       "description": "(sound), slot +0x10 of vtable MidiSoundVtable (00095c82): returns 0 when its slot +0x30 returns non-zero or SoundObject_LoadSample fails. Stores the far pointer to the loaded file (manager +0x38e for the index) at +0xbf and the far callback MidiSound_EndCallback (0004e7b4) at +0xc7, and calls HmiMidi_InitSong (0006e4c1)(+0xbf, the track map +0x3f, the handle +0x19). A non-zero result goes to +4, is formatted as 'SoundObject::playMIDI: %s' with HmiLib_ErrorText (0006f23d)'s text, sets +0x19 to -1 and the word +0x1d to 0xffff, and returns 0. Otherwise calls HmiMidi_SetBranchCallback (0006eeae)(handle, +0x35, word +0x39) when the far pointer +0x35 is set, then HmiMidi_StartSong (0006ea6b)(handle), copies the handle to the word +0x1d and the word +0x21 to +0x23, calls HmiMidi_SetLoopCallback (0006ee87)(handle, far MidiSound_LoopCallback (0004e718)) and returns 1.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#loading-and-playing",
+      "source": "Herculan/docs/es1/sound/song-player.md#loading",
       "verified": {
         "bytes": "000505c8+299",
         "sha1": "433de0023aa3",
@@ -30851,7 +30851,7 @@
       "confidence": "high",
       "name": "SoundManager_InitTimerPointer",
       "description": "Frameless: stores the far pointer CS:HmiTimer_Dispatch (0006da51), made with maybe_MK_FP, at 000b1ed0 (selector 000b1ed4), then RET. es2_xref finds one stored pointer to it, at 000adc68.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-librarys-timer; ES1DBSIM disassembly at 00050d18",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-librarys-timer; ES1DBSIM disassembly at 00050d18",
       "verified": {
         "bytes": "00050d18+29",
         "sha1": "a471bcbc5113",
@@ -41825,7 +41825,7 @@
       "confidence": "high",
       "name": "HmiTimer_Init",
       "description": "(rate, flags) of the HMI library. With bit 0 of flags clear it sets 000bd8d8 and installs HmiTimer_Dispatch (0006da51) through HmiTimer_Disable, HmiTimer_Install(0xffff, far pointer) and HmiTimer_Enable; with it set it clears 000bd8d8. With rate 0 or bit 0 set the divisor 0009d7dc becomes 0xffff; otherwise it calls HmiTimer_SetDivisor (0006da37) with 0xffff for a rate of 0xff00 or with 0x1234dc / rate, keeps the rate at 0009d87c, takes the far pointer CS:0006dacf for 0009d83a and sets 0009d8bc to 0x10000. Returns 0. es2_xref finds one call, from SoundManager_LoadDrivers, with (0, 1).",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-librarys-timer; ES1DBSIM decompile at 0006d4f5",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-librarys-timer; ES1DBSIM decompile at 0006d4f5",
       "verified": {
         "bytes": "0006d4f5+205",
         "sha1": "9e9e6dd0bed4",
@@ -41840,7 +41840,7 @@
       "confidence": "high",
       "name": "HmiTimer_Uninit",
       "description": "(a) of the HMI library: while 000bd8d8 is set, HmiTimer_Disable, HmiTimer_Remove and HmiTimer_Enable. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-librarys-timer; ES1DBSIM decompile at 0006d5c2",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-librarys-timer; ES1DBSIM decompile at 0006d5c2",
       "verified": {
         "bytes": "0006d5c2+36",
         "sha1": "3cd98316105b",
@@ -41855,7 +41855,7 @@
       "confidence": "high",
       "name": "HmiTimer_AddEvent",
       "description": "(rate, far handler, event out) of the HMI library: takes the first of 16 timer events whose far handler at 0009d7e0 (6 bytes each) is null, returning 0xb with none. Stores the handler and the rate (0009d840), and when 0x1234dc / rate is below the divisor 0009d7dc sets the divisor to it through HmiTimer_SetDivisor (0006da37). Then gives every live event its step at 0009d880, (rate << 16) / (0x1234dc / divisor), or for a rate of 0xff00 0x10000 with the divisor 0xffff and 0x123333 / (0x1234dc / divisor) otherwise, and scales each accumulator at 0009d8c0 by old divisor / new when the divisor changed. Brackets the work with HmiTimer_Disable and HmiTimer_Enable while 000bd8d8 is set. Returns 0 with the event's number through the pointer.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-librarys-timer; ES1DBSIM decompile at 0006d5e6",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-librarys-timer; ES1DBSIM decompile at 0006d5e6",
       "verified": {
         "bytes": "0006d5e6+422",
         "sha1": "dd5d0f379416",
@@ -41870,7 +41870,7 @@
       "confidence": "high",
       "name": "HmiTimer_SetEventRate",
       "description": "(event, rate) of the HMI library: 10 for an event of 16 or more or one with a null handler. Stores the rate, lowers the divisor 0009d7dc to 0x1234dc / rate when that is smaller, works out every live event's step as HmiTimer_AddEvent (0006d5e6) does and zeroes its accumulator. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-librarys-timer; ES1DBSIM decompile at 0006d78c",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-librarys-timer; ES1DBSIM decompile at 0006d78c",
       "verified": {
         "bytes": "0006d78c+329",
         "sha1": "e0879e286cae",
@@ -41885,7 +41885,7 @@
       "confidence": "high",
       "name": "HmiTimer_RemoveEvent",
       "description": "(event) of the HMI library: clears the event's far handler, sets the divisor through HmiTimer_SetDivisor (0006da37) to 0x1234dc / the highest rate among the live events whose rate is not 0xff00, or to 0xffff with none, then works out every live event's step as HmiTimer_AddEvent (0006d5e6) does and zeroes its accumulator. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-librarys-timer; ES1DBSIM decompile at 0006d8d5",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-librarys-timer; ES1DBSIM decompile at 0006d8d5",
       "verified": {
         "bytes": "0006d8d5+340",
         "sha1": "312fd21186a6",
@@ -41900,7 +41900,7 @@
       "confidence": "high",
       "name": "HmiTimer_GetEventRate",
       "description": "(event) of the HMI library: returns the event's rate from 0009d840.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-librarys-timer; ES1DBSIM decompile at 0006da29",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-librarys-timer; ES1DBSIM decompile at 0006da29",
       "verified": {
         "bytes": "0006da29+14",
         "sha1": "07063691ec8e",
@@ -41915,7 +41915,7 @@
       "confidence": "high",
       "name": "HmiTimer_SetDivisor",
       "description": "(divisor) of the HMI library: stores it at 0009d7dc and calls HmiTimer_NoOp with it.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-librarys-timer; ES1DBSIM decompile at 0006da37",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-librarys-timer; ES1DBSIM decompile at 0006da37",
       "verified": {
         "bytes": "0006da37+26",
         "sha1": "3d4af80f5b28",
@@ -41930,7 +41930,7 @@
       "confidence": "high",
       "name": "HmiTimer_Dispatch",
       "description": "Far function of the HMI library: for each of the 16 timer events with a non-null far handler at 0009d7e0, adds the event's step 0009d880 to its accumulator 0009d8c0 and, when bit 16 of the accumulator is set, clears the accumulator's high word, stores the event's byte of 0009d900 in 0009d910 unless it is 0xff, and far-calls the handler. The loop index is the dword 0009db28. RETF.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-librarys-timer; ES1DBSIM disassembly at 0006da51",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-librarys-timer; ES1DBSIM disassembly at 0006da51",
       "verified": {
         "bytes": "0006da51+126",
         "sha1": "5b73ad382c69",
@@ -42020,7 +42020,7 @@
       "confidence": "high",
       "name": "HmiMidi_InitSong",
       "description": "(song block, track map, handle out) of the HMI library, the .HMP loader: returns 0xe when the file the block's far pointer gives does not open HMIMIDIP and 0xb when all 8 song slots (far pointers at 000a22ec) are taken. Keeps the file and the track map in the slot, the track count +0x30 at 000a2178 and 000a2198, and writes the block's callback into the file at +0x300 (offset) and +0x304 (selector); clears the slot's 127 entries at 000a5fec and two far pointers. Walks the tracks from +0x308, each chunk +4 bytes on: keeps the chunk's pointer, and its events pointer (chunk +0xc) moved past the first delta HmiMidi_ReadDelta (0006ed60) reads into 000a1948[track]. From the branch table at the file's +0x20 offset (a count byte per track, then 24-byte entries) keeps each track's first entry and writes each entry's file + [+0xc] at +8. Then routes each track whose map entry is 0xff to the first open driver (ids at 000a130c, 5) that answers one of its device ids at +0x80 + track*0x14 (5, ending at 0): 0xa000 answered by 0xa000, 0xa001 or 0xa008, 0xa002 by 0xa002 or 0xa009, others by themselves; a first id of 0 maps to 0, and a track nothing answers loses its events pointer, maps to 0xff and decrements 000a2178. Returns 0 with the slot through the handle pointer. es2_xref finds one call, from MidiSound_Play (00050652).",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#loading-and-playing",
+      "source": "Herculan/docs/es1/sound/song-player.md#loading",
       "verified": {
         "bytes": "0006e4c1+1404",
         "sha1": "65f113a38012",
@@ -42035,7 +42035,7 @@
       "confidence": "high",
       "name": "HmiMidi_FreeSong",
       "description": "(song) of the HMI library: 10 for a song of 8 or more; otherwise clears the song's file far pointer at 000a22ec and returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-end; ES1DBSIM decompile at 0006ea3d",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-end; ES1DBSIM decompile at 0006ea3d",
       "verified": {
         "bytes": "0006ea3d+46",
         "sha1": "5e4f6c14b223",
@@ -42050,7 +42050,7 @@
       "confidence": "high",
       "name": "HmiMidi_StartSong",
       "description": "(song) of the HMI library: registers the far pointer CS:HmiMidi_SongTick (0007ef95) with HmiTimer_AddEvent (0006d5e6) at the rate the song file's +0x38 holds, the event's number going to 000a24e8[song], and returns a non-zero result. Otherwise stores the song in 0009d900[event], sets the playing flag 000a22ac[song] and returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#playing; ES1DBSIM decompile and disassembly at 0006ea6b",
+      "source": "Herculan/docs/es1/sound/song-player.md#playing; ES1DBSIM decompile and disassembly at 0006ea6b",
       "verified": {
         "bytes": "0006ea6b+110",
         "sha1": "79014d23d447",
@@ -42065,7 +42065,7 @@
       "confidence": "high",
       "name": "HmiMidi_StopSong",
       "description": "(song) of the HMI library: 10 for a song of 8 or more. Removes the song's timer event with HmiTimer_RemoveEvent (0006d8d5) unless its number is -1, sets 0009d900[event] to 0xff and the number to -1. While the playing flag 000a22ac[song] is set it calls HmiMidi_SilenceSong (00071f84), clears the flag and the song's file far pointer, and calls HmiMidi_ResetSong (0006eb98) with a block of the file's far pointer and the callback from the file's +0x300. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-end; ES1DBSIM decompile at 0006ead9",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-end; ES1DBSIM decompile at 0006ead9",
       "verified": {
         "bytes": "0006ead9+191",
         "sha1": "5d9a1f900ef3",
@@ -42080,7 +42080,7 @@
       "confidence": "high",
       "name": "HmiMidi_ResetSong",
       "description": "(song, block) of the HMI library: puts a song back at its start as HmiMidi_InitSong (0006e4c1) sets it up. Stores the block's file far pointer at 000a22ec[song], the file's track count +0x30 at 000a2178 and 000a2198, and the block's callback into the file's +0x300 and +0x304. For each track from +0x308 zeroes its tick count 000a1d48, keeps the chunk's far pointer (000a3fd8) and the events pointer (000a1348) moved past the first delta, which HmiMidi_ReadDelta (0006ed60) reads into 000a1948. Then clears the events pointer of each track whose track map entry is 0xff and takes 1 off 000a2178 for it. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-end; ES1DBSIM decompile at 0006eb98",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-end; ES1DBSIM decompile at 0006eb98",
       "verified": {
         "bytes": "0006eb98+456",
         "sha1": "8ef29dfeea07",
@@ -42110,7 +42110,7 @@
       "confidence": "high",
       "name": "HmiMidi_SetMasterVolume",
       "description": "(volume) of the HMI library: stores the byte at 000a56d8 and, for each open driver (ids at 000a130c up to a 0) and each of 16 channels the driver's table at 000a5688 marks, and channel 9, calls the driver entry's first function (000a21b8 + slot*0x24) with the 3-byte controller 7 event at 000a55c8 whose value is the channel's kept volume 000a56fc * volume >> 7, or 0 while the channel's flag at 000a785c is set. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#volume; ES1DBSIM decompile at 0006edb3",
+      "source": "Herculan/docs/es1/sound/song-player.md#volume; ES1DBSIM decompile at 0006edb3",
       "verified": {
         "bytes": "0006edb3+212",
         "sha1": "0fd1e153f5aa",
@@ -42125,7 +42125,7 @@
       "confidence": "high",
       "name": "HmiMidi_SetLoopCallback",
       "description": "(song, far callback) of the HMI library: stores the callback at 000a5fbc + song*6, which HmiMidi_SongTick (0007ef95) calls at a loop end controller. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-branch-controllers; ES1DBSIM decompile at 0006ee87",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-branch-controllers; ES1DBSIM decompile at 0006ee87",
       "verified": {
         "bytes": "0006ee87+39",
         "sha1": "cb489b37fdbc",
@@ -42140,7 +42140,7 @@
       "confidence": "high",
       "name": "HmiMidi_SetBranchCallback",
       "description": "(song, far callback) of the HMI library: stores the callback at 000a5f8c + song*6, which HmiMidi_SongTick (0007ef95) calls at a branch controller. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-branch-controllers; ES1DBSIM decompile at 0006eeae",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-branch-controllers; ES1DBSIM decompile at 0006eeae",
       "verified": {
         "bytes": "0006eeae+39",
         "sha1": "683408ba347e",
@@ -42155,7 +42155,7 @@
       "confidence": "high",
       "name": "HmiMidi_SetTriggerCallback",
       "description": "(song, index, far callback) of the HMI library: stores the callback at 000a5fec + song*0x2fa + index*6, which HmiMidi_SongTick (0007ef95) calls at a controller 0x77 of that value. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-branch-controllers; ES1DBSIM decompile at 0006eed5",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-branch-controllers; ES1DBSIM decompile at 0006eed5",
       "verified": {
         "bytes": "0006eed5+52",
         "sha1": "b95f78653915",
@@ -42170,7 +42170,7 @@
       "confidence": "high",
       "name": "HmiMidi_BranchTrack",
       "description": "(song, track, id) of the HMI library: finds the track's branch entry whose byte +4 is the id, walking the 24-byte entries from the track's first (000a598c) with no bound, sets the track's events pointer to the chunk + the entry's +0 + 0xc, sends each pair of the entry's data (+7 bytes at the pointer +8) as a controller on the chunk's +8 channel through HmiMidi_SendEvent (000715c5), clears the byte 000a77bc and returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-branch-controllers; ES1DBSIM decompile at 0006ef09",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-branch-controllers; ES1DBSIM decompile at 0006ef09",
       "verified": {
         "bytes": "0006ef09+324",
         "sha1": "98fce07e7593",
@@ -42185,7 +42185,7 @@
       "confidence": "high",
       "name": "HmiMidi_BranchSong",
       "description": "(song, id) of the HMI library: for each track from 1 with an events pointer, finds its branch entry whose byte +4 is the id with bit 0x80 set, sets the events pointer to the chunk + the entry's +0 + 0xc and past the delta there, which HmiMidi_ReadDelta (0006ed60) reads into the track's delta, zeroes the track's tick count and sends each pair of the entry's data as a controller on the channel of the event landed on through HmiMidi_SendEvent (000715c5). Clears the byte 000a77bc and returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-branch-controllers; ES1DBSIM decompile at 0006f04d",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-branch-controllers; ES1DBSIM decompile at 0006f04d",
       "verified": {
         "bytes": "0006f04d+467",
         "sha1": "c9afc4be6092",
@@ -42200,7 +42200,7 @@
       "confidence": "high",
       "name": "HmiMidi_IsSongDone",
       "description": "(song) of the HMI library: 1 when the playing flag 000a22ac[song] is 0, else 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-end; ES1DBSIM decompile at 0006f225",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-end; ES1DBSIM decompile at 0006f225",
       "verified": {
         "bytes": "0006f225+19",
         "sha1": "9984ea966920",
@@ -42215,7 +42215,7 @@
       "confidence": "high",
       "name": "HmiLib_ErrorText",
       "description": "(error) of the HMI library: returns the string pointer at 0009dd2c + error*4.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#loading; ES1DBSIM decompile at 0006f23d",
+      "source": "Herculan/docs/es1/sound/song-player.md#loading; ES1DBSIM decompile at 0006f23d",
       "verified": {
         "bytes": "0006f23d+14",
         "sha1": "97426e37946d",
@@ -42230,7 +42230,7 @@
       "confidence": "high",
       "name": "HmiMidi_PauseSong",
       "description": "(song, silence) of the HMI library: sets the paused flag 000a226c[song], which stops HmiMidi_SongTick (0007ef95) for the song. With silence non-zero, for each of 32 tracks with an events pointer it calls the track's driver's first function with a controller 7 event of value 0 on the chunk's +8 channel (mapped through 000a45d8 in the channel-stealing mode) and sets the channel's flag at 000a785c. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#volume; ES1DBSIM decompile at 0006f24d",
+      "source": "Herculan/docs/es1/sound/song-player.md#volume; ES1DBSIM decompile at 0006f24d",
       "verified": {
         "bytes": "0006f24d+277",
         "sha1": "d155be0d1450",
@@ -42245,7 +42245,7 @@
       "confidence": "high",
       "name": "HmiMidi_ResumeSong",
       "description": "(song) of the HMI library: clears the paused flag 000a226c[song] and, for each of 32 tracks with an events pointer, sends a controller 7 with the channel's kept volume 000a56fc through HmiMidi_SendEvent (000715c5) and clears the channel's flag at 000a785c. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#volume; ES1DBSIM decompile at 0006f362",
+      "source": "Herculan/docs/es1/sound/song-player.md#volume; ES1DBSIM decompile at 0006f362",
       "verified": {
         "bytes": "0006f362+271",
         "sha1": "e310f6c8d1ab",
@@ -42260,7 +42260,7 @@
       "confidence": "high",
       "name": "HmiMidi_MuteSong",
       "description": "(song) of the HMI library: sets the muted flag 000a228c[song] and, for each of 32 tracks with an events pointer, calls the track's driver's first function with a controller 7 event of value 0 on the chunk's +8 channel. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#volume; ES1DBSIM decompile at 0006f471",
+      "source": "Herculan/docs/es1/sound/song-player.md#volume; ES1DBSIM decompile at 0006f471",
       "verified": {
         "bytes": "0006f471+235",
         "sha1": "ecba43c01487",
@@ -42275,7 +42275,7 @@
       "confidence": "high",
       "name": "HmiMidi_UnmuteSong",
       "description": "(song) of the HMI library: clears the muted flag 000a228c[song] and, for each of 32 tracks with an events pointer, sends a controller 7 with the channel's kept volume 000a56fc through HmiMidi_SendEvent (000715c5). Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#volume; ES1DBSIM decompile at 0006f55c",
+      "source": "Herculan/docs/es1/sound/song-player.md#volume; ES1DBSIM decompile at 0006f55c",
       "verified": {
         "bytes": "0006f55c+242",
         "sha1": "9f5b9a1e7797",
@@ -42290,7 +42290,7 @@
       "confidence": "high",
       "name": "HmiMidi_SetSongVolume",
       "description": "(song, volume) of the HMI library: stores the byte as the dword 000a56dc[song] and, for each of 32 tracks with an events pointer, calls the track's driver's first function with a controller 7 event on the chunk's +8 channel whose value is the channel's kept volume 000a56fc * volume >> 7. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#volume; ES1DBSIM decompile at 0006f64e",
+      "source": "Herculan/docs/es1/sound/song-player.md#volume; ES1DBSIM decompile at 0006f64e",
       "verified": {
         "bytes": "0006f64e+272",
         "sha1": "40d5eccf6564",
@@ -42305,7 +42305,7 @@
       "confidence": "high",
       "name": "HmiMidi_FadeSong",
       "description": "(song, flags, time, from, to) of the HMI library: the step count is ((time << 16) / (0x640000 / the rate of the song's timer event, HmiTimer_GetEventRate (0006da29))) >> 2. With a count of 0 it calls HmiMidi_StopSong (0006ead9) for flag 4 and otherwise HmiMidi_SetSongVolume (0006f64e) with to. Otherwise it sets the song volume to from and stores the flags (000a77c0), the step (000a77e0), the difference of the two volumes << 16 over the count, taken as to - from with bit 0 of flags set and from - to without, the volume from << 16 (000a7800) and the count (000a7820), which HmiMidi_SongTick (0007ef95) steps. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#volume; ES1DBSIM decompile at 0006f75e",
+      "source": "Herculan/docs/es1/sound/song-player.md#volume; ES1DBSIM decompile at 0006f75e",
       "verified": {
         "bytes": "0006f75e+226",
         "sha1": "4c7360335b76",
@@ -42365,7 +42365,7 @@
       "confidence": "high",
       "name": "HmiMidi_CloseDriver",
       "description": "(slot, free) of the HMI library: 1 when the slot's open flag 000a12e4 is clear. Otherwise calls the driver entry's +0xc function, removes the timer event 000a5988 with HmiTimer_RemoveEvent (0006d8d5) for device 0xa00a, calls HmiMidi_FreeDriverImage (00081599) when free is non-zero and the device is neither 0xa003 nor 0xa005, clears the slot's two far pointers (000a127c, 000a129c), its device id (000a130c) and the open flag, and returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-drivers; ES1DBSIM decompile at 0007144b",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-drivers; ES1DBSIM decompile at 0007144b",
       "verified": {
         "bytes": "0007144b+202",
         "sha1": "474ba7f40c41",
@@ -42380,7 +42380,7 @@
       "confidence": "high",
       "name": "HmiMidi_ResetDriver",
       "description": "(slot) of the HMI library: on each of 16 channels calls the driver entry's first function with controller 0x79 and then 0x7b, value 0, then the entry's +0x12 function with the far pointer 000a597c, the slot and 000a5984. Returns 0.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-drivers; ES1DBSIM decompile at 00071515",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-drivers; ES1DBSIM decompile at 00071515",
       "verified": {
         "bytes": "00071515+172",
         "sha1": "83897f960604",
@@ -42395,7 +42395,7 @@
       "confidence": "high",
       "name": "HmiMidi_SendEvent",
       "description": "(song, far event pointer, driver slot, length) of the HMI library. With the channel-stealing mode 000a55d4 off: a controller event is copied to the 4-byte buffer 000a55c8, a controller 7 with its value kept at 000a56fc[slot*16 + channel] and replaced by ((value * the song volume 000a56dc[song]) >> 7) * the master volume 000a56d8 >> 7, or by 0 while the muted flag 000a228c[song] is set, and the driver entry's first function (000a21b8 + slot*0x24) is called with the buffer, the length and the slot; any other event is passed to that function as it is. Returns 1. With the mode on it maps the event's channel to a device channel through 000a45d8, taking a free one of those the driver's table 000a5688 marks or taking one over by the values at the song file's +0x40, re-sends the kept program, pitch bend, volume and controller 0x40 to a newly taken channel, rewrites the event's channel for the call and restores it after.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-tick; ES1DBSIM decompile at 000715c5",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-tick; ES1DBSIM decompile at 000715c5",
       "verified": {
         "bytes": "000715c5+2495",
         "sha1": "dac77e32b0cb",
@@ -42410,7 +42410,7 @@
       "confidence": "high",
       "name": "HmiMidi_SilenceSong",
       "description": "(song) of the HMI library: for each track up to the file's count whose track map entry is neither -1 nor 0xff, calls the driver entry's first function four times on the chunk's +8 channel: controller 0x7b value 0, controller 0x79 value 0, the pitch bend bytes 0x40 0x40, and controller 7 value 0. In the channel-stealing mode it uses the mapped channel and frees the mapping. Returns 1.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-end; ES1DBSIM decompile at 00071f84",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-end; ES1DBSIM decompile at 00071f84",
       "verified": {
         "bytes": "00071f84+687",
         "sha1": "304b14579c17",
@@ -42425,7 +42425,7 @@
       "confidence": "high",
       "name": "HmiMidi_SetChannelStealing",
       "description": "(mode) of the HMI library: stores it at 000a55d4 and returns the old value. es2_xref finds one call, from SoundManager_LoadDrivers.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-tick; ES1DBSIM decompile at 0007225a",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-tick; ES1DBSIM decompile at 0007225a",
       "verified": {
         "bytes": "0007225a+25",
         "sha1": "c4e432355375",
@@ -44675,7 +44675,7 @@
       "confidence": "high",
       "name": "HmiMidi_SongTick",
       "description": "Far timer handler of the HMI library, for the song in the byte 0009d910: returns unless the playing flag 000a22ac is set and the paused flag 000a226c clear. With a fade count 000a7820, on every fourth call (the byte 000a7840) it takes 1 off the count, moves the 16.16 volume 000a7800 by the step 000a77e0 (down for flags 2 and 4, up for 1) and calls HmiMidi_SetSongVolume (0006f64e); flag 4 at a count of 0 ends the song. Then for each track below the count 000a2198 it adds 1 to the tick count 000a1d48 and, while the events pointer 000a1348 is set and the count has reached the delta 000a1948, handles the event: its length from the table 000a22cc by the status's high nibble or 000a22dc by the low nibble of a status of 0xf0 or more; 0xff 0x2f clears the track's pointer and takes 1 off 000a2178, ending the song at 0, else length 3; 0xff 0x51 is length 5; other 0xff events and controllers 0x6c, 0x6e, 0x71, 0x74, 0x78 are stepped over; 0x6d and 0x73 copy the byte 6 past the status into the loop count +6 of the track's branch entry of the event's value; 0x6f/0x70 (every track from 1 with a pointer) and 0x75/0x76 (this track) take 1 off that count unless 0 or 0xff, call the loop callback 000a5fbc with (song, track, id, count) and branch while the count and the answer are non-zero; 0x72 (every track from 1) and 0x79 (this track) call the branch callback 000a5f8c with (song, track, id | 0x80) and branch to that id unless it answers 0; 0x77 calls the trigger callback of the value; any other event goes to HmiMidi_SendEvent (000715c5) with the track's driver slot. A branch sets the pointer to the chunk + the entry's +0 + 0xc, sends a program change with the entry's +5 and the entry's data pairs as controllers, and leaves the pointer there. After an event the tick count is zeroed, the pointer moves by the length and past the next delta, read by HmiMidi_ReadDelta (0006ed60), and the loop goes on while that delta is 0. Ending the song: clears the playing flag, HmiMidi_SilenceSong (00071f84), HmiTimer_RemoveEvent (0006d8d5), HmiMidi_ResetSong (0006eb98), then a far call of the callback at the file's +0x300 with the song.",
-      "source": "Herculan/docs/es1/formats/hmp-music.md#the-tick; ES1DBSIM decompile at 0007ef95",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-tick; ES1DBSIM decompile at 0007ef95",
       "verified": {
         "bytes": "0007ef95+5974",
         "sha1": "b07994346a96",

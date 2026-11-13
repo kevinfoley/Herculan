@@ -1,6 +1,6 @@
 # The HMI driver containers
 
-**The sound drivers ship as three files in `SOS\`, each a run of `.com` driver images behind a short header.** `HMIMDRV.386` holds the MIDI drivers the [music](hmp-music.md#the-devices) plays through, `HMIDRV.386` the digital drivers the [sounds](sound-samples.md#the-driver) play through, and `HMIDET.386` the drivers that detect a card. The three share one layout.
+**The sound drivers ship as three files in `SOS\`, each a run of `.com` driver images behind a short header.** `HMIMDRV.386` holds the MIDI drivers the [music](../sound/song-player.md#the-devices) plays through, `HMIDRV.386` the digital drivers the [sounds](sound-samples.md#the-driver) play through, and `HMIDET.386` the drivers that detect a card. The three share one layout.
 
 ## Layout
 
@@ -49,7 +49,7 @@ In all three files the last entry's image ends at the file's end, and every imag
               a zero-terminated short name, "<device> MIDI" in HMIMDRV.386
 ```
 
-An image is flat 32-bit code and data together, addressed from 0: `fmmidi.com`'s code reads and writes its own data through absolute operands that are offsets into the image, such as the word at `0x4fe`. Its jump lands on `0x504`, as `fmmidi3.com`'s does. `ES1FMMIDI` names `fmmidi.com`'s image, and addresses given for it are offsets into the image.
+An image is flat 32-bit code and data together, addressed from 0: `fmmidi.com`'s code reads and writes its own data through absolute operands that are offsets into the image, such as the word at `0x4fe`. Its jump lands on `0x504`, as `fmmidi3.com`'s does. `ES1FMMIDI` names `fmmidi.com`'s image, and addresses given for it are offsets into the image; what its entry and its five functions do is [the FM driver](../sound/fm-driver.md#the-images-interface).
 
 ## Loading an image
 
@@ -65,7 +65,7 @@ The library enters the image by a far call to offset 0 of the code selector, the
 | `EAX` | Asked by | The image answers |
 |---|---|---|
 | 0 | `HmiDriver_CopyInfo` (`ES1DBSIM 00081649`), for which `es2_xref.py` finds no call | `EDX`, the offset of `0x6a` bytes the library copies out |
-| 1 | `HmiDriver_GetFunctions` (`ES1DBSIM 00081687`), from `HmiMidi_InitDriver` | `EDI`, the offset of a table of five 8-byte entries, each opening with a function's offset; the library pairs each offset with the code selector as [the driver slot's](hmp-music.md#the-drivers) first five far functions |
+| 1 | `HmiDriver_GetFunctions` (`ES1DBSIM 00081687`), from `HmiMidi_InitDriver` | `EDI`, the offset of a table of five 8-byte entries, each opening with a function's offset; the library pairs each offset with the code selector as [the driver slot's](../sound/song-player.md#the-drivers) first five far functions |
 | 2 | `HmiDriver_Call` (`ES1DBSIM 000816cd`), which passes any number, from `HmiMidi_InitDriver` for device `0xa00a` alone | a far function the library registers with its timer at 120 calls a second |
 
 Every later call is a far call to one of the five functions, its arguments on the stack.
@@ -73,5 +73,5 @@ Every later call is a far call to one of the five functions, its arguments on th
 ## Open
 
 - **Open:** the header's byte `0x33` and its `+0x28`, and an entry's flags.
-- **Open:** what an image holds between its short name and its entry; `fmmidi.com`'s code runs to `0x243f` of its `0x3028` bytes.
-- **Open:** which registers an image's entry reads besides `EAX`, `FS` and `EDI`, and the `0x6a` bytes request 0 gives.
+- **Open:** what the images other than `fmmidi.com` hold between their short name and their entry.
+- **Open:** which registers the other images' entries read; `fmmidi.com`'s reads `AX` and `FS`, and what the `0x6a` bytes of its request 0 mean is [the FM driver's](../sound/fm-driver.md#open) item.

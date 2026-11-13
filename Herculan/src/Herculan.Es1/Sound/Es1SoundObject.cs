@@ -363,7 +363,7 @@ public sealed class Es1DigiSound : Es1SoundObject {
 }
 
 /// <summary>
-/// A song (docs/es1/formats/hmp-music.md#loading): <c>MidiSound</c>, <c>0xcf</c> bytes, vtable
+/// A song (docs/es1/sound/song-player.md#loading): <c>MidiSound</c>, <c>0xcf</c> bytes, vtable
 /// <c>MidiSoundVtable</c> (<c>00095c82</c>), built by <c>MidiSound_Ctor</c> (<c>000504dc</c>).
 ///
 /// <para>PLACEHOLDER: the HMI song player is item 7's module D (docs/herculan/plan-es1-first-mission.md), so a song plays

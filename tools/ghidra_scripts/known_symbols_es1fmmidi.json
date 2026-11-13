@@ -7,5 +7,545 @@
     "Entries are in address order. tools/scripts/es2_naming.py insert and edit keep it, and check that it holds."
   ],
   "entries": [
+    {
+      "address": "00000504",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_Entry",
+      "description": "The image's entry, reached by the jump at offset 0 with a request in AX and the data selector in FS: stores the selector in the words 0x554, 0x5ba, 0x6ac, 0x61a (the operand of the MOV AX at the top of each far function), 0xa3 and 0xab (the selectors of the info block's two far pointers), then calls the function at 0xbb + request*4 with DS the selector, and returns far. The table holds two functions.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-images-interface; ES1FMMIDI disassembly at 00000504",
+      "verified": {
+        "bytes": "00000504+70",
+        "sha1": "932f29e0c26a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000054a",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_OpenFar",
+      "description": "Far function, entry 1 of the function table: loads DS and ES with the patched selector, keeps the low word of its fourth stack dword (the port) at 0x4fe, sets the busy byte 0xeb, disables interrupts, saves SS:ESP at 0xf0/0xec, calls FmMidi_Open (00000744) with (0, 0, 0, port), restores them and the flags and clears the busy byte. RETF.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-images-interface; ES1FMMIDI disassembly at 0000054a",
+      "verified": {
+        "bytes": "0000054a+102",
+        "sha1": "0156fbb9a916",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000005b0",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_CloseFar",
+      "description": "Far function, entries 2 and 3 of the function table (close and reset): the same frame as FmMidi_OpenFar (0000054a) around a call of FmMidi_Close (0000077f), reading no argument. RETF.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-images-interface; ES1FMMIDI disassembly at 000005b0",
+      "verified": {
+        "bytes": "000005b0+80",
+        "sha1": "526423aa9310",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000610",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_LoadBankFar",
+      "description": "Far function, entry 4 of the function table: copies its four stack dwords (far bank pointer offset and selector, slot, a fourth) to 0x600-0x60c and, in the same frame as FmMidi_OpenFar (0000054a), calls FmMidi_LoadBank (000007bb) with them. Returns 0. RETF.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-images-interface; ES1FMMIDI disassembly at 00000610",
+      "verified": {
+        "bytes": "00000610+137",
+        "sha1": "7c416cbb6b43",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000699",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_GetInfo",
+      "description": "Request 0 of FmMidi_Entry (00000504): returns 0x73, the offset of the info block, in EDX.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-images-interface; ES1FMMIDI disassembly at 00000699",
+      "verified": {
+        "bytes": "00000699+6",
+        "sha1": "65088af5d1a3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000069f",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_GetFunctions",
+      "description": "Request 1 of FmMidi_Entry (00000504): returns 0xc3, the offset of the table of five functions, in EDI.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-images-interface; ES1FMMIDI disassembly at 0000069f",
+      "verified": {
+        "bytes": "0000069f+6",
+        "sha1": "9e76b34c22c6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000006a5",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_SendFar",
+      "description": "Far function, entry 0 of the function table: loads DS and ES with the patched selector, loads the far event pointer of its first two stack dwords and, in the same frame as FmMidi_OpenFar (0000054a), calls FmMidi_Send (00000715) with (offset, selector, 0, 0). The length and slot arguments are not read. RETF.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-images-interface; ES1FMMIDI disassembly at 000006a5",
+      "verified": {
+        "bytes": "000006a5+95",
+        "sha1": "166d66794a64",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000715",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_Send",
+      "description": "(event offset, selector, 0, 0): calls FmMidi_HandleEvent (0000080c) with the far pointer and returns 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#events; ES1FMMIDI disassembly at 00000715",
+      "verified": {
+        "bytes": "00000715+47",
+        "sha1": "585c3b7b4dbd",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000744",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_Open",
+      "description": "(0, 0, 0, port): stores the port at 0x2cf0 and calls FmMidi_Init (00000a09) with a far pointer to it. Returns 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#opening-and-closing; ES1FMMIDI disassembly at 00000744",
+      "verified": {
+        "bytes": "00000744+59",
+        "sha1": "a3e6c219b037",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000077f",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_Close",
+      "description": "Calls FmMidi_Shutdown (00000a7b) and returns 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#opening-and-closing; ES1FMMIDI disassembly at 0000077f",
+      "verified": {
+        "bytes": "0000077f+30",
+        "sha1": "180fc1193549",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000007bb",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_LoadBank",
+      "description": "(bank offset, selector, slot, fourth): calls FmMidi_SetBank (00000bc8) with the far bank pointer and returns 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-banks; ES1FMMIDI disassembly at 000007bb",
+      "verified": {
+        "bytes": "000007bb+47",
+        "sha1": "e8ea40f209f7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000080c",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_HandleEvent",
+      "description": "(unused, unused, far event pointer): by the high nibble of the status byte, with the channel its low nibble. 0x80, and 0x90 with a third byte of 0: fills the 3 bytes at 0x269a with the note, the velocity and the channel and calls FmMidi_NoteOff (0000143c). 0x90: FmMidi_NoteOn (00000f4c)(note, velocity, channel). 0xb0: fills 0x269f with the channel, the controller and the value and calls FmMidi_Controller (0000174a). 0xc0: fills 0x269d with the program and the channel and calls FmMidi_ProgramChange (000016fd). 0xe0: fills 0x26a2 with the channel and the event's third byte and calls FmMidi_PitchBend (000018bf). Any other status does nothing.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#events; ES1FMMIDI disassembly at 0000080c",
+      "verified": {
+        "bytes": "0000080c+475",
+        "sha1": "cd0dae10498b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000a09",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_Init",
+      "description": "(unused, unused, far pointer to the port): copies the port dword to 0x2cec, calls Opl_Init (00001b39) with a far pointer to it and Opl_Reset (00001bb8), and sets the open flag 0x2444. Returns 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#opening-and-closing; ES1FMMIDI decompile at 00000a09",
+      "verified": {
+        "bytes": "00000a09+80",
+        "sha1": "e3f07b208cfc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000a7b",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_Shutdown",
+      "description": "Copies the kept port 0x2cf8 to 0x2cec, calls Opl_Init (00001b39) with a far pointer to it, Opl_Silence (00001caf) and Opl_Close (00001d9d), and clears the open flag 0x2444.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#opening-and-closing; ES1FMMIDI decompile at 00000a7b",
+      "verified": {
+        "bytes": "00000a7b+67",
+        "sha1": "fb353cbbce13",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000ae0",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_ResetState",
+      "description": "Calls Opl_Silence (00001caf), clears the bank flag 0x25a8, and sets the driver's tables to their values in the image: for 9 voices the note 0x2d70 to 0, the channel 0x24c4 to 0 and the velocity 0x25ec to 0x7f; for 16 channels the bend 0x24e8 to 0x40, the program 0x2484 to 0, the had-a-bend flag 0x2528 to 0, the volume 0x25ac to 0x7f and 0x2610 to 0. es2_xref finds one call, from 0x7a8, in a function at 0x79d that it finds no reference to.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#opening-and-closing; ES1FMMIDI decompile at 00000ae0",
+      "verified": {
+        "bytes": "00000ae0+198",
+        "sha1": "edbb0c0e0125",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000bc8",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_SetBank",
+      "description": "(unused, unused, far bank pointer): packs the bank with FmMidi_PackBank (00000d21), then by the flag 0x25a8, which it flips. Clear, the melodic bank: keeps the far pointer at 0x2450, the word +8 at 0x2448, far pointers to the bank + its dword +0xc at 0x2456 and + its dword +0x10 at 0x245c, sets 0x2462 and calls FmMidi_ProgramChange (000016fd) with program 0 for each of channels 0-8. Set, the drum bank: keeps the far pointer at 0x2466 and far pointers to the bank + the melodic bank's dword +0xc at 0x246c and + the melodic bank's dword +0x10 at 0x2472, and sets 0x2478.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-banks; ES1FMMIDI disassembly at 00000bc8",
+      "verified": {
+        "bytes": "00000bc8+345",
+        "sha1": "ac1b19bf9139",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000d21",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_PackBank",
+      "description": "(far bank pointer): for the 30-byte records from the bank + its dword +0x10, the word +8 less 2 of them, rewrites in place +0xb = +0xb<<7 | +0xc<<6 | +7<<5 | +0xd<<4 | +3, +2 = +2<<6 | +0xa, +5 = +5<<4 | +8, +6 = +6<<4 | +9, +0xe = +4*2 | +0xe, +0x18 = +0x18<<7 | +0x19<<6 | +0x14<<5 | +0x1a<<4 | +0x10, +0xf = +0xf<<6 | +0x17, +0x12 = +0x12<<4 | +0x15 and +0x13 = +0x13<<4 | +0x16: the chip's 0x20, 0x40, 0x60, 0x80 and 0xc0 bytes of the modulator and the first four of the carrier.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-banks; ES1FMMIDI decompile at 00000d21",
+      "verified": {
+        "bytes": "00000d21+521",
+        "sha1": "fc3768b753fe",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000f4c",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_NoteOn",
+      "description": "(note, velocity, channel): returns for a channel of 16 or more. Takes a voice from FmMidi_AllocVoice (00001dde)(channel, note), calls Opl_KeyOff (00001ea5) on it and stores the channel at 0x24c4[voice]. Five times writes register 0x80 + the carrier's offset with the kept byte 0x2d30 | 0xf, then the modulator's the same way. Calls Opl_LoadPatch (00001f25) with the record at the melodic records 0x245c + the channel's program 0x2484 * 0x1e, or on channel 9 the drum records 0x2472 + note * 0x1e. Stores the velocity at 0x25ec[voice] and works the level: a = the byte of velocity * ((the channel's volume 0x25ac << 7) / 0x7f) >> 7, level = (0x2000 - (0x40 - the curve byte 0x2d9c[a >> 1]) * 2 * (0x40 - (the carrier's kept 0x2d10 byte & 0x3f))) >> 7. Writes level | the top two bits of the operator's 0x2d10 byte to 0x40 + the carrier's offset, and before it, off channel 9 and when the record's +0xe is 0, to 0x40 + the modulator's. Calls Opl_KeyOn (0000212e) with the dword at 0x2db8 + note*4, on channel 9 with the note the byte +2 of the drum name record 0x246c + note*0xc, and stores the note at 0x2d70[voice]. Off channel 9, with 0x2480 and the channel's had-a-bend flag 0x2528 set, calls Opl_SetFrequency (000021f0) with FmMidi_BendFrequency (00001981)(the channel's bend 0x24e8, note, voice).",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#note-on; ES1FMMIDI both at 00000f4c",
+      "verified": {
+        "bytes": "00000f4c+1230",
+        "sha1": "bedfbd01517e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000143c",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_NoteOff",
+      "description": "(unused, unused, far pointer to note, velocity, channel), for a channel below 16. With the channel's sustain 0x2650 at 0 or its held count 0x26ac at 32 or more: for each of 9 voices whose note 0x2d70 is the note and whose channel 0x24c4 is the channel, calls Opl_KeyOff (00001ea5) and zeroes the note. Otherwise copies the 3 bytes to 0x26ec + channel*0x60 + count*3 and adds 1 to the count.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#note-off; ES1FMMIDI decompile at 0000143c",
+      "verified": {
+        "bytes": "0000143c+366",
+        "sha1": "455cab5c6fbd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000015aa",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_AllNotesOff",
+      "description": "(channel), for a channel below 16: sets the channel's volume 0x25ac to 0x7f, the dword 0x25ec + channel*4 to 0x7f, 0x2610 and the sustain 0x2650 to 0, and for each of 9 voices whose channel 0x24c4 is the channel calls Opl_KeyOff (00001ea5) and zeroes the note 0x2d70.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#controllers; ES1FMMIDI decompile at 000015aa",
+      "verified": {
+        "bytes": "000015aa+169",
+        "sha1": "fdf235887724",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001653",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_ResetControllers",
+      "description": "(channel), for a channel below 16: sets the channel's volume 0x25ac to 0x7f, the dword 0x25ec + channel*4 to 0x7f, 0x2610 and the sustain 0x2650 to 0, the bend 0x24e8 to 0x40 and the bend range 0x2568 to 2.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#controllers; ES1FMMIDI decompile at 00001653",
+      "verified": {
+        "bytes": "00001653+136",
+        "sha1": "08024aab68f5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000016fd",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_ProgramChange",
+      "description": "(unused, unused, far pointer to program, channel): stores the program at 0x2484[channel].",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#events; ES1FMMIDI decompile at 000016fd",
+      "verified": {
+        "bytes": "000016fd+43",
+        "sha1": "fd0f2d297801",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000174a",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_Controller",
+      "description": "(unused, unused, far pointer to channel, controller, value). 7: FmMidi_SetChannelVolume (00002286)(channel, value). 0x40: stores the value as the channel's sustain 0x2650 and, when it is 0, while the held count 0x26ac is non-zero takes 1 off it and calls FmMidi_NoteOff (0000143c) with the held entry at that index. 0x66: stores the value as the bend range 0x2568. 0x79: FmMidi_ResetControllers (00001653). 0x7b: FmMidi_AllNotesOff (000015aa). Any other controller does nothing.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#controllers; ES1FMMIDI decompile at 0000174a",
+      "verified": {
+        "bytes": "0000174a+339",
+        "sha1": "bbdf201fcf12",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000018bf",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_PitchBend",
+      "description": "(unused, unused, far pointer to channel, bend), for a channel below 16 other than 9: stores the bend at 0x24e8[channel], sets the had-a-bend flag 0x2528 and, for each of 9 voices with a note 0x2d70 whose channel 0x24c4 is the channel, calls Opl_SetFrequency (000021f0) with FmMidi_BendFrequency (00001981)(bend, the voice's note, voice).",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#pitch-bend; ES1FMMIDI decompile at 000018bf",
+      "verified": {
+        "bytes": "000018bf+194",
+        "sha1": "13cd5a789761",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001981",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_BendFrequency",
+      "description": "(bend, note, voice): returns the bent frequency word. i = note - 12, s = i mod 12 by repeated subtraction, f = the dword table 0x2de8[i], r = the bend range 0x2568 of the voice's channel 0x24c4. Bend below 0x40: d = f - table[i - r]; when d is above 0x2cf unsigned, d = ((f & 0x3ff) - the dword at 0x2f80 + r*4) & 0x3ff; returns f - d * (((0x3f - bend) * 1000) >> 6) / 1000. Otherwise d = table[i + r] - f; when d is above 0x2cf, f = ((f & 0x1c00) + 0x400) | the dword at 0x2f84 + (0xb - s)*4 and d = table[i + r] - f; returns f + d * (((bend - 0x40) * 1000) >> 6) / 1000. The divisions are unsigned.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#pitch-bend; ES1FMMIDI both at 00001981",
+      "verified": {
+        "bytes": "00001981+406",
+        "sha1": "a28ffde204bb",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001b39",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "Opl_Init",
+      "description": "(far pointer to the port): stores the port at 0x2d7b and 0x2cf8, writes register 1 with 0x20 through Opl_Write (00001c64), zeroes 0x2d64, calls Opl_Reset (00001bb8) and sets the chip-open flag 0x2d7f.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#opening-and-closing; ES1FMMIDI decompile at 00001b39",
+      "verified": {
+        "bytes": "00001b39+93",
+        "sha1": "d03512147e80",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001bb8",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "Opl_Reset",
+      "description": "For 9 voices zeroes the kept 0xb0 byte 0x2d49 and writes it to 0xb0 + voice through Opl_Write (00001c64), zeroes the 11 bytes at 0x2d65 and the byte 0x2d80, and writes 0xbd with 0x2d64 & 0xc0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#opening-and-closing; ES1FMMIDI decompile at 00001bb8",
+      "verified": {
+        "bytes": "00001bb8+152",
+        "sha1": "96381f223682",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001c64",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "Opl_Write",
+      "description": "(register, value): OUT of the register to the port word 0x2cf8, six IN from port + 1, OUT of the value to port + 1, then 28 IN from the port. Ghidra's function ends after 17 of them; the rest and the POP EBP, RET run to 0x1c9d.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#the-chip; ES1FMMIDI disassembly at 00001c64",
+      "verified": {
+        "bytes": "00001c64+45",
+        "sha1": "00779790c325",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00001caf",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "Opl_Silence",
+      "description": "Returns 2 when the chip-open flag 0x2d7f is clear. Otherwise zeroes 0x2d64 and writes it to 0xbd, writes each of 9 voices' kept 0xb0 byte 0x2d49 & 0xdf to 0xb0 + voice, writes 0xff to 0x40 + each voice's carrier offset, zeroes the 11 bytes at 0x2d65 and returns 0. Every write is Opl_Write (00001c64).",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#opening-and-closing; ES1FMMIDI decompile at 00001caf",
+      "verified": {
+        "bytes": "00001caf+204",
+        "sha1": "d7622c6f8d9f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001d9d",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "Opl_Close",
+      "description": "Clears the chip-open flag 0x2d7f and returns 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#opening-and-closing; ES1FMMIDI decompile at 00001d9d",
+      "verified": {
+        "bytes": "00001d9d+31",
+        "sha1": "dea6148afa29",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001dde",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_AllocVoice",
+      "description": "(channel, note): returns the first of 9 voices whose note 0x2d70 is 0. With none, for each channel from 0 to 15 whose had-a-bend flag 0x2528 is 0, the first voice whose channel 0x24c4 is that channel. With none, the channel argument, less 9 when it is 9 or more. The note is not read.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#voice-allocation; ES1FMMIDI disassembly at 00001dde",
+      "verified": {
+        "bytes": "00001dde+165",
+        "sha1": "274969582b31",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00001ea5",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "Opl_KeyOff",
+      "description": "(voice): returns 6 when the voice's note 0x2d70 is 0. Otherwise clears bit 0x20 of the kept 0xb0 byte 0x2d49, writes it to 0xb0 + voice through Opl_Write (00001c64), zeroes the note and returns 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#note-on; ES1FMMIDI decompile at 00001ea5",
+      "verified": {
+        "bytes": "00001ea5+94",
+        "sha1": "6dacf8084063",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001f25",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "Opl_LoadPatch",
+      "description": "(far pointer to a packed bank record, voice), with m and c the voice's modulator and carrier offsets from the byte pairs at 0x2d81: keeps the record's +0x13 at 0x2d30[c] and +6 at 0x2d30[m], then writes through Opl_Write (00001c64), in order, 0x20+m = +0xb, 0x40+m = +2 (kept at 0x2d10[m]), 0x60+m = +5, 0x80+m = +6, 0xc0+voice = +0xe, 0xe0+m = +0x1c, 0x20+c = +0x18, 0x60+c = +0x12, 0x80+c = +0x13, 0xe0+c = +0x1d. The record's +0xf is kept at 0x2d10[c] and not written. Sets 0x2d65[voice] and returns 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#note-on; ES1FMMIDI disassembly at 00001f25",
+      "verified": {
+        "bytes": "00001f25+487",
+        "sha1": "e93d5ee3640d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000212e",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "Opl_KeyOn",
+      "description": "(voice, frequency word): keeps the low byte at 0x2d40[voice] and the high byte | 0x20 at 0x2d49[voice], writes 0xa0 + voice with the low byte, 0xb0 + voice with the high byte less bit 0x20 and then with it, through Opl_Write (00001c64), and sets the voice's note 0x2d70 to 1. Returns 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#note-on; ES1FMMIDI decompile at 0000212e",
+      "verified": {
+        "bytes": "0000212e+160",
+        "sha1": "8658e806dd3e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000021f0",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "Opl_SetFrequency",
+      "description": "(voice, frequency word): keeps the low byte at 0x2d40[voice] and the high byte | 0x20 at 0x2d49[voice] and writes them to 0xa0 + voice and 0xb0 + voice through Opl_Write (00001c64). Returns 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#pitch-bend; ES1FMMIDI decompile at 000021f0",
+      "verified": {
+        "bytes": "000021f0+116",
+        "sha1": "0aa0ce182da2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00002286",
+      "binary": "ES1FMMIDI",
+      "type": "function",
+      "confidence": "high",
+      "name": "FmMidi_SetChannelVolume",
+      "description": "(channel, volume), for a channel below 16: stores the volume at 0x25ac[channel], sets 0x2610[channel] and, for each of 9 voices with a note 0x2d70 whose channel 0x24c4 is the channel, works the level of FmMidi_NoteOn (00000f4c) from the volume and the voice's velocity 0x25ec and writes it | the top two bits of the operator's 0x2d10 byte to 0x40 + the carrier's offset, and before it to 0x40 + the modulator's when the byte +0xe of the melodic record of the program 0x2484 of the voice's channel is 0.",
+      "source": "Herculan/docs/es1/sound/fm-driver.md#controllers; ES1FMMIDI decompile at 00002286",
+      "verified": {
+        "bytes": "00002286+424",
+        "sha1": "378b45cbfab8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    }
   ]
 }
