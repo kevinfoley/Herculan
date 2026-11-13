@@ -27,7 +27,8 @@ The code that reads the rate takes the divisor *w* from the timer in GL slot 0 (
 | `SimClock_TicksPerSecond` (`000bba44`) and `000bba40` ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)) | 120 |
 | `SimClock_TicksPer100ms` (`000bba42`), `000bdbd4`, `000bdbd6` and `000bdbd8` | 12 |
 | `FrameRate_TicksPerSecond` (`000b5e2c`, [the frame-rate meter](debug-monitor.md#the-frame-rate-meter)) | 120 |
-| `HmiTimer_Install`'s count, 120 / 60 ([the driver](../formats/sound-samples.md#the-driver)) | 2: the sound driver's service runs on every second interrupt, 60 times a second |
+| `SoundManager_LoadDrivers`' count for the sound library's dispatcher, 120 / 120 ([the library's timer](../formats/hmp-music.md#the-librarys-timer)) | 1: the sound library's timed work, the songs' ticks among it, runs on every interrupt |
+| `HmiTimer_Install`'s count, 120 / 60 ([the digital driver's timer](../formats/sound-samples.md#the-digital-drivers-timer)) | 2, in a path the driver load does not take |
 
 The first timer built claims GL slot 0 and is the one installed; a later one finds the slot taken and touches nothing. `es2_xref.py` finds three calls of `DVTimer_Ctor`: `Sim_StartMission`'s; `Ttm_AllocHandles` (`00069780`), which builds one with `0x4da6` only when slot 0 is empty, and for which `es2_xref.py` finds one chain of calls, `Cockpit_LoadPanel` from `CockpitViewManager_LoadViews` from `CockpitViewManager_Ctor`, one call each, which `Sim_StartMission` runs at its step 13 ([the simulator's interpreter](../formats/ttm-scripts.md#the-simulator)), by which point the slot is taken; and `maybe_Kind0InputDevice_Ctor` (`0004b440`), to which it finds no reference ([Open](#open)). A scan of `ES1DBSIM`'s image bytes for `OUT` to ports `0x40` and `0x43` and for loads of those port numbers into `DX` finds `Pit_SetDivisor`'s three writes ([Open](#open)).
 

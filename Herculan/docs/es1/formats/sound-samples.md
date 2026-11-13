@@ -81,7 +81,7 @@ A sound object plays one name. `SoundManager_CreateObject` (`0004f4e8`, `ES1GO 0
 | `+0x31` | byte, the volume, 0–100; 100 from the constructor |
 | `+0x32` | `int16`, the placed sound's volume |
 | `+0x34` | byte, the priority; `0xff` from the constructor, then `SoundManager_CreateObject`'s |
-| `+0x35`, `+0x39` | a far pointer, 0 from the constructor, that `MidiSound_Play` passes to `0006eeae` ([`hmp-music.md`](hmp-music.md#loading-and-playing)) |
+| `+0x35`, `+0x39` | a far pointer, 0 from the constructor, that `MidiSound_Play` passes to `0006eeae` ([`hmp-music.md`](hmp-music.md#loading)) |
 | `+0x3b` | the vtable |
 
 **`SoundObject_Ctor` (`00050020`, `ES1GO 00043b28`)**, (memory or 0): allocates `0x3f` bytes when given none, returning 0 when that fails, stores the base vtable `SoundObjectVtable` (`00095c46`) and the defaults above, and returns the object. Both class constructors run it first and set the flags `+0x0d` to 2 when the object has a name, else 0. **`SoundObject_Dtor` (`000500d8`)**, (object, flags): stores the base vtable again, unloads the sample with `SoundObject_Unload`, clears the manager's object slot (`+0x14c`[`+0x08`]) and frees the object when bit 0 of the flags is set. **`SoundObject_Unload` (`00050164`)**: stops the sound through slot `+0x14` when slot `+0x30` says it plays; when it is loaded, takes one off the name's reference count `+0x352`, and at 0 frees the name's data `+0x38e`, clears that pointer and takes the name's size `+0x262` off the bytes loaded `+0x4f6`; then clears the loaded bit. **`maybe_SoundObject_SetBranchCallback` (`00050450`)**, (object, offset, selector): for a song (`+0x17` set) stores the far pointer at `+0x35`; `es2_xref` finds no caller in either image, and the manager's debug listing ([the debug listing](#the-debug-listing)) shows it set as `B` in its `Br` column.
@@ -89,7 +89,7 @@ A sound object plays one name. `SoundManager_CreateObject` (`0004f4e8`, `ES1GO 0
 | Class | Size | Vtable | Built by | Its own fields |
 |---|---|---|---|---|
 | `DigiSound` | `0x50` | `DigiSoundVtable` (`00095cd6`, `ES1GO 0008261c`) | `DigiSound_Ctor` (`000507c8`, `ES1GO 0004446c`) | `+0x3f` 2; `+0x43` and its switch `+0x47`, 0; `+0x48` and `+0x4c`, a loop range, -1 each |
-| `MidiSound` | `0xcf` | `MidiSoundVtable` (`00095c82`, `ES1GO 000825bc`) | `MidiSound_Ctor` (`000504dc`, `ES1GO 0004412a`) | `+0x3f` 32 dwords, the track map, `0xff` each; `+0xbf` and `+0xc7`, the song block ([`hmp-music.md`](hmp-music.md#loading-and-playing)) |
+| `MidiSound` | `0xcf` | `MidiSoundVtable` (`00095c82`, `ES1GO 000825bc`) | `MidiSound_Ctor` (`000504dc`, `ES1GO 0004412a`) | `+0x3f` 32 dwords, the track map, `0xff` each; `+0xbf` and `+0xc7`, the song block ([`hmp-music.md`](hmp-music.md#loading)) |
 
 #### The vtables
 
@@ -107,7 +107,7 @@ Each slot takes the object first. The base's are stubs a `NOP` opens; where `Mid
 | `+0x20` | (value) | `maybe_SoundObject_SetPitch` (`000500c3`), nothing | the base's | `maybe_DigiSound_SetPitch` (`00050884`): `+0x43` = the value, at least `0x8000`, and above `0xf0000` its low word with `0xf0000`; sets `+0x47` |
 | `+0x24` | (value) | `SoundObject_SetStartWord10` (`000500c7`), nothing | the base's | `DigiSound_SetStartWord10` (`00050870`): `+0x3f` = the value's low word, the start block's `+0x10` |
 | `+0x28` | (start, end, count), the repeats | `SoundObject_SetRepeatCount` (`00050470`): count to `+0x23` while it plays, else to `+0x21` | the base's | `DigiSound_SetRepeats` (`00050cbc`): while it plays, count to `+0x23` and to the voice record's word `+0x38`; else count to `+0x21` and `+0x23`, end to `+0x48` and start to `+0x4c` |
-| `+0x2c` | (volume) | `SoundObject_SetVolume` (`000500cb`), nothing | `MidiSound_SetVolume` (`0005075c`): below 0, `+0x31` = 0 and `0006edb3`(0); else `+0x31` = the volume held to 100, and `0006edb3`(`+0x31` × 127 × the manager's `+0x241` / 10,000), the song player's volume ([`hmp-music.md`](hmp-music.md#loading-and-playing)) | `DigiSound_SetVolume` (`000508c4`): below 0, `+0x31` = 0 and a live voice to `HmiDigi_SetSampleVolume` (`0006e0b3`)(driver, voice, 0); else `+0x31` = the volume held to 100, and a live voice to `0006e0b3` with `+0x31` × `0x7fff` × the manager's `+0x241` / 10,000 |
+| `+0x2c` | (volume) | `SoundObject_SetVolume` (`000500cb`), nothing | `MidiSound_SetVolume` (`0005075c`): below 0, `+0x31` = 0 and `0006edb3`(0); else `+0x31` = the volume held to 100, and `0006edb3`(`+0x31` × 127 × the manager's `+0x241` / 10,000), the song player's master volume ([`hmp-music.md`](hmp-music.md#volume)) | `DigiSound_SetVolume` (`000508c4`): below 0, `+0x31` = 0 and a live voice to `HmiDigi_SetSampleVolume` (`0006e0b3`)(driver, voice, 0); else `+0x31` = the volume held to 100, and a live voice to `0006e0b3` with `+0x31` × `0x7fff` × the manager's `+0x241` / 10,000 |
 | `+0x30` | plays | `SoundObject_IsPlaying` (`000500cf`), 0 | `MidiSound_IsPlaying` (`00050730`): 0 with no song (`+0x19` -1), else 1 when `0006f225`(handle) answers 0 | `DigiSound_IsPlaying` (`00050c18`): 0 with no voice, else 1 when `HmiDigi_IsVoiceDone` (`0006df9d`)(driver, voice) answers 0, the voice still busy |
 
 **The driver's calls back.** `MidiSound_Play` hands the song two far callbacks and `DigiSound_Play` the start block one; each finds its object among the 60 slots of `SoundManager_Instance` (`000bd73e`), the manager `SoundManager_Ctor` stores:
@@ -227,7 +227,7 @@ ES2's loader plays a file that is not RIFF as raw 8-bit unsigned mono at 11,025 
 
 ### The digital driver's timer
 
-**The HMI code runs its timed work from the game's timer: it hands the game a far callback, which the game registers at a count of a sixtieth of the timer's rate.** What a count means to the timer is [Open](../simulation/debug-monitor.md#open). The functions at `00050d38`–`00050e1f`, after the sound files and before [the profile file](profile-files.md), are what the HMI code calls for it:
+**The HMI code runs its timed work from the game's timer, on every interrupt: `SoundManager_LoadDrivers`' callback `0004e710` far-calls the library's dispatcher ([the library's timer](hmp-music.md#the-librarys-timer)).** The library can also hand the game a far callback of its own through `HmiTimer_Install`, which the game would register at a count of a sixtieth of the timer's rate; `SoundManager_LoadDrivers` starts the library's timer with the flag that skips that, in both programs, and `es2_xref.py` finds no other call of the library's start. What a count means to the timer is [Open](../simulation/debug-monitor.md#open). The functions at `00050d38`–`00050e1f`, after the sound files and before [the profile file](profile-files.md), are what the HMI code calls for it:
 
 | Function | Address | Does |
 |---|---|---|

@@ -51,7 +51,27 @@ In all three files the last entry's image ends at the file's end, and every imag
 
 An image is flat 32-bit code and data together, addressed from 0: `fmmidi.com`'s code reads and writes its own data through absolute operands that are offsets into the image, such as the word at `0x4fe`. Its jump lands on `0x504`, as `fmmidi3.com`'s does. `ES1FMMIDI` names `fmmidi.com`'s image, and addresses given for it are offsets into the image.
 
+## Loading an image
+
+**The game's HMI library reads one image out of `hmimdrv.386` into memory of its own and calls it through two selectors.** `HmiMidi_LoadDriverImage` (`ES1DBSIM 00081365`, `ES1GO 0006e321`), for a device id from `0xa000` to `0xa200` and a free driver slot:
+
+1. opens the library's driver path (`ES1DBSIM 000a575c`) with `hmimdrv.386` appended, returning `0xf` when it does not open, and reads the `0x2c`-byte header;
+2. reads entry headers of `0x30` bytes, one more than the image count at most, skipping each image whose device id is not the one asked for by its size `+0x24`;
+3. for the match, allocates the size plus `0x1068` bytes, takes the first 4 KB boundary in it, makes two selectors for that address, one for data and one given the code segment's access rights, reads the image there and locks its memory;
+4. returns 7 when no entry matched, and otherwise 0 with the image's address, the two far pointers (offset 0 of each selector) and the allocation.
+
+The library enters the image by a far call to offset 0 of the code selector, the image's opening jump, with a request number in `EAX` and the data selector in `FS` (`EDI` 0):
+
+| `EAX` | Asked by | The image answers |
+|---|---|---|
+| 0 | `HmiDriver_CopyInfo` (`ES1DBSIM 00081649`), for which `es2_xref.py` finds no call | `EDX`, the offset of `0x6a` bytes the library copies out |
+| 1 | `HmiDriver_GetFunctions` (`ES1DBSIM 00081687`), from `HmiMidi_InitDriver` | `EDI`, the offset of a table of five 8-byte entries, each opening with a function's offset; the library pairs each offset with the code selector as [the driver slot's](hmp-music.md#the-drivers) first five far functions |
+| 2 | `HmiDriver_Call` (`ES1DBSIM 000816cd`), which passes any number, from `HmiMidi_InitDriver` for device `0xa00a` alone | a far function the library registers with its timer at 120 calls a second |
+
+Every later call is a far call to one of the five functions, its arguments on the stack.
+
 ## Open
 
 - **Open:** the header's byte `0x33` and its `+0x28`, and an entry's flags.
-- **Open:** what an image holds between its short name and its entry, and how the library calls the entry; `fmmidi.com`'s code runs to `0x243f` of its `0x3028` bytes.
+- **Open:** what an image holds between its short name and its entry; `fmmidi.com`'s code runs to `0x243f` of its `0x3028` bytes.
+- **Open:** which registers an image's entry reads besides `EAX`, `FS` and `EDI`, and the `0x6a` bytes request 0 gives.
