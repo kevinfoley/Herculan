@@ -96,7 +96,7 @@ Rejected alternatives:
 
 | Alternative | Why not |
 |---|---|
-| A separate repository for ES1 under the same brand | The HercWorks readers, the RE tooling, the hooks and the doc rules would be duplicated or held together by submodules, and a reader fix made twice ([ES1 plan](plan-es1-support.md#decisions-to-make-before-phase-0), decision 1) |
+| A separate repository for ES1 under the same brand | The HercWorks readers, the RE tooling, the hooks and the doc rules would be duplicated or held together by submodules, and a reader fix made twice ([ES1 plan](plan-es1-support.md#decisions), decision 1) |
 | Version branches inside one simulation | The compiler, object layout and fixed-point rounding all differ, so the shared code would fill with version switches |
 | ES1's data on ES2's simulation | Not ES1's behaviour; the answers above rule it out |
 
