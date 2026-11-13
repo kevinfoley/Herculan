@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using HercWorks.Core.Data.File.Dat.Shell;
 using Herculan.Es1.Shell.Hangar;
 
@@ -57,24 +58,11 @@ public sealed class Es1RepairMenu : Es1Menu {
 	/// <c>Hangar_SelectNext</c>(0) for 2004 and <c>Hangar_SelectPrev</c>(0) otherwise, then <see cref="RefreshHerc"/>;
 	/// 1902 (<c>0002f05b</c>) <see cref="RepairAllSelected"/>; 1901 (<c>0002f0fa</c>) the target 4444; 1710
 	/// (<c>0002f105</c>) <c>CareerRecord_SaveCurrent</c> (<see cref="Es1ShellMission.SaveCurrentRecord"/>). REPAIR (1920)
-	/// and PREFS (1910) pass to <see cref="Es1ShellScreens.HandleMessage"/> as screens. A handler is no iterator: the
-	/// steps' wipes, whose waits are the frame's, are passed over, as <see cref="Es1ArmingMenu"/>'s HERCS are. With no bay
-	/// the selection is not stepped, an engine guard.
+	/// and PREFS (1910) pass to <see cref="Es1ShellScreens.HandleMessage"/> as screens. The HERCS cases, which wait, are
+	/// <see cref="OnMessageWaiting"/>'s, as is REPAIR ALL's.
 	/// </summary>
 	public override void OnMessage(ref Es1MenuMessage message) {
 		switch (message.Target) {
-			case NextHerc:
-			case PrevHerc:
-				if (Bay is { } bay) {
-					foreach (var _ in message.Target == NextHerc ? bay.SelectNext(0) : bay.SelectPrev(0)) {
-					}
-				}
-
-				RefreshHerc();
-				break;
-			case RepairAll:
-				RepairAllSelected();
-				break;
 			case Scrap:
 				message = message with { Target = Es1ScrapAlert.Screen };
 				break;
@@ -84,21 +72,43 @@ public sealed class Es1RepairMenu : Es1Menu {
 		}
 	}
 
+	/// <summary>The HERCS cases (<c>0002f02f</c>), <see cref="StepHerc"/>, and REPAIR ALL's, <see cref="RepairAllSelected"/>, which wait; any other <see cref="OnMessage"/>.</summary>
+	public override IEnumerable<Es1ShellWait> OnMessageWaiting(StrongBox<Es1MenuMessage> message) => message.Value.Target switch {
+		NextHerc or PrevHerc => StepHerc(message.Value.Target == NextHerc),
+		RepairAll => RepairAllSelected(),
+		_ => base.OnMessageWaiting(message),
+	};
+
+	/// <summary>
+	/// The HERCS cases (<c>0002f02f</c>): <c>Hangar_SelectNext</c>(0) for 2004 and <c>Hangar_SelectPrev</c>(0) otherwise,
+	/// then <see cref="RefreshHerc"/>. The waits are the wipes'. With no bay the selection is not stepped, an engine guard.
+	/// </summary>
+	private IEnumerable<Es1ShellWait> StepHerc(bool next) {
+		if (Bay is { } bay) {
+			foreach (var wait in next ? bay.SelectNext(0) : bay.SelectPrev(0)) {
+				yield return wait;
+			}
+		}
+
+		RefreshHerc();
+	}
+
 	/// <summary>
 	/// REPAIR ALL's case (<c>0002f05b</c>) (docs/es1/shell/repair-and-build.md#repair-all): <c>Repair_AutoSelected</c>
 	/// (<c>00029bdd</c>), which is <c>Repair_Auto</c>(<c>Career_Salvage</c>, <c>Hangar_SelectedSlot</c>)
 	/// (<see cref="Es1CareerAfterMission.RepairAuto"/>); <c>Hangar_ShowSlot</c>(<c>Hangar_SelectedSlot</c>)
-	/// (<see cref="Es1HangarBay.ShowSlot"/>), its waits passed over; CONDITION's line <see cref="Es1RepairCosts.LevelForCondition"/>
+	/// (<see cref="Es1HangarBay.ShowSlot"/>), whose waits are its scripts'; CONDITION's line <see cref="Es1RepairCosts.LevelForCondition"/>
 	/// of the HERC's overall condition, 0 for no HERC (slot <c>+0x24</c>); <see cref="RefreshSalvage"/>; and
 	/// <c>Roster_ForEachPilotNoOp</c> (<see cref="Es1CareerRoster.ForEachPilotNoOp"/>). With no hangar nothing is repaired
 	/// or shown, an engine guard.
 	/// </summary>
-	private void RepairAllSelected() {
+	private IEnumerable<Es1ShellWait> RepairAllSelected() {
 		var mission = Context.Mission;
 		if (mission.Hangar is { } hangar) {
 			new Es1CareerAfterMission(mission, Context.Data).RepairAuto((uint)mission.Roster.Salvage, hangar.SelectedSlot, hangar);
 			if (Bay is { } bay) {
-				foreach (var _ in bay.ShowSlot(hangar.SelectedSlot)) {
+				foreach (var wait in bay.ShowSlot(hangar.SelectedSlot)) {
+					yield return wait;
 				}
 			}
 		}
@@ -267,19 +277,19 @@ public sealed class Es1ScrapAlert : Es1Menu {
 	/// (<see cref="Es1HangarBay.AssignScripts"/>); the draw page wiped onto the visible one
 	/// (<see cref="Es1ScreenBlinds.Copy"/>(8, the visible page, the draw page)); that pilot made the current pilot
 	/// (<see cref="Es1CareerRecord.SelectPilot"/>), and the kept slot selected again when it is −1; and the target 1900,
-	/// back to REPAIR. A handler is no iterator: the steps' wipes, whose waits are the frame's, are passed over, as
-	/// <see cref="Es1RepairMenu"/>'s HERCS are. With no bay nothing is scrapped, given its bay or wiped, and with no record
-	/// or hangar no pilot is selected, engine guards.
+	/// back to REPAIR. The waits are the scrap's and the wipes'. With no bay nothing is scrapped, given its bay or wiped,
+	/// and with no record or hangar no pilot is selected, engine guards.
 	/// </summary>
-	public override void OnMessage(ref Es1MenuMessage message) {
-		if (message.Target != ScrapButton) {
-			return;
+	public override IEnumerable<Es1ShellWait> OnMessageWaiting(StrongBox<Es1MenuMessage> message) {
+		if (message.Value.Target != ScrapButton) {
+			yield break;
 		}
 
 		var mission = Context.Mission;
 		var bay = Bay;
 		if (bay != null) {
-			foreach (var _ in bay.ScrapSelectedHerc()) {
+			foreach (var wait in bay.ScrapSelectedHerc()) {
+				yield return wait;
 			}
 		}
 
@@ -288,7 +298,8 @@ public sealed class Es1ScrapAlert : Es1Menu {
 		short entry = mission.CurrentRecord?.FindPilotBySlot(slot) ?? -1;
 		if (bay != null) {
 			var display = bay.Surface.Display;
-			foreach (var _ in bay.AssignScripts().Concat(bay.Blinds.Copy(8, display.VisiblePage, display.DrawPage))) {
+			foreach (var wait in bay.AssignScripts().Concat(bay.Blinds.Copy(8, display.VisiblePage, display.DrawPage))) {
+				yield return wait;
 			}
 		}
 
@@ -299,7 +310,7 @@ public sealed class Es1ScrapAlert : Es1Menu {
 			}
 		}
 
-		message = message with { Target = Es1RepairMenu.Screen };
+		message.Value = message.Value with { Target = Es1RepairMenu.Screen };
 	}
 
 	/// <summary>Slot <c>+4</c>, <c>ScrapAlert_Dtor</c> (<c>0003fbac</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>

@@ -101,7 +101,14 @@ Kind 3's style 1 builds an icon button, `MTBmpButton_Ctor` (`0001d47d`, class `M
 | `0x4e` keypad + | 28, 30 | 108: 32, 33 |
 | `0x50` Down, `0x51` PgDn | 21, 23 | 1504: 38, 39 and `0001a4f4` |
 
-With any other key the constructor looks the id up among the four at `0007f2c4`, 1806, 2003, 1807 and 2004, ARMING's < POINTS, < HERCS, POINTS > and HERCS > ([the window](arming.md#the-window)), and jumps to `0001d97a` for the first two and `0001d9f9` for the others, code Ghidra left undefined ([Open](#open)); any other id sets no frames.
+With any other key the constructor looks the id up among the four at `0007f2c4`, 1806, 2003, 1807 and 2004, ARMING's < POINTS, < HERCS, POINTS > and HERCS > ([the window](arming.md#the-window)), and jumps through the table at `0007f2d4` to `0001d97a` for the first two and `0001d9f9` for the others; any other id sets no frames. Each pair is drawn as one plate the two buttons share, its arrows' rects splitting the clicks:
+
+| Ids | Code | State 0, 1, 2 frames | Corner `+0x95`, `+0x99` |
+|---|---|---|---|
+| 1806, 2003 | `0001d97a` | 48, 50, 51 | (left − 1, top − 1) |
+| 1807, 2004 | `0001d9f9` (Ghidra leaves it undefined) | 48, 49, 51 | (left − 27, top − 1) |
+
+Both then set the three pens' x (`+0x7c`, `+0x84`, `+0x8c`) to the new corner's x, lower the pushed pen's y `+0x88` by 1, back onto the up pen's row, and copy the up pen's y over the inactive one's `+0x90`. A button's text is centered in its frame's width, so both arrows of a pair draw their text, POINTS or HERCS, in the same place over the plate.
 
 `MTBmpButton`'s vtable (`0007f24a`) has its own slots `+4`, `+8`, `+0xc` and `+0x48`, and `MTButton`'s for `+0x10`, `+0x18`, `+0x2c` and `+0x3c`:
 
@@ -195,5 +202,4 @@ Kind 15 builds `MTStrListBox_Ctor` (`0001e11a`, class `MTStrListBox`, vtable `00
 
 - **Open:** where the button file ends, and whether the slider and list classes from `0001deaa` share it.
 - **Open:** what calls `MTButton_Highlight` and `MTButton_Unhighlight`: no caller of `MTButton`'s slots `+0x10` and `+0x18` was found in the window, active window's or shell code read here.
-- **Open:** the frames the icon buttons 1806, 2003, 1807 and 2004, ARMING's POINTS and HERCS arrows, take: the constructor jumps to `0001d97a` and `0001d9f9`, code Ghidra left undefined.
 - **Open:** the list box's slots `+0x10`, `+0x14`, `+0x18`, `+0x28`, `+0x34`, `+0x3c` and `+0x40` (`0001d037`, `BarGraph_NoOpButtonCopy`, `0001d04f`, `0001d07b`, `0001d0a2`, `0001d0bd`, `0001d0cb`).

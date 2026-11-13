@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Herculan.Engine.Content;
 using Herculan.Es1.Input;
 using Herculan.Es1.Panels;
@@ -64,6 +65,19 @@ public class Es1Menu {
 	/// of the message, which it may change: <c>Menu_OnMessage</c> (<c>0003b764</c>), nothing.
 	/// </summary>
 	public virtual void OnMessage(ref Es1MenuMessage message) {
+	}
+
+	/// <summary>
+	/// Slot <c>+8</c> for a case that waits. Retail's handlers run inside <c>Shell_HandleMessage</c> and spin there in
+	/// their waits, such as a wipe's <c>Shell_WaitTicks</c>; here <see cref="Es1ShellScreens.HandleMessage"/> stands at each
+	/// wait this returns, with the message in <paramref name="message"/>, which the handler may change. The default runs
+	/// <see cref="OnMessage"/> at once, with no waits.
+	/// </summary>
+	public virtual IEnumerable<Es1ShellWait> OnMessageWaiting(StrongBox<Es1MenuMessage> message) {
+		var value = message.Value;
+		OnMessage(ref value);
+		message.Value = value;
+		return [];
 	}
 
 	/// <summary>Slot <c>+4</c>, <c>Menu_Dtor</c> (<c>0003b6d1</c>)(menu, flags): the vtables stored back and the menu freed; the window and the background are <see cref="Close"/>'s.</summary>

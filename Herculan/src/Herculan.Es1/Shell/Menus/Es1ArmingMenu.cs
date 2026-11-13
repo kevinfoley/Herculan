@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Data.File.Dyn;
 using Herculan.Es1.Panels;
@@ -159,7 +160,7 @@ public sealed class Es1ArmingMenu : Es1Menu {
 	/// Slot <c>+8</c>, <c>ArmingMenu_OnMessage</c> (<c>0002e54c</c>) (docs/es1/shell/arming.md#what-a-press-does): the
 	/// target looked up among the eleven ids of <c>ArmingMenu_CaseTable</c> (<c>00080db8</c>, cases at <c>00080de4</c>);
 	/// nothing for any other id. The value is the message's word <c>+4</c>. Of the targets only DONE's, which its case
-	/// changes, is a screen.
+	/// changes, is a screen. The HERCS cases, which wait, are <see cref="OnMessageWaiting"/>'s.
 	/// </summary>
 	public override void OnMessage(ref Es1MenuMessage message) {
 		switch (message.Target) {
@@ -186,14 +187,6 @@ public sealed class Es1ArmingMenu : Es1Menu {
 					SelectListLine(downList.GetValue());
 				}
 
-				break;
-			case NextHerc:
-				// 0002e6e1.
-				StepHerc(true);
-				break;
-			case PrevHerc:
-				// 0002e896.
-				StepHerc(false);
 				break;
 			case Es1ShellMouse.HangarAreaTarget:
 				// 0002ea0f: Hangar_SelectMount(value), the area pressed or −1.
@@ -224,6 +217,10 @@ public sealed class Es1ArmingMenu : Es1Menu {
 		}
 	}
 
+	/// <summary>The HERCS cases, 2004 (<c>0002e6e1</c>) and 2003 (<c>0002e896</c>), <see cref="StepHerc"/>, which waits in its wipes; any other <see cref="OnMessage"/>.</summary>
+	public override IEnumerable<Es1ShellWait> OnMessageWaiting(StrongBox<Es1MenuMessage> message) =>
+		message.Value.Target is NextHerc or PrevHerc ? StepHerc(message.Value.Target == NextHerc) : base.OnMessageWaiting(message);
+
 	/// <summary>
 	/// The HERCS cases (docs/es1/shell/arming.md#hercs): <c>Hangar_SelectNext</c> or <c>Hangar_SelectPrev</c> with 2 in
 	/// <c>Shell_Mode</c> 0 and 0 otherwise, in mode 0 then <c>Hangar_SelectedSlot</c> stored in the slot <c>+8</c> of
@@ -231,21 +228,20 @@ public sealed class Es1ArmingMenu : Es1Menu {
 	/// <c>CareerRecord_Current</c>'s current pilot (<see cref="Es1CareerRecord.SelectPilot"/> of
 	/// <see cref="Es1CareerRecord.FindPilotBySlot"/>); PILOT selects <see cref="PilotLine"/>(the roster's current record,
 	/// that pilot) and HERC the HERC's chassis, −1 for none (slot <c>+0x24</c>); <c>Herc_MountHighlightShown</c> cleared;
-	/// <see cref="Refresh"/>. A handler is no iterator: the steps' wipes, whose waits are the frame's, are passed over, as
-	/// <see cref="Es1CrewAssignMenu"/> passes the bay's script waits. Retail writes the current pilot's entry with no
-	/// bounds test; one outside the four is not written here, and with no hangar the selection is not stepped, engine
-	/// guards.
+	/// <see cref="Refresh"/>. The waits are the wipes'. Retail writes the current pilot's entry with no bounds test; one
+	/// outside the four is not written here, and with no hangar the selection is not stepped, engine guards.
 	/// </summary>
-	private void StepHerc(bool next) {
+	private IEnumerable<Es1ShellWait> StepHerc(bool next) {
 		var mission = Context.Mission;
 		short mode = mission.Mode == 0 ? (short)2 : (short)0;
 		if (Bay is { } bay) {
-			foreach (var _ in next ? bay.SelectNext(mode) : bay.SelectPrev(mode)) {
+			foreach (var wait in next ? bay.SelectNext(mode) : bay.SelectPrev(mode)) {
+				yield return wait;
 			}
 		}
 
 		if (mission.Hangar is not { } hangar) {
-			return;
+			yield break;
 		}
 
 		if (mission.Mode == 0 && mission.Record is { } single && single.CurrentPilot is >= 0 and < Es1CareerRecord.PilotCount) {

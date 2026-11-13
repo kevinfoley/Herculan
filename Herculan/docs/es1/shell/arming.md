@@ -33,7 +33,7 @@ Addresses are `ES1GO` image addresses ([the X-32 executable](../formats/x32-exec
 | 1111 | text button | (14, 157)–(120, 169) | MISSILE TYPE, `Esc` | the list's mode |
 | 100 | text button | (48, 175)–(86, 187) | DONE, `Space` | back |
 
-The texts are `eng\menu1800.bin`'s and `menu1820.bin`'s lines 0 to 8, the same in both. The four POINTS and HERCS buttons are icon buttons that keep their text, their key being 0; which frames their ids take is [the menu controls' Open](menu-controls.md#open).
+The texts are `eng\menu1800.bin`'s and `menu1820.bin`'s lines 0 to 8, the same in both. The four POINTS and HERCS buttons are icon buttons that keep their text, their key being 0; each pair shares one plate of `res32\corners.dba` with its text centered on it ([the buttons](menu-controls.md#buttons)).
 
 **The screen object** is `0x28` bytes: a menu's `0x26` ([the screen object](menus.md#the-screen-object)), a byte `+0x26` the case sets to `0xff`, and the byte `+0x27`, the list's mode: 0 the weapons, 1 the missile types.
 

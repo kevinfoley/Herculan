@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Data.File.Dyn;
 using Herculan.Es1.Shell.Hangar;
@@ -75,7 +76,8 @@ public sealed class Es1FabricationMenu : Es1Menu {
 	/// (<c>00030a08</c>) and 2004 (<c>00030b55</c>) <see cref="StepChassis"/>, BUILD given
 	/// <see cref="AffordableState"/> and the panel marked; 2001 (<c>00030c86</c>) <see cref="BuildOrScrap"/> and the panel
 	/// marked; 1710 (<c>00030e77</c>), DONE, <c>CareerRecord_SaveCurrent</c> (<see cref="Es1ShellMission.SaveCurrentRecord"/>),
-	/// the target then passing to <see cref="Es1ShellScreens.HandleMessage"/> as a screen.
+	/// the target then passing to <see cref="Es1ShellScreens.HandleMessage"/> as a screen. 2001's case, which waits, is
+	/// <see cref="OnMessageWaiting"/>'s.
 	/// </summary>
 	public override void OnMessage(ref Es1MenuMessage message) {
 		switch (message.Target) {
@@ -85,14 +87,23 @@ public sealed class Es1FabricationMenu : Es1Menu {
 				SetState(BuildButton, AffordableState());
 				MarkPanel();
 				break;
-			case BuildButton:
-				BuildOrScrap();
-				MarkPanel();
-				break;
 			case Done:
 				Context.Mission.SaveCurrentRecord();
 				break;
 		}
+	}
+
+	/// <summary>2001's case (<c>00030c86</c>): <see cref="BuildOrScrap"/>, which waits, and the panel marked; any other <see cref="OnMessage"/>.</summary>
+	public override IEnumerable<Es1ShellWait> OnMessageWaiting(StrongBox<Es1MenuMessage> message) =>
+		message.Value.Target == BuildButton ? BuildAndMark() : base.OnMessageWaiting(message);
+
+	/// <summary><see cref="BuildOrScrap"/>, then the panel marked.</summary>
+	private IEnumerable<Es1ShellWait> BuildAndMark() {
+		foreach (var wait in BuildOrScrap()) {
+			yield return wait;
+		}
+
+		MarkPanel();
 	}
 
 	/// <summary>Slot <c>+4</c>, <c>FabricationMenu_Dtor</c> (<c>00030910</c>): <see cref="Es1MenuBanks.ChassisArt"/> destroyed (<c>GLBitmapArray_Dtor</c>(array, 3)), the base vtables stored and the menu freed.</summary>
@@ -138,26 +149,27 @@ public sealed class Es1FabricationMenu : Es1Menu {
 	/// (<see cref="Es1HangarBay.BuildIntoSelected"/>), BUILD given line <c>0xcd</c>, SCRAP, and both arrows made inactive;
 	/// with one, the selected HERC, the marked one, scrapped (<see cref="Es1HangarBay.ScrapSelectedHerc"/>), the draw page
 	/// wiped onto the visible one (<see cref="Es1ScreenBlinds.Copy"/>(8, the visible page, the draw page)), BUILD given
-	/// line <c>0xce</c>, BUILD, and both arrows made up. A handler is no iterator: the scrap's and the wipe's waits, the
-	/// frame's, are passed over, as <see cref="Es1ScrapAlert"/>'s are. With no bay nothing is built, scrapped or wiped, an
-	/// engine guard.
+	/// line <c>0xce</c>, BUILD, and both arrows made up. The waits are the scrap's and the wipe's. With no bay nothing is
+	/// built, scrapped or wiped, an engine guard.
 	/// </summary>
-	private void BuildOrScrap() {
+	private IEnumerable<Es1ShellWait> BuildOrScrap() {
 		var bay = Bay;
 		if (Context.Mission.Hangar?.HasMarkedHerc() != true) {
 			bay?.BuildIntoSelected(Context.Globals.FabricationChassis);
 			SetText(BuildButton, ScrapLine);
 			SetState(PrevChassis, Es1DUIControl.Inactive);
 			SetState(NextChassis, Es1DUIControl.Inactive);
-			return;
+			yield break;
 		}
 
 		if (bay != null) {
-			foreach (var _ in bay.ScrapSelectedHerc()) {
+			foreach (var wait in bay.ScrapSelectedHerc()) {
+				yield return wait;
 			}
 
 			var display = bay.Surface.Display;
-			foreach (var _ in bay.Blinds.Copy(8, display.VisiblePage, display.DrawPage)) {
+			foreach (var wait in bay.Blinds.Copy(8, display.VisiblePage, display.DrawPage)) {
+				yield return wait;
 			}
 		}
 

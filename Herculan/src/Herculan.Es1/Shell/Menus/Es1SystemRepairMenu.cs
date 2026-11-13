@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using HercWorks.Core.Data.File.Dat.Shell;
 using Herculan.Engine.Settings;
 using Herculan.Es1.Settings;
@@ -132,7 +133,7 @@ public sealed class Es1SystemRepairMenu : Es1Menu {
 	/// and 107 <see cref="Raise"/> and <see cref="Lower"/>; 101 and 102 (<c>00030224</c>, <c>00030270</c>) 1921's previous
 	/// or next line, then <see cref="SelectItem"/>; 1900 <see cref="Proceed"/>; 99 <see cref="CancelChanges"/>. Retail
 	/// reads a missing list's slot through the −1 index; a missing list is skipped here, and the line read first is the
-	/// item, engine guards.
+	/// item, engine guards. 1900's case, which waits, is <see cref="OnMessageWaiting"/>'s.
 	/// </summary>
 	public override void OnMessage(ref Es1MenuMessage message) {
 		var items = FindList(ItemList);
@@ -163,9 +164,6 @@ public sealed class Es1SystemRepairMenu : Es1Menu {
 			case NextItem:
 				items?.SelectNext();
 				SelectItem();
-				break;
-			case Es1RepairMenu.Screen:
-				Proceed();
 				break;
 			case Cancel:
 				CancelChanges(ref message);
@@ -294,14 +292,14 @@ public sealed class Es1SystemRepairMenu : Es1Menu {
 	/// PROCEED's case (<c>000302bc</c>) (docs/es1/shell/repair-and-build.md#cancel-and-proceed): nothing when
 	/// <c>Career_Salvage</c> equals <see cref="OpenedSalvage"/>; otherwise the item set to
 	/// <see cref="Es1RepairCosts.TargetForLevel"/> of the level STATUS shows, unless <see cref="ProceedKeepsLevels"/> is
-	/// set, and the bay shown again (<see cref="Es1HangarBay.ShowSlot"/>(<c>Hangar_SelectedSlot</c>)), its waits passed
-	/// over as REPAIR ALL's are. The target stays 1900, REPAIR. With no STATUS no status is set, and with no bay or hangar
-	/// nothing is shown, engine guards.
+	/// set, and the bay shown again (<see cref="Es1HangarBay.ShowSlot"/>(<c>Hangar_SelectedSlot</c>)), whose waits are its
+	/// scripts'. The target stays 1900, REPAIR. With no STATUS no status is set, and with no bay or hangar nothing is
+	/// shown, engine guards.
 	/// </summary>
-	private void Proceed() {
+	private IEnumerable<Es1ShellWait> Proceed() {
 		var mission = Context.Mission;
 		if (mission.Roster.Salvage == OpenedSalvage) {
-			return;
+			yield break;
 		}
 
 		if (!ProceedKeepsLevels && FindList(StatusList) is { } status && SelectedHerc is { } herc) {
@@ -309,10 +307,15 @@ public sealed class Es1SystemRepairMenu : Es1Menu {
 		}
 
 		if (Bay is { } bay && mission.Hangar is { } hangar) {
-			foreach (var _ in bay.ShowSlot(hangar.SelectedSlot)) {
+			foreach (var wait in bay.ShowSlot(hangar.SelectedSlot)) {
+				yield return wait;
 			}
 		}
 	}
+
+	/// <summary>1900's case, <see cref="Proceed"/>, which waits; any other <see cref="OnMessage"/>.</summary>
+	public override IEnumerable<Es1ShellWait> OnMessageWaiting(StrongBox<Es1MenuMessage> message) =>
+		message.Value.Target == Es1RepairMenu.Screen ? Proceed() : base.OnMessageWaiting(message);
 
 	/// <summary>
 	/// CANCEL's case (<c>00030377</c>) (docs/es1/shell/repair-and-build.md#cancel-and-proceed): the current pilot's share

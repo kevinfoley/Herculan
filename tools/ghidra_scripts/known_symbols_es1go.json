@@ -7783,13 +7783,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MTBmpButton_Ctor",
-      "description": "(this, text, id, key, rect) in stack order, callee-cleaned: a 0xb1-byte button, allocated when this is 0, over MTButton_Ctor (0001cde8)(this, id, key, text, rect); the vtable 0007f24a at +0x20 and the rect's first point at +0x95. By the key, a scan code, copies frame pointers of res32\\corners.dba's array (000ab4ee, its +8) to +0xa5 and +0xad (a) and +0xa9 (b): 0x48 and 0x49 frames 20, 22; 0x4a 29, 31; 0x4b 25, 27; 0x4d 24, 26; 0x4e 28, 30; 0x50 and 0x51 21, 23. Ids 1503, 1504, 1505 and 1506 take 36/37, 38/39, 40/41 and 42/43 and call DUIControl_SetHitMode (0001a4f4)(this, 1); 109 takes 34/35, 108 32/33, 2003 44/46 and 2004 45/47. Any other key looks the id up among the four at 0007f2c4 and jumps through the table beside them. Zeroes the word +0x19 and the byte +0x1f.",
+      "description": "(this, text, id, key, rect) in stack order, callee-cleaned: a 0xb1-byte button, allocated when this is 0, over MTButton_Ctor (0001cde8)(this, id, key, text, rect); the vtable 0007f24a at +0x20 and the rect's first point at +0x95. By the key, a scan code, copies frame pointers of res32\\corners.dba's array (000ab4ee, its +8) to +0xa5 and +0xad (a) and +0xa9 (b): 0x48 and 0x49 frames 20, 22; 0x4a 29, 31; 0x4b 25, 27; 0x4d 24, 26; 0x4e 28, 30; 0x50 and 0x51 21, 23. Ids 1503, 1504, 1505 and 1506 take 36/37, 38/39, 40/41 and 42/43 and call DUIControl_SetHitMode (0001a4f4)(this, 1); 109 takes 34/35, 108 32/33, 2003 44/46 and 2004 45/47. Any other key looks the id up among the four at 0007f2c4 (1806, 2003, 1807, 2004) and jumps through the table at 0007f2d4: 1806 and 2003 to 0001d97a, frames 48/50/51 at +0xa5/+0xa9/+0xad and the corner +0x95, +0x99 each less 1; 1807 and 2004 to 0001d9f9 (undefined in Ghidra), frames 48/49/51 and the corner x less 27 and y less 1; both then store the corner's x in the pens' x +0x7c, +0x84, +0x8c, lower +0x88 by 1 and copy +0x80 to +0x90. Zeroes the word +0x19 and the byte +0x1f.",
       "source": "ES1GO decompile at 0001d47d",
       "verified": {
         "bytes": "0001d47d+1552",
         "sha1": "786c90492188",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {

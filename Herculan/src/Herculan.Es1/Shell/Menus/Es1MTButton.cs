@@ -154,8 +154,11 @@ public sealed class Es1MTBmpButton : Es1MTButton {
 	/// <c>MTBmpButton_Ctor</c> (<c>0001d47d</c>)(button, <paramref name="text"/>, <paramref name="id"/>,
 	/// <paramref name="key"/>, <paramref name="rect"/>): <c>MTButton_Ctor</c>, the rect's corner at <c>+0x95</c>, and by
 	/// the key the frames of <c>res32\corners.dba</c> (<c>000ab4ee</c>): frame <i>a</i> for the up and inactive states,
-	/// <i>b</i> for the pushed one; ids 1503 to 1506 also call <see cref="Es1DUIControl.SetHitShape"/>(1). The state and
-	/// <see cref="Es1DUIControl.Changed"/> cleared.
+	/// <i>b</i> for the pushed one; ids 1503 to 1506 also call <see cref="Es1DUIControl.SetHitShape"/>(1). A key outside
+	/// the table takes frames only for ARMING's POINTS and HERCS arrows (docs/es1/shell/menu-controls.md#buttons), each
+	/// pair drawn as one plate: frame 48 up, 50 or 49 pushed, 51 inactive, the corner moved up 1 and left 1 or 27, and the
+	/// three pens put at the new corner's x, the pushed one on the up one's row, the inactive one the up one's. The state
+	/// and <see cref="Es1DUIControl.Changed"/> cleared.
 	/// </summary>
 	public Es1MTBmpButton(Es1ShellData data, string? text, short id, byte key, Es1Rect rect)
 			: base(data, id, key, text, rect) {
@@ -177,14 +180,30 @@ public sealed class Es1MTBmpButton : Es1MTButton {
 			if (id is >= 1503 and <= 1506) {
 				SetHitShape(1);
 			}
-		} else if (id is 1806 or 2003 or 1807 or 2004) {
-			// PLACEHOLDER: the four ids at 0007f2c4 jump to code Ghidra left undefined (0001d97a, 0001d9f9), unread; their
-			// menus are later modules' (dlg-menu-dialogs.md's Open). The button keeps no frames and draws only its text.
+		} else if (id is PrevPoints or PrevHercs or NextPoints or NextHercs) {
+			// 0001d95f: the id among the four at 0007f2c4; 0001d97a for 1806 and 2003, 0001d9f9 for 1807 and 2004.
+			bool next = id is NextPoints or NextHercs;
+			Frames[0] = Es1CornerFrame.Frame(data.Corners, PairUpFrame);
+			Frames[1] = Es1CornerFrame.Frame(data.Corners, next ? NextPushedFrame : PrevPushedFrame);
+			Frames[2] = Es1CornerFrame.Frame(data.Corners, PairInactiveFrame);
+			Corner = (rect.X0 - (next ? NextPairOffset : 1), rect.Y0 - 1);
+			Points[0] = (Corner.X, Points[0].Y);
+			Points[1] = (Corner.X, Points[1].Y - 1);
+			Points[2] = Points[0];
 		}
 
 		State = Up;
 		Changed = false;
 	}
+
+	/// <summary>ARMING's &lt; POINTS, &lt; HERCS, POINTS > and HERCS >, the ids at <c>0007f2c4</c>.</summary>
+	private const short PrevPoints = 1806, PrevHercs = 2003, NextPoints = 1807, NextHercs = 2004;
+
+	/// <summary>The <c>res32\corners.dba</c> frames of the POINTS and HERCS plates: up, a previous arrow pushed, a next arrow pushed, inactive.</summary>
+	private const int PairUpFrame = 48, PrevPushedFrame = 50, NextPushedFrame = 49, PairInactiveFrame = 51;
+
+	/// <summary>How far left a next arrow's corner moves, onto its plate's corner: 27.</summary>
+	private const int NextPairOffset = 27;
 
 	/// <summary><c>+0x95</c>, <c>+0x99</c>: the rect's corner, relative to the window, where the frame is drawn.</summary>
 	public (int X, int Y) Corner { get; }

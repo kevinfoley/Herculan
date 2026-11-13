@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Data.File.Dyn;
@@ -116,8 +117,37 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 	/// <summary>
 	/// Slot <c>+8</c>, <c>CrewAssignMenu_OnMessage</c> (<c>0002d19e</c>) (docs/es1/shell/hangar.md#the-buttons): the
 	/// target looked up among the eleven ids at <c>00080cd0</c> (cases at <c>00080cfc</c>); nothing for any other id. Of the
-	/// targets only 1700, which ACCEPT's case also sets, is a screen.
+	/// targets only 1700, which ACCEPT's case also sets, is a screen. ACCEPT's case, which waits, is
+	/// <see cref="OnMessageWaiting"/>'s.
 	/// </summary>
+	public override IEnumerable<Es1ShellWait> OnMessageWaiting(StrongBox<Es1MenuMessage> message) =>
+		message.Value.Target == Accept ? AcceptCrew(message) : base.OnMessageWaiting(message);
+
+	/// <summary>
+	/// ACCEPT's case (<c>0002d284</c>): the target 1700; <c>CareerRecord_SaveCurrent</c>; the player's entry made the current
+	/// pilot; <c>HangarBay_AssignScripts</c> (<c>000122e0</c>), whose waits are its scripts'; and the slot the screen opened
+	/// with selected again.
+	/// </summary>
+	private IEnumerable<Es1ShellWait> AcceptCrew(StrongBox<Es1MenuMessage> message) {
+		var hangar = Hangar;
+		message.Value = message.Value with { Target = Es1ServiceBayMenu.Screen };
+		Context.Mission.SaveCurrentRecord();
+		if (hangar != null && _record != null) {
+			_record.SelectPilot(_record.PlayerEntry, hangar);
+		}
+
+		if (Context.Screens.Bay is { } bay) {
+			foreach (var wait in bay.AssignScripts()) {
+				yield return wait;
+			}
+		}
+
+		if (hangar != null) {
+			hangar.SelectedSlot = OpenedSlot;
+		}
+	}
+
+	/// <inheritdoc cref="OnMessageWaiting"/>
 	public override void OnMessage(ref Es1MenuMessage message) {
 		var hangar = Hangar;
 		switch (message.Target) {
@@ -149,26 +179,6 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 					for (int i = 0; i < Es1CareerRecord.PilotCount; i++) {
 						_record.Pilots[i].Slot = OpenedSlots[i];
 					}
-				}
-
-				break;
-			case Accept:
-				// 0002d284.
-				message = message with { Target = Es1ServiceBayMenu.Screen };
-				Context.Mission.SaveCurrentRecord();
-				if (hangar != null && _record != null) {
-					_record.SelectPilot(_record.PlayerEntry, hangar);
-				}
-
-				if (Context.Screens.Bay is { } bay) {
-					// HangarBay_AssignScripts (000122e0). A handler is no iterator; a fade's retrace waits in its script runs are
-					// passed over, as Es1ShellBackdrop.Show passes them.
-					foreach (var _ in bay.AssignScripts()) {
-					}
-				}
-
-				if (hangar != null) {
-					hangar.SelectedSlot = OpenedSlot;
 				}
 
 				break;

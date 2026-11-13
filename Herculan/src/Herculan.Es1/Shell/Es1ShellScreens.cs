@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Content;
@@ -875,7 +876,15 @@ public sealed class Es1ShellScreens {
 			yield break;
 		}
 
-		CurrentMenu?.OnMessage(ref message);
+		if (CurrentMenu is { } handler) {
+			var box = new StrongBox<Es1MenuMessage>(message);
+			foreach (var wait in handler.OnMessageWaiting(box)) {
+				yield return wait;
+			}
+
+			message = box.Value;
+		}
+
 		short target = message.Target;
 		if (target == BackTarget) {
 			bool fromWarMap = PreviousScreen is 1500 or 1501 && MissionMap == null;
