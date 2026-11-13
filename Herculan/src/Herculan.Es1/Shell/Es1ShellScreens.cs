@@ -645,7 +645,8 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_DrawScreen</c> (<c>0003c1b7</c>) (docs/es1/shell/menus.md#drawing-a-screen), while
 	/// <see cref="PageShown"/> is set: <see cref="Es1MenuGlobals.InputReady"/> cleared and the cursor taken off; with
-	/// <see cref="DrawsBackdrop"/> set, the <c>.ANM</c> when <see cref="AnmMode"/> is 2, then the backdrop copied onto the
+	/// <see cref="DrawsBackdrop"/> set, the draw and visible pages cleared to color 0 when <see cref="AnmMode"/> is 0 and
+	/// the screen is not 1000, the <c>.ANM</c> when <see cref="AnmMode"/> is 2, then the backdrop copied onto the
 	/// draw page (<see cref="Es1ShellBackdrop.Draw"/>) and, on backdrop 4000, the group's scripts played and the player's
 	/// bay shown (<see cref="Es1HangarBay.ShowPlayerBay"/>), on any other the scripts run (<see cref="Es1HangarBay.RunScripts"/>);
 	/// with it clear, on screens 1700 and 1710, the player's bay shown; with a current menu, the source and draw pages set to page 2, the
@@ -671,8 +672,10 @@ public sealed class Es1ShellScreens {
 		int keptDraw = display.DrawPage, keptSource = display.SourcePage;
 		if (DrawsBackdrop) {
 			if (AnmMode == 0 && CurrentScreen != MainMenuScreen) {
-				// The raster slot 0008663c with (the draw page, 0) and (the visible page, 0). PLACEHOLDER: the slot is
-				// unread; a change to a screen with a new backdrop and no .ANM reaches it, as the later modules' screens do.
+				// 0003c260 and 0003c287: the raster slot 0008663c, VGA8_ClearPage, with (the draw page, 0) and (the visible
+				// page, 0), both read at entry, so the old picture is not shown under the palette the next frame uploads.
+				display.ClearPage(keptDraw, 0);
+				display.ClearPage(display.VisiblePage, 0);
 			}
 
 			if (AnmMode == 2) {
