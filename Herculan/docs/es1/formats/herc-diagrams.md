@@ -43,7 +43,20 @@ mount count x {
 }
 ```
 
-Each retail file's mount count is its chassis's count from the table at `000803c8`.
+Each retail file's mount count is its chassis's count from the table at `000803c8`, and every mount's first record is the empty mount, weapon 17 with frame 0.
+
+Six of the retail files hold records for weapon 5, the grenade launcher no HERC can be fitted with ([cut content](../cut-content.md#weapons)), always with the highest frames its mounts' records name:
+
+| Chassis | Mounts | Frames | `WEP1` | `OUTL` |
+|---|---|---|---|---|
+| 0 `ROAD.DAT` | 2 | 9 | 32×21 | 32×21 |
+| 1 `GUNS.DAT` | 2 | 12 | 32×23 | 32×21 |
+| 3 `TOMA.DAT` | 2 | 27 | 32×19 | 32×21 |
+| 4 `PATR.DAT` | 4 | 27 | 16×12 | 24×15 |
+| 5 `PANT.DAT` | 3, 5, 6 | 42, 43, 44 | 32×18, 16×18, 16×19 | 32×19, 16×19, 16×17 |
+| 6 `HERC.DAT` | 2, 3, 4 | 48, 49, 50 | past the bank's 48 frames | 32×23, 32×19, 32×22 |
+
+Each `WEP1` picture is a box launcher with a square muzzle, and matches no other frame of its bank. No `WEPD` bank holds the damaged picture: frame − 1 is the bank's frame count or more on all six. `RAPT.DAT` and `COLO.DAT` hold no weapon 5 record.
 
 `HercLayout_Load` (`00021d0c`) opens each of the eight files through `VolRStream_CtorFromPath`, reads the mount count into the word at `000aae0e` + 6 × chassis and an array of that many 6-byte mounts into the dword at `000aae0a` + 6 × chassis, and for each mount reads its record count into the mount's `+4` and makes an array of that many 20-byte records (`HercLayout_RecordCtor`, `00021f71`) at its `+0`. A record is the weapon at `+0`, the frame at `+2`, and the two points as `int32` pairs at `+4` and `+0xc`, each coordinate sign-extended. It destroys each stream through its vtable. `HercLayout_Free` frees the record arrays and the mount arrays.
 
