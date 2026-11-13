@@ -42,7 +42,20 @@ public sealed class Es1ShellScreens {
 		_lipSync = lipSync;
 		MapMouse = new Es1ShellMouseQueue(devices.Mouse, devices.Display.Cursor, globals.Widgets);
 		_controls = new Es1ShellControls(devices, this);
+		_anm = new Es1AnmPlayer(devices.Display, content, devices.Sound, devices.WaitTicks);
 	}
+
+	private readonly Es1AnmPlayer _anm;
+
+	/// <summary>
+	/// <c>Anm_Play</c>(1, <paramref name="soundIndex"/>, <see cref="AnmName"/>) (<see cref="Es1AnmPlayer.Play"/>) with
+	/// <c>Shell_SoundOption</c>, which reads 0 before the first screen, an engine guard, as does a name not set.
+	/// </summary>
+	private IEnumerable<Es1ShellWait> PlayAnm(short soundIndex) =>
+		AnmName is { } name ? _anm.Play(1, soundIndex, name, _menuContext?.Data.SoundOption ?? 0) : [];
+
+	/// <summary>The sounds of the two animations, name indexes of <see cref="Es1ShellSound.Names"/>: <c>res32\menuclsa.raw</c> and <c>res32\menuopn2.raw</c>.</summary>
+	private const short CloseSound = 0xa, OpenSound = 0xb;
 
 	/// <summary><c>Shell_PollInput</c>, which CONTROLS' panel reads; the host sets it to the frame's (<see cref="Es1ShellFrame.PollInput"/>).</summary>
 	public Func<Es1LiveBlock>? PollInput { get; set; }
@@ -663,7 +676,10 @@ public sealed class Es1ShellScreens {
 			}
 
 			if (AnmMode == 2) {
-				// PLACEHOLDER: Anm_Play(1, 0xa, AnmName); the shell has no .ANM player yet (docs/es1/formats/anm-animation.md).
+				foreach (var wait in PlayAnm(CloseSound)) {
+					yield return wait;
+				}
+
 				AnmMode = 0;
 			}
 
@@ -701,13 +717,16 @@ public sealed class Es1ShellScreens {
 		}
 
 		if (AnmMode == 1) {
-			// Palette_UploadWhole(0007fcd0) and 0007fcd4 cleared, then Anm_Play(1, 0xb, AnmName). PLACEHOLDER: the shell has
-			// no .ANM player yet (docs/es1/formats/anm-animation.md).
+			// Palette_UploadWhole(0007fcd0) and 0007fcd4 cleared, then Anm_Play(1, 0xb, AnmName).
 			if (_backdrop.Palette is { } palette) {
 				UploadPalette?.Invoke(palette);
 			}
 
 			_backdrop.PaletteDue = false;
+			foreach (var wait in PlayAnm(OpenSound)) {
+				yield return wait;
+			}
+
 			AnmMode = 0;
 		}
 

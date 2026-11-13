@@ -22777,7 +22777,7 @@
         "bytes": "0005afa8+315",
         "sha1": "ade9f74a3ad8",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
