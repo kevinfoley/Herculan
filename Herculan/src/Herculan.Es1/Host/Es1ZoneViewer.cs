@@ -382,11 +382,17 @@ public static class Es1ZoneViewer {
 			disposables.Add(models);
 			var projectileDraw = new Es1ProjectileDraw(gl, content, scene, world.Globals.Projectiles);
 			disposables.Add(projectileDraw);
-			var explosionDraw = new Es1ExplosionDraw(gl, content, scene, world.Globals.Explosions);
+			// The palette the effects' billboards are shown through, the zone's until the live one moves.
+			var billboardPalette = scene.Palette != null ? new PaletteTexture(gl, scene.Palette) : null;
+			if (billboardPalette != null) {
+				disposables.Add(billboardPalette);
+			}
+
+			var explosionDraw = new Es1ExplosionDraw(gl, content, scene, world.Globals.Explosions, billboardPalette);
 			disposables.Add(explosionDraw);
 			var debrisDraw = new Es1DebrisDraw(gl, scene, world.Globals.Debris, models);
 			disposables.Add(debrisDraw);
-			var smokeDraw = new Es1SmokeDraw(gl, content, scene, world.Globals.Smoke);
+			var smokeDraw = new Es1SmokeDraw(gl, content, scene, world.Globals.Smoke, billboardPalette);
 			disposables.Add(smokeDraw);
 			var flyerDraw = new Es1FlyerDraw(gl, scene, world.Globals.Flyers.Live, detail);
 			disposables.Add(flyerDraw);
@@ -424,7 +430,7 @@ public static class Es1ZoneViewer {
 				// The world's colours follow the live palette as the cockpit's do, rebuilt before a pass when it changed.
 				var liveMonitor = monitor;
 				var worldPalette = new Es1WorldPalette(sceneRenderer, shadeRamps, paletteRamp,
-					new[] { backdrop, missileHorizon }.OfType<Es1Backdrop>().ToArray(), liveMonitor);
+					new[] { backdrop, missileHorizon }.OfType<Es1Backdrop>().ToArray(), billboardPalette, liveMonitor);
 				monitor.WorldPass = (x, y, width, height) => {
 					worldPalette.Follow(liveMonitor);
 					DrawWorld(gl, sceneRenderer, spriteRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);

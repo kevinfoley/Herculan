@@ -33,9 +33,14 @@ namespace Herculan.Engine.Render;
 /// would reach <see cref="SpriteRenderer.UprightMaxPixels"/> pixels under a projection whose focal length is this many
 /// pixels. Null draws Earthsiege 2's.
 /// </param>
+/// <param name="PaletteHandle">
+/// Set when <paramref name="TextureHandle"/> is the bank's palette indices (<see cref="TextureAtlas.IndexPixels"/>): the
+/// palette each index is shown through at the draw (<see cref="PaletteTexture"/>), as an 8-bit screen shows a blitted
+/// byte through the live palette. Null draws the texture's own colors.
+/// </param>
 public readonly record struct SpriteBatch(
 	SpriteQuad[][] Sprites, TextureAtlas Atlas, uint TextureHandle, Matrix4x4 Transform, int Frame,
-	IDrawFiling? Filing = null, int? UprightFocalPixels = null);
+	IDrawFiling? Filing = null, int? UprightFocalPixels = null, uint? PaletteHandle = null);
 
 /// <summary>
 /// Draws <see cref="SpriteQuad"/> billboards, the flat camera-facing bitmaps that impact effects and
@@ -51,7 +56,8 @@ public readonly record struct SpriteBatch(
 /// either.</para>
 ///
 /// <para>Transparency is palette index 0, which the bank is decoded with — see
-/// <c>Scene.SceneModelLibrary</c>. Alpha is tested rather than blended, matching a rasterizer that
+/// <c>Scene.SceneModelLibrary</c>. A batch with a <see cref="SpriteBatch.PaletteHandle"/> samples the bank's indices
+/// and takes each color from that palette. Alpha is tested rather than blended, matching a rasterizer that
 /// either wrote a palette byte or skipped the pixel. Depth writes are off.</para>
 ///
 /// <para>The original paints each impact effect, fire or shot as one entry of its per-cell draw list
@@ -215,6 +221,10 @@ public sealed class SpriteRenderer : IDisposable {
 		var down = new Vector3(-unitUp.X, -unitUp.Y, 0f);
 
 		_shader.SetSamplerTexture("uTexture", batch.TextureHandle, 0);
+		_shader.SetInt("uIndexed", batch.PaletteHandle != null ? 1 : 0);
+		if (batch.PaletteHandle is { } palette) {
+			_shader.SetSamplerTexture("uPalette", palette, 1);
+		}
 
 		foreach (var quad in quads) {
 			DrawQuad(quad, batch.Atlas, batch.Transform, view, nearPlane, squash, right, down, batch.UprightFocalPixels);

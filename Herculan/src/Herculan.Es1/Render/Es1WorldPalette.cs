@@ -15,29 +15,32 @@ namespace Herculan.Es1.Render;
 /// <para>What follows: the shaded faces' ramp table (<see cref="SurfaceRampTable"/>), the palette-by-row table every
 /// textured and solid face reads (<see cref="PaletteRampTable"/>), whose indices, the distance bands' ranges and the
 /// texture colour tables (docs/es1/rendering/polygon-shading.md#the-texture-colour-tables), stay as they were built, and
-/// the backdrop's ground (<see cref="Es1Backdrop.ShowIn"/>). What does not, each a PLACEHOLDER where it is built: the
-/// effects' billboards, the sky's bands, the skyline and the clouds.</para>
+/// the backdrop's ground (<see cref="Es1Backdrop.ShowIn"/>) and the palette the effects' billboards' indices are drawn
+/// through (<see cref="SpriteBatch.PaletteHandle"/>). What does not, each a PLACEHOLDER where it is built: the sky's
+/// bands, the skyline and the clouds.</para>
 /// </summary>
 public sealed class Es1WorldPalette {
 	private readonly SceneRenderer _renderer;
 	private readonly SurfaceRampTable? _shadeRamps;
 	private readonly PaletteRampTable? _paletteRamp;
 	private readonly IReadOnlyList<Es1Backdrop> _backdrops;
+	private readonly PaletteTexture? _billboards;
 	private int _shownVersion;
 	private int[] _shownColors;
 
 	/// <summary>
 	/// Keeps <paramref name="renderer"/>'s tables, <paramref name="shadeRamps"/> and <paramref name="paletteRamp"/> as it
-	/// was given them, and <paramref name="backdrops"/>' ground to <paramref name="monitor"/>'s live palette, which they
-	/// were built in. A shade table not built from palette indices (<see cref="SurfaceRampTable.CanRecolor"/>) is left as
-	/// it is.
+	/// was given them, <paramref name="backdrops"/>' ground and <paramref name="billboards"/>, the effects' billboards'
+	/// palette, to <paramref name="monitor"/>'s live palette, which they were built in. A shade table not built from
+	/// palette indices (<see cref="SurfaceRampTable.CanRecolor"/>) is left as it is.
 	/// </summary>
 	public Es1WorldPalette(SceneRenderer renderer, SurfaceRampTable? shadeRamps, PaletteRampTable? paletteRamp,
-			IReadOnlyList<Es1Backdrop> backdrops, Es1Monitor monitor) {
+			IReadOnlyList<Es1Backdrop> backdrops, PaletteTexture? billboards, Es1Monitor monitor) {
 		_renderer = renderer;
 		_shadeRamps = shadeRamps is { CanRecolor: true } ? shadeRamps : null;
 		_paletteRamp = paletteRamp;
 		_backdrops = backdrops;
+		_billboards = billboards;
 		_shownVersion = monitor.PaletteVersion;
 		_shownColors = Colors(monitor.Palette);
 	}
@@ -84,6 +87,8 @@ public sealed class Es1WorldPalette {
 		foreach (var backdrop in _backdrops) {
 			backdrop.ShowIn(live);
 		}
+
+		_billboards?.Show(live);
 	}
 
 	/// <summary>Each entry's color as one value, red in the low byte, or −1 where <paramref name="palette"/> lacks it.</summary>

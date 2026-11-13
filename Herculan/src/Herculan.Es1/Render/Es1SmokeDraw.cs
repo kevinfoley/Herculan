@@ -25,28 +25,28 @@ public sealed class Es1SmokeDraw : IDisposable {
 	private readonly GL _gl;
 	private readonly List<IDisposable> _owned = new();
 	private readonly Dictionary<TSObject, (GpuMesh?[] Cells, SpriteQuad[][] Sprites)> _roots = new(ReferenceEqualityComparer.Instance);
-	private readonly (TextureAtlas Atlas, uint Sprites, uint Faces)? _bank;
+	private readonly (TextureAtlas Atlas, uint Texture)? _bank;
+	private readonly PaletteTexture? _palette;
 	private readonly List<SceneItem> _items = new();
 	private readonly List<SpriteBatch> _batches = new();
 
-	/// <summary>Uploads <c>dba\smoke</c> and every cell of every root of <c>dts\smoke</c>, and pulls each root's billboards.</summary>
-	public Es1SmokeDraw(GL gl, GameContent content, Es1ZoneScene scene, Es1SmokePool pool) {
+	/// <summary>
+	/// Uploads <c>dba\smoke</c> and every cell of every root of <c>dts\smoke</c>, and pulls each root's billboards, which
+	/// are shown through <paramref name="palette"/>, the live palette; with none the bank is not uploaded.
+	/// </summary>
+	public Es1SmokeDraw(GL gl, GameContent content, Es1ZoneScene scene, Es1SmokePool pool, PaletteTexture? palette) {
 		_gl = gl;
 		_scene = scene;
 		_pool = pool;
-		if (scene.Palette != null && content.Read("dba", "SMOKE.DBA") is { } bytes
+		_palette = palette;
+		if (palette != null && content.Read("dba", "SMOKE.DBA") is { } bytes
 				&& new DynamixBitmapArrayTransformer().Parse(bytes) is { } bank
 				&& TextureAtlas.Build(bank, scene.Palette, transparentIndex0: true) is { } atlas) {
-			// PLACEHOLDER: palette index 0 left unpainted, as the impact effects' billboards leave it; what VGA_8's scaled
-			// blit, slot 29 (0008c744), does with it is unread (docs/es1/rendering/screen-pages.md#open).
-			// PLACEHOLDER: the billboards keep the colours of the palette they were built in, where retail's blit writes
-			// indices the live palette shows; the plan's hit flash covers them
-			// (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out).
-			var sprites = atlas.Upload(gl);
-			var faces = atlas.Upload(gl, indexed: true);
-			_owned.Add(sprites);
-			_owned.Add(faces);
-			_bank = (atlas, sprites.Handle, faces.Handle);
+			// The bank's indices, which the faces and the billboards both sample, index 0 left unpainted as the impact
+			// effects' is (Es1ExplosionDraw).
+			var texture = atlas.Upload(gl, indexed: true);
+			_owned.Add(texture);
+			_bank = (atlas, texture.Handle);
 		}
 
 		foreach (var root in pool.Shapes) {
@@ -104,15 +104,15 @@ public sealed class Es1SmokeDraw : IDisposable {
 			var transform = WorldScale.ToRenderMatrix(frame);
 			int cell = ball.CellFrame;
 			if (cell >= 0 && cell < root.Cells.Length && root.Cells[cell] is { } mesh) {
-				_items.Add(new SceneItem(mesh, transform, _bank?.Faces) {
+				_items.Add(new SceneItem(mesh, transform, _bank?.Texture) {
 					RampBlock = flatRamps ? shading.FlatBlock : shading.Block(Es1SmokeBall.TypeTag, distance),
 					LightAnchor = (ball.Position, (shape as TSBasePart)?.Radius ?? 0),
 				});
 			}
 
 			if (_bank is { } bank && root.Sprites.Length > 0) {
-				_batches.Add(new SpriteBatch(root.Sprites, bank.Atlas, bank.Sprites, transform, cell,
-					UprightFocalPixels: 1 << focalShift));
+				_batches.Add(new SpriteBatch(root.Sprites, bank.Atlas, bank.Texture, transform, cell,
+					UprightFocalPixels: 1 << focalShift, PaletteHandle: _palette?.Handle));
 			}
 		}
 	}

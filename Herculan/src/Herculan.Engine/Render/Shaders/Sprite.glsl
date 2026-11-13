@@ -42,6 +42,9 @@ void main() {
 #ifdef FRAGMENT_SHADER
 
 uniform sampler2D uTexture;
+// With uIndexed the texel's red is a palette index, shown through uPalette's row of 256 entries.
+uniform sampler2D uPalette;
+uniform bool uIndexed;
 uniform usampler2D uPaintRank;
 uniform bool uPaintRankTest;
 uniform uint uEntryRank;
@@ -60,7 +63,10 @@ void main() {
 		discard;
 	}
 
-	FragColor = vec4(texel.rgb, 1.0);
+	vec3 color = uIndexed
+		? texelFetch(uPalette, ivec2(int(floor(texel.r * 255.0 + 0.5)), 0), 0).rgb
+		: texel.rgb;
+	FragColor = vec4(color, 1.0);
 }
 
 #endif

@@ -16,7 +16,8 @@ namespace Herculan.Es1.Render;
 /// <c>g_ExplosionPool</c> whose position's Z is not negative and that lies within its type tag's last distance band
 /// (<see cref="Es1Shading.IsBeyondLastBand"/>), drawn as <c>TS_OBJ</c>'s render draws it on the cell its row's sequence
 /// stands on: a root's bitmap parts as Earthsiege's upright billboards out of the root's <c>dba\explo&lt;n&gt;</c> bank
-/// (<see cref="SpriteBatch.UprightFocalPixels"/>), and any faces as the zone's shapes draw theirs, in the ramps of its
+/// (<see cref="SpriteBatch.UprightFocalPixels"/>), their indices shown through the live palette
+/// (<see cref="Es1WorldPalette"/>), and any faces as the zone's shapes draw theirs, in the ramps of its
 /// tag's band, with the effect lights picked by its position and its shape's radius. Each live effect's ground shape is
 /// drawn with the shadows within <see cref="Es1WorldDraw.ShadowRange"/> of the camera, on its sequence 0's cell, its Z
 /// set to 0 (<c>FlatObj_DrawExploCopy</c>, <c>ES1DBSIM 00005ca8</c>).
@@ -28,7 +29,8 @@ public sealed class Es1ExplosionDraw : IDisposable {
 	private readonly List<IDisposable> _owned = new();
 	private readonly GpuMesh?[][] _cells;
 	private readonly SpriteQuad[][][] _sprites;
-	private readonly (TextureAtlas Atlas, uint Sprites, uint Faces)?[] _banks = new (TextureAtlas, uint, uint)?[Es1ExplosionPool.BankCount];
+	private readonly (TextureAtlas Atlas, uint Texture)?[] _banks = new (TextureAtlas, uint)?[Es1ExplosionPool.BankCount];
+	private readonly PaletteTexture? _palette;
 	private readonly GpuMesh?[] _groundCells = [];
 	private readonly List<SceneItem> _items = new();
 	private readonly List<SceneItem> _groundItems = new();
@@ -36,27 +38,24 @@ public sealed class Es1ExplosionDraw : IDisposable {
 
 	/// <summary>
 	/// Uploads <c>dba\explo0</c> to <c>dba\explo8</c>, every cell of every root of <c>dts\explos</c> and the ground
-	/// shapes' root of the flat set (<see cref="Es1FlatObjPool.Shapes"/>), and pulls each root's billboards.
+	/// shapes' root of the flat set (<see cref="Es1FlatObjPool.Shapes"/>), and pulls each root's billboards, which are
+	/// shown through <paramref name="palette"/>, the live palette; with none no bank is uploaded.
 	/// </summary>
-	public Es1ExplosionDraw(GL gl, GameContent content, Es1ZoneScene scene, Es1ExplosionPool pool) {
+	public Es1ExplosionDraw(GL gl, GameContent content, Es1ZoneScene scene, Es1ExplosionPool pool, PaletteTexture? palette) {
 		_gl = gl;
 		_scene = scene;
 		_pool = pool;
+		_palette = palette;
 
 		for (int b = 0; b < _banks.Length; b++) {
-			if (scene.Palette != null && content.Read("dba", $"EXPLO{b}.DBA") is { } bytes
+			if (palette != null && content.Read("dba", $"EXPLO{b}.DBA") is { } bytes
 					&& new DynamixBitmapArrayTransformer().Parse(bytes) is { } bank
 					&& TextureAtlas.Build(bank, scene.Palette, transparentIndex0: true) is { } atlas) {
-				// PLACEHOLDER: palette index 0 left unpainted, as ES2's billboard leaves it; what VGA_8's scaled blit,
-				// slot 29 (0008c744), does with it is unread (docs/es1/rendering/screen-pages.md#open).
-				// PLACEHOLDER: the billboards keep the colours of the palette they were built in, where retail's blit
-				// writes indices the live palette shows; the plan's hit flash covers them
-				// (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out).
-				var sprites = atlas.Upload(gl);
-				var faces = atlas.Upload(gl, indexed: true);
-				_owned.Add(sprites);
-				_owned.Add(faces);
-				_banks[b] = (atlas, sprites.Handle, faces.Handle);
+				// The bank's indices, which the faces and the billboards both sample. Index 0 is left unpainted: VGA_8's
+				// scaled blit writes only the non-zero bytes (docs/es1/rendering/screen-pages.md#the-simulator).
+				var texture = atlas.Upload(gl, indexed: true);
+				_owned.Add(texture);
+				_banks[b] = (atlas, texture.Handle);
 			}
 		}
 
@@ -81,7 +80,7 @@ public sealed class Es1ExplosionDraw : IDisposable {
 	/// <summary>The effects' billboards the last <see cref="Update"/> placed.</summary>
 	public IReadOnlyList<SpriteBatch> Sprites => _batches;
 
-	private (TextureAtlas Atlas, uint Sprites, uint Faces)? Bank(int root) =>
+	private (TextureAtlas Atlas, uint Texture)? Bank(int root) =>
 		root < _pool.RootBanks.Count && _pool.RootBanks[root] is { } bank && bank >= 0 && bank < _banks.Length ? _banks[bank] : null;
 
 	/// <summary>One mesh per cell frame of <paramref name="root"/>, as many as its longest sequence holds; null for a cell with no faces.</summary>
@@ -139,15 +138,15 @@ public sealed class Es1ExplosionDraw : IDisposable {
 			int cell = effect.DrawnCellFrame;
 			var bank = Bank(root);
 			if (cell >= 0 && cell < _cells[root].Length && _cells[root][cell] is { } mesh) {
-				_items.Add(new SceneItem(mesh, transform, bank?.Faces) {
+				_items.Add(new SceneItem(mesh, transform, bank?.Texture) {
 					RampBlock = flatRamps ? shading.FlatBlock : shading.Block(effect.Tag, distance),
 					LightAnchor = (effect.Position, (effect.Shape as TSBasePart)?.Radius ?? 0),
 				});
 			}
 
 			if (bank is { } sprites && _sprites[root].Length > 0) {
-				_batches.Add(new SpriteBatch(_sprites[root], sprites.Atlas, sprites.Sprites, transform, cell,
-					UprightFocalPixels: 1 << focalShift));
+				_batches.Add(new SpriteBatch(_sprites[root], sprites.Atlas, sprites.Texture, transform, cell,
+					UprightFocalPixels: 1 << focalShift, PaletteHandle: _palette?.Handle));
 			}
 		}
 	}
