@@ -6,8 +6,8 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The floating "Terrain" window, opened from Mission Settings &gt; Terrain: the zone the mission is played in, with its
-/// size and the retail missions played in it (<see cref="ZoneCatalog"/>), then replacing the mission's terrain from an
-/// image and exporting its heightmap (<see cref="TerrainView"/>).
+/// size and the retail missions played in it (<see cref="ZoneCatalog"/>), then its heightmap, cell size and highest point,
+/// replacing the mission's terrain from an image and exporting its heightmap (<see cref="TerrainView"/>).
 /// </summary>
 internal sealed class MissionTerrainWindow {
 	// Where it first opens and how big, in pixels on a 100% display (ScaledImGui.Scaled).

@@ -92,7 +92,7 @@ internal sealed class EditorMission {
 			new MissionTextView(Texts), new DebriefView(Debrief));
 		TerrainWindow = new MissionTerrainWindow(
 			() => Terrain.OwnZone is { } own ? ZoneCatalog.DescribeOwn(Zone, own) : zones.Describe(Zone),
-			new TerrainView(Terrain, new TerrainImageForm("Replace terrain from", pictures), () => Name));
+			new TerrainView(Terrain, new TerrainImageForm("Replace terrain from", pictures), pictures, () => Name));
 		var catalog = new UnitTypeCatalog(content);
 		Properties = new PropertiesPanel(sceneIndex, Selection, source, Mover, Sides, Deleter, Members,
 			new SquadMachinePanel(Fitter, Squad, squad, Presets), new RosterFitView(Fitter, Types, TableEditor, catalog, Presets),
