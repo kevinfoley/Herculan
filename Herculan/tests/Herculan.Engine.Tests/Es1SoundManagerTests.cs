@@ -1,4 +1,5 @@
 using Herculan.Engine.Audio;
+using Herculan.Engine.Numerics;
 using Herculan.Es1.Sound;
 using Xunit;
 
@@ -75,6 +76,75 @@ public class Es1SoundManagerTests {
 		Assert.Equal(31, manager.Driver.CountBusyVoices());
 	}
 
+	/// <summary>
+	/// A placed sound at or past the hearing range takes volume 0 and its play starts no voice, while one within the range
+	/// starts one. Catches the range comparison inverted and the play's silent-volume test dropped.
+	/// </summary>
+	[Fact]
+	public void APlacedSoundPastTheHearingRangeDoesNotStart() {
+		var manager = Manager(("a", 10));
+		manager.UpdateListener(Transform3.Identity);
+		var far = manager.CreateObject(2, 1, 0)!;
+		var near = manager.CreateObject(2, 1, 0)!;
+		far.SetPosition(new Vec3i((int)Es1SoundManager.DefaultHearingRange * 2, 0, 0));
+		near.SetPosition(new Vec3i((int)Es1SoundManager.DefaultHearingRange / 2, 0, 0));
+
+		Assert.True(far.Play());
+		Assert.False(far.IsPlaying());
+		Assert.True(near.Play());
+		Assert.True(near.IsPlaying());
+		Assert.Equal(1, manager.Driver.CountBusyVoices());
+	}
+
+	/// <summary>
+	/// The placement's pan puts a sound on +x and one on −x on opposite sides of one straight ahead on y, +x lowest. Catches
+	/// the dot product taken with the wrong axis, which leaves all three alike, and its sign flipped.
+	/// </summary>
+	[Fact]
+	public void ThePansSideFollowsTheXOffset() {
+		var manager = Manager(("a", 10));
+		manager.UpdateListener(Transform3.Identity);
+		int d = (int)Es1SoundManager.DefaultHearingRange / 2;
+		var east = manager.CreateObject(2, 1, 0)!;
+		var ahead = manager.CreateObject(2, 1, 0)!;
+		var west = manager.CreateObject(2, 1, 0)!;
+		east.SetPosition(new Vec3i(d, 0, 0));
+		ahead.SetPosition(new Vec3i(0, d, 0));
+		west.SetPosition(new Vec3i(-d, 0, 0));
+
+		Assert.True(east.Pan < ahead.Pan && ahead.Pan < west.Pan, $"{east.Pan:x} {ahead.Pan:x} {west.Pan:x}");
+	}
+
+	/// <summary>
+	/// A voice line with speech off loads its script and reads no voice, and its start plays nothing; with speech on the same
+	/// line reads its voice and its start plays it. Catches the speech switch dropped from the load or the start, and the
+	/// script's load put under the switch.
+	/// </summary>
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void AVoiceLinePlaysItsVoiceOnlyWithSpeechOn(bool speech) {
+		var reads = new List<string>();
+		var backend = new EndlessBackend();
+		var sound = new Es1Sound { SpeechEnabled = speech };
+		var lines = new Es1VoiceLines();
+		sound.Init(Es1SoundDevices.ImageDefaults, false, lines, (folder, name) => {
+			reads.Add($"{folder}\\{name}".ToLowerInvariant());
+			return folder == "simvoice" ? new byte[10] : null;
+		}, backend);
+
+		var slot = lines.LoadLine("LINE", "P1_01000", 1, (folder, name) => {
+			reads.Add($"{folder}\\{name}".ToLowerInvariant());
+			return null;
+		});
+
+		Assert.NotNull(slot);
+		Assert.True(lines.Start(slot!));
+		Assert.Contains(@"snc\line.snc", reads);
+		Assert.Equal(speech, reads.Contains(@"simvoice\p1_01000.sfx"));
+		Assert.Equal(speech ? 1 : 0, sound.Manager!.Driver.CountBusyVoices());
+	}
+
 	/// <summary>A manager over <c>hmi\&lt;name&gt;.sfx</c> files of the given sizes, on a backend whose plays never end.</summary>
 	private static Es1SoundManager Manager(params (string Name, int Size)[] files) {
 		var sizes = files.ToDictionary(f => f.Name + ".sfx", f => f.Size);
@@ -85,10 +155,13 @@ public class Es1SoundManagerTests {
 		return manager;
 	}
 
-	/// <summary>A backend whose every play lasts until it is stopped.</summary>
-	private sealed class EndlessBackend : IAudioBackend {
+	/// <summary>A backend whose every play lasts until it is stopped, counting the plays started.</summary>
+	internal sealed class EndlessBackend : IAudioBackend {
 		private readonly HashSet<int> _playing = [];
 		private int _samples, _plays;
+
+		/// <summary>The plays started.</summary>
+		public int Starts => _plays;
 
 		public bool IsAvailable => true;
 		public int CreateSample(WaveSample sample) => _samples++;

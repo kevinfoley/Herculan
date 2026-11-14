@@ -64,6 +64,26 @@ public class Es1SoundFilesTests {
 		});
 	}
 
+	/// <summary>
+	/// The install's three HMI driver containers (docs/es1/formats/hmi-driver-container.md) walk the loader's layout and
+	/// write back byte for byte. Passes vacuously without the install's <c>SOS\</c>.
+	/// </summary>
+	[Theory]
+	[InlineData("HMIDET.386")]
+	[InlineData("HMIDRV.386")]
+	[InlineData("HMIMDRV.386")]
+	public void EveryDriverContainerRoundTrips(string name) {
+		for (var at = new DirectoryInfo(AppContext.BaseDirectory); at != null; at = at.Parent) {
+			string path = Path.Combine(at.FullName, "ES1", "SOS", name);
+			if (File.Exists(path)) {
+				byte[] bytes = File.ReadAllBytes(path);
+				var reader = new Es1HmiDriverContainerTransformer();
+				Assert.Equal(bytes, reader.Write(reader.Parse(bytes)!));
+				return;
+			}
+		}
+	}
+
 	private static bool HasExtension(VolEntry e, string extension) =>
 		e.FileName != null && e.FileName.Trim().EndsWith(extension, StringComparison.OrdinalIgnoreCase);
 

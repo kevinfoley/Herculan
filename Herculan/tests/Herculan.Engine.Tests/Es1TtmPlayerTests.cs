@@ -42,7 +42,7 @@ public class Es1TtmPlayerTests {
 	}
 
 	/// <summary>A <c>.TTM</c> file holding <paramref name="words"/> as its script, packed as literal runs.</summary>
-	private static byte[] File(ushort[] words, ushort pages) {
+	internal static byte[] File(ushort[] words, ushort pages) {
 		var script = new byte[words.Length * 2];
 		for (int i = 0; i < words.Length; i++) {
 			BinaryPrimitives.WriteUInt16LittleEndian(script.AsSpan(2 * i), words[i]);
