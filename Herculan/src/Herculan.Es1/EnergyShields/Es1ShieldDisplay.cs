@@ -108,7 +108,7 @@ public sealed class Es1ShieldDisplay {
 	/// <summary>
 	/// <c>Palette_InstallRange</c> (<c>00027e98</c>)(entries, count, first), through which the rings' colors reach the
 	/// live palette: the first entry and retail's palette dwords, red in the low byte, then green, blue and a flag byte of
-	/// 1. Null drops them, as before the host wires the monitor; the cockpit is built before it is, so the constructor's
+	/// 1. Null drops them, as before the host wires the presenter; the cockpit is built before it is, so the constructor's
 	/// install is dropped and the first view's paint makes it.
 	/// </summary>
 	public Action<int, IReadOnlyList<uint>>? InstallPaletteRange { get; set; }

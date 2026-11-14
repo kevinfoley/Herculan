@@ -67,11 +67,11 @@ public sealed class Es1CursorImage {
 /// <c>VGA_8</c>'s slots 30 and 31, <c>00088728</c> and <c>000887ff</c>, which draw it on the visible page and take it
 /// off again (docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines).
 ///
-/// <para>Retail draws the cursor into video memory on the page the monitor shows, the pixels under it saved and put back
-/// as it moves, so on the monitor it is the image over the picture at the position less the hotspot while it is shown.
-/// This engine draws it there in the monitor's present, over the window, in the live palette
-/// (<see cref="Es1Monitor"/>); the save-under is not kept. A page change hides and shows it around itself, which
-/// leaves it where it was on the monitor, so that is not kept either.</para>
+/// <para>Retail draws the cursor into video memory on the page on show, the pixels under it saved and put back
+/// as it moves, so on the screen it is the image over the picture at the position less the hotspot while it is shown.
+/// This engine draws it there as the presenter shows the screen, over the window, in the live palette
+/// (<see cref="Es1ScreenPresenter"/>); the save-under is not kept. A page change hides and shows it around itself, which
+/// leaves it where it was on the screen, so that is not kept either.</para>
 /// </summary>
 public sealed class Es1Cursor {
 	/// <summary><c>00098d68</c> and <c>00098d78</c>, the image and its hotspot.</summary>
@@ -89,7 +89,7 @@ public sealed class Es1Cursor {
 	/// <summary><c>VGA8_ShowPageIdle</c> (<c>00098d96</c>): clear while a page change runs; 1 in the image.</summary>
 	public bool ShowPageIdle { get; private set; } = true;
 
-	/// <summary>Where the image's top-left lies on the monitor while it is shown, the position less the hotspot; null when nothing is drawn.</summary>
+	/// <summary>Where the image's top-left lies on the screen while it is shown, the position less the hotspot; null when nothing is drawn.</summary>
 	public (int X, int Y)? DrawnAt =>
 		Shown && Image is { } image ? (Position.X - image.HotspotX, Position.Y - image.HotspotY) : null;
 

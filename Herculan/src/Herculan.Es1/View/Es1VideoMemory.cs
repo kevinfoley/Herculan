@@ -44,7 +44,7 @@ public interface IEs1WorldLayer {
 /// The simulator's display during a mission and the VGA memory it draws in (docs/es1/rendering/screen-pages.md#the-video-memory):
 /// a screen 640 pixels wide over the VGA's 256 KB, or the shell's 320 (<see cref="ShellWidth"/>), the four page origins, the display's page pair <c>+0x88</c>/<c>+0x8c</c>,
 /// its visible, source and draw pages <c>+0x34</c>, <c>+0x38</c> and <c>+0x3c</c>, and <c>VGA_8</c>'s page routines on
-/// them (docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines). The monitor shows the 320 × 200 window at
+/// them (docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines). The screen is the 320 × 200 window at
 /// the start address and pan <see cref="ShowPage"/> last wrote.
 ///
 /// <para>Retail keeps one store of palette indices. This engine keeps that store in <see cref="Cells"/>, where a cell
@@ -96,7 +96,7 @@ public sealed class Es1VideoMemory {
 	/// <summary>The rows <see cref="Cells"/> is laid out in, the partial last row included.</summary>
 	public int StoreRows { get; }
 
-	/// <summary>The monitor's window, one page: 320 × 200.</summary>
+	/// <summary>The screen's window, one page: 320 × 200.</summary>
 	public const int PageWidth = Es1CockpitViews.ScreenWidth;
 
 	/// <inheritdoc cref="PageWidth"/>
@@ -135,7 +135,7 @@ public sealed class Es1VideoMemory {
 	/// <summary>Where page <paramref name="page"/> lies now, the offset and pan <c>VGA8_SetPageOrigin</c> last stored for it.</summary>
 	public (int X, int Y) PageOrigin(int page) => _pageOrigins[page];
 
-	/// <summary><c>+0x88</c>: during a frame, the page on the monitor.</summary>
+	/// <summary><c>+0x88</c>: during a frame, the page on show.</summary>
 	public int PairVisible { get; set; }
 
 	/// <summary><c>+0x8c</c>: during a frame, the page drawn.</summary>
@@ -156,11 +156,11 @@ public sealed class Es1VideoMemory {
 	/// </summary>
 	public bool FlipWithoutPan { get; set; }
 
-	/// <summary>The cell the monitor's top-left pixel shows, as a linear address.</summary>
-	public int MonitorStart => Wrap(_startOffset + _pan);
+	/// <summary>The cell the screen's top-left pixel shows, as a linear address.</summary>
+	public int ShownStart => Wrap(_startOffset + _pan);
 
-	/// <summary>The monitor's top-left pixel as a column and row of the store.</summary>
-	public (int X, int Y) MonitorOrigin => (MonitorStart % ScreenWidth, MonitorStart / ScreenWidth);
+	/// <summary>The screen's top-left pixel as a column and row of the store.</summary>
+	public (int X, int Y) ShownOrigin => (ShownStart % ScreenWidth, ShownStart / ScreenWidth);
 
 	/// <summary>Sets page <paramref name="page"/>'s own origin, the display's <c>+0x48</c> entry, and puts the page there.</summary>
 	public void SetPageBase(int page, int x, int y) {
@@ -172,7 +172,7 @@ public sealed class Es1VideoMemory {
 	/// <c>VGA8_SetPageOrigin</c> (<c>ES1DBSIM 0005279d</c>), the driver's slot 15: page <paramref name="page"/> lies at
 	/// (<paramref name="x"/>, <paramref name="y"/>) from now on; the draw and source pages are addressed through their
 	/// origins as each draw runs, and the visible page is shown again (<see cref="ShowPage"/>), which scrolls the
-	/// monitor. Returns whether that show waited for a retrace.
+	/// screen. Returns whether that show waited for a retrace.
 	/// </summary>
 	public bool SetPageOrigin(int page, int x, int y) {
 		_pageOrigins[page] = (x, y);

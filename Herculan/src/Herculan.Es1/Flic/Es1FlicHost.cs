@@ -19,8 +19,8 @@ namespace Herculan.Es1.Flic;
 /// <summary>
 /// ES1's flic player, <c>PLAYFLIC.EXE</c>'s <c>Flic_Main</c> (<c>ES1PLAYFLIC 00000310</c>), as a turn in the launcher's
 /// window (docs/es1/formats/dfl-flic.md#playing-a-flic): the flic opened, played (<see cref="Es1FlicPlayer"/>) into the
-/// mode-<c>0x13</c> screen with its sound (<see cref="Es1FlicSound"/>), shown on the monitor at 4:3 as the shell's screen
-/// is (<see cref="Es1Monitor"/>), and closed.
+/// mode-<c>0x13</c> screen with its sound (<see cref="Es1FlicSound"/>), shown at 4:3 as the shell's screen
+/// is (<see cref="Es1ScreenPresenter"/>), and closed.
 ///
 /// <para>Retail sets mode <c>0x13</c> before it opens the flic and the saved mode after; between turns the launcher's
 /// window shows black (<see cref="HostWindow.Hold"/>), which stands in for both.</para>
@@ -217,11 +217,11 @@ public static class Es1FlicHost {
 		using var window = new EngineWindow(host, Es1ShellHost.Title);
 		var display = new Es1VideoMemory(Es1VideoMemory.ShellWidth);
 		var cells = new ushort[Es1FlicDecoder.ScreenWidth * Es1FlicDecoder.ScreenHeight];
-		Es1Monitor? monitor = null;
+		Es1ScreenPresenter? presenter = null;
 		int screenShown = -1, dacShown = -1;
 
 		window.Load += (gl, input) => {
-			monitor = new Es1Monitor(gl, display);
+			presenter = new Es1ScreenPresenter(gl, display);
 			// The window as ES1 last ran; its [Alt+Enter] is not a key that skips the movie.
 			var fullScreenKey = Es1FullScreen.Start(window, () => input.Mice.Count > 0 ? input.Mice[0] : null);
 			foreach (var keyboard in input.Keyboards) {
@@ -245,7 +245,7 @@ public static class Es1FlicHost {
 			}
 		};
 		window.Render += (_, _) => {
-			if (monitor == null) {
+			if (presenter == null) {
 				return;
 			}
 
@@ -260,15 +260,15 @@ public static class Es1FlicHost {
 			}
 
 			if (decoder.DacVersion != dacShown) {
-				monitor.SetPalette(Palette(decoder.Dac));
+				presenter.SetPalette(Palette(decoder.Dac));
 				dacShown = decoder.DacVersion;
 			}
 
-			monitor.Present(window.FramebufferSize);
+			presenter.Present(window.FramebufferSize);
 		};
 		window.Closing += () => {
-			monitor?.Dispose();
-			monitor = null;
+			presenter?.Dispose();
+			presenter = null;
 		};
 		window.Run();
 	}

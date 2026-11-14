@@ -41,11 +41,11 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// composes: the load and its files are <see cref="Es1SingleMission"/> and <see cref="Es1MissionFiles"/>, the world
 /// <see cref="Es1World"/>, the tick <see cref="Es1SimulationRunner"/>, built by <see cref="Es1SimulationStart"/>, the zone <see cref="Es1ZoneScene"/>, the draw
 /// <see cref="Es1WorldDraw"/>, the display and its views <see cref="Es1VideoMemory"/> and <see cref="Es1ViewManager"/>,
-/// the frame on them <see cref="Es1FrameLoop"/>, and the monitor <see cref="Es1Monitor"/>.
+/// the frame on them <see cref="Es1FrameLoop"/>, and the presenter <see cref="Es1ScreenPresenter"/>.
 ///
 /// <para>Each host frame runs the tick when the clock answers one, and after it the camera, the world drawn into the
 /// display's draw page and the frame's end, as <c>Sim_Main</c>'s frame does (docs/es1/simulation/main-loop.md#the-frame);
-/// and every host frame shows the monitor's picture of the display. The GL context is current in the window's update
+/// and every host frame shows the display's 320 × 200 screen. The GL context is current in the window's update
 /// as in its render, both on the one thread, so the tick's 3D pass is drawn there.</para>
 ///
 /// <para><b>Not retail, awaiting the user's decision:</b> with no player's machine (the free camera only) no tick runs.
@@ -66,7 +66,7 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// nothing and writes no file, so <c>data\exit.cfg</c> keeps the 0 the start wrote.</para>
 ///
 /// <para><b>This engine's own:</b> HERCULAN's menu bar is over the mission in the window the shell's turns use
-/// (<see cref="FrontEndWindow"/>), drawn over the monitor or the free camera, hidden until [Shift+Esc], a gamepad's
+/// (<see cref="FrontEndWindow"/>), drawn over the screen or the free camera, hidden until [Shift+Esc], a gamepad's
 /// Back or a joystick's Custom menu bar input raises it (<see cref="Es1HostKeyboard.MenuBarTakes"/>,
 /// <see cref="FrontEndWindow.BeginFrame"/>, <see cref="Es1ControllerPort.JoystickMenuBarInput"/>); the pointer at
 /// the window's top does not. The mission runs on under it, as Earthsiege 2's does, the controller muted while the bar
@@ -268,7 +268,7 @@ public static class Es1ZoneViewer {
 		SpriteRenderer? sprites = null;
 		Es1Backdrop? backdrop = null;
 		Es1WorldDraw? draw = null;
-		Es1Monitor? monitor = null;
+		Es1ScreenPresenter? presenter = null;
 		Es1FrameLoop? frameLoop = null;
 		Es1MechModels? models = null;
 		var disposables = new List<IDisposable>();
@@ -316,7 +316,7 @@ public static class Es1ZoneViewer {
 			var cockpitMouse = new Es1CockpitMouse(display.Cursor) { Tape = tape };
 			cockpitMouse.Init(hostMouse);
 			manager = new Es1ViewManager(views, display, player, cockpitMouse, world.Globals, preferences) {
-				// The canvas a window wider than 4:3 shows around the monitor (plan decision 30).
+				// The canvas a window wider than 4:3 shows around the screen (plan decision 30).
 				Canvas = new Es1Canvas(),
 			};
 		}
@@ -401,21 +401,21 @@ public static class Es1ZoneViewer {
 			draw = new Es1WorldDraw(gl, scene, world, models, detail, disposables, projectileDraw, explosionDraw, debrisDraw,
 				smokeDraw, flyerDraw, structureDraw);
 			if (manager != null && chain != null) {
-				monitor = new Es1Monitor(gl, manager.Display, manager);
-				disposables.Add(monitor);
-				var shownMonitor = monitor;
-				manager.GlanceReach = () => shownMonitor.GlanceReach(window.FramebufferSize);
-				manager.CanvasShown = () => shownMonitor.ShowsCanvas(window.FramebufferSize);
-				monitor.SetPalette(scene.Palette);
+				presenter = new Es1ScreenPresenter(gl, manager.Display, manager);
+				disposables.Add(presenter);
+				var shownPresenter = presenter;
+				manager.GlanceReach = () => shownPresenter.GlanceReach(window.FramebufferSize);
+				manager.CanvasShown = () => shownPresenter.ShowsCanvas(window.FramebufferSize);
+				presenter.SetPalette(scene.Palette);
 				// The cockpit script's palette commands upload to the same live palette, and the shield display's rings are
 				// installed into it.
-				manager.Cockpit.Scripts.UploadPalette = monitor.SetPalette;
-				manager.Cockpit.Shields.InstallPaletteRange = monitor.InstallRange;
+				manager.Cockpit.Scripts.UploadPalette = presenter.SetPalette;
+				manager.Cockpit.Shields.InstallPaletteRange = presenter.InstallRange;
 				// The hit shake's palette switches make whole palettes live on it.
-				var impactMonitor = monitor;
-				world.Globals.ImpactPalette.LivePalette = () => impactMonitor.Palette;
-				world.Globals.ImpactPalette.SetLivePalette = monitor.SetPalette;
-				monitor.Fit(window.FramebufferSize);
+				var impactPresenter = presenter;
+				world.Globals.ImpactPalette.LivePalette = () => impactPresenter.Palette;
+				world.Globals.ImpactPalette.SetLivePalette = presenter.SetPalette;
+				presenter.Fit(window.FramebufferSize);
 				var worldDraw = draw;
 				var sceneRenderer = renderer;
 				// A cockpit rect's view, the NAV MAP's or the MISSILE CAM's, from a camera of its own (plan decision 17); the
@@ -432,21 +432,21 @@ public static class Es1ZoneViewer {
 				}
 
 				// The world's colours follow the live palette as the cockpit's do, rebuilt before a pass when it changed.
-				var liveMonitor = monitor;
+				var livePresenter = presenter;
 				var worldPalette = new Es1WorldPalette(sceneRenderer, shadeRamps, paletteRamp,
-					new[] { backdrop, missileHorizon }.OfType<Es1Backdrop>().ToArray(), billboardPalette, liveMonitor);
-				monitor.WorldPass = (x, y, width, height) => {
-					worldPalette.Follow(liveMonitor);
+					new[] { backdrop, missileHorizon }.OfType<Es1Backdrop>().ToArray(), billboardPalette, livePresenter);
+				presenter.WorldPass = (x, y, width, height) => {
+					worldPalette.Follow(livePresenter);
 					DrawWorld(gl, sceneRenderer, spriteRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
 				};
-				monitor.ViewPass = (view, size, viewport) => {
-					worldPalette.Follow(liveMonitor);
+				presenter.ViewPass = (view, size, viewport) => {
+					worldPalette.Follow(livePresenter);
 					DrawRectView(gl, sceneRenderer, spriteRenderer, worldDraw, missileHorizon, rectCamera, view, size, viewport);
 				};
 				// The gunsight's pick, answered from what that pass drew (plan decision 16).
 				var pick = new Es1WorldPick(gl, sceneRenderer, worldDraw);
 				disposables.Add(pick);
-				monitor.WorldPick = viewport => pick.ObjectAt(cockpitCamera, viewport);
+				presenter.WorldPick = viewport => pick.ObjectAt(cockpitCamera, viewport);
 				// Cam_Update on ViewObjectPtr, whichever camera the views have made it; the 3D pass draws from it with the
 				// installed window's projection, the machine the camera rides in left out of the draw.
 				frameLoop = new Es1FrameLoop(manager, () => chain.Camera.Update(), () => {
@@ -455,8 +455,8 @@ public static class Es1ZoneViewer {
 					worldDraw.Update(cockpitCamera, viewCamera.MountedObject);
 				}, detail, () => chain.Camera);
 				// The death flash's palettes and fades are installed into the same live palette.
-				frameLoop.InstallPaletteRange = monitor.InstallRange;
-				frameLoop.LivePalette = () => liveMonitor.Palette;
+				frameLoop.InstallPaletteRange = presenter.InstallRange;
+				frameLoop.LivePalette = () => livePresenter.Palette;
 				frameLoop.World = scene.World;
 				frameLoop.StartMission(Es1CursorImage.Load(content, "CURSOR"),
 					() => Panels.Es1WidgetResources.LoadFrames(content, "INTRO")?.FirstOrDefault());
@@ -464,8 +464,8 @@ public static class Es1ZoneViewer {
 
 			keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
 			mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
-			hostMouse.Pointer = () => monitor?.CockpitPointer(window.FramebufferSize, window.ClientSize)
-				?? Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize);
+			hostMouse.Pointer = () => presenter?.CockpitPointer(window.FramebufferSize, window.ClientSize)
+				?? Es1ScreenPresenter.Pointer(window.FramebufferSize, window.ClientSize);
 			hostMouse.HostHasPointer = () => window.ImGuiWantsMouse;
 			if (mouse != null) {
 				hostMouse.Attach(mouse);
@@ -619,7 +619,7 @@ public static class Es1ZoneViewer {
 			// The host's pointer is hidden over the window while the cockpit's cursor stands in for it, and shown over the
 			// menu bar and its windows.
 			if (mouse != null && !looking) {
-				var mode = !free && monitor != null && !window.ImGuiWantsMouse ? CursorMode.Hidden : CursorMode.Normal;
+				var mode = !free && presenter != null && !window.ImGuiWantsMouse ? CursorMode.Hidden : CursorMode.Normal;
 				if (mouse.Cursor.CursorMode != mode) {
 					mouse.Cursor.CursorMode = mode;
 				}
@@ -630,12 +630,12 @@ public static class Es1ZoneViewer {
 			window.BeginFrame(delta);
 			if (renderer != null && draw != null) {
 				var size = window.FramebufferSize;
-				if (free || monitor == null) {
+				if (free || presenter == null) {
 					draw.Update(camera, null);
 					renderer.Clear();
 					DrawWorld(glContext!, renderer, sprites!, backdrop, draw, camera, 0, 0, size.X, size.Y);
 				} else {
-					monitor.Present(size);
+					presenter.Present(size);
 				}
 			}
 

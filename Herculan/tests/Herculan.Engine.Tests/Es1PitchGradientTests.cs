@@ -50,7 +50,7 @@ public class Es1PitchGradientTests {
 		return palette;
 	}
 
-	/// <summary>A new palette with <paramref name="entries"/> from <paramref name="first"/>, as the monitor sends one.</summary>
+	/// <summary>A new palette with <paramref name="entries"/> from <paramref name="first"/>, as the presenter sends one.</summary>
 	private static DynamixPalette Installed(DynamixPalette live, int first, IReadOnlyList<uint> entries) {
 		var palette = new DynamixPalette { ColorCount = live.ColorCount, Colors = new Dictionary<int, ColorBytes>(live.Colors) };
 		for (int i = 0; i < entries.Count; i++) {

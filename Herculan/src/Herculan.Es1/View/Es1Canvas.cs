@@ -1,19 +1,19 @@
 namespace Herculan.Es1.View;
 
 /// <summary>
-/// <b>This engine's own:</b> the cockpit's canvas beside the monitor that a window wider than 4:3 shows under the
+/// <b>This engine's own:</b> the cockpit's canvas beside the 320 × 200 screen that a window wider than 4:3 shows under the
 /// "High resolution widescreen" tweak (docs/herculan/plan-es1-first-mission.md#decisions, decision 30). Retail's views 0,
 /// 2 and 3 are three windows on one image plane (docs/es1/simulation/cockpit-views.md#the-views-geometry), and the
 /// skyline and the textured ground are placed in canvas columns (docs/es1/rendering/ground-and-sky.md#the-horizon-skyline),
 /// so one projection continued across the three panels gives what retail draws in each view; this store holds the three
 /// side by side in the canvas's own columns, view 3 at <see cref="PageColumn"/> 0, view 0 at 320 and view 2 at 640, in
-/// <see cref="Width"/> × <see cref="Rows"/> cells outside retail's 256 KB, with a world layer of its own at the monitor's
+/// <see cref="Width"/> × <see cref="Rows"/> cells outside retail's 256 KB, with a world layer of its own at the screen's
 /// scale.
 ///
 /// <para>After each <c>Sim_RenderFrame</c> the page retail has just drawn, its cells and world pixels, is copied into the
 /// page of the view whose window it was drawn in (<see cref="TakeDrawnPage"/>). A side page takes the page's first
 /// <see cref="SideRows"/> rows: the strip below them that the view shake fills with color <c>0x3f</c> in a side view
-/// (<see cref="Es1ViewManager.SetShakeBand"/>) stays in the monitor, and the canvas shows the heads-down display's edge
+/// (<see cref="Es1ViewManager.SetShakeBand"/>) stays in the screen, and the canvas shows the heads-down display's edge
 /// columns there instead. View 0's page takes all <see cref="Rows"/>, whose last rows are the heads-down display's top,
 /// which lies at canvas row 197 under it.</para>
 ///
@@ -24,7 +24,7 @@ public sealed class Es1Canvas {
 	/// <summary>The canvas's columns, the three views' 320 each.</summary>
 	public const int Width = 3 * Es1VideoMemory.PageWidth;
 
-	/// <summary>The rows each page holds: the screen's 200 and the ten below it that the view shake can scroll onto the monitor (<see cref="Es1ViewManager.StripY1"/>).</summary>
+	/// <summary>The rows each page holds: the screen's 200 and the ten below it that the view shake can scroll onto the screen (<see cref="Es1ViewManager.StripY1"/>).</summary>
 	public const int Rows = Es1ViewManager.StripY1;
 
 	/// <summary>The rows a side page takes from the page retail drew.</summary>

@@ -15,7 +15,7 @@ namespace Herculan.Es1.View;
 /// <para>Retail's installs write into the active palette in place (<c>Palette_InstallRange</c>), so the impact palette
 /// keeps what was installed into it while it showed, the pitch gradient's entries among them, and a palette made active
 /// again shows what was installed into it before. This engine's installs send a changed copy as a new live palette each
-/// time (<see cref="Es1Monitor.InstallRange"/>), so each palette the switches hold is kept here as its latest colors: at
+/// time (<see cref="Es1ScreenPresenter.InstallRange"/>), so each palette the switches hold is kept here as its latest colors: at
 /// each switch the active one takes the live palette as it then stands (<see cref="LivePalette"/>).</para>
 /// </summary>
 public sealed class Es1ImpactPalette {

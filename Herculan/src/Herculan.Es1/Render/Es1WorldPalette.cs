@@ -9,8 +9,8 @@ namespace Herculan.Es1.Render;
 /// live palette, so whatever is installed into it (docs/es1/rendering/palette.md#installing-colors), the death flash's
 /// palettes and fades among them (docs/es1/simulation/main-loop.md#the-death-flash--sim_deathflash-00058414), shows on the
 /// world as on the cockpit. The renderer resolves the world's indices to colours through tables built at load; when
-/// <see cref="Es1Monitor.PaletteVersion"/> has moved since the tables were last shown, <see cref="Follow"/> shows them in
-/// the monitor's live palette and sends them again, so a still palette costs nothing.
+/// <see cref="Es1ScreenPresenter.PaletteVersion"/> has moved since the tables were last shown, <see cref="Follow"/> shows them in
+/// the presenter's live palette and sends them again, so a still palette costs nothing.
 ///
 /// <para>What follows: the shaded faces' ramp table (<see cref="SurfaceRampTable"/>), the palette-by-row table every
 /// textured and solid face reads (<see cref="PaletteRampTable"/>), whose indices, the distance bands' ranges and the
@@ -31,32 +31,32 @@ public sealed class Es1WorldPalette {
 	/// <summary>
 	/// Keeps <paramref name="renderer"/>'s tables, <paramref name="shadeRamps"/> and <paramref name="paletteRamp"/> as it
 	/// was given them, <paramref name="backdrops"/>' ground and <paramref name="billboards"/>, the effects' billboards'
-	/// palette, to <paramref name="monitor"/>'s live palette, which they were built in. A shade table not built from
+	/// palette, to <paramref name="presenter"/>'s live palette, which they were built in. A shade table not built from
 	/// palette indices (<see cref="SurfaceRampTable.CanRecolor"/>) is left as it is.
 	/// </summary>
 	public Es1WorldPalette(SceneRenderer renderer, SurfaceRampTable? shadeRamps, PaletteRampTable? paletteRamp,
-			IReadOnlyList<Es1Backdrop> backdrops, PaletteTexture? billboards, Es1Monitor monitor) {
+			IReadOnlyList<Es1Backdrop> backdrops, PaletteTexture? billboards, Es1ScreenPresenter presenter) {
 		_renderer = renderer;
 		_shadeRamps = shadeRamps is { CanRecolor: true } ? shadeRamps : null;
 		_paletteRamp = paletteRamp;
 		_backdrops = backdrops;
 		_billboards = billboards;
-		_shownVersion = monitor.PaletteVersion;
-		_shownColors = Colors(monitor.Palette);
+		_shownVersion = presenter.PaletteVersion;
+		_shownColors = Colors(presenter.Palette);
 	}
 
 	/// <summary>
-	/// The tables and the ground shown in <paramref name="monitor"/>'s live palette when an entry changed since they last
+	/// The tables and the ground shown in <paramref name="presenter"/>'s live palette when an entry changed since they last
 	/// were. The shade table, the large one, is rebuilt whole only when an entry a shaded cell names changed
 	/// (<see cref="SurfaceRampTable.ShadedCellsName"/>), and otherwise only its palette row is, so the shield rings'
 	/// entries, which no shaded cell names, cost one row.
 	/// </summary>
-	public void Follow(Es1Monitor monitor) {
-		if (monitor.PaletteVersion == _shownVersion || monitor.Palette is not { } live) {
+	public void Follow(Es1ScreenPresenter presenter) {
+		if (presenter.PaletteVersion == _shownVersion || presenter.Palette is not { } live) {
 			return;
 		}
 
-		_shownVersion = monitor.PaletteVersion;
+		_shownVersion = presenter.PaletteVersion;
 		var colors = Colors(live);
 		bool changed = false, shadedChanged = false;
 		for (int index = 0; index < colors.Length; index++) {

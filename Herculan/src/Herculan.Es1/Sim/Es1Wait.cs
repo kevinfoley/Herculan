@@ -10,7 +10,7 @@ namespace Herculan.Es1.Sim;
 /// <para>Retail's panel loops run inside <c>Sim_MainTick</c> until the panel closes
 /// (docs/es1/simulation/alert-panels.md#the-loop). The port suspends the tick at each pass of a loop and goes on from
 /// there: a pass of the status panel's loop, which in retail goes round again at once, ends at
-/// <see cref="NextHostFrame"/>, so the host shows the monitor between passes; a pass that waits for the monitor ends at
+/// <see cref="NextHostFrame"/>, so the host shows the screen between passes; a pass that waits for the monitor ends at
 /// its <see cref="Retrace"/>.</para>
 /// </summary>
 public readonly record struct Es1Wait {

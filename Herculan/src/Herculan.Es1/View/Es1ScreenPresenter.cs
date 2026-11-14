@@ -8,7 +8,7 @@ using Silk.NET.OpenGL;
 namespace Herculan.Es1.View;
 
 /// <summary>
-/// The monitor on <see cref="Es1VideoMemory"/>: the 320 × 200 window at the start address the display last showed,
+/// The host window's view of <see cref="Es1VideoMemory"/>: the 320 × 200 window at the start address the display last showed,
 /// shown at 4:3 as a CRT showed it (docs/herculan/plan-es1-first-mission.md, decision 7), each cell's palette index
 /// through the live palette and each world cell from the world layer under it (<see cref="IndexedWorldSurface"/>). It
 /// holds the display's world layer: the 3D pass is drawn into it where <see cref="Es1VideoMemory.DrawWorld"/> marks the
@@ -17,9 +17,9 @@ namespace Herculan.Es1.View;
 ///
 /// <para>Built on a view manager with a canvas (<see cref="Es1ViewManager.Canvas"/>), it holds the canvas's world layer
 /// too, at the same scale, and under the "High resolution widescreen" tweak shows a window wider than 4:3 the canvas
-/// around the monitor (plan decision 30, <see cref="Es1CanvasLayout"/>).</para>
+/// around the screen (plan decision 30, <see cref="Es1CanvasLayout"/>).</para>
 /// </summary>
-public sealed class Es1Monitor : IDisposable {
+public sealed class Es1ScreenPresenter : IDisposable {
 	/// <summary>The shape the screen is shown at.</summary>
 	internal static readonly Vector2D<int> DisplayFrame = new(4000, 3000);
 
@@ -34,9 +34,9 @@ public sealed class Es1Monitor : IDisposable {
 
 	/// <summary>
 	/// Holds <paramref name="display"/>'s world layer, and with <paramref name="views"/> that has a canvas, the canvas's,
-	/// whose layout follows the monitor's canvas point.
+	/// whose layout follows the screen's canvas point.
 	/// </summary>
-	public Es1Monitor(GL gl, Es1VideoMemory display, Es1ViewManager? views = null) {
+	public Es1ScreenPresenter(GL gl, Es1VideoMemory display, Es1ViewManager? views = null) {
 		_surface = new IndexedWorldSurface(gl, display.ScreenWidth, display.StoreRows);
 		Display = display;
 		_layer = new SurfaceLayer(this, _surface, display);
@@ -180,7 +180,7 @@ public sealed class Es1Monitor : IDisposable {
 			return null;
 		}
 
-		var (column, row) = _views.MonitorCanvasPoint;
+		var (column, row) = _views.ScreenCanvasPoint;
 		var layout = Es1CanvasLayout.Create(windowSize, column, row);
 		return layout.SideColumns > 0 ? layout : null;
 	}
@@ -195,12 +195,12 @@ public sealed class Es1Monitor : IDisposable {
 	public bool ShowsCanvas(Vector2D<int> windowSize) => CanvasLayout(windowSize) != null;
 
 	/// <summary>
-	/// Shows the monitor's picture in a window of <paramref name="windowSize"/>: the cells written since the last, then the
+	/// Shows the 320 × 200 screen in a window of <paramref name="windowSize"/>: the cells written since the last, then the
 	/// window at the start address, and over it the display's cursor while it is shown, its image at the pointer less the
 	/// hotspot, as retail's slot 30 draws it on the visible page (<see cref="Es1Cursor"/>). With a canvas layout
 	/// (<see cref="Es1CanvasLayout"/>), first the heads-down display's edge columns stretched out to the window's edges
 	/// beside view 0's page, as ES2's port stretches its heads-down art, then the canvas's three pages over them at the
-	/// monitor's canvas rows, and the monitor over those at its place, or in its stead the panels up lifted to the window's
+	/// screen's canvas rows, and the screen over those at its place, or in its stead the panels up lifted to the window's
 	/// center (<see cref="LiftedPanels"/>).
 	/// </summary>
 	public void Present(Vector2D<int> windowSize) {
@@ -223,7 +223,7 @@ public sealed class Es1Monitor : IDisposable {
 		}
 
 		if (CanvasLayout(windowSize) is not { } layout) {
-			_surface.Present(new FrameFit(DisplayFrame, windowSize), Display.MonitorStart, Es1VideoMemory.PageWidth,
+			_surface.Present(new FrameFit(DisplayFrame, windowSize), Display.ShownStart, Es1VideoMemory.PageWidth,
 				Es1VideoMemory.PageHeight, Display.AddressCount, cursor.DrawnAt);
 			return;
 		}
@@ -232,13 +232,13 @@ public sealed class Es1Monitor : IDisposable {
 		// The heads-down display lies at the same canvas place in both halves of the store, its left edge on the half's
 		// own column.
 		var (baseX, baseY) = Display.PageBase(Display.VisiblePage);
-		int edgeRow = (baseY + layout.MonitorRow) * Display.ScreenWidth + baseX;
+		int edgeRow = (baseY + layout.ScreenRow) * Display.ScreenWidth + baseX;
 		_surface.Draw(windowSize, layout.LeftStretch, edgeRow, 1, Es1VideoMemory.PageHeight, Display.AddressCount);
 		_surface.Draw(windowSize, layout.RightStretch, edgeRow + Es1VideoMemory.PageWidth - 1, 1, Es1VideoMemory.PageHeight,
 			Display.AddressCount);
 		foreach (int view in (ReadOnlySpan<int>)[3, 0, 2]) {
 			int column = Es1Canvas.PageColumn(view)!.Value;
-			int row0 = Math.Max(0, layout.MonitorRow), row1 = Math.Min(Es1Canvas.PageRows(view), layout.MonitorRow + Es1VideoMemory.PageHeight);
+			int row0 = Math.Max(0, layout.ScreenRow), row1 = Math.Min(Es1Canvas.PageRows(view), layout.ScreenRow + Es1VideoMemory.PageHeight);
 			if (row1 > row0) {
 				_canvasSurface!.Draw(windowSize, layout.CanvasRect(column, row0, column + Es1VideoMemory.PageWidth, row1),
 					row0 * Es1Canvas.Width + column, Es1VideoMemory.PageWidth, row1 - row0, Es1Canvas.Width * Es1Canvas.Rows);
@@ -246,7 +246,7 @@ public sealed class Es1Monitor : IDisposable {
 		}
 
 		if (LiftedPanels(layout) is not { } panels) {
-			_surface.Draw(windowSize, layout.MonitorFit.Placement, Display.MonitorStart, Es1VideoMemory.PageWidth,
+			_surface.Draw(windowSize, layout.ScreenFit.Placement, Display.ShownStart, Es1VideoMemory.PageWidth,
 				Es1VideoMemory.PageHeight, Display.AddressCount, cursor.DrawnAt);
 			return;
 		}
@@ -260,7 +260,7 @@ public sealed class Es1Monitor : IDisposable {
 				continue;
 			}
 
-			_surface.Draw(windowSize, ScreenRect(centered, x0, y0, x1 + 1, y1 + 1), Display.MonitorStart + y0 * Display.ScreenWidth + x0,
+			_surface.Draw(windowSize, ScreenRect(centered, x0, y0, x1 + 1, y1 + 1), Display.ShownStart + y0 * Display.ScreenWidth + x0,
 				x1 - x0 + 1, y1 - y0 + 1, Display.AddressCount);
 		}
 
@@ -280,7 +280,7 @@ public sealed class Es1Monitor : IDisposable {
 	/// under the panels.
 	/// </summary>
 	private IReadOnlyList<Es1Rect>? LiftedPanels(Es1CanvasLayout layout) {
-		if (_views?.Cockpit.Panels is not { OpenRects.Count: > 0 } panels || layout.MonitorColumn == layout.WindowColumn
+		if (_views?.Cockpit.Panels is not { OpenRects.Count: > 0 } panels || layout.ScreenColumn == layout.WindowColumn
 				|| _views.PageView(Display.VisiblePage) is not (2 or 3)) {
 			return null;
 		}
@@ -296,13 +296,13 @@ public sealed class Es1Monitor : IDisposable {
 		return (X(x0), Y(y0), X(x1) - X(x0), Y(y1) - Y(y0));
 	}
 
-	/// <summary>The window's mapping between the host's pointer, in client coordinates of <paramref name="clientSize"/>, and the 320 × 200 screen at the monitor's 4:3 placement.</summary>
+	/// <summary>The window's mapping between the host's pointer, in client coordinates of <paramref name="clientSize"/>, and the 320 × 200 screen at its 4:3 placement.</summary>
 	public static ScreenPointer Pointer(Vector2D<int> framebufferSize, Vector2D<int> clientSize) =>
 		new(new FrameFit(DisplayFrame, framebufferSize), clientSize, new Vector2D<int>(Es1VideoMemory.PageWidth, Es1VideoMemory.PageHeight));
 
 	/// <summary>
-	/// <see cref="Pointer"/> at the monitor's place in the canvas layout when there is one (<see cref="Es1CanvasLayout.Pointer"/>),
-	/// so the pointer stays on the monitor's 320 columns as a glance moves them; and at the window's center while panels are
+	/// <see cref="Pointer"/> at the screen's place in the canvas layout when there is one (<see cref="Es1CanvasLayout.Pointer"/>),
+	/// so the pointer stays on the screen's 320 columns as a glance moves them; and at the window's center while panels are
 	/// lifted there (<see cref="LiftedPanels"/>).
 	/// </summary>
 	public ScreenPointer CockpitPointer(Vector2D<int> framebufferSize, Vector2D<int> clientSize) =>
@@ -323,8 +323,8 @@ public sealed class Es1Monitor : IDisposable {
 		_canvasSurface?.Dispose();
 	}
 
-	/// <summary>A store's world layer on one of the monitor's surfaces, drawn by the monitor's passes.</summary>
-	private sealed class SurfaceLayer(Es1Monitor monitor, IndexedWorldSurface surface, Es1VideoMemory memory) : IEs1WorldLayer {
+	/// <summary>A store's world layer on one of the presenter's surfaces, drawn by its passes.</summary>
+	private sealed class SurfaceLayer(Es1ScreenPresenter presenter, IndexedWorldSurface surface, Es1VideoMemory memory) : IEs1WorldLayer {
 		// The GL viewport of the last world pass.
 		private (int X, int Y, int Width, int Height)? _worldViewport;
 
@@ -332,7 +332,7 @@ public sealed class Es1Monitor : IDisposable {
 			surface.KeepWorld(keep);
 			var (glX, glY, glWidth, glHeight) = surface.BeginWorld(x, y, width, height);
 			_worldViewport = (glX, glY, glWidth, glHeight);
-			monitor.WorldPass?.Invoke(glX, glY, glWidth, glHeight);
+			presenter.WorldPass?.Invoke(glX, glY, glWidth, glHeight);
 			surface.RestoreWorld();
 			surface.EndWorld();
 		}
@@ -344,7 +344,7 @@ public sealed class Es1Monitor : IDisposable {
 		/// whose backdrop writes no depth. Without a pass no cell is drawn into.
 		/// </summary>
 		public bool[] DrawWorldView(int x, int y, int width, int height, Es1RectView view) {
-			if (monitor.ViewPass is not { } pass) {
+			if (presenter.ViewPass is not { } pass) {
 				return new bool[width * height];
 			}
 
@@ -370,7 +370,7 @@ public sealed class Es1Monitor : IDisposable {
 		/// <see cref="WorldPick"/>.
 		/// </summary>
 		public object? ObjectAt(int x, int y) {
-			if (monitor.WorldPick is not { } pick || _worldViewport is not { } viewport) {
+			if (presenter.WorldPick is not { } pick || _worldViewport is not { } viewport) {
 				return null;
 			}
 

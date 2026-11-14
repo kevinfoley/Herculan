@@ -109,7 +109,7 @@ public sealed class Es1ShellScreens {
 	/// </summary>
 	public bool DemoRequested { get; set; }
 
-	/// <summary><c>Palette_UploadWhole</c>: the palette made the live one, the monitor's.</summary>
+	/// <summary><c>Palette_UploadWhole</c>: the palette made the live one, the presenter's.</summary>
 	public Action<HercWorks.Core.Data.File.Dyn.DynamixPalette>? UploadPalette { get; set; }
 
 	/// <summary><c>Shell_CurrentScreen</c> (<c>000817c0</c>), −1 in the image.</summary>

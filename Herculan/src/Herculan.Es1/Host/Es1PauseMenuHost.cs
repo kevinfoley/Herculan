@@ -14,7 +14,7 @@ namespace Herculan.Es1.Host;
 /// no panel comes back the same way.
 /// </summary>
 /// <param name="runner">The simulation runner, once built.</param>
-/// <param name="frameLoop">The frame loop, whose work stands while a panel is up; none with no monitor, and then no item raises a panel.</param>
+/// <param name="frameLoop">The frame loop, whose work stands while a panel is up; none with no presenter, and then no item raises a panel.</param>
 internal sealed class Es1PauseMenuHost(Func<Es1SimulationRunner?> runner, Func<Es1FrameLoop?> frameLoop) : IPauseMenuHost {
 	// The runner's tick count when an item sent its key, until the work that key started has run.
 	private long? _raisedAt;

@@ -126,7 +126,7 @@ internal static class Es1LiftStart {
 	/// <c>PitchGradient_Enabled</c> set.
 	/// <para><b>This engine's own</b> (plan decision 30): the canvas's side panels draw each pass's cut, art and fills too
 	/// (<see cref="Es1ViewManager.CanvasOverlay"/>). The canvas is held through each pass's drawing time
-	/// (<see cref="Es1ViewManager.CanvasHeld"/>), while the monitor still shows the previous pass, and drawn just before
+	/// (<see cref="Es1ViewManager.CanvasHeld"/>), while the screen still shows the previous pass, and drawn just before
 	/// <c>Sim_EndFrame</c> shows the new one (<see cref="Es1FrameLoop.DrawCanvas"/>); it holds the ride's last frame through
 	/// the jolt.</para>
 	/// <para>With no machine or camera, which retail always has, nothing; with no art, which retail reads unchecked, no
@@ -166,7 +166,7 @@ internal static class Es1LiftStart {
 				globals.LiftStartFadeRemaining = (short)fade.Step(clock.Clock, frame.InstallPalette);
 			}
 
-			// The monitor shows the page drawn only from the frame's end on, so the canvas takes the pass just before it.
+			// The screen shows the page drawn only from the frame's end on, so the canvas takes the pass just before it.
 			views.CanvasHeld = false;
 			loop.DrawCanvas();
 			foreach (var retrace in frame.EndFrame(frozen())) {
@@ -177,7 +177,7 @@ internal static class Es1LiftStart {
 		machine.Position = home;
 		globals.Sound.Stop(RiseSound);
 		views.CanvasOverlay = null;
-		// The jolt's frames go to a page that is not shown, so the canvas keeps the ride's last frame, as the monitor does.
+		// The jolt's frames go to a page that is not shown, so the canvas keeps the ride's last frame, as the screen does.
 		views.CanvasHeld = true;
 		uint end = clock.Clock + JoltLength;
 		views.SetShakeBand(JoltBand);

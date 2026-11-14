@@ -173,13 +173,13 @@ public sealed class Es1ViewManager {
 	public int InstalledView { get; private set; }
 
 	/// <summary>
-	/// <b>This engine's own:</b> the canvas beside the monitor (plan decision 30, <see cref="Es1Canvas"/>), which the frame
+	/// <b>This engine's own:</b> the canvas beside the screen (plan decision 30, <see cref="Es1Canvas"/>), which the frame
 	/// fills under the "High resolution widescreen" tweak; none with no host to show it.
 	/// </summary>
 	public Es1Canvas? Canvas { get; set; }
 
 	/// <summary>
-	/// <b>This engine's own:</b> how far the monitor's canvas column may move from view 0's before the window showing the
+	/// <b>This engine's own:</b> how far the screen's canvas column may move from view 0's before the window showing the
 	/// canvas stops following it (<see cref="Es1CanvasLayout.Reach"/>); a glance's slide steps past it set the page's origin
 	/// without waiting for a retrace (<see cref="Glance"/>). None waits at every step, as retail's slide does.
 	/// </summary>
@@ -192,13 +192,13 @@ public sealed class Es1ViewManager {
 	public int PageView(int page) => _pageViews[page];
 
 	/// <summary>
-	/// <b>This engine's own:</b> where the monitor's top-left pixel lies on the cockpit's canvas, from view 0's top-left:
+	/// <b>This engine's own:</b> where the screen's top-left pixel lies on the cockpit's canvas, from view 0's top-left:
 	/// the visible page's origin less its own, plus the canvas origin of the view the page holds (<see cref="PageView"/>),
 	/// in columns; less its own in rows. So it stays right on the retrace between a glance's last step and the view
-	/// change, when the slid page and then the far half are on the monitor while <see cref="CurrentView"/> is still the
+	/// change, when the slid page and then the far half are on show while <see cref="CurrentView"/> is still the
 	/// old view.
 	/// </summary>
-	public (int Column, int Row) MonitorCanvasPoint {
+	public (int Column, int Row) ScreenCanvasPoint {
 		get {
 			int page = Display.VisiblePage;
 			var (originX, originY) = Display.PageOrigin(page);
@@ -231,7 +231,7 @@ public sealed class Es1ViewManager {
 	}
 
 	/// <summary>
-	/// <b>This engine's own:</b> whether the window shows <see cref="Canvas"/> beside the monitor, as the host's monitor
+	/// <b>This engine's own:</b> whether the window shows <see cref="Canvas"/> beside the screen, as the presenter
 	/// lays it out. With none, it is taken as shown.
 	/// </summary>
 	public Func<bool>? CanvasShown { get; set; }
@@ -244,7 +244,7 @@ public sealed class Es1ViewManager {
 
 	/// <summary>
 	/// <b>This engine's own:</b> set while the frame drawn is not yet shown, or never will be. The canvas then keeps the
-	/// last frame shown, as the monitor does: <see cref="EndRenderFrame"/> copies nothing into it and
+	/// last frame shown, as the screen does: <see cref="EndRenderFrame"/> copies nothing into it and
 	/// <see cref="DrawCanvasPanels"/> draws nothing.
 	/// </summary>
 	internal bool CanvasHeld { get; set; }
@@ -464,7 +464,7 @@ public sealed class Es1ViewManager {
 
 	/// <summary>
 	/// <c>CockpitView_ProcessViewCommand</c> (<c>000226f0</c>), once a frame from <c>Sim_EndFrame</c> after the flip: the
-	/// border when asked for; the cooldown; the page gate, which holds a glance until the page on the monitor,
+	/// border when asked for; the cooldown; the page gate, which holds a glance until the page on show,
 	/// <c>+0x88</c>, is the half it slides from; then the wait for a vertical retrace, yielded as
 	/// <see cref="Es1Retrace.VerticalRetrace"/>, <c>Display_FlipWithoutPan</c> cleared and, while nothing is staged, the
 	/// pending command staged (docs/es1/simulation/cockpit-views.md#cockpitview_processviewcommand-000226f0), a pan first
@@ -532,7 +532,7 @@ public sealed class Es1ViewManager {
 				break;
 		}
 
-		// An armed shake the view state cleared moved the page on the monitor.
+		// An armed shake the view state cleared moved the page on show.
 		foreach (var wait in TakeOwedRetraces()) {
 			yield return wait;
 		}
@@ -543,7 +543,7 @@ public sealed class Es1ViewManager {
 	/// else: runs the staged command, yielding a retrace for each step of its slide
 	/// (docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904). The first half copies the outgoing
 	/// picture across the pages for commands 0, 1 and 3, every command but 2 first painting the ticker
-	/// (<see cref="Messages.Es1MessageTicker.Paint"/>); the slide moves the monitor's page, <c>+0x88</c>, by the
+	/// (<see cref="Messages.Es1MessageTicker.Paint"/>); the slide moves the page on show, <c>+0x88</c>, by the
 	/// <c>.VUE</c> records' canvas origins, 5 rows or 10 columns a step and the rest of the way in a last one, and while
 	/// the pilot channel has a line up it draws on that page and lifts the line around each step
 	/// (<see cref="SlideStep"/>, <see cref="EndLift"/>); the after column sets the current view, command 3 painting the
@@ -748,13 +748,13 @@ public sealed class Es1ViewManager {
 	}
 
 	/// <summary>
-	/// A glance's slide and its after column: commands 4 and 5 slide the monitor's page 10 columns a step by record 2's
+	/// A glance's slide and its after column: commands 4 and 5 slide the page on show 10 columns a step by record 2's
 	/// <i>x</i> less record 0's, and by record 0's plus record 3's the other way; command 6 slides back by record 0's
 	/// plus the current view's, toward the side it came from. Then the far half's page is shown, the near one drawn on,
 	/// the pair swapped, the slid page put back on its own origin and the far half copied onto it.
 	///
-	/// <para><b>This engine's own</b> (plan decision 30, KNOWN_ISSUES.md): a step that leaves the monitor's canvas column
-	/// (<see cref="MonitorCanvasPoint"/>) further than <see cref="GlanceReach"/> from view 0's does not wait for its
+	/// <para><b>This engine's own</b> (plan decision 30, KNOWN_ISSUES.md): a step that leaves the screen's canvas column
+	/// (<see cref="ScreenCanvasPoint"/>) further than <see cref="GlanceReach"/> from view 0's does not wait for its
 	/// retrace, so a window that already shows part of the side panel slides only until the panel's outer edge meets the
 	/// window's edge, as ES2's port does, and the steps beyond happen at once. The retrace wait after the slide, the far
 	/// half's show, is kept.</para>
@@ -877,11 +877,11 @@ public sealed class Es1ViewManager {
 	}
 
 	/// <summary>
-	/// A glance's <see cref="SlideStep"/>, answering a wait only while the step leaves the monitor's canvas column within
+	/// A glance's <see cref="SlideStep"/>, answering a wait only while the step leaves the screen's canvas column within
 	/// <see cref="GlanceReach"/> of view 0's.
 	/// </summary>
 	private bool GlanceSlideStep(bool lifted, int page, int x, int y) =>
-		SlideStep(lifted, page, x, y) && (GlanceReach is not { } reach || Math.Abs(MonitorCanvasPoint.Column) <= reach());
+		SlideStep(lifted, page, x, y) && (GlanceReach is not { } reach || Math.Abs(ScreenCanvasPoint.Column) <= reach());
 
 	/// <summary>
 	/// A lifted slide's end: the draw page put back to <paramref name="drawn"/>, <c>+0x8c</c>, and the pilot channel's box

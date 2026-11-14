@@ -31,14 +31,14 @@ internal interface IEs1FramePacer {
 /// <c>Sim_EndFrame</c> (<c>ES1DBSIM 00059b40</c>), with its view change, page flip and view command
 /// (docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904); and the display's part of
 /// <c>Sim_StartMission</c>, steps 11 and 13 to 15 (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc).
-/// The host shows the monitor's picture every host frame (<see cref="Es1Monitor"/>).
+/// The host shows the 320 × 200 screen every host frame (<see cref="Es1ScreenPresenter"/>).
 ///
 /// <para>The monitor is a timeline of vertical retraces on host time, <see cref="RetracesPerSecond"/> a second, the
 /// first at the loop's construction: the phase of the monitor against the PC timer is this engine's, the two running
 /// apart in retail. A retrace's own length is taken as nil, so a retrace is the instant it starts. A frame's end that
 /// waits for the monitor, a view's slide (<c>VGA8_ShowPage</c>) or the retrace wait that ends every frame past the
 /// cooldown and the page gate (<c>Vga_WaitVerticalRetrace</c> in <c>CockpitView_ProcessViewCommand</c>), holds the
-/// frame until the wait's retrace starts and goes on from that instant: the host goes on showing the monitor, and until the frame's end
+/// frame until the wait's retrace starts and goes on from that instant: the host goes on showing the screen, and until the frame's end
 /// has run no tick runs and no input is taken, while the PC timer runs on (<see cref="Es1SimulationRunner.Hold"/>).
 /// Then the clock takes the rest of the host frame, as <c>Time_BeginSimTick</c> follows <c>Sim_EndFrame</c>.</para>
 ///
@@ -108,12 +108,12 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	public Es1ViewManager Views { get; }
 
 	/// <summary>
-	/// <c>Palette_InstallRange</c> on the monitor's live palette (<see cref="Es1Monitor.InstallRange"/>), which the host
-	/// sets; none installs nothing, as with no monitor.
+	/// <c>Palette_InstallRange</c> on the presenter's live palette (<see cref="Es1ScreenPresenter.InstallRange"/>), which the host
+	/// sets; none installs nothing, as with no presenter.
 	/// </summary>
 	public Action<int, IReadOnlyList<uint>>? InstallPaletteRange { get; set; }
 
-	/// <summary>The live palette (<see cref="Es1Monitor.Palette"/>), which the host sets; none with no monitor.</summary>
+	/// <summary>The live palette (<see cref="Es1ScreenPresenter.Palette"/>), which the host sets; none with no presenter.</summary>
 	public Func<DynamixPalette?>? LivePalette { get; set; }
 
 	/// <summary>The theater's world file, whose shorts 10 and 11 the pitch gradient reads, which the host sets; none runs no gradient.</summary>
@@ -437,7 +437,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// monitor its routines make, after those the frame's draw owes (<see cref="Es1ViewManager.TakeOwedRetraces"/>).
 	/// </summary>
 	internal static IEnumerable<Es1Retrace> EndFrame(Es1ViewManager views, bool frozen) {
-		// The hit shake's steps in the frame's draw moved the page on the monitor, each move waiting for it there.
+		// The hit shake's steps in the frame's draw moved the page on show, each move waiting for a retrace.
 		foreach (var wait in views.TakeOwedRetraces()) {
 			yield return wait;
 		}
@@ -484,7 +484,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// shake's offset is taken back out; then this engine's record of the page drawn and its copy into the canvas
 	/// (<see cref="Es1ViewManager.EndRenderFrame"/>). After a 3D pass, this engine also draws the canvas's side panels
 	/// (<see cref="Es1ViewManager.DrawCanvasPanels"/>). They are drawn without the shake's offset, because the canvas
-	/// already moves with the monitor's shaken row.
+	/// already moves with the screen's shaken row.
 	/// </summary>
 	private void RenderFrame() {
 		var globals = Views.Cockpit.Globals;

@@ -125,7 +125,7 @@ public sealed class Es1AlertGlobals {
 	/// <b>This engine's own:</b> the rects of the panels up, in the order they went up. <see cref="Es1AlertPanel.Enter"/>
 	/// adds one and <see cref="Es1AlertPanel.Leave"/> takes it off, whether or not <see cref="CountsOpen"/> is set. The
 	/// host reads them to draw the panels at the window's center while the 320 × 200 screen lies off it
-	/// (<see cref="View.Es1Monitor.Present"/>).
+	/// (<see cref="View.Es1ScreenPresenter.Present"/>).
 	/// </summary>
 	public IReadOnlyList<Es1Rect> OpenRects => _openRects;
 

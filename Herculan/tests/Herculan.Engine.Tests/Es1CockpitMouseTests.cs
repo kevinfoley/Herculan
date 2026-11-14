@@ -110,7 +110,7 @@ public class Es1CockpitMouseTests {
 	}
 
 	/// <summary>
-	/// The host's pointer maps into the 320 × 200 screen through the monitor's 4:3 placement: in a window wider than 4:3
+	/// The host's pointer maps into the 320 × 200 screen through the screen's 4:3 placement: in a window wider than 4:3
 	/// the screen's left edge is the placement's, not the window's, its far corner is (319, 199), a pointer over the bar
 	/// or past the window is held to the edge, and on a scaled display the client's coordinates are scaled to the
 	/// framebuffer's first. Catches the window's width taken for the placement's, a missing clamp, and the client and
@@ -119,7 +119,7 @@ public class Es1CockpitMouseTests {
 	[Fact]
 	public void ThePointerMapsThroughTheFourByThreePlacementAndIsHeldToTheScreen() {
 		// A 1000 × 600 framebuffer shows the screen 800 × 600 from column 100; the client is half that, a 2x display.
-		var pointer = Es1Monitor.Pointer(new Vector2D<int>(1000, 600), new Vector2D<int>(500, 300));
+		var pointer = Es1ScreenPresenter.Pointer(new Vector2D<int>(1000, 600), new Vector2D<int>(500, 300));
 
 		Assert.Equal((0, 0), pointer.ToScreen(50, 0));
 		Assert.Equal((319, 199), pointer.ToScreen(449.9f, 299.9f));
@@ -133,13 +133,13 @@ public class Es1CockpitMouseTests {
 	}
 
 	/// <summary>
-	/// In a 1400 × 600 window showing the canvas beside the 800 × 600 monitor, a pointer over a side panel rests on the
-	/// monitor's edge column toward it; at a glance right's end, the monitor moved 300 pixels right of centre, the pointer
-	/// maps onto the monitor where it now lies, and over view 0's canvas left of it holds to column 0. Catches the pointer
-	/// mapped across the whole window, and mapped through the centred placement after the monitor has moved.
+	/// In a 1400 × 600 window showing the canvas beside the screen's 800 × 600, a pointer over a side panel rests on the
+	/// screen's edge column toward it; at a glance right's end, the screen moved 300 pixels right of centre, the pointer
+	/// maps onto the screen where it now lies, and over view 0's canvas left of it holds to column 0. Catches the pointer
+	/// mapped across the whole window, and mapped through the centred placement after the screen has moved.
 	/// </summary>
 	[Fact]
-	public void InAWideWindowThePointerIsHeldToTheMonitorsColumnsWhereverTheyLie() {
+	public void InAWideWindowThePointerIsHeldToTheScreensColumnsWhereverTheyLie() {
 		var window = new Vector2D<int>(1400, 600);
 
 		var rest = Es1CanvasLayout.Create(window, 0, 0).Pointer(window);

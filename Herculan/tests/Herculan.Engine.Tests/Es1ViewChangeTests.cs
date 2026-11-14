@@ -18,7 +18,7 @@ public class Es1ViewChangeTests {
 	private const byte CanopyIndex = 10;
 
 	/// <summary>
-	/// A pan down slides the page on the monitor down 5 rows a retrace by the heads-down view's 197: to row 200, the
+	/// A pan down slides the page on show down 5 rows a retrace by the heads-down view's 197: to row 200, the
 	/// steps' overshoot, then back to 197, after which the frame's end shows the other page at its own 197. Hand-worked
 	/// from the loop of <c>CockpitView_StepViewTransition</c>. Catches the step changed, the last step dropped or taken
 	/// inside the loop, the slide put on the drawn page, and a step that does not wait its retrace.
@@ -39,7 +39,7 @@ public class Es1ViewChangeTests {
 	}
 
 	/// <summary>
-	/// A glance right whose frame's end flips page 2 onto the monitor is held there, until the next flip puts page 0 on it;
+	/// A glance right whose frame's end flips page 2 onto the screen is held there, until the next flip puts page 0 on it;
 	/// it then slides page 0 right 10 columns a retrace to 320, the far half, shows page 2 and swaps the pair, and copies
 	/// page 2 back onto page 0. Catches the gate read from the drawn page or inverted, the slide's count or direction,
 	/// and the pair left unswapped or the far half not copied back.
@@ -73,7 +73,7 @@ public class Es1ViewChangeTests {
 	}
 
 	/// <summary>
-	/// In a 1400 × 600 window, whose 800 × 600 monitor leaves 120 canvas columns showing on each side, a glance right
+	/// In a 1400 × 600 window, whose screen, 800 × 600, leaves 120 canvas columns showing on each side, a glance right
 	/// waits a retrace for each step only up to the reach of 200 columns, where the right side panel's outer edge, canvas
 	/// column 960, lies on the window's right edge; the steps beyond and the last set take none, and the far half's show
 	/// and the frame's flip wait as before. Catches the reach not read, a step past it that still waits, and a reach that
@@ -94,13 +94,13 @@ public class Es1ViewChangeTests {
 	}
 
 	/// <summary>
-	/// Through a glance right the monitor's canvas column follows the slide to 320 and stays there on the retrace after
+	/// Through a glance right the screen's canvas column follows the slide to 320 and stays there on the retrace after
 	/// its last step, when the far half holding view 2 is shown at its own origin while the current view is still 0, and
 	/// on the frame's flip after the far half is copied back onto page 0. Catches the column taken from the current view
 	/// rather than the view the shown page holds, and the copy back not carrying that view to page 0.
 	/// </summary>
 	[Fact]
-	public void TheMonitorsCanvasColumnStaysOnTheSidePanelAcrossTheGlancesEnd() {
+	public void TheScreensCanvasColumnStaysOnTheSidePanelAcrossTheGlancesEnd() {
 		var (views, frames) = Start();
 
 		var columns = Glance(views, frames);
@@ -209,18 +209,18 @@ public class Es1ViewChangeTests {
 		Rows = 200, Cols = 320, ImageData = Enumerable.Repeat(index, 320 * 200).ToArray(),
 	};
 
-	/// <summary>One frame after a tick, every retrace it waits taken at once; returns the monitor's origin at each.</summary>
+	/// <summary>One frame after a tick, every retrace it waits taken at once; returns the screen's origin at each.</summary>
 	private static List<(int X, int Y)> RunFrame(Es1FrameLoop frames) {
 		var shown = new List<(int X, int Y)>();
 		foreach (var _ in frames.RunFrame(frozen: false)) {
-			shown.Add(frames.Views.Display.MonitorOrigin);
+			shown.Add(frames.Views.Display.ShownOrigin);
 			Assert.True(shown.Count < 1000, "The frame's end never finished.");
 		}
 
 		return shown;
 	}
 
-	/// <summary>A glance right queued once page 0 is on the monitor and run to its end; returns the monitor's canvas column at each retrace of the frame that slides.</summary>
+	/// <summary>A glance right queued once page 0 is on show and run to its end; returns the screen's canvas column at each retrace of the frame that slides.</summary>
 	private static List<int> Glance(Es1ViewManager views, Es1FrameLoop frames) {
 		RunFrame(frames);
 		RunFrame(frames);
@@ -230,7 +230,7 @@ public class Es1ViewChangeTests {
 		Assert.True(views.Staged);
 		var columns = new List<int>();
 		foreach (var _ in frames.RunFrame(frozen: false)) {
-			columns.Add(views.MonitorCanvasPoint.Column);
+			columns.Add(views.ScreenCanvasPoint.Column);
 			Assert.True(columns.Count < 1000, "The frame's end never finished.");
 		}
 

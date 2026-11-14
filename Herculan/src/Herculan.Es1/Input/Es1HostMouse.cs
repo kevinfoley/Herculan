@@ -16,7 +16,7 @@ public readonly record struct Es1MouseRecord(int X, int Y, ushort Buttons);
 /// and <c>Mouse_Buttons</c> (<c>000962e8</c>–<c>000962f0</c>), held from one event to the next, and the callbacks
 /// <c>Mouse_AddCallback</c> registers, each run for the events its mask names.
 ///
-/// <para><b>This engine's own:</b> the host's pointer is mapped into the 320 × 200 screen through the monitor's 4:3
+/// <para><b>This engine's own:</b> the host's pointer is mapped into the 320 × 200 screen through the screen's 4:3
 /// placement (<see cref="Pointer"/>, <see cref="ScreenPointer"/>, docs/herculan/plan-es1-first-mission.md decision 7)
 /// and held to x 0–319 and y 0–199, the bounds <c>Input_BuildSourceTable</c> gives the driver. A host move is one move
 /// event and a host button change one press or release event, each with the pointer where the host has it.</para>

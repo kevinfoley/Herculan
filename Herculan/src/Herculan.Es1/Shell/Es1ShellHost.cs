@@ -19,8 +19,8 @@ namespace Herculan.Es1.Shell;
 /// devices are <see cref="Es1ShellDevices"/>, the shared data <see cref="Es1ShellData"/>, the frame and its input
 /// <see cref="Es1ShellFrame"/>, the screens <see cref="Es1ShellScreens"/> over <see cref="Es1ShellBackdrop"/> and
 /// <see cref="Es1DirtyList"/> with the menus' window globals <see cref="Es1MenuGlobals"/>, the mouse's callbacks into the
-/// menus <see cref="Es1ShellMouse"/>, and the frame-time scale <see cref="Es1ShellTime"/>; the monitor is
-/// <see cref="Es1Monitor"/> on the display.
+/// menus <see cref="Es1ShellMouse"/>, and the frame-time scale <see cref="Es1ShellTime"/>; the presenter is
+/// <see cref="Es1ScreenPresenter"/> on the display.
 ///
 /// <para>The start-up's steps 1 to 6 run before the window opens, so a step that ends the program ends it without one;
 /// steps 7 on and the frame loop run in the window, on host time (<see cref="Es1ShellFrame"/>); the shutdown runs once
@@ -114,7 +114,7 @@ public static class Es1ShellHost {
 		private readonly Es1LipSyncPlayer _lipSync;
 		private readonly IAudioBackend _audio;
 		private Es1ShellData? _data;
-		private Es1Monitor? _monitor;
+		private Es1ScreenPresenter? _presenter;
 
 		// A fatal assert was raised: the window closes at the next update, and no shutdown runs.
 		private bool _asserted;
@@ -159,14 +159,14 @@ public static class Es1ShellHost {
 				window.Render += (delta, gl) => {
 					window.BeginFrame(delta);
 					ShowSystemPointer(window);
-					_monitor?.Present(window.FramebufferSize);
+					_presenter?.Present(window.FramebufferSize);
 					window.DrawMenuBar(revealOnHover: true);
 					window.FrameDrawn(gl);
 				};
 				window.Closing += () => {
 					window.DisposeImGui();
-					_monitor?.Dispose();
-					_monitor = null;
+					_presenter?.Dispose();
+					_presenter = null;
 				};
 				window.Run();
 			}
@@ -203,17 +203,17 @@ public static class Es1ShellHost {
 
 		/// <summary>
 		/// The window's load: the window full screen or not as ES1 last ran (<see cref="Es1FullScreen"/>), unless
-		/// <paramref name="keepWindow"/>; the monitor on the display, then the start-up's steps 7 on and the frame loop
+		/// <paramref name="keepWindow"/>; the presenter on the display, then the start-up's steps 7 on and the frame loop
 		/// started, which run until the first wait for the timer; then the host's mouse and keys taken, the cursor standing
 		/// in for the host's pointer over the window.
 		/// </summary>
 		private void OnLoad(FrontEndWindow window, GL gl, IInputContext input, bool keepWindow) {
 			window.Attach(gl, input);
 			var fullScreenKey = Es1FullScreen.Start(window, keepWindow);
-			_monitor = new Es1Monitor(gl, _devices.Display);
-			_frame.UploadPalette = _monitor.SetPalette;
-			_screens.UploadPalette = _monitor.SetPalette;
-			_devices.Mouse.Pointer = () => Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize);
+			_presenter = new Es1ScreenPresenter(gl, _devices.Display);
+			_frame.UploadPalette = _presenter.SetPalette;
+			_screens.UploadPalette = _presenter.SetPalette;
+			_devices.Mouse.Pointer = () => Es1ScreenPresenter.Pointer(window.FramebufferSize, window.ClientSize);
 			_devices.Mouse.HostHasPointer = () => window.ImGuiWantsMouse;
 
 			// The player's maps as last saved, read each time CONTROLS opens, since the Controller window may have saved since.
@@ -245,7 +245,7 @@ public static class Es1ShellHost {
 				return;
 			}
 
-			bool overScreen = Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize).Over(mouse.Position.X, mouse.Position.Y);
+			bool overScreen = Es1ScreenPresenter.Pointer(window.FramebufferSize, window.ClientSize).Over(mouse.Position.X, mouse.Position.Y);
 			var mode = window.ImGuiWantsMouse || !overScreen ? CursorMode.Normal : CursorMode.Hidden;
 			if (mouse.Cursor.CursorMode != mode) {
 				mouse.Cursor.CursorMode = mode;

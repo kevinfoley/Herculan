@@ -84,7 +84,7 @@ public sealed class Es1ShellFrame {
 		_debugMode = debugMode;
 	}
 
-	/// <summary><c>Palette_UploadWhole</c>: the palette made the live one, the monitor's (<see cref="Es1Monitor.SetPalette"/>).</summary>
+	/// <summary><c>Palette_UploadWhole</c>: the palette made the live one, the presenter's (<see cref="Es1ScreenPresenter.SetPalette"/>).</summary>
 	public Action<DynamixPalette>? UploadPalette { get; set; }
 
 	/// <summary><c>Shell_QuitRequested</c> (<c>0007e808</c>), which the quit keys set.</summary>

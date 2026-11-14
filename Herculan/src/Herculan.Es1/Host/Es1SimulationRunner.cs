@@ -108,7 +108,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	public Func<IEnumerable<Engine.Input.KeyAction>>? CustomKeyActions { get; set; }
 
 	/// <summary>
-	/// One host frame of <paramref name="elapsed"/> where nothing shows the monitor, as with no display: the clock and,
+	/// One host frame of <paramref name="elapsed"/> where nothing shows the screen, as with no display: the clock and,
 	/// when a tick is due, the whole tick. With no display no panel is raised, so the tick never waits.
 	/// </summary>
 	/// <exception cref="InvalidOperationException">The tick waited, which only a panel's loop does.</exception>
@@ -119,7 +119,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 
 		var ended = new StrongBox<bool>();
 		foreach (var _ in Tick(ended)) {
-			throw new InvalidOperationException("The tick waited with nothing to show the monitor.");
+			throw new InvalidOperationException("The tick waited with nothing to show the screen.");
 		}
 
 		return ended.Value ? Frame.MissionEnded : Frame.Ticked;
