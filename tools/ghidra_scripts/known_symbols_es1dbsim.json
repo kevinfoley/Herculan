@@ -29995,7 +29995,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SoundManager_LoadDrivers",
-      "description": "(manager): returns 0 unless SoundManager_LoadBanks (0004f6d4) succeeds. Calls HmiTimer_Init (0006d4f5)(0, 1), registers SoundManager_TimerCallback (0004e710) with Timer_AddCallback at a count from the word at 000bdd0c+4 and 120 and keeps the slot at +0x134, calls 0006fdbb(00095b54) and 00070ed8(00095b59), opens the MIDI device 00095a0c with HmiMidi_InitDriver (00071076) on the blocks +0xcc and +0xa0 (handle 000bd8c0) and loads the banks +0x13a and +0x146 into it with 00072275. Fills the digital driver block: device 00095a04 at +0, 0x78 at +4, 8 at +0xc, 1 at +0x10, far pointers to +0xd8 at +0x14 and to +0x24 at +0x1c; port 00095a00, IRQ 000959fc and DMA 000959f8 at +0x24, +0x28 and +0x2c; 0x1000 (SoundDriver_Defaults (000959ec)) at +0xd8, 1 at +0xe4, the rate 11025 (000959f0) at +0xe8, 0x13 at +0xec; the manager's far pointer at +0xb8. Sets 000bd8c8 to 0, calls 0006fdbb(00095bb8), opens device 0xa005 with HmiMidi_InitDriver on +0xcc and +0xa0 (handle 000bd8c4), loads +0x140 into it with 00072275, calls HmiMidi_SetChannelStealing (0007225a)(0), sets SoundManager_DriversLoaded (000bd8cc) to 1 and returns 1. Each failure formats 'SoundManager::loadDrivers: %s' with HmiLib_ErrorText (0006f23d)'s text, passes one or both MIDI handles to HmiMidi_CloseDriver (0007144b)(handle, 1) from the bank loads on, calls 0006fe28, 00071064 and HmiTimer_Uninit (0006d5c2)(0), and returns 0. Called from Sound_Init (0004db14).",
+      "description": "(manager): returns 0 unless SoundManager_LoadBanks (0004f6d4) succeeds. Calls HmiTimer_Init (0006d4f5)(0, 1), registers SoundManager_TimerCallback (0004e710) with Timer_AddCallback at a count from the word at 000bdd0c+4 and 120 and keeps the slot at +0x134, calls HmiDigi_InitSystem (0006fdbb)(00095b54) and HmiMidi_InitSystem (00070ed8)(00095b59), opens the MIDI device 00095a0c with HmiMidi_InitDriver (00071076) on the blocks +0xcc and +0xa0 (handle 000bd8c0) and loads the banks +0x13a and +0x146 into it with HmiMidi_LoadBank (00072275). Fills the digital driver block: device 00095a04 at +0, 0x78 at +4, 8 at +0xc, 1 at +0x10, far pointers to +0xd8 at +0x14 and to +0x24 at +0x1c; port 00095a00, IRQ 000959fc and DMA 000959f8 at +0x24, +0x28 and +0x2c; 0x1000 (SoundDriver_Defaults (000959ec)) at +0xd8, 1 at +0xe4, the rate 11025 (000959f0) at +0xe8, 0x13 at +0xec; the manager's far pointer at +0xb8. Sets 000bd8c8 to 0, calls HmiDigi_InitSystem (0006fdbb)(00095bb8), opens device 0xa005 with HmiMidi_InitDriver on +0xcc and +0xa0 (handle 000bd8c4), loads +0x140 into it with HmiMidi_LoadBank (00072275), calls HmiMidi_SetChannelStealing (0007225a)(0), sets SoundManager_DriversLoaded (000bd8cc) to 1 and returns 1. Each failure formats 'SoundManager::loadDrivers: %s' with HmiLib_ErrorText (0006f23d)'s text, passes one or both MIDI handles to HmiMidi_CloseDriver (0007144b)(handle, 1) from the bank loads on, calls HmiDigi_UninitSystem (0006fe28), HmiMidi_UninitSystem (00071064) and HmiTimer_Uninit (0006d5c2)(0), and returns 0. Called from Sound_Init (0004db14).",
       "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
       "verified": {
         "bytes": "0004ef8c+1093",
@@ -30010,7 +30010,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SoundManager_UnloadDrivers",
-      "description": "(manager): with SoundManager_DriversLoaded (000bd8cc) set: stops each non-null object of the 60 slots +0x14c through its vtable slot +0x14; HmiMidi_ResetDriver (00071515) on the MIDI handles 000bd8c0 and 000bd8c4, then HmiMidi_CloseDriver (0007144b)(handle, 1) on each; Timer_RemoveCallback of the word +0x134 (its test against -1 compares the word zero-extended, so it always passes); 00071064; 000705c5(000bd8c8, 1, 1); 0006fe28; clears SoundManager_DriversLoaded. es2_xref finds calls from SoundManager_Dtor (0004eccc) and Sound_Shutdown (0004de08).",
+      "description": "(manager): with SoundManager_DriversLoaded (000bd8cc) set: stops each non-null object of the 60 slots +0x14c through its vtable slot +0x14; HmiMidi_ResetDriver (00071515) on the MIDI handles 000bd8c0 and 000bd8c4, then HmiMidi_CloseDriver (0007144b)(handle, 1) on each; Timer_RemoveCallback of the word +0x134 (its test against -1 compares the word zero-extended, so it always passes); HmiMidi_UninitSystem (00071064); HmiDigi_UninitDriver (000705c5)(000bd8c8, 1, 1); HmiDigi_UninitSystem (0006fe28); clears SoundManager_DriversLoaded. es2_xref finds calls from SoundManager_Dtor (0004eccc) and Sound_Shutdown (0004de08).",
       "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile and disassembly at 0004f3d4",
       "verified": {
         "bytes": "0004f3d4+218",
@@ -41959,7 +41959,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HmiDigi_StopSample",
-      "description": "(driver, voice), C convention: 10 for a voice above 31; for a voice record (the far pointer at 0009d10c + driver * 0xc0 + voice * 6) whose word +0x30 has bit 0x8000 set and bit 0x1000 clear, clears bit 0x8000 (the byte +0x31 & 0x7f) and the word +0x34; answers 0 either way, so a busy voice with bit 0x1000 set is not stopped. es2_xref finds calls from DigiSound_Stop (00050c88), maybe_DigiSound_Pause (000509a0) and 00081789.",
+      "description": "(driver, voice), C convention: 10 for a voice above 31; for a voice record (the far pointer at 0009d10c + driver * 0xc0 + voice * 6) whose word +0x30 has bit 0x8000 set and bit 0x1000 clear, clears bit 0x8000 (the byte +0x31 & 0x7f) and the word +0x34; answers 0 either way, so a busy voice with bit 0x1000 set is not stopped. es2_xref finds calls from DigiSound_Stop (00050c88), maybe_DigiSound_Pause (000509a0) and HmiDigiMidi_SendEvent (00081789).",
       "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006dd7f",
       "verified": {
         "bytes": "0006dd7f+101",
@@ -42004,13 +42004,28 @@
       "type": "function",
       "confidence": "high",
       "name": "HmiDigi_SetSampleVolume",
-      "description": "(driver, voice, volume), C convention: with bit 0x8000 of the voice record's word +0x30 set (the far pointer at 0009d10c + driver * 0xc0 + voice * 6), stores the volume in its word +0x32 and answers the old word; else answers 0. It does not test the voice's range. es2_xref finds calls from DigiSound_SetPlacedVolume (00050954), DigiSound_SetVolume (000508c4) and 00081789.",
+      "description": "(driver, voice, volume), C convention: with bit 0x8000 of the voice record's word +0x30 set (the far pointer at 0009d10c + driver * 0xc0 + voice * 6), stores the volume in its word +0x32 and answers the old word; else answers 0. It does not test the voice's range. es2_xref finds calls from DigiSound_SetPlacedVolume (00050954), DigiSound_SetVolume (000508c4) and HmiDigiMidi_SendEvent (00081789).",
       "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006e0b3",
       "verified": {
         "bytes": "0006e0b3+82",
         "sha1": "80dd47f604af",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0006e265",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_SetSamplePan",
+      "description": "(driver, voice, pan), C convention: with bit 0x8000 of the voice record's word +0x30 set (the far pointer at 0009d10c + driver * 0xc0 + voice * 6), stores the pan in its word +0x54, where HmiDigi_StartSample (0006dad9) puts the start block's +0x40, and answers the old word; else answers 0. It does not test the voice's range. es2_xref finds one call, from HmiDigiMidi_SendEvent (00081789).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#playing-a-note; ES1DBSIM decompile at 0006e265",
+      "verified": {
+        "bytes": "0006e265+82",
+        "sha1": "857d0e7f713e",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -42344,12 +42359,90 @@
       }
     },
     {
+      "address": "0006fdbb",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_InitSystem",
+      "description": "(far path) of the HMI library, the digital library's start: sets 0009db40 to 1, copies the path's string to 0009d914, or an empty string for a null pointer, stores DS's absolute address (__dosx_get_abs_address) in 0009db14, calls 0006f971 and returns 0. es2_xref finds two calls, from SoundManager_LoadDrivers (0004ef8c); the one before HmiMidi_InitSystem (00070ed8) passes sos\\.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM disassembly at 0006fdbb",
+      "verified": {
+        "bytes": "0006fdbb+109",
+        "sha1": "61e94e94dc3a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006fe28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_UninitSystem",
+      "description": "Of the HMI library, the digital library's stop: calls 0006fb96, clears 0009db40, which HmiDigi_InitSystem (0006fdbb) sets, and returns 0.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM disassembly at 0006fe28",
+      "verified": {
+        "bytes": "0006fe28+18",
+        "sha1": "28dd5c4d42ab",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006fe3a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_InitDriver",
+      "description": "(device, far hardware block, far init block, far handle) of the HMI library, the digital driver's open: takes the first of five driver numbers whose device dword 0009d510 is 0, answering 0xb when there is none, and stores the device there. With the init block's far pointer +0x24 null it loads the driver image with 00080dd1, answering its error, and stores what that gives in the init block's +0x24, +0x2c, +0x44 and +0x54; otherwise it takes those from the block. It answers the error of 000812d1 on the driver's 0x6c-byte record at 0009d528. For a device below 0xe106: with the init block's +0x0c 0 the buffer is the init block's far pointer +0x04; otherwise it allocates the init block's +0x00 bytes with 0007074d, answering 5 when that fails, and fills them with 0x80 when the record's +0x24 is 8 and bit 0x80 of its +0x3d is clear, else with 0. It then calls 000809b8, keeps the far handler that gives at 0009d0ec, and calls 00080715 on the driver's voice pointers (0009d10c + driver * 0xc0); for a device from 0xe106 the handler is 0. It writes the handler into the init block's +0x1c, calls 00080ab8, 00080a0a (with the init block's +0x14 and +0x18), 00080a90, HmiDigi_CallDriver2 (00080a69) with the init block's +0x10, the rate, and 00080a3f with the buffer and its size, sets 0009d040 and 0009d068, copies the blocks' fields into the driver's 0x5c-byte entry at 000a231c (its +0x14 the device), stores the driver number through the handle pointer and returns 0. es2_xref finds one call, from HmiDigiMidi_Open (00081b08).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1DBSIM decompile at 0006fe3a"
+    },
+    {
+      "address": "000705c5",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_UninitDriver",
+      "description": "(driver, free, unload) of the HMI library, the digital driver's close: answers 1 when the driver's open flag 0009d040 is clear. Otherwise it clears 0009d068; when 0009d0d8[driver] is below 0xe106, 0009db2c[driver] is set (the open allocated the buffer) and free is non-zero, it frees the buffer through 00070906 when 00080c1c answers 3 and clears 0009db2c. It then calls 000808d6, 00080994 and 00080aee, and with unload non-zero 00081002 and 0008127a, clears the driver's far pointers, its device 0009d510 and its open flag, and answers 0. es2_xref finds calls from HmiDigiMidi_Close (00081c4b) and SoundManager_UnloadDrivers (0004f3d4).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1DBSIM decompile at 000705c5"
+    },
+    {
+      "address": "00070ed8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_InitSystem",
+      "description": "(far path) of the HMI library, the MIDI library's start: copies the path's string to the driver path 000a575c, or an empty string for a null pointer, stores DS's absolute address (__dosx_get_abs_address) in 0009db14, calls 00070985, fills HmiCallbackMidi_Functions (000a2574) with the far pointers of HmiCallbackMidi_SendEvent (00081719), HmiCallbackMidi_Open (00081739), HmiCallbackMidi_Close (00081744), HmiCallbackMidi_Reset (0008174f) and HmiCallbackMidi_SetCallback (0008175a), and HmiDigiMidi_Functions (000a3028) with those of HmiDigiMidi_SendEvent (00081789), HmiDigiMidi_Open (00081b08), HmiDigiMidi_Close (00081c4b), HmiDigiMidi_Reset (00081cb0) and HmiDigiMidi_LoadBank (00081cd3), sets HmiMidi_SystemStarted (000a2570) to 1 and returns 0. es2_xref finds one call, from SoundManager_LoadDrivers (0004ef8c), which passes sos\\.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM decompile and disassembly at 00070ed8",
+      "verified": {
+        "bytes": "00070ed8+396",
+        "sha1": "f7b028e1cb8a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00071064",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_UninitSystem",
+      "description": "Of the HMI library, the MIDI library's stop: calls 00070c1b, clears HmiMidi_SystemStarted (000a2570) and returns 0.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM disassembly at 00071064",
+      "verified": {
+        "bytes": "00071064+18",
+        "sha1": "3267e6b8dbd6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00071076",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "HmiMidi_InitDriver",
-      "description": "(device, port block, block, handle out) of the HMI library: takes the first of 5 driver slots whose id at 000a130c is 0, returning 0xb with none, stores the device there and copies its 16 bytes from 000a55d8 + (device - 0xa000)*16 to 000a5688. For 0xa005 and 0xa003 copies six far pointers (from 000a3028 or 000a2574) into the slot's 0x24-byte entry at 000a21b8 and calls its entry +6 with the block's far pointer +0x18/+0x1c, the slot and 000a5984. For any other device loads the driver with HmiMidi_LoadDriverImage (00081365) unless the block's far pointer +4 is set (keeping its results in the block's +4-+0x14 and +0x28), calls HmiMidi_IsDriverSlotFree (000816f5) and HmiDriver_GetFunctions (00081687), and calls the driver's entry +6 with the port block's +8, +4 and +0. A non-zero result is returned; for 0xa00a it also calls HmiTimer_AddEvent (0006d5e6)(0x78, ...). Marks the slot open (000a12e4), stores it through the handle pointer and returns 0.",
+      "description": "(device, port block, block, handle out) of the HMI library: takes the first of 5 driver slots whose id at 000a130c is 0, returning 0xb with none, stores the device there and copies its 16 bytes from 000a55d8 + (device - 0xa000)*16 to 000a5688. For 0xa005 and 0xa003 copies six far pointers (from HmiDigiMidi_Functions (000a3028) or HmiCallbackMidi_Functions (000a2574)) into the slot's 0x24-byte entry at 000a21b8 and calls its entry +6 with the block's far pointer +0x18/+0x1c, the slot and HmiMidi_DriverArg (000a5984). For any other device loads the driver with HmiMidi_LoadDriverImage (00081365) unless the block's far pointer +4 is set (keeping its results in the block's +4-+0x14 and +0x28), calls HmiMidi_IsDriverSlotFree (000816f5) and HmiDriver_GetFunctions (00081687), and calls the driver's entry +6 with the port block's +8, +4 and +0. A non-zero result is returned; for 0xa00a it also calls HmiTimer_AddEvent (0006d5e6)(0x78, ...). Marks the slot open (000a12e4), stores it through the handle pointer and returns 0.",
       "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
       "verified": {
         "bytes": "00071076+981",
@@ -42379,7 +42472,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HmiMidi_ResetDriver",
-      "description": "(slot) of the HMI library: on each of 16 channels calls the driver entry's first function with controller 0x79 and then 0x7b, value 0, then the entry's +0x12 function with the far pointer 000a597c, the slot and 000a5984. Returns 0.",
+      "description": "(slot) of the HMI library: on each of 16 channels calls the driver entry's first function with controller 0x79 and then 0x7b, value 0, then the entry's +0x12 function with the far pointer 000a597c, the slot and HmiMidi_DriverArg (000a5984). Returns 0.",
       "source": "Herculan/docs/es1/sound/song-player.md#the-drivers; ES1DBSIM decompile at 00071515",
       "verified": {
         "bytes": "00071515+172",
@@ -42431,6 +42524,21 @@
         "sha1": "c4e432355375",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00072275",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_LoadBank",
+      "description": "(slot, offset, selector, x) of the HMI library: far-calls the slot's driver entry +0x18 function (000a21b8 + slot * 0x24) with the far pointer selector:offset, the slot and x, and answers what it answers, EAX left as the call returns it. es2_xref finds three calls, from SoundManager_LoadDrivers (0004ef8c).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-bank; ES1DBSIM decompile and disassembly at 00072275",
+      "verified": {
+        "bytes": "00072275+42",
+        "sha1": "0c87a8fc1637",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -44693,6 +44801,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00080a69",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_CallDriver2",
+      "description": "(entry offset, entry selector, offset, selector, value) of the HMI library: far-calls the driver image's entry with 2 in EAX, the far pointer selector:offset in FS:EDI and the value in EBX, keeping ESI, EDI, EBX, ECX, FS, GS and ES, and answers EAX as the image leaves it. es2_xref finds one call, from HmiDigi_InitDriver (0006fe3a), with the init block's rate.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1DBSIM decompile and disassembly at 00080a69",
+      "verified": {
+        "bytes": "00080a69+39",
+        "sha1": "49025b220ce3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00081365",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -44778,6 +44901,321 @@
       "verified": {
         "bytes": "000816f5+25",
         "sha1": "9c6bec820355",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00081711",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_GetFunctions",
+      "description": "Of the HMI library: answers the far pointer DS:HmiCallbackMidi_Functions (000a2574), the offset in EAX and the selector in DX. es2_xref finds one call, from HmiMidi_InitDriver (00071076), for device 0xa003.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM decompile and disassembly at 00081711",
+      "verified": {
+        "bytes": "00081711+8",
+        "sha1": "d28b7d6a316d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00081719",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_SendEvent",
+      "description": "(far event, length, slot), device 0xa003's send, a far function: far-calls HmiCallbackMidi_Callback (000a2594) with the event's offset and selector, the length and the slot, and answers what it answers.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1DBSIM decompile and disassembly at 00081719",
+      "verified": {
+        "bytes": "00081719+32",
+        "sha1": "12a90072113f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00081739",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_Open",
+      "description": "Device 0xa003's open, a far function: loads the stack's [ESP+0x10] and [ESP+0x14] into ECX and EDX and answers 0. HmiCallbackMidi_Close (00081744) and HmiCallbackMidi_Reset (0008174f) are the same code.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1DBSIM disassembly at 00081739",
+      "verified": {
+        "bytes": "00081739+11",
+        "sha1": "12dca4e9ee38",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00081744",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_Close",
+      "description": "Device 0xa003's close, a far function: the code of HmiCallbackMidi_Open (00081739), answering 0.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1DBSIM disassembly at 00081744",
+      "verified": {
+        "bytes": "00081744+11",
+        "sha1": "12dca4e9ee38",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0008174f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_Reset",
+      "description": "Device 0xa003's reset, a far function: the code of HmiCallbackMidi_Open (00081739), answering 0.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1DBSIM disassembly at 0008174f",
+      "verified": {
+        "bytes": "0008174f+11",
+        "sha1": "12dca4e9ee38",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0008175a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_SetCallback",
+      "description": "(offset, selector, slot, x), device 0xa003's bank function, a far function: stores the far pointer selector:offset in HmiCallbackMidi_Callback (000a2594), which HmiCallbackMidi_SendEvent (00081719) calls, and answers 0.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1DBSIM disassembly at 0008175a",
+      "verified": {
+        "bytes": "0008175a+34",
+        "sha1": "ddcff7f1041a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00081781",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_GetFunctions",
+      "description": "Of the HMI library: answers the far pointer DS:HmiDigiMidi_Functions (000a3028), the offset in EAX and the selector in DX. es2_xref finds one call, from HmiMidi_InitDriver (00071076), for device 0xa005.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM decompile and disassembly at 00081781",
+      "verified": {
+        "bytes": "00081781+8",
+        "sha1": "b595764337b7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00081789",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_SendEvent",
+      "description": "(far event, length, slot), device 0xa005's send, a far function; it answers 0 and reads the event's status, its channel the low four bits, the note or controller byte 1 and the value byte 2. A note on with a velocity, for a note whose far pointer HmiDigiMidi_NoteSamples (000a3048)[slot][note] is not null: unless the start block's +0x24 is 0xffff8000, stops the voice HmiDigiMidi_TakeNoteVoice (0008229d)(slot, note, channel) takes with HmiDigi_StopSample (0006dd7f) on the slot's digital driver HmiDigiMidi_DigiDriver (000a3f68); when HmiDigiMidi_VoiceCount (000a3014) has reached HmiDigiMidi_VoiceLimit (000a3000), stops the voice HmiDigiMidi_TakeChannelVoice (000821a7)(slot, channel) takes; with HmiDigiMidi_UseVelocity (000a3fb8) set, writes ((the slot's volume HmiDigiMidi_SlotLevels (000a259c) +0 * velocity) >> 7) << 8 to the block's +0x14; writes the note to +0x18 and, with bit 0x80 of the slot's pan (+4) clear, the pan << 9 to +0x40; starts the block with HmiDigi_StartSample (0006dad9) and, given a voice, records it with HmiDigiMidi_AddVoice (0008212c)(slot, voice, note, velocity, channel). A note on with velocity 0, and a note off, stop the note's voice under the same +0x24 test. Controller 0x7b stops every voice HmiDigiMidi_TakeChannelVoice takes for the channel; controller 7 stores the value as the slot's volume and passes value * the voice's velocity * 2 to HmiDigi_SetSampleVolume (0006e0b3) for each recorded voice from HmiDigiMidi_VoiceOldest (000a2fec) to HmiDigiMidi_VoiceNext (000a2fd8); controller 10 stores the value as the slot's pan and passes value << 9 to HmiDigi_SetSamplePan (0006e265) for each. Any other event does nothing.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#playing-a-note; ES1DBSIM decompile and disassembly at 00081789",
+      "verified": {
+        "bytes": "00081789+895",
+        "sha1": "c7c89433d63d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00081b08",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Open",
+      "description": "(far block, slot, x), device 0xa005's open, a far function. With a digital driver whose entry at 000a231c + driver * 0x5c has +0x14 equal to the block's device +0x00, among the first five, takes its number and clears HmiDigiMidi_OwnsDriver (000a3fa4)[slot]. Otherwise sets it, opens the device with HmiDigi_InitDriver (0006fe3a)(block +0x00, far block +0x1c, far block +0x14, far handle), answering its error, and registers the far handler the open left at the init block's +0x1c with HmiTimer_AddEvent (0006d5e6) at the block's +0x04 calls a second, keeping the event number at HmiDigiMidi_TimerEvent (000a3f90)[slot] and setting HmiDigiMidi_TimerAdded (000a3f7c)[slot], answering its error. Then stores the driver at HmiDigiMidi_DigiDriver (000a3f68)[slot], the block's +0x10 at HmiDigiMidi_UseVelocity (000a3fb8)[slot] and the slot at HmiDigiMidi_DriverSlot (000a7848)[driver], calls HmiDigiMidi_ClearVoices (000820c5)(slot, block +0x0c), sets bit 0x80 of the pan of all five slots of HmiDigiMidi_SlotLevels (000a259c), and answers 0.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1DBSIM disassembly at 00081b08",
+      "verified": {
+        "bytes": "00081b08+323",
+        "sha1": "9d4a1e411a86",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00081c4b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Close",
+      "description": "(far pointer, slot, x), device 0xa005's close, a far function: with HmiDigiMidi_TimerAdded (000a3f7c)[slot] set, clears it and, with HmiDigiMidi_OwnsDriver (000a3fa4)[slot] set, closes the driver with HmiDigi_UninitDriver (000705c5)(HmiDigiMidi_DigiDriver (000a3f68)[slot], 1, 1) and removes the timer event HmiDigiMidi_TimerEvent (000a3f90)[slot] with HmiTimer_RemoveEvent (0006d8d5); then calls HmiDigiMidi_CloseNoOp (00082127)(slot) and answers 0. HmiMidi_CloseDriver (0007144b) passes HmiMidi_DriverArg (000a5984) where it reads the slot.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1DBSIM disassembly at 00081c4b",
+      "verified": {
+        "bytes": "00081c4b+101",
+        "sha1": "6190f667e0c3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00081cb0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Reset",
+      "description": "(far pointer, slot, x), device 0xa005's reset, a far function: HmiDigiMidi_ClearVoices (000820c5)(slot, HmiDigiMidi_VoiceLimit (000a3000)[slot]), forgetting the slot's recorded voices without stopping them, and answers 0.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1DBSIM disassembly at 00081cb0",
+      "verified": {
+        "bytes": "00081cb0+35",
+        "sha1": "b40aea74ab06",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00081cd3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_LoadBank",
+      "description": "(far bank, slot, x), device 0xa005's bank function, a far function: keeps the bank's far pointer at HmiDigiMidi_Banks (000a3f48)[slot], clears the slot's 128 far pointers of HmiDigiMidi_NoteSamples (000a3048), and answers 0xe unless the bank opens with HmiDigiMidi_BankSignature (000a3fcc), HMIDIGIP. From offset 0x28, while the offset is below the bank's dword +0x24, each entry is a 0x74-byte start block and its data: the note entry of the block's +0x18 gets a far pointer to the block, the block's +0x00 a far pointer to its data at +0x74, its +0x1c the far callback HmiDigiMidi_SampleCallback (00081e1d), and the next entry starts the block's +0x08 + 0x74 on. Answers 0.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-bank; ES1DBSIM disassembly at 00081cd3",
+      "verified": {
+        "bytes": "00081cd3+330",
+        "sha1": "f8a38bf2fea0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00081e1d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_SampleCallback",
+      "description": "(driver, event, voice), the far callback HmiDigiMidi_LoadBank (00081cd3) puts in each start block's +0x1c, taking the arguments DigiSound_DoneCallback (0004e7fc) reads: with event 2 removes the voice from the slot HmiDigiMidi_DriverSlot (000a7848)[driver] with HmiDigiMidi_RemoveVoice (0008239b); any other event does nothing.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM disassembly at 00081e1d",
+      "verified": {
+        "bytes": "00081e1d+43",
+        "sha1": "fe24bdbd1085",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0008202d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_SetSongTempo",
+      "description": "(song, percent) of the HMI library: answers 0 when HmiMidi_IsSongDone answers non-zero. Otherwise sets the song's timer event (000a24e8[song]) with HmiTimer_SetEventRate to ((percent << 16) / 100 * the song file's rate +0x38) >> 16, at least 1, and answers HmiTimer_GetEventRate of it. es2_xref finds no caller.",
+      "source": "Herculan/docs/es1/sound/song-player.md#playing; ES1DBSIM decompile at 0008202d",
+      "verified": {
+        "bytes": "0008202d+122",
+        "sha1": "9bafb4e51c04",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000820c5",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_ClearVoices",
+      "description": "(slot, limit): sets the slot's 32 entries of HmiDigiMidi_Voices (000a25d8) to -1, zeroes HmiDigiMidi_VoiceNext (000a2fd8), HmiDigiMidi_VoiceOldest (000a2fec) and HmiDigiMidi_VoiceCount (000a3014), and stores the limit at HmiDigiMidi_VoiceLimit (000a3000).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 000820c5",
+      "verified": {
+        "bytes": "000820c5+98",
+        "sha1": "d40a73151082",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00082127",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_CloseNoOp",
+      "description": "(slot): answers its argument. es2_xref finds one call, from HmiDigiMidi_Close (00081c4b), its last.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1DBSIM disassembly at 00082127",
+      "verified": {
+        "bytes": "00082127+5",
+        "sha1": "341dc3ec187f",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0008212c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_AddVoice",
+      "description": "(slot, voice, note, velocity, channel): answers -1 when HmiDigiMidi_VoiceCount (000a3014) has reached HmiDigiMidi_VoiceLimit (000a3000); otherwise writes the four into the entry of HmiDigiMidi_Voices (000a25d8) at HmiDigiMidi_VoiceNext (000a2fd8), adds 1 to the count, moves the next index on by 1 modulo 32 and answers the entry's index.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 0008212c",
+      "verified": {
+        "bytes": "0008212c+123",
+        "sha1": "9a6928c3e4c4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000821a7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_TakeChannelVoice",
+      "description": "(slot, channel): -1 when HmiDigiMidi_VoiceCount (000a3014) is 0. Otherwise finds the first of the slot's 32 entries of HmiDigiMidi_Voices (000a25d8), by position in the array, whose channel matches and whose voice is not -1, and answers -1 with none; it moves each entry from the found one back to HmiDigiMidi_VoiceOldest (000a2fec) up one place, sets the oldest entry to -1, moves the oldest index on by 1 modulo 32, takes 1 off the count and answers the found entry's voice.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 000821a7",
+      "verified": {
+        "bytes": "000821a7+246",
+        "sha1": "d8ea8d55fe6c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0008229d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_TakeNoteVoice",
+      "description": "(slot, note, channel): HmiDigiMidi_TakeChannelVoice (000821a7) for the first entry whose note and channel both match.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 0008229d",
+      "verified": {
+        "bytes": "0008229d+254",
+        "sha1": "79d5aa6ce866",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0008239b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_RemoveVoice",
+      "description": "(slot, voice): HmiDigiMidi_TakeChannelVoice (000821a7) for the first entry whose voice is the one given, answering the voice, or -1 with none.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 0008239b",
+      "verified": {
+        "bytes": "0008239b+232",
+        "sha1": "6707d42a11c3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00082483",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_FindNoteVoice",
+      "description": "(slot, note, channel): answers the voice of the first entry HmiDigiMidi_TakeNoteVoice (0008229d) would take, leaving it recorded, or -1. es2_xref finds no caller.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 00082483",
+      "verified": {
+        "bytes": "00082483+129",
+        "sha1": "e9e9bc90cd91",
         "scope": "body",
         "via": "decompile"
       }
@@ -49014,6 +49452,186 @@
       "name": "g_TSObjectTypeRegistry",
       "description": "The shape class registry: 18 entries of 12 bytes {tag, load function, name}, followed at 0009f080 by their count, 0x12. Light_ResetSystem (000632ec) registers it with ClassItem_RegisterBucket. ES2's g_TSObjectTypeRegistry (DBSIM 004a63c8), with the same tags, names and order.",
       "source": "Herculan/docs/es1/formats/dts-shape.md"
+    },
+    {
+      "address": "000a2570",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiMidi_SystemStarted",
+      "description": "dword, 1 from HmiMidi_InitSystem (00070ed8), 0 from HmiMidi_UninitSystem (00071064).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program"
+    },
+    {
+      "address": "000a2574",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_Functions",
+      "description": "Device 0xa003's five 6-byte far function pointers (send, open, close, reset, bank), 0 in the image, filled by HmiMidi_InitSystem (00070ed8) and copied by HmiMidi_InitDriver (00071076), which takes six: the sixth is the 6 bytes after them.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program"
+    },
+    {
+      "address": "000a2594",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_Callback",
+      "description": "6-byte far pointer, 0 in the image: the function HmiCallbackMidi_SendEvent (00081719) calls, stored by HmiCallbackMidi_SetCallback (0008175a).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device"
+    },
+    {
+      "address": "000a259c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_SlotLevels",
+      "description": "Device 0xa005's 12 bytes per driver slot, five slots: +0 the volume, 127 in the image, set by controller 7; +4 the pan, 0 in the image, bit 0x80 set by HmiDigiMidi_Open (00081b08) for all five slots and the value of controller 10 after; +8 0 in the image.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#playing-a-note"
+    },
+    {
+      "address": "000a25d8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Voices",
+      "description": "Device 0xa005's recorded voices, 0x200 bytes per driver slot: 32 entries of four dwords, the digital driver's voice, the note, the velocity and the channel, -1 each when free.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
+    },
+    {
+      "address": "000a2fd8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_VoiceNext",
+      "description": "dword per driver slot: the index of HmiDigiMidi_Voices (000a25d8) HmiDigiMidi_AddVoice (0008212c) writes next.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
+    },
+    {
+      "address": "000a2fec",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_VoiceOldest",
+      "description": "dword per driver slot: the index of the oldest recorded entry of HmiDigiMidi_Voices (000a25d8).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
+    },
+    {
+      "address": "000a3000",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_VoiceLimit",
+      "description": "dword per driver slot: the most voices the slot records, the open block's +0x0c, 8 from SoundManager_LoadDrivers.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
+    },
+    {
+      "address": "000a3014",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_VoiceCount",
+      "description": "dword per driver slot: how many voices the slot records.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
+    },
+    {
+      "address": "000a3028",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Functions",
+      "description": "Device 0xa005's five 6-byte far function pointers (send, open, close, reset, bank), 0 in the image, filled by HmiMidi_InitSystem (00070ed8) and copied by HmiMidi_InitDriver (00071076), which takes six: the sixth is the 6 bytes after them, from 000a3046, which run into HmiDigiMidi_NoteSamples (000a3048).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program"
+    },
+    {
+      "address": "000a3048",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_NoteSamples",
+      "description": "Device 0xa005's 0x300 bytes per driver slot: for each of 128 notes a 6-byte far pointer to the bank's start block for it, null for none, set by HmiDigiMidi_LoadBank (00081cd3).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-bank"
+    },
+    {
+      "address": "000a3f48",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Banks",
+      "description": "6-byte far pointer per driver slot: the bank HmiDigiMidi_LoadBank (00081cd3) last loaded.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-bank"
+    },
+    {
+      "address": "000a3f68",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_DigiDriver",
+      "description": "dword per driver slot: the digital driver number device 0xa005 plays through, set by HmiDigiMidi_Open (00081b08).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening"
+    },
+    {
+      "address": "000a3f7c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_TimerAdded",
+      "description": "dword per driver slot: set when HmiDigiMidi_Open (00081b08) registered the digital driver's timer event, cleared by HmiDigiMidi_Close (00081c4b).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening"
+    },
+    {
+      "address": "000a3f90",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_TimerEvent",
+      "description": "dword per driver slot: the HMI timer event number HmiDigiMidi_Open (00081b08) registered the digital driver's handler as.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening"
+    },
+    {
+      "address": "000a3fa4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_OwnsDriver",
+      "description": "dword per driver slot: 1 when HmiDigiMidi_Open (00081b08) opened the digital driver itself, 0 when it took one already open.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening"
+    },
+    {
+      "address": "000a3fb8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_UseVelocity",
+      "description": "dword per driver slot: the open block's +0x10, 1 from SoundManager_LoadDrivers; while set a note on writes the start block's volume from the slot's volume and the velocity.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#playing-a-note"
+    },
+    {
+      "address": "000a3fcc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_BankSignature",
+      "description": "The string HMIDIGIP that HmiDigiMidi_LoadBank (00081cd3) compares a bank's first bytes with.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-bank"
+    },
+    {
+      "address": "000a5984",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiMidi_DriverArg",
+      "description": "dword, 0 in the image: the last argument HmiMidi_InitDriver (00071076) and HmiMidi_ResetDriver (00071515) pass a driver's open and reset, and both of the last two HmiMidi_CloseDriver (0007144b) passes its close, where HmiDigiMidi_Close (00081c4b) reads its slot. es2_xref --decode finds five reads and no write by absolute operand.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting"
+    },
+    {
+      "address": "000a7848",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_DriverSlot",
+      "description": "dword per digital driver: the MIDI driver slot of device 0xa005 playing through it, set by HmiDigiMidi_Open (00081b08) and read by HmiDigiMidi_SampleCallback (00081e1d).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
     },
     {
       "address": "000ad788",

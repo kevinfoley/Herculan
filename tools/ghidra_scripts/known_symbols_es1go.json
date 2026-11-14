@@ -24061,7 +24061,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HmiDigi_StopSample",
-      "description": "(driver, voice), C convention: 10 for a voice above 31; for a voice record (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6) whose word +0x30 has bit 0x8000 set and bit 0x1000 clear, clears bit 0x8000 (the byte +0x31 & 0x7f) and the word +0x34; answers 0 either way, so a busy voice with bit 0x1000 set is not stopped. es2_xref finds calls from DigiSound_Stop (000449d8), maybe_DigiSound_Pause (00044684) and 0006e745. The code of ES1DBSIM's HmiDigi_StopSample (0006dd7f), relocated operands aside.",
+      "description": "(driver, voice), C convention: 10 for a voice above 31; for a voice record (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6) whose word +0x30 has bit 0x8000 set and bit 0x1000 clear, clears bit 0x8000 (the byte +0x31 & 0x7f) and the word +0x34; answers 0 either way, so a busy voice with bit 0x1000 set is not stopped. es2_xref finds calls from DigiSound_Stop (000449d8), maybe_DigiSound_Pause (00044684) and HmiDigiMidi_SendEvent (0006e745). The code of ES1DBSIM's HmiDigi_StopSample (0006dd7f), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006dd7f",
       "verified": {
         "bytes": "0005e537+101",
@@ -24106,11 +24106,26 @@
       "type": "function",
       "confidence": "high",
       "name": "HmiDigi_SetSampleVolume",
-      "description": "(driver, voice, volume), C convention: with bit 0x8000 of the voice record's word +0x30 set (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6), stores the volume in its word +0x32 and answers the old word; else answers 0. It does not test the voice's range. es2_xref finds calls from DigiSound_SetVolume (0004459a), DigiSound_SetPlacedVolume (00044635) and 0006e745. The code of ES1DBSIM's HmiDigi_SetSampleVolume (0006e0b3), relocated operands aside.",
+      "description": "(driver, voice, volume), C convention: with bit 0x8000 of the voice record's word +0x30 set (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6), stores the volume in its word +0x32 and answers the old word; else answers 0. It does not test the voice's range. es2_xref finds calls from DigiSound_SetVolume (0004459a), DigiSound_SetPlacedVolume (00044635) and HmiDigiMidi_SendEvent (0006e745). The code of ES1DBSIM's HmiDigi_SetSampleVolume (0006e0b3), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006e0b3",
       "verified": {
         "bytes": "0005e86b+82",
         "sha1": "ccd41a6c22f1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005ea1d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_SetSamplePan",
+      "description": "(driver, voice, pan), C convention: with bit 0x8000 of the voice record's word +0x30 set (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6), stores the pan in its word +0x54, where HmiDigi_StartSample (0005e291) puts the start block's +0x40, and answers the old word; else answers 0. It does not test the voice's range. es2_xref finds one call, from HmiDigiMidi_SendEvent (0006e745). The code of ES1DBSIM's HmiDigi_SetSamplePan (0006e265), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#playing-a-note; ES1DBSIM decompile at 0006e265",
+      "verified": {
+        "bytes": "0005ea1d+82",
+        "sha1": "546f754226f9",
         "scope": "body",
         "via": "decompile"
       }
@@ -24476,6 +24491,84 @@
       }
     },
     {
+      "address": "000606ff",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_InitSystem",
+      "description": "(far path) of the HMI library, the digital library's start: sets 0008ac18 to 1, copies the path's string to 0008a9ec, or an empty string for a null pointer, stores DS's absolute address (__dosx_get_abs_address) in 0008abec, calls 000602b5 and returns 0. es2_xref finds two calls, from SoundManager_LoadDrivers (0004240a); the one before HmiMidi_InitSystem (0006181c) passes sos\\. The code of ES1DBSIM's HmiDigi_InitSystem (0006fdbb), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM disassembly at 0006fdbb",
+      "verified": {
+        "bytes": "000606ff+109",
+        "sha1": "dea4a3248400",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006076c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_UninitSystem",
+      "description": "Of the HMI library, the digital library's stop: calls 000604da, clears 0008ac18, which HmiDigi_InitSystem (000606ff) sets, and returns 0. The code of ES1DBSIM's HmiDigi_UninitSystem (0006fe28), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM disassembly at 0006fe28",
+      "verified": {
+        "bytes": "0006076c+18",
+        "sha1": "9c8255c350dc",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006077e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_InitDriver",
+      "description": "The code of ES1DBSIM's HmiDigi_InitDriver (0006fe3a), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1GO decompile at 0006077e, against ES1DBSIM's at 0006fe3a"
+    },
+    {
+      "address": "00060f09",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_UninitDriver",
+      "description": "The code of ES1DBSIM's HmiDigi_UninitDriver (000705c5), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1GO decompile at 00060f09, against ES1DBSIM's at 000705c5"
+    },
+    {
+      "address": "0006181c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_InitSystem",
+      "description": "The code of ES1DBSIM's HmiMidi_InitSystem (00070ed8), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1GO decompile at 0006181c, against ES1DBSIM's at 00070ed8",
+      "verified": {
+        "bytes": "0006181c+396",
+        "sha1": "9d4bbfb929c9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000619a8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_UninitSystem",
+      "description": "Of the HMI library, the MIDI library's stop: calls 0006155f, clears HmiMidi_SystemStarted (0008ead8) and returns 0. The code of ES1DBSIM's HmiMidi_UninitSystem (00071064), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM disassembly at 00071064",
+      "verified": {
+        "bytes": "000619a8+18",
+        "sha1": "edb53f1dde8e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00061d8f",
       "binary": "ES1GO",
       "type": "function",
@@ -24496,7 +24589,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HmiMidi_ResetDriver",
-      "description": "(slot) of the HMI library: on each of 16 channels calls the driver entry's first function with controller 0x79 and then 0x7b, value 0, then the entry's +0x12 function with the far pointer 00091ee4, the slot and 00091eec. Returns 0. The code of ES1DBSIM's HmiMidi_ResetDriver (00071515), relocated operands aside.",
+      "description": "(slot) of the HMI library: on each of 16 channels calls the driver entry's first function with controller 0x79 and then 0x7b, value 0, then the entry's +0x12 function with the far pointer 00091ee4, the slot and HmiMidi_DriverArg (00091eec). Returns 0. The code of ES1DBSIM's HmiMidi_ResetDriver (00071515), relocated operands aside.",
       "source": "Herculan/docs/es1/sound/song-player.md#the-drivers; ES1DBSIM decompile at 00071515",
       "verified": {
         "bytes": "00061e59+172",
@@ -24548,6 +24641,21 @@
         "sha1": "21dce2ba5550",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00062bb9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_LoadBank",
+      "description": "(slot, offset, selector, x) of the HMI library: far-calls the slot's driver entry +0x18 function (0008e720 + slot * 0x24) with the far pointer selector:offset, the slot and x, and answers what it answers, EAX left as the call returns it. es2_xref finds three calls, from SoundManager_LoadDrivers (0004240a). The code of ES1DBSIM's HmiMidi_LoadBank (00072275), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-bank; ES1DBSIM decompile and disassembly at 00072275",
+      "verified": {
+        "bytes": "00062bb9+42",
+        "sha1": "034b0cc107c8",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -26849,6 +26957,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0006da25",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_CallDriver2",
+      "description": "(entry offset, entry selector, offset, selector, value) of the HMI library: far-calls the driver image's entry with 2 in EAX, the far pointer selector:offset in FS:EDI and the value in EBX, keeping ESI, EDI, EBX, ECX, FS, GS and ES, and answers EAX as the image leaves it. es2_xref finds one call, from HmiDigi_InitDriver (0006077e), with the init block's rate. The code of ES1DBSIM's HmiDigi_CallDriver2 (00080a69), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1DBSIM decompile and disassembly at 00080a69",
+      "verified": {
+        "bytes": "0006da25+39",
+        "sha1": "49025b220ce3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0006e321",
       "binary": "ES1GO",
       "type": "function",
@@ -26934,6 +27057,321 @@
       "verified": {
         "bytes": "0006e6b1+25",
         "sha1": "05c9e0ee7918",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006e6cd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_GetFunctions",
+      "description": "The code of ES1DBSIM's HmiCallbackMidi_GetFunctions (00081711), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1GO decompile at 0006e6cd, against ES1DBSIM's at 00081711",
+      "verified": {
+        "bytes": "0006e6cd+8",
+        "sha1": "fa3f7e27e2e1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006e6d5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_SendEvent",
+      "description": "(far event, length, slot), device 0xa003's send, a far function: far-calls HmiCallbackMidi_Callback (0008eafc) with the event's offset and selector, the length and the slot, and answers what it answers. The code of ES1DBSIM's HmiCallbackMidi_SendEvent (00081719), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1DBSIM decompile and disassembly at 00081719",
+      "verified": {
+        "bytes": "0006e6d5+32",
+        "sha1": "127f328022d3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0006e6f5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_Open",
+      "description": "The code of ES1DBSIM's HmiCallbackMidi_Open (00081739), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1GO disassembly at 0006e6f5, against ES1DBSIM's at 00081739",
+      "verified": {
+        "bytes": "0006e6f5+11",
+        "sha1": "12dca4e9ee38",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006e700",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_Close",
+      "description": "The code of ES1DBSIM's HmiCallbackMidi_Close (00081744), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1GO disassembly at 0006e700, against ES1DBSIM's at 00081744",
+      "verified": {
+        "bytes": "0006e700+11",
+        "sha1": "12dca4e9ee38",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006e70b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_Reset",
+      "description": "The code of ES1DBSIM's HmiCallbackMidi_Reset (0008174f), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1GO disassembly at 0006e70b, against ES1DBSIM's at 0008174f",
+      "verified": {
+        "bytes": "0006e70b+11",
+        "sha1": "12dca4e9ee38",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006e716",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_SetCallback",
+      "description": "The code of ES1DBSIM's HmiCallbackMidi_SetCallback (0008175a), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1GO disassembly at 0006e716, against ES1DBSIM's at 0008175a",
+      "verified": {
+        "bytes": "0006e716+34",
+        "sha1": "24db6bd3716c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006e73d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_GetFunctions",
+      "description": "The code of ES1DBSIM's HmiDigiMidi_GetFunctions (00081781), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1GO decompile at 0006e73d, against ES1DBSIM's at 00081781",
+      "verified": {
+        "bytes": "0006e73d+8",
+        "sha1": "a75656543835",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006e745",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_SendEvent",
+      "description": "(far event, length, slot), device 0xa005's send, a far function; it answers 0 and reads the event's status, its channel the low four bits, the note or controller byte 1 and the value byte 2. A note on with a velocity, for a note whose far pointer HmiDigiMidi_NoteSamples (0008f5b0)[slot][note] is not null: unless the start block's +0x24 is 0xffff8000, stops the voice HmiDigiMidi_TakeNoteVoice (0006f259)(slot, note, channel) takes with HmiDigi_StopSample (0005e537) on the slot's digital driver HmiDigiMidi_DigiDriver (000904d0); when HmiDigiMidi_VoiceCount (0008f57c) has reached HmiDigiMidi_VoiceLimit (0008f568), stops the voice HmiDigiMidi_TakeChannelVoice (0006f163)(slot, channel) takes; with HmiDigiMidi_UseVelocity (00090520) set, writes ((the slot's volume HmiDigiMidi_SlotLevels (0008eb04) +0 * velocity) >> 7) << 8 to the block's +0x14; writes the note to +0x18 and, with bit 0x80 of the slot's pan (+4) clear, the pan << 9 to +0x40; starts the block with HmiDigi_StartSample (0005e291) and, given a voice, records it with HmiDigiMidi_AddVoice (0006f0e8)(slot, voice, note, velocity, channel). A note on with velocity 0, and a note off, stop the note's voice under the same +0x24 test. Controller 0x7b stops every voice HmiDigiMidi_TakeChannelVoice takes for the channel; controller 7 stores the value as the slot's volume and passes value * the voice's velocity * 2 to HmiDigi_SetSampleVolume (0005e86b) for each recorded voice from HmiDigiMidi_VoiceOldest (0008f554) to HmiDigiMidi_VoiceNext (0008f540); controller 10 stores the value as the slot's pan and passes value << 9 to HmiDigi_SetSamplePan (0005ea1d) for each. Any other event does nothing. The code of ES1DBSIM's HmiDigiMidi_SendEvent (00081789), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#playing-a-note; ES1DBSIM decompile and disassembly at 00081789",
+      "verified": {
+        "bytes": "0006e745+895",
+        "sha1": "9daca8690c56",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0006eac4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Open",
+      "description": "The code of ES1DBSIM's HmiDigiMidi_Open (00081b08), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1GO disassembly at 0006eac4, against ES1DBSIM's at 00081b08",
+      "verified": {
+        "bytes": "0006eac4+323",
+        "sha1": "0d12e3e9a7f1",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006ec07",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Close",
+      "description": "The code of ES1DBSIM's HmiDigiMidi_Close (00081c4b), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1GO disassembly at 0006ec07, against ES1DBSIM's at 00081c4b",
+      "verified": {
+        "bytes": "0006ec07+101",
+        "sha1": "3acc29dbcc19",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006ec6c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Reset",
+      "description": "The code of ES1DBSIM's HmiDigiMidi_Reset (00081cb0), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1GO disassembly at 0006ec6c, against ES1DBSIM's at 00081cb0",
+      "verified": {
+        "bytes": "0006ec6c+35",
+        "sha1": "489b798adfc2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006ec8f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_LoadBank",
+      "description": "The code of ES1DBSIM's HmiDigiMidi_LoadBank (00081cd3), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-bank; ES1GO disassembly at 0006ec8f, against ES1DBSIM's at 00081cd3",
+      "verified": {
+        "bytes": "0006ec8f+330",
+        "sha1": "cfc4a1ec375c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006edd9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_SampleCallback",
+      "description": "The code of ES1DBSIM's HmiDigiMidi_SampleCallback (00081e1d), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1GO disassembly at 0006edd9, against ES1DBSIM's at 00081e1d",
+      "verified": {
+        "bytes": "0006edd9+43",
+        "sha1": "c60994f981e5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006efe9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_SetSongTempo",
+      "description": "(song, percent) of the HMI library: answers 0 when HmiMidi_IsSongDone answers non-zero. Otherwise sets the song's timer event (0008ea50[song]) with HmiTimer_SetEventRate to ((percent << 16) / 100 * the song file's rate +0x38) >> 16, at least 1, and answers HmiTimer_GetEventRate of it. es2_xref finds no caller. The code of ES1DBSIM's HmiMidi_SetSongTempo (0008202d), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/song-player.md#playing; ES1DBSIM decompile at 0008202d",
+      "verified": {
+        "bytes": "0006efe9+122",
+        "sha1": "a219e164aea2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006f081",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_ClearVoices",
+      "description": "(slot, limit): sets the slot's 32 entries of HmiDigiMidi_Voices (0008eb40) to -1, zeroes HmiDigiMidi_VoiceNext (0008f540), HmiDigiMidi_VoiceOldest (0008f554) and HmiDigiMidi_VoiceCount (0008f57c), and stores the limit at HmiDigiMidi_VoiceLimit (0008f568). The code of ES1DBSIM's HmiDigiMidi_ClearVoices (000820c5), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 000820c5",
+      "verified": {
+        "bytes": "0006f081+98",
+        "sha1": "348b27a71d25",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006f0e3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_CloseNoOp",
+      "description": "The code of ES1DBSIM's HmiDigiMidi_CloseNoOp (00082127), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1GO disassembly at 0006f0e3, against ES1DBSIM's at 00082127",
+      "verified": {
+        "bytes": "0006f0e3+5",
+        "sha1": "341dc3ec187f",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0006f0e8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_AddVoice",
+      "description": "(slot, voice, note, velocity, channel): answers -1 when HmiDigiMidi_VoiceCount (0008f57c) has reached HmiDigiMidi_VoiceLimit (0008f568); otherwise writes the four into the entry of HmiDigiMidi_Voices (0008eb40) at HmiDigiMidi_VoiceNext (0008f540), adds 1 to the count, moves the next index on by 1 modulo 32 and answers the entry's index. The code of ES1DBSIM's HmiDigiMidi_AddVoice (0008212c), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 0008212c",
+      "verified": {
+        "bytes": "0006f0e8+123",
+        "sha1": "1d2dafebbc7d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006f163",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_TakeChannelVoice",
+      "description": "(slot, channel): -1 when HmiDigiMidi_VoiceCount (0008f57c) is 0. Otherwise finds the first of the slot's 32 entries of HmiDigiMidi_Voices (0008eb40), by position in the array, whose channel matches and whose voice is not -1, and answers -1 with none; it moves each entry from the found one back to HmiDigiMidi_VoiceOldest (0008f554) up one place, sets the oldest entry to -1, moves the oldest index on by 1 modulo 32, takes 1 off the count and answers the found entry's voice. The code of ES1DBSIM's HmiDigiMidi_TakeChannelVoice (000821a7), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 000821a7",
+      "verified": {
+        "bytes": "0006f163+246",
+        "sha1": "937ed77f6e5b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006f259",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_TakeNoteVoice",
+      "description": "(slot, note, channel): HmiDigiMidi_TakeChannelVoice (0006f163) for the first entry whose note and channel both match. The code of ES1DBSIM's HmiDigiMidi_TakeNoteVoice (0008229d), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 0008229d",
+      "verified": {
+        "bytes": "0006f259+254",
+        "sha1": "12bcbf9a52ae",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006f357",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_RemoveVoice",
+      "description": "(slot, voice): HmiDigiMidi_TakeChannelVoice (0006f163) for the first entry whose voice is the one given, answering the voice, or -1 with none. The code of ES1DBSIM's HmiDigiMidi_RemoveVoice (0008239b), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 0008239b",
+      "verified": {
+        "bytes": "0006f357+232",
+        "sha1": "99738eed8c33",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006f43f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigiMidi_FindNoteVoice",
+      "description": "(slot, note, channel): answers the voice of the first entry HmiDigiMidi_TakeNoteVoice (0006f259) would take, leaving it recorded, or -1. es2_xref finds no caller. The code of ES1DBSIM's HmiDigiMidi_FindNoteVoice (00082483), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1DBSIM decompile at 00082483",
+      "verified": {
+        "bytes": "0006f43f+129",
+        "sha1": "79375b67e058",
         "scope": "body",
         "via": "decompile"
       }
@@ -29940,6 +30378,186 @@
       "name": "Math_CosTableQ14",
       "description": "int16[1025]: entry i is floor(16384 cos(i / 4096 turn)), 0x4000 to 0, in every entry; BuildEulerRotationMatrixQ14 (000589c4) and Math_BuildRotation2D (0005533c) read it, sin by cos(a - 0x4000) and the far half by negating entry 0x800 - i. ES1DBSIM's Math_CosTableQ14 (000981cc) rounds where this truncates, 554 of the 1025 entries being one less here.",
       "source": "Herculan/docs/es1/shell/map.md#the-shapes; es2_peek.py ES1GO 0008b648 1026 --words against cos"
+    },
+    {
+      "address": "0008ead8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiMidi_SystemStarted",
+      "description": "dword, 1 from HmiMidi_InitSystem (0006181c), 0 from HmiMidi_UninitSystem (000619a8). ES1DBSIM's HmiMidi_SystemStarted is at 000a2570.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program"
+    },
+    {
+      "address": "0008eadc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_Functions",
+      "description": "ES1GO's copy of ES1DBSIM's HmiCallbackMidi_Functions (000a2574).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1GO disassembly"
+    },
+    {
+      "address": "0008eafc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiCallbackMidi_Callback",
+      "description": "ES1GO's copy of ES1DBSIM's HmiCallbackMidi_Callback (000a2594).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-callback-device; ES1GO disassembly"
+    },
+    {
+      "address": "0008eb04",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_SlotLevels",
+      "description": "ES1GO's copy of ES1DBSIM's HmiDigiMidi_SlotLevels (000a259c).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#playing-a-note; ES1GO disassembly"
+    },
+    {
+      "address": "0008eb40",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Voices",
+      "description": "Device 0xa005's recorded voices, 0x200 bytes per driver slot: 32 entries of four dwords, the digital driver's voice, the note, the velocity and the channel, -1 each when free. ES1DBSIM's HmiDigiMidi_Voices is at 000a25d8.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
+    },
+    {
+      "address": "0008f540",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_VoiceNext",
+      "description": "dword per driver slot: the index of HmiDigiMidi_Voices (0008eb40) HmiDigiMidi_AddVoice (0006f0e8) writes next. ES1DBSIM's HmiDigiMidi_VoiceNext is at 000a2fd8.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
+    },
+    {
+      "address": "0008f554",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_VoiceOldest",
+      "description": "dword per driver slot: the index of the oldest recorded entry of HmiDigiMidi_Voices (0008eb40). ES1DBSIM's HmiDigiMidi_VoiceOldest is at 000a2fec.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
+    },
+    {
+      "address": "0008f568",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_VoiceLimit",
+      "description": "dword per driver slot: the most voices the slot records, the open block's +0x0c, 8 from SoundManager_LoadDrivers. ES1DBSIM's HmiDigiMidi_VoiceLimit is at 000a3000.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
+    },
+    {
+      "address": "0008f57c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_VoiceCount",
+      "description": "dword per driver slot: how many voices the slot records. ES1DBSIM's HmiDigiMidi_VoiceCount is at 000a3014.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices"
+    },
+    {
+      "address": "0008f590",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Functions",
+      "description": "ES1GO's copy of ES1DBSIM's HmiDigiMidi_Functions (000a3028).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1GO disassembly"
+    },
+    {
+      "address": "0008f5b0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_NoteSamples",
+      "description": "ES1GO's copy of ES1DBSIM's HmiDigiMidi_NoteSamples (000a3048).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-bank; ES1GO disassembly"
+    },
+    {
+      "address": "000904b0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_Banks",
+      "description": "ES1GO's copy of ES1DBSIM's HmiDigiMidi_Banks (000a3f48).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-bank; ES1GO disassembly"
+    },
+    {
+      "address": "000904d0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_DigiDriver",
+      "description": "ES1GO's copy of ES1DBSIM's HmiDigiMidi_DigiDriver (000a3f68).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1GO disassembly"
+    },
+    {
+      "address": "000904e4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_TimerAdded",
+      "description": "ES1GO's copy of ES1DBSIM's HmiDigiMidi_TimerAdded (000a3f7c).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1GO disassembly"
+    },
+    {
+      "address": "000904f8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_TimerEvent",
+      "description": "ES1GO's copy of ES1DBSIM's HmiDigiMidi_TimerEvent (000a3f90).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1GO disassembly"
+    },
+    {
+      "address": "0009050c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_OwnsDriver",
+      "description": "ES1GO's copy of ES1DBSIM's HmiDigiMidi_OwnsDriver (000a3fa4).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1GO disassembly"
+    },
+    {
+      "address": "00090520",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_UseVelocity",
+      "description": "dword per driver slot: the open block's +0x10, 1 from SoundManager_LoadDrivers; while set a note on writes the start block's volume from the slot's volume and the velocity. ES1DBSIM's HmiDigiMidi_UseVelocity is at 000a3fb8.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#playing-a-note"
+    },
+    {
+      "address": "00090534",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_BankSignature",
+      "description": "ES1GO's copy of ES1DBSIM's HmiDigiMidi_BankSignature (000a3fcc).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-bank; ES1GO disassembly"
+    },
+    {
+      "address": "00091eec",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiMidi_DriverArg",
+      "description": "ES1GO's copy of ES1DBSIM's HmiMidi_DriverArg (000a5984).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1GO disassembly"
+    },
+    {
+      "address": "00093db0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigiMidi_DriverSlot",
+      "description": "ES1GO's copy of ES1DBSIM's HmiDigiMidi_DriverSlot (000a7848).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-voices; ES1GO disassembly"
     },
     {
       "address": "000941e8",

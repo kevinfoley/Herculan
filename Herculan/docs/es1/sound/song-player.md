@@ -96,7 +96,7 @@ When the last track ends, the tick marks the song not playing, silences it (`Hmi
 | `+0x18` | load a bank | `00072275`, which `SoundManager_LoadDrivers` calls for the melodic and drum banks and `sos\drum32.dig` |
 | `+0x1e` | | |
 
-For `0xa005` and `0xa003` the six come from tables in the program ([the devices](#the-devices)). For any other device the first five come from the driver's image, which `HmiMidi_LoadDriverImage` (`00081365`) [loads from `hmimdrv.386`](../formats/hmi-driver-container.md#loading-an-image) unless the caller's block already holds one, and the open function is then called with the three dwords of the caller's port block. `HmiMidi_CloseDriver` calls the close function, frees a loaded image with `HmiMidi_FreeDriverImage` (`00081599`) when asked to, and frees the slot. What the FM image's five functions do with their arguments is [the FM driver](fm-driver.md#the-images-interface); its reset is its close.
+For `0xa005` and `0xa003` they come from tables in the program, five functions each ([the devices in the program](drum-device.md#the-devices-in-the-program)). For any other device the first five come from the driver's image, which `HmiMidi_LoadDriverImage` (`00081365`) [loads from `hmimdrv.386`](../formats/hmi-driver-container.md#loading-an-image) unless the caller's block already holds one, and the open function is then called with the three dwords of the caller's port block. `HmiMidi_CloseDriver` calls the close function, frees a loaded image with `HmiMidi_FreeDriverImage` (`00081599`) when asked to, and frees the slot. The close is called with the far pointer `000a597c`, which `HmiMidi_InitDriver` sets only while an image opens, and `HmiMidi_DriverArg` (`000a5984`) twice; the reset with that far pointer, the slot and `000a5984`; the bank function with the bank's far pointer, the slot and `00072275`'s fourth argument. What the FM image's five functions do with their arguments is [the FM driver](fm-driver.md#the-images-interface); its reset is its close.
 
 ## The devices
 
@@ -110,7 +110,7 @@ For `0xa005` and `0xa003` the six come from tables in the program ([the devices]
 | `0xa004` | MT-32 | `0xa004` |
 | `0xa008` | AWE 32 | `0xa000` |
 
-The drivers themselves are [`SOS\HMIMDRV.386`'s images](../formats/hmi-driver-container.md#layout), which also hold a driver for `0xa009` (OPL3, answering a track that lists `0xa002`), `0xa00a` (Gravis UltraSound) and `0xa006` (the PC speaker). `0xa005`, which `SoundManager_LoadDrivers` opens with `sos\drum32.dig` and the digital driver's blocks, is none of them, and neither is `0xa003`: `HmiMidi_InitDriver` takes those two devices' functions from tables in the program itself, `000a3028` and `000a2574`.
+The drivers themselves are [`SOS\HMIMDRV.386`'s images](../formats/hmi-driver-container.md#layout), which also hold a driver for `0xa009` (OPL3, answering a track that lists `0xa002`), `0xa00a` (Gravis UltraSound) and `0xa006` (the PC speaker). Neither `0xa005`, the drums, nor `0xa003`, which hands events to a function of its opener's, is among them: both are code in the program ([`drum-device.md`](drum-device.md)), and `SoundManager_LoadDrivers` opens `0xa005` beside the setup's device.
 
 Track 0 of each of the 19 songs lists no device and goes to slot 0. Of the others, every melodic track lists `0xa002` first, `0xa000` after it or not at all, except `ICE`'s tracks 13–15, `INTRO1`'s 10–14 and `INTRO2`'s 14–17, which list `0xa000` first (`INTRO2`'s 17 then `0xa00a`, `0xa002` and `0xa007`); the rest list `0xa005` alone, and most songs have one track listing `0xa003` alone. `DESERT`'s eleven tracks and every melodic track of `RUBBLE`, `VOLCANO`, `WIN2` and `LOSING` list `0xa002` alone. No track lists `0xa004`. So by step 6 of `HmiMidi_InitSong`, with `0xa005` always open beside the setup's device:
 
@@ -121,8 +121,8 @@ Track 0 of each of the 19 songs lists no device and goes to slot 0. Of the other
 ## Open
 
 - **Open:** the channel-stealing mode of `HmiMidi_SendEvent` and `HmiMidi_SilenceSong`, which both programs turn off.
-- **Open:** the driver entry's `+0x1e` function, the arguments of its close, reset and bank functions, and the Gravis UltraSound driver's timer function, which `HmiMidi_InitDriver` asks the image for and registers at 120 a second.
+- **Open:** the driver entry's `+0x1e` function, which for the two devices in the program is a copy of the six bytes after their tables, and the Gravis UltraSound driver's timer function, which `HmiMidi_InitDriver` asks the image for and registers at 120 a second.
 - **Open:** what stores a `MidiSound`'s far pointer `+0x35`, the branch callback `MidiSound_Play` passes on.
-- **Open:** what `0xa003` and `0xa007` stand for, which neither `SOUNDSET.INI` nor `HMIMDRV.386` lists.
+- **Open:** what `0xa007` stands for, which neither `SOUNDSET.INI` nor `HMIMDRV.386` lists, and what the songs' `0xa003` tracks were written for.
 - **Open:** [the devices](#the-devices)' routing in the running game. A retail check: with the setup's MIDI device set to MPU 401 under DOSBox-X, `DESERT`'s song is silent and `RUBBLE`'s plays only its `0xa005` track, where FM plays both whole.
 - **Open:** the song's pace in the running game. A retail check: `BATTLE1A`'s track 1 loops at tick 10,243, so at 120.05 ticks a second its opening returns 85.3 s after it starts.
