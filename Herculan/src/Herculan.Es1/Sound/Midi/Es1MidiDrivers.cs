@@ -1,20 +1,78 @@
+using HercWorks.Core.Data.File;
+using HercWorks.Core.Io.Transform.Common;
+
 namespace Herculan.Es1.Sound.Midi;
 
 /// <summary>
 /// The library's table of open MIDI drivers (docs/es1/sound/song-player.md#the-drivers): five slots, each holding a
-/// device id (<c>000a130c</c>, 0 for a free slot) and the driver's functions, and the rule by which a song's tracks pick
-/// a slot (docs/es1/sound/song-player.md#loading, step 6).
+/// device id (<c>000a130c</c>, 0 for a free slot), the driver's functions and the image its code came from, and the rule by
+/// which a song's tracks pick a slot (docs/es1/sound/song-player.md#loading, step 6).
 /// </summary>
-public sealed class Es1MidiDrivers {
+/// <param name="open">The install's reader, a path to a file's bytes, null when it does not open; none opens no file.</param>
+public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null) {
 	/// <summary>The open drivers at most: the size of the table.</summary>
 	public const int Slots = 5;
 
 	/// <summary>The device ids a track lists at most: the entries of <c>Es1HmpSong.TrackDevices</c> a track has.</summary>
 	public const int TrackDeviceIds = 5;
 
+	/// <summary>The container of MIDI driver images, under <see cref="DriverPath"/> (docs/es1/formats/hmi-driver-container.md).</summary>
+	public const string ContainerName = "hmimdrv.386";
+
+	/// <summary>Retail's error for no image in the container for the device.</summary>
+	public const int NoImage = 7;
+
+	/// <summary>Retail's error for a device outside <c>0xa000</c>–<c>0xa200</c>.</summary>
+	public const int DeviceOutOfRange = 6;
+
+	/// <summary>Retail's error for a slot that already holds an image.</summary>
+	public const int SlotHoldsImage = 9;
+
+	/// <summary>Retail's error for a slot past the table, or, freeing an image, a slot that holds none.</summary>
+	public const int BadSlot = 10;
+
+	/// <summary>Retail's error for a container that does not open.</summary>
+	public const int NoContainer = 0xf;
+
+	/// <summary>Retail's error when all <see cref="Slots"/> slots hold a device.</summary>
+	public const int SlotsTaken = 0xb;
+
 	private readonly int[] _ids = new int[Slots];
 	private readonly IEs1MidiDriver?[] _drivers = new IEs1MidiDriver?[Slots];
 	private readonly bool[,] _channels = new bool[Slots, 16];
+	private readonly bool[] _inUse = new bool[Slots];
+	private readonly int[] _imageIds = new int[Slots];
+	private readonly byte[]?[] _images = new byte[Slots][];
+
+	/// <summary>
+	/// The device id of the entry header the loader read last (<c>000a2568</c>, in the buffer <c>000a2540</c>), kept from one
+	/// load to the next as retail's buffer is.
+	/// </summary>
+	private int _entryDevice;
+
+	/// <summary>
+	/// The driver path (<c>000a575c</c>), which <c>HmiMidi_InitSystem</c> (<c>00070ed8</c>) copies from its argument, an empty
+	/// string for a null pointer; <see cref="LoadDriverImage"/> appends <see cref="ContainerName"/> to it.
+	/// </summary>
+	public string DriverPath { get; set; } = "";
+
+	/// <summary>
+	/// Whether <paramref name="slot"/> is in use (<c>000a12e4</c>): set by <see cref="LoadDriverImage"/>, whether or not it
+	/// finds an image, and by a driver's open; cleared by <see cref="FreeDriverImage"/> and <see cref="Close"/>.
+	/// </summary>
+	public bool InUse(int slot) => _inUse[slot];
+
+	/// <summary>
+	/// The device id <see cref="LoadDriverImage"/> left for <paramref name="slot"/> (<c>000a12f8</c>): that of the last entry
+	/// header it read, the matching entry's or, with none matching, the container's last.
+	/// </summary>
+	public int ImageDeviceId(int slot) => _imageIds[slot];
+
+	/// <summary>
+	/// The image the driver in <paramref name="slot"/> was loaded from, null for none. It stands for retail's copy of the image
+	/// and the two selectors over it (<c>000a127c</c>, <c>000a129c</c>, <c>000a12bc</c>, <c>000a12d0</c>).
+	/// </summary>
+	public byte[]? Image(int slot) => _images[slot];
 
 	/// <summary>
 	/// The channels each device's master volume reaches (<c>000a55d8</c>, 16 bytes a device from <c>0xa000</c>): every
@@ -43,15 +101,83 @@ public sealed class Es1MidiDrivers {
 
 	/// <summary>
 	/// <c>HmiMidi_InitDriver</c> (<c>00071076</c>)'s choice of a slot: <paramref name="driver"/>, which has opened as
-	/// <paramref name="deviceId"/>, takes the first free slot, answered in <paramref name="slot"/>. False, retail's error
-	/// <c>0xb</c>, when all five are taken. Retail keeps the id of a slot whose open then fails; here the caller adds a
-	/// driver once it has opened.
+	/// <paramref name="deviceId"/>, takes the first free slot, answered in <paramref name="slot"/>, and marks it in use. False,
+	/// retail's error <c>0xb</c>, when all five are taken. Retail keeps the id of a slot whose open then fails; here the
+	/// caller adds a driver once it has opened.
 	/// </summary>
 	public bool TryAdd(int deviceId, IEs1MidiDriver driver, out int slot) {
+		if (!Claim(deviceId, out slot)) {
+			return false;
+		}
+
+		_drivers[slot] = driver;
+		_inUse[slot] = true;
+		return true;
+	}
+
+	/// <summary>
+	/// <c>HmiMidi_InitDriver</c> (<c>00071076</c>) (docs/es1/sound/song-player.md#the-drivers), for a device whose code is
+	/// an image: <paramref name="deviceId"/> takes the first free slot, answered in <paramref name="slot"/>, and its channel
+	/// table; the image is the one <paramref name="block"/> holds or, with none, the one <see cref="LoadDriverImage"/> loads,
+	/// which the block then keeps; the driver is made for the image with the port block, and the slot is marked in use,
+	/// answering 0. <see cref="SlotsTaken"/> when no slot is free; a load's error as it answers it, the slot keeping the device
+	/// id and the load's marks, as retail's does.
+	///
+	/// <para>Retail's reuse of the block's image stores its data far pointer, address and allocation in the slot's tables
+	/// but not its code far pointer, which the load's path stores. Retail then has the image answer request 1 with its five
+	/// functions (<c>HmiDriver_GetFunctions</c>, <c>00081687</c>) and calls the open function with the port block; here the
+	/// driver's constructor stands for both (<see cref="IEs1MidiDriver"/>). Its call of <c>HmiMidi_IsDriverSlotFree</c>,
+	/// whose answer it does not read, has no counterpart. Device <c>0xa00a</c>'s timer function, which retail asks the image
+	/// for and registers at 120 calls a second, is not ported: the sound manager opens <c>0xa002</c> for every MIDI device
+	/// (decision 25 of docs/herculan/plan-es1-first-mission.md).</para>
+	///
+	/// <para>PLACEHOLDER (docs/herculan/plan-es1-sound.md, module D part 7): no image has a driver yet, so the slot opens with
+	/// no functions and the events the song player sends it are dropped. Devices <c>0xa005</c> and <c>0xa003</c>, whose
+	/// functions come from tables in the program and whose open reads the block's <c>+0x18</c>
+	/// (docs/es1/sound/drum-device.md#the-devices-in-the-program), open the same way, with no functions and no open.</para>
+	/// </summary>
+	/// <param name="deviceId">The device to open.</param>
+	/// <param name="portBlock">The caller's port block, three dwords; the FM image reads the low word of <c>+0</c>, the port.</param>
+	/// <param name="block">The caller's block, which keeps the image.</param>
+	/// <param name="slot">The slot the device took, −1 when none was free.</param>
+	public int InitDriver(int deviceId, int[] portBlock, Es1MidiDriverBlock block, out int slot) {
+		if (!Claim(deviceId, out slot)) {
+			return SlotsTaken;
+		}
+
+		if (deviceId is not (0xa005 or 0xa003)) {
+			byte[]? image = block.Image;
+			if (image == null) {
+				int error = LoadDriverImage(deviceId, slot, out image);
+				if (error != 0) {
+					return error;
+				}
+
+				block.Image = image;
+			}
+
+			_images[slot] = image;
+			_drivers[slot] = DriverFor(deviceId, image!, portBlock);
+		}
+
+		_inUse[slot] = true;
+		return 0;
+	}
+
+	/// <summary>
+	/// The driver for an image, made with what its open function takes. PLACEHOLDER (module D part 7): none yet, so null for
+	/// every image.
+	/// </summary>
+	private static IEs1MidiDriver? DriverFor(int deviceId, byte[] image, int[] portBlock) => null;
+
+	/// <summary>
+	/// <c>HmiMidi_InitDriver</c>'s choice of a slot: the first whose device id is 0, given <paramref name="deviceId"/> and
+	/// that device's channel table (<c>000a55d8</c> to <c>000a5688</c>); false when all are taken.
+	/// </summary>
+	private bool Claim(int deviceId, out int slot) {
 		for (slot = 0; slot < Slots; slot++) {
 			if (_ids[slot] == 0) {
 				_ids[slot] = deviceId;
-				_drivers[slot] = driver;
 				for (int channel = 0; channel < 16; channel++) {
 					_channels[slot, channel] = UsesChannel(deviceId, channel);
 				}
@@ -65,17 +191,95 @@ public sealed class Es1MidiDrivers {
 	}
 
 	/// <summary>
-	/// <c>HmiMidi_CloseDriver</c> (<c>0007144b</c>): the driver's close called and the slot freed. False, retail's answer 1,
-	/// for a slot that is not open.
+	/// <c>HmiMidi_LoadDriverImage</c> (<c>00081365</c>) (docs/es1/formats/hmi-driver-container.md#loading-an-image): the
+	/// image for <paramref name="deviceId"/> read out of <see cref="ContainerName"/> under <see cref="DriverPath"/> into
+	/// <paramref name="image"/>, answering 0. <see cref="BadSlot"/> for a slot past the table, <see cref="SlotHoldsImage"/> for
+	/// a slot in use, <see cref="DeviceOutOfRange"/> for a device outside <c>0xa000</c>–<c>0xa200</c> and
+	/// <see cref="NoContainer"/> when the container does not open, each with nothing changed. Otherwise the entries are read
+	/// in turn up to the first whose device is <paramref name="deviceId"/>, the slot is marked in use and given the last entry's
+	/// device as its <see cref="ImageDeviceId"/>, and the answer is <see cref="NoImage"/> when no entry matched.
+	///
+	/// <para>Retail answers 10 for a slot above 5, so slot 5, past the five-slot table, passes the test and reads its flag
+	/// from the next table; here it answers <see cref="BadSlot"/>. Retail reads one entry header more than the image count
+	/// when none matches; every retail container ends with its last image, so that read gets no bytes and leaves the last
+	/// entry's header in the buffer, and it is not made here. A container the reader refuses counts as one with no entries,
+	/// an engine guard: retail reads whatever the file holds. Retail's error 5, for an allocation that fails, has no
+	/// counterpart.</para>
 	/// </summary>
-	public bool Close(int slot) {
-		if (_drivers[slot] is not { } driver) {
+	public int LoadDriverImage(int deviceId, int slot, out byte[]? image) {
+		image = null;
+		if (slot is < 0 or >= Slots) {
+			return BadSlot;
+		}
+
+		if (_inUse[slot]) {
+			return SlotHoldsImage;
+		}
+
+		if (deviceId is < 0xa000 or > 0xa200) {
+			return DeviceOutOfRange;
+		}
+
+		if (open?.Invoke(DriverPath + ContainerName) is not { } bytes) {
+			return NoContainer;
+		}
+
+		Es1HmiDriverContainer? container;
+		try {
+			container = new Es1HmiDriverContainerTransformer().Parse(bytes);
+		} catch (InvalidDataException) {
+			container = null;
+		}
+
+		foreach (var entry in container?.Images ?? []) {
+			_entryDevice = entry.DeviceId;
+			if (entry.DeviceId == deviceId) {
+				image = entry.Image;
+				break;
+			}
+		}
+
+		_imageIds[slot] = _entryDevice;
+		_inUse[slot] = true;
+		return image == null ? NoImage : 0;
+	}
+
+	/// <summary>
+	/// <c>HmiMidi_FreeDriverImage</c> (<c>00081599</c>): the slot's image freed and the slot no longer in use, answering 0;
+	/// <see cref="BadSlot"/> for a slot past the table or not in use. Retail's test lets slot 5 through, as
+	/// <see cref="LoadDriverImage"/>'s does.
+	/// </summary>
+	public int FreeDriverImage(int slot) {
+		if (slot is < 0 or >= Slots || !_inUse[slot]) {
+			return BadSlot;
+		}
+
+		_images[slot] = null;
+		_inUse[slot] = false;
+		return 0;
+	}
+
+	/// <summary>
+	/// <c>HmiMidi_CloseDriver</c> (<c>0007144b</c>): for a slot in use, the driver's close called, with
+	/// <paramref name="freeImage"/> its image freed unless its device is <c>0xa003</c> or <c>0xa005</c>, whose code is the
+	/// program's, then the slot freed and no longer in use. False, retail's answer 1, for a slot not in use. A slot with no
+	/// driver functions has no close to call; retail calls the slot's entry whatever it holds. Retail also removes device
+	/// <c>0xa00a</c>'s timer event, which no open here registers.
+	/// </summary>
+	public bool Close(int slot, bool freeImage) {
+		if (!_inUse[slot]) {
 			return false;
 		}
 
-		driver.Close(slot);
+		_drivers[slot]?.Close(slot);
+		if (freeImage && _ids[slot] is not (0xa003 or 0xa005)) {
+			FreeDriverImage(slot);
+		}
+
+		_images[slot] = null;
 		_ids[slot] = 0;
 		_drivers[slot] = null;
+		_inUse[slot] = false;
 		return true;
 	}
 

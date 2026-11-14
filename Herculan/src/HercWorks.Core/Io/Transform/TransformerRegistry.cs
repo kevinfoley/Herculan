@@ -261,6 +261,8 @@ public static class TransformerRegistry {
 		new("HMI Bank", e => NameIs(e, "MELODIC.BNK") || NameIs(e, "DRUM.BNK") || NameIs(e, "DRUM32.DIG"),
 			() => new Common.Es1HmiBankTransformer()),
 		new("Unread HMI Bank (opaque)", e => NameIs(e, "DONS.BNK") || NameIs(e, "DRUM.DIG"), () => new Common.Es1OpaqueFileTransformer()),
+		// docs/es1/formats/hmi-driver-container.md: SOS\'s three containers of driver images.
+		new("HMI Driver Container", e => NameEndsWith(e, ".386"), () => new Common.Es1HmiDriverContainerTransformer()),
 		// docs/es1/formats/dlg-menu-dialogs.md: the shell's menus, a count and 13-byte records.
 		new("Menu Dialog", e => NameEndsWith(e, ".DLG"), () => new Shell.Es1MenuDialogTransformer()),
 		// docs/es1/formats/bnd-notes.md#the-shells-files: the shell's eight, read whole at start-up. SIMVOL0's bnd\ holds six of

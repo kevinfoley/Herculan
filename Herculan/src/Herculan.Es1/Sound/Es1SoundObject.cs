@@ -368,8 +368,9 @@ public sealed class Es1DigiSound : Es1SoundObject {
 /// A song (docs/es1/sound/song-player.md#loading): <c>MidiSound</c>, <c>0xcf</c> bytes, vtable
 /// <c>MidiSoundVtable</c> (<c>00095c82</c>), built by <c>MidiSound_Ctor</c> (<c>000504dc</c>).
 ///
-/// <para>PLACEHOLDER: the song plays through <see cref="Es1SoundManager.Midi"/>, where no driver opens until module D's
-/// part 7, so no track but track 0 is routed to a driver and nothing is heard. Nothing calls
+/// <para>PLACEHOLDER: the song plays through <see cref="Es1SoundManager.Midi"/>, where the FM device's slot opens with no
+/// driver functions and device <c>0xa005</c> does not open until module D's part 7, so the tracks routed to the FM slot
+/// play into nothing, the <c>0xa005</c> tracks are dropped and nothing is heard. Nothing calls
 /// <see cref="Es1MidiSystem.Tick"/> until part 8, so a song started stays started and <see cref="IsPlaying"/> stays true
 /// until it is stopped.</para>
 ///
