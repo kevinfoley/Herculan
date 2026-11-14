@@ -21,7 +21,7 @@ using HercWorks.Core.Io.Transform;
 //
 // This file is the entry point alone: parse the command line, find the install, and hand over to the
 // turn that was asked for — an install (DiscInstall), Metaltech: Earthsiege's launcher (Es1Launcher) or one of its
-// missions (Es1ZoneViewer), a movie
+// missions (Es1MissionHost), a movie
 // (MovieHost), one mission, or by default ES.EXE's loop of front end and simulator (Launcher), in the window opened here;
 // and, when a shell's "Game" menu switches game (GameSwitch), the other game's launcher in the same window.
 
@@ -145,7 +145,7 @@ int RunEs1(string root, bool switched) {
 		return 1;
 	}
 
-	return Es1ZoneViewer.Run(root, options.MissionPath, es1.ToOverrides(), imguiFontPath, imguiItalicFontPath,
+	return Es1MissionHost.Run(root, options.MissionPath, es1.ToOverrides(), imguiFontPath, imguiItalicFontPath,
 		new Es1ShellMenus(localization, root, inMission: true), options.PlayTape, options.DemoTape, options.RecordTape,
 		silent: options.SilentAudio);
 }

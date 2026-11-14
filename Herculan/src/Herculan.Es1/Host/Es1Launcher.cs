@@ -12,7 +12,7 @@ namespace Herculan.Es1.Host;
 /// <summary>
 /// ES1's launcher, <c>ESCD.EXE</c>'s <c>Launcher_Main</c> (<c>000005cc</c>) in <c>ES1ESCD</c> (docs/es1/shell/launcher.md):
 /// the start-up's checks and drive prefixes, then the shell (<see cref="Es1ShellHost"/>) and the simulator
-/// (<see cref="Es1ZoneViewer"/>) one after the other, each by the number the program before left in <c>data\exit.cfg</c>,
+/// (<see cref="Es1MissionHost"/>) one after the other, each by the number the program before left in <c>data\exit.cfg</c>,
 /// until that number is 0. The programs' exit statuses are not read, as retail keeps none of <c>spawnv</c>'s answers.
 ///
 /// <para>Retail spawns each program as a DOS executable; here each is a turn in the one <see cref="HostWindow"/> the host
@@ -56,7 +56,7 @@ public static class Es1Launcher {
 	/// <param name="imguiFontPath">The faces the shell's ImGui draws in (<see cref="Es1ShellHost.Run"/>).</param>
 	/// <param name="menus">
 	/// Builds each shell turn's and each mission's menu bar and its windows (<see cref="Es1ShellHost.Run"/>,
-	/// <see cref="Es1ZoneViewer.Run"/>), given whether the turn is a mission.
+	/// <see cref="Es1MissionHost.Run"/>), given whether the turn is a mission.
 	/// </param>
 	/// <param name="screenshotPath"><c>--screenshot</c>'s file, which the first shell turn captures; none for a play.</param>
 	/// <param name="window">The window every turn runs in, which the host owns.</param>
@@ -182,11 +182,11 @@ public static class Es1Launcher {
 	/// A turn of the simulator on the install's <c>data\</c> files, <c>spawnv</c>(0, <c>dbsim.exe</c>, ...), its status not
 	/// kept: <paramref name="arguments"/> read as <c>Sim_ParseCommandLine</c> (<c>00058e74</c>) reads them
 	/// (docs/es1/simulation/main-loop.md#the-command-line), each switch looked up by the character after its <c>-</c>,
-	/// case-sensitive, a character not in its table passed over, and handed to <see cref="Es1ZoneViewer.Run"/> as far as
+	/// case-sensitive, a character not in its table passed over, and handed to <see cref="Es1MissionHost.Run"/> as far as
 	/// it takes them. <c>-D</c> is its demo; <c>-p</c> and <c>-r</c> its tape to play and to record, each name taken only
 	/// when none was given before, and <c>-D</c>'s pick replacing any; <c>-c</c> (<c>Sim_PreParseCommandLine</c>) lets it
 	/// honor <c>ALT_DRIVE</c>, which the install's paths stand in for here; <c>-eggplant</c> is what step 6's refusal
-	/// tests, which <see cref="Es1ZoneViewer"/> does not make; and each <c>-s</c> toggles <c>000b5b68</c> from 1, which
+	/// tests, which <see cref="Es1MissionHost"/> does not make; and each <c>-s</c> toggles <c>000b5b68</c> from 1, which
 	/// clear makes no sound manager. The mission's menu bar is one <paramref name="menus"/> builds, as a shell turn's is.
 	/// </summary>
 	private static void RunSimulator(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath,
@@ -233,7 +233,7 @@ public static class Es1Launcher {
 			Console.Error.WriteLine($"PLACEHOLDER: DBSIM.EXE's {string.Join(" ", notHanded)} not handed to the simulator.");
 		}
 
-		Es1ZoneViewer.Run(installRoot, null, new Es1HeaderOverrides(null, null, null), imguiFontPath, imguiItalicFontPath,
+		Es1MissionHost.Run(installRoot, null, new Es1HeaderOverrides(null, null, null), imguiFontPath, imguiItalicFontPath,
 			menus(true), playTape, demo, recordTape, window, soundOn, silent);
 		window.Hold(null);
 	}

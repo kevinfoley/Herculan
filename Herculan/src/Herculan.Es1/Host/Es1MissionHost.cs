@@ -74,7 +74,7 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// the pointer is over the bar or one of its windows, where the system's pointer shows, and the engine aids' keys do
 /// nothing while a field of its windows is typed into.</para>
 /// </summary>
-public static class Es1ZoneViewer {
+public static class Es1MissionHost {
 	/// <summary>The clear colour when the theater's sky cannot be built: a mid grey, plainly not a retail sky.</summary>
 	private static readonly Vector3 MissingSky = new(0.32f, 0.32f, 0.36f);
 
