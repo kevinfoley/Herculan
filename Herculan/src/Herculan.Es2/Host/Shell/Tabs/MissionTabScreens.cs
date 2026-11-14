@@ -271,8 +271,8 @@ sealed class MissionTabScreens {
 		}
 	}
 
-	// Mission_OnRockAndRoll (00445509): the first test to fail puts the refusal up; otherwise the handoff
-	// is written and the shell's window closes, and the host runs the mission it names.
+	// Mission_OnRockAndRoll (00445509): tries to start the mission; if successful, writes the handoff
+	// and closes the shell window; the host will pass it off to the simulator.
 	private void RockAndRoll() {
 		if (ShellMissionLaunch.Check(_game.Hangar) is { } refusal) {
 			_dialogs.LaunchRefusal.Open(refusal);
