@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Nuked-OPL3 1.8 ported to C#, the OPL emulator of decision 27 (docs/herculan/plan-es1-sound.md, "The OPL emulator").
+       It is LGPL 2.1 or later, as the C original is (COPYING beside this file), and the one assembly of the engine that is
+       not MIT. It references nothing, and nothing of it is compiled into another assembly: Herculan.Engine references it as
+       a library, and the host's single-file publish leaves it a file of its own beside the executable, so a recipient can
+       replace it with a modified copy, as the LGPL requires. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Herculan.Opl3</RootNamespace>
+    <AssemblyName>Herculan.Opl3</AssemblyName>
+    <PackageLicenseExpression>LGPL-2.1-or-later</PackageLicenseExpression>
+    <Copyright>Copyright (C) 2013-2020 Nuke.YKT</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The license text, embedded so that the assembly carries it wherever it is copied, and a file beside it in every
+         build and publish that includes it. -->
+    <EmbeddedResource Include="COPYING" LogicalName="COPYING" />
+    <None Include="COPYING" Link="Herculan.Opl3.COPYING.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+</Project>

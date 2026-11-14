@@ -46,6 +46,14 @@
     <None Include="..\..\missions\*.hcm" LinkBase="Missions" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- The LGPL OPL emulator stays a file of its own beside the executable in a single-file publish, so that a recipient can
+       replace it with a modified copy, as the LGPL requires (Herculan.Opl3.csproj). -->
+  <Target Name="KeepOpl3OutOfSingleFile" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Update="@(ResolvedFileToPublish)" Condition="'%(Filename)%(Extension)' == 'Herculan.Opl3.dll'" ExcludeFromSingleFile="true" />
+    </ItemGroup>
+  </Target>
+
   <!-- Loose files, not EmbeddedResource: Localization scans this folder at runtime, so a player can
        drop in their own .lang file (a new locale, or edits to an existing one) after install without
        rebuilding anything. -->

@@ -34,6 +34,8 @@
     <ProjectReference Include="..\HercWorks.Disc\HercWorks.Disc.csproj" />
     <ProjectReference Include="..\HercWorks.Vol\HercWorks.Vol.csproj" />
     <ProjectReference Include="..\HercWorks.Video\HercWorks.Video.csproj" />
+    <!-- The OPL emulator, LGPL, kept an assembly of its own (its csproj says why). -->
+    <ProjectReference Include="..\Herculan.Opl3\Herculan.Opl3.csproj" />
   </ItemGroup>
 
   <ItemGroup>
