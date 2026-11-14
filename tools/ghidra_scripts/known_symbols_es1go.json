@@ -24539,6 +24539,21 @@
       "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1GO decompile at 00060f09, against ES1DBSIM's at 000705c5"
     },
     {
+      "address": "0006155f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_UnlockMemory",
+      "description": "The code of ES1DBSIM's HmiMidi_UnlockMemory (00070c1b), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1GO decompile at 0006155f, against ES1DBSIM's at 00070c1b",
+      "verified": {
+        "bytes": "0006155f+701",
+        "sha1": "654f5a6115ae",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006181c",
       "binary": "ES1GO",
       "type": "function",
@@ -24559,13 +24574,28 @@
       "type": "function",
       "confidence": "high",
       "name": "HmiMidi_UninitSystem",
-      "description": "Of the HMI library, the MIDI library's stop: calls 0006155f, clears HmiMidi_SystemStarted (0008ead8) and returns 0. The code of ES1DBSIM's HmiMidi_UninitSystem (00071064), relocated operands aside.",
+      "description": "Of the HMI library, the MIDI library's stop: calls HmiMidi_UnlockMemory (0006155f), clears HmiMidi_SystemStarted (0008ead8) and returns 0. The code of ES1DBSIM's HmiMidi_UninitSystem (00071064), relocated operands aside.",
       "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM disassembly at 00071064",
       "verified": {
         "bytes": "000619a8+18",
         "sha1": "edb53f1dde8e",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "000619ba",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_InitDriver",
+      "description": "The code of ES1DBSIM's HmiMidi_InitDriver (00071076), relocated operands aside.",
+      "source": "Herculan/docs/es1/sound/song-player.md#the-drivers; ES1GO decompile at 000619ba, against ES1DBSIM's at 00071076",
+      "verified": {
+        "bytes": "000619ba+981",
+        "sha1": "9f301a322489",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {

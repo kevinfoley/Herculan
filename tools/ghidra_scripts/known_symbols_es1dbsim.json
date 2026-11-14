@@ -29995,7 +29995,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SoundManager_LoadDrivers",
-      "description": "(manager): returns 0 unless SoundManager_LoadBanks (0004f6d4) succeeds. Calls HmiTimer_Init (0006d4f5)(0, 1), registers SoundManager_TimerCallback (0004e710) with Timer_AddCallback at a count from the word at 000bdd0c+4 and 120 and keeps the slot at +0x134, calls HmiDigi_InitSystem (0006fdbb)(00095b54) and HmiMidi_InitSystem (00070ed8)(00095b59), opens the MIDI device 00095a0c with HmiMidi_InitDriver (00071076) on the blocks +0xcc and +0xa0 (handle 000bd8c0) and loads the banks +0x13a and +0x146 into it with HmiMidi_LoadBank (00072275). Fills the digital driver block: device 00095a04 at +0, 0x78 at +4, 8 at +0xc, 1 at +0x10, far pointers to +0xd8 at +0x14 and to +0x24 at +0x1c; port 00095a00, IRQ 000959fc and DMA 000959f8 at +0x24, +0x28 and +0x2c; 0x1000 (SoundDriver_Defaults (000959ec)) at +0xd8, 1 at +0xe4, the rate 11025 (000959f0) at +0xe8, 0x13 at +0xec; the manager's far pointer at +0xb8. Sets 000bd8c8 to 0, calls HmiDigi_InitSystem (0006fdbb)(00095bb8), opens device 0xa005 with HmiMidi_InitDriver on +0xcc and +0xa0 (handle 000bd8c4), loads +0x140 into it with HmiMidi_LoadBank (00072275), calls HmiMidi_SetChannelStealing (0007225a)(0), sets SoundManager_DriversLoaded (000bd8cc) to 1 and returns 1. Each failure formats 'SoundManager::loadDrivers: %s' with HmiLib_ErrorText (0006f23d)'s text, passes one or both MIDI handles to HmiMidi_CloseDriver (0007144b)(handle, 1) from the bank loads on, calls HmiDigi_UninitSystem (0006fe28), HmiMidi_UninitSystem (00071064) and HmiTimer_Uninit (0006d5c2)(0), and returns 0. Called from Sound_Init (0004db14).",
+      "description": "(manager): clears SoundManager_DriversLoaded (000bd8cc) and returns 0 unless SoundManager_LoadBanks (0004f6d4) succeeds. Calls HmiTimer_Init (0006d4f5)(0, 1), registers SoundManager_TimerCallback (0004e710) with Timer_AddCallback at a count from the word at 000bdd0c+4 and 120 and keeps the slot at +0x134, calls HmiDigi_InitSystem (0006fdbb)(00095b54) and HmiMidi_InitSystem (00070ed8)(00095b59), clears the block +0xa0's far pointer +4, so that the open loads an image, stores the port 00095a08 at +0xcc, opens the MIDI device 00095a0c with HmiMidi_InitDriver (00071076) on the blocks +0xcc and +0xa0 (handle 000bd8c0) and loads the banks +0x13a and +0x146 into it with HmiMidi_LoadBank (00072275). Fills the digital driver block: device 00095a04 at +0, 0x78 at +4, 8 at +0xc, 1 at +0x10, far pointers to +0xd8 at +0x14 and to +0x24 at +0x1c; port 00095a00, IRQ 000959fc and DMA 000959f8 at +0x24, +0x28 and +0x2c; 0x1000 (SoundDriver_Defaults (000959ec)) at +0xd8, 1 at +0xe4, the rate 11025 (000959f0) at +0xe8, 0x13 at +0xec; the manager's far pointer at +0xb8. Sets 000bd8c8 to 0, calls HmiDigi_InitSystem (0006fdbb)(00095bb8), opens device 0xa005 with HmiMidi_InitDriver on +0xcc and +0xa0 (handle 000bd8c4), loads +0x140 into it with HmiMidi_LoadBank (00072275), calls HmiMidi_SetChannelStealing (0007225a)(0), sets SoundManager_DriversLoaded to 1 and returns 1. Each call's error goes to 000bd8d0. Each failure formats 'SoundManager::loadDrivers: %s' with HmiLib_ErrorText (0006f23d)'s text, passes one or both MIDI handles to HmiMidi_CloseDriver (0007144b)(handle, 1) from the bank loads on, calls HmiDigi_UninitSystem (0006fe28), HmiMidi_UninitSystem (00071064) and HmiTimer_Uninit (0006d5c2)(0), and returns 0. Called from Sound_Init (0004db14).",
       "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
       "verified": {
         "bytes": "0004ef8c+1093",
@@ -42407,6 +42407,21 @@
       "source": "Herculan/docs/es1/sound/drum-device.md#closing-and-resetting; ES1DBSIM decompile at 000705c5"
     },
     {
+      "address": "00070c1b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_UnlockMemory",
+      "description": "Of the HMI library, called by HmiMidi_UninitSystem (00071064): unlocks the library's memory with 18 calls of X32_UnlockRegion, 16 on code ranges through CS from 0006e4c0 to 00082694, one on the 0x6724 bytes of data at DS:000a1278, and one with CS, that length and the dword stored at 000a1278 as its offset. It touches no driver slot.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM decompile and disassembly at 00070c1b",
+      "verified": {
+        "bytes": "00070c1b+701",
+        "sha1": "de053d370775",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00070ed8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -42427,7 +42442,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HmiMidi_UninitSystem",
-      "description": "Of the HMI library, the MIDI library's stop: calls 00070c1b, clears HmiMidi_SystemStarted (000a2570) and returns 0.",
+      "description": "Of the HMI library, the MIDI library's stop: calls HmiMidi_UnlockMemory (00070c1b), clears HmiMidi_SystemStarted (000a2570) and returns 0.",
       "source": "Herculan/docs/es1/sound/drum-device.md#the-devices-in-the-program; ES1DBSIM disassembly at 00071064",
       "verified": {
         "bytes": "00071064+18",
@@ -42442,13 +42457,13 @@
       "type": "function",
       "confidence": "high",
       "name": "HmiMidi_InitDriver",
-      "description": "(device, port block, block, handle out) of the HMI library: takes the first of 5 driver slots whose id at 000a130c is 0, returning 0xb with none, stores the device there and copies its 16 bytes from 000a55d8 + (device - 0xa000)*16 to 000a5688. For 0xa005 and 0xa003 copies six far pointers (from HmiDigiMidi_Functions (000a3028) or HmiCallbackMidi_Functions (000a2574)) into the slot's 0x24-byte entry at 000a21b8 and calls its entry +6 with the block's far pointer +0x18/+0x1c, the slot and HmiMidi_DriverArg (000a5984). For any other device loads the driver with HmiMidi_LoadDriverImage (00081365) unless the block's far pointer +4 is set (keeping its results in the block's +4-+0x14 and +0x28), calls HmiMidi_IsDriverSlotFree (000816f5) and HmiDriver_GetFunctions (00081687), and calls the driver's entry +6 with the port block's +8, +4 and +0. A non-zero result is returned; for 0xa00a it also calls HmiTimer_AddEvent (0006d5e6)(0x78, ...). Marks the slot open (000a12e4), stores it through the handle pointer and returns 0.",
+      "description": "(device, port block, block, handle out) of the HMI library: takes the first of 5 driver slots whose id at 000a130c is 0, returning 0xb with none, stores the device there and copies its 16 bytes from 000a55d8 + (device - 0xa000)*16 to 000a5688. For 0xa005 and 0xa003 copies six far pointers (from HmiDigiMidi_Functions (000a3028) or HmiCallbackMidi_Functions (000a2574)) into the slot's 0x24-byte entry at 000a21b8 and calls its entry +6 with the block's far pointer +0x18/+0x1c, the slot and HmiMidi_DriverArg (000a5984), returning a non-zero result. For any other device clears the far pointer 000a597c. When the block's far pointer +4 is 0 it loads the driver with HmiMidi_LoadDriverImage (00081365), returning a non-zero result, and keeps the two far pointers, the address and the allocation in the block's +4, +0xc, +0x14 and +0x28 and in the slot's 000a127c, 000a129c, 000a12bc and 000a12d0; otherwise it reads them from the block and stores them in the slot's tables except the code far pointer 000a129c. Calls HmiMidi_IsDriverSlotFree (000816f5) and HmiDriver_GetFunctions (00081687) into the slot's entry, sets the slot's flag 000a12e4, stores the slot through the handle pointer, sets 000a597c to the far pointer 0:(the port block's +8) and calls the entry +6 with it and the port block's +4 and +0. A non-zero result is returned with the device, the flag and 000a597c left set; otherwise 000a597c is cleared. For 0xa00a it then calls HmiTimer_AddEvent (0006d5e6)(0x78, ...) with HmiDriver_Call (000816cd)'s answer to request 2, keeping the event at 000a5988. Sets the slot's flag, stores the slot through the handle pointer and returns 0.",
       "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
       "verified": {
         "bytes": "00071076+981",
         "sha1": "ef275ea3c20a",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {

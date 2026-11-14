@@ -53,12 +53,19 @@ An image is flat 32-bit code and data together, addressed from 0: `fmmidi.com`'s
 
 ## Loading an image
 
-**The game's HMI library reads one image out of `hmimdrv.386` into memory of its own and calls it through two selectors.** `HmiMidi_LoadDriverImage` (`ES1DBSIM 00081365`, `ES1GO 0006e321`), for a device id from `0xa000` to `0xa200` and a free driver slot:
+**The game's HMI library reads one image out of `hmimdrv.386` into memory of its own and calls it through two selectors.** `HmiMidi_LoadDriverImage` (`ES1DBSIM 00081365`, `ES1GO 0006e321`)(device, slot):
 
-1. opens the library's driver path (`ES1DBSIM 000a575c`) with `hmimdrv.386` appended, returning `0xf` when it does not open, and reads the `0x2c`-byte header;
-2. reads entry headers of `0x30` bytes, one more than the image count at most, skipping each image whose device id is not the one asked for by its size `+0x24`;
-3. for the match, allocates the size plus `0x1068` bytes, takes the first 4 KB boundary in it, makes two selectors for that address, one for data and one given the code segment's access rights, reads the image there and locks its memory;
-4. returns 7 when no entry matched, and otherwise 0 with the image's address, the two far pointers (offset 0 of each selector) and the allocation.
+1. answers 10 for a slot above 5, 9 when the slot's flag (`ES1DBSIM 000a12e4` + 4 × slot) is set, and 6 for a device outside `0xa000`–`0xa200`; slot 5, one past the five driver slots, passes the first test and reads its flag from `000a12f8`, the first entry of step 6's table;
+2. opens the library's driver path (`ES1DBSIM 000a575c`) with `hmimdrv.386` appended, answering `0xf` when it does not open, and reads the `0x2c`-byte header;
+3. reads entry headers of `0x30` bytes until one's device id is the one asked for, up to the image count + 1 of them, seeking past each other image by its size `+0x24`;
+4. for the match, allocates the size plus `0x1068` bytes, answering 5 when that fails, takes the first 4 KB boundary in it, makes two selectors for that address, one for data and one given the code segment's access rights, reads the image there and locks its memory;
+5. closes the file;
+6. stores the device id of the last entry header read at `000a12f8` + 4 × slot and sets the slot's flag, whether or not an entry matched;
+7. answers 7 when no entry matched, and otherwise 0 with the image's address, the two far pointers (offset 0 of each selector) and the allocation.
+
+`HmiMidi_FreeDriverImage` (`ES1DBSIM 00081599`)(slot) is the reverse: 10 for a slot above 5 or one whose flag is clear, otherwise the allocation freed, the flag cleared, the two selectors freed and 0.
+
+`HmiMidi_InitDriver` ([the drivers](../sound/song-player.md#the-drivers)) loads an image only when its caller's block holds none, its far pointer `+0x04` being 0. It keeps the new image's data and code far pointers, address and allocation in the block's `+0x04`, `+0x0c`, `+0x14` and `+0x28`, and in the slot's tables (`ES1DBSIM 000a127c`, `000a129c`, `000a12bc`, `000a12d0`). When the block already holds an image, it stores the block's values in the slot's tables except the code far pointer `000a129c`. It then asks the image for its functions, sets the slot's flag, gives the caller the slot and calls the image's open. An error from the load or the open is its answer, and the slot keeps the device id: after the load's 7 or a failed open, the slot's flag stays set too.
 
 The library enters the image by a far call to offset 0 of the code selector, the image's opening jump, with a request number in `EAX` and the data selector in `FS` (`EDI` 0):
 
