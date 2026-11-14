@@ -136,5 +136,5 @@ The four career texts are the lines of `data\mission.str` that the career block'
 
 ## Open
 
-- **Open:** what the briefing's map panel shows while the briefing movie plays, before `ShellMap_RunIntro` has run.
+- **Open:** what reaches `00444a91`, a frameless routine with no Ghidra function that starts straight after `Mission_Leave`'s `ret`. It hides the map grid, installs and commits palette `stage + 4`, calls `Display_PresentStoredRect` when the map object `DAT_0046f26c` is set, stores 2, the briefing's value, in `DAT_004778a8`, and returns. `es2_xref.py` finds no branch to it and no stored pointer.
 - **Deferred:** no reference to the mission screen's map scope `DAT_0048d818` found but `Mission_BuildScreen`'s store (`es2_xref.py`), so nothing found shows it.

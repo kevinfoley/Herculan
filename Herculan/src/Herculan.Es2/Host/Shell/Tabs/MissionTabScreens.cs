@@ -223,8 +223,9 @@ sealed class MissionTabScreens {
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		_missionScreen.Paint(surface, text, sprites, lit);
 
-		// PLACEHOLDER: the map panel is left bare while the briefing movie is queued or playing,
-		// its intro not yet begun; what the original's panel shows then is not known.
+		// While the briefing movie is queued or playing, the map panel shows only its own body. The map is
+		// painted by its intro, which the main loop runs after the pass's movies
+		// (docs/retail/shell/mission-map.md#the-intro).
 		if (_viewUp == ShellMissionView.Briefing && !BriefingMoviePending()) {
 			_missionMap?.Paint(surface, _mapArt, MapClock());
 		}

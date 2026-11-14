@@ -167,6 +167,8 @@ The timer is `GetTickCount() >> 4` (`Shell_TimerTicks`, `00465a1c`), a tick of 1
 
 The map object keeps its state, so the next time the briefing is shown the loop makes one pass: state `0x13`, one paint, done.
 
+**Behind the briefing movie the panel is bare.** The paint is reached through the map object's vtable, and the references `es2_xref.py` finds to that object, `DAT_0046f26c`, are `ShellMap_RunIntro`'s, `ShellMap_Build`'s, the six buttons' handlers' and one in a routine nothing is found to reach ([Open](mission-screen.md#open)). `ShellMap_Build` runs when a mission is loaded, before the briefing is shown. The buttons ignore every click while a movie plays ([`movies-and-sound.md`](movies-and-sound.md#input-while-a-movie-plays)). The main loop plays the movie queue before it runs the intro. So on the briefing's first show after a load, the dirty-list flush draws the `Mission Map` panel with its filled body, and that body stays up while the briefing movie plays in Telecomm. The intro's first paint comes after the movie.
+
 ## Rejected readings
 
 | Reading | Why it is wrong |

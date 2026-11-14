@@ -31,8 +31,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_RunIntro",
-      "description": "Main-loop hook: when Mission_Show set DAT_0046c075, installs the briefing palette and loops ShellMap_IntroStep until it returns false; a click (DAT_0046c07c) or scancode 1/0x39 calls ShellMap_SkipIntro.",
-      "source": "docs/retail/shell/mission-map.md"
+      "description": "Main-loop hook, run after Movie_PlayQueue: while DAT_0046c075 is set, clears it, installs and commits the palette in DAT_0046c076 unless it is -1 (then parks it at -1), flushes the keyboard ring and raises DAT_0046c078 with DAT_0046c07c cleared, then loops ShellMap_IntroStep on DAT_0046f26c until it returns false, each pass presenting (Display_PresentStoredRect), popping one key, calling ShellMap_SkipIntro for scancode 1 or 0x39 or a click (DAT_0046c07c), and pumping messages; DAT_0046c078 drops after.",
+      "source": "docs/retail/shell/mission-map.md",
+      "verified": {
+        "bytes": "0040146a+187",
+        "sha1": "ac8cc3517cdf",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00401525",
@@ -3528,8 +3534,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_Build",
-      "description": "Destroys the map in DAT_0046f26c, constructs a new one (0x3c5 bytes) over the canvas rect {0x123,0x43,0x249,0x124} and builds its relief (ShellMap_BuildRelief). Called from Game_LoadSlot, Career_LoadCurrentMission and MissionNameDialog_OnLoad.",
-      "source": "docs/retail/shell/mission-map.md"
+      "description": "Destroys the map in DAT_0046f26c, constructs a new one (0x3c5 bytes) over the canvas rect {0x123,0x43,0x249,0x124} and builds its relief (ShellMap_BuildRelief). Callers found by es2_xref: Game_LoadSlot, Career_LoadCurrentMission and MissionNameDialog_OnLoad. Asserts in game.cpp when the allocation fails.",
+      "source": "docs/retail/shell/mission-map.md",
+      "verified": {
+        "bytes": "0040e1a7+326",
+        "sha1": "a80970140175",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040e2ed",
