@@ -48,7 +48,7 @@ public class Es1HmpSongTransformer : ByteTransformer<Es1HmpSong> {
 			}
 
 			song.Tracks.Add(new Es1HmpTrack {
-				ChunkNumber = Int(b, at), Length = length, Unread08 = Int(b, at + 8), Events = b[(at + 12)..(at + length)],
+				ChunkNumber = Int(b, at), Length = length, Channel = Int(b, at + 8), Events = b[(at + 12)..(at + length)],
 			});
 			at += length;
 		}
@@ -93,7 +93,7 @@ public class Es1HmpSongTransformer : ByteTransformer<Es1HmpSong> {
 		foreach (var track in source.Tracks) {
 			w.Write(track.ChunkNumber);
 			w.Write(track.Length);
-			w.Write(track.Unread08);
+			w.Write(track.Channel);
 			w.Write(track.Events);
 		}
 

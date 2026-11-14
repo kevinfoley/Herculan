@@ -46,7 +46,7 @@ So an event of delta *d* is handled *d* ticks after the one before it, and the f
 
 ### The branch controllers
 
-A branch moves a track's events pointer to the event a branch entry lands on: the entry of the track's list whose id `+0x04` matches, found by walking the list from its first entry with no count of its length. The player's controllers, by the event's second byte, *v* its third:
+A branch moves a track's events pointer to the event a branch entry lands on, the entry's `+0x00` bytes into the track's events: the entry of the track's list whose id `+0x04` matches, found by walking the list from its first entry with no count of its length. The player's controllers, by the event's second byte, *v* its third:
 
 | Controller | Does |
 |---|---|
@@ -55,7 +55,7 @@ A branch moves a track's events pointer to the event a branch entry lands on: th
 | `0x6f`, `0x70` | the song's loop end: takes 1 off entry *v*'s loop count unless it is 0 or `0xff`, calls the loop callback, and with a count left branches every track but track 0 that still has an events pointer to its own entry *v* |
 | `0x75`, `0x76` | the track's loop end: the same count and callback, branching this track alone |
 | `0x72` | the song's branch: calls the branch callback with *v* and its bit `0x80` set, and branches every track but track 0 to its entry of that id unless the callback answers 0 |
-| `0x79` | the track's branch: the same, for this track alone |
+| `0x79` | the track's branch: the same for this track alone, with the id *v* as it is, no bit `0x80` added |
 | `0x77` | calls the song's trigger callback *v*, one of 127 a song |
 
 The loop callback is called with (song, track, id, count left) and the branch callback with (song, track, id); an answer of 0 stops the branch, and with no callback set the count alone decides. A count of `0xff` is never counted down.
@@ -85,14 +85,14 @@ When the last track ends, the tick marks the song not playing, silences it (`Hmi
 
 ## The drivers
 
-**The library plays through up to five open drivers, each a slot of six far functions.** `HmiMidi_InitDriver` (`00071076`) takes the first free slot (ids at `000a130c`) and fills its 0x24-byte entry at `000a21b8`:
+**The library plays through up to five open drivers, each a slot of six far functions.** `HmiMidi_InitDriver` (`00071076`) takes the first slot whose id (at `000a130c`) is 0, answers `0xb` when there is none, copies the device's 16-byte channel table (`000a55d8` + 16 × (id − `0xa000`)) to the slot's at `000a5688` ([the master volume](#volume) reads it), and fills its 0x24-byte entry at `000a21b8`:
 
 | Entry | Function | Called by |
 |---|---|---|
 | `+0x00` | send an event: (far event pointer, length, slot) | `HmiMidi_SendEvent` and the volume, silence and reset functions |
 | `+0x06` | open | `HmiMidi_InitDriver` |
 | `+0x0c` | close | `HmiMidi_CloseDriver` (`0007144b`) |
-| `+0x12` | reset | `HmiMidi_ResetDriver` (`00071515`), after controllers `0x79` and `0x7b` with 0 on all 16 channels |
+| `+0x12` | reset | `HmiMidi_ResetDriver` (`00071515`), after it has sent each channel in turn controller `0x79` then `0x7b`, both 0 |
 | `+0x18` | load a bank | `00072275`, which `SoundManager_LoadDrivers` calls for the melodic and drum banks and `sos\drum32.dig` |
 | `+0x1e` | | |
 

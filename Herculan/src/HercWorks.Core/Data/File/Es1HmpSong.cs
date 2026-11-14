@@ -63,8 +63,11 @@ public class Es1HmpTrack {
 	/// <summary><c>+4</c>: the chunk's length, these 12 bytes of header included; the next chunk starts that far on.</summary>
 	public int Length { get; set; }
 
-	/// <summary><c>+8</c>, which the loader does not read.</summary>
-	public int Unread08 { get; set; }
+	/// <summary>
+	/// <c>+8</c>: the track's MIDI channel. The loader does not read it; the song player sends on it the setup of a branch of
+	/// this track alone and the song's silencing (docs/es1/sound/song-player.md#the-branch-controllers).
+	/// </summary>
+	public int Channel { get; set; }
 
 	/// <summary>From <c>+0xc</c>: the track's events, <see cref="Length"/> less 12 bytes.</summary>
 	public byte[] Events { get; set; } = [];

@@ -1,4 +1,6 @@
+using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Numerics;
+using Herculan.Es1.Sound.Midi;
 
 namespace Herculan.Es1.Sound;
 
@@ -366,9 +368,13 @@ public sealed class Es1DigiSound : Es1SoundObject {
 /// A song (docs/es1/sound/song-player.md#loading): <c>MidiSound</c>, <c>0xcf</c> bytes, vtable
 /// <c>MidiSoundVtable</c> (<c>00095c82</c>), built by <c>MidiSound_Ctor</c> (<c>000504dc</c>).
 ///
-/// <para>PLACEHOLDER: the HMI song player is item 7's module D (docs/herculan/plan-es1-first-mission.md), so a song plays
-/// nothing: <see cref="Play"/> loads the file, which counts against the manager's limit as retail's does, and starts no
-/// song, leaving no handle.</para>
+/// <para>PLACEHOLDER: the song plays through <see cref="Es1SoundManager.Midi"/>, where no driver opens until module D's
+/// part 7, so no track but track 0 is routed to a driver and nothing is heard. Nothing calls
+/// <see cref="Es1MidiSystem.Tick"/> until part 8, so a song started stays started and <see cref="IsPlaying"/> stays true
+/// until it is stopped.</para>
+///
+/// <para>The branch callback at <c>+0x35</c> is not kept: what stores it is Open
+/// (docs/es1/sound/song-player.md#open).</para>
 /// </summary>
 public sealed class Es1MidiSound : Es1SoundObject {
 	/// <summary>The entries of the track map at <c>+0x3f</c>.</summary>
@@ -388,39 +394,80 @@ public sealed class Es1MidiSound : Es1SoundObject {
 		base.Destroy();
 	}
 
+	/// <summary><c>+0x04</c>: the library's answer to the last <see cref="Play"/>'s load of the song, 0 for none.</summary>
+	public int Error { get; private set; }
+
 	/// <summary>
-	/// Slot <c>+0x10</c>, <c>MidiSound_Play</c> (<c>000505c8</c>): false while it plays or when the file does not load.
-	/// PLACEHOLDER: the song's start, <c>HmiMidi_InitSong</c> and its callbacks, is module D's; false, with no handle.
+	/// Slot <c>+0x10</c>, <c>MidiSound_Play</c> (<c>000505c8</c>) (docs/es1/sound/song-player.md#loading): false while it
+	/// plays or when the file does not load. Otherwise the song is handed to <see cref="Es1HmiSongs.Init"/> with the
+	/// object's track map and <see cref="Es1SoundManager.MidiEndCallback"/>: an error is kept in <see cref="Error"/>, the
+	/// handle left −1 and the answer false (retail also formats the error's text into a stack buffer nothing reads). Then
+	/// the song is started with <see cref="Es1SoundManager.MidiLoopCallback"/> as its loop callback, the handle copied to
+	/// <see cref="Es1SoundObject.HandleCopy"/> and <see cref="Es1SoundObject.RepeatCount"/> to
+	/// <see cref="Es1SoundObject.PlayingRepeatCount"/>, and the answer true. A file the transformer cannot walk is the
+	/// error <see cref="Es1HmiSongs.NotASong"/>, where retail, which reads it in place, plays what it can.
 	/// </summary>
 	public override bool Play() {
-		if (!IsPlaying()) {
-			LoadSample();
+		if (IsPlaying() || !LoadSample()) {
+			return false;
 		}
 
-		return false;
-	}
+		var midi = Manager.Midi;
+		Es1HmiSong? song = null;
+		int error;
+		try {
+			var file = new Es1HmpSongTransformer().Parse(Manager.Data(Index));
+			error = file == null ? Es1HmiSongs.NotASong : midi.Songs.Init(file, TrackMap, Manager.MidiEndCallback, out song);
+		} catch (InvalidDataException) {
+			error = Es1HmiSongs.NotASong;
+		}
 
-	/// <summary>
-	/// Slot <c>+0x14</c>, <c>MidiSound_Stop</c> (<c>000506f4</c>): with a song, the object left with none. PLACEHOLDER: the
-	/// song player's two calls, <c>0006ead9</c> and <c>0006ea3d</c>, are module D's.
-	/// </summary>
-	public override void Stop() {
-		if (Handle != -1) {
+		Error = error;
+		if (error != 0 || song == null) {
 			Handle = -1;
 			HandleCopy = 0xffff;
+			return false;
 		}
+
+		Handle = song.Slot;
+		Es1HmiPlayer.Start(song);
+		HandleCopy = (ushort)Handle;
+		PlayingRepeatCount = RepeatCount;
+		song.LoopCallback = Manager.MidiLoopCallback;
+		return true;
 	}
 
 	/// <summary>
-	/// Slot <c>+0x2c</c>, <c>MidiSound_SetVolume</c> (<c>0005075c</c>): below 0, the volume 0; else held to 100.
-	/// PLACEHOLDER: the songs' volume it then sets, <c>0006edb3</c>(volume × <c>0x7f</c> × the master volume / 10,000),
-	/// is module D's.
+	/// Slot <c>+0x14</c>, <c>MidiSound_Stop</c> (<c>000506f4</c>): with a song, the player's stop
+	/// (<see cref="Es1HmiPlayer.Stop"/>), its slot freed, and the object left with none.
 	/// </summary>
-	public override void SetVolume(sbyte volume) => Volume = (byte)Math.Clamp(volume, (sbyte)0, (sbyte)100);
+	public override void Stop() {
+		if (Handle == -1) {
+			return;
+		}
+
+		if (Manager.Midi.Songs.Song(Handle) is { } song) {
+			Manager.Midi.Player.Stop(song);
+			Manager.Midi.Songs.Free(song);
+		}
+
+		Handle = -1;
+		HandleCopy = 0xffff;
+	}
 
 	/// <summary>
-	/// Slot <c>+0x30</c>, <c>MidiSound_IsPlaying</c> (<c>00050730</c>): with a song, whether the player has it.
-	/// PLACEHOLDER: no song starts until module D, so the handle is always −1 and the answer false.
+	/// Slot <c>+0x2c</c>, <c>MidiSound_SetVolume</c> (<c>0005075c</c>): below 0, the volume 0; else held to 100; the MIDI
+	/// master volume (<see cref="Es1HmiPlayer.SetMasterVolume"/>) then set to the volume × <c>0x7f</c> × the manager's
+	/// master volume / 10,000.
 	/// </summary>
-	public override bool IsPlaying() => Handle != -1;
+	public override void SetVolume(sbyte volume) {
+		Volume = (byte)Math.Clamp(volume, (sbyte)0, (sbyte)100);
+		Manager.Midi.Player.SetMasterVolume((byte)(Volume * 0x7f * Manager.MasterVolume / 10000));
+	}
+
+	/// <summary>
+	/// Slot <c>+0x30</c>, <c>MidiSound_IsPlaying</c> (<c>00050730</c>): with a song, whether the player has it started
+	/// (<c>HmiMidi_IsSongDone</c>, <c>0006f225</c>, is the flag clear).
+	/// </summary>
+	public override bool IsPlaying() => Handle != -1 && Manager.Midi.Songs.Song(Handle)?.Playing == true;
 }

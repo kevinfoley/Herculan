@@ -1,4 +1,5 @@
 using Herculan.Engine.Numerics;
+using Herculan.Es1.Sound.Midi;
 
 namespace Herculan.Es1.Sound;
 
@@ -70,6 +71,52 @@ public sealed class Es1SoundManager {
 
 	/// <summary>The digital driver the objects play through.</summary>
 	public Es1DigitalDriver Driver { get; }
+
+	/// <summary>The HMI library's MIDI half, which the song objects play through.</summary>
+	public Es1MidiSystem Midi { get; } = new();
+
+	/// <summary>
+	/// <c>MidiSound_EndCallback</c> (<c>0004e7b4</c>)(song handle), the callback a song's end calls: the first song object
+	/// whose <see cref="Es1SoundObject.HandleCopy"/> is the handle stopped through its slot <c>+0x14</c>.
+	/// </summary>
+	internal void MidiEndCallback(int handle) => FindSong(handle)?.Stop();
+
+	/// <summary>
+	/// <c>MidiSound_LoopCallback</c> (<c>0004e718</c>)(song handle, track, id, count): true for an id below <c>0x80</c>.
+	/// For <c>0x80</c> and above, false when no song object has the handle, else by its repeat count: −1 loops forever,
+	/// 0 stops the loop, and any other count is lowered by 1 through its slot <c>+0x28</c> and loops.
+	/// </summary>
+	internal bool MidiLoopCallback(int handle, int track, int id, int count) {
+		if ((id & 0x80) == 0) {
+			return true;
+		}
+
+		if (FindSong(handle) is not { } song) {
+			return false;
+		}
+
+		short repeats = song.IsPlaying() ? song.PlayingRepeatCount : song.RepeatCount;
+		if (repeats == -1) {
+			return true;
+		}
+
+		if (repeats == 0) {
+			return false;
+		}
+
+		song.SetRepeats(-1, -1, (short)(repeats - 1));
+		return true;
+	}
+
+	private Es1SoundObject? FindSong(int handle) {
+		foreach (var sound in _objects) {
+			if (sound != null && sound.Kind != 0 && sound.HandleCopy == handle) {
+				return sound;
+			}
+		}
+
+		return null;
+	}
 
 	/// <summary><c>+0x23c</c>: the distance a placed sound is heard to.</summary>
 	public uint HearingRange { get; private set; } = DefaultHearingRange;
