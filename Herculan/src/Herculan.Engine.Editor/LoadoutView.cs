@@ -183,8 +183,8 @@ internal sealed class LoadoutView {
 				added: range => _selected = (table.Guid, range, table.Options.Count));
 		}
 
-		EditorText.Tooltip($"Adds a copy of option {at + 1}. The chances are shared out again with it, the share no option takes "
-			+ "kept as it is.");
+		EditorText.Tooltip($"Adds a copy of option {at + 1}. The other chances shrink to make room for it; the chance that no option "
+			+ "is picked stays the same.");
 		ImGui.SameLine();
 		string? noRemove = RandomTableEditing.WhyNoRemove(_editor.Source, table.Guid, table.Options[at].Range);
 		ImGui.BeginDisabled(noRemove != null);
@@ -193,7 +193,7 @@ internal sealed class LoadoutView {
 		}
 
 		ImGui.EndDisabled();
-		EditorText.Tooltip(noRemove ?? "Its chance is shared over the other options, in proportion to theirs.");
+		EditorText.Tooltip(noRemove ?? "Gives this option's chance to the other options, in proportion to their own chances.");
 	}
 
 	// A choice of the other random tables of its kind to pick from instead, by their titles.

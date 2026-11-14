@@ -126,11 +126,8 @@ internal sealed class GroupView {
 				_deleter.Request(group.Guid);
 			}
 
-			EditorText.Tooltip(blockers.Going.Count switch {
-				0 => "Deletes the group, which has no members.",
-				1 => "Deletes the group and its one member.",
-				int n => $"Deletes the group and its {n} members.",
-			} + (group.Setup.PaintsGround && group.Kind == MissionUnitKind.Base ? " Its base pad goes with it." : ""));
+			EditorText.Tooltip("Deletes the group and its members, if any."
+				+ (group.Setup.PaintsGround && group.Kind == MissionUnitKind.Base ? " Its base pad goes with it." : ""));
 			if (blockers.Kept.Count > 0) {
 				EditorText.Wrapped("Stays, as another group also places it:");
 				foreach (var kept in blockers.Kept) {
@@ -145,12 +142,12 @@ internal sealed class GroupView {
 			return;
 		}
 
-		EditorText.Wrapped("Cannot be deleted while these reference or need it:");
+		EditorText.Wrapped("Cannot be deleted while these reference it:");
 		_links.References(blockers.Group);
 		foreach (var (member, names, fired) in blockers.Members) {
 			ImGui.PushID($"member{member.Guid}");
 			ImGui.Spacing();
-			const string goes = ", a member going with it, is referenced by:";
+			const string goes = " is referenced by:";
 			_links.Object(member, EditorText.AfterRoom(goes));
 			EditorText.After(goes);
 			_links.References(names, fired: fired);
@@ -190,7 +187,7 @@ internal sealed class GroupView {
 		if (group.OffScene) {
 			EditorText.Note(MissionText.OffScene(group.ArrivalVerb, member: false));
 		} else if (waitsOn != -1) {
-			EditorText.Wrapped($"Not in the mission until that trigger activates; then it arrives {MissionText.Arrival(group.ArrivalVerb)}.");
+			EditorText.Wrapped($"Not in the mission until the trigger activates; then it arrives {MissionText.Arrival(group.ArrivalVerb)}.");
 		} else {
 			ImGui.TextUnformatted("In the mission from the start.");
 		}
@@ -238,7 +235,7 @@ internal sealed class GroupView {
 						_mover.ReturnToRoute(group.Guid);
 					}
 
-					EditorText.Tooltip("Drops its own position, so it starts at the start of its route again.");
+					EditorText.Tooltip("Drops its own position, so it starts at the beginning of its route again.");
 					EditorText.Reason(_mover.Failure);
 				}
 
@@ -251,8 +248,8 @@ internal sealed class GroupView {
 
 				break;
 			default:
-				EditorText.Wrapped("Starts at: no position of its own and no route; give it one or the other.");
-				EditorText.Note("The editor shows it at the map's corner (0, 0); where it starts in play is not known.");
+				EditorText.Wrapped("Starts at: (no position or route set)");
+				EditorText.Note("The Editor shows it at the map's corner (0, 0); where it starts in play is not known.");
 				break;
 		}
 
@@ -289,9 +286,7 @@ internal sealed class GroupView {
 
 		var carried = _mover.CarriedMembers(group.Guid);
 		if (carried.Count > 0) {
-			EditorText.Note(carried.Count == 1
-				? "Ctrl+drag also moves its structure that has a position of its own."
-				: $"Ctrl+drag also moves its {carried.Count} structures that have positions of their own.");
+			EditorText.Note("Ctrl+drag also moves any of its structures that have positions of their own");
 			_sharers.Draw(_mover.CarriedSharersOf(group.Guid), "Also on their spots, moving with them on Ctrl+drag:", aloneNote: false);
 		}
 	}
@@ -317,8 +312,7 @@ internal sealed class GroupView {
 		}
 
 		ImGui.EndDisabled();
-		EditorText.Tooltip("A concrete pad painted over the ground tile under the group, with the ground under it levelled; "
-			+ "its structures stand at a fixed spot in that tile.");
+		EditorText.Tooltip("A pad painted on the ground tile under the group; its structures stand at a fixed spot in that tile.");
 		if (why != null) {
 			EditorText.Reason(why);
 		} else if (asked && group.Pad is { } pad) {

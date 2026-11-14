@@ -9,11 +9,11 @@ namespace Herculan.Engine.Editor;
 /// The members of a herc, flyer or structure group outside the player's squad in its view
 /// (docs/herculan/editor-design.md#group-sizes-and-roster-limits), one row per member slot, which is its place in the group's formation
 /// (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 7): slot 0 stands on the group's position and each
-/// later slot on its formation's spot for it. A structure group has as many places as its formation
+/// later slot on its formation's spot for it. A structure group has as many slots as its formation
 /// (<see cref="BaseFormationTable.SlotCount"/>), a slot past them standing on the group's position again
 /// (<see cref="BaseFormationTable.OffsetFor"/>); a herc or flyer group as many as this editor joins one to
 /// (<see cref="HercGroups.LastJoinSlot"/>, <see cref="FlyerGroups.LastJoinSlot"/>). The rows run to the last slot a record of
-/// the group fills, and one more while the group has a place for it, so a lone member shows one empty place rather than its
+/// the group fills, and one more while the group has a slot for it, so a lone member shows one empty slot rather than its
 /// formation's every one.
 ///
 /// <para>Each row has the member's link and a choice: a member's type within its kind, those offered for the group's side
@@ -66,7 +66,7 @@ internal sealed class GroupSlotsView {
 
 	/// <summary>Draws <paramref name="group"/>'s slots.</summary>
 	public void Draw(PlannedGroup group) {
-		int places = Places(group);
+		int slots = Places(group);
 		int last = -1;
 		for (int slot = 0; slot < MissionPlacementRules.GroupMemberSlots; slot++) {
 			if (!_source.MemberSlotFree(group.Guid, slot)) {
@@ -82,10 +82,9 @@ internal sealed class GroupSlotsView {
 		}
 
 		var shown = _index.Layout.Entry<MissionGroup164>(group.Guid)?.Fields.MemberRefs;
-		int rows = Math.Min(MissionPlacementRules.GroupMemberSlots, Math.Max(1, last + 1 < places ? last + 2 : last + 1));
+		int rows = Math.Min(MissionPlacementRules.GroupMemberSlots, Math.Max(1, last + 1 < slots ? last + 2 : last + 1));
 		ImGui.TextUnformatted($"Members: {group.Members.Count}");
-		EditorText.Tooltip("Each place in the group has its own spot around the group's position, turned with the group's "
-			+ "heading. A member with a position of its own stands there instead.");
+		EditorText.Tooltip("Each unit in the group has its own slot in the formation, though a unit may override its starting position.");
 		ImGui.PushID("slots");
 		for (int slot = 0; slot < rows; slot++) {
 			ImGui.PushID(slot);
@@ -101,10 +100,10 @@ internal sealed class GroupSlotsView {
 				DrawEmpty(group, slot);
 			}
 
-			if (group.Kind == MissionUnitKind.Base && slot > 0 && slot >= places) {
-				EditorText.Note(places <= 1
-					? "Stands on the group's position: its formation has one place."
-					: $"Stands on the group's position: its formation has {places} places.");
+			if (group.Kind == MissionUnitKind.Base && slot > 0 && slot >= slots) {
+				EditorText.Note(slots <= 1
+					? "Stands on the group's position: its formation has one slot."
+					: $"Stands on the group's position: its formation has {slots} slot.");
 			}
 
 			ImGui.PopID();
@@ -123,7 +122,7 @@ internal sealed class GroupSlotsView {
 		}, "Not added: ");
 	}
 
-	// How many places <group> offers members: a structure group its formation's, a herc or flyer group as many as a join fills.
+	// How many slots <group> offers members: a structure group its formation's, a herc or flyer group as many as a join fills.
 	private int Places(PlannedGroup group) => group.Kind switch {
 		MissionUnitKind.Mech => HercGroups.LastJoinSlot + 1,
 		MissionUnitKind.Flyer => FlyerGroups.LastJoinSlot + 1,
@@ -137,7 +136,7 @@ internal sealed class GroupSlotsView {
 		_ => _placer.WhyNoAdd,
 	};
 
-	// A member this group places: its type, a choice within its kind or Empty, which deletes it, and its link.
+	// A member this group slots: its type, a choice within its kind or Empty, which deletes it, and its link.
 	private void DrawMember(PlannedGroup group, PlannedObject member) {
 		var key = member.Key;
 		var sceneObject = _index.ObjectOf(key);
@@ -153,7 +152,7 @@ internal sealed class GroupSlotsView {
 			: blockers.None ? null
 			: blockers.Fixed ?? "The mission references or needs it; its own view says what.";
 		string? goes = blockers?.RemovedGroups.Any(removed => removed.Group == group.Guid) == true
-			? "It is the group's last member, so the group is deleted with it."
+			? "It is the group's last member; removing it also removes the group."
 			: null;
 
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(TypeWidth));
@@ -187,11 +186,11 @@ internal sealed class GroupSlotsView {
 
 		EditorText.Reason(fixedType);
 		if (OwnPoint(key)) {
-			EditorText.Note("Stands at its own position, not on this place's spot.");
+			EditorText.Note("Stands at its own position, not on this slot's position.");
 		}
 	}
 
-	// A slot whose record this group does not place: one referencing no record the mission has, or one an earlier group places.
+	// A slot whose record this group does not place: one referencing no record the mission has, or one an earlier group slots.
 	private void DrawUnplaced(PlannedGroup group, short guid) {
 		var key = new ObjectKey(Row(group), guid);
 		var planned = _index.Plan.Object(key);
@@ -210,9 +209,9 @@ internal sealed class GroupSlotsView {
 				: "It is not in the scene.");
 		} else {
 			EditorText.Note(group.Kind switch {
-				MissionUnitKind.Mech => "References a HERC the mission does not have.",
-				MissionUnitKind.Flyer => "References a flyer the mission does not have.",
-				_ => "References a structure the mission does not have.",
+				MissionUnitKind.Mech => "References a missing HERC.",
+				MissionUnitKind.Flyer => "References a missing flyer.",
+				_ => "References a missing structure.",
 			});
 		}
 	}

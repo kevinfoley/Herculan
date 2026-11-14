@@ -49,7 +49,7 @@ internal sealed class LineField {
 		if (wrong) {
 			EditorText.PopProblemField();
 			string missing = string.Concat(shown.Where(c => c is < FirstDrawn or > LastDrawn).Distinct());
-			EditorText.Problem($"The game's fonts have no letter for {missing}: it is dropped when you leave the field.");
+			EditorText.Problem($"The game's fonts have no character for {missing}: it is dropped when you leave the field.");
 		}
 
 		if (_key != key) {

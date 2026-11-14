@@ -122,9 +122,8 @@ internal sealed class MissionSettingsWindow {
 		string? why = _playableIn.WhyFixed;
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Playable in:");
-		EditorText.Tooltip("HERCULAN only frees the mission of the limits retail alone has: the HERC, flyer and building and "
-			+ "vehicle slots, the positions, the map markers and the objects the counts in the viewport's corner show. Retail "
-			+ "still loads the mission, and can crash once it passes one.");
+		EditorText.Tooltip("With \"HERCULAN only\" selected, the limits shown in the lower-left corner of the viewport" +
+			"are not enforced. Retail can still load the mission, but will crash if a limit is exceeded.");
 		ImGui.SameLine();
 		ImGui.BeginDisabled(why != null);
 		ImGui.SetNextItemWidth(-1f);

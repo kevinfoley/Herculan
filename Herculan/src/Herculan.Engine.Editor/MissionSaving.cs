@@ -351,18 +351,17 @@ internal sealed class MissionSaving {
 	}
 
 	/// <summary>
-	/// Why a new mission cannot be named <paramref name="name"/>, or null when it can: a name Save As takes
-	/// (<see cref="SavedMissions.WhyNotName"/>) that no archive mission has, nor one HERCULAN comes with. A new mission opens
-	/// as a mission no archive holds, and the game would play it under an archive mission's name as that mission, in its
-	/// career position; under an included mission's name, it would hide that mission.
+	/// Why a new mission cannot be named <paramref name="name"/>, or null when it can. The name must pass Save As's rules
+	/// (<see cref="SavedMissions.WhyNotName"/>) and must not belong to an archive mission or to a mission HERCULAN comes with,
+	/// because the game gives a saved mission precedence over a mission of the same name.
 	/// </summary>
 	public string? WhyNotNewName(string name) =>
 		SavedMissions.WhyNotName(name)
-		?? (InArchive(name) ? $"The archives have a mission named {name}; a new mission takes a name of its own."
-			: Included(name) ? $"A mission named {name} comes with HERCULAN; a new mission takes a name of its own."
+		?? (InArchive(name) ? $"The archives already have a mission named {name}. Choose another name."
+			: Included(name) ? $"HERCULAN already comes with a mission named {name}. Choose another name."
 			: null);
 
-	/// <summary>Whether naming a mission <paramref name="name"/> means its save replaces another mission's saved files.</summary>
+	/// <summary>Whether the install already has a saved mission named <paramref name="name"/>, so that saving under that name replaces its files.</summary>
 	public bool HasSaved(string name) => SavedMissions.Exists(_installRoot, name);
 
 	/// <summary>The question asked before a save replaces the saved mission <paramref name="name"/>.</summary>
@@ -436,7 +435,7 @@ internal sealed class MissionSaving {
 		}
 
 		if (_bundleTarget.Existing != null) {
-			EditorText.Note($"The folder already holds {file}, which the export replaces.");
+			EditorText.Note($"Exporting to this folder will overwrite the previous {file}.");
 		}
 
 		if (picking) {
@@ -497,10 +496,10 @@ internal sealed class MissionSaving {
 		try {
 			Directory.CreateDirectory(folder);
 			byte[] msn = new MissionFileTransformer().Write(document.Mission)
-				?? throw new InvalidOperationException("The mission file does not write.");
+				?? throw new InvalidOperationException("Couldn't write the mission file.");
 			var texts = new Dictionary<string, byte[]> {
 				[Path.GetExtension(TextPath(mission.Name))] = new MissionStringFileTransformer().Write(document.Text!)
-					?? throw new InvalidOperationException("The mission's text does not write."),
+					?? throw new InvalidOperationException("Couldn't write the mission's text."),
 			};
 			File.WriteAllBytes(path, MissionBundle.Write(mission.Name, msn, texts, mission.About.About, mission.OwnZone));
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException
@@ -581,15 +580,15 @@ internal sealed class MissionSaving {
 		var document = mission.Source;
 		try {
 			byte[] msn = new MissionFileTransformer().Write(document.Mission)
-				?? throw new InvalidOperationException("The mission file does not write.");
+				?? throw new InvalidOperationException("Couldn't write the mission file.");
 			byte[]? text = document.Text == null ? null : new MissionStringFileTransformer().Write(document.Text);
 			var written = SavedMissions.Write(_installRoot, request.Name, _shellContent().Language, msn, text, mission.About.About,
 				mission.OwnZone);
 			Console.WriteLine($"Saved {mission.Name} as {string.Join(" and ", written)}.");
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException
 				or ArgumentException) {
-			Console.Error.WriteLine($"Cannot save {request.Name}: {ex.Message}");
-			ShowMessage($"Cannot save {request.Name}: {ex.Message}");
+			Console.Error.WriteLine($"Couldn't save {request.Name}: {ex.Message}");
+			ShowMessage($"Couldn't save {request.Name}: {ex.Message}");
 			return;
 		}
 

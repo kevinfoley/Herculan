@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// A Heading in an object's or a group's view (<see cref="OwnHeadings"/>): a choice of its own heading, typed in whole
 /// degrees, or what it faces without one, set through <see cref="HeadingEditor"/> as one undo step; then one sentence for each
-/// other version of the mission that names another heading. A structure or ground vehicle without one faces its group's heading,
+/// other condition of the mission that names another heading. A structure or ground vehicle without one faces its group's heading,
 /// turned by its formation slot; a group faces along its first order's route. A herc's or flyer's own heading is shown, not
 /// set.
 /// </summary>
@@ -55,8 +55,11 @@ internal sealed class HeadingField {
 			"It turns the group's formation, and every member with no heading of its own.");
 	}
 
-	// The choice, with what the heading turns (<turns>) on hover, the degrees for an own heading or <without> for none, then
-	// the other versions.
+	/// <summary>
+	/// Draws the choice of heading source. An own heading shows its degrees beside the choice; no own heading shows the
+	/// <paramref name="without"/> note below it. Last come the other headings the mission names under conditions.
+	/// </summary>
+	/// <param name="turns">What the heading turns, shown on hover; none when null.</param>
 	private void Draw(int row, short guid, int facing, string[] sources, string without, string? turns = null) {
 		var source = _editor.Source;
 		short? own = OwnHeadings.Degrees(source, row, guid);
@@ -133,7 +136,7 @@ internal sealed class HeadingField {
 		ImGui.Text("deg");
 	}
 
-	// One sentence per other version that names another heading, from the records of the GUID under other conditions.
+	// One sentence per condition that names another heading, from the records of the GUID under other conditions.
 	private static void DrawOverrides(MissionDocument source, int row, short guid) {
 		var overrides = OwnHeadings.Overrides(source, row, guid);
 		if (overrides.Count == 0) {
@@ -146,7 +149,7 @@ internal sealed class HeadingField {
 			EditorText.Wrapped($"It faces {faces} {PresenceSentences.Occasion(rule)}.");
 		}
 
-		EditorText.Note("A change here does not change it in those versions.");
+		EditorText.Note("Editing the heading here does not change the ones listed above.");
 	}
 
 	// The choice's width: its longest label, its frame's padding either side and the arrow button, which is a frame high.
