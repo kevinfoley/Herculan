@@ -5,6 +5,8 @@ MIT License
 
 This license does not cover the HERCULAN Engine logo and icon artwork (the files in Branding/). See Branding/README.md.
 
+This license does not cover Herculan.Opl3 (Herculan.Opl3.dll, from Herculan/src/Herculan.Opl3/ in the source), a C# port of Nuked-OPL3 1.8, Copyright (C) 2013-2020 Nuke.YKT. It is under the GNU Lesser General Public License, version 2.1 or later, whose text is Herculan.Opl3.COPYING.txt beside the HERCULAN executable and Herculan/src/Herculan.Opl3/COPYING in the source. You may replace Herculan.Opl3.dll with a modified copy built from that source.
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

@@ -2,27 +2,34 @@ using System.Numerics;
 using System.Reflection;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
+using Herculan.Opl3;
 using ImGuiNET;
 
 namespace Herculan.Engine.Menus;
 
 /// <summary>
-/// The floating "About" window opened from the menu bar: the engine's name, its version, and the licence it is
-/// released under. The licence is <c>LICENSE.txt</c> from the repository root, embedded in the engine library (see
+/// The floating "About" window opened from the menu bar: the engine's name, its version, and the licences it is
+/// released under. The first is <c>LICENSE.txt</c> from the repository root, embedded in the engine library (see
 /// <c>Herculan.Engine.csproj</c>) so that a build run straight from <c>bin</c>, which has no copy beside it, shows
-/// it too.
+/// it too. The second is the LGPL text of <c>Herculan.Opl3</c>, the one assembly <c>LICENSE.txt</c> does not cover,
+/// embedded in that assembly as <c>COPYING</c>.
 /// </summary>
 public sealed class AboutWindow {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 520f;
-	private const float LicenseHeight = 260f;
+	private const float LicenseHeight = 200f;
 
 	private const string ProductName = "HERCULAN Engine";
 	private const string LicenseResource = "LICENSE.txt";
 
+	/// <summary>The heading of <c>Herculan.Opl3</c>'s licence: the assembly's name and what it ports, names left untranslated.</summary>
+	private const string Opl3Heading = "Herculan.Opl3 (Nuked-OPL3 1.8)";
+	private const string Opl3LicenseResource = "COPYING";
+
 	private readonly LocalizationTable _localization;
 	private readonly string _version;
 	private readonly string _license;
+	private readonly string _opl3License;
 
 	/// <summary>Whether the window is open. Set by the menu bar; see <see cref="HostMenuBar"/>.</summary>
 	public bool IsOpen { get; set; }
@@ -30,7 +37,8 @@ public sealed class AboutWindow {
 	public AboutWindow(LocalizationTable localization) {
 		_localization = localization;
 		_version = "v" + DisplayVersion();
-		_license = Unwrap(ReadLicense());
+		_license = Unwrap(ReadResource(typeof(AboutWindow).Assembly, LicenseResource));
+		_opl3License = Unwrap(ReadResource(typeof(Opl3Chip).Assembly, Opl3LicenseResource));
 	}
 
 	/// <summary>
@@ -53,6 +61,12 @@ public sealed class AboutWindow {
 			ImGui.SeparatorText(_localization.GetStringOrKey("about.license"));
 			if (ImGui.BeginChild("##license", new Vector2(0f, ScaledImGui.Scaled(LicenseHeight)), ImGuiChildFlags.Border)) {
 				ImGui.TextWrapped(_license);
+			}
+			ImGui.EndChild();
+
+			ImGui.SeparatorText(Opl3Heading);
+			if (ImGui.BeginChild("##opl3license", new Vector2(0f, ScaledImGui.Scaled(LicenseHeight)), ImGuiChildFlags.Border)) {
+				ImGui.TextWrapped(_opl3License);
 			}
 			ImGui.EndChild();
 
@@ -81,8 +95,8 @@ public sealed class AboutWindow {
 		return assembly.GetName().Version?.ToString(3) ?? "?";
 	}
 
-	private static string ReadLicense() {
-		using var stream = typeof(AboutWindow).Assembly.GetManifestResourceStream(LicenseResource);
+	private static string ReadResource(Assembly assembly, string name) {
+		using var stream = assembly.GetManifestResourceStream(name);
 		if (stream == null) {
 			return "";
 		}
@@ -91,7 +105,7 @@ public sealed class AboutWindow {
 		return reader.ReadToEnd();
 	}
 
-	// LICENSE.txt is hard-wrapped at about 75 columns, which TextWrapped would break again at the panel's width into
+	// LICENSE.txt and COPYING are hard-wrapped at about 75 columns, which TextWrapped would break again at the panel's width into
 	// ragged lines. This joins each paragraph's lines into one, keeping blank lines and "- " list items as they are.
 	private static string Unwrap(string text) {
 		var paragraphs = new List<string>();
