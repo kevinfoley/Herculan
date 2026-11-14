@@ -161,10 +161,14 @@ def json_path(p):
     return p if p.is_absolute() else REPO / p
 
 
-def batch_items(steps):
-    """The entries and edits of the file's insert and edit JSONs, as (subcommand, item) pairs."""
+def batch_items(steps, start=1):
+    """The entries and edits of the file's insert and edit JSONs from step `start` on, as (subcommand, item)
+    pairs. A step before `start` has run: its entries are in known_symbols, and an edit's "replace" pairs would
+    no longer find their old text there."""
     out = []
-    for s in steps:
+    for i, s in enumerate(steps, 1):
+        if i < start:
+            continue
         if s.kind == "write" and s.argv[0] == "es2_naming.py" and s.argv[1] in ("insert", "edit"):
             for e in json.loads(json_path(s.argv[2]).read_text(encoding="utf-8")):
                 out.append((s.argv[1], e))
@@ -206,15 +210,16 @@ def fix_shapes(steps):
 
 def precheck(steps, start=1):
     """Runs es2_stamp.py's wording checks over each stamp line from step `start` on, against the
-    descriptions the file's inserts and edits will write (the known_symbols text for the rest), with
-    that line's flags. Reads known_symbols, writes nothing. Prints a REFUSE line for each sentence the
-    stamp would stop on, UNUSED for a --read-callers or --own-negatives no target of its line needs, and
-    es2_naming.py's SHAPE warnings; returns the number of REFUSE and target problems."""
+    descriptions the file's inserts and edits from that step on will write (the known_symbols text for
+    the rest, which holds the earlier steps' writes), with that line's flags. Reads known_symbols, writes
+    nothing. Prints a REFUSE line for each sentence the stamp would stop on, UNUSED for a --read-callers or
+    --own-negatives no target of its line needs, and es2_naming.py's SHAPE warnings; returns the number of
+    REFUSE and target problems."""
     import es2_naming
     import es2_stamp
     import es2_symbols
     descs, names, types = {}, {}, {}
-    items = batch_items(steps)
+    items = batch_items(steps, start)
     current = {}
     for sub, e in items:
         key = (e["binary"], e["address"].lower())
