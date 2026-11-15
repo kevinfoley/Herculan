@@ -183,9 +183,13 @@ public partial class MechObject {
 			bool movementOrder = SquadOrderVerb == SquadOrderMove
 				|| (SquadOrderVerb == SquadOrderNone && GroupOrderIsMovement);
 
-			if (!movementOrder || Behaviour.State is not { Committed: true }) {
-				Target = AiTargeting.SelectTarget(world, this, TargetFilter.MissionTargetOnly);
+			// The original jumps straight to the call at 0041d00a, held target or not.
+			if (movementOrder && Behaviour.State is { Committed: true }) {
+				SelectBehaviour(world);
+				return;
 			}
+
+			Target = AiTargeting.SelectTarget(world, this, TargetFilter.MissionTargetOnly);
 
 			if (Target == null) {
 				SelectBehaviour(world);
