@@ -43,12 +43,16 @@ public sealed class Es1FmDriver : IEs1MidiDriver {
 	private const int InstrumentCount = 0x2448; // the melodic bank's +0x08
 	private const int MelodicLoaded = 0x2462;
 	private const int DrumLoaded = 0x2478;
+	private const int BendSwitch = 0x2480;
 	private const int Programs = 0x2484;
 	private const int VoiceChannels = 0x24c4;
+	private const int Bends = 0x24e8; // the pitch bend, the event's third byte; 0x40 is none
 	private const int HadBend = 0x2528;
+	private const int BendRanges = 0x2568; // semitones
 	private const int BankFlip = 0x25a8;
 	private const int Volumes = 0x25ac;
-	private const int Velocities = 0x25ec;
+	private const int Velocities = 0x25ec; // by voice, nine of them; the resets store one by channel
+	private const int VolumeSet = 0x2610; // by channel: 1 once controller 7 sets it, 0 after a reset
 	private const int Sustain = 0x2650;
 	private const int HeldCounts = 0x26ac;
 	private const int HeldNotes = 0x26ec; // bytes: 32 note-offs of 3 bytes a channel
@@ -68,6 +72,7 @@ public sealed class Es1FmDriver : IEs1MidiDriver {
 	private const int OperatorOffsets = 0x2d81; // bytes: the modulator and the carrier of each voice
 	private const int LevelCurve = 0x2d9c; // 64 bytes
 	private const int Frequencies = 0x2de8; // dwords: the frequency word of each note from 12
+	private const int Half = 0x2f84; // dwords: the F-numbers of B down to C halved, then 24 more
 
 	private readonly IOplChip _chip;
 	private byte[]? _melodic;
@@ -248,12 +253,9 @@ public sealed class Es1FmDriver : IEs1MidiDriver {
 
 	/// <summary>
 	/// <c>FmMidi_HandleEvent</c> (<c>0000080c</c>) (docs/es1/sound/fm-driver.md#events): by the status byte's high nibble,
-	/// the low nibble the channel, a note off (<c>0x8c</c>), a note on or, with velocity 0, a note off (<c>0x9c</c>), or a
-	/// program change (<c>0xcc</c>); any other status does nothing. A data byte past the event's end reads 0, an engine
-	/// guard: retail reads the byte after it.
-	///
-	/// <para>PLACEHOLDER (docs/herculan/plan-es1-sound.md, module D part 7 step 2): the controllers (<c>0xbc</c>) and the
-	/// pitch bend (<c>0xec</c>) do nothing yet.</para>
+	/// the low nibble the channel, a note off (<c>0x8c</c>), a note on or, with velocity 0, a note off (<c>0x9c</c>), a
+	/// controller (<c>0xbc</c>), a program change (<c>0xcc</c>) or a pitch bend from the third byte alone (<c>0xec</c>); any
+	/// other status does nothing. A data byte past the event's end reads 0, an engine guard: retail reads the byte after it.
 	/// </summary>
 	private void HandleEvent(ReadOnlySpan<byte> midiEvent) {
 		if (midiEvent.IsEmpty) {
@@ -274,8 +276,14 @@ public sealed class Es1FmDriver : IEs1MidiDriver {
 			case 0x90:
 				NoteOn(data1, data2, channel);
 				break;
+			case 0xb0:
+				Controller(channel, data1, data2);
+				break;
 			case 0xc0:
 				ProgramChange(data1, channel);
+				break;
+			case 0xe0:
+				PitchBend(channel, data2);
 				break;
 		}
 	}
@@ -290,11 +298,8 @@ public sealed class Es1FmDriver : IEs1MidiDriver {
 	/// channel's program in the melodic bank or, on <see cref="DrumChannel"/>, the note's number in the drum bank; the
 	/// velocity kept and <see cref="Level"/> written to the carrier, and first to the modulator on a melodic channel whose
 	/// instrument's packed <c>+0x0e</c> is 0; then the note started with its frequency word, on the drum channel that of the
-	/// note in the drum's name record <c>+0x02</c>, and kept as the voice's.
-	///
-	/// <para>PLACEHOLDER (module D part 7 step 2): on a melodic channel that has had a pitch bend, with the bend switch
-	/// <c>0x2480</c> on, retail then writes the bent frequency (<c>FmMidi_BendFrequency</c>, <c>00001981</c>, and
-	/// <c>Opl_SetFrequency</c>, <c>000021f0</c>). No channel has had one until step 2 ports the pitch bend.</para>
+	/// note in the drum's name record <c>+0x02</c>, and kept as the voice's. On a melodic channel that has had a pitch bend,
+	/// with the bend switch <c>0x2480</c> on, the channel's bend is then applied (<see cref="BendFrequency"/>).
 	/// </summary>
 	private void NoteOn(byte note, byte velocity, int channel) {
 		if (channel >= 16) {
@@ -327,6 +332,9 @@ public sealed class Es1FmDriver : IEs1MidiDriver {
 		int pitch = drum ? BankByte(_drum, _drumNames + note * NameSize + 2) : note;
 		OplKeyOn(voice, Dword(Frequencies + (pitch - 12) * 4));
 		SetByte(VoiceNotes + voice, note);
+		if (!drum && Dword(BendSwitch) != 0 && Dword(HadBend + channel * 4) != 0) {
+			OplSetFrequency(voice, BendFrequency((uint)Dword(Bends + channel * 4), note, voice));
+		}
 	}
 
 	/// <summary>
@@ -370,6 +378,166 @@ public sealed class Es1FmDriver : IEs1MidiDriver {
 		SetByte(at + 2, channel);
 		SetDword(HeldCounts + channel * 4, (int)held + 1);
 	}
+
+	/// <summary>
+	/// <c>FmMidi_Controller</c> (<c>0000174a</c>) (docs/es1/sound/fm-driver.md#controllers), by <paramref name="controller"/>:
+	/// 7 the channel's volume (<see cref="SetChannelVolume"/>); <c>0x40</c> the sustain pedal kept and, at 0, each held
+	/// note-off of the channel given to <see cref="NoteOff"/>, the last held first, the count taken down before each;
+	/// <c>0x66</c> the bend range kept; <c>0x79</c> <see cref="ResetControllers"/>; <c>0x7b</c> <see cref="AllNotesOff"/>.
+	/// Any other controller does nothing.
+	/// </summary>
+	private void Controller(int channel, byte controller, byte value) {
+		switch (controller) {
+			case 0x07:
+				SetChannelVolume(channel, value);
+				break;
+			case 0x40:
+				SetDword(Sustain + channel * 4, value);
+				if (value != 0) {
+					break;
+				}
+
+				while (Dword(HeldCounts + channel * 4) != 0) {
+					int held = Dword(HeldCounts + channel * 4) - 1;
+					SetDword(HeldCounts + channel * 4, held);
+					int at = HeldNotes + held * 3 + channel * HeldLimit * 3;
+					NoteOff(Byte(at), Byte(at + 1), Byte(at + 2));
+				}
+
+				break;
+			case 0x66:
+				SetDword(BendRanges + channel * 4, value);
+				break;
+			case 0x79:
+				ResetControllers(channel);
+				break;
+			case 0x7b:
+				AllNotesOff(channel);
+				break;
+		}
+	}
+
+	/// <summary>
+	/// <c>FmMidi_SetChannelVolume</c> (<c>00002286</c>), for a channel below 16: <paramref name="volume"/> kept as the
+	/// channel's, <c>0x2610</c> set, and <see cref="Level"/> written again for each playing voice of the channel from its kept
+	/// velocity, to the carrier and, first, to the modulator when the packed <c>+0x0e</c> of the channel's program in the
+	/// melodic bank is 0. That test reads the melodic bank for a drum voice too.
+	/// </summary>
+	private void SetChannelVolume(int channel, byte volume) {
+		if (channel >= 16) {
+			return;
+		}
+
+		SetDword(Volumes + channel * 4, volume);
+		SetDword(VolumeSet + channel * 4, 1);
+		for (int voice = 0; voice < Voices; voice++) {
+			if (Byte(VoiceNotes + voice) == 0 || (uint)Dword(VoiceChannels + voice * 4) != (uint)channel) {
+				continue;
+			}
+
+			int level = Level(voice, volume);
+			int program = Dword(Programs + Dword(VoiceChannels + voice * 4) * 4);
+			if (BankByte(_melodic, _melodicRecords + program * RecordSize + 0x0e) == 0) {
+				Write(0x40 + Modulator(voice), level | Byte(Levels + Modulator(voice)) & 0xc0);
+			}
+
+			Write(0x40 + Carrier(voice), level | Byte(Levels + Carrier(voice)) & 0xc0);
+		}
+	}
+
+	/// <summary>
+	/// <c>FmMidi_ResetControllers</c> (<c>00001653</c>), controller <c>0x79</c>, for a channel below 16: the channel's volume
+	/// to <c>0x7f</c>, <c>0x2610</c> and the sustain to 0, the bend to <c>0x40</c> and the range to 2, and <c>0x7f</c> stored
+	/// at <c>0x25ec</c> + channel × 4, in the voices' velocity table (docs/es1/sound/fm-driver.md#controllers). No write;
+	/// the had-a-bend flag and the held note-offs stay.
+	/// </summary>
+	private void ResetControllers(int channel) {
+		if (channel >= 16) {
+			return;
+		}
+
+		SetDword(Volumes + channel * 4, 0x7f);
+		SetDword(Velocities + channel * 4, 0x7f);
+		SetDword(VolumeSet + channel * 4, 0);
+		SetDword(Sustain + channel * 4, 0);
+		SetDword(Bends + channel * 4, 0x40);
+		SetDword(BendRanges + channel * 4, 2);
+	}
+
+	/// <summary>
+	/// <c>FmMidi_AllNotesOff</c> (<c>000015aa</c>), controller <c>0x7b</c>, for a channel below 16: the channel's volume to
+	/// <c>0x7f</c>, <c>0x2610</c> and the sustain to 0, <c>0x7f</c> stored at <c>0x25ec</c> + channel × 4 as the reset does,
+	/// and every voice that last played for the channel turned off and marked free. The had-a-bend flag and the held
+	/// note-offs stay.
+	/// </summary>
+	private void AllNotesOff(int channel) {
+		if (channel >= 16) {
+			return;
+		}
+
+		SetDword(Volumes + channel * 4, 0x7f);
+		SetDword(Velocities + channel * 4, 0x7f);
+		SetDword(VolumeSet + channel * 4, 0);
+		SetDword(Sustain + channel * 4, 0);
+		for (int voice = 0; voice < Voices; voice++) {
+			if ((uint)Dword(VoiceChannels + voice * 4) == (uint)channel) {
+				OplKeyOff(voice);
+				SetByte(VoiceNotes + voice, 0);
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>FmMidi_PitchBend</c> (<c>000018bf</c>) (docs/es1/sound/fm-driver.md#pitch-bend), for a channel below 16 other than
+	/// <see cref="DrumChannel"/>: <paramref name="bend"/> kept as the channel's, the channel marked as having had a bend,
+	/// and each playing voice of the channel given its note's bent frequency (<see cref="BendFrequency"/>).
+	/// </summary>
+	private void PitchBend(int channel, byte bend) {
+		if (channel >= 16 || channel == DrumChannel) {
+			return;
+		}
+
+		SetDword(Bends + channel * 4, bend);
+		SetDword(HadBend + channel * 4, 1);
+		for (int voice = 0; voice < Voices; voice++) {
+			if (Byte(VoiceNotes + voice) != 0 && (uint)Dword(VoiceChannels + voice * 4) == (uint)channel) {
+				OplSetFrequency(voice, BendFrequency(bend, Byte(VoiceNotes + voice), voice));
+			}
+		}
+	}
+
+	/// <summary>
+	/// <c>FmMidi_BendFrequency</c> (<c>00001981</c>)(bend, note, voice) (docs/es1/sound/fm-driver.md#pitch-bend): the
+	/// frequency word between the note's own and that of the note the range away, the range that of the channel the voice
+	/// last played for. Every operation is unsigned 32-bit, as retail's, and a table read past the image reads 0. The note's
+	/// place in its octave is the remainder, the number retail's subtraction loop reaches, without the loop's time.
+	/// </summary>
+	private int BendFrequency(uint bend, int note, int voice) {
+		uint index = (uint)(note - 12);
+		uint inOctave = index % 12;
+		uint range = (uint)Dword(BendRanges + Dword(VoiceChannels + voice * 4) * 4);
+		uint frequency = FrequencyAt(index);
+		uint step;
+		if (bend < 0x40) {
+			step = frequency - FrequencyAt(index - range);
+			if (step > 0x2cf) {
+				step = (frequency & 0x3ff) - (uint)Dword(Half + (int)(range - 1) * 4) & 0x3ff;
+			}
+
+			return (int)(frequency - step * ((0x3f - bend) * 1000 >> 6) / 1000);
+		}
+
+		step = FrequencyAt(index + range) - frequency;
+		if (step > 0x2cf) {
+			frequency = (frequency & 0x1c00) + 0x400 | (uint)Dword(Half + (int)(11 - inOctave) * 4);
+			step = FrequencyAt(index + range) - frequency;
+		}
+
+		return (int)(frequency + step * ((bend - 0x40) * 1000 >> 6) / 1000);
+	}
+
+	/// <summary>The dword of the frequency table at <paramref name="index"/>, an unsigned index with no bound.</summary>
+	private uint FrequencyAt(uint index) => (uint)Dword(Frequencies + (int)(index * 4));
 
 	/// <summary>
 	/// <c>FmMidi_AllocVoice</c> (<c>00001dde</c>) (docs/es1/sound/fm-driver.md#voice-allocation): the lowest free voice; with
@@ -453,6 +621,17 @@ public sealed class Es1FmDriver : IEs1MidiDriver {
 		Write(0xb0 + voice, Byte(FrequencyHigh + voice) & 0xdf);
 		Write(0xb0 + voice, Byte(FrequencyHigh + voice));
 		SetByte(VoiceNotes + voice, 1);
+	}
+
+	/// <summary>
+	/// <c>Opl_SetFrequency</c> (<c>000021f0</c>)(voice, word): the word's low byte and its high byte with the key-on bit set
+	/// kept and written to <c>0xa0</c> + voice and <c>0xb0</c> + voice.
+	/// </summary>
+	private void OplSetFrequency(int voice, int word) {
+		SetByte(FrequencyLow + voice, word);
+		SetByte(FrequencyHigh + voice, (word >> 8) | 0x20);
+		Write(0xa0 + voice, Byte(FrequencyLow + voice));
+		Write(0xb0 + voice, Byte(FrequencyHigh + voice));
 	}
 
 	/// <summary>The modulator's operator offset of <paramref name="voice"/>, from the pairs at <c>0x2d81</c>.</summary>

@@ -90,6 +90,7 @@ The driver's state:
 | `0x2568` | channel | the bend range in semitones | 2 |
 | `0x25ac` | channel | the volume, controller 7 | `0x7f` |
 | `0x25ec` | voice | the velocity of the voice's note | `0x7f` |
+| `0x2610` | channel | 1 once controller 7 has set the volume, 0 after controller `0x79` or `0x7b` | 0 |
 | `0x2650` | channel | the sustain pedal, controller `0x40` | 0 |
 | `0x26ac`, `0x26ec` | channel | the count of held note-offs and up to 32 of them, 3 bytes each | 0 |
 | `0x2d10` | operator offset | the operator's `0x40` byte as the instrument gives it | 0 |
@@ -98,7 +99,7 @@ The driver's state:
 | `0x2d70` | voice | the note the voice plays, 0 for a free voice | 0 |
 | `0x2480` | | the pitch bend switch | 1 |
 
-A search of the disassembly for `0x2480` finds the one read, in the note on, and no store.
+A search of the disassembly for `0x2480` finds the one read, in the note on, and no store. One for `0x2610` finds four stores, by the volume, the two resets and `FmMidi_ResetState`, and no read.
 
 ### Opening and closing
 
@@ -176,14 +177,14 @@ A voice turned off is left to its instrument's release, which step 2 of the next
 
 | Controller | Does |
 |---|---|
-| 7 | `FmMidi_SetChannelVolume` (`00002286`): keeps *x* as the channel's volume and, for each playing voice of the channel, writes [the level](#the-level) again from the voice's kept velocity, to the carrier and, when the packed `+0x0e` of the channel's program in the melodic bank is 0, the modulator first |
+| 7 | `FmMidi_SetChannelVolume` (`00002286`): keeps *x* as the channel's volume, sets its `0x2610` dword to 1 and, for each playing voice of the channel, writes [the level](#the-level) again from the voice's kept velocity, to the carrier and, when the packed `+0x0e` of the channel's program in the melodic bank is 0, the modulator first |
 | `0x40` | keeps *x* as the sustain pedal; at 0 it gives each held note-off of the channel to `FmMidi_NoteOff`, the last held first |
 | `0x66` | keeps *x* as the channel's bend range |
-| `0x79` | `FmMidi_ResetControllers` (`00001653`): the channel's volume to `0x7f`, sustain to 0, bend to `0x40` and range to 2 |
-| `0x7b` | `FmMidi_AllNotesOff` (`000015aa`): the channel's volume to `0x7f` and sustain to 0, and every voice of the channel turned off and marked free |
+| `0x79` | `FmMidi_ResetControllers` (`00001653`): the channel's volume to `0x7f`, its `0x2610` dword and sustain to 0, bend to `0x40` and range to 2 |
+| `0x7b` | `FmMidi_AllNotesOff` (`000015aa`): the channel's volume to `0x7f`, its `0x2610` dword and sustain to 0, and every voice of the channel turned off and marked free |
 | any other | nothing |
 
-So the pan (controller 10) the songs' branch entries send has no effect on this device. Neither `0x79` nor `0x7b` clears the channel's had-a-bend flag or its held note-offs' count. Both also store `0x7f` at `0x25ec` + channel × 4, the velocity table, which has nine entries: for a channel below 9 that is a voice's velocity, and above it a dword of the table after it. The volume's test of the modulator reads the melodic bank for a drum voice too.
+So the pan (controller 10) the songs' branch entries send has no effect on this device. Neither `0x79` nor `0x7b` clears the channel's had-a-bend flag or its held note-offs' count. Both also store `0x7f` at `0x25ec` + channel × 4, the velocity table, which has nine entries: for a channel below 9 that is a voice's velocity, and above it the `0x2610` dword of channel − 9. The volume's test of the modulator reads the melodic bank for a drum voice too.
 
 ### Frequencies
 
@@ -201,7 +202,7 @@ A frequency word is the chip's block number << 10 | F-number, the two bytes `0xa
 - **Down, *b* < `0x40`:** *d* = *f* − table[*i* − *r*]. When *d* is above `0x2cf` (the two notes are in different blocks), *d* = ((*f* & `0x3ff`) − half[*r* − 1]) & `0x3ff`. The result is *f* − *d* × (((`0x3f` − *b*) × 1000) >> 6) / 1000.
 - **Up, *b* ≥ `0x40`:** *d* = table[*i* + *r*] − *f*. When *d* is above `0x2cf`, *f* becomes the same note written in the next block, ((*f* & `0x1c00`) + `0x400`) | half[11 − *s*], and *d* is taken again from it. The result is *f* + *d* × (((*b* − `0x40`) × 1000) >> 6) / 1000.
 
-The comparisons and divisions are unsigned. `half` is the 36 dwords at `0x2f84`, the first twelve the F-numbers of B down to C halved:
+The comparisons and divisions are unsigned. The code works *s* by taking 12 off *i* until it is below 12, so for a note below 12, whose *i* is near 2^32, the loop runs about 358 million times. `half` is the 36 dwords at `0x2f84`, the first twelve the F-numbers of B down to C halved:
 
 ```
 144 132 121 110 101 0f8 0e5 0d8 0cc 0c1 0b6 0ac

@@ -538,7 +538,7 @@
       "type": "function",
       "confidence": "high",
       "name": "FmMidi_SetChannelVolume",
-      "description": "(channel, volume), for a channel below 16: stores the volume at 0x25ac[channel], sets 0x2610[channel] and, for each of 9 voices with a note 0x2d70 whose channel 0x24c4 is the channel, works the level of FmMidi_NoteOn (00000f4c) from the volume and the voice's velocity 0x25ec and writes it | the top two bits of the operator's 0x2d10 byte to 0x40 + the carrier's offset, and before it to 0x40 + the modulator's when the byte +0xe of the melodic record of the program 0x2484 of the voice's channel is 0.",
+      "description": "(channel, volume), for a channel below 16: stores the volume at 0x25ac[channel], sets 0x2610[channel] to 1 and, for each of 9 voices with a note 0x2d70 whose channel 0x24c4 is the channel, works the level of FmMidi_NoteOn (00000f4c) from the volume and the voice's velocity 0x25ec and writes it | the top two bits of the operator's 0x2d10 byte to 0x40 + the carrier's offset, and before it to 0x40 + the modulator's when the byte +0xe of the melodic record of the program 0x2484 of the voice's channel is 0.",
       "source": "Herculan/docs/es1/sound/fm-driver.md#controllers; ES1FMMIDI decompile at 00002286",
       "verified": {
         "bytes": "00002286+424",
