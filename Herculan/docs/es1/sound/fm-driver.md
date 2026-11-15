@@ -212,10 +212,11 @@ The comparisons and divisions are unsigned. The code works *s* by taking 12 off 
 
 The range comes from the voice's channel as `0x24c4` holds it, the channel the voice last played for.
 
+A song's end and stop send the pitch bend `En 40 40` on each of its tracks' channels ([the end](song-player.md#the-end)), which marks those channels as having had a bend, and nothing clears the mark while the driver stays open. Each note on of such a channel in a later song then writes its bent frequency at `0x40`: the note's own word, but for a note whose word and the word *r* notes up are in different blocks, the same pitch written in the next block. The release cut of the operators at offsets `0x10`–`0x15` then reads those `0xa0` bytes ([the state](#the-chip)).
+
 ## Open
 
 - **Open:** the info block's dword at `0x93`, its two lists and the words `0xc0`, and what the library does with the `0x6a` bytes; `es2_xref.py` finds no call of the request in the game ([loading an image](../formats/hmi-driver-container.md#loading-an-image)).
 - **Open:** the image's bytes from `0xf2` to the entry at `0x504`, zero but for a few bytes, in which a search of the disassembly finds one address used, the word at `0x4fe`, where the open keeps the port.
 - **Open:** whether a song reaches the cases the code handles without a check: a note outside 12–114, an instrument 126 or 127, a channel above 8 given controller `0x79` or `0x7b`.
 - **Open:** `fmmidi3.com`, device `0xa009`, which the FM setup does not load.
-- **Open:** the level and the frequencies in the running game. A retail check: DOSBox-X's capture of the chip's writes for a song, which holds only the writes that change a register, compared with the writes these rules give for the same song.

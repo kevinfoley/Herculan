@@ -1,3 +1,4 @@
+using Herculan.Engine.Audio.Opl;
 using Herculan.Engine.Numerics;
 using Herculan.Es1.Sound.Midi;
 
@@ -64,10 +65,11 @@ public sealed class Es1SoundManager {
 	/// </summary>
 	/// <param name="read">The volumes' reader, (folder, file name) to a file's bytes; none opens no name.</param>
 	/// <param name="driver">The digital driver the objects play through.</param>
-	public Es1SoundManager(Func<string, string, byte[]?>? read, Es1DigitalDriver driver) {
+	/// <param name="fmChip">The chip the FM driver writes to; none makes one (<see cref="Es1MidiDrivers.FmChip"/>).</param>
+	public Es1SoundManager(Func<string, string, byte[]?>? read, Es1DigitalDriver driver, IOplChip? fmChip = null) {
 		_read = read;
 		Driver = driver;
-		Midi = new Es1MidiSystem(Open);
+		Midi = new Es1MidiSystem(Open, fmChip);
 	}
 
 	/// <summary>The digital driver the objects play through.</summary>
