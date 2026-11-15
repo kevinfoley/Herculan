@@ -10,9 +10,12 @@ public enum Es1MidiCallKind {
 
 	/// <summary><see cref="IEs1MidiDriver.Close"/>.</summary>
 	Close,
+
+	/// <summary><see cref="IEs1MidiDriver.LoadBank"/>.</summary>
+	LoadBank,
 }
 
-/// <summary>One call to an <see cref="Es1RecordingMidiDriver"/>: its kind, slot and, for an event, its bytes.</summary>
+/// <summary>One call to an <see cref="Es1RecordingMidiDriver"/>: its kind, slot and, for an event or a bank, its bytes.</summary>
 public readonly record struct Es1MidiCall(Es1MidiCallKind Kind, int Slot, byte[] Bytes);
 
 /// <summary>
@@ -31,4 +34,10 @@ public sealed class Es1RecordingMidiDriver : IEs1MidiDriver {
 
 	/// <inheritdoc/>
 	public void Close(int slot) => Calls.Add(new Es1MidiCall(Es1MidiCallKind.Close, slot, []));
+
+	/// <summary><see cref="IEs1MidiDriver.LoadBank"/>, kept and answered 0.</summary>
+	public int LoadBank(byte[] bank, int slot) {
+		Calls.Add(new Es1MidiCall(Es1MidiCallKind.LoadBank, slot, bank));
+		return 0;
+	}
 }

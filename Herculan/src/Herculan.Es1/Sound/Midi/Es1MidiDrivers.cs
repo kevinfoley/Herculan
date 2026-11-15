@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File;
 using HercWorks.Core.Io.Transform.Common;
+using Herculan.Engine.Audio.Opl;
 
 namespace Herculan.Es1.Sound.Midi;
 
@@ -9,7 +10,8 @@ namespace Herculan.Es1.Sound.Midi;
 /// which a song's tracks pick a slot (docs/es1/sound/song-player.md#loading, step 6).
 /// </summary>
 /// <param name="open">The install's reader, a path to a file's bytes, null when it does not open; none opens no file.</param>
-public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null) {
+/// <param name="fmChip">The chip the FM driver writes to; none makes a <see cref="NukedOplChip"/>.</param>
+public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null, IOplChip? fmChip = null) {
 	/// <summary>The open drivers at most: the size of the table.</summary>
 	public const int Slots = 5;
 
@@ -55,6 +57,9 @@ public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null) {
 	/// string for a null pointer; <see cref="LoadDriverImage"/> appends <see cref="ContainerName"/> to it.
 	/// </summary>
 	public string DriverPath { get; set; } = "";
+
+	/// <summary>The chip the FM driver (<see cref="Es1FmDriver"/>) writes to, whichever slot it opens in.</summary>
+	public IOplChip FmChip { get; } = fmChip ?? new NukedOplChip();
 
 	/// <summary>
 	/// Whether <paramref name="slot"/> is in use (<c>000a12e4</c>): set by <see cref="LoadDriverImage"/>, whether or not it
@@ -131,10 +136,11 @@ public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null) {
 	/// for and registers at 120 calls a second, is not ported: the sound manager opens <c>0xa002</c> for every MIDI device
 	/// (decision 25 of docs/herculan/plan-es1-first-mission.md).</para>
 	///
-	/// <para>PLACEHOLDER (docs/herculan/plan-es1-sound.md, module D part 7): no image has a driver yet, so the slot opens with
-	/// no functions and the events the song player sends it are dropped. Devices <c>0xa005</c> and <c>0xa003</c>, whose
-	/// functions come from tables in the program and whose open reads the block's <c>+0x18</c>
-	/// (docs/es1/sound/drum-device.md#the-devices-in-the-program), open the same way, with no functions and no open.</para>
+	/// <para>The image of <c>0xa002</c> opens as an <see cref="Es1FmDriver"/> on <see cref="FmChip"/>; any other image opens
+	/// with no functions, its events dropped, since the sound manager opens no other. PLACEHOLDER
+	/// (docs/herculan/plan-es1-sound.md, module D part 7 step 5): devices <c>0xa005</c> and <c>0xa003</c>, whose functions come
+	/// from tables in the program and whose open reads the block's <c>+0x18</c>
+	/// (docs/es1/sound/drum-device.md#the-devices-in-the-program), open with no functions and no open.</para>
 	/// </summary>
 	/// <param name="deviceId">The device to open.</param>
 	/// <param name="portBlock">The caller's port block, three dwords; the FM image reads the low word of <c>+0</c>, the port.</param>
@@ -165,10 +171,18 @@ public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null) {
 	}
 
 	/// <summary>
-	/// The driver for an image, made with what its open function takes. PLACEHOLDER (module D part 7): none yet, so null for
-	/// every image.
+	/// The driver for an image, made with what its open function takes: the FM driver for <c>0xa002</c>, which runs in
+	/// <paramref name="image"/>, and none for any other device.
 	/// </summary>
-	private static IEs1MidiDriver? DriverFor(int deviceId, byte[] image, int[] portBlock) => null;
+	private IEs1MidiDriver? DriverFor(int deviceId, byte[] image, int[] portBlock) =>
+		deviceId == 0xa002 ? new Es1FmDriver(image, FmChip, portBlock) : null;
+
+	/// <summary>
+	/// <c>HmiMidi_LoadBank</c> (<c>00072275</c>)(slot, bank, <i>x</i>): <paramref name="bank"/> given to the bank function of
+	/// the driver in <paramref name="slot"/>, answering what it answers. Retail calls the slot's entry whatever it holds;
+	/// a slot with no driver answers 0 here, an engine guard.
+	/// </summary>
+	public int LoadBank(int slot, byte[] bank) => _drivers[slot]?.LoadBank(bank, slot) ?? 0;
 
 	/// <summary>
 	/// <c>HmiMidi_InitDriver</c>'s choice of a slot: the first whose device id is 0, given <paramref name="deviceId"/> and

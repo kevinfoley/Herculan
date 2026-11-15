@@ -1,3 +1,5 @@
+using Herculan.Engine.Audio.Opl;
+
 namespace Herculan.Es1.Sound.Midi;
 
 /// <summary>
@@ -8,8 +10,9 @@ namespace Herculan.Es1.Sound.Midi;
 public sealed class Es1MidiSystem {
 	/// <summary>Makes the system with no driver open.</summary>
 	/// <param name="open">The install's reader, a path to a file's bytes, through which the drivers' images load.</param>
-	public Es1MidiSystem(Func<string, byte[]?>? open = null) {
-		Drivers = new Es1MidiDrivers(open);
+	/// <param name="fmChip">The chip the FM driver writes to; none makes one (<see cref="Es1MidiDrivers.FmChip"/>).</param>
+	public Es1MidiSystem(Func<string, byte[]?>? open = null, IOplChip? fmChip = null) {
+		Drivers = new Es1MidiDrivers(open, fmChip);
 		Songs = new Es1HmiSongs(Drivers);
 		Player = new Es1HmiPlayer(Drivers, Songs);
 	}

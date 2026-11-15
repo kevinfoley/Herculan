@@ -93,7 +93,7 @@ The driver's state:
 | `0x2650` | channel | the sustain pedal, controller `0x40` | 0 |
 | `0x26ac`, `0x26ec` | channel | the count of held note-offs and up to 32 of them, 3 bytes each | 0 |
 | `0x2d10` | operator offset | the operator's `0x40` byte as the instrument gives it | 0 |
-| `0x2d30` | operator offset | the operator's `0x80` byte | 0 |
+| `0x2d30` | operator offset | the operator's `0x80` byte; for voices 6–8's operators, offsets `0x10`–`0x15`, these are the bytes `0x2d40`–`0x2d45`, voices 0–5's `0xa0` bytes, so a store to either overwrites the other | 0 |
 | `0x2d40`, `0x2d49` | voice | the bytes last written to `0xa0` + *v* and `0xb0` + *v* | 0 |
 | `0x2d70` | voice | the note the voice plays, 0 for a free voice | 0 |
 | `0x2480` | | the pitch bend switch | 1 |
@@ -102,7 +102,7 @@ A search of the disassembly for `0x2480` finds the one read, in the note on, and
 
 ### Opening and closing
 
-`FmMidi_Init` (`00000a09`), the open's worker, keeps the port, then `Opl_Init` (`00001b39`) writes register `0x01` with `0x20`, which lets the waveform registers work, and `Opl_Reset` (`00001bb8`) writes 0 to `0xb0`–`0xb8` and to `0xbd`; `Opl_Reset` runs a second time before the driver marks itself open. `FmMidi_Shutdown` (`00000a7b`), the close's worker, runs `Opl_Init` on the kept port again and then `Opl_Silence` (`00001caf`): 0 to `0xbd`, each voice's `0xb0` byte with its key-on bit cleared, and `0xff` to every carrier's `0x40` register.
+`FmMidi_Init` (`00000a09`), the open's worker, keeps the port, then `Opl_Init` (`00001b39`) writes register `0x01` with `0x20`, which lets the waveform registers work, and runs `Opl_Reset` (`00001bb8`), which writes 0 to `0xb0`–`0xb8` and to `0xbd`; `FmMidi_Init` runs `Opl_Reset` a second time before the driver marks itself open. `FmMidi_Shutdown` (`00000a7b`), the close's worker, runs `Opl_Init` on the kept port again, with its reset, and then `Opl_Silence` (`00001caf`): 0 to `0xbd`, each voice's `0xb0` byte with its key-on bit cleared, and `0xff` to every carrier's `0x40` register.
 
 Neither touches the per-channel state, so it keeps the image's values until an event changes it. `FmMidi_ResetState` (`00000ae0`), which sets it all back, is called only from a function at `0x79d` that `es2_xref.py` finds no reference to.
 
