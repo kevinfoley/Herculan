@@ -369,10 +369,9 @@ public sealed class Es1DigiSound : Es1SoundObject {
 /// <c>MidiSoundVtable</c> (<c>00095c82</c>), built by <c>MidiSound_Ctor</c> (<c>000504dc</c>).
 ///
 /// <para>PLACEHOLDER: the song plays through <see cref="Es1SoundManager.Midi"/>, where the FM driver writes the tracks
-/// routed to it to a chip whose output reaches no stream until module D's part 7 step 3, and device <c>0xa005</c> does not
-/// open until step 5, so its tracks are dropped and nothing is heard. Nothing calls
-/// <see cref="Es1MidiSystem.Tick"/> until part 8, so a song started stays started and <see cref="IsPlaying"/> stays true
-/// until it is stopped.</para>
+/// routed to it to a chip, and device <c>0xa005</c> does not open until module D's part 7 step 5, so its tracks are
+/// dropped. Nothing opens <see cref="Es1MidiSystem.Output"/> or calls <see cref="Es1MidiSystem.Tick"/> until part 8, so
+/// nothing is heard, a song started stays started, and <see cref="IsPlaying"/> stays true until it is stopped.</para>
 ///
 /// <para>The branch callback at <c>+0x35</c> is not kept: what stores it is Open
 /// (docs/es1/sound/song-player.md#open).</para>

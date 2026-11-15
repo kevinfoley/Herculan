@@ -1,4 +1,6 @@
+using Herculan.Engine.Audio;
 using Herculan.Engine.Audio.Opl;
+using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.Sound.Midi;
 
@@ -8,6 +10,9 @@ namespace Herculan.Es1.Sound.Midi;
 /// (docs/es1/sound/song-player.md).
 /// </summary>
 public sealed class Es1MidiSystem {
+	/// <summary>The chip's rate times the interrupts so far, less the frames rendered for them times the interrupt rate.</summary>
+	private int _frameCarry;
+
 	/// <summary>Makes the system with no driver open.</summary>
 	/// <param name="open">The install's reader, a path to a file's bytes, through which the drivers' images load.</param>
 	/// <param name="fmChip">The chip the FM driver writes to; none makes one (<see cref="Es1MidiDrivers.FmChip"/>).</param>
@@ -35,9 +40,39 @@ public sealed class Es1MidiSystem {
 	public Es1HmiPlayer Player { get; }
 
 	/// <summary>
-	/// One interrupt of the game's timer for every song: <see cref="Es1HmiPlayer.Tick"/> on each song slot in turn.
-	/// Retail's timer calls each playing song's own event in the order the library holds them; the slot order stands in
-	/// for it.
+	/// The FM chip's output in the host's mixer, which <see cref="Tick"/> renders into; none until
+	/// <see cref="OpenOutput"/>. Not retail's, whose chip makes its own sound.
+	/// </summary>
+	public OplStream? Output { get; private set; }
+
+	/// <summary>
+	/// <see cref="Output"/> opened on <paramref name="backend"/> for <see cref="Es1MidiDrivers.FmChip"/>, in blocks of one
+	/// interrupt's share of the chip's rate rounded down, 414 frames at an OPL's 49,716 a second, so the stream's ring holds as few interrupts' writes
+	/// ahead of what is heard as it can; any output open before is closed first.
+	/// </summary>
+	public void OpenOutput(IAudioBackend backend) {
+		CloseOutput();
+		Output = new OplStream(backend, Drivers.FmChip, Drivers.FmChip.SampleRate / Es1SimClock.InterruptsPerSecond);
+	}
+
+	/// <summary><see cref="Output"/> stopped and dropped, the frame count's carry with it.</summary>
+	public void CloseOutput() {
+		Output?.Dispose();
+		Output = null;
+		_frameCarry = 0;
+	}
+
+	/// <summary>
+	/// One interrupt of the game's timer: <see cref="Es1HmiPlayer.Tick"/> on each song slot in turn, then the interrupt's
+	/// share of the FM chip's frames rendered into <see cref="Output"/> as one call, so the tick's register writes take
+	/// effect at the tick's time in the output. Retail's timer calls each playing song's own event in the order the library
+	/// holds them; the slot order stands in for it.
+	///
+	/// <para>The share is the chip's rate over <see cref="Es1SimClock.InterruptsPerSecond"/>, 49,716 / 120: 414 frames or 415,
+	/// the fraction carried to the next interrupt, so that each second of interrupts renders the chip's second. The engine
+	/// counts the interrupts at 120 a second of the host's time (<see cref="Es1SimClock"/>), where retail's hardware gives
+	/// 120.05, so a song plays 0.04% slower than on that hardware. Every write of a tick takes effect from the tick's first
+	/// frame.</para>
 	/// </summary>
 	public void Tick() {
 		for (int slot = 0; slot < Es1HmiSongs.Slots; slot++) {
@@ -45,5 +80,14 @@ public sealed class Es1MidiSystem {
 				Player.Tick(song);
 			}
 		}
+
+		if (Output is not { } output) {
+			return;
+		}
+
+		_frameCarry += output.Chip.SampleRate;
+		int frames = _frameCarry / Es1SimClock.InterruptsPerSecond;
+		_frameCarry -= frames * Es1SimClock.InterruptsPerSecond;
+		output.Render(frames);
 	}
 }
