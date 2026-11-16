@@ -36,6 +36,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 
 	private readonly Es1HostKeyboard _hostKeyboard;
 	private readonly Es1CustomKeys _customKeys;
+	private readonly Es1Preferences _preferences;
 
 	// The host time held towards the tape's next frame.
 	private double _tapeHeld;
@@ -79,6 +80,8 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 
 		AxisKeys = keyboardInput.AxisKeys;
 		Simulation = new Es1Simulation(world, input, viewChain);
+		_preferences = preferences;
+		preferences.MusicTick = MusicTick;
 
 		// Sim_StartMission's step 4 sets the panels' two hooks to SimInput_PushDisable and SimInput_PopEnable.
 		if (viewChain?.Manager is { } manager) {
@@ -194,10 +197,10 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// Before it, the engine hum: in the view manager's outside view (its <c>+0x10</c> 4)
 	/// <see cref="Sound.Es1Sound.HumRow"/> stopped while it plays, in any other view started while neither it nor
 	/// <see cref="Sound.Es1Sound.StartRow"/> plays. With no view manager, where retail always has one, the hum's step is
-	/// skipped, an engine guard.
-	/// PLACEHOLDER: its first step, <c>Music_Tick</c> (item 7's module D).
+	/// skipped, an engine guard. Its first step is <see cref="MusicTick"/>.
 	/// </summary>
 	private void FrameSoundTick() {
+		MusicTick();
 		var sound = Simulation.Globals.Sound;
 		if (Simulation.ViewChain.Manager is { } views) {
 			bool humming = sound.IsPlaying(Sound.Es1Sound.HumRow);
@@ -212,6 +215,9 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 
 		sound.UpdateListener(Simulation.ViewChain.Camera);
 	}
+
+	/// <summary><c>Music_Tick</c> (<see cref="Es1Music.Tick"/>) on the simulation's globals, with the preferences' option 0.</summary>
+	private void MusicTick() => Simulation.Globals.Music.Tick(Simulation.Globals, _preferences[Es1Preferences.MusicOption]);
 
 	/// <summary>
 	/// <c>Sim_Main</c>'s loop test, then <see cref="Es1Simulation.MainTick"/>: with <c>DemoAbort</c> set, which the axis
@@ -253,6 +259,10 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	public bool Frozen => Simulation.Frozen;
 
 	public void Dispose() {
+		if (_preferences.MusicTick == MusicTick) {
+			_preferences.MusicTick = null;
+		}
+
 		_customKeys.Release();
 		_hostKeyboard.Detach();
 	}

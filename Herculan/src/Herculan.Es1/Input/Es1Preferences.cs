@@ -458,11 +458,21 @@ public sealed class Es1Preferences {
 	public Es1Sound? Sound { get; }
 
 	/// <summary>
-	/// <c>Prefs_ApplyMusicOption</c> (<c>0004ad0c</c>), option 0's handler: <see cref="Es1Sound.SetMusicEnabled"/>(value).
-	/// PLACEHOLDER: then <c>Music_Tick</c> (<c>000585dc</c>) when the value is not 0 and <see cref="InitInProgress"/> is
-	/// clear, the songs, item 7's module D (docs/herculan/plan-es1-first-mission.md).
+	/// <c>Prefs_ApplyMusicOption</c> (<c>0004ad0c</c>), option 0's handler: <see cref="Es1Sound.SetMusicEnabled"/>(value),
+	/// then <see cref="MusicTick"/> when the value is not 0 and <see cref="InitInProgress"/> is clear.
 	/// </summary>
-	private void ApplyMusicOption(byte value) => Sound?.SetMusicEnabled(value);
+	private void ApplyMusicOption(byte value) {
+		Sound?.SetMusicEnabled(value);
+		if (value != 0 && !InitInProgress) {
+			MusicTick?.Invoke();
+		}
+	}
+
+	/// <summary>
+	/// <c>Music_Tick</c> (<c>000585dc</c>, <see cref="Sim.Es1Music.Tick"/>) on the running mission, which the simulation
+	/// runner sets while it runs; none before, as for the shell's options and a test's.
+	/// </summary>
+	public Action? MusicTick { get; set; }
 
 	/// <summary>
 	/// <c>Prefs_ApplySoundsOption</c> (<c>0004acfc</c>), option 1's handler: <see cref="Es1Sound.SetEffectsEnabled"/>(value).

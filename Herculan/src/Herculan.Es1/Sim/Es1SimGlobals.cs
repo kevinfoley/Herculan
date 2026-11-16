@@ -50,6 +50,9 @@ public sealed class Es1SimGlobals {
 	/// </summary>
 	public Sound.Es1Sound Sound { get; set; } = new();
 
+	/// <summary><c>Music_Tick</c>'s song and its switch (<see cref="Es1Music"/>), with no song until the first frame's call.</summary>
+	public Es1Music Music { get; } = new();
+
 	/// <summary><c>Behaviour_DwellJitter</c> (<c>000bc426</c>).</summary>
 	public Es1DwellJitter DwellJitter { get; } = new();
 

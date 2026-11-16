@@ -1,4 +1,4 @@
-﻿using HercWorks.Core.Data.File.Cfg;
+using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Es1.Shell;

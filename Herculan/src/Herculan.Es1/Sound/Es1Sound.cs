@@ -162,11 +162,12 @@ public sealed class Es1Sound {
 	/// </summary>
 	/// <param name="read">The volumes' reader, (folder, file name) to a file's bytes, which the manager and the catalog read through.</param>
 	/// <param name="timer">The simulator's PC timer, which the manager's drivers put the songs' tick on.</param>
+	/// <param name="fmChip">The chip the FM driver writes to; none makes one (<see cref="Midi.Es1MidiDrivers.FmChip"/>).</param>
 	public void Init(Es1SoundDevices devices, bool lowMemory, Es1VoiceLines voiceLines, Func<string, string, byte[]?> read,
-			IAudioBackend backend, Es1SimClock timer) {
+			IAudioBackend backend, Es1SimClock timer, Engine.Audio.Opl.IOplChip? fmChip = null) {
 		voiceLines.InitSlots(lowMemory, this);
 		if (devices.DigitalDevice != 0) {
-			var manager = new Es1SoundManager(read, new Es1DigitalDriver(backend), timer: timer) { Devices = devices };
+			var manager = new Es1SoundManager(read, new Es1DigitalDriver(backend), fmChip, timer) { Devices = devices };
 			Manager = manager;
 			manager.LoadDrivers();
 			manager.SetMemoryLimit(lowMemory ? LowMemoryLimit : MemoryLimit);
