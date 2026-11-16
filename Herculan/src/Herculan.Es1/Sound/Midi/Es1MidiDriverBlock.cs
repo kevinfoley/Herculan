@@ -11,4 +11,10 @@ public sealed class Es1MidiDriverBlock {
 	/// address and its allocation; null while the data far pointer is 0, which has the next open load one.
 	/// </summary>
 	public byte[]? Image { get; set; }
+
+	/// <summary>
+	/// <c>+0x18</c>: the far pointer to the sound manager, whose first bytes are the digital driver block device
+	/// <c>0xa005</c>'s open reads (docs/es1/sound/drum-device.md#opening); zero until the manager fills it.
+	/// </summary>
+	public Es1DigitalDriverBlock Digital { get; set; }
 }

@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File;
 using HercWorks.Core.Io.Transform.Common;
+using Herculan.Engine.Audio;
 using Herculan.Engine.Audio.Opl;
 
 namespace Herculan.Es1.Sound.Midi;
@@ -11,7 +12,9 @@ namespace Herculan.Es1.Sound.Midi;
 /// </summary>
 /// <param name="open">The install's reader, a path to a file's bytes, null when it does not open; none opens no file.</param>
 /// <param name="fmChip">The chip the FM driver writes to; none makes a <see cref="NukedOplChip"/>.</param>
-public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null, IOplChip? fmChip = null) {
+/// <param name="digital">The digital driver device <c>0xa005</c> plays its samples on; none makes one over a
+/// <see cref="NullAudioBackend"/>.</param>
+public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null, IOplChip? fmChip = null, Es1DigitalDriver? digital = null) {
 	/// <summary>The open drivers at most: the size of the table.</summary>
 	public const int Slots = 5;
 
@@ -39,6 +42,12 @@ public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null, IOplChip?
 	/// <summary>Retail's error when all <see cref="Slots"/> slots hold a device.</summary>
 	public const int SlotsTaken = 0xb;
 
+	/// <summary>
+	/// <c>HmiMidi_DriverArg</c> (<c>000a5984</c>): the third argument the library passes a driver's open, close and reset, a
+	/// dword 0 in the image that <c>es2_xref --decode</c> finds no write of (docs/es1/sound/drum-device.md#open).
+	/// </summary>
+	public const int DriverArg = 0;
+
 	private readonly int[] _ids = new int[Slots];
 	private readonly IEs1MidiDriver?[] _drivers = new IEs1MidiDriver?[Slots];
 	private readonly bool[,] _channels = new bool[Slots, 16];
@@ -60,6 +69,12 @@ public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null, IOplChip?
 
 	/// <summary>The chip the FM driver (<see cref="Es1FmDriver"/>) writes to, whichever slot it opens in.</summary>
 	public IOplChip FmChip { get; } = fmChip ?? new NukedOplChip();
+
+	/// <summary>Device <c>0xa005</c>, the drums, whichever slots it opens in (<c>HmiDigiMidi_Functions</c>, <c>000a3028</c>).</summary>
+	public Es1DigiMidiDriver DigiMidi { get; } = new(digital ?? new Es1DigitalDriver(new NullAudioBackend()));
+
+	/// <summary>Device <c>0xa003</c>, whichever slots it opens in (<c>HmiCallbackMidi_Functions</c>, <c>000a2574</c>).</summary>
+	public Es1CallbackMidiDriver CallbackMidi { get; } = new();
 
 	/// <summary>
 	/// Whether <paramref name="slot"/> is in use (<c>000a12e4</c>): set by <see cref="LoadDriverImage"/>, whether or not it
@@ -137,10 +152,13 @@ public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null, IOplChip?
 	/// (decision 25 of docs/herculan/plan-es1-first-mission.md).</para>
 	///
 	/// <para>The image of <c>0xa002</c> opens as an <see cref="Es1FmDriver"/> on <see cref="FmChip"/>; any other image opens
-	/// with no functions, its events dropped, since the sound manager opens no other. PLACEHOLDER
-	/// (docs/herculan/plan-es1-sound.md, module D part 7 step 5): devices <c>0xa005</c> and <c>0xa003</c>, whose functions come
-	/// from tables in the program and whose open reads the block's <c>+0x18</c>
-	/// (docs/es1/sound/drum-device.md#the-devices-in-the-program), open with no functions and no open.</para>
+	/// with no functions, its events dropped, since the sound manager opens no other.</para>
+	///
+	/// <para>Devices <c>0xa005</c> and <c>0xa003</c> are the program's own (docs/es1/sound/drum-device.md#the-devices-in-the-program):
+	/// the slot takes <see cref="DigiMidi"/> or <see cref="CallbackMidi"/>, and <see cref="DigiMidi"/>'s open reads the block's
+	/// <see cref="Es1MidiDriverBlock.Digital"/>, its error answered with the slot keeping the device and the driver but not
+	/// marked in use, as retail's. No image is loaded and the block's is left alone. <see cref="CallbackMidi"/>'s open
+	/// answers 0 and is not called.</para>
 	/// </summary>
 	/// <param name="deviceId">The device to open.</param>
 	/// <param name="portBlock">The caller's port block, three dwords; the FM image reads the low word of <c>+0</c>, the port.</param>
@@ -151,7 +169,15 @@ public sealed class Es1MidiDrivers(Func<string, byte[]?>? open = null, IOplChip?
 			return SlotsTaken;
 		}
 
-		if (deviceId is not (0xa005 or 0xa003)) {
+		if (deviceId == 0xa005) {
+			_drivers[slot] = DigiMidi;
+			int error = DigiMidi.Open(block.Digital, slot);
+			if (error != 0) {
+				return error;
+			}
+		} else if (deviceId == 0xa003) {
+			_drivers[slot] = CallbackMidi;
+		} else {
 			byte[]? image = block.Image;
 			if (image == null) {
 				int error = LoadDriverImage(deviceId, slot, out image);

@@ -87,6 +87,7 @@ public sealed class Es1DigitalDriver {
 		v.Busy = true;
 		v.Block = block;
 		v.Volume = block.Volume;
+		v.PanWord = block.Pan;
 		v.Pan = block.StereoPan;
 		v.Repeats = (short)block.Repeats;
 		v.Sample = Sample(block);
@@ -133,6 +134,23 @@ public sealed class Es1DigitalDriver {
 		int old = (short)v.Volume;
 		v.Volume = volume;
 		_backend.SetGain(v.Play, Gain(volume));
+		return old;
+	}
+
+	/// <summary>
+	/// <c>HmiDigi_SetSamplePan</c> (<c>0006e265</c>)(driver, <paramref name="voice"/>, <paramref name="pan"/>): a busy
+	/// voice's pan word <c>+0x54</c>, answering the one it had; 0 for a voice not busy, and for a number past the last,
+	/// which retail does not test, an engine guard. PLACEHOLDER (decision 26): the word is kept and not heard, as the
+	/// block's pan <c>+0x40</c> is not.
+	/// </summary>
+	public int SetSamplePan(int voice, ushort pan) {
+		if ((uint)voice >= Voices || !_voices[voice].Busy) {
+			return 0;
+		}
+
+		var v = _voices[voice];
+		int old = (short)v.PanWord;
+		v.PanWord = pan;
 		return old;
 	}
 
@@ -213,6 +231,7 @@ public sealed class Es1DigitalDriver {
 		public bool Busy;
 		public Es1SampleStart Block;
 		public ushort Volume;
+		public ushort PanWord;
 		public float Pan;
 		public short Repeats;
 		public int Sample = -1;

@@ -69,10 +69,10 @@ public sealed class Es1SoundManager {
 	public Es1SoundManager(Func<string, string, byte[]?>? read, Es1DigitalDriver driver, IOplChip? fmChip = null) {
 		_read = read;
 		Driver = driver;
-		Midi = new Es1MidiSystem(Open, fmChip);
+		Midi = new Es1MidiSystem(Open, fmChip, driver);
 	}
 
-	/// <summary>The digital driver the objects play through.</summary>
+	/// <summary>The digital driver the objects play through, and device <c>0xa005</c>'s drums.</summary>
 	public Es1DigitalDriver Driver { get; }
 
 	/// <summary>The HMI library's MIDI half, which the song objects play through; its images load through the volumes' reader.</summary>
@@ -464,27 +464,50 @@ public sealed class Es1SoundManager {
 	public int MidiHandle { get; private set; } = -1;
 
 	/// <summary>
+	/// <c>000bd8c4</c>: the slot device <c>0xa005</c> opened in, −1 before <see cref="LoadDrivers"/> opens it or when no slot
+	/// was free.
+	/// </summary>
+	public int DrumHandle { get; private set; } = -1;
+
+	/// <summary>
+	/// <c>000bd8c8</c>: the digital driver the sounds play through, which device <c>0xa005</c>'s open opens: 0, which the
+	/// stand-in <see cref="Driver"/> is.
+	/// </summary>
+	public int DigitalHandle { get; private set; }
+
+	/// <summary>
+	/// The digital driver block (<c>+0x00</c>–<c>+0x10</c>) <see cref="LoadDrivers"/> fills before it opens device
+	/// <c>0xa005</c>: the <c>[SoundFX]</c> device, its timer at 120 calls a second, 8 voices and the velocity switch on.
+	/// </summary>
+	private Es1DigitalDriverBlock DigitalBlock => new(Devices.DigitalDevice, 0x78, 8, 1);
+
+	/// <summary>
 	/// <c>SoundManager_LoadDrivers</c> (<c>0004ef8c</c>)(manager) (docs/es1/formats/sound-samples.md#the-driver):
 	/// <see cref="DriversLoaded"/> cleared, false unless <see cref="LoadBanks"/> succeeds; the MIDI half started with
 	/// <c>sos\</c>, the block's image cleared, and the MIDI device opened in <see cref="MidiHandle"/> on the port block whose
 	/// <c>+0</c> is <see cref="Es1SoundDevices.MidiPort"/>, false when it does not open; then <see cref="MelodicBank"/> and
-	/// <see cref="DrumBank"/> loaded into it, in that order, through <c>HmiMidi_LoadBank</c> (<c>00072275</c>), the device
-	/// closed with its image freed and false at the first that answers an error; otherwise <see cref="DriversLoaded"/> set,
-	/// true. A failed open leaves the slot it took holding the device, as retail's, whose <c>HmiMidi_UninitSystem</c>
-	/// (<c>00071064</c>) clears no slot.
+	/// <see cref="DrumBank"/> loaded into it, in that order, through <c>HmiMidi_LoadBank</c> (<c>00072275</c>). The block's
+	/// <see cref="Es1MidiDriverBlock.Digital"/> is then filled (<see cref="DigitalBlock"/>), <see cref="DigitalHandle"/> set
+	/// to 0, and device <c>0xa005</c> opened in <see cref="DrumHandle"/> on the same port block and block, with
+	/// <see cref="Drum32Dig"/> loaded into it; then <see cref="DriversLoaded"/> set, true.
 	///
-	/// <para>The device opened is <c>0xa002</c>, the FM driver, whatever <see cref="Es1SoundDevices.MidiDevice"/> names:
+	/// <para>A failure answers false having closed the handles retail's closes, with their images freed. The melodic bank's
+	/// close of <see cref="DrumHandle"/>, before the device has opened, closes what an earlier load left there, and nothing
+	/// for −1. A failed open leaves the slot it took holding the device, as retail's, whose
+	/// <c>HmiMidi_UninitSystem</c> (<c>00071064</c>) clears no slot.</para>
+	///
+	/// <para>The MIDI device opened is <c>0xa002</c>, the FM driver, whatever <see cref="Es1SoundDevices.MidiDevice"/> names:
 	/// retail opens that device and routes the songs' tracks for it (decision 25 of docs/herculan/plan-es1-first-mission.md).
 	/// The port block's dwords <c>+4</c> and <c>+8</c>, the manager's <c>+0xd0</c> and <c>+0xd4</c>, are 0 here; the FM
-	/// image does not read them (docs/es1/sound/fm-driver.md#the-images-interface).</para>
+	/// image does not read them (docs/es1/sound/fm-driver.md#the-images-interface), and device <c>0xa005</c>'s open reads
+	/// none of the port block.</para>
 	///
-	/// <para>PLACEHOLDER: the HMI calls between, which item 7's modules D and E port (docs/herculan/plan-es1-first-mission.md):
-	/// <c>0006d4f5</c>(0, 1); the timer callback <c>0004e710</c> and its slot <c>+0x134</c>; <c>HmiDigi_InitSystem</c>; the
-	/// digital driver, hardware and init blocks filled from <see cref="Devices"/>; device <c>0xa005</c> opened with
-	/// <see cref="Drum32Dig"/>; and <c>0007225a</c>(0). The stand-in <see cref="Driver"/> plays without them. Each failure
-	/// formats its message into a stack buffer and answers false; their <c>HmiDigi_UninitSystem</c>,
-	/// <c>HmiMidi_UninitSystem</c> and <c>HmiTimer_Uninit</c>(0) are not ported, nor the melodic bank's close of device
-	/// <c>0xa005</c>'s handle (<c>000bd8c4</c>). The FM driver answers 0 to both banks.</para>
+	/// <para>PLACEHOLDER: the HMI calls of item 7's module E (docs/herculan/plan-es1-first-mission.md):
+	/// <c>HmiTimer_Init</c>(0, 1); the timer callback <c>0004e710</c> and its slot <c>+0x134</c>; <c>HmiDigi_InitSystem</c>,
+	/// called before the MIDI half and again before device <c>0xa005</c>'s open; the hardware and init blocks filled from
+	/// <see cref="Devices"/>; and <c>HmiMidi_SetChannelStealing</c>(0). The stand-in <see cref="Driver"/> plays without them.
+	/// Each failure formats its message into a stack buffer and answers false; their <c>HmiDigi_UninitSystem</c>,
+	/// <c>HmiMidi_UninitSystem</c> and <c>HmiTimer_Uninit</c>(0) are not ported. The FM driver answers 0 to both banks.</para>
 	/// </summary>
 	public bool LoadDrivers() {
 		DriversLoaded = false;
@@ -501,13 +524,41 @@ public sealed class Es1SoundManager {
 			return false;
 		}
 
-		if (Midi.Drivers.LoadBank(MidiHandle, MelodicBank!) != 0 || Midi.Drivers.LoadBank(MidiHandle, DrumBank!) != 0) {
+		if (Midi.Drivers.LoadBank(MidiHandle, MelodicBank!) != 0) {
 			Midi.Drivers.Close(MidiHandle, true);
+			CloseDrums();
+			return false;
+		}
+
+		if (Midi.Drivers.LoadBank(MidiHandle, DrumBank!) != 0) {
+			Midi.Drivers.Close(MidiHandle, true);
+			return false;
+		}
+
+		_midiBlock.Digital = DigitalBlock;
+		DigitalHandle = 0;
+		error = Midi.Drivers.InitDriver(0xa005, portBlock, _midiBlock, out handle);
+		DrumHandle = handle;
+		if (error != 0) {
+			Midi.Drivers.Close(MidiHandle, true);
+			return false;
+		}
+
+		if (Midi.Drivers.LoadBank(DrumHandle, Drum32Dig!) != 0) {
+			Midi.Drivers.Close(MidiHandle, true);
+			CloseDrums();
 			return false;
 		}
 
 		DriversLoaded = true;
 		return true;
+	}
+
+	/// <summary><see cref="DrumHandle"/> closed with its image freed, when it names a slot.</summary>
+	private void CloseDrums() {
+		if (DrumHandle >= 0) {
+			Midi.Drivers.Close(DrumHandle, true);
+		}
 	}
 
 	/// <summary>
@@ -536,11 +587,13 @@ public sealed class Es1SoundManager {
 
 	/// <summary>
 	/// <c>SoundManager_UnloadDrivers</c> (<c>0004f3d4</c>)(manager): while <see cref="DriversLoaded"/> is set, every object
-	/// of the <see cref="ObjectSlots"/> stopped through its slot <c>+0x14</c>, the MIDI device in <see cref="MidiHandle"/>
-	/// reset (<c>HmiMidi_ResetDriver</c>, <c>00071515</c>) and closed with its image freed (<c>HmiMidi_CloseDriver</c>,
-	/// <c>0007144b</c>, with 1), then <see cref="DriversLoaded"/> cleared. PLACEHOLDER: the HMI calls between, the same two on
-	/// device <c>0xa005</c>'s handle, the timer callback's removal, <c>00071064</c>, <c>000705c5</c> and <c>0006fe28</c>,
-	/// are item 7's modules D and E.
+	/// of the <see cref="ObjectSlots"/> stopped through its slot <c>+0x14</c>, the devices in <see cref="MidiHandle"/> and
+	/// <see cref="DrumHandle"/> reset in turn (<c>HmiMidi_ResetDriver</c>, <c>00071515</c>), then each closed with its image
+	/// freed (<c>HmiMidi_CloseDriver</c>, <c>0007144b</c>, with 1), then <see cref="DriversLoaded"/> cleared. The drums'
+	/// reset stops their voices, with each channel's controller <c>0x7b</c>. PLACEHOLDER: the HMI calls after the closes,
+	/// the timer callback's removal, <c>HmiMidi_UninitSystem</c> (<c>00071064</c>), <c>HmiDigi_UninitDriver</c>
+	/// (<c>000705c5</c>)(<see cref="DigitalHandle"/>, 1, 1) and <c>HmiDigi_UninitSystem</c> (<c>0006fe28</c>), are item 7's
+	/// module E; the stand-in <see cref="Driver"/> stays open.
 	/// </summary>
 	public void UnloadDrivers() {
 		if (!DriversLoaded) {
@@ -552,7 +605,9 @@ public sealed class Es1SoundManager {
 		}
 
 		Midi.Drivers.Reset(MidiHandle);
+		Midi.Drivers.Reset(DrumHandle);
 		Midi.Drivers.Close(MidiHandle, true);
+		Midi.Drivers.Close(DrumHandle, true);
 		DriversLoaded = false;
 	}
 

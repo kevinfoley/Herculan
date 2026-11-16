@@ -16,8 +16,9 @@ public sealed class Es1MidiSystem {
 	/// <summary>Makes the system with no driver open.</summary>
 	/// <param name="open">The install's reader, a path to a file's bytes, through which the drivers' images load.</param>
 	/// <param name="fmChip">The chip the FM driver writes to; none makes one (<see cref="Es1MidiDrivers.FmChip"/>).</param>
-	public Es1MidiSystem(Func<string, byte[]?>? open = null, IOplChip? fmChip = null) {
-		Drivers = new Es1MidiDrivers(open, fmChip);
+	/// <param name="digital">The digital driver device <c>0xa005</c> plays on; none makes one (<see cref="Es1MidiDrivers.DigiMidi"/>).</param>
+	public Es1MidiSystem(Func<string, byte[]?>? open = null, IOplChip? fmChip = null, Es1DigitalDriver? digital = null) {
+		Drivers = new Es1MidiDrivers(open, fmChip, digital);
 		Songs = new Es1HmiSongs(Drivers);
 		Player = new Es1HmiPlayer(Drivers, Songs);
 	}
@@ -27,9 +28,10 @@ public sealed class Es1MidiSystem {
 
 	/// <summary>
 	/// <c>HmiMidi_InitSystem</c> (<c>00070ed8</c>)(path): <paramref name="path"/> copied to the drivers'
-	/// <see cref="Es1MidiDrivers.DriverPath"/>, an empty string for none. The rest of its work, filling the two devices'
-	/// function tables held in the program, is module D part 7's (docs/herculan/plan-es1-sound.md); the absolute address of
-	/// the data segment and the memory locks have no counterpart.
+	/// <see cref="Es1MidiDrivers.DriverPath"/>, an empty string for none. The two devices' function tables it fills are
+	/// <see cref="Es1MidiDrivers.DigiMidi"/> and <see cref="Es1MidiDrivers.CallbackMidi"/>, there from the construction;
+	/// the absolute address of the data segment and the memory locks have no counterpart, nor
+	/// <c>HmiMidi_SystemStarted</c> (<c>000a2570</c>).
 	/// </summary>
 	public void InitSystem(string? path) => Drivers.DriverPath = path ?? "";
 
