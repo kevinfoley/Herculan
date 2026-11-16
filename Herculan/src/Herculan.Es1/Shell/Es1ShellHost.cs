@@ -119,6 +119,10 @@ public static class Es1ShellHost {
 		// A fatal assert was raised: the window closes at the next update, and no shutdown runs.
 		private bool _asserted;
 
+		// The host's controller the joystick devices are built on, from the window's load, and the frames counted until they are.
+		private MappedController? _controller;
+		private int _controllerFrames;
+
 		public Session(string installRoot, GameContent content, Es1ShellSwitches switches, short exitCode, IAudioBackend audio) {
 			_installRoot = installRoot;
 			_content = content;
@@ -149,6 +153,7 @@ public static class Es1ShellHost {
 						_audio.Update();
 						_devices.HostKeyboard?.Advance(delta);
 						_devices.Mouse.TakeBackPointer();
+						CreateJoysticksWhenDetectable(window);
 						Guard(() => _frame.AdvanceHostFrame(TimeSpan.FromSeconds(delta)));
 					}
 
@@ -220,6 +225,7 @@ public static class Es1ShellHost {
 			string dataDirectory = CaseInsensitivePath.Combine(_installRoot, Es1MissionFiles.DataFolder);
 			_screens.StickOptionsOverridden = () => Es1ControllerPort.InCustomMode(
 				new MappedController(input, JoystickMapFile.LoadForPlayer(dataDirectory)));
+			_controller = new MappedController(input, JoystickMapFile.LoadForPlayer(dataDirectory));
 
 			_frame.Start(Main(Es1HostKeyboard.ReadBiosShiftFlags(window.Keyboard)));
 
@@ -233,6 +239,23 @@ public static class Es1ShellHost {
 				hostKeyboard.FullScreenKey = fullScreenKey;
 				hostKeyboard.GiveMenuBarItsKeys(window);
 			}
+		}
+
+		/// <summary>
+		/// Once a host frame until it has: the joystick devices built on the game port over the host's controller
+		/// (<see cref="Es1ShellDevices.CreateJoysticks"/>) once the start-up has loaded the preferences and the controller can
+		/// be detected (<see cref="Host.Es1SimulationStart.CanDetect"/>). The port is muted while HERCULAN's menu bar or one of
+		/// its windows is up, as over a mission.
+		/// </summary>
+		private void CreateJoysticksWhenDetectable(FrontEndWindow window) {
+			if (_devices.Joysticks != null || _devices.Preferences == null || _controller is not { } controller
+					|| !Host.Es1SimulationStart.CanDetect(controller, ++_controllerFrames)) {
+				return;
+			}
+
+			var port = Es1ControllerPort.Over(controller);
+			port.Muted = () => window.MenuBarUp;
+			_devices.CreateJoysticks(port);
 		}
 
 		/// <summary>

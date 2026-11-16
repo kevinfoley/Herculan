@@ -11,7 +11,7 @@ namespace Herculan.Es1.Shell;
 /// <summary>
 /// The shell's devices, <c>Shell_InitDevices</c> (<c>ES1GO 00045d24</c>) and <c>Shell_ShutdownDevices</c>
 /// (<c>00046094</c>) (docs/es1/shell/startup.md#the-devices): the PC timer and its three callbacks, the display and its
-/// four pages, the cursor, the mouse and the keyboard. They are the simulator's libraries, which the shell links too:
+/// four pages, the cursor, the mouse, the keyboard and the joysticks. They are the simulator's libraries, which the shell links too:
 /// the PC timer is <see cref="Es1SimClock"/>'s (its interrupts and callback slots; the shell reads none of its simulation
 /// countdown), the display <see cref="Es1VideoMemory"/> at <see cref="Es1VideoMemory.ShellWidth"/>, the mouse
 /// <see cref="Es1HostMouse"/> and the keyboard <see cref="Es1Keyboard"/> in its <c>INT 15h</c> mode.
@@ -185,15 +185,7 @@ public sealed class Es1ShellDevices {
 			preferences.ShellSetOption(true, 0, Es1Preferences.RadioOption);
 		}
 
-		// PLACEHOLDER: retail ends here with Input_CreateJoystickDevices (000087ff), which builds the joystick devices as the
-		// simulator's Es1JoystickDevices does. The first is the stick configuration option 7 names. The second is the RCS
-		// rudder pedals when option 9 is set, except under option 7 = 2, whose second device is a second stick; there option
-		// 9 is cleared instead. In the shell, the sticks' first two buttons act as Enter and Tab in the open dialog
-		// (docs/es1/shell/startup.md#the-input), which Es1ShellFrame ports.
-		// The shell has no game port over the host's controller, as the simulator's start builds (Es1SimulationStart), so it
-		// builds no devices: the poll reads no joystick (Es1ShellFrame.PollDeviceBlock), the buttons never press, and
-		// CONTROLS rebuilds nothing (Es1ShellControls.RebuildJoysticks). The calibration files each device would load are
-		// left out by design (plan decision 9).
+		// Retail ends here with Input_CreateJoystickDevices (000087ff), which this engine runs later (CreateJoysticks).
 		// With no sound manager, Prefs_SetOption(1, 0, i) for options 0, 1 and 2.
 		if (!SoundManagerPresent) {
 			for (int option = Es1Preferences.MusicOption; option <= Es1Preferences.RadioOption; option++) {
@@ -202,6 +194,26 @@ public sealed class Es1ShellDevices {
 		}
 
 		Preferences = preferences;
+	}
+
+	/// <summary>
+	/// The joystick devices <see cref="CreateJoysticks"/> built, whose first two buttons act as <c>Enter</c> and <c>Tab</c>
+	/// in the open dialog (docs/es1/shell/startup.md#the-input); none before then.
+	/// </summary>
+	public Es1JoystickDevices? Joysticks { get; private set; }
+
+	/// <summary>
+	/// <c>Input_CreateJoystickDevices</c> (<c>000087ff</c>), the simulator's statements (<see cref="Es1JoystickDevices.Create"/>)
+	/// on <paramref name="port"/>, for <see cref="Preferences"/>' options 7 and 9; nothing before <see cref="Init"/>.
+	/// <para><b>This engine's departure:</b> retail builds the devices at the end of <c>Prefs_Init</c>, inside
+	/// <see cref="Init"/>. The host builds them once the controller can be detected, a few frames later, as the
+	/// simulator's start does (<see cref="Host.Es1SimulationStart"/>); a device built sooner would find no axis answering
+	/// and read no buttons. The calibration files are not read (plan decision 9).</para>
+	/// </summary>
+	public void CreateJoysticks(IEs1GamePort port) {
+		if (Preferences is { } preferences) {
+			Joysticks = Es1JoystickDevices.Create(preferences, port);
+		}
 	}
 
 	/// <summary>

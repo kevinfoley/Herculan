@@ -312,9 +312,9 @@ public sealed class Es1ShellFrame {
 
 	/// <summary>
 	/// <c>Input_PollDeviceBlock</c> (<c>000277d8</c>) on the shell's devices, which <see cref="PollInput"/> calls and
-	/// <c>Shell_PlayTtm</c> calls itself: the keyboard's word, the mouse's position and its three buttons at
-	/// <c>+0xa</c>–<c>+0xc</c>, the pointer and buttons left 0 while the mouse device is disabled
-	/// (<see cref="Es1ShellDevices.MouseDeviceEnabled"/>).
+	/// <c>Shell_PlayTtm</c> calls itself, the simulator's (<see cref="Es1DevicePoll.Poll"/>) on the shell's devices: the
+	/// keyboard's word, the joysticks' records, the mouse's position and its three buttons at <c>+0xa</c>–<c>+0xc</c>,
+	/// the pointer and buttons left 0 while the mouse device is disabled (<see cref="Es1ShellDevices.MouseDeviceEnabled"/>).
 	/// </summary>
 	public Es1LiveBlock PollDeviceBlock() {
 		var mouse = _devices.Mouse;
@@ -327,8 +327,17 @@ public sealed class Es1ShellFrame {
 			MouseEnabled = enabled,
 		};
 
-		// Input_PollJoysticks and the two joystick devices' records: Input_CreateJoystickDevices (000087ff) builds them, which is a
-		// PLACEHOLDER here (Es1ShellDevices.Init), so there is none to read.
+		// Input_PollJoysticks, then the two devices' records, kind 3's and then kind 4's, merged when they answer; none before
+		// the devices are built (Es1ShellDevices.CreateJoysticks).
+		if (_devices.Joysticks is { } joysticks) {
+			joysticks.Poll();
+			foreach (int kind in (int[])[Es1JoystickDevices.FirstKind, Es1JoystickDevices.SecondKind]) {
+				if (joysticks.ReadJoystickState(kind) is { } record) {
+					block.MergeJoystickRecord(record);
+				}
+			}
+		}
+
 		ushort buttons = enabled ? mouse.Buttons : (ushort)0;
 		block.MouseButtons[0] = (byte)((buttons & Es1HostMouse.LeftBit) != 0 ? 1 : 0);
 		block.MouseButtons[1] = (byte)((buttons & Es1HostMouse.RightBit) != 0 ? 1 : 0);

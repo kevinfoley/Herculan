@@ -92,7 +92,7 @@ public sealed class Es1SimulationStart : IDisposable {
 		}
 
 		_frames++;
-		if (_frames < 2 || (_controller.Device != null && _controller.Map == null && _frames <= MaxWaitFrames)) {
+		if (!CanDetect(_controller, _frames)) {
 			return null;
 		}
 
@@ -113,6 +113,14 @@ public sealed class Es1SimulationStart : IDisposable {
 		Console.WriteLine(Describe(port));
 		return Runner;
 	}
+
+	/// <summary>
+	/// Whether <paramref name="controller"/> can be detected on host frame <paramref name="frame"/>, counted from 1: from
+	/// the second frame, once no controller is attached or the picked one's map is known, or past
+	/// <see cref="MaxWaitFrames"/> (the class summary says why).
+	/// </summary>
+	public static bool CanDetect(MappedController controller, int frame) =>
+		frame >= 2 && (controller.Device == null || controller.Map != null || frame > MaxWaitFrames);
 
 	public void Dispose() => Runner?.Dispose();
 

@@ -213,12 +213,11 @@ public sealed class Es1ShellAlertInput : Es1AlertInput {
 
 	/// <summary>
 	/// <c>ControlsPanel_ApplyDevices</c>' (<c>00006bed</c>) rebuild: the two joystick devices destroyed
-	/// (<c>JoystickDevice_Dtor</c>(device, 3)) and built again as <c>Input_CreateJoystickDevices</c> (<c>000087ff</c>) builds them.
-	/// PLACEHOLDER: the shell holds no joystick devices here (<see cref="Es1ShellDevices.Init"/>'s placeholder for
-	/// <c>Input_CreateJoystickDevices</c>), so there is none to destroy or build.
+	/// (<c>JoystickDevice_Dtor</c>(device, 3)) and built again as <c>Input_CreateJoystickDevices</c> (<c>000087ff</c>) builds them
+	/// (<see cref="Es1JoystickDevices.Rebuild"/>, whose doc comment gives this engine's departure for <c>NONE</c>); nothing
+	/// before the host has built them (<see cref="Es1ShellDevices.CreateJoysticks"/>).
 	/// </summary>
-	public override void RebuildJoysticks() {
-	}
+	public override void RebuildJoysticks() => _devices.Joysticks?.Rebuild(_preferences);
 
 	/// <summary>
 	/// <c>InputDevice_Enable</c> or <c>InputDevice_Disable</c> of the shell's mouse device's <c>+0x3a</c>, which the shell
