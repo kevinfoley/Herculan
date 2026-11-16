@@ -308,7 +308,7 @@ public static class Es1MissionHost {
 		// Step 3's Sound_Init, which reads from the volumes the simulator mounts, then Snc_MissionInit, which puts the lip-sync player
 		// on the PC timer. With no sound manager, Prefs_SetOption(1, 0, i) then runs for options 0, 1 and 2.
 		var sound = world.Globals.Sound;
-		sound.Init(devices, preferences.LowMemory, world.Globals.VoiceLines, content.Read, audio);
+		sound.Init(devices, preferences.LowMemory, world.Globals.VoiceLines, content.Read, audio, world.Globals.Clock);
 		world.Globals.VoiceLines.MissionInit(world.Globals.Clock);
 		if (sound.Manager == null) {
 			for (int option = Es1Preferences.MusicOption; option <= Es1Preferences.RadioOption; option++) {

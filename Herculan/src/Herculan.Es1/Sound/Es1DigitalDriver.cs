@@ -72,6 +72,9 @@ public sealed class Es1DigitalDriver {
 		}
 	}
 
+	/// <summary>The host's mixer the voices play through, which the FM chip's output also plays through (<see cref="Midi.Es1MidiSystem.OpenOutput"/>).</summary>
+	public IAudioBackend Backend => _backend;
+
 	/// <summary>
 	/// <c>HmiDigi_StartSample</c> (<c>0006dad9</c>)(driver, <paramref name="block"/>): the block copied into the first voice
 	/// not busy, and that voice's number; −1 with all <see cref="Voices"/> busy. Retail's 0 for a device id above

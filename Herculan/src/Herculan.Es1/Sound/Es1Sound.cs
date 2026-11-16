@@ -6,6 +6,7 @@ using Herculan.Engine.Audio;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Settings;
 using Herculan.Es1.Settings;
+using Herculan.Es1.Sim;
 using Herculan.Es1.View;
 
 namespace Herculan.Es1.Sound;
@@ -160,11 +161,12 @@ public sealed class Es1Sound {
 	/// countdown <see cref="ListenerFrames"/>.
 	/// </summary>
 	/// <param name="read">The volumes' reader, (folder, file name) to a file's bytes, which the manager and the catalog read through.</param>
+	/// <param name="timer">The simulator's PC timer, which the manager's drivers put the songs' tick on.</param>
 	public void Init(Es1SoundDevices devices, bool lowMemory, Es1VoiceLines voiceLines, Func<string, string, byte[]?> read,
-			IAudioBackend backend) {
+			IAudioBackend backend, Es1SimClock timer) {
 		voiceLines.InitSlots(lowMemory, this);
 		if (devices.DigitalDevice != 0) {
-			var manager = new Es1SoundManager(read, new Es1DigitalDriver(backend)) { Devices = devices };
+			var manager = new Es1SoundManager(read, new Es1DigitalDriver(backend), timer: timer) { Devices = devices };
 			Manager = manager;
 			manager.LoadDrivers();
 			manager.SetMemoryLimit(lowMemory ? LowMemoryLimit : MemoryLimit);

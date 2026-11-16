@@ -130,7 +130,7 @@ public sealed class Es1ShellDevices {
 			Timer.AddCallback(2, BlinkTick);
 		}
 
-		Sound.Init(installRoot, debugMode, content.Read, audio);
+		Sound.Init(installRoot, debugMode, content.Read, audio, Timer);
 
 		CreateDisplay();
 

@@ -131,7 +131,7 @@ public class Es1SoundManagerTests {
 		sound.Init(Es1SoundDevices.ImageDefaults, false, lines, (folder, name) => {
 			reads.Add($"{folder}\\{name}".ToLowerInvariant());
 			return folder == "simvoice" ? new byte[10] : null;
-		}, backend);
+		}, backend, new Herculan.Es1.Sim.Es1SimClock());
 
 		var slot = lines.LoadLine("LINE", "P1_01000", 1, (folder, name) => {
 			reads.Add($"{folder}\\{name}".ToLowerInvariant());

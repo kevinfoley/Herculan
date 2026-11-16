@@ -78,8 +78,10 @@ public sealed class Es1ShellSound {
 	/// A click not made is not loaded, an engine guard where retail loads through a null object.
 	/// </summary>
 	/// <param name="read">The shell's volumes' reader, (folder, file name) to a file's bytes, which the manager reads through.</param>
+	/// <param name="timer">The shell's PC timer, which the manager's drivers put the songs' tick on.</param>
 	/// <exception cref="Es1FatalAssertException"><c>resource.cfg</c> does not open.</exception>
-	public void Init(string installRoot, bool debugMode, Func<string, string, byte[]?> read, IAudioBackend backend) {
+	public void Init(string installRoot, bool debugMode, Func<string, string, byte[]?> read, IAudioBackend backend,
+			Es1SimClock timer) {
 		if (debugMode) {
 			return;
 		}
@@ -94,7 +96,7 @@ public sealed class Es1ShellSound {
 			return;
 		}
 
-		var manager = new Es1SoundManager(read, new Es1DigitalDriver(backend)) { Devices = devices };
+		var manager = new Es1SoundManager(read, new Es1DigitalDriver(backend), timer: timer) { Devices = devices };
 		Manager = manager;
 		manager.LoadDrivers();
 		manager.SetMasterVolume(MasterVolume);

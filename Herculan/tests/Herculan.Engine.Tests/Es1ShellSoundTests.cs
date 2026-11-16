@@ -1,4 +1,4 @@
-using HercWorks.Core.Data.File.Cfg;
+﻿using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Es1.Shell;
@@ -43,7 +43,7 @@ public class Es1ShellSoundTests {
 			ticks += waits;
 			return [];
 		});
-		none.Init("", true, (_, _) => null, new Es1SoundManagerTests.EndlessBackend());
+		none.Init("", true, (_, _) => null, new Es1SoundManagerTests.EndlessBackend(), new Es1SimClock());
 		Drain(none.PlayMusic(Es1ShellSound.Intro1Track));
 		Drain(none.PlayMusic(Es1ShellSound.LosingTrack));
 		Assert.Equal(0, ticks);
@@ -132,7 +132,7 @@ public class Es1ShellSoundTests {
 				$"[{Es1ResourceCfg.SoundFx}]\r\n{Es1ResourceCfg.Driver}=E016\r\n");
 			var backend = new Es1SoundManagerTests.EndlessBackend();
 			var sound = new Es1ShellSound(waitTicks);
-			sound.Init(root.FullName, false, (_, _) => new byte[10], backend);
+			sound.Init(root.FullName, false, (_, _) => new byte[10], backend, new Es1SimClock());
 			Assert.NotNull(sound.Manager);
 			test(sound, backend);
 		} finally {
