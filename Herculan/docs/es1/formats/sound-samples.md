@@ -12,7 +12,7 @@ The simulator's sound file, `0004db14`–`0004e70f`, follows `appinput.cpp`'s ex
 | `Sound_StaticDtor` | `0004e6d0` | `000adcc8` | `OwnedArray_Dtor`(`SoundCatalog_StringTable`, 2), which frees the table's buffer, leaving the positions |
 | `maybe_Point3I_CtorSoundCopy` | `0004e6e0` | | the code of `maybe_Point3I_Ctor` (`000633fc`) |
 
-The first two are frameless, with no Ghidra function. ES2's `Sound_StaticInit` (`0046349c`) builds the string table alone, and its `Sound_StaticDtor` (`004634cc`) is ES1's. The lip-sync player is the end of the file, `0004e39c`–`0004e6ae` ([`snc-lip-sync.md`](snc-lip-sync.md#playing-a-line)). `0004e710`, the far call through `000b1ed0` that `SoundManager_LoadDrivers` registers with the timer, follows; the files from there to the [HMI timer's](#the-digital-drivers-timer), and the sound file's source name, are [Open](#open).
+The first two are frameless, with no Ghidra function. ES2's `Sound_StaticInit` (`0046349c`) builds the string table alone, and its `Sound_StaticDtor` (`004634cc`) is ES1's. The lip-sync player is the end of the file, `0004e39c`–`0004e6ae` ([`snc-lip-sync.md`](snc-lip-sync.md#playing-a-line)). `SoundManager_TimerCallback` (`0004e710`), the far call through `000b1ed0` that `SoundManager_LoadDrivers` registers with the timer, follows; the files from there to the [HMI timer's](#the-digital-drivers-timer), and the sound file's source name, are [Open](#open).
 
 ## Which files
 
@@ -205,7 +205,7 @@ The voice lines are digital sounds that SOUNDS does not switch: RADIO does ([pla
 `SoundManager_LoadDrivers` (`0004ef8c`):
 
 1. reads the three bank files whole with `SoundManager_LoadBanks` (`0004f6d4`), and fails when one does not load;
-2. registers `0004e710` with `Timer_AddCallback` and keeps the slot at `+0x134`, then starts the HMI library's digital and MIDI halves with `HmiDigi_InitSystem` (`0006fdbb`) and `HmiMidi_InitSystem` (`00070ed8`), each with `sos\` ([the devices in the program](../sound/drum-device.md#the-devices-in-the-program));
+2. registers `SoundManager_TimerCallback` (`0004e710`) with `Timer_AddCallback` and keeps the slot at `+0x134`, then starts the HMI library's digital and MIDI halves with `HmiDigi_InitSystem` (`0006fdbb`) and `HmiMidi_InitSystem` (`00070ed8`), each with `sos\` ([the devices in the program](../sound/drum-device.md#the-devices-in-the-program));
 3. opens the MIDI device with `HmiMidi_InitDriver` (`00071076`), handle `000bd8c0`, and loads the melodic and drum banks into it through `00072275`;
 4. fills the digital driver, hardware and init blocks above from the defaults block, sets `000bd8c8` to 0, calls `HmiDigi_InitSystem` again, and opens MIDI device `0xa005` with `HmiMidi_InitDriver` on the same port block and the block at `+0xa0`, handle `000bd8c4`, loading `sos\drum32.dig` into it; that open opens the digital driver, as driver 0, the `000bd8c8` the sound effects play through ([opening](../sound/drum-device.md#opening));
 5. turns the channel-stealing mode off (`HmiMidi_SetChannelStealing`, `0007225a`, with 0), sets `SoundManager_DriversLoaded` (`000bd8cc`) and returns 1.
@@ -227,7 +227,7 @@ ES2's loader plays a file that is not RIFF as raw 8-bit unsigned mono at 11,025 
 
 ### The digital driver's timer
 
-**The HMI code runs its timed work from the game's timer, on every interrupt: `SoundManager_LoadDrivers`' callback `0004e710` far-calls the library's dispatcher ([the library's timer](../sound/song-player.md#the-librarys-timer)).** The library can also hand the game a far callback of its own through `HmiTimer_Install`, which the game would register at a count of a sixtieth of the timer's rate; `SoundManager_LoadDrivers` starts the library's timer with the flag that skips that, in both programs, and `es2_xref.py` finds no other call of the library's start. What a count means to the timer is [Open](../simulation/debug-monitor.md#open). The digital driver's own handler is one of the library's timer events, which device `0xa005`'s open registers at 120 calls a second ([opening](../sound/drum-device.md#opening)). The functions at `00050d38`–`00050e1f`, after the sound files and before [the profile file](profile-files.md), are what the HMI code calls for it:
+**The HMI code runs its timed work from the game's timer, on every interrupt: `SoundManager_LoadDrivers`' callback `SoundManager_TimerCallback` (`0004e710`) far-calls the library's dispatcher ([the library's timer](../sound/song-player.md#the-librarys-timer)).** The library can also hand the game a far callback of its own through `HmiTimer_Install`, which the game would register at a count of a sixtieth of the timer's rate; `SoundManager_LoadDrivers` starts the library's timer with the flag that skips that, in both programs, and `es2_xref.py` finds no other call of the library's start. What a count means to the timer is [Open](../simulation/debug-monitor.md#open). The digital driver's own handler is one of the library's timer events, which device `0xa005`'s open registers at 120 calls a second ([opening](../sound/drum-device.md#opening)). The functions at `00050d38`–`00050e1f`, after the sound files and before [the profile file](profile-files.md), are what the HMI code calls for it:
 
 | Function | Address | Does |
 |---|---|---|

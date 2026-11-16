@@ -83,6 +83,10 @@ The driver's state:
 
 | Address | Per | Holds | In the image |
 |---|---|---|---|
+| `0x2444` | | the open flag, a dword: set by `FmMidi_Init`, cleared by `FmMidi_Shutdown` | 0 |
+| `0x2448` | | the melodic bank's instrument count, its header's `+0x08`, a dword | 0 |
+| `0x2462`, `0x2478` | | dwords set to 1 when the melodic bank, and the drum bank, is taken | 0 |
+| `0x2480` | | the pitch bend switch | 1 |
 | `0x2484` | channel | the program | 0 |
 | `0x24c4` | voice | the channel the voice last played for | 0 |
 | `0x24e8` | channel | the pitch bend, the event's third byte | `0x40` |
@@ -93,17 +97,23 @@ The driver's state:
 | `0x2610` | channel | 1 once controller 7 has set the volume, 0 after controller `0x79` or `0x7b` | 0 |
 | `0x2650` | channel | the sustain pedal, controller `0x40` | 0 |
 | `0x26ac`, `0x26ec` | channel | the count of held note-offs and up to 32 of them, 3 bytes each | 0 |
+| `0x2cec` | | the port dword `FmMidi_Init` and `FmMidi_Shutdown` hand `Opl_Init` | `0x388` |
+| `0x2cf0` | | the port the open is given (`FmMidi_Open`, `00000744`) | `0x388` |
+| `0x2cf8`, `0x2d7b` | | the port `Opl_Init` keeps; `Opl_Write` writes through the word at `0x2cf8`, which `FmMidi_Shutdown` copies to `0x2cec` | `0x388`, 0 |
 | `0x2d10` | operator offset | the operator's `0x40` byte as the instrument gives it | 0 |
 | `0x2d30` | operator offset | the operator's `0x80` byte; for voices 6–8's operators, offsets `0x10`–`0x15`, these are the bytes `0x2d40`–`0x2d45`, voices 0–5's `0xa0` bytes, so a store to either overwrites the other | 0 |
 | `0x2d40`, `0x2d49` | voice | the bytes last written to `0xa0` + *v* and `0xb0` + *v* | 0 |
+| `0x2d64` | | the byte for register `0xbd`: `Opl_Init` and `Opl_Silence` zero it, and `Opl_Reset` writes its top two bits | 0 |
+| `0x2d65` | voice | 11 bytes: `Opl_LoadPatch` sets the voice's, and `Opl_Reset` and `Opl_Silence` zero all of them | 0 |
 | `0x2d70` | voice | the note the voice plays, 0 for a free voice | 0 |
-| `0x2480` | | the pitch bend switch | 1 |
+| `0x2d7f` | | the chip-open byte: set by `Opl_Init`, cleared by `Opl_Close` (`00001d9d`); while it is clear `Opl_Silence` writes nothing and answers 2 | 0 |
+| `0x2d80` | | a byte `Opl_Reset` zeroes | 0 |
 
 A search of the disassembly for `0x2480` finds the one read, in the note on, and no store. One for `0x2610` finds four stores, by the volume, the two resets and `FmMidi_ResetState`, and no read.
 
 ### Opening and closing
 
-`FmMidi_Init` (`00000a09`), the open's worker, keeps the port, then `Opl_Init` (`00001b39`) writes register `0x01` with `0x20`, which lets the waveform registers work, and runs `Opl_Reset` (`00001bb8`), which writes 0 to `0xb0`–`0xb8` and to `0xbd`; `FmMidi_Init` runs `Opl_Reset` a second time before the driver marks itself open. `FmMidi_Shutdown` (`00000a7b`), the close's worker, runs `Opl_Init` on the kept port again, with its reset, and then `Opl_Silence` (`00001caf`): 0 to `0xbd`, each voice's `0xb0` byte with its key-on bit cleared, and `0xff` to every carrier's `0x40` register.
+`FmMidi_Init` (`00000a09`), the open's worker, keeps the port, then `Opl_Init` (`00001b39`) writes register `0x01` with `0x20`, which lets the waveform registers work, and runs `Opl_Reset` (`00001bb8`), which writes 0 to `0xb0`–`0xb8` and to `0xbd`; `FmMidi_Init` runs `Opl_Reset` a second time before the driver marks itself open. `FmMidi_Shutdown` (`00000a7b`), the close's worker, runs `Opl_Init` on the kept port again, with its reset, and then `Opl_Silence` (`00001caf`): 0 to `0xbd`, each voice's `0xb0` byte with its key-on bit cleared, and `0xff` to every carrier's `0x40` register. Then `Opl_Close` (`00001d9d`) marks the chip closed and the driver marks itself closed.
 
 Neither touches the per-channel state, so it keeps the image's values until an event changes it. `FmMidi_ResetState` (`00000ae0`), which sets it all back, is called only from a function at `0x79d` that `es2_xref.py` finds no reference to.
 
