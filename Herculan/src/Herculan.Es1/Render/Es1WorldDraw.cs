@@ -63,7 +63,7 @@ public sealed class Es1WorldDraw {
 			}
 
 			if (!meshes.TryGetValue(shape.ShapeIndex, out var mesh)) {
-				mesh = new GpuMesh(gl, model.Vertices, model.TriangleVertexCount, model.PointVertexCount);
+				mesh = new GpuMesh(gl, model);
 				meshes[shape.ShapeIndex] = mesh;
 				owned.Add(mesh);
 			}

@@ -48,22 +48,21 @@ public sealed class Es1DebrisDraw : IDisposable {
 		}
 
 		var surfaces = _scene.Shading.Surfaces;
-		var builds = new List<(MeshVertex[] Vertices, int Triangles, int Points, CellGate Gate)>();
+		var builds = new List<(IMeshRanges Ranges, CellGate Gate)>();
 		var levels = DtsMeshBuilder.BuildDetailLevels(root, atlas, surfaces);
 		if (levels.Length > 0) {
-			builds.AddRange(levels.Select(level => (level.Vertices, level.TriangleVertexCount, level.PointVertexCount, level.Gate)));
+			builds.AddRange(levels.Select(level => ((IMeshRanges)level, level.Gate)));
 		} else {
-			var build = DtsMeshBuilder.BuildRoot(root, atlas, surfaces);
-			builds.Add((build.Vertices, build.TriangleVertexCount, build.PointVertexCount, CellGate.Ungated));
+			builds.Add((DtsMeshBuilder.BuildRoot(root, atlas, surfaces), CellGate.Ungated));
 		}
 
 		var pieces = new List<(GpuMesh, CellGate)>();
-		foreach (var (vertices, triangles, points, gate) in builds) {
-			if (vertices.Length == 0) {
+		foreach (var (ranges, gate) in builds) {
+			if (ranges.Vertices.Length == 0) {
 				continue;
 			}
 
-			var mesh = new GpuMesh(gl, vertices, triangles, points);
+			var mesh = new GpuMesh(gl, ranges);
 			_owned.Add(mesh);
 			pieces.Add((mesh, gate));
 		}

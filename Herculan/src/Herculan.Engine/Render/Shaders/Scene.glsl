@@ -94,6 +94,10 @@ uniform float uSunShadeSlope;
 // only that draw turns on, together with depth clamping; a culled corner sets both negative.
 uniform mat4 uEntryProjection;
 
+// A whole-pixel shift in normalized device coordinates, zero but while SceneRenderer draws a line poly several times over
+// to widen it (GpuMesh.Draw).
+uniform vec2 uClipPixelOffset;
+
 // The impact effects' dynamic lights, as they apply to the object being drawn — FUN_00407098 picks
 // them per render entry and the renderer uploads its answer here. See EffectLightSelection, and
 // docs/retail/formats/effect-lights.md for the two shade terms below.
@@ -267,6 +271,7 @@ void main() {
 	gl_ClipDistance[0] = clipPosition.z + clipPosition.w;
 	gl_ClipDistance[1] = clipPosition.w - clipPosition.z;
 	gl_Position = uEntryProjection * viewPosition;
+	gl_Position.xy += uClipPixelOffset * gl_Position.w;
 }
 
 #endif

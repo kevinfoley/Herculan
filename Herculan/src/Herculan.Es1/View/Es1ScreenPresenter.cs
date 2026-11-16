@@ -70,6 +70,15 @@ public sealed class Es1ScreenPresenter : IDisposable {
 	/// </summary>
 	public Action<Es1RectView, (int Width, int Height), (int X, int Y, int Width, int Height)>? ViewPass { get; set; }
 
+	/// <summary>
+	/// The world layer's pixels to one of the screen's, each way, for the <see cref="WorldPass"/>, <see cref="ViewPass"/>
+	/// or <see cref="WorldPick"/> under way (<see cref="IndexedWorldSurface.Scale"/>): what the pass widens line polys
+	/// and points to (<see cref="SceneRenderer.LinePolyPixels"/>), so a gun round covers one screen pixel's worth of the
+	/// layer under the "High resolution widescreen" tweak as it covers one screen pixel in retail. That widening is this
+	/// engine's, part of the tweak; retail draws at one pixel per screen pixel and has nothing to widen.
+	/// </summary>
+	public int PassScale { get; private set; } = 1;
+
 	/// <summary>The live palette the cells' indices show through, as <see cref="SetPalette"/> last sent it.</summary>
 	public DynamixPalette? Palette => _palette;
 
@@ -332,6 +341,7 @@ public sealed class Es1ScreenPresenter : IDisposable {
 			surface.KeepWorld(keep);
 			var (glX, glY, glWidth, glHeight) = surface.BeginWorld(x, y, width, height);
 			_worldViewport = (glX, glY, glWidth, glHeight);
+			presenter.PassScale = surface.Scale;
 			presenter.WorldPass?.Invoke(glX, glY, glWidth, glHeight);
 			surface.RestoreWorld();
 			surface.EndWorld();
@@ -352,6 +362,7 @@ public sealed class Es1ScreenPresenter : IDisposable {
 			surface.UploadCells(memory.Cells, firstRow, rowCount);
 			surface.PaintCells(x, y, width, height);
 			var viewport = surface.BeginWorld(x, y, width, height);
+			presenter.PassScale = surface.Scale;
 			pass(view, (width, height), viewport);
 			bool[] covered;
 			if (view.FillsRect) {
@@ -375,6 +386,7 @@ public sealed class Es1ScreenPresenter : IDisposable {
 			}
 
 			surface.BeginWorldPixel(x, y);
+			presenter.PassScale = surface.Scale;
 			try {
 				return pick(viewport);
 			} finally {

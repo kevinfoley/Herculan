@@ -259,7 +259,7 @@ internal sealed class MissionDrawables : IDisposable {
 
 		if (model.Cells.Length > 0) {
 			_modelCells[model.Key] = model.Cells
-				.Select(cell => Keep(new GpuMesh(_gl, cell.Vertices, cell.TriangleVertexCount, cell.PointVertexCount)))
+				.Select(cell => Keep(new GpuMesh(_gl, cell)))
 				.ToArray();
 		} else {
 			_modelMeshes[model.Key] = Keep(new GpuMesh(_gl, model.Mesh, model.TriangleVertexCount, model.PointVertexCount));

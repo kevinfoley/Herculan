@@ -26,7 +26,7 @@ public static partial class DtsMeshBuilder {
 			points = points.Where(point => point.Ground == side).ToList();
 		}
 
-		var edges = SurvivingOutlines(kept, outlines);
+		var edges = StandaloneLast(SurvivingOutlines(kept, outlines));
 
 		int triangleVertices = kept.Count * 3;
 		int lineVertices = edges.Count * 2;
@@ -44,8 +44,18 @@ public static partial class DtsMeshBuilder {
 			EmitPoint(points[i], local: false, vertices, triangleVertices + lineVertices + i);
 		}
 
-		return new MeshBuild(vertices, triangleVertices, points.Count);
+		return new MeshBuild(vertices, triangleVertices, points.Count, StandaloneVertices(edges));
 	}
+
+	/// <summary>
+	/// <paramref name="edges"/> with the face outlines first and the line polys after them, each kind in its own order, as
+	/// <see cref="MeshBuild"/> lays out the line range.
+	/// </summary>
+	private static List<OutlineEdge> StandaloneLast(List<OutlineEdge> edges) =>
+		edges.Where(edge => !edge.Standalone).Concat(edges.Where(edge => edge.Standalone)).ToList();
+
+	/// <summary>How many vertices the line polys among <paramref name="edges"/> take.</summary>
+	private static int StandaloneVertices(List<OutlineEdge> edges) => edges.Count(edge => edge.Standalone) * 2;
 
 	/// <summary>
 	/// The outline edges whose poly still has geometry after <see cref="DropCoincidentTwins"/>, each
@@ -121,9 +131,9 @@ public static partial class DtsMeshBuilder {
 	/// layer, which is only for stable output — nothing reads the order.
 	/// </summary>
 	private static MeshSegment[] EmitSegments(Collector sink) =>
-		Partition(sink, local: true, (key, vertices, triangleVertices, pointVertices, walkFaces) =>
+		Partition(sink, local: true, (key, vertices, triangleVertices, pointVertices, walkFaces, standaloneVertices) =>
 			new MeshSegment(key.TransformId, key.Gate, vertices, triangleVertices, pointVertices, key.Leaf,
-				key.Ground, key.Layer, walkFaces));
+				key.Ground, key.Layer, walkFaces, standaloneVertices));
 
 	/// <summary>
 	/// The same split by cell, <see cref="TSBSPPart"/> child and paint layer alone, at the baked rest
@@ -131,8 +141,9 @@ public static partial class DtsMeshBuilder {
 	/// nothing poses. See <see cref="MeshCell"/>.
 	/// </summary>
 	private static MeshCell[] EmitCells(Collector sink) =>
-		Partition(sink, local: false, (key, vertices, triangleVertices, pointVertices, _) =>
-				new MeshCell(key.Gate, vertices, triangleVertices, pointVertices, key.Leaf, key.Ground, key.Layer))
+		Partition(sink, local: false, (key, vertices, triangleVertices, pointVertices, _, standaloneVertices) =>
+				new MeshCell(key.Gate, vertices, triangleVertices, pointVertices, key.Leaf, key.Ground, key.Layer,
+					standaloneVertices))
 			.GroupBy(cell => (cell.Gate, cell.Leaf, cell.Ground, cell.Layer))
 			.Select(MergeCells)
 			.ToArray();
@@ -153,20 +164,26 @@ public static partial class DtsMeshBuilder {
 
 		int triangleVertices = parts.Sum(part => part.TriangleVertexCount);
 		int pointVertices = parts.Sum(part => part.PointVertexCount);
+		int standaloneVertices = parts.Sum(part => part.StandaloneLineVertexCount);
 		var vertices = new MeshVertex[parts.Sum(part => part.Vertices.Length)];
 
-		// Triangles first, outlines after and points last, across the whole merged piece, because
-		// each count is one boundary rather than one per part.
+		// Triangles first, outlines after, then line polys and points last, across the whole merged
+		// piece, because each count is one boundary rather than one per part.
 		int atTriangle = 0;
 		int atEdge = triangleVertices;
 		int atPoint = vertices.Length - pointVertices;
+		int atStandalone = atPoint - standaloneVertices;
 		foreach (var part in parts) {
 			Array.Copy(part.Vertices, 0, vertices, atTriangle, part.TriangleVertexCount);
 			atTriangle += part.TriangleVertexCount;
 
-			int edgeVertices = part.Vertices.Length - part.TriangleVertexCount - part.PointVertexCount;
-			Array.Copy(part.Vertices, part.TriangleVertexCount, vertices, atEdge, edgeVertices);
-			atEdge += edgeVertices;
+			int lineStart = part.TriangleVertexCount;
+			int lineVertices = part.Vertices.Length - lineStart - part.PointVertexCount;
+			int outlineVertices = lineVertices - part.StandaloneLineVertexCount;
+			Array.Copy(part.Vertices, lineStart, vertices, atEdge, outlineVertices);
+			atEdge += outlineVertices;
+			Array.Copy(part.Vertices, lineStart + outlineVertices, vertices, atStandalone, part.StandaloneLineVertexCount);
+			atStandalone += part.StandaloneLineVertexCount;
 
 			Array.Copy(part.Vertices, part.Vertices.Length - part.PointVertexCount, vertices, atPoint,
 				part.PointVertexCount);
@@ -174,20 +191,20 @@ public static partial class DtsMeshBuilder {
 		}
 
 		return new MeshCell(pieces.Key.Gate, vertices, triangleVertices, pointVertices, pieces.Key.Leaf,
-			pieces.Key.Ground, pieces.Key.Layer);
+			pieces.Key.Ground, pieces.Key.Layer, standaloneVertices);
 	}
 
 	/// <summary>
 	/// The shared split behind <see cref="EmitSegments"/> and <see cref="EmitCells"/>: survivors
 	/// bucketed by node, cell, <see cref="TSBSPPart"/> child, paint layer and ground plane, each bucket
-	/// emitted as triangles, then the outline edges and then the points belonging to the same bucket.
+	/// emitted as triangles, then the outline edges, the line polys and the points belonging to the same bucket.
 	///
 	/// <para>The paint layers are worked out over the survivors, the ground plane left out because it is
 	/// painted with the ground. When the geometry outside every part is layered, all of it joins one
 	/// <see cref="BspTree.Whole"/> child, so its layers are painted as a part's are.</para>
 	/// </summary>
 	private static T[] Partition<T>(Collector sink, bool local,
-			Func<PieceKey, MeshVertex[], int, int, TextureWalkFace?[]?, T> make) {
+			Func<PieceKey, MeshVertex[], int, int, TextureWalkFace?[]?, int, T> make) {
 		var kept = DropCoincidentTwins(sink.Triangles, leavesApart: true);
 		var edges = SurvivingOutlines(kept, sink.Outlines);
 
@@ -226,7 +243,7 @@ public static partial class DtsMeshBuilder {
 		int next = 0;
 		foreach (var key in keys) {
 			var list = byNode.TryGetValue(key, out var triangles) ? triangles : new List<Triangle>();
-			var nodeEdges = edgesByNode.TryGetValue(key, out var found) ? found : new List<OutlineEdge>();
+			var nodeEdges = StandaloneLast(edgesByNode.TryGetValue(key, out var found) ? found : new List<OutlineEdge>());
 			var nodePoints = pointsByNode.TryGetValue(key, out var foundPoints) ? foundPoints : new List<OutlineEdge>();
 
 			int triangleVertices = list.Count * 3;
@@ -249,7 +266,7 @@ public static partial class DtsMeshBuilder {
 				EmitPoint(nodePoints[i], local, vertices, triangleVertices + lineVertices + i);
 			}
 
-			pieces[next++] = make(key, vertices, triangleVertices, nodePoints.Count, walkFaces);
+			pieces[next++] = make(key, vertices, triangleVertices, nodePoints.Count, walkFaces, StandaloneVertices(nodeEdges));
 		}
 
 		return pieces;

@@ -51,6 +51,24 @@ public readonly record struct CellGate(short Sequence, short Frame, PartDetail? 
 }
 
 /// <summary>
+/// The primitive ranges of a mesh's vertex array, as <see cref="MeshBuild"/> lays them out: triangles,
+/// face outlines, line polys and points. What <see cref="GpuMesh"/> uploads.
+/// </summary>
+public interface IMeshRanges {
+	/// <summary>Every range's vertices, in order.</summary>
+	MeshVertex[] Vertices { get; }
+
+	/// <summary>How many leading vertices are triangle corners.</summary>
+	int TriangleVertexCount { get; }
+
+	/// <summary>How many trailing vertices are points.</summary>
+	int PointVertexCount { get; }
+
+	/// <summary>How many vertices just before the points are line polys.</summary>
+	int StandaloneLineVertexCount { get; }
+}
+
+/// <summary>
 /// One node's share of a shape's geometry: the triangles of every group that hangs from a single
 /// transform <i>and</i> stands on one cell of one animation sequence, in that node's own space
 /// rather than the shape's.
@@ -75,9 +93,10 @@ public readonly record struct CellGate(short Sequence, short Frame, PartDetail? 
 /// or null for a triangle that is no such face's; null when no triangle is. The table a renderer that fills textured
 /// faces by the original's row walk reads — see <see cref="TextureWalkFace"/>.
 /// </param>
+/// <param name="StandaloneLineVertexCount">How many vertices at the end of the line range are line polys — see <see cref="MeshBuild"/>.</param>
 public readonly record struct MeshSegment(int TransformId, CellGate Gate, MeshVertex[] Vertices,
 	int TriangleVertexCount, int PointVertexCount = 0, BspLeaf? Leaf = null, bool Ground = false, int Layer = 0,
-	TextureWalkFace?[]? WalkFaces = null);
+	TextureWalkFace?[]? WalkFaces = null, int StandaloneLineVertexCount = 0) : IMeshRanges;
 
 /// <summary>
 /// One cell's share of a shape's geometry, at the rest pose <see cref="DtsMeshBuilder.BuildRoot"/>
@@ -102,8 +121,10 @@ public readonly record struct MeshSegment(int TransformId, CellGate Gate, MeshVe
 /// piece of a layered slot outside every <c>TSBSPPart</c> carries a <paramref name="Leaf"/> of
 /// <see cref="BspTree.Whole"/>, so that it is painted through the same group machinery.
 /// </param>
+/// <param name="StandaloneLineVertexCount">How many vertices at the end of the line range are line polys — see <see cref="MeshBuild"/>.</param>
 public readonly record struct MeshCell(CellGate Gate, MeshVertex[] Vertices, int TriangleVertexCount,
-	int PointVertexCount = 0, BspLeaf? Leaf = null, bool Ground = false, int Layer = 0);
+	int PointVertexCount = 0, BspLeaf? Leaf = null, bool Ground = false, int Layer = 0,
+	int StandaloneLineVertexCount = 0) : IMeshRanges;
 
 /// <summary>
 /// A built mesh: filled triangles first, then the outline edges that are drawn over them as lines,
@@ -115,14 +136,21 @@ public readonly record struct MeshCell(CellGate Gate, MeshVertex[] Vertices, int
 /// single pixel (docs/retail/rendering/dts-texture-binding.md#tssolidpoly--palette-index-unlit-fill-plus-outline).
 /// A solid face's outline is resolved by <see cref="DtsMeshBuilder"/>'s <c>ResolveSolidColors</c>, a
 /// shaded face's carries a ramp for the shader (<see cref="MeshVertex.OutlineFillRamp"/>).</para>
+///
+/// <para>The line range holds the face outlines first and then the line polys, the two-vertex polys
+/// that fill nothing (<see cref="StandaloneLineVertexCount"/>). A line poly and a point are objects
+/// of their own rather than the edge of a face, so a renderer drawing the world at a multiple of the
+/// original's resolution can widen them apart from the outlines (<see cref="GpuMesh.Draw(int, Action{System.Numerics.Vector2})"/>).</para>
 /// </summary>
 /// <param name="Vertices">Triangle corners in <c>[0, TriangleVertexCount)</c>, line-segment
 /// endpoint pairs after it, and the last <paramref name="PointVertexCount"/> points.</param>
 /// <param name="TriangleVertexCount">Always a multiple of three; the line range between it and the
 /// points is a multiple of two.</param>
 /// <param name="PointVertexCount">How many trailing vertices are points.</param>
+/// <param name="StandaloneLineVertexCount">How many vertices at the end of the line range, just
+/// before the points, are line polys; a multiple of two.</param>
 public readonly record struct MeshBuild(MeshVertex[] Vertices, int TriangleVertexCount,
-		int PointVertexCount = 0) {
+		int PointVertexCount = 0, int StandaloneLineVertexCount = 0) : IMeshRanges {
 	public static MeshBuild Empty { get; } = new(Array.Empty<MeshVertex>(), 0);
 
 	/// <summary>How many vertices belong to the outline pass.</summary>

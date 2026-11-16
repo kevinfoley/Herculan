@@ -38,12 +38,12 @@ public sealed class SceneUploads : IDisposable {
 		// triangles, and only one of them is ever drawn.
 		foreach (var model in scene.Models.All) {
 			if (animatedKeys.Contains(model.Key)) {
-				Segments[model.Key] = model.Segments.Select(segment => new GpuMesh(gl, segment.Vertices, segment.TriangleVertexCount, segment.PointVertexCount)).ToArray();
+				Segments[model.Key] = model.Segments.Select(segment => new GpuMesh(gl, segment)).ToArray();
 				_disposables.AddRange(Segments[model.Key]);
 			} else if (model.Cells.Length > 0) {
 				// A shape whose cells damage drives uploads every one of them and draws the ones its
 				// object's cell frames name, rather than being rebuilt each time a part comes off.
-				Cells[model.Key] = model.Cells.Select(cell => new GpuMesh(gl, cell.Vertices, cell.TriangleVertexCount, cell.PointVertexCount)).ToArray();
+				Cells[model.Key] = model.Cells.Select(cell => new GpuMesh(gl, cell)).ToArray();
 				_disposables.AddRange(Cells[model.Key]);
 			} else if (model.Mesh.Length > 0) {
 				// A pure billboard shape — every EMP round, every impact effect — has no triangles at all

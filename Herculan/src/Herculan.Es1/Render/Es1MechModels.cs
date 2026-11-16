@@ -87,7 +87,7 @@ public sealed class Es1MechModels : IDisposable {
 					return null;
 				}
 
-				var mesh = new GpuMesh(gl, build.Vertices, build.TriangleVertexCount, build.PointVertexCount);
+				var mesh = new GpuMesh(gl, build);
 				models._owned.Add(mesh);
 				return mesh;
 			}).ToArray();
@@ -147,7 +147,7 @@ public sealed class Es1MechModels : IDisposable {
 				continue;
 			}
 
-			var mesh = new GpuMesh(gl, segment.Vertices, segment.TriangleVertexCount, segment.PointVertexCount);
+			var mesh = new GpuMesh(gl, segment);
 			owned.Add(mesh);
 
 			GpuTextureWalkTable? walk = null;

@@ -90,7 +90,7 @@ public sealed class Es1ExplosionDraw : IDisposable {
 		for (int frame = 0; frame < frames; frame++) {
 			var build = DtsMeshBuilder.BuildRoot(root, atlas, _scene.Shading.Surfaces, frame);
 			if (build.Vertices.Length > 0) {
-				var mesh = new GpuMesh(_gl, build.Vertices, build.TriangleVertexCount, build.PointVertexCount);
+				var mesh = new GpuMesh(_gl, build);
 				_owned.Add(mesh);
 				cells[frame] = mesh;
 			}

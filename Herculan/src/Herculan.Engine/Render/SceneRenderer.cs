@@ -349,6 +349,21 @@ public sealed class SceneRenderer : IDisposable {
 	public float SunShadeSlope { get; set; } = MissionSun.FaceShadeSlope;
 
 	/// <summary>
+	/// How many pixels wide each line poly and point is drawn (<see cref="MeshBuild"/>), 1 and up; face outlines stay one
+	/// pixel wide. A game drawing its world at a whole multiple of the original's resolution sets the multiple, so a thin
+	/// object such as a gun round keeps the size on screen that one of the original's pixels gave it
+	/// (<see cref="GpuMesh.Draw(int, Action{Vector2})"/>).
+	/// </summary>
+	public int LinePolyPixels { get; set; } = 1;
+
+	/// <summary>Sets the scene program's whole-pixel offset for the pass's viewport, the callback a wide line poly is drawn through.</summary>
+	private void SetPixelOffset(Vector2 pixels) =>
+		_shader.SetVector2("uClipPixelOffset", pixels * 2f / _passViewportSize);
+
+	/// <summary>The pass's viewport size in pixels, which <see cref="SetPixelOffset"/> turns pixels into clip space by.</summary>
+	private Vector2 _passViewportSize = Vector2.One;
+
+	/// <summary>
 	/// The impact effects' dynamic lights, the game's light manager. Each drawn item whose <see cref="SceneItem.LightSubject"/> or <see cref="SceneItem.LightAnchor"/> is set gets
 	/// its own selection out of these, which is what <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) does per
 	/// render entry. Null lights the scene by the sun alone, which is what a tool with no simulation running gets.
@@ -697,7 +712,9 @@ public sealed class SceneRenderer : IDisposable {
 		// The same for the walked faces' samplerBuffer, and what their walk projects with (SceneItem.TextureWalk).
 		_shader.SetInt("uTextureWalkFaces", TextureWalkUnit);
 		_shader.SetInt("uTextureWalk", 0);
-		_shader.SetVector2("uViewportSize", new Vector2(System.Math.Max(viewportWidth, 1), System.Math.Max(viewportHeight, 1)));
+		_passViewportSize = new Vector2(System.Math.Max(viewportWidth, 1), System.Math.Max(viewportHeight, 1));
+		_shader.SetVector2("uViewportSize", _passViewportSize);
+		_shader.SetVector2("uClipPixelOffset", Vector2.Zero);
 		_shader.SetVector2("uViewportOrigin", new Vector2(viewportX, viewportY));
 		_shader.SetFloat("uNearPlane", camera.NearPlane);
 		_walking = false;
@@ -1053,8 +1070,11 @@ public sealed class SceneRenderer : IDisposable {
 			_shader.SetInt("uTextureWalk", _walking ? 1 : 0);
 		}
 
-		item.Mesh.Draw();
+		item.Mesh.Draw(LinePolyPixels, _setPixelOffset ??= SetPixelOffset);
 	}
+
+	// SetPixelOffset as a delegate made once, so a draw allocates none.
+	private Action<Vector2>? _setPixelOffset;
 
 	/// <summary>The texture unit the paint ranks are sampled from (<see cref="BindPaintRanks"/>).</summary>
 	public const int PaintRankUnit = 3;

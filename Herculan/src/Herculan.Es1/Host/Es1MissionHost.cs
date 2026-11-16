@@ -479,16 +479,21 @@ public static class Es1MissionHost {
 					new[] { backdrop, missileHorizon }.OfType<Es1Backdrop>().ToArray(), billboardPalette, livePresenter);
 				presenter.WorldPass = (x, y, width, height) => {
 					worldPalette.Follow(livePresenter);
+					sceneRenderer.LinePolyPixels = livePresenter.PassScale;
 					DrawWorld(gl, sceneRenderer, spriteRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
 				};
 				presenter.ViewPass = (view, size, viewport) => {
 					worldPalette.Follow(livePresenter);
+					sceneRenderer.LinePolyPixels = livePresenter.PassScale;
 					DrawRectView(gl, sceneRenderer, spriteRenderer, worldDraw, missileHorizon, rectCamera, view, size, viewport);
 				};
 				// The gunsight's pick is answered from what that pass drew (plan decision 16).
 				var pick = new Es1WorldPick(gl, sceneRenderer, worldDraw);
 				disposables.Add(pick);
-				presenter.WorldPick = viewport => pick.ObjectAt(cockpitCamera, viewport);
+				presenter.WorldPick = viewport => {
+					sceneRenderer.LinePolyPixels = livePresenter.PassScale;
+					return pick.ObjectAt(cockpitCamera, viewport);
+				};
 				// Cam_Update on ViewObjectPtr, which holds whichever camera the views have selected. The 3D pass draws from that camera with
 				// the installed window's projection, and leaves out the machine that carries the camera.
 				frameLoop = new Es1FrameLoop(manager, () => chain.Camera.Update(), () => {
