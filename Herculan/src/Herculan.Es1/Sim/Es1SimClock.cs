@@ -123,7 +123,7 @@ public sealed class Es1SimClock {
 		_phase -= interrupts * TimeSpan.TicksPerSecond;
 		_interrupts += interrupts;
 		_countdown = (short)Math.Max(0L, _countdown - interrupts);
-		for (long i = 0; i < interrupts && _callbacks.Count > 0; i++) {
+		for (long i = 0; i < interrupts && _callbacksTaken > 0; i++) {
 			RunCallbacks();
 		}
 	}
@@ -136,30 +136,58 @@ public sealed class Es1SimClock {
 	/// </summary>
 	public TimeSpan ToNextInterrupt => TimeSpan.FromTicks((TimeSpan.TicksPerSecond - _phase + TicksPerSecond - 1) / TicksPerSecond);
 
+	/// <summary>The periodic slots, <c>Timer_CallbackMask</c>'s (<c>0009cd64</c>) 16 bits.</summary>
+	public const int CallbackSlots = 16;
+
 	/// <summary>
-	/// <c>Timer_AddCallback</c> (<c>0006d289</c>)(<paramref name="count"/>, <paramref name="callback"/>): the callback run
-	/// on every <paramref name="count"/>th interrupt from now, after the slots taken before it
-	/// (docs/es1/simulation/timer.md#callbacks). Returns the slot + 1. <c>Time_SimClockTimerTick</c>, slot 0 in retail,
-	/// is this clock's own count and not a slot here.
+	/// <c>Timer_AddCallback</c> (<c>0006d289</c>; the shell's <c>ES1GO 00056509</c>)(<paramref name="count"/>,
+	/// <paramref name="callback"/>) (docs/es1/simulation/timer.md#callbacks): the lowest free slot of
+	/// <see cref="CallbackSlots"/> takes the callback, run on every <paramref name="count"/>th interrupt from now, and the
+	/// answer is the slot + 1; 0 with every slot taken. Retail also answers 0 with no timer installed, which this clock always
+	/// is. <c>Time_SimClockTimerTick</c>, the simulator's slot 0 in retail, is this clock's own count and not a slot here,
+	/// so the simulator's slots answer one less than retail's and it has one more free.
 	/// </summary>
 	public int AddCallback(int count, Action callback) {
 		ArgumentOutOfRangeException.ThrowIfLessThan(count, 1);
-		_callbacks.Add(new TimerCallback(count, callback) { Counter = count });
-		return _callbacks.Count;
+		int slot = Array.IndexOf(_callbacks, null);
+		if (slot < 0) {
+			return 0;
+		}
+
+		_callbacks[slot] = new TimerCallback(count, callback) { Counter = count };
+		_callbacksTaken++;
+		return slot + 1;
 	}
 
-	/// <summary>One interrupt's pass over the slots, lowest first: each counter down by 1, and at 0 its callback run and the counter reloaded.</summary>
+	/// <summary>
+	/// <c>Timer_RemoveCallback</c> (<c>0006d337</c>; the shell's <c>ES1GO 000565b7</c>)(<paramref name="slot"/>): for a slot
+	/// of 1 to <see cref="CallbackSlots"/>, slot − 1 freed, true when it was taken; false otherwise.
+	/// </summary>
+	public bool RemoveCallback(int slot) {
+		if (slot < 1 || slot > CallbackSlots || _callbacks[slot - 1] == null) {
+			return false;
+		}
+
+		_callbacks[slot - 1] = null;
+		_callbacksTaken--;
+		return true;
+	}
+
+	/// <summary>One interrupt's pass over the slots, lowest first: each taken counter down by 1, and at 0 its callback run and the counter reloaded.</summary>
 	private void RunCallbacks() {
 		foreach (var slot in _callbacks) {
-			if (--slot.Counter == 0) {
+			if (slot != null && --slot.Counter == 0) {
 				slot.Counter = slot.Period;
 				slot.Callback();
 			}
 		}
 	}
 
-	/// <summary>The periodic slots <see cref="AddCallback"/> took, in slot order.</summary>
-	private readonly List<TimerCallback> _callbacks = [];
+	/// <summary>The periodic slots, none where a slot is free.</summary>
+	private readonly TimerCallback?[] _callbacks = new TimerCallback?[CallbackSlots];
+
+	/// <summary>The slots of <see cref="_callbacks"/> taken.</summary>
+	private int _callbacksTaken;
 
 	/// <summary>A periodic slot: its period <c>0009ce6c</c>, counter <c>0009cdec</c> and callback <c>0009cd6c</c>.</summary>
 	private sealed class TimerCallback(int period, Action callback) {
