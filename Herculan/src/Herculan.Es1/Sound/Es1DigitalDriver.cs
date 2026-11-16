@@ -26,9 +26,9 @@ public readonly record struct Es1SampleStart(
 	int LoopEnd, int LoopStart, ushort Pan, float StereoPan);
 
 /// <summary>
-/// <b>This engine's stand-in for HMI's digital driver</b> (docs/es1/formats/sound-samples.md#the-driver), whose mixing is
-/// item 7's module E: its 32 voices, the calls the sound objects make on them, and their end, over the host's
-/// <see cref="IAudioBackend"/>. A voice is busy from its start to its stop or its end, as retail's bit <c>0x8000</c> of the
+/// <b>This engine's stand-in for HMI's digital driver</b> (docs/es1/sound/digital-mixer.md), whose port, item 7's module
+/// E, is deferred (docs/herculan/plan-es1-sound.md#module-e-the-digital-driver): its 32 voices, the calls the sound
+/// objects make on them, and their end, over the host's <see cref="IAudioBackend"/>. A voice is busy from its start to its stop or its end, as retail's bit <c>0x8000</c> of the
 /// voice record's word <c>+0x30</c> is; the five calls below read and write the voice as their retail counterparts read
 /// and write the record.
 ///
@@ -36,9 +36,9 @@ public readonly record struct Es1SampleStart(
 /// its share of <c>0x7fff</c>, the data as unsigned 8-bit mono at <see cref="SampleRate"/>, and a repeat count <i>c</i> as
 /// <i>c</i> + 1 plays; the start block's <c>+0x10</c>, its loop range and the voice word <c>+0x30</c>'s bit <c>0x1000</c>
 /// are not read. Every voice plays in the center, as retail's do on the Sound Blaster 16's 8-bit mono device
-/// (<c>e015</c>), where the user heard them: the block's pan <c>+0x40</c> is not read, since which of its ends is left on a
-/// stereo device is not known (docs/es1/formats/sound-samples.md#open). The driver's own curves, format, repeats and pan
-/// replace them in module E. <see cref="Es1Sound.Stereo"/> pans a voice by the block's
+/// (<c>e015</c>), where the user heard them: the block's pan <c>+0x40</c>, which retail's stereo mixer applies, is not
+/// read. The volume's share is linear, as the mixer's gain is; the host mixes in floating point, where the mixer adds
+/// 8-bit samples and clips them. <see cref="Es1Sound.Stereo"/> pans a voice by the block's
 /// <see cref="Es1SampleStart.StereoPan"/> and <see cref="SetPan"/> instead.</para>
 /// </summary>
 public sealed class Es1DigitalDriver {

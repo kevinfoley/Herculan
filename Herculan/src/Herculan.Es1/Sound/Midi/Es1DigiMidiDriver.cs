@@ -20,7 +20,7 @@ public readonly record struct Es1DigitalDriverBlock(int Device, int TimerRate, i
 /// globals, one entry for each of the <see cref="Es1MidiDrivers.Slots"/> driver slots, so one object serves every slot the
 /// device opens in.
 ///
-/// <para>The digital driver is this engine's stand-in, <see cref="Es1DigitalDriver"/>, until module E
+/// <para>The digital driver is this engine's stand-in, <see cref="Es1DigitalDriver"/>, while module E is deferred
 /// (docs/herculan/plan-es1-sound.md); it is the program's one digital driver, number 0.</para>
 /// </summary>
 public sealed class Es1DigiMidiDriver : IEs1MidiDriver {
