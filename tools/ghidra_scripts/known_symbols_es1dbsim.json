@@ -42394,8 +42394,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HmiDigi_InitDriver",
-      "description": "(device, far hardware block, far init block, far handle) of the HMI library, the digital driver's open: takes the first of five driver numbers whose device dword 0009d510 is 0, answering 0xb when there is none, and stores the device there. With the init block's far pointer +0x24 null it loads the driver image with 00080dd1, answering its error, and stores what that gives in the init block's +0x24, +0x2c, +0x44 and +0x54; otherwise it takes those from the block. It answers the error of 000812d1 on the driver's 0x6c-byte record at 0009d528. For a device below 0xe106: with the init block's +0x0c 0 the buffer is the init block's far pointer +0x04; otherwise it allocates the init block's +0x00 bytes with 0007074d, answering 5 when that fails, and fills them with 0x80 when the record's +0x24 is 8 and bit 0x80 of its +0x3d is clear, else with 0. It then calls 000809b8, keeps the far handler that gives at 0009d0ec, and calls 00080715 on the driver's voice pointers (0009d10c + driver * 0xc0); for a device from 0xe106 the handler is 0. It writes the handler into the init block's +0x1c, calls 00080ab8, 00080a0a (with the init block's +0x14 and +0x18), 00080a90, HmiDigi_CallDriver2 (00080a69) with the init block's +0x10, the rate, and 00080a3f with the buffer and its size, sets 0009d040 and 0009d068, copies the blocks' fields into the driver's 0x5c-byte entry at 000a231c (its +0x14 the device), stores the driver number through the handle pointer and returns 0. es2_xref finds one call, from HmiDigiMidi_Open (00081b08).",
-      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1DBSIM decompile at 0006fe3a"
+      "description": "(device, far hardware block, far init block, far handle) of the HMI library, the digital driver's open: takes the first of five driver numbers whose device dword 0009d510 is 0, answering 0xb when there is none, and stores the device there. When the init block's dwords +0x04 and +0x24 are both 0 (the OR at 0006fee9 tests ESI, which still holds +0x04 from the prologue; the selector +0x28 is loaded and not tested) it loads the driver image with HmiDigi_LoadDriverImage (00080dd1), answering its error, and stores what that gives in the init block's +0x24, +0x2c, +0x44 and +0x54 and in 0009cf70, 0009cf90, 0009cfb0 and 0009cfc4; otherwise it takes those from the block. It answers the error of 000812d1 on the driver's 0x6c-byte record at 0009d528. For a device below 0xe106: with the init block's +0x0c 0 the buffer is the init block's far pointer +0x04 and 0009db2c is 0; otherwise it sets 0009db2c, allocates the init block's +0x00 bytes with 0007074d, which also gives the init block's +0x40, and when that fails calls 00081002 with the driver number, clears the device dword and answers 5; it fills the bytes with 0x80 when the record's +0x24 is 8 and bit 0x80 of its +0x3d is clear, else with 0. The buffer's far pointer goes to +0x04 and 0009d0a4. With the init block's far pointer +0x30 null it loads the mixer image with HmiDigi_LoadMixerImage (00081082), the device being the init block's +0x3c, or the record's +0x68 when that is 0, answering its error; otherwise it takes the mixer's data and code far pointers, address and allocation from +0x30, +0x4c, +0x38 and +0x58. With bit 2 of the record's +0x3d set it calls 00080be5 with the mixer's and the driver image's far pointers. It stores the mixer's four values in the init block and in 0009cfd8, 0009cff8, 0009d018 and 0009d02c, sets 0009d054, and opens the mixer with HmiDigi_OpenMixer (000809b8) on the buffer, its size, the DMA count port HmiDigi_DmaCountPorts (0009d7b0)[hardware block +0x08] and the driver number, keeping the mix handler's far pointer at 0009d0ec and the second answer at 0009d4ec, and points the driver's 32 voice pointers (0009d10c + driver * 0xc0) at the mixer's voice records with HmiDigi_SetVoicePointers (00080715); for a device from 0xe106 the handler is 0. It writes the handler into the init block's +0x1c, keeps the init block's +0x40 at 0009d0c4[driver], calls 00080ab8 with the hardware block's +0x08 and keeps its low byte at 0009d7d0[driver], calls 00080a0a with the driver image's far pointers, the hardware block's +0x00, +0x04, +0x08 and +0x0c and the init block's +0x14 and +0x18, then 00080a90, HmiDigi_CallDriver2 (00080a69) with the init block's +0x10, the rate, and 00080a3f with 0009d0c4[driver] and the size; sets 0009d040 and 0009d068, copies the blocks' fields into the driver's 0x5c-byte entry at 000a231c (its +0x14 the device), stores the driver number through the handle pointer and returns 0. es2_xref finds one call, from HmiDigiMidi_Open (00081b08).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1DBSIM decompile at 0006fe3a",
+      "verified": {
+        "bytes": "0006fe3a+1931",
+        "sha1": "51978f513883",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "000705c5",
@@ -44816,6 +44822,36 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00080715",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_SetVoicePointers",
+      "description": "(table, offset, selector) of the HMI library: writes 32 six-byte far pointers into the table, selector:offset, selector:offset + 0x6c and so on, one for each voice record of the mixer image, which keeps them 0x6c bytes apart. es2_xref finds one call, from HmiDigi_InitDriver (0006fe3a), with the driver's voice pointers (0009d10c + driver * 0xc0) and the far pointer the mixer's request 10 answers in ESI.",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1DBSIM disassembly at 00080715",
+      "verified": {
+        "bytes": "00080715+49",
+        "sha1": "bf1e1041036b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000809b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_OpenMixer",
+      "description": "(code offset, code selector, data offset, data selector, buffer offset, buffer selector, size, port, driver, out) of the HMI library: far-calls the mixer image's entry, code selector:offset, with 10 in EAX, the data selector in FS, the buffer in ES:EDI, the size in ECX, the port in EDX, the driver number in EBX and the library's DS in GS, keeping ESI, EDI, EBX, ECX, FS, GS and ES. With interrupts off it then stores the image's answers through out: EDI with the code selector at +0x00 (the mix handler), ECX with the data selector at +0x08, and ESI with the data selector at +0x10 (the voice records). es2_xref finds one call, from HmiDigi_InitDriver (0006fe3a).",
+      "source": "Herculan/docs/es1/sound/drum-device.md#opening; ES1DBSIM disassembly at 000809b8",
+      "verified": {
+        "bytes": "000809b8+82",
+        "sha1": "f1c062cc05da",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00080a69",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -44826,6 +44862,36 @@
       "verified": {
         "bytes": "00080a69+39",
         "sha1": "49025b220ce3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00080dd1",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_LoadDriverImage",
+      "description": "(device, slot, address out, data far pointer out, a, code far pointer out, b, allocation out) of the HMI library, the digital drivers' image load: answers 10 for a slot above 5, 9 when the slot's flag (0009d040 + 4 * slot) is set, and 6 for a device outside 0xe000-0xe200. It copies the library's driver path (0009d914, which HmiDigi_InitSystem fills) to 0009da14, appends hmidrv.386 and opens it, answering 0xf when that fails; reads the 0x2c-byte header to 0009dda4, then entry headers of 0x30 bytes to 0009ddd0, up to the image count (0009ddc4) + 1 of them, seeking past each image by its size (0009ddf4) until one's device id (0009ddf8) is the device and its flags have bit 0x4000 (bit 0x40 of the byte 0009ddfd). For that entry it allocates the size + 0x1068 bytes, answering 5 when that fails, rounds the allocation's address + 0x1000 down to 4 KB, makes two selectors for that address with maybe_X32_AllocSelector from 00080746's answer, passes the second with 0009db14 to 0008076c, reads the image there and locks it (X32_LockRegion), and stores the address, the first selector's far pointer, 0008076c's answer and the allocation through its third, fourth, sixth and eighth arguments. It then closes the file, stores the device id of the last entry header read at 0009d0d8 + 4 * slot, sets the slot's flag and answers 0, whether or not an entry matched. es2_xref finds one call, from HmiDigi_InitDriver (0006fe3a).",
+      "source": "Herculan/docs/es1/formats/hmi-driver-container.md#loading-an-image; ES1DBSIM decompile and disassembly at 00080dd1",
+      "verified": {
+        "bytes": "00080dd1+561",
+        "sha1": "4da888bd94fc",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00081082",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_LoadMixerImage",
+      "description": "(device, address out, data far pointer out, a, code far pointer out, b, allocation out) of the HMI library, the mixer images' load: answers 6 for a device outside 0x1000-0x1023. It copies the library's driver path (0009d914) to 0009da14, appends hmidrv.386 and opens it, answering 0xf when that fails; reads the 0x2c-byte header to 0009dda4, then entry headers of 0x30 bytes to 0009ddd0, up to the image count (0009ddc4) + 1 of them, seeking past each other image by its size (0009ddf4), until one's device id (0009ddf8) is the device and its flags have bit 0x4000 (bit 0x40 of the byte 0009ddfd). For that entry it allocates the size + 0x5068 bytes, answering 5 when that fails, rounds the allocation's address + 0x1000 down to 4 KB, makes two selectors for that address with maybe_X32_AllocSelector from 00080746's answer, passes the second with 0009db14 to 0008076c, reads the size + 0x4000 bytes there, locks that many through the first selector (X32_LockRegion), and stores the allocation, 0008076c's answer, the first selector's far pointer and the address through its seventh, fifth, third and second arguments. It closes the file and answers 0, whether or not an entry matched. Unlike HmiDigi_LoadDriverImage (00080dd1) it keeps no slot flag or device id. es2_xref finds two calls, both from HmiDigi_InitDriver (0006fe3a).",
+      "source": "Herculan/docs/es1/formats/hmi-driver-container.md#loading-an-image; ES1DBSIM decompile and disassembly at 00081082",
+      "verified": {
+        "bytes": "00081082+504",
+        "sha1": "024a249a68fd",
         "scope": "body",
         "via": "both"
       }
@@ -49395,6 +49461,15 @@
       "name": "Timer_DelayedMask",
       "description": "dword, 16 slots used: the delayed callbacks Timer_AddDelayedCallback has taken; cleared by Pit_InstallHandler, a slot freed by Timer_RemoveDelayedCallback or by Pit_TimerInterrupt when its repeats run out. Per slot: callback 0009cdac, counter 0009ce2c, period 0009ceac, delay 0009ceec, repeats 0009cf2c.",
       "source": "Herculan/docs/es1/simulation/timer.md#callbacks; ES1DBSIM disassembly"
+    },
+    {
+      "address": "0009d7b0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiDigi_DmaCountPorts",
+      "description": "Eight dwords, the DMA controllers' count-register ports of channels 0-7: 1, 3, 5, 7, 0xc2, 0xc6, 0xca and 0xce. HmiDigi_InitDriver (0006fe3a) passes the one for the hardware block's +0x08 to the mixer image in EDX through HmiDigi_OpenMixer (000809b8).",
+      "source": "ES1DBSIM image bytes at 0009d7b0; ES1DBSIM disassembly at 00070347"
     },
     {
       "address": "0009ded4",

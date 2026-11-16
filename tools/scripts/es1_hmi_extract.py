@@ -12,6 +12,13 @@ address the code uses is an offset into it. This writes those bytes and a layout
 
     py tools/scripts/es1_hmi_extract.py E:/ES2Stuff/ES1/SOS/HMIMDRV.386 --list
     py tools/scripts/es1_hmi_extract.py E:/ES2Stuff/ES1/SOS/HMIMDRV.386 fmmidi.com ES1FMMIDI --import E:/ES2Stuff --seed 504+699+69f+6a5+54a+5b0+610
+    py tools/scripts/es1_hmi_extract.py E:/ES2Stuff/ES1/SOS/HMIDRV.386 sb168m.com ES1SB168M --import E:/ES2Stuff --seed 221+32b+372+3a2+3dc+349+4c4+4d4+4e4+4ea
+    py tools/scripts/es1_hmi_extract.py E:/ES2Stuff/ES1/SOS/HMIDRV.386 sb168s.com ES1SB168S --import E:/ES2Stuff --seed 223+32d+374+3a4+3de+34b+4c6+4d6+4e6+4ec
+
+A digital driver's seeds are its request table, the dwords its entry indexes by `AX` (at 0x102 in
+sb168m.com, 0x104 in sb168s.com). Its interrupt handler, which ends the image, stays undefined
+bytes even as a seed; `es2_naming.py apply BIN --define ADDR` makes it a function once its
+known_symbols entry exists.
 
 The walk checks what the layout rests on and refuses a file that differs: the entries end exactly
 at the file's end, each entry's length field is its image size plus 0x5c, and each image opens with

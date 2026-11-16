@@ -1,0 +1,26 @@
+﻿{
+  "schema_version": 1,
+  "_readme": [
+    "Known symbols for ES1's Sound Blaster 16 8-bit stereo digital driver sb168s.com (ES1SB168S, device 0xe016), an image of SOS/HMIDRV.386: confirmed address -> meaning mappings, applied to the ES1Recon Ghidra project by ES2ApplySymbolNames.java.",
+    "Addresses are offsets into the driver image (Herculan/docs/es1/formats/hmi-driver-container.md#an-image).",
+    "Schema, confidence rules and run order: tools/ghidra_scripts/README.md, 'Known symbols'.",
+    "Entries are in address order. tools/scripts/es2_naming.py insert and edit keep it, and check that it holds."
+  ],
+  "entries": [
+    {
+      "address": "000005b4",
+      "binary": "ES1SB168S",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_InterruptHandler",
+      "description": "The card's interrupt handler, ending in IRETD; FUN_00000508 loads its address at 00000543. It saves EAX, EDX and the four segment registers, loads DS with the image's data selector, which the image's entry stores in this handler's own MOV AX operand at 000005be, and reads the card's port (the word 00000134) + 0xe, which acknowledges a Sound Blaster's 8-bit interrupt. It then writes the byte 00000163 to the first interrupt controller's port 0x20 and, when the IRQ (the byte 00000162) is above 7, the byte 00000164 to the second's port 0xa0, restores the registers and returns.",
+      "source": "Herculan/docs/es1/formats/hmi-driver-container.md#loading-an-image; capstone disassembly at 000005b4",
+      "verified": {
+        "bytes": "000005b4+69",
+        "sha1": "0e26801ee46f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    }
+  ]
+}

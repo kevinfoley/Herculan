@@ -1,0 +1,266 @@
+﻿{
+  "schema_version": 1,
+  "_readme": [
+    "Known symbols for ES1's Sound Blaster 16 8-bit mono digital driver sb168m.com (ES1SB168M, device 0xe015), an image of SOS/HMIDRV.386: confirmed address -> meaning mappings, applied to the ES1Recon Ghidra project by ES2ApplySymbolNames.java.",
+    "Addresses are offsets into the driver image (Herculan/docs/es1/formats/hmi-driver-container.md#an-image).",
+    "Schema, confidence rules and run order: tools/ghidra_scripts/README.md, 'Known symbols'.",
+    "Entries are in address order. tools/scripts/es2_naming.py insert and edit keep it, and check that it holds."
+  ],
+  "entries": [
+    {
+      "address": "000001e1",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_Entry",
+      "description": "The image's entry, reached through the jump at 00000000 by a far call with the request number in AX and the image's data selector in FS: saves DS and loads it from FS, stores FS into SbDigi_InterruptHandler's MOV AX operand (000005ba) and into the selector words of the far pointers at 000000b6, 000000be, 000000c6 and 000000ce, and calls the function whose offset the dword table at 00000102 holds at the request number, with the caller's BX in AX and the other registers as the caller left them. It then restores DS and returns far. The table holds eleven offsets, requests 0-10.",
+      "source": "Herculan/docs/es1/formats/hmi-driver-container.md#loading-an-image; capstone disassembly at 000001e1",
+      "verified": {
+        "bytes": "000001e1+64",
+        "sha1": "1e45c2bb3ee0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000221",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_Init",
+      "description": "Request 0, (AX the card's port, CH the DMA channel, CL the IRQ): keeps them at 00000132, 00000134 and 00000160; takes the channel's DMA page, address and count ports from the word tables at 00000167, 00000177 and 0000016f into 00000136, 00000138 and 0000015c, and the IRQ's interrupt vector, unmask byte and mask byte from the word tables at 0000017f, 000001a1 and 000001c1 into 0000013a, 0000013c and 0000013e; and sets the end-of-interrupt bytes SbDigi_InterruptHandler writes: 00000161 is 0x60 | IRQ, or for an IRQ above 7, 0x62, with 00000162 0x60 | (IRQ - 8). It resets the DSP (1, a delay loop, then 0 to port + 6), waits up to 0xffff reads for bit 7 of port + 0xe and up to 0xffff reads for 0xaa at port + 0xa without testing whether either came, installs the handler with SbDigi_InstallHandler (00000504), writes 0x83 to the mixer's address port (port + 4) and 0x0b to its data port (port + 5), and answers 1 in AX.",
+      "source": "capstone disassembly at 00000221",
+      "verified": {
+        "bytes": "00000221+266",
+        "sha1": "815d3e5b7d11",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000032b",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_Uninit",
+      "description": "Request 1: writes the DSP command 0xda (exit 8-bit auto-initialized DMA) to port + 0xc with no wait for the DSP, restores the interrupt vector with SbDigi_RestoreHandler (0000054c), and answers 1 in AX.",
+      "source": "capstone disassembly at 0000032b",
+      "verified": {
+        "bytes": "0000032b+30",
+        "sha1": "a87e04382d0c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000349",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_Stop",
+      "description": "Request 5: masks the IRQ with SbDigi_MaskIrq (0000058e), writes the DSP command 0xda (exit 8-bit auto-initialized DMA) to port + 0xc with no wait for the DSP, masks the DMA channel (the channel | 4 to the DMA controller's port 0x0a), and clears the byte 00000163.",
+      "source": "capstone disassembly at 00000349",
+      "verified": {
+        "bytes": "00000349+41",
+        "sha1": "0072fecab589",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000372",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_SetRate",
+      "description": "Request 2, (AX the rate): keeps the rate at 0000014e and sends the DSP command 0x41 (set the output rate), then the rate's high and low bytes, each write after SbDigi_WaitWrite (000004eb).",
+      "source": "capstone disassembly at 00000372",
+      "verified": {
+        "bytes": "00000372+48",
+        "sha1": "b606a63d2efe",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000003a2",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_SetDmaMode",
+      "description": "Request 3, (AX the DMA mode byte's transfer bits: 8 reads memory to the card, 4 writes the card's data to memory): keeps AX at 00000150, which SbDigi_StartDma (000003dc) ORs into the mode byte, sets the word 00000152 to 1, and the word 0000015e to 0x24 when AX is 4, else to 0x14.",
+      "source": "capstone disassembly at 000003a2",
+      "verified": {
+        "bytes": "000003a2+58",
+        "sha1": "8a151d751df0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000003dc",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_StartDma",
+      "description": "Request 4, (EDI the buffer's physical address, ECX its length in bytes): sets the byte 00000163; keeps the address's high word at 00000154 and its low word at 00000156, computes (high << 12) + (low >> 4) in AX and then overwrites it; keeps the length at 00000165 and the length less the word 00000152 at 0000015a. It programs the DMA controller: the mode 0x50 | the channel | the byte 00000150 to port 0x0b, the address's third byte to the channel's page port, 0 to port 0x0c (the flip-flop), the address's low word to the address port and the count 0000015a to the count port, low bytes first; unmasks the IRQ with SbDigi_UnmaskIrq (0000056c) and the channel (the channel to port 0x0a); reads port + 0xe; and sends the DSP command 0xc4 (8-bit auto-initialized output), the mode byte 0 (mono, unsigned) and the count 0000015a's low and high bytes, each write after SbDigi_WaitWrite (000004eb).",
+      "source": "capstone disassembly at 000003dc",
+      "verified": {
+        "bytes": "000003dc+232",
+        "sha1": "0d41f178dc36",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000004c4",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_Pause",
+      "description": "Request 6: sends the DSP command 0xd0 (pause 8-bit DMA) after SbDigi_WaitWrite (000004eb).",
+      "source": "capstone disassembly at 000004c4",
+      "verified": {
+        "bytes": "000004c4+16",
+        "sha1": "71dad3a2f9ab",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000004d4",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_Resume",
+      "description": "Request 7: sends the DSP command 0xd4 (continue 8-bit DMA) after SbDigi_WaitWrite (000004eb).",
+      "source": "capstone disassembly at 000004d4",
+      "verified": {
+        "bytes": "000004d4+16",
+        "sha1": "1f024f731690",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000004e4",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_GetInfo",
+      "description": "Request 8: answers 0x76 in EDX, the offset of the image's information block, which opens with the name SB16 8 Mono; its dword +0x68 (000000de) is 0x1000, the mixer image HmiDigi_InitDriver (ES1DBSIM 0006fe3a) loads for this driver.",
+      "source": "capstone disassembly at 000004e4; image bytes at 00000076",
+      "verified": {
+        "bytes": "000004e4+6",
+        "sha1": "a9ceeab03aa6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000004ea",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_NoOp",
+      "description": "Requests 9 and 10: returns at once.",
+      "source": "capstone disassembly at 000004ea; the request table at 00000102",
+      "verified": {
+        "bytes": "000004ea+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000004eb",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_WaitWrite",
+      "description": "Reads port + 0xc until its bit 7 is clear, the DSP ready for a write, with no limit on the reads; keeps AX and DX.",
+      "source": "capstone disassembly at 000004eb",
+      "verified": {
+        "bytes": "000004eb+25",
+        "sha1": "49484cf901ac",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00000504",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_InstallHandler",
+      "description": "(AX the interrupt vector): masks the IRQ with SbDigi_MaskIrq (0000058e), then through the DOS extender's INT 21h keeps the vector's protected-mode handler (function 0x2502) at 00000140, its selector at 00000144, and its real-mode handler (0x2503) at 00000148, and sets SbDigi_InterruptHandler (CS:000005b0) to take the interrupt in protected mode whichever mode the processor is in (0x2506).",
+      "source": "capstone disassembly at 00000504",
+      "verified": {
+        "bytes": "00000504+72",
+        "sha1": "f42a9489ab2b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000054c",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_RestoreHandler",
+      "description": "(AX the interrupt vector): masks the IRQ with SbDigi_MaskIrq (0000058e) and restores the vector's protected-mode handler (00000140) and real-mode handler (00000148) together with the DOS extender's INT 21h function 0x2507.",
+      "source": "capstone disassembly at 0000054c",
+      "verified": {
+        "bytes": "0000054c+32",
+        "sha1": "aa43080d2616",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000056c",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_UnmaskIrq",
+      "description": "ANDs the byte 0000013c into the interrupt mask of the controller the vector 0000013a belongs to: port 0x21 for a vector below 0x10, else 0xa1.",
+      "source": "capstone disassembly at 0000056c",
+      "verified": {
+        "bytes": "0000056c+34",
+        "sha1": "7457584da7bb",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000058e",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_MaskIrq",
+      "description": "ORs the byte 0000013e into the interrupt mask of the controller the vector 0000013a belongs to: port 0x21 for a vector below 0x10, else 0xa1.",
+      "source": "capstone disassembly at 0000058e",
+      "verified": {
+        "bytes": "0000058e+34",
+        "sha1": "fff71e61c91a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000005b0",
+      "binary": "ES1SB168M",
+      "type": "function",
+      "confidence": "high",
+      "name": "SbDigi_InterruptHandler",
+      "description": "The card's interrupt handler, ending in IRETD; SbDigi_InstallHandler loads its address at 0000053f. It saves EAX, EDX and the four segment registers, loads DS with the image's data selector, which the image's entry stores in this handler's own MOV AX operand at 000005ba, and reads the card's port (the word 00000132) + 0xe, which acknowledges a Sound Blaster's 8-bit interrupt. It then writes the byte 00000161 to the first interrupt controller's port 0x20 and, when the IRQ (the byte 00000160) is above 7, the byte 00000162 to the second's port 0xa0, restores the registers and returns.",
+      "source": "Herculan/docs/es1/formats/hmi-driver-container.md#loading-an-image; capstone disassembly at 000005b0",
+      "verified": {
+        "bytes": "000005b0+69",
+        "sha1": "62a6ab99f5f5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    }
+  ]
+}

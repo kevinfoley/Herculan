@@ -223,7 +223,7 @@ The MIDI device's open comes before the digital driver's blocks are filled and d
 
 ES2's loader plays a file that is not RIFF as raw 8-bit unsigned mono at 11,025 Hz ([ES2's sample format](../../retail/formats/sound-samples.md#sample-format)).
 
-`[SoundFX]` `Driver#` holds one of the digital devices the setup program `SOUNDSET.EXE` lists in its `SOUNDSET.INI`, up to four a card in the columns 8-bit mono, 8-bit stereo, 16-bit mono and 16-bit stereo: Sound Blaster `e000` and `e001`, Sound Blaster 16 `e015`–`e018`, and so on for 18 cards; the image's default `0xe000` is the Sound Blaster's 8-bit mono. The drivers are the 95 `.com` images in `SOS\HMIDRV.386`, a name both images hold; `HmiDigi_InitDriver` loads one through `00080dd1` ([opening](../sound/drum-device.md#opening)), whose body is [Open](#open). The MIDI devices are [`song-player.md`](../sound/song-player.md#the-devices)'s.
+`[SoundFX]` `Driver#` holds one of the digital devices the setup program `SOUNDSET.EXE` lists in its `SOUNDSET.INI`, up to four a card in the columns 8-bit mono, 8-bit stereo, 16-bit mono and 16-bit stereo: Sound Blaster `e000` and `e001`, Sound Blaster 16 `e015`–`e018`, and so on for 18 cards; the image's default `0xe000` is the Sound Blaster's 8-bit mono. The drivers are the 95 `.com` images in `SOS\HMIDRV.386`, a name both images hold; `HmiDigi_InitDriver` loads one with `HmiDigi_LoadDriverImage` (`00080dd1`, [loading an image](hmi-driver-container.md#loading-an-image)), the device's image whose flags have bit `0x4000`: `sb168m.com` for `e015` and `sb168s.com` for `e016` ([opening](../sound/drum-device.md#opening)). The MIDI devices are [`song-player.md`](../sound/song-player.md#the-devices)'s.
 
 ### The digital driver's timer
 
@@ -357,7 +357,6 @@ The functions the sections above give an `ES1GO` address beside their own are co
 
 ## Open
 
-- **Open:** how `00080dd1`, which `HmiDigi_InitDriver` calls, loads a digital driver out of `SOS\HMIDRV.386`, for module E.
 - **Open:** the sample format the driver mixes the data as. The bytes centre on `0x80`, as unsigned 8-bit samples would, and many files open on a run of `0x7f`–`0x81`.
 - **Open:** what the digital driver's image does with the init block `HmiDigi_InitDriver` hands it, for module E: whether the samples play at the rate it passes as the image's call 2, 11,025 Hz ([opening](../sound/drum-device.md#opening)), and what the `0x13` it passes to `00080a0a` is.
 - **Open:** what plays `ROSEY1.SFX` and the eleven `res32\` `.RAW` files the shell's table does not name. A lead for the `.RAW` files: a script's `TOKEN_HDS_LOAD` names index `0xe` with its string put through `TtmScript_BuildPath` (`ES1GO 00047138`), which leaves a `.RAW` name as it is ([the commands](ttm-scripts.md#the-commands)), so the `0xc21f` strings of the shell's `.TTM` scripts name the files the scripts play; no census of them has been run.

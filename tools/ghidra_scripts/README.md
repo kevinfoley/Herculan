@@ -1,6 +1,6 @@
 # Ghidra scripts
 
-Headless scripts driving the `ES2Recon` Ghidra project over `DBSIM.EXE` and `VSHELL.EXE`, and the `ES1Recon` project over ES1's `ES1DBSIM` and `ES1GO` images and its FM MIDI driver's, `ES1FMMIDI`.
+Headless scripts driving the `ES2Recon` Ghidra project over `DBSIM.EXE` and `VSHELL.EXE`, and the `ES1Recon` project over ES1's `ES1DBSIM` and `ES1GO` images and its sound drivers': the FM MIDI driver `ES1FMMIDI` and the Sound Blaster 16's 8-bit digital drivers `ES1SB168M` (mono) and `ES1SB168S` (stereo).
 
 `tools/scripts/retail_binaries.py` is the registry of those binaries: for each, its identifier, the file the tools read, its container format (PE, the flat X-32 image `es1_x32_extract.py` writes, or the HMI driver image `es1_hmi_extract.py` writes), its compiler (Borland C++, Symantec C++, or none for hand-written assembly), its Ghidra project and program name, its known-symbols file and its `analysis_out/` dumps. Every Python tool that takes a binary takes it from there, and a tool that depends on one container or compiler refuses a binary of another with an error rather than returning nothing for it. The gitignored files (the retail binaries, the dumps, the Ghidra install and projects) are read from the main checkout, which the registry finds from a worktree's `.git` file, so the tools run the same from a worktree.
 

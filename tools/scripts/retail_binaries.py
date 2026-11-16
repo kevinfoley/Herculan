@@ -12,13 +12,14 @@ like a real negative.
 |---|---|---|---|
 | `DBSIM`, `VSHELL` | ES2 | PE | Borland C++ |
 | `ES1DBSIM`, `ES1GO`, `ES1ESCD`, `ES1PLAYFLIC` | ES1 | X-32 flat image | Symantec C++ |
-| `ES1FMMIDI` | ES1 | HMI driver image | assembly |
+| `ES1FMMIDI`, `ES1SB168M`, `ES1SB168S` | ES1 | HMI driver image | assembly |
 
 The PE files are read as shipped from `ES2/`. The X-32 executables are read as the flat image
 `es1_x32_extract.py` writes to `tools/analysis_out/<ID>` with `<ID>_layout.json` beside it
 (Herculan/docs/es1/formats/x32-executable.md): loaded at address 0, no relocations and no section
 table, so the image is one block of code and data together. An HMI driver image is one `.com` image of a driver container
-(`SOS/HMIMDRV.386`'s `fmmidi.com` for `ES1FMMIDI`), written with its layout the same way by
+(`SOS/HMIMDRV.386`'s `fmmidi.com` for `ES1FMMIDI`, `SOS/HMIDRV.386`'s `sb168m.com` and `sb168s.com`
+for `ES1SB168M` and `ES1SB168S`), written with its layout the same way by
 `es1_hmi_extract.py` (Herculan/docs/es1/formats/hmi-driver-container.md): flat as well, and
 hand-written assembly, so a tool that depends on a compiler's idioms refuses it. The compilers' conventions are in
 Herculan/docs/retail/formats/borland-rtti.md and Herculan/docs/es1/formats/compiler.md.
@@ -112,6 +113,8 @@ REGISTRY = {b.id: b for b in (
     Binary("ES1ESCD", "ES1", X32, SYMANTEC, os.path.join("tools", "analysis_out", "ES1ESCD"), "ES1Recon", "ES1ESCD"),
     Binary("ES1PLAYFLIC", "ES1", X32, SYMANTEC, os.path.join("tools", "analysis_out", "ES1PLAYFLIC"), "ES1Recon", "ES1PLAYFLIC"),
     Binary("ES1FMMIDI", "ES1", HMI, ASSEMBLY, os.path.join("tools", "analysis_out", "ES1FMMIDI"), "ES1Recon", "ES1FMMIDI"),
+    Binary("ES1SB168M", "ES1", HMI, ASSEMBLY, os.path.join("tools", "analysis_out", "ES1SB168M"), "ES1Recon", "ES1SB168M"),
+    Binary("ES1SB168S", "ES1", HMI, ASSEMBLY, os.path.join("tools", "analysis_out", "ES1SB168S"), "ES1Recon", "ES1SB168S"),
 )}
 IDS = tuple(REGISTRY)
 

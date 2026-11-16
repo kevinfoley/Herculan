@@ -26987,6 +26987,36 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0006d6d1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_SetVoicePointers",
+      "description": "The code of ES1DBSIM's HmiDigi_SetVoicePointers (00080715), relocated operands aside.",
+      "source": "es2_naming.py match: exact masked disassembly of ES1DBSIM 00080715",
+      "verified": {
+        "bytes": "0006d6d1+49",
+        "sha1": "bf1e1041036b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006d974",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_OpenMixer",
+      "description": "The code of ES1DBSIM's HmiDigi_OpenMixer (000809b8), relocated operands aside.",
+      "source": "es2_naming.py match: exact masked disassembly of ES1DBSIM 000809b8",
+      "verified": {
+        "bytes": "0006d974+82",
+        "sha1": "f1c062cc05da",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0006da25",
       "binary": "ES1GO",
       "type": "function",
@@ -26999,6 +27029,36 @@
         "sha1": "49025b220ce3",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0006dd8d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_LoadDriverImage",
+      "description": "(device, slot, address out, data far pointer out, a, code far pointer out, b, allocation out) of the HMI library, the digital drivers' image load: answers 10 for a slot above 5, 9 when the slot's flag (0008a118 + 4 * slot) is set, and 6 for a device outside 0xe000-0xe200. It copies the library's driver path (0008a9ec) to 0008aaec, appends hmidrv.386 and opens it, answering 0xf when that fails; reads the 0x2c-byte header to 0008ae7c, then entry headers of 0x30 bytes to 0008aea8, up to the image count (0008ae9c) + 1 of them, seeking past each image by its size (0008aecc) until one's device id (0008aed0) is the device and its flags have bit 0x4000 (bit 0x40 of the byte 0008aed5). For that entry it allocates the size + 0x1068 bytes, answering 5 when that fails, reads the image to the allocation's address + 0x1000 rounded down to 4 KB through two selectors, and stores the address, the far pointers and the allocation through its third, fourth, sixth and eighth arguments. It then closes the file, stores the device id of the last entry header read at 0008a1b0 + 4 * slot, sets the slot's flag and answers 0, whether or not an entry matched. es2_xref finds one call, from HmiDigi_InitDriver (0006077e). The code of ES1DBSIM's HmiDigi_LoadDriverImage (00080dd1), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/hmi-driver-container.md#loading-an-image; ES1GO masked disassembly diffed against ES1DBSIM 00080dd1",
+      "verified": {
+        "bytes": "0006dd8d+561",
+        "sha1": "5e1752f9f734",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006e03e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_LoadMixerImage",
+      "description": "The code of ES1DBSIM's HmiDigi_LoadMixerImage (00081082), relocated operands aside.",
+      "source": "es2_naming.py match: exact masked disassembly of ES1DBSIM 00081082",
+      "verified": {
+        "bytes": "0006e03e+504",
+        "sha1": "50590e180923",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
