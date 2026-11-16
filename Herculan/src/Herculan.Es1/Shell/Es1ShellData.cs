@@ -12,6 +12,7 @@ using Herculan.Es1.Input;
 using Herculan.Es1.Shell.Hangar;
 using Herculan.Es1.Shell.Map;
 using Herculan.Es1.Sim;
+using Herculan.Es1.View;
 
 namespace Herculan.Es1.Shell;
 
@@ -109,6 +110,13 @@ public sealed class Es1ShellData {
 	/// <summary>The value tables <c>LoadDamageDat_Shell</c> expands from <c>cfg\damage.dat</c>, zero in the image until <see cref="Load"/>.</summary>
 	public Es1RepairCosts RepairCosts { get; private set; } = new();
 
+	/// <summary>
+	/// <c>Shell_FullScreenRegion</c>'s rect (<c>0009b000</c>–<c>0009b00c</c>), which <see cref="Load"/> sets to (0, 0) and
+	/// the display's width and height less 1 (docs/es1/shell/startup.md#the-shared-data): the rect screen 9999 copies onto
+	/// the draw page.
+	/// </summary>
+	public Es1Rect FullScreenRegion { get; private set; }
+
 	/// <summary><c>eng\watext.bin</c>, the shell's text at <c>0009afa8</c>; none when it does not read.</summary>
 	public string[]? Text { get; private set; }
 
@@ -198,9 +206,10 @@ public sealed class Es1ShellData {
 		Random = Es1ShellRandom.AtStartup(secondsSince1970);
 		Text = content.Read("eng", "WATEXT.BIN") is { } text ? new BinStringFileTransformer().Parse(text)?.Values : null;
 
-		// PLACEHOLDER: the rect 0009b000–0009b00c, (0, 0) and the display's attributes 2 and 3 less 1, which screen 9999
-		// reads (S2's); Es1ScreenBlinds takes its bottom as a constant. Retail runs LoadDamageDat_Shell between the HERC
-		// diagrams' second and third loads; here it follows all four, and neither reads what the other loads.
+		// The display's attributes 2 and 3 are its width and height; Es1ScreenBlinds takes the rect's bottom as a constant.
+		FullScreenRegion = new Es1Rect(0, 0, Es1VideoMemory.PageWidth - 1, Es1VideoMemory.PageHeight - 1);
+		// Retail runs LoadDamageDat_Shell between the HERC diagrams' second and third loads; here it follows all four, and
+		// neither reads what the other loads.
 		var art = Es1HercArt.Load(content);
 		RepairCosts = Es1RepairCosts.Load(content);
 		HercDiagrams = new Es1HercDiagrams(art);

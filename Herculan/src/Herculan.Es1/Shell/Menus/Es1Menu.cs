@@ -386,3 +386,17 @@ public sealed class Es1QuitAlert : Es1Menu {
 	public override void Dtor() {
 	}
 }
+
+/// <summary>
+/// The loading screen's object, class <c>SimLoadMenu</c> (vtable <c>00081d7e</c>) (docs/es1/shell/menus.md#changing-screens--shell_handlemessage-0003c7d8):
+/// screen 9999, whose window <c>dlg\menu9999.dlg</c> builds. Its slot <c>+8</c>, <c>SimLoadMenu_OnMessage</c>
+/// (<c>0003f96d</c>), does nothing, as <see cref="Es1Menu.OnMessage"/> does.
+/// </summary>
+public sealed class Es1SimLoadMenu : Es1Menu {
+	public Es1SimLoadMenu(Es1MenuContext context) : base(context) {
+	}
+
+	/// <summary>Slot <c>+4</c>, <c>SimLoadMenu_Dtor</c> (<c>0003f8b6</c>): its vtable, then <c>Menu</c>'s, stored and the menu freed.</summary>
+	public override void Dtor() {
+	}
+}

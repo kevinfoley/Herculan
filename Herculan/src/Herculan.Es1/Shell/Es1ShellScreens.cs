@@ -978,7 +978,7 @@ public sealed class Es1ShellScreens {
 	/// career menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', TECH RELEASE's, the delete
 	/// warning's, the disk-space warning's, the options menu's and its battle-set picker's, the service bay's, its three
 	/// warnings', CREW's, ARMING's, REPAIR's, PREFERENCES' and SYSTEM REPAIR's, and the quit question's are ported, 1490's, 1499's and 1520's
-	/// message boxes, screen 9999's exit code and CONTROLS' panel (<see cref="Es1ShellControls"/>), which leaves the target
+	/// message boxes, the loading screen, 9999, and CONTROLS' panel (<see cref="Es1ShellControls"/>), which leaves the target
 	/// 1300; with any other the screen becomes current with no menu, as retail's does for the cases that make none, its
 	/// backdrop shown with no window. The waits are the war map's and the debriefing's, whose constructors delete the box
 	/// the text box held, ARMING's and REPAIR's step to a HERC, and CONTROLS' page swap and panel loop.
@@ -993,11 +993,19 @@ public sealed class Es1ShellScreens {
 
 				break;
 			case LoadingScreen:
-				// 0003cab5.
+				// 0003cab5: the exit code; a SimLoadMenu, which step 10 opens as menu 9999; ShellBackdrop_LoadPalette(9999); the
+				// track Show flagged left unstarted (0007fcd5 cleared); anm\esiege2.anm, the string 00080994, with 0007fcd7 2; and
+				// Display_CopyRectToPage(the draw page +0x38, the visible page +0x30, Shell_FullScreenRegion).
 				ExitCode = (short)(DemoRequested ? 5 : 2);
-				// PLACEHOLDER: a SimLoadMenu, ShellBackdrop_LoadPalette(9999), 0007fcd5 cleared, anm\esiege2.anm with 0007fcd7 2
-				// and the rect 0009b000 copied to the visible page: the loading screen, S2's, which the war map's BEGIN MISSION >
-				// and the options menu's VIEW DEMO reach.
+				if (_menuContext != null) {
+					CurrentMenu = new Es1SimLoadMenu(_menuContext);
+				}
+
+				_backdrop.LoadPalette(LoadingScreen);
+				_backdrop.MusicDue = false;
+				AnmName = "anm\\esiege2.anm";
+				AnmMode = 2;
+				CopyVisibleToDraw(_menuContext?.Data.FullScreenRegion ?? FullScreen);
 				break;
 			case QuitAlertScreen:
 				// 0003d553: a QuitAlert, which step 10 opens as menu 999.
@@ -1275,6 +1283,21 @@ public sealed class Es1ShellScreens {
 
 				goto case Es1OptionsMenu.Screen;
 		}
+	}
+
+	/// <summary>
+	/// Screen 9999's <c>Display_CopyRectToPage</c> (<c>0004c17c</c>)(the draw page, the visible page, <paramref name="rect"/>)
+	/// (docs/es1/rendering/screen-pages.md#fixing-a-rect): the source page set to the visible page, the rect copied from it
+	/// onto the draw page at the offset (0, 0), the rect added as dirty with delay 0 (<c>DirtyBox_AddRect</c>), and both
+	/// pages put back. The copy is <see cref="Es1VideoMemory.CopyRect"/> uncut, as <see cref="Es1ShellBackdrop.Draw"/>'s is.
+	/// </summary>
+	private void CopyVisibleToDraw(Es1Rect rect) {
+		var display = _devices.Display;
+		int keptSource = display.SourcePage;
+		display.SourcePage = display.VisiblePage;
+		display.CopyRect(rect.X0, rect.Y0, rect.X1, rect.Y1, 0, 0);
+		_dirty.AddRect(rect.X0, rect.Y0, rect.X1, rect.Y1, 0);
+		display.SourcePage = keptSource;
 	}
 
 	/// <summary>The crew screen, 1610, whose case loads its own palette and from which the service bay's case loads backdrop 4000's again.</summary>
