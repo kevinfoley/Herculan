@@ -13,17 +13,39 @@ public sealed class Es1Skyline {
 	/// <summary>The most frames the backdrop carries; retail banks hold 4.</summary>
 	public const int MaxFrames = 16;
 
-	private Es1Skyline(byte[] pixels, int width, int[] rows) {
-		Pixels = pixels;
+	/// <summary>
+	/// Every frame's palette indices, <see cref="Width"/> across, frame <c>k</c>'s rows from row <c>k · </c><see cref="SlotRows"/>;
+	/// 0 where the frame holds index 0 and past a frame's own rows.
+	/// </summary>
+	private readonly byte[] _indices;
+
+	private Es1Skyline(byte[] indices, int width, int[] rows) {
+		_indices = indices;
 		Width = width;
 		Rows = rows;
 	}
 
 	/// <summary>
-	/// Every frame as RGBA8, <see cref="Width"/> across, frame <c>k</c>'s rows from row <c>k · </c><see cref="SlotRows"/>.
-	/// The alpha is 0 where the frame holds palette index 0.
+	/// Every frame as RGBA8 shown in <paramref name="palette"/>, laid out as the indices are. The alpha is 0 where the
+	/// frame holds palette index 0 or an entry <paramref name="palette"/> lacks.
 	/// </summary>
-	public byte[] Pixels { get; }
+	public byte[] PixelsIn(DynamixPalette palette) {
+		var pixels = new byte[_indices.Length * 4];
+		for (int i = 0; i < _indices.Length; i++) {
+			byte index = _indices[i];
+			if (index == 0 || !palette.Colors.TryGetValue(index, out var entry)) {
+				continue;
+			}
+
+			var color = entry.GetColor();
+			pixels[i * 4] = color.R;
+			pixels[i * 4 + 1] = color.G;
+			pixels[i * 4 + 2] = color.B;
+			pixels[i * 4 + 3] = 255;
+		}
+
+		return pixels;
+	}
 
 	/// <summary>Frame 0's column count, <i>w</i>: every frame is stepped as this wide.</summary>
 	public int Width { get; }
@@ -41,15 +63,15 @@ public sealed class Es1Skyline {
 	public int Height => SlotRows * FrameCount;
 
 	/// <summary>
-	/// <c>Hzline_LoadBitmapBank</c>(<c>dba\</c><paramref name="bank"/>) (<c>ES1DBSIM 00026dc8</c>), the skyline built in
-	/// <paramref name="palette"/>; null when the install lacks the bank or it has no frame to draw.
+	/// <c>Hzline_LoadBitmapBank</c>(<c>dba\</c><paramref name="bank"/>) (<c>ES1DBSIM 00026dc8</c>); null when the install
+	/// lacks the bank or it has no frame to draw.
 	/// </summary>
-	public static Es1Skyline? Load(GameContent content, string bank, DynamixPalette? palette) =>
-		content.Read("dba", bank + ".DBA") is { } bytes ? From(new DynamixBitmapArrayTransformer().Parse(bytes), palette) : null;
+	public static Es1Skyline? Load(GameContent content, string bank) =>
+		content.Read("dba", bank + ".DBA") is { } bytes ? From(new DynamixBitmapArrayTransformer().Parse(bytes)) : null;
 
 	/// <summary>Builds the skyline from the bank, or returns null for a bank with no frame to draw.</summary>
-	public static Es1Skyline? From(DynamixBitmapArray? bank, DynamixPalette? palette) {
-		if (bank?.Images is not { Length: > 0 } frames || palette == null || frames[0].Cols < 1) {
+	public static Es1Skyline? From(DynamixBitmapArray? bank) {
+		if (bank?.Images is not { Length: > 0 } frames || frames[0].Cols < 1) {
 			return null;
 		}
 
@@ -57,33 +79,21 @@ public sealed class Es1Skyline {
 		int width = frames[0].Cols;
 		int[] rows = frames.Select(frame => (int)frame.Rows).ToArray();
 		int slot = rows.Max();
-		var pixels = new byte[width * slot * frames.Length * 4];
+		var all = new byte[width * slot * frames.Length];
 		for (int k = 0; k < frames.Length; k++) {
 			var frame = frames[k];
 			byte[] indices = frame.ImageData ?? [];
 			for (int row = 0; row < frame.Rows; row++) {
 				for (int column = 0; column < Math.Min(frame.Cols, width); column++) {
 					int source = row * frame.Cols + column;
-					if (source >= indices.Length) {
-						continue;
+					if (source < indices.Length) {
+						all[((k * slot) + row) * width + column] = indices[source];
 					}
-
-					byte index = indices[source];
-					int at = (((k * slot) + row) * width + column) * 4;
-					if (index == 0 || !palette.Colors.TryGetValue(index, out var entry)) {
-						continue;
-					}
-
-					var color = entry.GetColor();
-					pixels[at] = color.R;
-					pixels[at + 1] = color.G;
-					pixels[at + 2] = color.B;
-					pixels[at + 3] = 255;
 				}
 			}
 		}
 
-		return new Es1Skyline(pixels, width, rows);
+		return new Es1Skyline(all, width, rows);
 	}
 
 	/// <summary>

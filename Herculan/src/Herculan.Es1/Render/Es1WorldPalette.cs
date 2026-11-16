@@ -14,10 +14,9 @@ namespace Herculan.Es1.Render;
 ///
 /// <para>What follows: the shaded faces' ramp table (<see cref="SurfaceRampTable"/>), the palette-by-row table every
 /// textured and solid face reads (<see cref="PaletteRampTable"/>), whose indices, the distance bands' ranges and the
-/// texture colour tables (docs/es1/rendering/polygon-shading.md#the-texture-colour-tables), stay as they were built, and
-/// the backdrop's ground (<see cref="Es1Backdrop.ShowIn"/>) and the palette the effects' billboards' indices are drawn
-/// through (<see cref="SpriteBatch.PaletteHandle"/>). What does not, each a PLACEHOLDER where it is built: the sky's
-/// bands, the skyline and the clouds.</para>
+/// texture colour tables (docs/es1/rendering/polygon-shading.md#the-texture-colour-tables), stay as they were built, the
+/// backdrop (<see cref="Es1Backdrop.ShowIn"/>) and the palette the effects' billboards' indices are drawn through
+/// (<see cref="SpriteBatch.PaletteHandle"/>).</para>
 /// </summary>
 public sealed class Es1WorldPalette {
 	private readonly SceneRenderer _renderer;

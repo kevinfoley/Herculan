@@ -29,7 +29,7 @@ public sealed class Es1CloudLayer : IDisposable {
 	private readonly GpuTexture?[] _frames;
 	private readonly Vector2[] _frameTexels;
 
-	/// <summary>Uploads the cloud bank's frames in the live palette, index 0 left transparent.</summary>
+	/// <summary>Uploads the cloud bank's frames in <paramref name="palette"/>, the live one, index 0 left transparent.</summary>
 	public Es1CloudLayer(GL gl, Es1Clouds clouds, DynamixPalette palette) {
 		_gl = gl;
 		_clouds = clouds;
@@ -40,27 +40,47 @@ public sealed class Es1CloudLayer : IDisposable {
 		_frames = new GpuTexture?[images.Length];
 		_frameTexels = new Vector2[images.Length];
 		for (int f = 0; f < images.Length; f++) {
-			var image = images[f];
-			if (image?.ImageData is not { } data || image.Cols < 1 || image.Rows < 1
-					|| data.Length < image.Cols * image.Rows) {
+			if (Drawable(images[f]) is not { } image) {
 				continue;
 			}
 
-			var rgba = new byte[image.Cols * image.Rows * 4];
-			for (int i = 0; i < image.Cols * image.Rows; i++) {
-				if (data[i] != 0 && Es1Horizon.ColorOf(palette, data[i]) is { } colour) {
-					rgba[i * 4] = (byte)(colour.X * 255f);
-					rgba[i * 4 + 1] = (byte)(colour.Y * 255f);
-					rgba[i * 4 + 2] = (byte)(colour.Z * 255f);
-					rgba[i * 4 + 3] = 255;
-				}
-			}
-
-			_frames[f] = new GpuTexture(gl, rgba, image.Cols, image.Rows);
+			_frames[f] = new GpuTexture(gl, Colors(image, palette), image.Cols, image.Rows);
 
 			// The far texture corner: the last column rounded down to a multiple of 8, and the last row.
 			_frameTexels[f] = new Vector2((image.Cols - 1) & ~7, image.Rows - 1);
 		}
+	}
+
+	/// <summary>The frames shown in <paramref name="palette"/>, the live palette after it changed.</summary>
+	public void ShowIn(DynamixPalette palette) {
+		var images = _clouds.Bank.Images ?? [];
+		for (int f = 0; f < _frames.Length; f++) {
+			if (_frames[f] is { } texture && Drawable(images[f]) is { } image) {
+				texture.Update(Colors(image, palette), image.Cols, image.Rows);
+			}
+		}
+	}
+
+	/// <summary><paramref name="image"/> when it has the pixels to draw, otherwise null.</summary>
+	private static DynamixBitmap? Drawable(DynamixBitmap? image) =>
+		image?.ImageData is { } data && image.Cols >= 1 && image.Rows >= 1 && data.Length >= image.Cols * image.Rows
+			? image
+			: null;
+
+	/// <summary>A drawable frame's pixels as RGBA8 in <paramref name="palette"/>, index 0 and missing entries transparent.</summary>
+	private static byte[] Colors(DynamixBitmap image, DynamixPalette palette) {
+		var data = image.ImageData!;
+		var rgba = new byte[image.Cols * image.Rows * 4];
+		for (int i = 0; i < image.Cols * image.Rows; i++) {
+			if (data[i] != 0 && Es1Horizon.ColorOf(palette, data[i]) is { } colour) {
+				rgba[i * 4] = (byte)(colour.X * 255f);
+				rgba[i * 4 + 1] = (byte)(colour.Y * 255f);
+				rgba[i * 4 + 2] = (byte)(colour.Z * 255f);
+				rgba[i * 4 + 3] = 255;
+			}
+		}
+
+		return rgba;
 	}
 
 	/// <summary>

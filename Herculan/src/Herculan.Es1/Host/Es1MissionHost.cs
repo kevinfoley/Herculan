@@ -441,7 +441,7 @@ public static class Es1MissionHost {
 				Es1Backdrop? missileHorizon = null;
 				if (scene.Palette is { } palette && Es1MfdMissileCamScreen.Horizon(palette) is { } horizon) {
 					missileHorizon = new Es1Backdrop(gl, horizon, null,
-						Es1Skyline.Load(content, Es1MfdMissileCamScreen.SkylineBank, palette), null, null, palette) {
+						Es1Skyline.Load(content, Es1MfdMissileCamScreen.SkylineBank), null, null, palette) {
 						Options = backdropOptions,
 						FocalPixels = 1 << Es1MfdMissileCamScreen.FocalShift,
 					};

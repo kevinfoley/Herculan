@@ -24,12 +24,14 @@ public sealed class Es1Horizon {
 	/// <summary><c>+0x6c</c> as <c>Hzline_Ctor</c> (<c>00026180</c>) leaves it, 1, so that <i>t</i> is 0.</summary>
 	public const int CtorGapField = 1;
 
+	private readonly int _horizonColor;
 	private readonly int _groundTop;
 
-	private Es1Horizon(Vector3[] sky, Vector3[] ground, int groundTop, int skyBandHeight, int gapField, int groundBandHeight,
-			int lineOffset) {
+	private Es1Horizon(Vector3[] sky, Vector3[] ground, int horizonColor, int groundTop, int skyBandHeight, int gapField,
+			int groundBandHeight, int lineOffset) {
 		SkyColors = sky;
 		GroundColors = ground;
+		_horizonColor = horizonColor;
 		_groundTop = groundTop;
 		SkyBandHeight = skyBandHeight;
 		HorizonGap = gapField >> 1;
@@ -92,42 +94,41 @@ public sealed class Es1Horizon {
 
 		int horizonColor = zenithColor + skyBandCount - 1;
 		int groundTop = groundColor + groundBandCount - 1;
-		var sky = new Vector3[skyCount];
-		var ground = new Vector3[groundCount];
-		for (int k = 0; k < skyCount; k++) {
-			if (ColorOf(palette, horizonColor - k) is not { } color) {
-				return null;
-			}
-
-			sky[k] = color;
+		if (BandColors(palette, horizonColor, skyCount) is not { } sky
+				|| BandColors(palette, groundTop, groundCount) is not { } ground) {
+			return null;
 		}
 
-		for (int k = 0; k < groundCount; k++) {
-			if (ColorOf(palette, groundTop - k) is not { } color) {
-				return null;
-			}
-
-			ground[k] = color;
-		}
-
-		return new Es1Horizon(sky, ground, groundTop, skyBandHeight, gapField, groundBandHeight, lineOffset);
+		return new Es1Horizon(sky, ground, horizonColor, groundTop, skyBandHeight, gapField, groundBandHeight, lineOffset);
 	}
+
+	/// <summary>
+	/// <see cref="SkyColors"/>' entries shown in <paramref name="palette"/>, or null when it lacks one of them, which
+	/// <see cref="From(Es1WorldData, DynamixPalette?)"/> would not have built the horizon on.
+	/// </summary>
+	public Vector3[]? SkyColorsIn(DynamixPalette palette) => BandColors(palette, _horizonColor, SkyColors.Length);
 
 	/// <summary>
 	/// <see cref="GroundColors"/>' entries shown in <paramref name="palette"/>, or null when it lacks one of them, which
 	/// <see cref="From(Es1WorldData, DynamixPalette?)"/> would not have built the horizon on.
 	/// </summary>
-	public Vector3[]? GroundColorsIn(DynamixPalette palette) {
-		var ground = new Vector3[GroundColors.Length];
-		for (int k = 0; k < ground.Length; k++) {
-			if (ColorOf(palette, _groundTop - k) is not { } color) {
+	public Vector3[]? GroundColorsIn(DynamixPalette palette) => BandColors(palette, _groundTop, GroundColors.Length);
+
+	/// <summary>
+	/// The colors of <paramref name="count"/> bands, from entry <paramref name="first"/> down one entry a band, or null when
+	/// <paramref name="palette"/> lacks one of them.
+	/// </summary>
+	private static Vector3[]? BandColors(DynamixPalette palette, int first, int count) {
+		var colors = new Vector3[count];
+		for (int k = 0; k < count; k++) {
+			if (ColorOf(palette, first - k) is not { } color) {
 				return null;
 			}
 
-			ground[k] = color;
+			colors[k] = color;
 		}
 
-		return ground;
+		return colors;
 	}
 
 	/// <summary>

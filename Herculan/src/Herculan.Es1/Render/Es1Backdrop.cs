@@ -50,6 +50,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	private readonly GpuTexture? _blank;
 	private readonly Vector3?[] _speckColours = new Vector3?[3];
 	private readonly Random _random = new();
+	private Vector3[] _skyColours;
 	private Vector3[] _groundColours;
 
 	/// <summary>
@@ -61,6 +62,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 			Es1Clouds? clouds, Es1GroundSpecks? specks, DynamixPalette palette) {
 		_gl = gl;
 		_horizon = horizon;
+		_skyColours = horizon.SkyColors;
 		_groundColours = horizon.GroundColors;
 		_shader =ShaderProgram.Load(gl, typeof(Es1Backdrop).Assembly, ShaderFolder, "Backdrop.glsl");
 		_vertexArray = gl.GenVertexArray();
@@ -80,7 +82,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 
 		if (skyline != null) {
 			_skyline = skyline;
-			_skylineTexture = new GpuTexture(gl, skyline.Pixels, skyline.Width, skyline.Height);
+			_skylineTexture = new GpuTexture(gl, skyline.PixelsIn(palette), skyline.Width, skyline.Height);
 		}
 
 		if (clouds != null) {
@@ -96,20 +98,24 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	}
 
 	/// <summary>
-	/// The ground's colours shown in <paramref name="palette"/>, the live palette after it changed: the banded ground's
-	/// bands, the textured ground's colour tables and the scattered points, whose palette indices retail's screen shows
-	/// through the live palette as it shows every other (docs/es1/rendering/palette.md#installing-colors). A band whose
-	/// entry <paramref name="palette"/> lacks leaves the bands as they were.
-	/// <para>PLACEHOLDER: the sky's bands, the skyline and the clouds keep the colours of the palette the backdrop was
-	/// built in, where retail's screen shows them through the live palette too; the plan's sky's colors
-	/// (docs/herculan/plan-es1-first-mission.md#what-the-slice-leaves-out) covers them.</para>
+	/// The backdrop's colours shown in <paramref name="palette"/>, the live palette after it changed: the sky's bands, the
+	/// banded ground's bands, the textured ground's colour tables, the skyline, the clouds and the scattered points, whose
+	/// palette indices retail's screen shows through the live palette as it shows every other
+	/// (docs/es1/rendering/palette.md#installing-colors). A run of bands with an entry <paramref name="palette"/> lacks
+	/// stays as it was.
 	/// </summary>
 	public void ShowIn(DynamixPalette palette) {
+		_skyColours = _horizon.SkyColorsIn(palette) ?? _skyColours;
 		_groundColours = _horizon.GroundColorsIn(palette) ?? _groundColours;
 		if (_ground != null && _fadeColours != null) {
 			_fadeColours.Update(_ground.TableColors(palette), Es1TexturedGround.TableLength, Es1TexturedGround.TableCount);
 		}
 
+		if (_skyline != null && _skylineTexture != null) {
+			_skylineTexture.Update(_skyline.PixelsIn(palette), _skyline.Width, _skyline.Height);
+		}
+
+		_clouds?.ShowIn(palette);
 		if (_specks != null) {
 			ResolveSpecks(palette);
 		}
@@ -162,11 +168,11 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 		_shader.SetFloat("uCosRoll", cosRoll);
 		_shader.SetFloat("uSinRoll", sinRoll);
 
-		for (int k = 0; k < _horizon.SkyColors.Length; k++) {
-			_shader.SetVector3(SkyNames[k], _horizon.SkyColors[k]);
+		for (int k = 0; k < _skyColours.Length; k++) {
+			_shader.SetVector3(SkyNames[k], _skyColours[k]);
 		}
 
-		_shader.SetInt("uSkyCount", _horizon.SkyColors.Length);
+		_shader.SetInt("uSkyCount", _skyColours.Length);
 		_shader.SetFloat("uSkyBandHeight", _horizon.SkyBandHeight);
 		_shader.SetFloat("uGap", t);
 		_shader.SetFloat("uLineRow", lineRow);
