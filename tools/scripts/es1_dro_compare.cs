@@ -26,7 +26,12 @@
 //   --prelude S   a song played, then stopped as ShellMusic_Stop stops one but with no fade, before <song> starts, for
 //                 a capture whose song follows another: the stop's pitch bends and the voices' instruments carry over
 //   --prelude-ms M  how long the prelude plays, default 10000
-//   --master V    the sound manager's master volume, default the shell's 95
+//   --switch-at-ms T  plays <song>, one of the simulator's three calm songs, through the simulator's sound path
+//                 instead: Sound_Init with the catalog, Music_Tick once a frame, and at T ms into the song what
+//                 Music_Tick's check sets on seeing an enemy, so that the song fades and its battle song follows; no
+//                 check is due otherwise. Not with --prelude
+//   --frame-interrupts N  the timer's interrupts a frame with --switch-at-ms, default 3, the engine's tick
+//   --master V    the sound manager's master volume, default the shell's 95, or the simulator's 90 with --switch-at-ms
 //   --seconds S   how long to play the song, default the compared writes' length, 2 seconds and the search
 //   --show N      matching writes printed before each difference, default 6
 //   --diffs N     differences printed, default 10; the rest are counted
@@ -35,6 +40,7 @@ using Herculan.Engine.Audio;
 using Herculan.Engine.Audio.Opl;
 using Herculan.Engine.Content;
 using Herculan.Es1.Shell;
+using Herculan.Es1.Sim;
 using Herculan.Es1.Sound;
 
 if (args.Length < 2) {
@@ -115,16 +121,39 @@ if (folder == null || preludeName != null && preludeFolder == null) {
 }
 
 var chip = new RecordingChip();
-var manager = new Es1SoundManager(Read, new Es1DigitalDriver(new SilentBackend()), chip) {
-	Devices = Es1Sound.ReadDevices(install),
-};
-if (!manager.LoadDrivers()) {
-	Console.Error.WriteLine("LoadDrivers failed");
-	return 1;
+int switchAt = Option("switch-at-ms", -1), frameInterrupts = Option("frame-interrupts", 3);
+Es1SimGlobals? world = null;
+Es1SoundManager manager;
+if (switchAt < 0) {
+	manager = new Es1SoundManager(Read, new Es1DigitalDriver(new SilentBackend()), chip) {
+		Devices = Es1Sound.ReadDevices(install),
+	};
+	if (!manager.LoadDrivers()) {
+		Console.Error.WriteLine("LoadDrivers failed");
+		return 1;
+	}
+
+	manager.SetSampleNames([.. Es1ShellSound.Names, $@"{folder}\{songName}", .. preludeName == null ? Array.Empty<string>() : [$@"{preludeFolder}\{preludeName}"]]);
+} else {
+	// The simulator's path: Sound_Init with the catalog, whose rows the songs are; a timer that never runs, since the
+	// loop below ticks the songs itself.
+	world = new Es1SimGlobals();
+	world.Sound.Init(Es1Sound.ReadDevices(install), false, world.VoiceLines, Read, new SilentBackend(), new Es1SimClock(), chip);
+	if (world.Sound.Manager is not { DriversLoaded: true } loaded) {
+		Console.Error.WriteLine("Sound_Init made no manager or LoadDrivers failed");
+		return 1;
+	}
+
+	manager = loaded;
+	// The preferences' load with MUSIC on.
+	world.Sound.SetMusicEnabled(1);
+	if (preludeName != null) {
+		Console.Error.WriteLine("--prelude plays through the shell's path, which --switch-at-ms replaces");
+		return 2;
+	}
 }
 
-manager.SetMasterVolume((sbyte)Option("master", Es1ShellSound.MasterVolume));
-manager.SetSampleNames([.. Es1ShellSound.Names, $@"{folder}\{songName}", .. preludeName == null ? Array.Empty<string>() : [$@"{preludeFolder}\{preludeName}"]]);
+manager.SetMasterVolume((sbyte)Option("master", world == null ? Es1ShellSound.MasterVolume : Es1SoundManager.DefaultMasterVolume));
 
 // A song made and played as ShellMusic_Play does; null when it does not play.
 Es1SoundObject? Start(short index) {
@@ -153,7 +182,27 @@ if (preludeName != null) {
 
 int songTick = tick;
 int songWrite = chip.Writes.Count;
-if (Start((short)Es1ShellSound.Names.Length) is not { } music) {
+Es1SoundObject? music;
+if (world == null) {
+	music = Start((short)Es1ShellSound.Names.Length);
+} else {
+	// The calm song as Music_Tick's first call leaves it, with no check due; the first frame's call starts it.
+	short row = (short)Enumerable.Range(0, Es1Music.CalmSongs)
+		.FirstOrDefault(r => manager.Name(r)?.EndsWith(songName, StringComparison.OrdinalIgnoreCase) == true, -1);
+	if (row < 0) {
+		Console.Error.WriteLine($"{songName} is none of the catalog's calm songs, rows 0 to {Es1Music.CalmSongs - 1}");
+		return 1;
+	}
+
+	world.Music.Song = row;
+	world.Music.SongObject = world.Sound.Catalog(row);
+	world.Music.NextCheck = uint.MaxValue;
+	chip.Tick = tick;
+	world.Music.Tick(world, 1);
+	music = world.Sound.IsPlaying(row) ? world.Music.SongObject : null;
+}
+
+if (music == null) {
 	Console.Error.WriteLine($"{songName} does not play");
 	return 1;
 }
@@ -166,8 +215,20 @@ if (Option("tracks", 0) != 0 && manager.Midi.Songs.Song(music.Handle) is { } son
 	}
 }
 
+bool switched = false;
 for (; tick < songTick + seconds * 120; tick++) {
 	chip.Tick = tick;
+	if (world != null && tick > songTick && (tick - songTick) % frameInterrupts == 0) {
+		// A frame: Music_Tick, then at the switch's time what the check sets on seeing an enemy, so that the fade's
+		// first step is the next frame's.
+		world.Music.Tick(world, 1);
+		if (!switched && (tick - songTick) * 1000L >= switchAt * 120L) {
+			world.Music.Switching = true;
+			world.Music.Battle = true;
+			switched = true;
+		}
+	}
+
 	manager.Midi.Tick();
 }
 
