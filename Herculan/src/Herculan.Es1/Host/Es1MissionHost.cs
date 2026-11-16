@@ -93,10 +93,28 @@ public static class Es1MissionHost {
 	/// <summary>The clear color used when the theater's sky cannot be built. It is a mid gray, plainly not a retail sky.</summary>
 	private static readonly Vector3 MissingSky = new(0.32f, 0.32f, 0.36f);
 
+	/// <summary><c>data\mem.got</c>, the heap's size as <c>Sim_Main</c> writes it at the start of a run.</summary>
+	private const string HeapSizeName = "mem.got";
+
+	/// <summary>
+	/// The heap's size, <c>Mem_InitHeap</c> (<c>00001524</c>)'s answer to <c>Sim_Main</c>'s request of 6,000,000: the request,
+	/// capped at the extender's largest free block less 25,000 (docs/es1/simulation/memory.md#the-heap). This engine has no
+	/// extender and its memory is never short (as <see cref="Es1Preferences.LowMemory"/>), so the cap never applies and the
+	/// size is the request.
+	/// </summary>
+	private const int HeapSize = 6_000_000;
+
+	/// <summary><see cref="HeapSize"/> as 4 little-endian bytes over the install's <c>data\mem.got</c>; false when it does not open.</summary>
+	private static bool WriteHeapSize(string installRoot) {
+		var bytes = new byte[sizeof(int)];
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(bytes, HeapSize);
+		return Es1MissionResults.TryWrite(installRoot, HeapSizeName, bytes);
+	}
+
 	/// <summary>
 	/// Starts <paramref name="missionName"/> (with or without <c>.MSN</c>) as a single mission and runs the simulator on the files
 	/// written by that load. With no mission named, it runs the simulator on the files already in the install's <c>data\</c> folder,
-	/// as <c>DBSIM.EXE</c> does. Returns the process exit code: 1 when <c>data\exit.cfg</c> cannot be opened for writing or the
+	/// as <c>DBSIM.EXE</c> does. Returns the process exit code: 1 when <c>data\mem.got</c> or <c>data\exit.cfg</c> cannot be opened for writing or the
 	/// mission fails to load, and otherwise the code from <see cref="Show"/>. Returning the code held in <c>data\exit.cfg</c> as the
 	/// process's exit code is an addition of this engine: retail's <c>Sim_Main</c> returns nothing, and the shell reads the file.
 	///
@@ -127,7 +145,13 @@ public static class Es1MissionHost {
 			string imguiItalicFontPath, IFrontEndMenus menus, string? playTape = null, bool demo = false,
 			string? recordTape = null, HostWindow? window = null, bool soundOn = true, bool silent = false) {
 		// Sim_Main's step 4, which runs before the command line is parsed (docs/es1/simulation/main-loop.md#starting--sim_main-00059350):
-		// write an int16 0 to data\exit.cfg. A run that ends before Sim_Shutdown therefore leaves 0, which ends the launcher's loop.
+		// the heap's size to data\mem.got, then an int16 0 to data\exit.cfg. A run that ends before Sim_Shutdown therefore leaves
+		// 0, which ends the launcher's loop. Neither failure runs Sim_AssertCleanupHook, which Sim_StartMission adds later.
+		if (!WriteHeapSize(installRoot)) {
+			Console.Error.WriteLine($"data\\{HeapSizeName} does not open for writing in {installRoot} (main.cpp line 0xf1 asserts here).");
+			return Es1Shutdown.AssertExitStatus;
+		}
+
 		if (!Es1Shutdown.WriteExitCode(installRoot, 0)) {
 			Console.Error.WriteLine($"data\\{Es1Shutdown.ExitName} does not open for writing in {installRoot} (main.cpp line 0xf9 asserts here).");
 			return Es1Shutdown.AssertExitStatus;
