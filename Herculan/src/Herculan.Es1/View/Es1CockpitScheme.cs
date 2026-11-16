@@ -47,8 +47,9 @@ public readonly record struct Es1CockpitScheme(DynamixPalette Cockpit, int Schem
 			}
 		}
 
-		// PLACEHOLDER: a scheme past the table reads its word from CockpitViewShakeArmed and the globals after it, which
-		// the doc does not resolve to an entry; step 3 is skipped and entry 0x40 keeps step 2's colour.
+		// Retail reads a scheme past the table from CockpitViewShakeArmed and the globals after it. The player pilots only
+		// schemes 0 to 7, so only a hand-made data\player.mec gets here: step 3 is skipped and entry 0x40 keeps step 2's
+		// colour, an engine guard.
 		if (Scheme >= 0 && Scheme < ColorIndices.Count && colors.TryGetValue(ColorIndices[Scheme], out var named)) {
 			colors[SecondWindow] = named;
 		}

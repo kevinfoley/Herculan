@@ -15,7 +15,6 @@ Until its step lands, each of these does nothing, tagged `// PLACEHOLDER:` in co
 - **The digital driver's mix**, item 7's module E, deferred ([the sound plan](plan-es1-sound.md#module-e-the-digital-driver)): the effects, the pilots' voice lines, the songs' drums and the shell's click, talking heads' lines and `.TTM` sounds play through decision 26's stand-in for the digital driver.
 - **A modern controller's hat**, until a retail check settles which hat byte is which direction ([`joystick.md#open`](../es1/simulation/joystick.md#open)): the hat is not read, so the Thrustmaster FCS's hat line (port axis 3) carries whatever the throttle role holds, and the FlightstickPro's hat comes only from its buttons held together, as retail decodes them.
 - **The shell's loading screen**, no step yet: screen 9999 sets the exit code and leaves the screen as it was, where retail makes a `SimLoadMenu`, loads the palette `res32\regn9999.dpl`, plays `anm\esiege2.anm` and copies its rect to the visible page ([changing screens](../es1/shell/menus.md#changing-screens--shell_handlemessage-0003c7d8)).
-- **A cockpit scheme above 7**, no step yet: its `0x40` word, which retail reads past its table ([the color scheme](../es1/simulation/cockpit-views.md#the-color-scheme)), keeps the second range's colour at `0x40`.
 
 ## Decisions
 
