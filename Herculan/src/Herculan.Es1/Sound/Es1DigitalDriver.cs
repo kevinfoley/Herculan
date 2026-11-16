@@ -79,8 +79,13 @@ public sealed class Es1DigitalDriver {
 	/// <c>HmiDigi_StartSample</c> (<c>0006dad9</c>)(driver, <paramref name="block"/>): the block copied into the first voice
 	/// not busy, and that voice's number; −1 with all <see cref="Voices"/> busy. Retail's 0 for a device id above
 	/// <c>0xe105</c> is not taken, the stand-in having no device id.
+	///
+	/// <para>With <paramref name="due"/>, the engine's for device <c>0xa005</c>'s drums
+	/// (<see cref="Midi.Es1DigiMidiDriver.Timeline"/>), the voice is busy at once and its playback starts at the first
+	/// <see cref="Update"/> for which <paramref name="due"/> answers true; a volume or pan set before then is the one it
+	/// starts with, and a stop before then frees the voice unheard.</para>
 	/// </summary>
-	public int StartSample(in Es1SampleStart block) {
+	public int StartSample(in Es1SampleStart block, Func<bool>? due = null) {
 		int voice = Array.FindIndex(_voices, v => !v.Busy);
 		if (voice < 0) {
 			return -1;
@@ -94,7 +99,14 @@ public sealed class Es1DigitalDriver {
 		v.Pan = block.StereoPan;
 		v.Repeats = (short)block.Repeats;
 		v.Sample = Sample(block);
-		Begin(v);
+		v.Due = due;
+		if (due == null || due()) {
+			v.Due = null;
+			Begin(v);
+		} else {
+			v.Play = -1;
+		}
+
 		return voice;
 	}
 
@@ -109,6 +121,7 @@ public sealed class Es1DigitalDriver {
 
 		var v = _voices[voice];
 		v.Busy = false;
+		v.Due = null;
 		_backend.Stop(v.Play);
 		v.Play = -1;
 	}
@@ -185,11 +198,21 @@ public sealed class Es1DigitalDriver {
 	/// <summary>
 	/// This engine's stand-in for the driver's own service of its voices, which retail's runs from the timer: each busy
 	/// voice whose playback has ended plays again while it has repeats left, one off them, and is otherwise made free and
-	/// its block's callback given (<see cref="DoneEvent"/>, the voice). Call once a frame.
+	/// its block's callback given (<see cref="DoneEvent"/>, the voice). A voice whose start waits
+	/// (<see cref="StartSample"/>'s due) starts once it is due instead. Call once a frame.
 	/// </summary>
 	public void Update() {
 		for (int i = 0; i < Voices; i++) {
 			var v = _voices[i];
+			if (v.Busy && v.Due is { } due) {
+				if (due()) {
+					v.Due = null;
+					Begin(v);
+				}
+
+				continue;
+			}
+
 			if (!v.Busy || _backend.IsPlaying(v.Play)) {
 				continue;
 			}
@@ -239,5 +262,6 @@ public sealed class Es1DigitalDriver {
 		public short Repeats;
 		public int Sample = -1;
 		public int Play = -1;
+		public Func<bool>? Due;
 	}
 }

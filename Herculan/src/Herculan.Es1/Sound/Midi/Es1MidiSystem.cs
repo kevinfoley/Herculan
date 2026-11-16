@@ -49,18 +49,21 @@ public sealed class Es1MidiSystem {
 
 	/// <summary>
 	/// <see cref="Output"/> opened on <paramref name="backend"/> for <see cref="Es1MidiDrivers.FmChip"/>, in blocks of one
-	/// interrupt's share of the chip's rate rounded down, 414 frames at an OPL's 49,716 a second, so the stream's ring holds as few interrupts' writes
-	/// ahead of what is heard as it can; any output open before is closed first.
+	/// interrupt's share of the chip's rate rounded down, 414 frames at an OPL's 49,716 a second, which the stream's lag
+	/// counts in; any output open before is closed first. Device <c>0xa005</c>'s drums wait for it to be heard
+	/// (<see cref="Es1DigiMidiDriver.Timeline"/>).
 	/// </summary>
 	public void OpenOutput(IAudioBackend backend) {
 		CloseOutput();
 		Output = new OplStream(backend, Drivers.FmChip, Drivers.FmChip.SampleRate / Es1SimClock.InterruptsPerSecond);
+		Drivers.DigiMidi.Timeline = Output;
 	}
 
 	/// <summary><see cref="Output"/> stopped and dropped, the frame count's carry with it.</summary>
 	public void CloseOutput() {
 		Output?.Dispose();
 		Output = null;
+		Drivers.DigiMidi.Timeline = null;
 		_frameCarry = 0;
 	}
 

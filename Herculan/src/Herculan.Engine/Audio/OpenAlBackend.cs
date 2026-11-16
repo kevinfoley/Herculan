@@ -396,8 +396,11 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 	}
 
 	/// <inheritdoc />
-	public IAudioStream? OpenStream(int sampleRate, int channels) {
-		if (_disposed || channels is not (1 or 2)) {
+	public IAudioStream? OpenStream(int sampleRate, int channels) => OpenStream(sampleRate, channels, StreamVoice.BlockCount);
+
+	/// <inheritdoc />
+	public IAudioStream? OpenStream(int sampleRate, int channels, int blocks) {
+		if (_disposed || channels is not (1 or 2) || blocks < 1) {
 			return null;
 		}
 
@@ -407,7 +410,7 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 			return null;
 		}
 
-		uint[] buffers = _al.GenBuffers(StreamVoice.BlockCount);
+		uint[] buffers = _al.GenBuffers(blocks);
 		if (_al.GetError() != AudioError.NoError) {
 			_al.DeleteSource(source);
 			return null;
@@ -428,11 +431,11 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 	private readonly List<StreamVoice> _streams = new();
 
 	/// <summary>
-	/// A dedicated source fed from a ring of <see cref="BlockCount"/> buffers. The tag of each queued
+	/// A dedicated source fed from a ring of buffers, <see cref="BlockCount"/> unless its opener asks for more. The tag of each queued
 	/// buffer rides in a FIFO beside the source's own queue, so the two unqueue in step.
 	/// </summary>
 	private sealed class StreamVoice : IAudioStream {
-		/// <summary>Buffers in the ring. With the caller's block size this is the headroom a hitch has.</summary>
+		/// <summary>Buffers in the ring by default. With the caller's block size this is the headroom a hitch has.</summary>
 		public const int BlockCount = 4;
 
 		private readonly OpenAlBackend _owner;
@@ -526,6 +529,12 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 		public void SetGain(float gain) {
 			if (Live) {
 				Al.SetSourceProperty(_source, SourceFloat.Gain, Math.Clamp(gain, 0f, 1f));
+			}
+		}
+
+		public void SetPitch(float ratio) {
+			if (Live && ratio > 0) {
+				Al.SetSourceProperty(_source, SourceFloat.Pitch, ratio);
 			}
 		}
 

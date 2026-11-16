@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using Herculan.Engine.Audio.Opl;
 
 namespace Herculan.Es1.Sound.Midi;
 
@@ -105,6 +106,24 @@ public sealed class Es1DigiMidiDriver : IEs1MidiDriver {
 	}
 
 	private readonly Es1DigitalDriver _digital;
+
+	/// <summary>
+	/// The FM driver's output, whose timeline a note on's sample waits on: it starts once the output is heard at the frame
+	/// the note fell on, so that a drum sounds beside the FM notes of its tick rather than the output's lag ahead of them.
+	/// None, or an output that is not audible, starts it at once. Not retail's: the engine's, for the output's lag
+	/// (docs/herculan/plan-es1-sound.md, module D part 9).
+	/// </summary>
+	public OplStream? Timeline { get; set; }
+
+	/// <summary>A note on's wait for <see cref="Timeline"/> to be heard at the frame it renders next; none without one.</summary>
+	private Func<bool>? Due() {
+		if (Timeline is not { IsAudible: true } timeline) {
+			return null;
+		}
+
+		long at = timeline.NextFrame;
+		return () => timeline.HeardFrame >= at;
+	}
 
 	/// <summary>
 	/// <c>HmiDigiMidi_Open</c> (<c>00081b08</c>)(block, <paramref name="slot"/>, <i>x</i>): the slot given the digital driver
@@ -234,7 +253,7 @@ public sealed class Es1DigiMidiDriver : IEs1MidiDriver {
 					SetDword(bank, block + 0x40, _pan[slot] << 9);
 				}
 
-				int voice = _digital.StartSample(Start(slot, data1, bank, block));
+				int voice = _digital.StartSample(Start(slot, data1, bank, block), Due());
 				if (voice != -1) {
 					AddVoice(slot, voice, Dword(bank, block + 0x18), data2, channel);
 				}

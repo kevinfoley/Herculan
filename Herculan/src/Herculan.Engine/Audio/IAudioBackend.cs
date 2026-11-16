@@ -74,6 +74,12 @@ public interface IAudioBackend : IDisposable {
 	IAudioStream? OpenStream(int sampleRate, int channels);
 
 	/// <summary>
+	/// <see cref="OpenStream(int, int)"/> with a ring of <paramref name="blocks"/> blocks, for a caller that queues blocks too
+	/// small for the backend's own count to cover a late frame. A backend that keeps one count opens the stream with it.
+	/// </summary>
+	IAudioStream? OpenStream(int sampleRate, int channels, int blocks) => OpenStream(sampleRate, channels);
+
+	/// <summary>
 	/// Per-frame service of the device itself: noticing that the output endpoint has gone and bringing
 	/// it back. Call once a frame from whatever owns the frame loop.
 	/// </summary>
@@ -106,4 +112,11 @@ public interface IAudioStream : IDisposable {
 
 	/// <summary>The stream's gain, 0 to 1, under the master gain.</summary>
 	void SetGain(float gain);
+
+	/// <summary>
+	/// The stream's playback rate as a ratio, 1 being the rate it was opened at, so that a caller can steer how much it has
+	/// queued. A stream that cannot change its rate ignores it.
+	/// </summary>
+	void SetPitch(float ratio) {
+	}
 }

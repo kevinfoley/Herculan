@@ -81,8 +81,13 @@ public sealed class VolumeBackend : IAudioBackend {
 	}
 
 	/// <inheritdoc />
-	public IAudioStream? OpenStream(int sampleRate, int channels) {
-		if (_inner.OpenStream(sampleRate, channels) is not { } stream) {
+	public IAudioStream? OpenStream(int sampleRate, int channels) => Wrap(_inner.OpenStream(sampleRate, channels));
+
+	/// <inheritdoc />
+	public IAudioStream? OpenStream(int sampleRate, int channels, int blocks) => Wrap(_inner.OpenStream(sampleRate, channels, blocks));
+
+	private VolumeStream? Wrap(IAudioStream? stream) {
+		if (stream == null) {
 			return null;
 		}
 
@@ -144,6 +149,8 @@ public sealed class VolumeBackend : IAudioBackend {
 			_gain = gain;
 			ApplyGain();
 		}
+
+		public void SetPitch(float ratio) => _inner.SetPitch(ratio);
 
 		public void ApplyGain() => _inner.SetGain(_gain * _owner._music);
 
