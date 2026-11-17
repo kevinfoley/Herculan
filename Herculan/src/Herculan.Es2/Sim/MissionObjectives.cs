@@ -1,5 +1,4 @@
-﻿using Herculan.Engine.Numerics;
-using Herculan.Es2.Content;
+﻿using Herculan.Es2.Content;
 using Herculan.Es2.World;
 
 namespace Herculan.Es2.Sim;
@@ -83,9 +82,9 @@ public sealed class MissionObjectives {
 	/// for "carry on".
 	/// </returns>
 	public MissionStatus Poll(SimWorld world, MechObject player) {
-		SimMath.CountdownTimerTick(ref _alertDelay);
+		SimClock.CountdownTimerTick(ref _alertDelay);
 
-		if (SimMath.CountdownTimerTick(ref _pollInterval) != 0
+		if (SimClock.CountdownTimerTick(ref _pollInterval) != 0
 				&& !IsOutsideMissionBox(world, player, 0)) {
 			return MissionStatus.None;
 		}
@@ -161,8 +160,8 @@ public sealed class MissionObjectives {
 	/// [Q] outside the mission box reports on the objectives as though the player were inside it.
 	/// </param>
 	public MissionStatus Evaluate(SimWorld world, MechObject player, bool quiet) {
-		if (!quiet && SimMath.CountdownTimerTick(ref _messageLockout) != 0) {
-			SimMath.CountdownTimerTick(ref _messageLockout);
+		if (!quiet && SimClock.CountdownTimerTick(ref _messageLockout) != 0) {
+			SimClock.CountdownTimerTick(ref _messageLockout);
 			return _heldStatus;
 		}
 
@@ -513,7 +512,7 @@ public sealed class MissionObjectives {
 
 	/// <summary>
 	/// How long the poll waits between readings once it has one that is not worth raising —
-	/// <c>MissionPollTimer</c>'s re-arm, in <see cref="SimMath.CountdownTimerTick"/>'s unit rather than
+	/// <c>MissionPollTimer</c>'s re-arm, in <see cref="SimClock.CountdownTimerTick"/>'s unit rather than
 	/// milliseconds: about 4.9 seconds.
 	/// </summary>
 	public const short PollInterval = 10000;

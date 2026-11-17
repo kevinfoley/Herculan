@@ -185,7 +185,7 @@ public sealed record MissionAction(
 /// A ref outside block 5 is read as <c>-1</c>.
 /// </param>
 /// <param name="Delay">
-/// How long the timer runs, in <see cref="Engine.Numerics.SimMath.TickDelta"/>'s timer unit. The file
+/// How long the timer runs, in <see cref="Sim.SimClock.TickDelta"/>'s timer unit. The file
 /// states it in seconds, which <c>ActionTimer_SetDelay</c> (<c>004679c0</c>) shifts by
 /// <see cref="DelayShift"/> on the way in.
 /// </param>

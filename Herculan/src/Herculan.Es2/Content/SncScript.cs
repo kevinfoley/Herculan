@@ -1,6 +1,7 @@
 using HercWorks.Core.Io.Transform.Dbsim;
+using Herculan.Engine.Content;
 
-namespace Herculan.Engine.Content;
+namespace Herculan.Es2.Content;
 
 /// <summary>
 /// One <c>snc\P?_?????.SNC</c> — the frame timeline that animates a talking pilot's portrait while

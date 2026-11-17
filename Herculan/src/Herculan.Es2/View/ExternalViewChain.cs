@@ -1,4 +1,3 @@
-using Herculan.Engine.Numerics;
 using Herculan.Engine.View;
 using Herculan.Es2.Sim;
 using Herculan.Es2.Terrain;
@@ -391,7 +390,7 @@ public sealed class ExternalViewChain {
 		Camera.Steer(constants.Steer, constants.Throttle, constants.Trigger != 0);
 		Camera.Locked = true;
 
-		return SimMath.TimerCountDown(ref _deathCountdown) == 0;
+		return SimClock.TimerCountDown(ref _deathCountdown) == 0;
 	}
 
 	/// <summary>

@@ -89,7 +89,7 @@ public sealed partial class BaseObject {
 	/// target is inside its range. A dead one steps neither countdown.</para>
 	/// </summary>
 	private void StationTick(SimWorld world, TransportArmament armament, int index, WeaponStation station) {
-		if (SimMath.CountdownTimerTick(ref station.RetargetTimer) == 0) {
+		if (SimClock.CountdownTimerTick(ref station.RetargetTimer) == 0) {
 			station.Target = AiTargeting.SelectTarget(world, this, TargetFilter.RejectOwnClass, StationCone);
 			station.RetargetTimer = StationRetargetInterval;
 		}
@@ -118,14 +118,14 @@ public sealed partial class BaseObject {
 			}
 
 			ref var slot = ref station.Slots[s];
-			if (SimMath.CountdownTimerTick(ref slot.WindowTimer) == 0) {
+			if (SimClock.CountdownTimerTick(ref slot.WindowTimer) == 0) {
 				slot.WindowOpen = !slot.WindowOpen;
 				int phase = slot.WindowOpen ? 1 : 0;
 				slot.WindowTimer = (short)(WindowBase[phase] + world.Random.NextBelow(WindowSpread[phase]));
 			}
 
 			var weapon = armament.Slots[s];
-			if (SimMath.CountdownTimerTick(ref slot.RefireTimer) != 0 || !slot.WindowOpen
+			if (SimClock.CountdownTimerTick(ref slot.RefireTimer) != 0 || !slot.WindowOpen
 					|| (ushort)(yawError + weapon.YawArc) >= (ushort)(weapon.YawArc * 2)
 					|| (ushort)(pitchError + weapon.PitchArc) >= (ushort)(weapon.PitchArc * 2)
 					|| weapon.Range <= range) {

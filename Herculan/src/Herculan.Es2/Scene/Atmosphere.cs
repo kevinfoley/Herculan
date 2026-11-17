@@ -56,10 +56,11 @@ public readonly record struct Atmosphere(float FogStart, float FogEnd, Vector3? 
 	}
 
 	/// <summary>
-	/// Applies this to a renderer. Also sets the flat <see cref="SceneRenderer.SkyColor"/> the frame
-	/// is cleared to, so that whatever the gradient does not cover is at least the right hue.
+	/// Applies this to a renderer and the sky it paints behind its passes. Also sets the flat
+	/// <see cref="SceneRenderer.SkyColor"/> the frame is cleared to, so that whatever the gradient does not cover is at
+	/// least the right hue.
 	/// </summary>
-	public void ApplyTo(SceneRenderer renderer) {
+	public void ApplyTo(SceneRenderer renderer, SkyBackdrop backdrop) {
 		renderer.FogStart = FogStart;
 		renderer.FogEnd = FogEnd;
 		renderer.FogCellSize = CellSize;
@@ -67,7 +68,7 @@ public readonly record struct Atmosphere(float FogStart, float FogEnd, Vector3? 
 			renderer.FogColor = color;
 		}
 
-		renderer.Sky = Sky;
+		backdrop.Sky = Sky;
 		if (Sky is { } sky) {
 			renderer.SkyColor = sky.Zenith;
 		}

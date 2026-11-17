@@ -427,22 +427,22 @@ public sealed class SimWorld {
 	/// its behaviour does not vary with how fast frames are drawn.</para>
 	///
 	/// <para>One deliberate deviation goes with that, described in full on
-	/// <see cref="SimMath.ScalePerTickStep"/>: the raw per-tick accel steps are routed through it, so
+	/// <see cref="SimClock.ScalePerTickStep"/>: the raw per-tick accel steps are routed through it, so
 	/// changing this constant no longer silently rescales acceleration.</para>
 	/// </summary>
 	public const int TicksPerSecond = 25;
 
 	/// <summary>
-	/// The value written into <see cref="SimMath.TickDelta"/> for each tick.
+	/// The value written into <see cref="SimClock.TickDelta"/> for each tick.
 	///
 	/// <para>DBSIM computes it as <c>clamp((elapsedMs &lt;&lt; 8) / 125, 0x40, 0x1c2)</c>, so the Q8
 	/// unit 0x100 is <b>125 ms</b> and every rate in the sim is per-125 ms. At the 40 ms frame cap
 	/// that is <c>40 * 256 / 125 = 81</c>. The engine's fixed timestep pins it there, which is what
 	/// the original produces on any machine fast enough to hit its own cap — so everything
-	/// integrating through <see cref="SimMath.IntegrateRateOverTick"/> runs at the original's
+	/// integrating through <see cref="SimClock.IntegrateRateOverTick"/> runs at the original's
 	/// rate.</para>
 	/// </summary>
-	public const short TickDelta = SimMath.VanillaTickDelta;
+	public const short TickDelta = SimClock.VanillaTickDelta;
 
 	/// <summary>
 	/// Every beam resolved during the tick just completed, in the order they were fired. Cleared at
@@ -700,7 +700,7 @@ public sealed class SimWorld {
 	/// the tick outright.
 	/// </summary>
 	public void TickFrozen(short tickDelta) {
-		SimMath.TickDelta = tickDelta;
+		SimClock.TickDelta = tickDelta;
 		_beams.Clear();
 		_impacts.Clear();
 		PlayerMissile.TriggerCleared = false;
@@ -729,7 +729,7 @@ public sealed class SimWorld {
 	/// them.</para>
 	/// </summary>
 	public void Tick(short tickDelta, double elapsedMilliseconds) {
-		SimMath.TickDelta = tickDelta;
+		SimClock.TickDelta = tickDelta;
 		_beams.Clear();
 		_impacts.Clear();
 		PlayerMissile.TriggerCleared = false;

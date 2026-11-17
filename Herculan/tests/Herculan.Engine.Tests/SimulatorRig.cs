@@ -4,7 +4,6 @@ using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Data.Struct.Herc;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
-using Herculan.Engine.Numerics;
 using Herculan.Es2.Audio;
 using Herculan.Es2.Cockpit;
 using Herculan.Es2.Content;
@@ -46,14 +45,14 @@ sealed class SimulatorRig {
 		Staging = new SimulatorStaging(staged, new StagedScreenshot(), screenshotRun: false);
 
 		Art = LoadCockpitArt(start);
-		View = new CockpitView(Scene, Art, Staging.Start, KeyMap.Retail);
+		View = new CockpitView(Scene, Art, Staging.Start, KeyMap.Default);
 
 		Tape = new TapePlayback(null, start.Preferences, () => new Vector2D<int>(Width, Height), _cockpitInput,
-			KeyMap.Retail);
+			KeyMap.Default);
 		Recording = new TapeRecording(null, start.Preferences, Ports);
 		Input = new ScriptedInput(Keys, Pointer, _cockpitInput);
 
-		Panels = new ModalPanels(start, Pointer, View, hasCockpit: Art != null, Staging.Start.Joystick, KeyMap.Retail);
+		Panels = new ModalPanels(start, Pointer, View, hasCockpit: Art != null, Staging.Start.Joystick, KeyMap.Default);
 		Panels.OpenStaged(Staging.Start);
 
 		Displays = new CockpitDisplays(start, Art, View, Staging);
@@ -63,7 +62,7 @@ sealed class SimulatorRig {
 		Staging.StageMachine(View.PilotMech, Scene.World);
 
 		Simulator = new SimulatorFrame(start, Art, View, Displays, Panels, Tape, Recording, DeveloperKeys, Staging,
-			Outcome, Input, SystemButtonPresses, escapeMenu: null, () => new Vector2D<int>(Width, Height), KeyMap.Retail);
+			Outcome, Input, SystemButtonPresses, escapeMenu: null, () => new Vector2D<int>(Width, Height), KeyMap.Default);
 
 		Audio.StartMissionMusic(Scene.Mission.Header, 0);
 		Displays.PowerUpCockpit(Audio, screenshotRun: false);
@@ -129,7 +128,7 @@ sealed class SimulatorRig {
 		preferences.RegisterHandler(Prefs.PilotMessageOption, value => audio.SpeechEnabled = value != 0);
 		preferences.ApplyAll();
 
-		SimMath.PerTickStepsScaled = true;
+		SimClock.PerTickStepsScaled = true;
 
 		var squad = scene.Objects
 			.Where(o => o.Placement.IsPlayerSquad && !ReferenceEquals(o.Object, scene.PlayerObject?.Object))

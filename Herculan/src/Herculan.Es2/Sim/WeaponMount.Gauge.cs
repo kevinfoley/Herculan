@@ -1,5 +1,4 @@
 using HercWorks.Core.Data.Struct;
-using Herculan.Engine.Numerics;
 
 namespace Herculan.Es2.Sim;
 
@@ -76,7 +75,7 @@ public sealed partial class WeaponMount {
 	/// <para><b>Moved, deliberately.</b> The original does this inside
 	/// <c>WeaponMount_PushAmmoGaugeState</c> (<c>0040f330</c>), the gauge-state push, which runs per
 	/// frame and only for the machine whose cockpit is on screen. It is per-tick state driven by
-	/// <see cref="SimMath.IntegrateRateOverTick"/>, so it belongs on the tick; the visible result for
+	/// <see cref="SimClock.IntegrateRateOverTick"/>, so it belongs on the tick; the visible result for
 	/// the piloted machine is the same, and an AI machine's unread display figure now decays too.</para>
 	/// </summary>
 	private void AmmoGaugeDecayTick() {
@@ -86,7 +85,7 @@ public sealed partial class WeaponMount {
 
 		int floor = ChargeTarget << 8;
 		if (floor < Charge) {
-			Charge -= (short)SimMath.IntegrateRateOverTick(AmmoGaugeDecayRate);
+			Charge -= (short)SimClock.IntegrateRateOverTick(AmmoGaugeDecayRate);
 		}
 
 		if (Charge < floor) {

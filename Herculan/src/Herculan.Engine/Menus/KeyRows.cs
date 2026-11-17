@@ -32,7 +32,7 @@ sealed record KeyRow(KeySection Section, string Description, ImmutableArray<KeyR
 ///
 /// <para>Where the retail doc gives a line one key of several the map binds, as the arrows over their keypad twins, it
 /// shows that one. A line may restate another section's action with what it does there, as the outside view's arrows,
-/// which are the piloting actions. Every action of <see cref="KeyMap.Retail"/> is on at least one line.</para>
+/// which are the piloting actions. Every action of <see cref="KeyMap.Default"/> is on at least one line.</para>
 /// </summary>
 static class KeyRows {
 	public static readonly ImmutableArray<KeyRow> All = Build();

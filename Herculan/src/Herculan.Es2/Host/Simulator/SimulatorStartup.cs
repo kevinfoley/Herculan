@@ -1,5 +1,4 @@
 using HercWorks.Core.Io;
-using Herculan.Engine.Numerics;
 using Herculan.Es2.Cockpit;
 using Herculan.Es2.Install;
 using HercWorks.Core.Data.File.Cfg;
@@ -13,6 +12,7 @@ using Herculan.Es2.Content;
 using Herculan.Es2.Input;
 using Herculan.Es2.Scene;
 using Herculan.Es2.Shell;
+using Herculan.Es2.Sim;
 using Herculan.Es2.World;
 
 namespace Herculan.Es2.Host.Simulator;
@@ -186,8 +186,8 @@ static class SimulatorStartup {
 		}
 
 		// A replay applies the original's per-tick steps once per frame, as the recording did — see
-		// SimMath.PerTickStepsScaled.
-		SimMath.PerTickStepsScaled = tapePlayer == null;
+		// SimClock.PerTickStepsScaled.
+		SimClock.PerTickStepsScaled = tapePlayer == null;
 		// The two gates the original's own panel reads. SfxManager being null greys its first four rows, and
 		// VoiceArchivePresent (0049e9cd) -- which Voice_ArchiveExists (00459d6c) sets by trying to fopen the localised
 		// vol\simvoic?.vol under the install, not the disc -- is what lets the two message rows be stepped at all.

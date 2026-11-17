@@ -191,7 +191,7 @@ public sealed class MeteorObject {
 		}
 
 		if (AnimationFrame < frameCount) {
-			OpenProgress += SimMath.IntegrateRateOverTick(OpenRate);
+			OpenProgress += SimClock.IntegrateRateOverTick(OpenRate);
 			return false;
 		}
 

@@ -88,7 +88,7 @@ public sealed class TargetingPodLock {
 
 	/// <summary>
 	/// What <see cref="_decayTimer"/> reloads with on each expiry — the original's literal 5000,
-	/// which in <see cref="SimMath.TimerCountDown"/>'s unit is about 2.4 seconds rather than five.
+	/// which in <see cref="SimClock.TimerCountDown"/>'s unit is about 2.4 seconds rather than five.
 	/// </summary>
 	public const int DecayReload = 5000;
 
@@ -160,7 +160,7 @@ public sealed class TargetingPodLock {
 		// past the threshold holds a component for as long as the player keeps the target inside the
 		// resolver's range, and no longer. The counter is never initialised, so the first frame that
 		// reaches this expires immediately.
-		if (ComponentDamage > DecayDamage && SimMath.TimerCountDown(ref _decayTimer) == 0) {
+		if (ComponentDamage > DecayDamage && SimClock.TimerCountDown(ref _decayTimer) == 0) {
 			_decayTimer = DecayReload;
 			Cursor = NoComponent;
 		}

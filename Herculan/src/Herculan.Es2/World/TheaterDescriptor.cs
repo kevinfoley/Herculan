@@ -45,7 +45,7 @@ public sealed class TheaterDescriptor {
 
 	/// <summary>
 	/// The whole parsed file, for the fields this class does not lift out itself — the sky
-	/// backdrop's eight shorts among them (<see cref="Engine.Content.SkyGradient"/>).
+	/// backdrop's eight shorts among them (<see cref="Content.SkyGradient"/>).
 	/// </summary>
 	public WorldData File { get; }
 

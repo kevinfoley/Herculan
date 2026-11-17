@@ -152,7 +152,7 @@ public class DifficultyTests {
 		var shot = new Projectile(round, Record(), Muzzle, (0, 0, 0), ownerSpeed: 0,
 			power: Q10Unit / 2, owner: attacker, random: world.Random);
 
-		SimMath.TickDelta = SimMath.VanillaTickDelta;
+		SimClock.TickDelta = SimClock.VanillaTickDelta;
 		shot.Tick(world);
 
 		Assert.Equal(0, victim.DirectDamage);

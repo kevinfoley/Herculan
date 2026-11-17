@@ -1,4 +1,4 @@
-namespace Herculan.Engine.View;
+namespace Herculan.Es2.View;
 
 /// <summary>
 /// The screen of the cockpit view manager's view 4, in the 640x480 mode's device pixels: the 3D rect

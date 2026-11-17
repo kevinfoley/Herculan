@@ -1,4 +1,3 @@
-using Herculan.Engine.Numerics;
 using Herculan.Es2.Input;
 using Herculan.Es2.Sim;
 
@@ -244,7 +243,7 @@ public sealed class SimulationStepper {
 		}
 
 		_input.TakeLiveKeys();
-		SimMath.PerTickStepsScaled = true;
+		SimClock.PerTickStepsScaled = true;
 		_tickAccumulator = 0;
 		_tape.DeferredFrame = null;
 	}

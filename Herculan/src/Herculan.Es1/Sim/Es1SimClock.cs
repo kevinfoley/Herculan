@@ -6,7 +6,7 @@ namespace Herculan.Es1.Sim;
 /// ES1's simulation clock: the tick length <c>Time_InitSimClock</c> (<c>ES1DBSIM 00063e64</c>) sets up and
 /// <c>Time_BeginSimTick</c> (<c>00063f40</c>) measures each frame from the PC timer's interrupts, and the helpers that
 /// scale by it (docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40). The simulation
-/// owns one; ES2's tick is <see cref="SimMath.TickDelta"/>.
+/// owns one; ES2's tick is its own <c>SimClock.TickDelta</c>.
 ///
 /// <para>The host has no timer interrupt. <see cref="AdvanceHostFrame"/> counts the interrupts a host frame's real
 /// time holds, at <see cref="TicksPerSecond"/> a second, the rate the simulator derives from the divisor (the
@@ -209,7 +209,7 @@ public sealed class Es1SimClock {
 	public short IntegrateRateOverTick2(short rate) => WrapToTick(SimMath.Q8MultiplyRounded(rate, TickDelta2));
 
 	/// <summary>
-	/// <c>Math_CountdownTimerTick</c> (<c>0006410c</c>): ES2's <see cref="SimMath.CountdownTimerTick"/> with
+	/// <c>Math_CountdownTimerTick</c> (<c>0006410c</c>): ES2's <c>SimClock.CountdownTimerTick</c> with
 	/// <see cref="TickDelta"/>; one count is 100/256 ms (docs/es1/simulation/fixed-point-math.md#helpers-that-match).
 	/// </summary>
 	public short CountdownTimerTick(ref short timer) {
@@ -220,7 +220,7 @@ public sealed class Es1SimClock {
 		return timer;
 	}
 
-	/// <summary><c>Timer_CountDown</c> (<c>00064178</c>): ES2's <see cref="SimMath.TimerCountDown"/> with <see cref="TickDelta"/>.</summary>
+	/// <summary><c>Timer_CountDown</c> (<c>00064178</c>): ES2's <c>SimClock.TimerCountDown</c> with <see cref="TickDelta"/>.</summary>
 	public int TimerCountDown(ref int timer) {
 		timer -= TickDelta;
 		if (timer < 0) {

@@ -125,7 +125,7 @@ sealed class CockpitTextures : IDisposable {
 /// majority — where it did not change: the scene half is two texture handles, but the canopy half re-uploads
 /// three full-panel textures.
 /// </summary>
-sealed class DamageFlash(MissionScene scene, CockpitArt? art, SceneRenderer renderer, CockpitTextures textures) {
+sealed class DamageFlash(MissionScene scene, CockpitArt? art, SceneRenderer renderer, SkyBackdrop sky, CockpitTextures textures) {
 	/// <summary>Whether the scene and the canopy are currently showing the theater's impact palette.</summary>
 	public bool Shown { get; private set; }
 
@@ -147,7 +147,7 @@ sealed class DamageFlash(MissionScene scene, CockpitArt? art, SceneRenderer rend
 		// The sky and the fog colour come out of the palette too, and in an open zone they are most of
 		// what is on screen — see Scene.ImpactFlash.
 		if (scene.Models.ImpactFlash is { } flash) {
-			(active ? flash.Atmosphere : scene.Models.Atmosphere).ApplyTo(renderer);
+			(active ? flash.Atmosphere : scene.Models.Atmosphere).ApplyTo(renderer, sky);
 		}
 
 		textures.ShowFlash(active);

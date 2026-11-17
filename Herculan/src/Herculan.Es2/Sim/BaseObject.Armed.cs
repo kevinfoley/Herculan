@@ -61,7 +61,7 @@ public sealed partial class BaseObject {
 
 		DeathSequenceTick(world);
 
-		if (SimMath.CountdownTimerTick(ref _retargetTimer) == 0) {
+		if (SimClock.CountdownTimerTick(ref _retargetTimer) == 0) {
 			Target = AiTargeting.SelectTarget(world, this,
 				TargetFilter.RejectOwnClass | TargetFilter.IgnoreBearing);
 			_retargetTimer = RetargetInterval;
@@ -98,12 +98,12 @@ public sealed partial class BaseObject {
 
 		var (elevationError, traverseError) = AimTurret(world, aim);
 
-		if (SimMath.CountdownTimerTick(ref _fireWindowTimer) == 0) {
+		if (SimClock.CountdownTimerTick(ref _fireWindowTimer) == 0) {
 			_fireWindowOpen = !_fireWindowOpen;
 			_fireWindowTimer = FireWindowInterval;
 		}
 
-		if (SimMath.CountdownTimerTick(ref _refireTimer) != 0 || !_fireWindowOpen
+		if (SimClock.CountdownTimerTick(ref _refireTimer) != 0 || !_fireWindowOpen
 				|| (ushort)(elevationError + FiringError) >= FiringError * 2
 				|| (ushort)(traverseError + FiringError) >= FiringError * 2
 				|| range >= LeadRange) {
@@ -172,7 +172,7 @@ public sealed partial class BaseObject {
 	/// </summary>
 	private void StepMuzzleFlash() {
 		if (_animCellTimer == 0 || Type.AnimCellSequence < 0
-				|| SimMath.CountdownTimerTick(ref _animCellTimer) != 0) {
+				|| SimClock.CountdownTimerTick(ref _animCellTimer) != 0) {
 			return;
 		}
 
@@ -189,7 +189,7 @@ public sealed partial class BaseObject {
 
 	/// <summary>
 	/// <c>base+0x21d</c>'s reload — how often the turret looks for a target. Timer units, not
-	/// milliseconds (<see cref="SimMath.CountdownTimerTick"/>): about 4.9 seconds.
+	/// milliseconds (<see cref="SimClock.CountdownTimerTick"/>): about 4.9 seconds.
 	/// </summary>
 	private const short RetargetInterval = 10000;
 
@@ -208,7 +208,7 @@ public sealed partial class BaseObject {
 	/// <summary>
 	/// <c>base+0x219</c>'s reload, the pair at <c>004973e0</c> — both entries are 10000, so the
 	/// firing window is open and shut for equal spells. In timer units that is about 4.9 seconds
-	/// each, <b>not</b> ten: see <see cref="SimMath.CountdownTimerTick"/>.
+	/// each, <b>not</b> ten: see <see cref="SimClock.CountdownTimerTick"/>.
 	/// </summary>
 	private const short FireWindowInterval = 10000;
 

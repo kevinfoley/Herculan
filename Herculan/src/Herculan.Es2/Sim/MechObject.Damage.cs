@@ -103,7 +103,7 @@ public sealed partial class MechObject {
 	/// </summary>
 	public short DamageWindowTimer { get; private set; }
 
-	/// <summary>The damage window, in <see cref="SimMath.CountdownTimerTick"/>'s unit — about two seconds.</summary>
+	/// <summary>The damage window, in <see cref="SimClock.CountdownTimerTick"/>'s unit — about two seconds.</summary>
 	public const short DamageWindowReload = 4000;
 
 	/// <summary>

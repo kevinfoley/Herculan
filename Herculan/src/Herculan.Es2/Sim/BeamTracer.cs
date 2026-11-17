@@ -170,7 +170,7 @@ public sealed class BeamTracer {
 	/// </summary>
 	/// <returns>Whether the tracer has expired and should be freed.</returns>
 	internal bool Tick() {
-		Life = (short)(Life - SimMath.TickDelta);
+		Life = (short)(Life - SimClock.TickDelta);
 		if (Life < 0) {
 			Life = 0;
 		}

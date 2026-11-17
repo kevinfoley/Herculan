@@ -207,9 +207,9 @@ public sealed partial class MechObject : IFlightBody {
 		if (!Immobilised) {
 			var velocity = FlightWorldVelocity;
 			Position = new Vec3i(
-				Position.X + SimMath.IntegrateRateOverTick((short)velocity.X),
-				Position.Y + SimMath.IntegrateRateOverTick((short)velocity.Y),
-				Position.Z + SimMath.IntegrateRateOverTick((short)velocity.Z));
+				Position.X + SimClock.IntegrateRateOverTick((short)velocity.X),
+				Position.Y + SimClock.IntegrateRateOverTick((short)velocity.Y),
+				Position.Z + SimClock.IntegrateRateOverTick((short)velocity.Z));
 		}
 
 		int airSpeed = FlightVelocity.Y;

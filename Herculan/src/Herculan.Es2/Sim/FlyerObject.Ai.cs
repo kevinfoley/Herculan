@@ -72,7 +72,7 @@ public sealed partial class FlyerObject {
 
 	/// <summary>
 	/// The refire delay — <c>flyer+0x21f</c>'s reload, in
-	/// <see cref="SimMath.CountdownTimerTick"/>'s unit: about three quarters of a second.
+	/// <see cref="SimClock.CountdownTimerTick"/>'s unit: about three quarters of a second.
 	/// </summary>
 	private const short RefireDelay = 0x5dc;
 
@@ -109,7 +109,7 @@ public sealed partial class FlyerObject {
 	private protected override void OnTargetChanged(SimObject? previous) => TargetChanged = true;
 
 	/// <summary>
-	/// <c>flyer+0x9d</c> — raised whenever <see cref="Target"/> changes. Set for the same reason
+	/// <c>flyer+0x9d</c> — raised whenever <see cref="SimObject.Target"/> changes. Set for the same reason
 	/// <see cref="MechObject.TargetChanged"/> is: the setter is the only place that can.
 	/// </summary>
 	public bool TargetChanged { get; set; }
@@ -174,7 +174,7 @@ public sealed partial class FlyerObject {
 		}
 
 		if (Behaviour.State is { SuppressesDwell: false }) {
-			SimMath.TimerCountDown(ref Behaviour.DwellCountdown);
+			SimClock.TimerCountDown(ref Behaviour.DwellCountdown);
 		}
 
 		if (Behaviour.State is { Moves: true } && Flight != null) {
@@ -250,7 +250,7 @@ public sealed partial class FlyerObject {
 	private bool PatrolThink(SimWorld world) {
 		FollowStep(world);
 
-		if (!IsFlightLeader || SimMath.CountdownTimerTick(ref _targetSweepTimer) != 0) {
+		if (!IsFlightLeader || SimClock.CountdownTimerTick(ref _targetSweepTimer) != 0) {
 			return false;
 		}
 
@@ -274,7 +274,7 @@ public sealed partial class FlyerObject {
 	private bool SearchDestroyThink(SimWorld world) {
 		FollowStep(world);
 
-		if (!IsFlightLeader || SimMath.CountdownTimerTick(ref _targetSweepTimer) != 0) {
+		if (!IsFlightLeader || SimClock.CountdownTimerTick(ref _targetSweepTimer) != 0) {
 			return false;
 		}
 
@@ -549,7 +549,7 @@ public sealed partial class FlyerObject {
 		if (_attackPhase != PhaseExtend && range < AttackRunRange
 				&& (ushort)(bearing + FiringError) < FiringError * 2
 				&& (ushort)(ElevationToward(aim) - Pitch + FiringError) < FiringError * 2
-				&& SimMath.CountdownTimerTick(ref _refireTimer) == 0) {
+				&& SimClock.CountdownTimerTick(ref _refireTimer) == 0) {
 			Shoot(world, range);
 			_refireTimer = RefireDelay;
 		}

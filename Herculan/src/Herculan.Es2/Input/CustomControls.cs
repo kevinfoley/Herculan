@@ -1,6 +1,6 @@
+using Herculan.Es2.Content;
 using System.Collections.Immutable;
 using HercWorks.Core.Data.File.Cfg;
-using Herculan.Engine.Content;
 using Herculan.Engine.Input;
 
 namespace Herculan.Es2.Input;

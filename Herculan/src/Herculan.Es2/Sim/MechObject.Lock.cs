@@ -1,4 +1,3 @@
-using Herculan.Engine.Numerics;
 using Herculan.Es2.World;
 
 namespace Herculan.Es2.Sim;
@@ -148,7 +147,7 @@ public sealed partial class MechObject {
 		}
 	}
 
-	/// <summary>Whether the given missile subtype currently holds lock on <see cref="Target"/>.</summary>
+	/// <summary>Whether the given missile subtype currently holds lock on <see cref="SimObject.Target"/>.</summary>
 	public bool MissileLocked(int missileType) => Weapons.Locked(missileType);
 
 	/// <summary>
@@ -285,7 +284,7 @@ public sealed partial class MechObject {
 			return;
 		}
 
-		if (SimMath.CountdownTimerTick(ref _lockTimer[missileType]) == 0
+		if (SimClock.CountdownTimerTick(ref _lockTimer[missileType]) == 0
 				&& !(blockedByEcm && EcmSpoofed)) {
 			Weapons.SetMissileLock(missileType);
 		}
@@ -352,7 +351,7 @@ public sealed partial class MechObject {
 			return false;
 		}
 
-		if (SimMath.CountdownTimerTick(ref _ecmRollTimer) != 0) {
+		if (SimClock.CountdownTimerTick(ref _ecmRollTimer) != 0) {
 			return false;
 		}
 

@@ -369,7 +369,7 @@ public sealed partial class MechObject {
 	/// <para>All of it is 16-bit and wraps, as the original's word-sized adds do.</para>
 	/// </summary>
 	private void PowerTick(SimWorld world) {
-		EnergyPool = unchecked((short)(EnergyPool + SimMath.IntegrateRateOverTick(ReactorOutputRate)));
+		EnergyPool = unchecked((short)(EnergyPool + SimClock.IntegrateRateOverTick(ReactorOutputRate)));
 
 		short budget = unchecked((short)(EnergyPool - EnergyPoolReserve));
 		budget = ChargeWeapons(budget, world);

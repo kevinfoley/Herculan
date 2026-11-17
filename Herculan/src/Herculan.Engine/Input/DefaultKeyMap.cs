@@ -3,12 +3,16 @@ using Silk.NET.Input;
 namespace Herculan.Engine.Input;
 
 /// <summary>
-/// ES2's keys, as the handlers read them: docs/retail/key-bindings.md, less its developer keys (DeveloperKeys reads
-/// those itself), and the keyboard keys of docs/herculan/herculan-key-bindings.md. The arrows and the keypad's are the
-/// same scancodes to retail (<see cref="Scancodes.KeysOf"/>), so each such action has both, the one the manual names
-/// first.
+/// The default keys, which both games start from: Earthsiege 2's, as its handlers read them, docs/retail/key-bindings.md
+/// less its developer keys (DeveloperKeys reads those itself), and the keyboard keys of
+/// docs/herculan/herculan-key-bindings.md. The arrows and the keypad's are the same scancodes to retail
+/// (<see cref="Scancodes.KeysOf"/>), so each such action has both, the one the manual names first.
+///
+/// <para>It stays in the core rather than in ES2's code because ES1 shares most of it: ES1's keys are Earthsiege 2's
+/// but for a few (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8), and ES1's Custom profile
+/// takes every key it does not give differently from here.</para>
 /// </summary>
-internal static class RetailKeyMap {
+internal static class DefaultKeyMap {
 	public static KeyMap Build() {
 		var bindings = new List<KeyBinding>();
 		var section = KeySection.Piloting;

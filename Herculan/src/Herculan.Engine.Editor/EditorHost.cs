@@ -168,6 +168,7 @@ public sealed class EditorHost {
 
 	private GL? _gl;
 	private SceneRenderer? _renderer;
+	private SkyBackdrop? _sky;
 	private GroundLayerPass? _ground;
 	private WireframeRenderer? _wireframe;
 	private ScaledImGui? _imgui;
@@ -338,7 +339,8 @@ public sealed class EditorHost {
 
 	private void OnLoad(GL gl, IInputContext input) {
 		_gl = gl;
-		_renderer = new SceneRenderer(gl, editorGrid: true);
+		_sky = new SkyBackdrop(gl);
+		_renderer = new SceneRenderer(gl, editorGrid: true) { Backdrop = _sky };
 		_ground = new GroundLayerPass(gl, _renderer);
 		_wireframe = new WireframeRenderer(gl);
 		_heightmaps = new ZoneHeightmaps(gl, _launch.SimulatorContent);
@@ -550,7 +552,8 @@ public sealed class EditorHost {
 	private Vector2 Viewport => new(_window.FramebufferSize.X, _window.FramebufferSize.Y);
 
 	private MissionDrawables Upload(GL gl, SceneRenderer renderer, EditorMission mission) {
-		var drawables = new MissionDrawables(gl, renderer, mission, _settings);
+		var sky = _sky ?? throw new InvalidOperationException("The window has not loaded.");
+		var drawables = new MissionDrawables(gl, renderer, sky, mission, _settings);
 		mission.Sync.Moved += drawables.Move;
 		mission.Leveller.Changed += drawables.UploadTerrain;
 		mission.Sync.Added += drawables.Add;
@@ -897,6 +900,7 @@ public sealed class EditorHost {
 		_drawables?.Dispose();
 		_ground?.Dispose();
 		_renderer?.Dispose();
+		_sky?.Dispose();
 		_wireframe?.Dispose();
 		_heightmaps?.Dispose();
 	}

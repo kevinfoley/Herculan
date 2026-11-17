@@ -189,7 +189,7 @@ internal static class FlightPhysics {
 			short rate = (short)SimMath.Q8Multiply(ThrottleRate, throttleAxis);
 			if (rate != 0) {
 				state.Throttle =
-					ClampThrottle(state.Throttle + SimMath.IntegrateRateOverTick(rate));
+					ClampThrottle(state.Throttle + SimClock.IntegrateRateOverTick(rate));
 			}
 		}
 
@@ -200,7 +200,7 @@ internal static class FlightPhysics {
 		demand -= SimMath.Q10Multiply(body.Pitch < 0 ? DiveSpeedGain : ClimbSpeedGain, body.Pitch);
 
 		int airSpeed = state.BodyVelocity.Y;
-		MoveToward(ref airSpeed, demand, SimMath.IntegrateRateOverTick(fm.ThrustResponse));
+		MoveToward(ref airSpeed, demand, SimClock.IntegrateRateOverTick(fm.ThrustResponse));
 
 		// --- Sideslip drag ----------------------------------------------------------------------
 		// The sideways and vertical components of body velocity are taken into world space, scaled
@@ -223,9 +223,9 @@ internal static class FlightPhysics {
 			SimMath.Q10Multiply(fm.LateralDrag, slip.Y),
 			slip.Z);
 
-		lateral -= SimMath.IntegrateRateOverTick((short)drag.X);
-		airSpeed -= SimMath.IntegrateRateOverTick((short)drag.Y);
-		vertical -= SimMath.IntegrateRateOverTick((short)drag.Z);
+		lateral -= SimClock.IntegrateRateOverTick((short)drag.X);
+		airSpeed -= SimClock.IntegrateRateOverTick((short)drag.Y);
+		vertical -= SimClock.IntegrateRateOverTick((short)drag.Z);
 
 		state.BodyVelocity = new Vec3i(lateral, airSpeed, vertical);
 		state.WorldVelocity = frame.RotateVector(lateral, airSpeed, vertical);
@@ -351,11 +351,11 @@ internal static class FlightPhysics {
 			- SimMath.Q10Multiply(fm.AngularDamping, state.YawRate));
 
 		state.PitchRate = ClampSymmetric(
-			(short)(state.PitchRate + SimMath.IntegrateRateOverTick(pitchAccel)), fm.MaxPitchRate);
+			(short)(state.PitchRate + SimClock.IntegrateRateOverTick(pitchAccel)), fm.MaxPitchRate);
 		state.RollRate = ClampSymmetric(
-			(short)(state.RollRate + SimMath.IntegrateRateOverTick(rollAccel)), fm.MaxRollRate);
+			(short)(state.RollRate + SimClock.IntegrateRateOverTick(rollAccel)), fm.MaxRollRate);
 		state.YawRate = ClampSymmetric(
-			(short)(state.YawRate + SimMath.IntegrateRateOverTick(yawAccel)), fm.MaxYawRate);
+			(short)(state.YawRate + SimClock.IntegrateRateOverTick(yawAccel)), fm.MaxYawRate);
 
 		// --- Attitude -----------------------------------------------------------------------------
 		// The rotation is integrated as a *matrix*, from the mean of this tick's rates and last
@@ -363,9 +363,9 @@ internal static class FlightPhysics {
 		// flyable through a vertical climb, where integrating the three angles directly would
 		// gimbal — and it is the one place in the simulation that composes a rotation this way.
 		var step = Transform3.FromEuler(
-			(short)SimMath.IntegrateRateOverTick(Mean(previousPitchRate, state.PitchRate)),
-			(short)SimMath.IntegrateRateOverTick(Mean(previousRollRate, state.RollRate)),
-			(short)SimMath.IntegrateRateOverTick(Mean(previousYawRate, state.YawRate)));
+			(short)SimClock.IntegrateRateOverTick(Mean(previousPitchRate, state.PitchRate)),
+			(short)SimClock.IntegrateRateOverTick(Mean(previousRollRate, state.RollRate)),
+			(short)SimClock.IntegrateRateOverTick(Mean(previousYawRate, state.YawRate)));
 
 		var (pitch, rolled, heading) = Transform3.Concat(step, frame).ToEuler();
 		body.Pitch = pitch;
@@ -373,7 +373,7 @@ internal static class FlightPhysics {
 
 		// The bank-driven turn goes on top of the integrated attitude rather than through it, which
 		// is why a banked RAZOR turns about the world's vertical axis and not about its own.
-		body.Heading = (heading + SimMath.IntegrateRateOverTick((short)state.BankTurnRate)) & 0xffff;
+		body.Heading = (heading + SimClock.IntegrateRateOverTick((short)state.BankTurnRate)) & 0xffff;
 		body.FlightAttitudeChanged();
 
 		var settledFrame = body.FlightFrame;

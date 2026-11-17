@@ -1,7 +1,8 @@
 ﻿using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Io.Transform.Dbsim;
+using Herculan.Engine.Content;
 
-namespace Herculan.Engine.Content;
+namespace Herculan.Es2.Content;
 
 /// <summary>
 /// One herc's <c>vue\&lt;HERC&gt;.VUE</c> — where each cockpit view's window sits inside the cockpit

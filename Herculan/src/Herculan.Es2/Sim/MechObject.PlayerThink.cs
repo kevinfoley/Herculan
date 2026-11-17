@@ -1,4 +1,3 @@
-using Herculan.Engine.Numerics;
 using Herculan.Es2.Content;
 using Herculan.Es2.World;
 
@@ -117,7 +116,7 @@ public partial class MechObject {
 		if (group.OrderTarget is { Destroyed: false, AwaitingDeployment: false } subject
 				&& Position.ApproxDistanceTo(subject.Position) < DataLinkRange
 				&& InDataLinkArc(subject)) {
-			if (SimMath.TimerCountDown(ref _dataLinkCountdown) != 0) {
+			if (SimClock.TimerCountDown(ref _dataLinkCountdown) != 0) {
 				return;
 			}
 
@@ -178,7 +177,7 @@ public partial class MechObject {
 
 	/// <summary>
 	/// How long the link has to be held before each of the four lines — the table at
-	/// <c>0049a318</c>, read straight, in <see cref="SimMath.TimerCountDown"/>'s unit rather than
+	/// <c>0049a318</c>, read straight, in <see cref="SimClock.TimerCountDown"/>'s unit rather than
 	/// milliseconds. <b>The delay is written before the line it precedes is posted</b>,
 	/// so entry <i>n</i> is the wait between line <i>n</i> and line <i>n+1</i>. The third entry is
 	/// negative and kept as retail stores it; the countdown clamps it to no wait. What that does to

@@ -2,7 +2,7 @@ using System.Numerics;
 using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.File.Dyn;
 
-namespace Herculan.Engine.Content;
+namespace Herculan.Es2.Content;
 
 /// <summary>
 /// The theater's sky backdrop — retail's <c>hzline</c>, the flat palette fills
@@ -27,8 +27,8 @@ public sealed class SkyGradient {
 	/// </summary>
 	public const int MaxBands = 32;
 
-	/// <summary>The original's focal length in its own pixels — <see cref="Render.Camera.FocalLengthPixels"/>.</summary>
-	private const float RetailFocalPixels = Render.Camera.FocalLengthPixels;
+	/// <summary>The original's focal length in its own pixels — <see cref="Engine.Render.Camera.FocalLengthPixels"/>.</summary>
+	private const float RetailFocalPixels = Engine.Render.Camera.FocalLengthPixels;
 
 	private SkyGradient(Vector3[] bands, int bandHeight, int horizonGap, int lineOffset) {
 		Bands = bands;

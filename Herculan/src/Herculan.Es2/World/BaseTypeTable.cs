@@ -192,7 +192,7 @@ public readonly record struct BaseComponentType(
 /// </param>
 /// <param name="AnimCellInterval">
 /// <c>+0x26</c> — how long one frame of <paramref name="AnimCellSequence"/> holds, in
-/// <see cref="Engine.Numerics.SimMath.CountdownTimerTick"/>'s unit rather than milliseconds: the 256 every
+/// <see cref="Sim.SimClock.CountdownTimerTick"/>'s unit rather than milliseconds: the 256 every
 /// animated type states is a frame every 125 ms. Reloaded into the structure's own countdown each
 /// time it expires.
 /// </param>

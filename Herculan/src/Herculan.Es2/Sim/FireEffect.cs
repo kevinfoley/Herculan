@@ -98,7 +98,7 @@ public sealed class FireEffect {
 	/// counts with <c>DAT_006b4fbc</c>.</para>
 	/// </summary>
 	internal bool Tick(SimWorld world) {
-		if (SimMath.CountdownTimerTick(ref _timer) == 0) {
+		if (SimClock.CountdownTimerTick(ref _timer) == 0) {
 			_timer = FrameInterval;
 
 			if (_frameCount > 0) {

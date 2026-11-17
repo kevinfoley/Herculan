@@ -205,7 +205,7 @@ public sealed partial class MechObject {
 		short meanFrom = rate;
 
 		if (SaturatingAbs(rate) < SaturatingAbs(target)) {
-			short step = (short)SimMath.IntegrateRateOverTick(accel);
+			short step = (short)SimClock.IntegrateRateOverTick(accel);
 			SimMath.RateLimitedMoveToward(ref rate, target, step);
 		} else {
 			// Slowing down is not rate-limited, and neither is turning round: both land on the
@@ -214,7 +214,7 @@ public sealed partial class MechObject {
 			meanFrom = target;
 		}
 
-		short moved = (short)(angle + SimMath.IntegrateRateOverTick((short)((meanFrom + rate) >> 1)));
+		short moved = (short)(angle + SimClock.IntegrateRateOverTick((short)((meanFrom + rate) >> 1)));
 		angle = moved >= limitMax ? limitMax : moved <= limitMin ? limitMin : moved;
 	}
 
@@ -387,7 +387,7 @@ public sealed partial class MechObject {
 				TrackWorldPoint(world, target.AimPoint);
 				_centeringTorso = false;
 				tracked = true;
-			} else if (Target == null && SimMath.CountdownTimerTick(ref _autoTrackIdle) == 0) {
+			} else if (Target == null && SimClock.CountdownTimerTick(ref _autoTrackIdle) == 0) {
 				// ATT left holding nothing brings the turret home once its timer runs out, and does
 				// not clear the latch: selecting again puts the turret straight back on a target.
 				_centeringTorso = true;

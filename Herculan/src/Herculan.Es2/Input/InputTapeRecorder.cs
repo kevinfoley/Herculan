@@ -49,7 +49,7 @@ public sealed class InputTapeRecorder : IDisposable {
 	/// The <c>SimTickDelta</c> of the last frame that ticked, which a frame recorded under a modal panel
 	/// repeats — the panel's loop never refreshes it.
 	/// </summary>
-	public short LastTickDelta { get; private set; } = Engine.Numerics.SimMath.VanillaTickDelta;
+	public short LastTickDelta { get; private set; } = Sim.SimClock.VanillaTickDelta;
 
 	/// <summary>
 	/// Starts a tape at <paramref name="path"/> and writes its bundle: the mission file itself, its

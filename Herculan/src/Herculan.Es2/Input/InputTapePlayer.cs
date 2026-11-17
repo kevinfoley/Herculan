@@ -316,7 +316,7 @@ public sealed class InputTapePlayer {
 
 			short delta = frames[start].TickDelta;
 			if (i - start >= MinimumPanelSpan && delta != TickDeltaClamp
-				&& delta != Engine.Numerics.SimMath.VanillaTickDelta) {
+				&& delta != Sim.SimClock.VanillaTickDelta) {
 				spans.Add((start, i - 1));
 			}
 

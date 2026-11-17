@@ -244,8 +244,6 @@ public sealed class GroundHighlight {
 public sealed class SceneRenderer : IDisposable {
 	private readonly GL _gl;
 	private readonly ShaderProgram _shader;
-	private readonly ShaderProgram _skyShader;
-	private readonly uint _skyVertexArray;
 	private readonly bool _hasGrid;
 	private GpuTexture? _shadeRampTexture;
 	private GpuTexture? _paletteRampTexture;
@@ -288,8 +286,6 @@ public sealed class SceneRenderer : IDisposable {
 		_shader = editorGrid
 			? ShaderProgram.Load(gl, "Scene.glsl", "EDITOR_GRID")
 			: ShaderProgram.Load(gl, "Scene.glsl");
-		_skyShader = ShaderProgram.Load(gl, "Sky.glsl");
-		_skyVertexArray = gl.GenVertexArray();
 
 		_gl.Enable(EnableCap.DepthTest);
 		_gl.DepthFunc(DepthFunction.Less);
@@ -502,20 +498,14 @@ public sealed class SceneRenderer : IDisposable {
 	public Vector3 FogColor { get; set; } = new(0.55f, 0.60f, 0.68f);
 
 	/// <summary>
-	/// The theater's sky backdrop, banded out of its own palette — see
-	/// <see cref="Content.SkyGradient"/>. Null draws a flat <see cref="SkyColor"/> instead.
-	/// </summary>
-	public Content.SkyGradient? Sky { get; set; }
-
-	/// <summary>
-	/// A game's own backdrop, painted in place of <see cref="Sky"/> at the same point of every pass: after the
-	/// viewport is set and before any geometry. Null paints <see cref="Sky"/>.
+	/// A game's own backdrop, painted at the same point of every pass: after the viewport is set and before any
+	/// geometry. Null paints nothing, which leaves <see cref="SkyColor"/>.
 	/// </summary>
 	public ISceneBackdrop? Backdrop { get; set; }
 
 	/// <summary>
-	/// Flat fallback sky, used to clear the framebuffer and drawn instead of the gradient when
-	/// <see cref="Sky"/> is null.
+	/// Flat fallback sky, used to clear the framebuffer, and all the sky there is where <see cref="Backdrop"/> paints
+	/// none.
 	///
 	/// <para>Deliberately <b>not</b> <see cref="FogColor"/> — the sky and the
 	/// colour distant terrain fades into are separate things in the original, which match in seven
@@ -680,7 +670,7 @@ public sealed class SceneRenderer : IDisposable {
 
 	/// <summary>
 	/// Starts a pass into the viewport sub-rect, as <see cref="Render"/> does before it draws: sets the viewport, paints the
-	/// backdrop or the sky, and sets every scene-program uniform that does not change from item to item, with
+	/// backdrop, and sets every scene-program uniform that does not change from item to item, with
 	/// <paramref name="projection"/> as the pass's own (<see cref="PassProjection"/>).
 	/// </summary>
 	public void BeginPass(Camera camera, Matrix4x4 projection,
@@ -688,11 +678,7 @@ public sealed class SceneRenderer : IDisposable {
 		_passProjection = projection;
 		_gl.Viewport(viewportX, viewportY, (uint)System.Math.Max(viewportWidth, 1), (uint)System.Math.Max(viewportHeight, 1));
 
-		if (Backdrop != null) {
-			Backdrop.Draw(camera, viewportX, viewportY, viewportWidth, viewportHeight);
-		} else {
-			DrawSky(camera, viewportX, viewportY, viewportWidth, viewportHeight);
-		}
+		Backdrop?.Draw(camera, viewportX, viewportY, viewportWidth, viewportHeight);
 
 		_shader.Use();
 		_shader.SetMatrix("uView", camera.ViewMatrix);
@@ -1103,53 +1089,12 @@ public sealed class SceneRenderer : IDisposable {
 		return false;
 	}
 
-	/// <summary>
-	/// Paints the panel's sky before any geometry goes into it, as <c>Scene_DrawTerrainPass</c> paints
-	/// the <c>hzline</c> before the terrain. Depth-testing and depth-writing are both off, so this is
-	/// a background fill rather than something at the far plane — the scene draws straight over it and
-	/// nothing needs the far plane to sit beyond the sky. The line and the band rule are
-	/// <see cref="Content.SkyGradient"/>'s; this hands them to Sky.glsl.
-	/// </summary>
-	private void DrawSky(Camera camera, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
-		if (Sky is not { } sky) {
-			return;
-		}
-
-		float focalPixels = camera.FocalPixelsFor(viewportHeight);
-		var centre = camera.PrincipalPointInWindow(viewportX, viewportY, viewportWidth, viewportHeight);
-		var line = sky.Place(unchecked((short)camera.Pitch), unchecked((short)camera.Roll), centre, focalPixels);
-
-		_skyShader.Use();
-		for (int band = 0; band < sky.Bands.Length; band++) {
-			_skyShader.SetVector3($"uBands[{band}]", sky.Bands[band]);
-		}
-
-		_skyShader.SetInt("uBandCount", sky.Bands.Length);
-		_skyShader.SetFloat("uBandHeight", sky.BandHeight);
-		_skyShader.SetFloat("uGap", sky.HorizonGap);
-		_skyShader.SetVector2("uLineMid", line.Mid);
-		_skyShader.SetVector2("uLineUp", line.Up);
-		_skyShader.SetFloat("uScale", line.Scale);
-		_skyShader.SetInt("uRolled", line.Rolled ? 1 : 0);
-		_skyShader.SetFloat("uCosRoll", line.CosRoll);
-
-		_gl.Disable(EnableCap.DepthTest);
-		_gl.DepthMask(false);
-		_gl.BindVertexArray(_skyVertexArray);
-		_gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
-		_gl.BindVertexArray(0);
-		_gl.DepthMask(true);
-		_gl.Enable(EnableCap.DepthTest);
-	}
-
 	public void Dispose() {
 		_shader.Dispose();
-		_skyShader.Dispose();
 		_shadeRampTexture?.Dispose();
 		_paletteRampTexture?.Dispose();
 		_impactShadeRampTexture?.Dispose();
 		_impactPaletteRampTexture?.Dispose();
 		Discs.Free(_gl);
-		_gl.DeleteVertexArray(_skyVertexArray);
 	}
 }

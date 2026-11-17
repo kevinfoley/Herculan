@@ -35,11 +35,12 @@ sealed class WorldPassRenderer : IDisposable {
 		_pilotMech = scene.PlayerMech;
 		_world = world;
 		_transient = transient;
-		Scene = new SceneRenderer(gl);
+		Sky = new SkyBackdrop(gl);
+		Scene = new SceneRenderer(gl) { Backdrop = Sky };
 
-		// How far this zone is visible and what it fades into, both off the zone and its theater rather
-		// than hand-picked — see Scene.Atmosphere. The sky is deliberately left alone.
-		scene.Models.Atmosphere.ApplyTo(Scene);
+		// How far this zone is visible, what it fades into and the sky behind it, all off the zone and its theater
+		// rather than hand-picked — see Scene.Atmosphere.
+		scene.Models.Atmosphere.ApplyTo(Scene, Sky);
 
 		// The lights impact effects claim, which the renderer selects out of per drawn object — see
 		// EffectLightSelection. Live slots only ever come from the simulation, so this is the whole of
@@ -74,6 +75,9 @@ sealed class WorldPassRenderer : IDisposable {
 	}
 
 	public SceneRenderer Scene { get; }
+
+	/// <summary>The theater's sky, <see cref="Scene"/>'s backdrop.</summary>
+	public SkyBackdrop Sky { get; }
 
 	/// <summary>
 	/// Whether this frame's passes leave the player's own machine out: while looking out of its cockpit, the
@@ -120,8 +124,7 @@ sealed class WorldPassRenderer : IDisposable {
 		gl.Enable(EnableCap.DepthTest);
 		gl.Disable(EnableCap.Blend);
 
-		var sky = Scene.Sky;
-		Scene.Sky = null;
+		Scene.Backdrop = null;
 		var terrainItem = _world.Terrain;
 		uint? terrainTexture = terrainItem.TextureHandle;
 		terrainItem.TextureHandle = null;
@@ -138,7 +141,7 @@ sealed class WorldPassRenderer : IDisposable {
 		_world.RestoreFrameDetail();
 		_transient.RestoreFrameView();
 
-		Scene.Sky = sky;
+		Scene.Backdrop = Sky;
 		gl.Disable(EnableCap.ScissorTest);
 	}
 
@@ -189,6 +192,7 @@ sealed class WorldPassRenderer : IDisposable {
 	public void Dispose() {
 		_draw.Dispose();
 		Scene.Dispose();
+		Sky.Dispose();
 		_wireframe.Dispose();
 		_beams?.Dispose();
 		_sprites.Dispose();

@@ -111,7 +111,7 @@ public sealed class Projectile {
 
 	/// <summary>
 	/// <c>+0x52</c>. How far the shot travels per 125 ms, as
-	/// <see cref="SimMath.IntegrateRateOverTick"/> reads a rate: the record's own <c>Speed</c> plus
+	/// <see cref="SimClock.IntegrateRateOverTick"/> reads a rate: the record's own <c>Speed</c> plus
 	/// the firing machine's travel speed at the instant it left the barrel.
 	/// </summary>
 	public short Speed { get; }
@@ -176,7 +176,7 @@ public sealed class Projectile {
 	internal bool Tick(SimWorld world) {
 		AnimationTick();
 
-		_age = (short)(_age + SimMath.IntegrateRateOverTick(BulletCatalog.AgeRate));
+		_age = (short)(_age + SimClock.IntegrateRateOverTick(BulletCatalog.AgeRate));
 		if (_record.Lifetime * BulletCatalog.AgeRate < _age) {
 			Expired = true;
 			return true;
@@ -184,7 +184,7 @@ public sealed class Projectile {
 
 		HomingTick();
 
-		short step = (short)SimMath.IntegrateRateOverTick(Speed);
+		short step = (short)SimClock.IntegrateRateOverTick(Speed);
 		RebuildFrame();
 		var advanced = _frame.TransformPoint(0, step, 0);
 
@@ -283,7 +283,7 @@ public sealed class Projectile {
 			return;
 		}
 
-		if (SimMath.CountdownTimerTick(ref _animationTimer) == 0) {
+		if (SimClock.CountdownTimerTick(ref _animationTimer) == 0) {
 			_animationTimer = _record.FrameInterval;
 			AnimationFrame++;
 		}
@@ -317,8 +317,8 @@ public sealed class Projectile {
 		SimMath.RateLimitedMoveToward(ref pitchRate, (short)(bearingX - _eulerX), HomingTurnRate);
 		SimMath.RateLimitedMoveToward(ref yawRate, (short)(bearingZ - _eulerZ), HomingTurnRate);
 
-		_eulerX = (short)(_eulerX + SimMath.IntegrateRateOverTick(pitchRate));
-		_eulerZ = (short)(_eulerZ + SimMath.IntegrateRateOverTick(yawRate));
+		_eulerX = (short)(_eulerX + SimClock.IntegrateRateOverTick(pitchRate));
+		_eulerZ = (short)(_eulerZ + SimClock.IntegrateRateOverTick(yawRate));
 		_frameStale = true;
 	}
 

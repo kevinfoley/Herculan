@@ -14,7 +14,7 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// The charge lasts this plus <c>rand(<see cref="RamChargeJitter"/>)</c>, in
-	/// <see cref="SimMath.CountdownTimerTick"/>'s unit rather than milliseconds: about 1.5 seconds
+	/// <see cref="SimClock.CountdownTimerTick"/>'s unit rather than milliseconds: about 1.5 seconds
 	/// before the jitter.
 	/// </summary>
 	private const int RamChargeTime = 3000;
@@ -55,7 +55,7 @@ public sealed partial class MechObject {
 	/// <see cref="RamTick"/>s start on the second.</para>
 	/// </summary>
 	private bool RamThink(SimWorld world) {
-		if (SimMath.TimerCountDown(ref _ramRetargetTimer) == 0) {
+		if (SimClock.TimerCountDown(ref _ramRetargetTimer) == 0) {
 			Target = AiTargeting.SelectTarget(world, this,
 				TargetFilter.IgnoreIncoming | TargetFilter.IgnoreCrowding);
 			_ramRetargetTimer = RamRetargetInterval;
@@ -70,7 +70,7 @@ public sealed partial class MechObject {
 		RamSteer(world, target);
 
 		if (!_ramCharging) {
-			if (SimMath.CountdownTimerTick(ref _ramPhaseTimer) == 0) {
+			if (SimClock.CountdownTimerTick(ref _ramPhaseTimer) == 0) {
 				_ramCharging = true;
 				_ramPhaseTimer = (short)(RamChargeTime + world.Random.NextBelow(RamChargeJitter));
 			}
@@ -93,7 +93,7 @@ public sealed partial class MechObject {
 
 		RamSteer(world, third);
 
-		if (SimMath.CountdownTimerTick(ref _ramPhaseTimer) == 0) {
+		if (SimClock.CountdownTimerTick(ref _ramPhaseTimer) == 0) {
 			_ramCharging = false;
 			_ramPhaseTimer = (short)(RamApproachTime + world.Random.NextBelow(RamApproachJitter));
 		}

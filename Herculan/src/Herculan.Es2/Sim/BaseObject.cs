@@ -493,7 +493,7 @@ public sealed partial class BaseObject : SimObject {
 			return;
 		}
 
-		if (SimMath.CountdownTimerTick(ref _animCellTimer) != 0) {
+		if (SimClock.CountdownTimerTick(ref _animCellTimer) != 0) {
 			return;
 		}
 
@@ -547,7 +547,7 @@ public sealed partial class BaseObject : SimObject {
 		root?.WriteRoot(Transform3.Identity);
 
 		// Q8(SimTickDelta, 100), the same animation-time-per-sim-time constant the mech passes.
-		shape.StepAnimation((short)SimMath.IntegrateRateOverTick(AnimationTimeRate));
+		shape.StepAnimation((short)SimClock.IntegrateRateOverTick(AnimationTimeRate));
 
 		if (root == null) {
 			return;

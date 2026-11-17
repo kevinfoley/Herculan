@@ -47,7 +47,7 @@ public sealed partial class BaseObject {
 		for (int i = 0; i < Type.Components.Length; i++) {
 			if (_deathStage[i] == 0
 					|| StructureDeathSequence.At(Type.Components[i].DestroyedEffect) is not { } sequence
-					|| SimMath.CountdownTimerTick(ref _deathTimer[i]) != 0) {
+					|| SimClock.CountdownTimerTick(ref _deathTimer[i]) != 0) {
 				continue;
 			}
 

@@ -33,7 +33,7 @@ public sealed class PlayerTrail {
 	public void Record(SimObject player) {
 		_positions[_cursor] = player.Position;
 		_rotations[_cursor] = (player.Pitch, player.Roll, (short)player.Heading);
-		_lengths[_cursor] = SimMath.IntegrateRateOverTick(FrameRate);
+		_lengths[_cursor] = SimClock.IntegrateRateOverTick(FrameRate);
 		_cursor = (_cursor + 1) % Length;
 	}
 

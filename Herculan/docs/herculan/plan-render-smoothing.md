@@ -8,7 +8,7 @@ This is a plan, not a record of something built. Nothing here is implemented.
 
 ## Where rendering stands
 
-- The simulator runs a fixed-step accumulator (`Cockpit/SimulationStepper.cs`, called from `SimulatorFrame.Update`): `SimWorld.Tick` at `SimWorld.TicksPerSecond` = 25, with `SimMath.TickDelta` pinned to 81. Retail ticks and renders in the same 40 ms loop (`Time_BeginSimTick`, `004677bc`); see [`../retail/rendering/dts-node-posing.md`](../retail/rendering/dts-node-posing.md#evaluation-cadence--per-tick-not-per-rendered-frame).
+- The simulator runs a fixed-step accumulator (`Cockpit/SimulationStepper.cs`, called from `SimulatorFrame.Update`): `SimWorld.Tick` at `SimWorld.TicksPerSecond` = 25, with `SimClock.TickDelta` pinned to 81. Retail ticks and renders in the same 40 ms loop (`Time_BeginSimTick`, `004677bc`); see [`../retail/rendering/dts-node-posing.md`](../retail/rendering/dts-node-posing.md#evaluation-cadence--per-tick-not-per-rendered-frame).
 - After the tick loop, render state is copied straight off the sim, so a frame shows the latest whole tick. Every path goes through a small number of places, and this plan depends on keeping it that way:
   - `WorldDrawItems`' movers → `MissionScene.TransformOf` → `SimObject.WorldFrame`
   - `WorldDrawItems`' posed parts → `MissionScene.PosedTransformOf` → `WorldFrame` × `NodeTransform`
@@ -67,7 +67,7 @@ Stage B replaces "blend previous → current" with "blend current → predicted 
    | Projectiles, debris, drop pods | Straight-line or ballistic step | trivial |
 
    An object with no predictor falls back to stage A.
-4. **No side effects.** A predictor must not draw RNG, play sounds, add to or remove from pools, raise mission events, write contacts, or leave `SimMath.TickDelta` (a global static) changed. The simplest structure is capture → step the motion code alone → read the transforms → restore, reusing the blocked-move save/restore.
+4. **No side effects.** A predictor must not draw RNG, play sounds, add to or remove from pools, raise mission events, write contacts, or leave `SimClock.TickDelta` (a global static) changed. The simplest structure is capture → step the motion code alone → read the transforms → restore, reusing the blocked-move save/restore.
 5. **Collision.** Run `Mech_CollisionTest` in the prediction if it has no side effects; otherwise leave it out and accept that the next tick will correct a step that collision refuses.
 6. **Correction.** A prediction goes wrong on a collision refusal, a gait or sequence change, death, knockback, an AI changing its controls, or a projectile hit. When the next real tick lands, carry the difference between the predicted and the real state as an offset and decay it over a few frames instead of snapping. The decay is chosen per class (see [Open](#open)).
 7. **Projectile impacts.** A predicted round can pass through its target for part of a frame before the tick that registers the hit. Clamp the predicted segment at the first surface a raycast finds, or hide the round once the prediction crosses its target's bounds.

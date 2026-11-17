@@ -36,7 +36,7 @@ public struct CameraInput {
 /// <para>Concretely, every part of its motion goes through the toolkit: speeds ramp toward their
 /// target with <see cref="SimMath.RateLimitedMoveToward"/> — the same slew limiter the rocket's
 /// turn-rate cap and the shield recharge use — a tick's displacement comes from
-/// <see cref="SimMath.IntegrateRateOverTick"/>, and heading is applied with Q14 fixed-point trig
+/// <see cref="SimClock.IntegrateRateOverTick"/>, and heading is applied with Q14 fixed-point trig
 /// (<see cref="SimMath.Q14Multiply"/>) against a binary-angle facing. The one honest caveat is the
 /// trig table itself, which is generated rather than recovered; see <see cref="BinaryAngle"/>.</para>
 ///
@@ -101,14 +101,14 @@ public sealed class FlyCameraObject : SimObject {
 		SimMath.RateLimitedMoveToward(ref _yawRate, (short)(Clamp(input.Yaw) * TurnRate), TurnStep);
 		SimMath.RateLimitedMoveToward(ref _pitchRate, (short)(Clamp(input.Pitch) * TurnRate), TurnStep);
 
-		Heading = (Heading + SimMath.IntegrateRateOverTick(_yawRate)) & 0xffff;
+		Heading = (Heading + SimClock.IntegrateRateOverTick(_yawRate)) & 0xffff;
 
-		int pitch = Pitch + SimMath.IntegrateRateOverTick(_pitchRate);
+		int pitch = Pitch + SimClock.IntegrateRateOverTick(_pitchRate);
 		Pitch = (short)(pitch > PitchLimit ? PitchLimit : pitch < -PitchLimit ? -PitchLimit : pitch);
 
-		int forwardStep = SimMath.IntegrateRateOverTick(_forwardSpeed);
-		int strafeStep = SimMath.IntegrateRateOverTick(_strafeSpeed);
-		int verticalStep = SimMath.IntegrateRateOverTick(_verticalSpeed);
+		int forwardStep = SimClock.IntegrateRateOverTick(_forwardSpeed);
+		int strafeStep = SimClock.IntegrateRateOverTick(_strafeSpeed);
+		int verticalStep = SimClock.IntegrateRateOverTick(_verticalSpeed);
 
 		short sinYaw = BinaryAngle.Sin(Heading);
 		short cosYaw = BinaryAngle.Cos(Heading);

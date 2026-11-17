@@ -1,4 +1,6 @@
-namespace Herculan.Engine.View;
+using Herculan.Es2.Content;
+
+namespace Herculan.Es2.View;
 
 /// <summary>
 /// The cockpit's vertical pan between the forward view and the heads-down display — how far down the

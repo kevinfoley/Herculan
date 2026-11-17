@@ -228,7 +228,7 @@ public sealed partial class MechObject {
 			desired = 0;
 		} else {
 			if (_backoffTimer > 0) {
-				_backoffTimer -= SimMath.TickDelta;
+				_backoffTimer -= SimClock.TickDelta;
 				if (_backoffTimer < 0) {
 					_backoffTimer = 0;
 				}
@@ -274,7 +274,7 @@ public sealed partial class MechObject {
 			: turn;
 
 		short speed = Speed;
-		SimMath.RateLimitedMoveToward(ref speed, desired, SimMath.ScalePerTickStep(type.SpeedAccel));
+		SimMath.RateLimitedMoveToward(ref speed, desired, SimClock.ScalePerTickStep(type.SpeedAccel));
 		Speed = speed;
 
 		bool suppressTurning = UpdateGait(world, thread, turn, previousSpeed);
@@ -292,7 +292,7 @@ public sealed partial class MechObject {
 			(short)SimMath.Q8Multiply(
 				(short)SimMath.Q10Multiply(TurnRateGain, TurnRateTent(speedMagnitude, suppressTurning)),
 				turn),
-			SimMath.ScalePerTickStep(type.TurnAccel));
+			SimClock.ScalePerTickStep(type.TurnAccel));
 		TurnRate = turnRate;
 
 		Heading = (Heading + TurnRate) & 0xffff;
@@ -612,7 +612,7 @@ public sealed partial class MechObject {
 
 		// dt is the timestep in animation ticks: Q8(SimTickDelta, 100), where the 100 is the
 		// original's own animation-time-per-sim-time constant.
-		short delta = (short)SimMath.IntegrateRateOverTick(AnimationTimeRate);
+		short delta = (short)SimClock.IntegrateRateOverTick(AnimationTimeRate);
 
 		Thread.WriteRoot(Transform3.Identity);
 		Thread.Advance(delta);

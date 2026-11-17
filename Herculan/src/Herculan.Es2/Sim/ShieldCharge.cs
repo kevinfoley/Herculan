@@ -168,7 +168,7 @@ public sealed class ShieldCharge {
 		// the timestep, so leaving the draw as a fixed amount per tick would make the balance between
 		// income and demand depend on how fast the engine ticks. Exact, and a no-op, at the vanilla
 		// timestep the engine runs.
-		short cap = SimMath.ScalePerTickStep(RechargePerTick);
+		short cap = SimClock.ScalePerTickStep(RechargePerTick);
 
 		short granted = request;
 		if (granted > cap) {
@@ -182,7 +182,7 @@ public sealed class ShieldCharge {
 		short frontTarget = (short)SimMath.Q10Multiply(Balance, newTotal);
 		short step = deficit < 0
 			? OverfullSlewPerTick
-			: SimMath.ScalePerTickStep(BalanceSlewPerTick);
+			: SimClock.ScalePerTickStep(BalanceSlewPerTick);
 
 		SimMath.RateLimitedMoveToward(ref _front, frontTarget, step);
 		Rear = (short)(newTotal - _front);

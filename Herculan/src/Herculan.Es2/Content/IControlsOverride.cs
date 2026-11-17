@@ -1,4 +1,4 @@
-namespace Herculan.Engine.Content;
+namespace Herculan.Es2.Content;
 
 /// <summary>
 /// CONTROLS settings that stand in for some of <c>prefs.cfg</c>'s while they apply, read and written through

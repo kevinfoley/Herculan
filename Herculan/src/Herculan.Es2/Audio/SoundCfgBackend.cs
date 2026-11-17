@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Cfg;
+using Herculan.Engine.Audio;
 
-namespace Herculan.Engine.Audio;
+namespace Herculan.Es2.Audio;
 
 /// <summary>
 /// An <see cref="IAudioBackend"/> with <c>data\sound.cfg</c>'s output format put on it — what the original's SOS

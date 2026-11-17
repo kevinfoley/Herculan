@@ -17,6 +17,7 @@ using Herculan.Es2.Scene;
 using Herculan.Es2.Shell;
 using Herculan.Es2.Sim.Ai;
 using Herculan.Es2.Sim;
+using Herculan.Es2.View;
 using Herculan.Es2.World;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -334,7 +335,7 @@ sealed class SimulatorHost : IDisposable {
 		_input.ImGui = _imgui;
 		_input.Pad = _hddPad;
 		_textures = new CockpitTextures(gl, _art, _displays.HddCommand, _displays.HddMapFlashRaster);
-		_flash = new DamageFlash(_scene, _art, _passes.Scene, _textures);
+		_flash = new DamageFlash(_scene, _art, _passes.Scene, _passes.Sky, _textures);
 		_cockpit = new CockpitRenderer(gl, _art, _view, _displays, _textures, _passes);
 		_retailFrame = new FixedResolutionTarget(gl, RetailFrameSize);
 

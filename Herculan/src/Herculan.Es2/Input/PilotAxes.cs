@@ -1,4 +1,6 @@
-namespace Herculan.Engine.Input;
+using Herculan.Engine.Input;
+
+namespace Herculan.Es2.Input;
 
 /// <summary>
 /// The four game axes the simulator's control laws read — the device struct's <c>+0x0e</c>,

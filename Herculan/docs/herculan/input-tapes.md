@@ -13,7 +13,7 @@ Where it differs from retail, by this engine's choice:
 - **Paced.** Each simulation frame is held for its own recorded `SimTickDelta`, so a tape plays in the time it was recorded in; a panel frame is held for an estimated 6 ms.
 - **The install is left alone.** The bundle is unpacked over a copy of `DATA` in the temp folder rather than over `DATA` itself, with `-p`'s preference reconciliation and the install's `keyjoy.cfg`, as [above](../retail/formats/tap-input-tape.md#the-bundle).
 - **One keystroke per host frame.** Every recorded key press is held down for exactly one host frame with a frame of nothing between, so each auto-repeat press is a fresh key-down edge to the handlers, as each is a fresh command to retail's dispatcher.
-- **The original's per-tick steps.** `SimMath.ScalePerTickStep` is off for the replay, so the acceleration and shield steps apply once per frame, as retail's do at whatever frame rate the tape was recorded at.
+- **The original's per-tick steps.** `SimClock.ScalePerTickStep` is off for the replay, so the acceleration and shield steps apply once per frame, as retail's do at whatever frame rate the tape was recorded at.
 - **A panel's tick runs whole.** When a frame's own input raises a panel, the engine runs that frame's entire tick after the panel comes down, where retail has already ticked the effect pools before it.
 - **Divergence is logged.** The host prints each frame a panel goes up or comes down on, and `InputTapePlayer.InferredPanelSpans` lists the runs of one repeated delta that mark the recording's own panels; a mismatch is the replay leaving the recording.
 

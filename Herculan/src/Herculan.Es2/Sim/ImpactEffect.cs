@@ -157,7 +157,7 @@ public sealed class ImpactEffect {
 	/// left to draw.</para>
 	/// </summary>
 	internal void Tick() {
-		if (Finished || SimMath.CountdownTimerTick(ref _timer) != 0) {
+		if (Finished || SimClock.CountdownTimerTick(ref _timer) != 0) {
 			return;
 		}
 

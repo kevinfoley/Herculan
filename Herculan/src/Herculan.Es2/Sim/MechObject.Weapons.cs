@@ -15,7 +15,7 @@ public sealed partial class MechObject {
 	/// <c>travelling</c> and <c>following</c> call against whatever they are watching. It picks where
 	/// on the target the shot should go, by the target's own class, and hands the point on.
 	/// </summary>
-	/// <param name="subject">The object to shoot at; null takes <see cref="Target"/>.</param>
+	/// <param name="subject">The object to shoot at; null takes <see cref="SimObject.Target"/>.</param>
 	/// <param name="aspect">
 	/// How far the target's own aim is from this machine. The original computes it in three places and
 	/// reads it in exactly one — see <see cref="AspectOf"/>.
@@ -267,7 +267,7 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// How far <see cref="ChooseWeapon"/> pushes the next objective poll when a machine runs dry, in
-	/// <see cref="SimMath.CountdownTimerTick"/> counts: about half a second.
+	/// <see cref="SimClock.CountdownTimerTick"/> counts: about half a second.
 	/// </summary>
 	public const short DisarmedPollDeferral = 1000;
 

@@ -1,4 +1,4 @@
-using Herculan.Engine.View;
+using Herculan.Es2.View;
 
 namespace Herculan.Es2.Host.Debugging;
 
@@ -18,6 +18,6 @@ sealed class DebugOptions(bool drawSkeleton, SteadyEye steadyEye) {
 	/// </summary>
 	public int SkeletonJointCount { get; set; }
 
-	/// <inheritdoc cref="Herculan.Engine.View.SteadyEye"/>
+	/// <inheritdoc cref="Herculan.Es2.View.SteadyEye"/>
 	public SteadyEye SteadyEye { get; } = steadyEye;
 }

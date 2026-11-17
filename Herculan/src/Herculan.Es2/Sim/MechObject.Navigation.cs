@@ -426,7 +426,7 @@ public partial class MechObject {
 			return false;
 		}
 
-		if (SimMath.TimerCountDown(ref _navDecisionTimer) != 0) {
+		if (SimClock.TimerCountDown(ref _navDecisionTimer) != 0) {
 			return false;
 		}
 
@@ -474,7 +474,7 @@ public partial class MechObject {
 			return false;
 		}
 
-		if (SimMath.TimerCountDown(ref _navDecisionTimer) != 0) {
+		if (SimClock.TimerCountDown(ref _navDecisionTimer) != 0) {
 			return false;
 		}
 
@@ -551,7 +551,7 @@ public partial class MechObject {
 	/// states use. See docs/retail/simulation/ai-weapons.md.</para>
 	/// </summary>
 	private void LookAtTick(SimWorld world) {
-		if (SimMath.TimerCountDown(ref _navDecisionTimer) == 0) {
+		if (SimClock.TimerCountDown(ref _navDecisionTimer) == 0) {
 			LookAt = AiTargeting.SelectTarget(world, this, TargetFilter.None);
 			_navDecisionTimer = NavDecisionInterval;
 			Scanner = LookAt != null || RadarOrder;
@@ -580,7 +580,7 @@ public partial class MechObject {
 		Target = null;
 		SimObject? defence = null;
 
-		if ((holdsPost || FireAtWill) && SimMath.TimerCountDown(ref _navDecisionTimer) == 0) {
+		if ((holdsPost || FireAtWill) && SimClock.TimerCountDown(ref _navDecisionTimer) == 0) {
 			if (SquadOrderVerb == SquadOrderEngage && SquadOrderTarget != null) {
 				defence = SquadOrderTarget;
 			} else {
@@ -660,7 +660,7 @@ public partial class MechObject {
 
 	/// <summary>
 	/// <c>mech+0x5f</c> — what <c>travelling</c> and <c>following</c> point the turret at while they
-	/// walk. Deliberately not <see cref="Target"/>: the original never writes it there.
+	/// walk. Deliberately not <see cref="SimObject.Target"/>: the original never writes it there.
 	/// </summary>
 	public SimObject? LookAt { get; private set; }
 
@@ -686,7 +686,7 @@ public partial class MechObject {
 	private const int ArrivalRange = 10000;
 
 	/// <summary>
-	/// How often a navigation state re-decides, in <see cref="SimMath.TimerCountDown"/>'s unit
+	/// How often a navigation state re-decides, in <see cref="SimClock.TimerCountDown"/>'s unit
 	/// rather than milliseconds: about 4.9 seconds.
 	/// </summary>
 	private const int NavDecisionInterval = 10000;

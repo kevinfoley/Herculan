@@ -48,7 +48,7 @@ public sealed class FlyerBehaviourState {
 	public string Name { get; }
 
 	/// <summary>
-	/// Descriptor <c>+0x04</c> — the dwell time, in <see cref="SimMath.TimerCountDown"/>'s unit
+	/// Descriptor <c>+0x04</c> — the dwell time, in <see cref="SimClock.TimerCountDown"/>'s unit
 	/// and not in milliseconds: the 50000 <c>attacking</c> states is about 24 seconds.
 	/// </summary>
 	public int Dwell { get; }
@@ -126,7 +126,7 @@ public struct FlyerBehaviourBlock {
 	/// <summary>Block <c>+0x00</c> — the installed descriptor.</summary>
 	public FlyerBehaviourState? State { get; private set; }
 
-	/// <summary>Block <c>+0x05</c> — the dwell countdown, in <see cref="SimMath.TimerCountDown"/>'s unit.</summary>
+	/// <summary>Block <c>+0x05</c> — the dwell countdown, in <see cref="SimClock.TimerCountDown"/>'s unit.</summary>
 	public int DwellCountdown;
 
 	/// <inheritdoc cref="BehaviourBlock.TickCount"/>

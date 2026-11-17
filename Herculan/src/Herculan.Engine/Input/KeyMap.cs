@@ -25,8 +25,8 @@ public sealed record KeyBinding(KeyAction Action, KeySection Section, ImmutableA
 /// <summary>
 /// Which keys do what in a mission, and in the front end the few keys it shares with one: every <see cref="KeyAction"/>
 /// with its section and its chords, in display order. The host builds one instance and passes it to every key handler,
-/// which takes each key it reads from here, so this is the one table the bindings are read from. <see cref="Retail"/> is
-/// ES2's own.
+/// which takes each key it reads from here, so this is the one table the bindings are read from. <see cref="Default"/> is
+/// the default both games start from.
 ///
 /// <para>The handlers still test the modifiers themselves, as retail's command handlers match a whole command code:
 /// a handler reads a chord's key, and the [Alt] or [Ctrl] it tests beside it is its own, so a chord's
@@ -69,8 +69,8 @@ public sealed class KeyMap {
 		_byAction = byAction;
 	}
 
-	/// <summary>ES2's own keys (<see cref="RetailKeyMap"/>).</summary>
-	public static KeyMap Retail { get; } = RetailKeyMap.Build();
+	/// <summary>The default keys both games start from, Earthsiege 2's own (<see cref="DefaultKeyMap"/>).</summary>
+	public static KeyMap Default { get; } = DefaultKeyMap.Build();
 
 	/// <summary>Every action's binding, in display order.</summary>
 	public ImmutableArray<KeyBinding> Bindings { get; }

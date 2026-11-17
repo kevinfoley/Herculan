@@ -48,7 +48,7 @@ public partial class MechObject {
 		// is loaded by Behaviour_SetState and never stepped, so their dwell value means nothing and
 		// they end on their own terms instead.
 		if (Behaviour.State is { SuppressesDwell: false }) {
-			SimMath.TimerCountDown(ref Behaviour.DwellCountdown);
+			SimClock.TimerCountDown(ref Behaviour.DwellCountdown);
 		}
 
 		MoveTick(world);
@@ -557,7 +557,7 @@ public partial class MechObject {
 			return;
 		}
 
-		SimMath.CountdownTimerTick(ref world.SightingCalloutTimer);
+		SimClock.CountdownTimerTick(ref world.SightingCalloutTimer);
 
 		if (enemy.TargetClass == TargetClass.Structure
 				|| world.PlayerMech is not { } player || Group == null || !ReferenceEquals(Group, player.Group)
@@ -786,26 +786,26 @@ public partial class MechObject {
 	/// </summary>
 	internal void AiTimersTick() {
 		int retarget = RetargetCooldown;
-		SimMath.TimerCountDown(ref retarget);
+		SimClock.TimerCountDown(ref retarget);
 		RetargetCooldown = retarget;
 
 		int complaint = ComplaintCooldown;
-		SimMath.TimerCountDown(ref complaint);
+		SimClock.TimerCountDown(ref complaint);
 		ComplaintCooldown = complaint;
 
 		short silence = RadarSilenceTimer;
-		SimMath.CountdownTimerTick(ref silence);
+		SimClock.CountdownTimerTick(ref silence);
 		RadarSilenceTimer = silence;
 
 		int underFire = UnderFireWindow;
-		if (SimMath.TimerCountDown(ref underFire) == 0) {
+		if (SimClock.TimerCountDown(ref underFire) == 0) {
 			DamageFromPlayerGroup = 0;
 		}
 
 		UnderFireWindow = underFire;
 
 		short damageWindow = DamageWindowTimer;
-		if (SimMath.CountdownTimerTick(ref damageWindow) == 0) {
+		if (SimClock.CountdownTimerTick(ref damageWindow) == 0) {
 			damageWindow = DamageWindowReload;
 			DamageTaken = 0;
 		}
@@ -865,7 +865,7 @@ public partial class MechObject {
 	private static readonly IReadOnlyList<int> FearBandPenalties = new[] { 5, 25, 50 };
 
 	/// <summary>
-	/// The under-fire window, in <see cref="SimMath.TimerCountDown"/>'s unit rather than
+	/// The under-fire window, in <see cref="SimClock.TimerCountDown"/>'s unit rather than
 	/// milliseconds: about 15 seconds.
 	/// </summary>
 	private const int UnderFireWindowReload = 30000;
@@ -901,7 +901,7 @@ public partial class MechObject {
 
 	/// <summary>
 	/// What <see cref="EnemySighted"/> re-arms <see cref="SimWorld.SightingCalloutTimer"/> to on each
-	/// callout, in <see cref="SimMath.CountdownTimerTick"/>'s unit.
+	/// callout, in <see cref="SimClock.CountdownTimerTick"/>'s unit.
 	/// </summary>
 	private const short SightingCalloutInterval = 10000;
 

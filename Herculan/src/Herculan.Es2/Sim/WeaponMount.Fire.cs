@@ -233,14 +233,14 @@ public sealed partial class WeaponMount {
 	///
 	/// <para>The cell timer at <c>mount+0x84</c> is modelled because it is what the original counts,
 	/// but it never delays anything: both the press and each advance reset it to zero, and
-	/// <see cref="SimMath.CountdownTimerTick"/> clamps there, so it expires on every tick and the
+	/// <see cref="SimClock.CountdownTimerTick"/> clamps there, so it expires on every tick and the
 	/// book really does move a cell per tick.</para>
 	///
 	/// <para>A mount with no model, or one whose model carries no flipbook, latches immediately —
 	/// there are no cells to walk, so those two cases are the original's own first two tests.</para>
 	/// </summary>
 	private void SpinUpTick() {
-		if (!_spinUpRunning || SimMath.CountdownTimerTick(ref _spinUpCellTimer) != 0) {
+		if (!_spinUpRunning || SimClock.CountdownTimerTick(ref _spinUpCellTimer) != 0) {
 			return;
 		}
 

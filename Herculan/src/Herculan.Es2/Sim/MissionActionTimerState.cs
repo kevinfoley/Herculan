@@ -1,4 +1,3 @@
-using Herculan.Engine.Numerics;
 using Herculan.Es2.World;
 
 namespace Herculan.Es2.Sim;
@@ -25,7 +24,7 @@ public sealed class MissionActionTimerState {
 	/// <summary>The actions it fires, unset slots left null.</summary>
 	public IReadOnlyList<MissionActionState?> Sequence { get; }
 
-	/// <summary>What is left on the countdown, in <see cref="SimMath.TickDelta"/>'s timer unit.</summary>
+	/// <summary>What is left on the countdown, in <see cref="SimClock.TickDelta"/>'s timer unit.</summary>
 	public int Remaining { get; private set; }
 
 	/// <summary>
@@ -42,7 +41,7 @@ public sealed class MissionActionTimerState {
 			return;
 		}
 
-		Remaining -= SimMath.TickDelta;
+		Remaining -= SimClock.TickDelta;
 		if (Remaining > 0) {
 			return;
 		}

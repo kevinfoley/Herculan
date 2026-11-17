@@ -212,7 +212,7 @@ public sealed partial class BaseObject {
 	/// steering wherever its navigation wants while it crawls away from whatever it hit.</para>
 	/// </summary>
 	private void GroundVehicleLocomotion(short steer, short speed) {
-		if (SimMath.CountdownTimerTick(ref _backoffTimer) != 0) {
+		if (SimClock.CountdownTimerTick(ref _backoffTimer) != 0) {
 			speed = _backoffReverse ? (short)-BackoffSpeed : BackoffSpeed;
 		}
 
@@ -337,7 +337,7 @@ public sealed partial class BaseObject {
 
 	/// <summary>
 	/// <c>base+0x223</c> — what is left of the post-collision back-off, in timer units rather than
-	/// milliseconds (<see cref="SimMath.CountdownTimerTick"/>).
+	/// milliseconds (<see cref="SimClock.CountdownTimerTick"/>).
 	/// </summary>
 	private short _backoffTimer;
 

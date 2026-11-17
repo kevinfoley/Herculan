@@ -1,6 +1,6 @@
 using Herculan.Engine.Numerics;
 
-namespace Herculan.Engine.View;
+namespace Herculan.Es2.View;
 
 /// <summary>
 /// The debug panel's "steady eye", this engine's own diagnostic and nothing of the original's: it pins the

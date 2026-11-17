@@ -156,12 +156,12 @@ public sealed class DebrisObject {
 		var euler = Euler;
 		var velocity = Velocity;
 
-		euler.X += (short)SimMath.IntegrateRateOverTick(SpinRate);
+		euler.X += (short)SimClock.IntegrateRateOverTick(SpinRate);
 
 		var before = velocity;
-		velocity.Z += (short)SimMath.IntegrateRateOverTick(world.OnMoon ? MoonGravity : Gravity);
-		velocity.X -= (short)SimMath.IntegrateRateOverTick((short)SimMath.Q10Multiply(HorizontalDrag, velocity.X));
-		velocity.Y -= (short)SimMath.IntegrateRateOverTick((short)SimMath.Q10Multiply(HorizontalDrag, velocity.Y));
+		velocity.Z += (short)SimClock.IntegrateRateOverTick(world.OnMoon ? MoonGravity : Gravity);
+		velocity.X -= (short)SimClock.IntegrateRateOverTick((short)SimMath.Q10Multiply(HorizontalDrag, velocity.X));
+		velocity.Y -= (short)SimClock.IntegrateRateOverTick((short)SimMath.Q10Multiply(HorizontalDrag, velocity.Y));
 
 		// The average is taken in 16 bits and shifted there (SAR word), so a pair whose sum overflows
 		// a short wraps rather than widening. No throw in the game comes close, but it is the
@@ -193,7 +193,7 @@ public sealed class DebrisObject {
 
 		// The countdown is only consulted while the piece is still flying. Ground contact zeroes it
 		// before this, so a piece that touches down bursts on that tick whether or not it settled.
-		if (!settled && SimMath.CountdownTimerTick(ref _timer) != 0) {
+		if (!settled && SimClock.CountdownTimerTick(ref _timer) != 0) {
 			return false;
 		}
 

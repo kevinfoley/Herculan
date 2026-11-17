@@ -406,7 +406,6 @@ public static class Es1MissionHost {
 			// object's ramps (docs/es1/rendering/polygon-shading.md#the-distance-bands), and the textured ground's fade tables
 			// (Es1TexturedGround, docs/es1/rendering/ground-and-sky.md#the-textured-ground).
 			renderer = new SceneRenderer(gl) {
-				Sky = null,
 				SkyColor = MissingSky,
 				FogEnabled = false,
 				LightDirection = Es1Sun.Direction,

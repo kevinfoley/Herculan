@@ -126,7 +126,7 @@ public sealed class Rocket {
 
 	/// <summary>
 	/// <c>+0x52</c>. How far the missile travels per 125 ms, as
-	/// <see cref="SimMath.IntegrateRateOverTick"/> reads a rate. Unlike a gun round's this is not
+	/// <see cref="SimClock.IntegrateRateOverTick"/> reads a rate. Unlike a gun round's this is not
 	/// fixed at launch: it climbs each tick toward the <c>PROJ.DAT</c> record's own <c>Speed</c>.
 	/// </summary>
 	public short Speed => _speed;
@@ -236,7 +236,7 @@ public sealed class Rocket {
 		AccelerationTick();
 		GuidanceTick(world);
 
-		short step = (short)SimMath.IntegrateRateOverTick(_speed);
+		short step = (short)SimClock.IntegrateRateOverTick(_speed);
 		RebuildFrame();
 		var advanced = _frame.TransformPoint(0, step, 0);
 
@@ -305,7 +305,7 @@ public sealed class Rocket {
 	/// </summary>
 	private void AccelerationTick() {
 		short opening = _speed;
-		_speed = (short)(_speed + SimMath.IntegrateRateOverTick(_record.Acceleration));
+		_speed = (short)(_speed + SimClock.IntegrateRateOverTick(_record.Acceleration));
 		_speed = (short)((_speed + opening) >> 1);
 
 		if (Data.Speed < _speed) {
@@ -355,8 +355,8 @@ public sealed class Rocket {
 			return;
 		}
 
-		int yaw = SimMath.IntegrateRateOverTick((short)SimMath.Q8Multiply(PlayerSteerRate, input.Steer));
-		int pitch = SimMath.IntegrateRateOverTick((short)SimMath.Q8Multiply(PlayerSteerRate, input.Pitch));
+		int yaw = SimClock.IntegrateRateOverTick((short)SimMath.Q8Multiply(PlayerSteerRate, input.Steer));
+		int pitch = SimClock.IntegrateRateOverTick((short)SimMath.Q8Multiply(PlayerSteerRate, input.Pitch));
 		_eulerX = (short)(_eulerX + pitch);
 		_eulerZ = (short)(_eulerZ - yaw);
 		_frameStale = true;
@@ -425,8 +425,8 @@ public sealed class Rocket {
 		SimMath.RateLimitedMoveToward(ref pitchRate, pitchError, HomingTurnRate);
 		SimMath.RateLimitedMoveToward(ref yawRate, yawError, HomingTurnRate);
 
-		_eulerX = (short)(_eulerX + SimMath.IntegrateRateOverTick(pitchRate));
-		_eulerZ = (short)(_eulerZ + SimMath.IntegrateRateOverTick(yawRate));
+		_eulerX = (short)(_eulerX + SimClock.IntegrateRateOverTick(pitchRate));
+		_eulerZ = (short)(_eulerZ + SimClock.IntegrateRateOverTick(yawRate));
 		_frameStale = true;
 	}
 
@@ -504,7 +504,7 @@ public sealed class Rocket {
 			return;
 		}
 
-		if (SimMath.CountdownTimerTick(ref _animationTimer) == 0) {
+		if (SimClock.CountdownTimerTick(ref _animationTimer) == 0) {
 			_animationTimer = _record.FrameInterval;
 			AnimationFrame++;
 		}

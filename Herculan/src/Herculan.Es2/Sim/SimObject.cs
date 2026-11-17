@@ -267,7 +267,7 @@ public abstract class SimObject : Engine.Render.ILightSubject {
 
 	/// <summary>
 	/// <c>obj+0x1a2</c> — how many machines currently hold this object as their selected target.
-	/// Maintained by <see cref="MechObject.Target"/>'s setter, which is the only place the original
+	/// Maintained by <see cref="Target"/>'s setter, which is the only place the original
 	/// touches it either (every writer of <c>mech+0x1a4</c> decrements the old target's counter and
 	/// increments the new one's).
 	/// </summary>
@@ -740,8 +740,8 @@ public abstract class SimObject : Engine.Render.ILightSubject {
 
 	/// <summary>
 	/// One simulation step. Rate-based motion inside an override should go through
-	/// <see cref="SimMath.IntegrateRateOverTick"/> rather than multiplying by a float delta —
-	/// <see cref="SimWorld"/> maintains <see cref="SimMath.TickDelta"/> for exactly that.
+	/// <see cref="SimClock.IntegrateRateOverTick"/> rather than multiplying by a float delta —
+	/// <see cref="SimWorld"/> maintains <see cref="SimClock.TickDelta"/> for exactly that.
 	/// </summary>
 	public abstract void Tick(SimWorld world);
 

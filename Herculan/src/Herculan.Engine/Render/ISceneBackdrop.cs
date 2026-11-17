@@ -1,7 +1,7 @@
 namespace Herculan.Engine.Render;
 
 /// <summary>
-/// What a game paints behind everything in a pass, in place of <see cref="SceneRenderer"/>'s own sky — see
+/// What a game paints behind everything in a pass, its sky and whatever else stands behind the scene — see
 /// <see cref="SceneRenderer.Backdrop"/>. Each game's simulator paints its backdrop before any shape, so the scene
 /// draws straight over it.
 /// </summary>

@@ -80,7 +80,7 @@ public sealed class Es1CustomControls {
 		KeyAction.ThrottleStepDown => KeyChord.WithCtrl(Key.M),
 		KeyAction.PreviousChain => KeyChord.WithAlt(Key.GraveAccent),
 		_ when HostActions.Contains(action) || ThroughBlock.Contains(action) => null,
-		_ => KeyMap.Retail.Chords(action) is { Length: > 0 } chords ? chords[0] : null,
+		_ => KeyMap.Default.Chords(action) is { Length: > 0 } chords ? chords[0] : null,
 	};
 
 	/// <summary>The profile's axes, Fire and views on <paramref name="device"/> this frame.</summary>

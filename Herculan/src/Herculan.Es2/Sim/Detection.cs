@@ -142,9 +142,9 @@ public static class Detection {
 				continue;
 			}
 
-			SimMath.CountdownTimerTick(ref self.SightCacheTimer);
+			SimClock.CountdownTimerTick(ref self.SightCacheTimer);
 
-			if (SimMath.CountdownTimerTick(ref self.ContactDecayTimer) == 0) {
+			if (SimClock.CountdownTimerTick(ref self.ContactDecayTimer) == 0) {
 				self.ContactDecayTimer =
 					(short)(world.Random.NextBelow(TimerJitter) + ContactDecayInterval);
 				DecayContacts(world, self);

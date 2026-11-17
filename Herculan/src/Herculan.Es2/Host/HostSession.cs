@@ -62,8 +62,8 @@ public sealed class HostSession(string installRoot, LocalizationTable localizati
 
 	public LocalizationTable Localization { get; } = localization;
 
-	/// <summary>The one key map every key handler reads, a mission's and the front end's (<see cref="KeyMap.Retail"/>).</summary>
-	public KeyMap Keys { get; } = KeyMap.Retail;
+	/// <summary>The one key map every key handler reads, a mission's and the front end's (<see cref="KeyMap.Default"/>).</summary>
+	public KeyMap Keys { get; } = KeyMap.Default;
 
 	public string ImGuiFontPath { get; } = imguiFontPath;
 

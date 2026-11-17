@@ -94,7 +94,7 @@ public sealed class MechTypeRecord {
 	/// <summary>
 	/// Record field 6 — how much the speed scalar moves toward its target each tick. The original
 	/// applies it as a raw per-tick step with no timestep scaling, making its acceleration ramp
-	/// frame-rate dependent; the engine puts it through <see cref="SimMath.ScalePerTickStep"/> at
+	/// frame-rate dependent; the engine puts it through <see cref="SimClock.ScalePerTickStep"/> at
 	/// the call site instead (see <see cref="SimWorld.TicksPerSecond"/>). The value here is the
 	/// unscaled constant, as the file holds it.
 	/// </summary>

@@ -37,18 +37,19 @@ internal sealed class MissionDrawables : IDisposable {
 	private readonly Dictionary<string, GpuMesh> _groundMeshes = new();
 
 	/// <summary>
-	/// Uploads <paramref name="mission"/>'s scene and points <paramref name="renderer"/> at its theater: the fog,
-	/// sky and shading come off the zone and its theater as in Herculan.Engine.Host, rather than being hand-picked.
+	/// Uploads <paramref name="mission"/>'s scene and points <paramref name="renderer"/> and <paramref name="sky"/>, its
+	/// backdrop, at its theater: the fog, sky and shading come off the zone and its theater as in Herculan.Engine.Host,
+	/// rather than being hand-picked.
 	/// </summary>
-	public MissionDrawables(GL gl, SceneRenderer renderer, EditorMission mission, EditorSettings settings) {
+	public MissionDrawables(GL gl, SceneRenderer renderer, SkyBackdrop sky, EditorMission mission, EditorSettings settings) {
 		_gl = gl;
 		_isWaiting = mission.Index.IsWaiting;
 		_inScene = mission.Index.InScene;
 		var scene = _scene = mission.Scene;
 
-		// See Scene.Atmosphere. Without it the renderer has no sky gradient, so DrawSky paints nothing and the
+		// See Scene.Atmosphere. Without it the backdrop has no sky gradient, so it paints nothing and the
 		// view has no background at all.
-		scene.Models.Atmosphere.ApplyTo(renderer);
+		scene.Models.Atmosphere.ApplyTo(renderer, sky);
 
 		// The theater's shaded-surface colours, what a TSShadedPoly is actually drawn through. See
 		// SurfaceRampTable.

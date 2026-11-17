@@ -103,7 +103,7 @@ public sealed class Camera {
 	///
 	/// <para><b>The cockpit needs this.</b> DBSIM's own projection ends in
 	/// <c>screenX = x + centreX; screenY = centreY - y</c> with the pair coming from the herc's
-	/// <c>.VUE</c> (see <see cref="Content.CockpitViewGeometry.ProjectionCenter"/>), and that point is
+	/// <c>.VUE</c> (ES2's <c>CockpitViewGeometry.ProjectionCenter</c>), and that point is
 	/// well above the middle of the view — APOCA's is 95 rows down a 240-row view. It is also where
 	/// the gunsight reticle is drawn, which is what makes it load-bearing rather than cosmetic: a
 	/// shot leaves the muzzle parallel to the view axis, so its vanishing point is the principal

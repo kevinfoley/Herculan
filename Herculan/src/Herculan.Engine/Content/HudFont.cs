@@ -99,10 +99,11 @@ public sealed class HudFont {
 
 	/// <summary>
 	/// Device pixels a run's measured width is trimmed by before it is aligned — the original's
-	/// <c>1 &lt;&lt; XCoordShift</c>, which drops the trailing advance past the last glyph so a
-	/// centred or right-aligned run sits on its ink rather than on its spacing column.
+	/// <c>1 &lt;&lt; XCoordShift</c>, 2 in the 640x480 modes the <c>.HFN</c> set is drawn in, which drops the
+	/// trailing advance past the last glyph so a centred or right-aligned run sits on its ink rather than on its
+	/// spacing column.
 	/// </summary>
-	public const int TrailingAdvanceTrim = 1 << CockpitViewGeometry.CoordShift;
+	public const int TrailingAdvanceTrim = 1 << 1;
 
 	/// <summary>
 	/// Where a run of text lands inside a rect — the top-left device pixel of its first glyph — as

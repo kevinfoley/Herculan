@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Cfg;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
+using Herculan.Es2.Audio;
 using Herculan.Es2.Content;
 using Herculan.Es2.Shell;
 

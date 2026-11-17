@@ -181,7 +181,7 @@ public sealed partial class WeaponMount {
 		// own slot does, so a mount's cooldown runs on the same pass that charges it and a destroyed
 		// mount's does not run at all.
 		if (IsEnergyClass || Kind == WeaponMountKind.Ammunition) {
-			SimMath.CountdownTimerTick(ref _refireTimer);
+			SimClock.CountdownTimerTick(ref _refireTimer);
 
 			// WeaponMount_AndFlagBlocks (0040f881): +0x33 &= +0x3b, then +0x3b is cleared. Byte 0 is FiringSustained, which
 			// the ELF readiness test reads; byte 1 is the charge bar's hand-off, which PushGaugeState reads.

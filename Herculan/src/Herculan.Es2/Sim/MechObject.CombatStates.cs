@@ -312,7 +312,7 @@ public sealed partial class MechObject {
 			geometry.Approach = -1;
 			geometry.BearingError = (short)(geometry.BearingError + BinaryAngle.HalfTurn);
 		} else {
-			if (SimMath.TimerCountDown(ref _fleeSideTimer) == 0) {
+			if (SimClock.TimerCountDown(ref _fleeSideTimer) == 0) {
 				_fleeSideTimer = FleeSideInterval;
 				_fleeToTheLeft = world.Random.NextMasked(1) != 0;
 			}
@@ -366,7 +366,7 @@ public sealed partial class MechObject {
 			_skirtBlocking = LineOfSight.BlockedByShape;
 		}
 
-		if (SimMath.CountdownTimerTick(ref _skirtRecheckTimer) == 0) {
+		if (SimClock.CountdownTimerTick(ref _skirtRecheckTimer) == 0) {
 			_skirtRecheckTimer = SkirtRecheckInterval;
 			_skirtBlocking = LineOfSightToTarget(world);
 
@@ -435,7 +435,7 @@ public sealed partial class MechObject {
 	/// point.</para>
 	/// </summary>
 	private void CircleStep(ref CombatGeometry geometry, SimObject target) {
-		if (SimMath.CountdownTimerTick(ref _circleBreakOffTimer) != 0) {
+		if (SimClock.CountdownTimerTick(ref _circleBreakOffTimer) != 0) {
 			geometry.NearStandoff = 0;
 			geometry.Approach = -1;
 			geometry.BearingError = 0;
@@ -444,7 +444,7 @@ public sealed partial class MechObject {
 			return;
 		}
 
-		if (SimMath.CountdownTimerTick(ref _circleIntervalTimer) == 0
+		if (SimClock.CountdownTimerTick(ref _circleIntervalTimer) == 0
 				&& DamageTaken > CircleBreakOffDamage) {
 			_circleBreakOffTimer = CircleBreakOffDuration;
 		}
@@ -662,7 +662,7 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// How often <c>fleeing</c> swaps the side it runs to, in
-	/// <see cref="SimMath.TimerCountDown"/>'s unit rather than milliseconds: about two seconds.
+	/// <see cref="SimClock.TimerCountDown"/>'s unit rather than milliseconds: about two seconds.
 	/// </summary>
 	private const int FleeSideInterval = 4000;
 

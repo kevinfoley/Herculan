@@ -138,7 +138,7 @@ public sealed class BehaviourState {
 	public string Name { get; }
 
 	/// <summary>
-	/// Descriptor <c>+0x04</c> — the dwell time, in <see cref="SimMath.TimerCountDown"/>'s unit and
+	/// Descriptor <c>+0x04</c> — the dwell time, in <see cref="SimClock.TimerCountDown"/>'s unit and
 	/// not in milliseconds: the 50000 the combat states state is about 24 seconds. Only meaningful
 	/// for the eight states whose <see cref="SuppressesDwell"/> is clear; for the rest the countdown
 	/// is loaded and never stepped.
@@ -238,7 +238,7 @@ public struct BehaviourBlock {
 	public BehaviourState? State { get; private set; }
 
 	/// <summary>
-	/// Block <c>+0x05</c> — the dwell countdown, in <see cref="SimMath.TimerCountDown"/>'s unit.
+	/// Block <c>+0x05</c> — the dwell countdown, in <see cref="SimClock.TimerCountDown"/>'s unit.
 	/// Reaching zero is what makes
 	/// <see cref="MechObject.AiTick"/> run the reassess slot; only a state whose
 	/// <see cref="BehaviourState.SuppressesDwell"/> is clear ever counts down at all.

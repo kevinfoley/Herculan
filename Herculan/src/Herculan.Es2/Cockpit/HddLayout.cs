@@ -1,4 +1,4 @@
-﻿using Herculan.Engine.Content;
+﻿using Herculan.Es2.Content;
 using System.Buffers.Binary;
 using HercWorks.Core.Data.File.Gau;
 using HercWorks.Core.Data.File;
