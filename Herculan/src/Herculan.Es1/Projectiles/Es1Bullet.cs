@@ -1,5 +1,7 @@
 using HercWorks.Core.Data.File.Dat.Sim;
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
+using Herculan.Es1.Settings;
 using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.Projectiles;
@@ -27,8 +29,28 @@ public sealed class Es1Bullet : Es1Projectile {
 	/// <summary><c>+0x4c</c>, the speed, the projectile record's.</summary>
 	public short Speed { get; private set; }
 
-	/// <summary><c>+0x4e</c>, the age, in ticks.</summary>
+	/// <summary>
+	/// <c>+0x4e</c>, the age: in ticks, as retail counts it, or with <see cref="RealTimeLife"/> in 1/<see cref="AgeRate"/>
+	/// of 100 ms.
+	/// </summary>
 	public short Age { get; private set; }
+
+	/// <summary>
+	/// The rate the age gains through <c>Math_IntegrateRateOverTick</c> with <see cref="RealTimeLife"/>, and the scale of
+	/// the lifetime it is held against: ES2's <c>Bullet_TickUpdate</c>'s <c>0x200</c>
+	/// (docs/retail/simulation/projectiles.md#flight--bullet_tickupdate-0040b124).
+	/// </summary>
+	public const short AgeRate = 0x200;
+
+	/// <summary>
+	/// Whether a round's age counts time rather than ticks, from <see cref="Es1TweakSettingDefinitions.RealTimeRoundLife"/>.
+	/// The age gains <c>Math_IntegrateRateOverTick</c>(<see cref="AgeRate"/>) a tick and the round ends past the lifetime
+	/// × <see cref="AgeRate"/>, as ES2's ages, so the lifetime counts ES1's 100 ms tick unit and a round reaches the
+	/// lifetime × its speed at any frame rate: 85,000 units for an autocannon and 60,000 for an <c>EMP</c>, retail's reach
+	/// at 10 frames a second (docs/es1/simulation/projectiles.md#the-reach). This engine's invention; off, the age counts
+	/// ticks, as retail's does.
+	/// </summary>
+	public static bool RealTimeLife => TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.RealTimeRoundLife);
 
 	/// <summary><c>+0x50</c>, the power, a Q10 scale of both damage figures; 0 for none.</summary>
 	public short Power { get; private set; }
@@ -105,7 +127,8 @@ public sealed class Es1Bullet : Es1Projectile {
 
 	/// <summary>
 	/// <c>Bullet_TickUpdate</c> (<c>00007f84</c>) (docs/es1/simulation/projectiles.md#flight--bullet_tickupdate-00007f84):
-	/// the first cell frame's step every interval <c>+6</c>; the age, ending past the lifetime <c>+2</c>; then the sweep
+	/// the first cell frame's step every interval <c>+6</c>; the age, ending past the lifetime <c>+2</c>, or in time with
+	/// <see cref="RealTimeLife"/>; then the sweep
 	/// over the step <c>Math_IntegrateRateOverTick</c>(speed), slack <c>+4</c>, of the record's armor and shield, each
 	/// <c>Math_Q10Multiply</c>'d by the power when it is not 0, its splash factor and effects, with
 	/// <see cref="ShotKind"/>.
@@ -118,8 +141,15 @@ public sealed class Es1Bullet : Es1Projectile {
 			StepCellFrame(0);
 		}
 
-		Age++;
-		if (Age > (type?.Lifetime ?? 0)) {
+		int lifetime = type?.Lifetime ?? 0;
+		if (RealTimeLife) {
+			Age = (short)(Age + clock.IntegrateRateOverTick(AgeRate));
+			lifetime *= AgeRate;
+		} else {
+			Age++;
+		}
+
+		if (Age > lifetime) {
 			return 1;
 		}
 

@@ -53,11 +53,19 @@ public static class Es1TweakSettingDefinitions {
 	/// <see cref="Es1SystemRepairMenu.ProceedKeepsLevels"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> ProceedKeepsLevels = new("tweak.es1_no_free_repair_level", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// A gun round's lifetime counts time rather than ticks, so its reach no longer falls with the frame rate. This engine's
+	/// invention.
+	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice (plan decision 33,
+	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Projectiles.Es1Bullet.RealTimeLife"/>.</para>
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> RealTimeRoundLife = new("tweak.es1_real_time_round_life", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
 	#endregion
 
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels, RealTimeRoundLife,
 	};
 
 	/// <summary>
@@ -71,6 +79,6 @@ public static class Es1TweakSettingDefinitions {
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> Offered = new[] {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming,
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels, RealTimeRoundLife,
 	};
 }
