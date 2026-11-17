@@ -3838,7 +3838,7 @@
         "bytes": "00006eb4+552",
         "sha1": "6aa026bfa5e2",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -3853,7 +3853,7 @@
         "bytes": "000070dc+185",
         "sha1": "2042aea9cbcf",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -3868,7 +3868,7 @@
         "bytes": "00007198+565",
         "sha1": "e2808842ea16",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -38323,7 +38323,7 @@
         "bytes": "00063fa4+59",
         "sha1": "43af32f58658",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {

@@ -3,6 +3,7 @@
 **ES1's missile launchers fire missiles that burn, home on their target and can be flown from the missile camera as ES2's do ([ES2's missiles](../../retail/simulation/rockets.md)).** What a player would see differently, as far as this file's code decides it ([Open](#open)):
 
 - a missile leaves the launcher at a speed of 500 whatever the firing HERC's own speed, where ES2's adds the machine's travel speed;
+- a missile flies 80 ticks, 2 seconds on a machine that keeps 40 frames a second, where ES2's 80 ticks last 3.2 seconds at its 25 a second; in both, how far it gets depends on the frame rate: at 40 frames a second or more a HERC's missile reaches 35,120 units (211 m), short of the launchers' range of 60,000 ([the reach](#the-reach));
 - a HERC's missile takes the target its HERC has selected whether or not the launcher has lock: the lock question goes to a slot that answers yes on every HERC ([launching](#launching--rocket_fire-00007748));
 - an enemy's missile makes no warning sound as it nears the camera, where ES2's plays one;
 - any machine's electro-optical missile, not only the player's, makes the player let go of the trigger when it ends: a trigger held at that moment fires nothing until it is released ([flight](#flight--rocket_tickupdate-00007198)).
@@ -62,6 +63,21 @@ Slot `+0x18` of `RocketVtable`, (missile), returning 1 when the missile ends; ES
 5. **The sweep.** `Sim_RaycastObjectList` ([shots against objects](world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)) over the step `Math_IntegrateRateOverTick`(speed) along the frame's Y axis, with the record's `+6` as the ray's slack and a shot record from the projectile record: armor `+6` at `+4`, shield `+4` at `+6`, the splash factor `+8`, the impact effects `+0xc`, the owner and the subtype `+2` at `+0x12`, none of them scaled. A strike ends the missile; otherwise it moves to the step's end. What a strike does to what it strikes, the damage and the impact effect, is the sweep's and the struck object's hit test's ([the hit test](mech.md#the-hit-test--mech_directfirehittest-00013b44)).
 
 **When the missile ends**, by its lifetime or a strike, with subtype 3, it calls `Input_LatchButton`(1, 1) and clears the trigger byte `000b17c1` (`PlayerInputBlock` `+0x15`), whoever fired it: a latched button reads released while it is held ([the input read](input.md#reading-the-players-input--input_readplayerinput-0004cb14)). ES2's does this for the locally piloted machine's missile alone. The tick raises no strike flag for the missile camera and plays no proximity sound; ES1's missile camera finds its strike flash by looking for an explosion near where the missile was last seen ([painting](mfd-missile-camera.md#painting)).
+
+### The reach
+
+**A missile flies its lifetime in ticks, 80, however long the ticks are, so how far it gets depends on the frame rate.** Its burn and its step scale with `SimTickDelta`, which is held to 64–450 ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)), so every frame of 25 ms or less flies as a 25 ms one. ES2's counts its age in ticks too ([ES2's flight](../../retail/simulation/rockets.md#flight--rocket_tickupdate-0040a538)). A missile still gathering speed when its lifetime ends goes further on longer ticks both because it flies longer and because it reaches a higher speed. For a HERC's missile flown straight, from the launch speed 500 with the acceleration 250 and the cap 6000 of [the records](#the-type-table--rocket_loadresources-000073d0), worked through the tick's rounding:
+
+| Frame | `SimTickDelta` | Flight | Top speed | Reach |
+|---|---|---|---|---|
+| 25 ms or less, 40 frames a second or more | 64 | 2.0 s | 2,980 | 35,120 units (211 m) |
+| 33 ms, 30 frames a second | 85 | 2.7 s | 3,780 | 57,388 units (344 m) |
+| 50 ms, 20 frames a second | 128 | 4.0 s | 5,460 | 120,440 units (723 m) |
+| 83 ms, 12 frames a second | 213 | 6.7 s | 6,000 | 280,650 units (1,684 m) |
+| 100 ms, 10 frames a second | 256 | 8.0 s | 6,000 | 361,750 units (2,170 m) |
+| 183 ms or more, under 6 frames a second | 450 | 14.1 s | 6,000 | 727,170 units (4,363 m) |
+
+The pods' and `MISSL`'s range, which the weapon's readiness tests, is 60,000 ([the retail values](../formats/weapons-dat-sim.md#retail-values), [readiness](weapon-mounts.md#readiness)), so at 40 frames a second or more a missile fired at a target near the edge of that range ends short of it. A flyer's missile starts at its forward speed + 500 ([launching](#launching--rocket_fire-00007748)) and goes further.
 
 ## Homing — `Rocket_HomingSteer` (`00006eb4`)
 
