@@ -250,7 +250,7 @@ public sealed class Es1ShellFrame {
 			_screens.QuitFlag = true;
 		}
 
-		foreach (var wait in _screens.HandleMessage(_screens.Globals.PendingMessage, PresentFrame)) {
+		foreach (var wait in _screens.HandleMessage(_screens.Globals.PendingMessage, PresentFrame, PollDeviceBlock)) {
 			yield return wait;
 		}
 

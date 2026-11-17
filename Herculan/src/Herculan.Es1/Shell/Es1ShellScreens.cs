@@ -199,8 +199,7 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>
 	/// The byte <c>000809a9</c>, 0 in the image: <see cref="HandleMessage"/> plays the intro's last two scripts on the next
-	/// change of screen when it is 1, the credits when it is 2. The options menu's CREDITS sets 2 (<see cref="Es1OptionsMenu"/>);
-	/// no ported screen sets 1.
+	/// change of screen when it is 1, the credits when it is 2. The options menu's CREDITS sets 2 (<see cref="Es1OptionsMenu"/>).
 	/// </summary>
 	public byte ScriptsToPlay { get; set; }
 
@@ -849,6 +848,40 @@ public sealed class Es1ShellScreens {
 		return FullScreenContext;
 	}
 
+	/// <summary>The intro's last two scripts, in <c>intro\</c>, which <see cref="ScriptsToPlay"/> 1 plays (the strings at <c>00081d28</c>).</summary>
+	private static readonly string[] IntroEndScripts = ["iintro.ttm", "earth_w.ttm"];
+
+	/// <summary>The credits, in <c>intro\</c>, which <see cref="ScriptsToPlay"/> 2 plays (the strings at <c>00081d4d</c>).</summary>
+	private static readonly string[] CreditScripts = ["credit_a.ttm", "credit_b.ttm"];
+
+	/// <summary>
+	/// <c>Shell_HandleMessage</c>'s step 7 (docs/es1/shell/menus.md#changing-screens--shell_handlemessage-0003c7d8): the
+	/// prefix <c>intro\</c> (<c>Ttm_SetPathPrefix</c>), track <c>0xd</c> with <c>ShellMusic_Play</c> when
+	/// <paramref name="music"/> is set, <paramref name="names"/> played (<see cref="PlayTtm"/>), and the prefix <c>res32\</c>.
+	/// </summary>
+	private IEnumerable<Es1ShellWait> PlayIntroScripts(string[] names, bool music, Func<IEnumerable<Es1ShellWait>> presentFrame,
+			Func<Es1LiveBlock> pollDeviceBlock) {
+		if (Scripts is not { } scripts) {
+			// The scripts exist from the first screen on, before any message; the test is an engine guard.
+			yield break;
+		}
+
+		scripts.SetPathPrefix(IntroFolder);
+		if (music) {
+			foreach (var wait in _devices.Sound.PlayMusic(Es1ShellSound.Intro2Track)) {
+				yield return wait;
+			}
+		}
+
+		foreach (string name in names) {
+			foreach (var wait in PlayTtm(name, presentFrame, pollDeviceBlock)) {
+				yield return wait;
+			}
+		}
+
+		scripts.SetPathPrefix(ScriptFolder);
+	}
+
 	/// <summary>The screen that puts up a mission's opening message, 1499, which INSTANT ACTION > and SINGLE MISSION's BRIEFING > post.</summary>
 	private const short MessageScreen = 1499;
 
@@ -874,7 +907,9 @@ public sealed class Es1ShellScreens {
 	/// when the old one was 1000, <paramref name="presentFrame"/>), the target's case, the new menu opened, the screens
 	/// moved on and the screen drawn. The answer is <see cref="MessageChangedScreen"/>.
 	/// </summary>
-	public IEnumerable<Es1ShellWait> HandleMessage(Es1MenuMessage message, Func<IEnumerable<Es1ShellWait>> presentFrame) {
+	/// <param name="pollDeviceBlock"><c>Input_PollDeviceBlock</c>, which the scripts read the key or button that cuts them short from.</param>
+	public IEnumerable<Es1ShellWait> HandleMessage(Es1MenuMessage message, Func<IEnumerable<Es1ShellWait>> presentFrame,
+			Func<Es1LiveBlock> pollDeviceBlock) {
 		MessageChangedScreen = false;
 		Globals.PendingMessage = Es1MenuMessage.None;
 		if (message.Code == -1) {
@@ -919,18 +954,21 @@ public sealed class Es1ShellScreens {
 
 		var display = _devices.Display;
 		if (ScriptsToPlay == 1) {
+			// 0003c969: the byte cleared, the cursor taken off (the raster slot 0008662c, VGA_8's slot 31), track 0xd and the
+			// intro's last two scripts.
 			ScriptsToPlay = 0;
-			// The raster slot 0008662c, VGA_8's slot 31, takes the cursor off.
 			display.Cursor.Hide();
-			// PLACEHOLDER: Ttm_SetPathPrefix(intro\), ShellMusic_Play(0xd), Shell_PlayTtm (PlayTtm) of intro\iintro.ttm and
-			// intro\earth_w.ttm, and Ttm_SetPathPrefix(res32\); no ported screen sets ScriptsToPlay.
+			foreach (var wait in PlayIntroScripts(IntroEndScripts, true, presentFrame, pollDeviceBlock)) {
+				yield return wait;
+			}
 		}
 
 		if (ScriptsToPlay == 2) {
+			// 0003c9bb: the cursor taken off and the credits, with no music and the byte left for the track below.
 			display.Cursor.Hide();
-			// PLACEHOLDER: Ttm_SetPathPrefix(intro\), Shell_PlayTtm (PlayTtm) of intro\credit_a.ttm and intro\credit_b.ttm,
-			// and Ttm_SetPathPrefix(res32\): the credits, which the options menu's CREDITS asks for, are not played; PlayTtm
-			// reads Input_PollDeviceBlock, which the frame loop does not hand this method.
+			foreach (var wait in PlayIntroScripts(CreditScripts, false, presentFrame, pollDeviceBlock)) {
+				yield return wait;
+			}
 		}
 
 		short group = _backdrop.ForScreen(BackdropId, target);
