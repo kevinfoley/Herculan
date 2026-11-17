@@ -135,7 +135,8 @@ public class Es1ViewChangeTests {
 
 	/// <summary>
 	/// The world's cells and the 2D drawing share one store: a fill over part of the world replaces it, a copy carries
-	/// both the indices and the world cells, and the world layer is copied under them a row at a time. Catches a world
+	/// both the indices and the world cells, and the world layer is copied under them a row at a time, in the latch
+	/// passes' order: the whole groups, columns 0 to 7, then the partial right group, 8 and 9. Catches a world
 	/// pass that marks outside its clip block, a fill that leaves world cells, and a copy that moves the cells without
 	/// the world pixels.
 	/// </summary>
@@ -157,7 +158,8 @@ public class Es1ViewChangeTests {
 		Assert.Equal(9, display.Cell(0, 3, 0));
 		Assert.Equal(Es1VideoMemory.WorldCell, display.Cell(0, 3, 1));
 		Assert.Equal(0, display.Cell(0, 5, 0));
-		Assert.Equal(new[] { (320, 0, 0, 0, 10, 1), (320, 1, 0, 1, 10, 1) }, layer.Copied);
+		Assert.Equal(new[] { (320, 0, 0, 0, 8, 1), (320, 1, 0, 1, 8, 1), (328, 0, 8, 0, 2, 1), (328, 1, 8, 1, 2, 1) },
+			layer.Copied);
 	}
 
 	/// <summary>

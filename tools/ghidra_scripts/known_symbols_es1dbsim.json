@@ -31186,7 +31186,7 @@
         "bytes": "00051c3c+733",
         "sha1": "bd18d3ea1ce2",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {

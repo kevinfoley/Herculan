@@ -298,10 +298,12 @@ public sealed class Es1VideoMemory {
 	/// (<c>00051c3c</c>, the driver's slot 20): the source page's rect onto the draw page's rect moved by the offset, rows
 	/// and columns included (docs/es1/rendering/screen-pages.md#copying-between-pages).
 	///
-	/// <para>The driver copies through the latches a row at a time, left to right, when the two pages' pans agree, so a
-	/// copy whose ends meet reads what it has just written, as here; when they disagree it reads each row into a buffer
-	/// before writing it. A rect within one group of four columns reads source row <i>y</i> + the offset's <i>y</i> where
-	/// the others read <i>y</i> − it.</para>
+	/// <para>When the two pages' pans disagree the driver reads each row into a buffer before writing it. When they agree
+	/// it copies through the latches in up to three passes over every row, top to bottom: the partial group of four
+	/// columns at the rect's left, then the whole groups a row at a time, left to right, then the partial group at its
+	/// right. So where the target overlaps the source, a pass reads what an earlier pass, or its own earlier rows, has
+	/// written. A rect within one group of four columns is one pass, which reads source row <i>y</i> + the offset's
+	/// <i>y</i> where the others read <i>y</i> − it.</para>
 	/// </summary>
 	public void CopyRect(int x0, int y0, int x1, int y1, int offsetX, int offsetY) {
 		if (x1 < x0 || y1 < y0) {
@@ -310,14 +312,11 @@ public sealed class Es1VideoMemory {
 
 		int targetX0 = x0 + offsetX, targetX1 = x1 + offsetX;
 		int width = x1 - x0 + 1;
-		bool rowBuffered = ((offsetX + (Address(DrawPage, 0, 0) & 3) - (Address(SourcePage, 0, 0) & 3)) & 3) != 0;
-		bool oneGroup = !rowBuffered && (Address(DrawPage, targetX0, 0) >> 2) == (Address(DrawPage, targetX1, 0) >> 2);
-		var row = rowBuffered ? new ushort[width] : null;
-		for (int y = y0 + offsetY; y <= y1 + offsetY; y++) {
-			int sourceRow = oneGroup ? y + offsetY : y - offsetY;
-			int source = Address(SourcePage, x0, sourceRow);
-			int target = Address(DrawPage, targetX0, y);
-			if (row != null) {
+		if (((offsetX + (Address(DrawPage, 0, 0) & 3) - (Address(SourcePage, 0, 0) & 3)) & 3) != 0) {
+			var row = new ushort[width];
+			for (int y = y0 + offsetY; y <= y1 + offsetY; y++) {
+				int source = Address(SourcePage, x0, y - offsetY);
+				int target = Address(DrawPage, targetX0, y);
 				for (int i = 0; i < width; i++) {
 					row[i] = Cells[Wrap(source + i)];
 				}
@@ -325,13 +324,44 @@ public sealed class Es1VideoMemory {
 				for (int i = 0; i < width; i++) {
 					Write(Wrap(target + i), row[i]);
 				}
-			} else {
-				for (int i = 0; i < width; i++) {
-					Write(Wrap(target + i), Cells[Wrap(source + i)]);
-				}
+
+				CopyWorldRun(source, target, width);
 			}
 
-			CopyWorldRun(source, target, width);
+			return;
+		}
+
+		if ((Address(DrawPage, targetX0, 0) >> 2) == (Address(DrawPage, targetX1, 0) >> 2)) {
+			CopyColumns(x0, width, y0, y1, offsetX, offsetY, offsetY);
+			return;
+		}
+
+		int left = (4 - (Address(DrawPage, targetX0, 0) & 3)) & 3;
+		int right = (Address(DrawPage, targetX1, 0) + 1) & 3;
+		CopyColumns(x0, left, y0, y1, offsetX, offsetY, -offsetY);
+		CopyColumns(x0 + left, width - left - right, y0, y1, offsetX, offsetY, -offsetY);
+		CopyColumns(x1 - right + 1, right, y0, y1, offsetX, offsetY, -offsetY);
+	}
+
+	/// <summary>
+	/// One latch pass of <see cref="CopyRect"/>: <paramref name="count"/> columns from source column
+	/// <paramref name="x"/>, onto the draw page moved by the offset, for each target row from <paramref name="y0"/> +
+	/// <paramref name="offsetY"/> to <paramref name="y1"/> + <paramref name="offsetY"/> in turn, reading source row
+	/// <i>y</i> + <paramref name="sourceRowShift"/>.
+	/// </summary>
+	private void CopyColumns(int x, int count, int y0, int y1, int offsetX, int offsetY, int sourceRowShift) {
+		if (count <= 0) {
+			return;
+		}
+
+		for (int y = y0 + offsetY; y <= y1 + offsetY; y++) {
+			int source = Address(SourcePage, x, y + sourceRowShift);
+			int target = Address(DrawPage, x + offsetX, y);
+			for (int i = 0; i < count; i++) {
+				Write(Wrap(target + i), Cells[Wrap(source + i)]);
+			}
+
+			CopyWorldRun(source, target, count);
 		}
 	}
 

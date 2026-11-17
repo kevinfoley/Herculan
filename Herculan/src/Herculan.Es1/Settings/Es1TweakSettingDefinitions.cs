@@ -44,6 +44,14 @@ public static class Es1TweakSettingDefinitions {
 	/// retail's. This engine's invention. See <see cref="Es1ShapeDetail.RangeFactor"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> ExtendedDetailRange = new("tweak.es1_extended_detail_range", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// The return from the external view copies the cockpit's page without retail's column past its edge, which moves the
+	/// other page's left-most column by a row, so that column no longer flickers every frame after.
+	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice (plan decision 35,
+	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="View.Es1ViewManager.KeepCockpitEdge"/>.</para>
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FixCockpitEdgeFlicker = new("tweak.es1_fix_cockpit_edge_flicker", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -73,7 +81,8 @@ public static class Es1TweakSettingDefinitions {
 
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, ProceedKeepsLevels, RealTimeRoundLife,
+		Es2FlyerSpeed,
 	};
 
 	/// <summary>
@@ -88,6 +97,7 @@ public static class Es1TweakSettingDefinitions {
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> Offered = new[] {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming, TweakSettingDefinitions.MouseOutsideView,
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, ProceedKeepsLevels, RealTimeRoundLife,
+		Es2FlyerSpeed,
 	};
 }

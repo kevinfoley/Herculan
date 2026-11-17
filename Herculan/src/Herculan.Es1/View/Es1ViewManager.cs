@@ -293,6 +293,14 @@ public sealed class Es1ViewManager {
 
 	private static bool WideCanvas => TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HighResolutionWidescreen);
 
+	/// <summary>
+	/// <b>This engine's own</b>, the "Fix cockpit edge flicker" tweak (<see cref="Settings.Es1TweakSettingDefinitions.FixCockpitEdgeFlicker"/>,
+	/// plan decision 35): command 3's copy in <see cref="StepViewTransition"/> stops at column 319. Retail's reaches column
+	/// 320, which in the 640-pixel row lies on the drawn page's column 0, and the copy's last pass moves that column a row (docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904), so the two
+	/// pages show it a row apart until the canopy is blitted again. Off, retail's copy.
+	/// </summary>
+	public static bool KeepCockpitEdge => TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixCockpitEdgeFlicker);
+
 	/// <summary>The render context's clip block as the last view state copied it in, clip mode 2.</summary>
 	public Es1ClipBlock Clip { get; private set; } = Es1ClipBlock.Empty;
 
@@ -583,8 +591,8 @@ public sealed class Es1ViewManager {
 				break;
 			}
 			case 3:
-				// The rect reaches column 320, one past the page, as retail's does.
-				copy = (0, 0, 320, 199);
+				// The rect reaches column 320, one past the page, as retail's does, unless KeepCockpitEdge.
+				copy = (0, 0, KeepCockpitEdge ? Es1VideoMemory.PageWidth - 1 : Es1VideoMemory.PageWidth, 199);
 				break;
 		}
 
