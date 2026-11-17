@@ -663,7 +663,7 @@ install.destination_file       {0} is a file.
 install.destination_not_empty  {0} is not empty.
 install.destination_inside_disc  {0} is inside the disc folder.
 install.no_space               The install needs {0:N0} MB, but only {1:N0} MB are free there.
-install.retail_note            The original game's programs are copied too, but they will not run from this install: HERCULAN leaves out the video codecs, DirectX and the rest of the system setup the original installer did, and the original game cannot read a disc image. Play this install with HERCULAN.
+install.note                   The original game's programs are copied too, but they will not run from this install: HERCULAN leaves out the video codecs, DirectX and the rest of the system setup the original installer did, and the original game cannot read a disc image. Play this install with HERCULAN.
 install.install                Install
 install.copying                Copying {0} ({1} of {2})
 install.cancelled              The install was cancelled, and what it had copied was removed.

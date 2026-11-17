@@ -5,8 +5,8 @@ namespace Herculan.Es1.Host.Install;
 
 /// <summary>
 /// Metaltech: Earthsiege's install prompt: the engine's (<see cref="InstallPromptWindow"/>) for
-/// <see cref="Es1GameModule.Identity"/>, with a third button that installs from a disc first (<see cref="Es1InstallPanel"/>,
-/// in a <see cref="StartupWindow"/> of its own).
+/// <see cref="Es1GameModule.Identity"/>, with a third button that installs from a disc first (<see cref="InstallPanel"/>
+/// with <see cref="Es1DiscInstaller"/>, in a <see cref="StartupWindow"/> of its own).
 /// </summary>
 public static class Es1InstallPrompt {
 	private const int InstallWindowWidth = 720;
@@ -34,15 +34,15 @@ public static class Es1InstallPrompt {
 
 	// The install window until the player installs and chooses to use the install, or gives up; null for the latter.
 	private static string? RunInstall(LocalizationTable localization, string fontPath) {
-		using var panel = new Es1InstallPanel(localization);
+		using var panel = new InstallPanel(localization, new Es1DiscInstaller(localization));
 		string? installed = null;
 		StartupWindow.Run(localization, "es1_install.window_title", InstallWindowWidth, InstallWindowHeight, fontPath, owner => {
 			var outcome = panel.Draw(owner);
-			if (outcome == Es1InstallPanel.Outcome.Installed) {
+			if (outcome == InstallPanel.Outcome.Installed) {
 				installed = panel.Installed;
 			}
 
-			return outcome != Es1InstallPanel.Outcome.Open;
+			return outcome != InstallPanel.Outcome.Open;
 		});
 		return installed;
 	}

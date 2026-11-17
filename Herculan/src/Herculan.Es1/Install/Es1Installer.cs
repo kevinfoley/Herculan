@@ -94,9 +94,6 @@ public sealed class Es1Installer {
 	/// <summary>The bytes <see cref="Plan"/> copies (<see cref="DiscCopy.PlanBytes"/>).</summary>
 	public long PlanBytes() => DiscCopy.PlanBytes(_source, Plan());
 
-	/// <summary>Why <paramref name="destination"/> cannot be installed into (<see cref="DiscCopy.CheckDestination"/>), or null when it can.</summary>
-	public DiscCopy.DestinationProblem? CheckDestination(string destination) => DiscCopy.CheckDestination(_source, destination);
-
 	/// <summary>
 	/// Copies <see cref="Plan"/> into <paramref name="destination"/> (<see cref="DiscCopy.Copy"/>), then writes
 	/// <c>maxInst</c>'s <c>ES.BAT</c> and turns the copied <c>RESOURCE.CFG</c> into what <c>SOUNDSET</c> and

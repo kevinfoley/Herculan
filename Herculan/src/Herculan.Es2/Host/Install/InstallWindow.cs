@@ -1,3 +1,4 @@
+using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using ImGuiNET;
@@ -6,8 +7,8 @@ using Silk.NET.OpenGL;
 namespace Herculan.Es2.Host.Install;
 
 /// <summary>
-/// <see cref="InstallPanel"/> as a window of its own, which the startup's <see cref="InstallPrompt"/> opens when the
-/// player has no install yet.
+/// Earthsiege 2's <see cref="InstallPanel"/> (<see cref="Es2DiscInstaller"/>) as a window of its own, which the startup's
+/// <see cref="InstallPrompt"/> opens when the player has no install yet.
 /// </summary>
 static class InstallWindow {
 	internal const int WindowWidth = 720;
@@ -18,7 +19,7 @@ static class InstallWindow {
 	/// root, or null when the window was dismissed or closed. <paramref name="fontPath"/> is the ImGui font.
 	/// </summary>
 	public static string? Run(LocalizationTable localization, string fontPath) {
-		using var panel = new InstallPanel(localization);
+		using var panel = new InstallPanel(localization, new Es2DiscInstaller(localization));
 		string? installed = null;
 		using var window = new EngineWindow(localization.GetStringOrKey("install.window_title"),
 			WindowWidth, WindowHeight);

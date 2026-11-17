@@ -4,11 +4,9 @@ using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using Herculan.Es2.Host.Install;
-using Herculan.Engine.Localization;
 using Herculan.Engine.Menus;
 using Herculan.Es2.Host.Shell;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Updates;
 using Herculan.Es2.Content;
 using Herculan.Es2.Install;
 using ImGuiNET;
@@ -16,39 +14,30 @@ using ImGuiNET;
 namespace Herculan.Es2.Host.Settings;
 
 /// <summary>
-/// The floating "Settings" window opened from the menu bar: where the install is, which folder
-/// <c>data\drive.cfg</c> names as the disc, the disc image HERCULAN reads in its place, and the two languages.
-/// Retail has no such screen: its installer wrote <c>drive.cfg</c> and <c>language.cfg</c>, and nothing changed
-/// them after.
+/// Earthsiege 2's Settings window (<see cref="SettingsWindowBase"/>): where the install is, which folder
+/// <c>data\drive.cfg</c> names as the disc, the disc image HERCULAN reads in its place, the two languages, and Audio.
+/// Retail's installer wrote <c>drive.cfg</c> and <c>language.cfg</c>, and nothing changed them after.
 ///
 /// <para>The install and the disc are read once per shell turn — the archives are mounted from them as the turn
 /// starts (<see cref="GameInstall.MountShell(string, GameDisc?)"/>) — so changing any of them brings the shell back
-/// up through <c>restartShell</c>. A mission has none to give, and there they are greyed. The install is asked for
-/// with the startup's own prompt (<see cref="InstallPrompt"/>), or made from a disc (<see cref="InstallPanel"/>);
-/// the disc folder is written into the install's <c>drive.cfg</c> (<see cref="GameInstall.WriteDiscDirectory"/>),
-/// where the original game reads it too, and the disc image onto HERCULAN's own line of it
-/// (<see cref="GameInstall.WriteDiscImage"/>), which the original game never reads.</para>
+/// up through <c>restartShell</c>. The install is asked for with the startup's own prompt (<see cref="InstallPrompt"/>),
+/// or made from a disc (<see cref="InstallPanel"/> with <see cref="Es2DiscInstaller"/>); the disc folder is written into
+/// the install's <c>drive.cfg</c> (<see cref="GameInstall.WriteDiscDirectory"/>), where the original game reads it too,
+/// and the disc image onto HERCULAN's own line of it (<see cref="GameInstall.WriteDiscImage"/>), which the original
+/// game never reads.</para>
 ///
 /// <para>The game language is <c>data\language.cfg</c>'s letter (<see cref="GameInstall.WriteLanguage"/>), offered
 /// for each retail language whose folder (<see cref="RetailInstaller.LanguageFolder"/>) is on the disc or in the
 /// install. It is a shell turn's like the folders, so it too restarts the shell and is greyed in a mission. Choosing
 /// it also switches the interface to the matching <c>.lang</c> file, when there is one. The interface language is
-/// any <c>.lang</c> file, by the name it gives itself (<see cref="LocalizationTable.GetLanguages"/>), and changes at
-/// once, in a mission too.</para>
+/// any <c>.lang</c> file, by the name it gives itself, and changes at once, in a mission too.</para>
 ///
 /// <para>Audio holds the music and sound-effects volumes (<see cref="AudioVolumes"/>), which retail has no control for.
 /// They change what is sounding at once, in a mission too, and are saved as a slider is let go.</para>
-///
-/// <para>Updates holds the "Auto check for updates" setting and a Check for Updates button (<see cref="UpdateCheckRows"/>),
-/// which work in a mission too.</para>
 /// </summary>
-sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
-	// In pixels on a 100% display (ScaledImGui.Scaled).
-	private const float PanelWidth = 520f;
-	private static readonly Vector2 PromptSize = new(640f, 240f);
+sealed class SettingsWindow : SettingsWindowBase, IDisposable {
 	// Taller than the startup's own install window by its title bar.
 	private static readonly Vector2 InstallSize = new(720f, 680f);
-	private const string PromptId = "##folder_prompt";
 
 	internal enum PromptKind {
 		Install,
@@ -58,141 +47,88 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 
 	private readonly HostSession _session;
 	private readonly Action? _restartShell;
-	private PathPrompt? _prompt;
-	private PromptKind _promptKind;
-	private bool _promptRaised;
 	private InstallPanel? _install;
-	private bool _open;
-	private string? _error;
 
 	// The game languages the row offers, found as the window opens; finding them reads the disc.
 	private IReadOnlyList<RetailInstaller.Language>? _gameLanguages;
-	private readonly InterfaceLanguageCombo _interfaceLanguage;
-
-	private readonly UpdateCheckRows _updates;
 
 	/// <param name="restartShell">Brings the shell back up on the new folders; null in a mission. It is called
 	/// between this window's <c>Begin</c> and <c>End</c>, so it must not tear down the ImGui context there.</param>
-	public SettingsWindow(HostSession session, Action? restartShell) {
+	public SettingsWindow(HostSession session, Action? restartShell)
+		: base(session.Localization, "settings", inMission: restartShell == null) {
 		_session = session;
 		_restartShell = restartShell;
-		_interfaceLanguage = new InterfaceLanguageCombo(session.Localization);
-		_updates = new UpdateCheckRows(session.Localization);
 	}
 
 	/// <summary>Whether the window, or the install window it opened, is up. Set by the menu bar.</summary>
-	public bool IsOpen {
-		get => _open || _install != null;
-		set => _open = value;
+	public override bool IsOpen {
+		get => base.IsOpen || _install != null;
+		set => base.IsOpen = value;
 	}
 
 	/// <summary>
 	/// Takes the window down, and the folder prompt over it with nothing changed, and the install window unless a
 	/// copy is running in it.
 	/// </summary>
-	public void Close() {
-		_prompt = null;
-		_error = null;
-		_open = false;
-		_updates.Forget();
-		ForgetLanguages();
+	public override void Close() {
+		base.Close();
 		if (_install is { Busy: false }) {
 			_install.Dispose();
 			_install = null;
 		}
 	}
 
-	void IMenuBarPanel.Open() => IsOpen = true;
-
-	void IMenuBarPanel.BackOut() => Close();
-
-	/// <summary>
-	/// Draws the window and the install window, when each is up. <paramref name="owner"/> is the native window a picker
-	/// belongs to, and <paramref name="centre"/> when each is centred on the window (<see cref="PanelCentring.Condition"/>).
-	/// </summary>
-	public void Draw(nint owner, ImGuiCond centre) {
-		if (_open) {
-			DrawSettings(owner, centre);
-		}
-
+	/// <summary>Draws the window and the install window, when each is up.</summary>
+	public override void Draw(nint owner, ImGuiCond centre) {
+		base.Draw(owner, centre);
 		if (_install != null) {
 			DrawInstall(owner, centre);
 		}
 	}
 
-	private void DrawSettings(nint owner, ImGuiCond centre) {
-		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), 0f));
-		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), centre, new Vector2(0.5f, 0.5f));
-
-		bool stayOpen = true;
-		if (ImGui.Begin(_session.Localization.GetStringOrKey("settings.title") + "###settings", ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
-			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.folders"));
-			string installRoot = _session.InstallRoot;
-			if (FolderRow(_session.Localization.GetStringOrKey("settings.install_folder"), installRoot, "##change_install")) {
-				OpenPrompt(PromptKind.Install);
-			}
-
-			ImGui.BeginDisabled(_restartShell == null || _install != null);
-			if (ImGui.Button(_session.Localization.GetStringOrKey("settings.install_from_disc"))) {
-				OpenInstall();
-			}
-			ImGui.EndDisabled();
-
-			string? image = GameInstall.DiscImagePath(installRoot);
-			string? disc = GameInstall.DiscDirectory(installRoot);
-			if (FolderRow(_session.Localization.GetStringOrKey("settings.disc_folder"), disc ?? _session.Localization.GetStringOrKey("settings.no_disc"), "##change_disc")) {
-				OpenPrompt(PromptKind.DiscFolder);
-			}
-			if (image != null) {
-				ImGui.TextDisabled(_session.Localization.GetStringOrKey("settings.image_overrides"));
-			}
-
-			if (FolderRow(_session.Localization.GetStringOrKey("settings.disc_image"), image ?? _session.Localization.GetStringOrKey("settings.no_disc_image"), "##change_image",
-					removable: image != null)) {
-				OpenPrompt(PromptKind.DiscImage);
-			}
-
-			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.languages"));
-			GameLanguageRow(installRoot);
-			_interfaceLanguage.Draw();
-
-			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.audio"));
-			AudioRows();
-
-			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.updates"));
-			_updates.Draw();
-
-			if (_error != null) {
-				ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1f, 0.45f, 0.4f, 1f));
-				ImGui.TextWrapped(_error);
-				ImGui.PopStyleColor();
-			}
-
-			ImGui.Separator();
-			if (ImGui.Button(_session.Localization.GetStringOrKey("general.close"), new Vector2(ImGui.GetContentRegionAvail().X, 0f))) {
-				stayOpen = false;
-			}
-
-			DrawPrompt(owner, centre);
+	protected override void DrawRows() {
+		ImGui.SeparatorText(Localization.GetStringOrKey("settings.folders"));
+		string installRoot = _session.InstallRoot;
+		if (FolderRow(Localization.GetStringOrKey("settings.install_folder"), installRoot, "##change_install")) {
+			OpenPrompt(PromptKind.Install);
 		}
 
-		ImGui.End();
-
-		if (!stayOpen) {
-			_prompt = null;
-			_error = null;
-			_open = false;
-			_updates.Forget();
-			ForgetLanguages();
+		ImGui.BeginDisabled(InMission || _install != null);
+		if (ImGui.Button(Localization.GetStringOrKey("settings.install_from_disc"))) {
+			OpenInstall();
 		}
+		ImGui.EndDisabled();
+
+		string? image = GameInstall.DiscImagePath(installRoot);
+		string? disc = GameInstall.DiscDirectory(installRoot);
+		if (FolderRow(Localization.GetStringOrKey("settings.disc_folder"), disc ?? Localization.GetStringOrKey("settings.no_disc"), "##change_disc")) {
+			OpenPrompt(PromptKind.DiscFolder);
+		}
+		if (image != null) {
+			ImGui.TextDisabled(Localization.GetStringOrKey("settings.image_overrides"));
+		}
+
+		if (FolderRow(Localization.GetStringOrKey("settings.disc_image"), image ?? Localization.GetStringOrKey("settings.no_disc_image"), "##change_image",
+				removable: image != null)) {
+			OpenPrompt(PromptKind.DiscImage);
+		}
+
+		ImGui.SeparatorText(Localization.GetStringOrKey("settings.languages"));
+		GameLanguageRow(installRoot);
+		InterfaceLanguage.Draw();
+
+		ImGui.SeparatorText(Localization.GetStringOrKey("settings.audio"));
+		AudioRows();
 	}
+
+	protected override void Forget() => _gameLanguages = null;
 
 	// The install window, floating beside Settings. Using what it installed is the install's own Change.
 	private void DrawInstall(nint owner, ImGuiCond centre) {
 		ImGui.SetNextWindowSize(ScaledImGui.Scaled(InstallSize), ImGuiCond.Appearing);
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), centre, new Vector2(0.5f, 0.5f));
 		var outcome = InstallPanel.Outcome.Open;
-		if (ImGui.Begin(_session.Localization.GetStringOrKey("install.title") + "###install", ImGuiWindowFlags.NoCollapse)) {
+		if (ImGui.Begin(Localization.GetStringOrKey("install.title") + "###install", ImGuiWindowFlags.NoCollapse)) {
 			outcome = _install!.Draw(owner);
 		}
 
@@ -203,8 +139,7 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 			_install!.Dispose();
 			_install = null;
 			if (installed != null) {
-				_promptKind = PromptKind.Install;
-				Apply(installed);
+				ApplyInstall(installed);
 			}
 		}
 	}
@@ -214,21 +149,18 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 	private bool FolderRow(string label, string path, string buttonId, bool removable = false) {
 		ImGui.TextUnformatted(label);
 		ImGui.TextDisabled(path);
-		ImGui.BeginDisabled(_restartShell == null);
-		bool clicked = ImGui.Button(_session.Localization.GetStringOrKey("settings.change") + buttonId);
+		ImGui.BeginDisabled(InMission);
+		bool clicked = ImGui.Button(Localization.GetStringOrKey("settings.change") + buttonId);
 		bool removed = false;
 		if (removable) {
 			ImGui.SameLine();
-			removed = ImGui.Button(_session.Localization.GetStringOrKey("settings.remove") + buttonId + "_remove");
+			removed = ImGui.Button(Localization.GetStringOrKey("settings.remove") + buttonId + "_remove");
 		}
 		ImGui.EndDisabled();
-		if (_restartShell == null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
-			ScaledImGui.Tooltip(_session.Localization.GetStringOrKey("settings.in_mission"));
-		}
+		InMissionTooltip();
 
 		if (removed) {
-			_promptKind = PromptKind.DiscImage;
-			Apply(null);
+			ApplyDiscImage(null);
 		}
 
 		return clicked;
@@ -250,21 +182,19 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 			.ToList();
 
 		RetailInstaller.Language? chosen = null;
-		ImGui.BeginDisabled(_restartShell == null);
+		ImGui.BeginDisabled(InMission);
 		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.5f);
-		if (ImGui.BeginCombo(_session.Localization.GetStringOrKey("settings.game_language") + "###game_language",
-				current is { } known ? _session.Localization.GetStringOrKey(InstallPanel.LanguageKey(known)) : folder)) {
+		if (ImGui.BeginCombo(Localization.GetStringOrKey("settings.game_language") + "###game_language",
+				current is { } known ? Localization.GetStringOrKey(Es2DiscInstaller.LanguageKey(known)) : folder)) {
 			foreach (var language in _gameLanguages) {
-				if (ImGui.Selectable(_session.Localization.GetStringOrKey(InstallPanel.LanguageKey(language)), language == current) && language != current) {
+				if (ImGui.Selectable(Localization.GetStringOrKey(Es2DiscInstaller.LanguageKey(language)), language == current) && language != current) {
 					chosen = language;
 				}
 			}
 			ImGui.EndCombo();
 		}
 		ImGui.EndDisabled();
-		if (_restartShell == null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
-			ScaledImGui.Tooltip(_session.Localization.GetStringOrKey("settings.in_mission"));
-		}
+		InMissionTooltip();
 
 		if (chosen is { } next) {
 			ApplyGameLanguage(next);
@@ -278,23 +208,17 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 		try {
 			GameInstall.WriteLanguage(installRoot, language);
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			_error = string.Format(_session.Localization.GetStringOrKey("settings.write_failed"), GameInstall.LanguageCfgName, ex.Message);
+			Error = string.Format(Localization.GetStringOrKey("settings.write_failed"), GameInstall.LanguageCfgName, ex.Message);
 			return;
 		}
 
 		// The manual's page language is the locale code of the letter just written.
 		string locale = OnlineManual.Language(installRoot).Code;
-		if (_session.Localization.GetLocales().Contains(locale)) {
-			_session.Localization.SelectedLocale = locale;
+		if (Localization.GetLocales().Contains(locale)) {
+			Localization.SelectedLocale = locale;
 		}
 
-		Close();
-		_restartShell?.Invoke();
-	}
-
-	private void ForgetLanguages() {
-		_gameLanguages = null;
-		_interfaceLanguage.Forget();
+		Restart();
 	}
 
 	// The two volumes as percentage sliders. Dragging sets the volume at once; letting go saves it.
@@ -310,7 +234,7 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 	private float VolumeSlider(string key, float volume, out bool done) {
 		int percent = (int)MathF.Round(volume * 100f);
 		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.5f);
-		ImGui.SliderInt(_session.Localization.GetStringOrKey(key) + "###" + key, ref percent, 0, 100, "%d%%", ImGuiSliderFlags.AlwaysClamp);
+		ImGui.SliderInt(Localization.GetStringOrKey(key) + "###" + key, ref percent, 0, 100, "%d%%", ImGuiSliderFlags.AlwaysClamp);
 		done = ImGui.IsItemDeactivatedAfterEdit();
 		return percent / 100f;
 	}
@@ -321,103 +245,78 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 	/// </summary>
 	internal void OpenPrompt(PromptKind kind) {
 		string installRoot = _session.InstallRoot;
-		_prompt = kind switch {
-			PromptKind.Install => InstallPrompt.Create(_session.Localization, "general.cancel", installRoot, "settings.install_message"),
-			PromptKind.DiscFolder => new PathPrompt(_session.Localization, "disc_prompt", "general.cancel", DiscRefusal,
-				GameInstall.DiscDirectory(installRoot) ?? ""),
-			_ => new PathPrompt(_session.Localization, "image_prompt", "general.cancel", ImageRefusal,
-				GameInstall.DiscImagePath(installRoot) ?? "",
-				fileFilter: new NativePathPicker.FileFilter(_session.Localization.GetStringOrKey("install.image_filter"), ["iso", "bin", "cue"])),
-		};
-		_promptKind = kind;
-		_promptRaised = false;
-		_error = null;
+		switch (kind) {
+			case PromptKind.Install:
+				RaisePrompt(InstallPrompt.Create(Localization, "general.cancel", installRoot, "settings.install_message"),
+					ApplyInstall, InstallPromptWindow.MessageArguments);
+				break;
+			case PromptKind.DiscFolder:
+				RaisePrompt(new PathPrompt(Localization, "disc_prompt", "general.cancel", DiscRefusal,
+					GameInstall.DiscDirectory(installRoot) ?? ""), ApplyDiscFolder, Drive.FileName);
+				break;
+			default:
+				RaisePrompt(new PathPrompt(Localization, "image_prompt", "general.cancel", ImageRefusal,
+					GameInstall.DiscImagePath(installRoot) ?? "",
+					fileFilter: new NativePathPicker.FileFilter(Localization.GetStringOrKey("install.image_filter"), ["iso", "bin", "cue"])),
+					ApplyDiscImage, Drive.FileName);
+				break;
+		}
 	}
-
-	/// <summary>The prompt <see cref="OpenPrompt"/> raised, while it is up.</summary>
-	internal PathPrompt? Prompt => _prompt;
 
 	/// <summary>Opens the install window beside the window, as its Install from a Disc button does.</summary>
-	internal void OpenInstall() => _install = new InstallPanel(_session.Localization);
+	internal void OpenInstall() => _install = new InstallPanel(Localization, new Es2DiscInstaller(Localization));
 
-	// The prompt as a modal over the window, the size of the startup's own. It is opened here rather than by the
-	// Change button so that its popup ID is the window's whoever raised it.
-	private void DrawPrompt(nint owner, ImGuiCond centre) {
-		if (_prompt == null) {
-			return;
+	// The install becomes the next turn's and is remembered for the next launch, unless the session says not to.
+	private void ApplyInstall(string path) {
+		_session.InstallRoot = path;
+		if (_session.RememberInstall) {
+			try {
+				RetailInstalls.Remember(Es2GameModule.Identity, path);
+			} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+				Error = string.Format(Localization.GetStringOrKey("settings.write_failed"), Drive.FileName, ex.Message);
+				return;
+			}
 		}
 
-		if (!_promptRaised) {
-			ImGui.OpenPopup(PromptId);
-			_promptRaised = true;
-		}
-
-		ImGui.SetNextWindowSize(ScaledImGui.Scaled(PromptSize));
-		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), centre, new Vector2(0.5f, 0.5f));
-		if (!ImGui.BeginPopupModal(PromptId, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove)) {
-			return;
-		}
-
-		var outcome = _promptKind == PromptKind.Install
-			? _prompt.Draw(owner, GameContent.ArchiveFolderName)
-			: _prompt.Draw(owner, Drive.FileName);
-		if (outcome != PathPrompt.Outcome.Open) {
-			ImGui.CloseCurrentPopup();
-		}
-
-		ImGui.EndPopup();
-
-		if (outcome == PathPrompt.Outcome.Accepted && _prompt.Chosen is { } chosen) {
-			_prompt = null;
-			Apply(chosen);
-		} else if (outcome == PathPrompt.Outcome.Dismissed) {
-			_prompt = null;
-		}
+		Restart();
 	}
 
-	// The install becomes the next turn's and is remembered for the next launch, unless the session says not to;
-	// the disc folder and the disc
-	// image are written into the install's drive.cfg, null taking the image out. Either way the shell comes
-	// back up on it.
-	private void Apply(string? path) {
+	// The disc folder, written into the install's drive.cfg.
+	private void ApplyDiscFolder(string path) => WriteDrive(() => GameInstall.WriteDiscDirectory(_session.InstallRoot, path));
+
+	// The disc image, written into the install's drive.cfg; null takes it out.
+	private void ApplyDiscImage(string? path) => WriteDrive(() => GameInstall.WriteDiscImage(_session.InstallRoot, path));
+
+	// Writes drive.cfg, then opens the disc it names and brings the shell back up on it.
+	private void WriteDrive(Action write) {
 		try {
-			switch (_promptKind) {
-				case PromptKind.DiscFolder:
-					GameInstall.WriteDiscDirectory(_session.InstallRoot, path!);
-					_session.ReopenDisc();
-					break;
-				case PromptKind.DiscImage:
-					GameInstall.WriteDiscImage(_session.InstallRoot, path);
-					_session.ReopenDisc();
-					break;
-				default:
-					_session.InstallRoot = path!;
-					if (_session.RememberInstall) {
-						RetailInstalls.Remember(Es2GameModule.Identity, path!);
-					}
-					break;
-			}
+			write();
+			_session.ReopenDisc();
 		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			_error = string.Format(_session.Localization.GetStringOrKey("settings.write_failed"), Drive.FileName, ex.Message);
+			Error = string.Format(Localization.GetStringOrKey("settings.write_failed"), Drive.FileName, ex.Message);
 			return;
 		}
 
+		Restart();
+	}
+
+	private void Restart() {
 		Close();
 		_restartShell?.Invoke();
 	}
 
 	private string? DiscRefusal(string path) => GameInstall.CheckDiscDirectory(path) switch {
 		null => null,
-		GameInstall.DiscDirectoryProblem.Missing => string.Format(_session.Localization.GetStringOrKey("disc_prompt.missing"), path),
-		GameInstall.DiscDirectoryProblem.Whitespace => string.Format(_session.Localization.GetStringOrKey("disc_prompt.whitespace"), path, Drive.FileName),
-		_ => string.Format(_session.Localization.GetStringOrKey("disc_prompt.not_latin1"), path, Drive.FileName),
+		GameInstall.DiscDirectoryProblem.Missing => string.Format(Localization.GetStringOrKey("disc_prompt.missing"), path),
+		GameInstall.DiscDirectoryProblem.Whitespace => string.Format(Localization.GetStringOrKey("disc_prompt.whitespace"), path, Drive.FileName),
+		_ => string.Format(Localization.GetStringOrKey("disc_prompt.not_latin1"), path, Drive.FileName),
 	};
 
 	private string? ImageRefusal(string path) => GameInstall.CheckDiscImage(path, ShellHost.DiscCheckMovie, out string? detail) switch {
 		null => null,
-		GameInstall.DiscImageProblem.Missing => string.Format(_session.Localization.GetStringOrKey("image_prompt.missing"), path),
-		GameInstall.DiscImageProblem.Unreadable => string.Format(_session.Localization.GetStringOrKey("image_prompt.unreadable"), path, detail),
-		_ => string.Format(_session.Localization.GetStringOrKey("image_prompt.not_es2"), path),
+		GameInstall.DiscImageProblem.Missing => string.Format(Localization.GetStringOrKey("image_prompt.missing"), path),
+		GameInstall.DiscImageProblem.Unreadable => string.Format(Localization.GetStringOrKey("image_prompt.unreadable"), path, detail),
+		_ => string.Format(Localization.GetStringOrKey("image_prompt.not_es2"), path),
 	};
 
 	/// <summary>Cancels a copy still running in the install window, which removes what it wrote.</summary>

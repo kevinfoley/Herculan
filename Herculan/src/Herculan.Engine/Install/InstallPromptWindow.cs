@@ -46,12 +46,11 @@ public static class InstallPromptWindow {
 		return RetailInstalls.IsOnDisc(path) ? localization.GetStringOrKey("install_prompt.on_disc") : null;
 	}
 
-	/// <summary>
-	/// Draws <paramref name="prompt"/> into the current window, its message given the archive folder's name and
-	/// <see cref="RetailGameDetector.Es1Marker"/>, in that order.
-	/// </summary>
-	public static PathPrompt.Outcome DrawPrompt(PathPrompt prompt, nint owner) =>
-		prompt.Draw(owner, GameContent.ArchiveFolderName, RetailGameDetector.Es1Marker);
+	/// <summary>What the prompt's message is given: the archive folder's name and <see cref="RetailGameDetector.Es1Marker"/>, in that order.</summary>
+	public static object[] MessageArguments => [GameContent.ArchiveFolderName, RetailGameDetector.Es1Marker];
+
+	/// <summary>Draws <paramref name="prompt"/> into the current window, its message given <see cref="MessageArguments"/>.</summary>
+	public static PathPrompt.Outcome DrawPrompt(PathPrompt prompt, nint owner) => prompt.Draw(owner, MessageArguments);
 
 	/// <summary>
 	/// The window's one frame of content: the language combo over the prompt (<see cref="StartupWindow.Draw"/>).

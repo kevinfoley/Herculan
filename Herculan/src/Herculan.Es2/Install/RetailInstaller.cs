@@ -181,9 +181,6 @@ public sealed class RetailInstaller {
 	/// <summary>The bytes <paramref name="plan"/> copies (<see cref="DiscCopy.PlanBytes"/>).</summary>
 	public long PlanBytes(IReadOnlyList<(string Source, string Destination)> plan) => DiscCopy.PlanBytes(_source, plan);
 
-	/// <summary>Why <paramref name="destination"/> cannot be installed into (<see cref="DiscCopy.CheckDestination"/>), or null when it can.</summary>
-	public DiscCopy.DestinationProblem? CheckDestination(string destination) => DiscCopy.CheckDestination(_source, destination);
-
 	/// <summary>
 	/// Why the source cannot be written into <c>drive.cfg</c> as the install's disc, or null when it can: a disc
 	/// folder must pass <see cref="GameInstall.CheckDiscDirectory"/>. An image always can.

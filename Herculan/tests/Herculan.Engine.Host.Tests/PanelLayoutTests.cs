@@ -48,7 +48,7 @@ public class PanelLayoutTests {
 		["Install prompt"] = new(new(InstallPromptWindow.WindowWidth, InstallPromptWindow.WindowHeight), localization => StartupPrompt(localization, refuse: false)),
 		["Install prompt, path refused"] = new(new(InstallPromptWindow.WindowWidth, InstallPromptWindow.WindowHeight), localization => StartupPrompt(localization, refuse: true)),
 		["Install window"] = new(new(InstallWindow.WindowWidth, InstallWindow.WindowHeight), localization => {
-			var panel = new InstallPanel(localization);
+			var panel = new InstallPanel(localization, new Es2DiscInstaller(localization));
 			return new Scene(() => InstallWindow.Draw(panel, 0), panel);
 		}),
 		["Menu bar"] = new(Screen, localization => MenuBar(localization, (_, _) => { })),

@@ -663,7 +663,7 @@ install.destination_file       {0} ist eine Datei.
 install.destination_not_empty  {0} ist nicht leer.
 install.destination_inside_disc  {0} liegt im Datenträgerordner.
 install.no_space               Die Installation benötigt {0:N0} MB, dort sind aber nur {1:N0} MB frei.
-install.retail_note            Die Programme des Originalspiels werden ebenfalls kopiert, laufen aber aus dieser Installation nicht: HERCULAN lässt die Videocodecs, DirectX und die übrige Systemeinrichtung des Original-Installationsprogramms weg, und das Originalspiel kann kein Datenträgerabbild lesen. Spielen Sie diese Installation mit HERCULAN.
+install.note                   Die Programme des Originalspiels werden ebenfalls kopiert, laufen aber aus dieser Installation nicht: HERCULAN lässt die Videocodecs, DirectX und die übrige Systemeinrichtung des Original-Installationsprogramms weg, und das Originalspiel kann kein Datenträgerabbild lesen. Spielen Sie diese Installation mit HERCULAN.
 install.install                Installieren
 install.copying                Kopiere {0} ({1} von {2})
 install.cancelled              Die Installation wurde abgebrochen, und das bereits Kopierte wurde entfernt.

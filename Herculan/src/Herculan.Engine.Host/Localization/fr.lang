@@ -663,7 +663,7 @@ install.destination_file       {0} est un fichier.
 install.destination_not_empty  {0} n'est pas vide.
 install.destination_inside_disc  {0} se trouve dans le dossier du disque.
 install.no_space               L'installation nécessite {0:N0} Mo, mais seuls {1:N0} Mo sont libres à cet emplacement.
-install.retail_note            Les programmes du jeu original sont aussi copiés, mais ils ne fonctionneront pas depuis cette installation : HERCULAN omet les codecs vidéo, DirectX et le reste de la configuration système qu'effectuait l'installateur d'origine, et le jeu original ne peut pas lire une image disque. Jouez à cette installation avec HERCULAN.
+install.note                   Les programmes du jeu original sont aussi copiés, mais ils ne fonctionneront pas depuis cette installation : HERCULAN omet les codecs vidéo, DirectX et le reste de la configuration système qu'effectuait l'installateur d'origine, et le jeu original ne peut pas lire une image disque. Jouez à cette installation avec HERCULAN.
 install.install                Installer
 install.copying                Copie de {0} ({1} sur {2})
 install.cancelled              L'installation a été annulée, et ce qu'elle avait copié a été supprimé.

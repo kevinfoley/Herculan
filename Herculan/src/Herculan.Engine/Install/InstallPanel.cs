@@ -1,22 +1,53 @@
 using System.Numerics;
 using HercWorks.Disc;
-using Herculan.Engine;
 using Herculan.Engine.Content;
-using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
-using Herculan.Es1.Install;
 using ImGuiNET;
 
-namespace Herculan.Es1.Host.Install;
+namespace Herculan.Engine.Install;
 
 /// <summary>
-/// The body of Metaltech: Earthsiege's "install from a disc" window: a disc folder or image, a destination, and the copy
-/// itself run off the frame loop with a progress bar (<see cref="Es1Installer"/>). A finished install keeps its source as
-/// the disc the movies play from (<see cref="Es1Disc"/>), as the full install's <c>ES.BAT</c> names the CD it came from.
-/// Retail's installer is the disc's <c>INSTALL.SCR</c> under <c>COPYFILZ.EXE</c>; nothing here imitates its screens.
+/// One game's side of <see cref="InstallPanel"/>: whether a disc is that game's, the choices it offers about the copy,
+/// and the copy itself.
 /// </summary>
-sealed class Es1InstallPanel : IDisposable {
+public interface IDiscInstaller {
+	/// <summary>
+	/// The prefix of the panel's strings that differ by game: <c>.message</c>, <c>.picker_folder_title</c>,
+	/// <c>.picker_image_title</c>, <c>.note</c> and <c>.done</c>.
+	/// </summary>
+	string KeyPrefix { get; }
+
+	/// <summary>The game's name, in the log.</summary>
+	string GameName { get; }
+
+	/// <summary>
+	/// Takes <paramref name="disc"/>, whose full path is <paramref name="location"/>, and returns true when it is the
+	/// game's; otherwise holds nothing of it and returns false. <paramref name="message"/> is what was found, or why the
+	/// disc is refused.
+	/// </summary>
+	bool Open(GameDisc disc, string location, out string message);
+
+	/// <summary>Lets go of the disc <see cref="Open"/> took.</summary>
+	void Close();
+
+	/// <summary>The bytes the copy takes with the choices made now; 0 with no disc taken.</summary>
+	long Bytes { get; }
+
+	/// <summary>Draws the choices the game offers between the source and the destination, greyed with no disc taken.</summary>
+	void DrawChoices();
+
+	/// <summary>The copy into <paramref name="destination"/> with the choices made now, to run off the frame loop.</summary>
+	Action<IProgress<InstallProgress>, CancellationToken> Copy(string destination);
+}
+
+/// <summary>
+/// The body of a game's "install from a disc" window: a disc folder or image, the choices the game offers
+/// (<see cref="IDiscInstaller.DrawChoices"/>), a destination, and the copy itself run off the frame loop with a progress
+/// bar. It draws into whatever ImGui window is current, so a game can show it as a window of its own or a floating one.
+/// Each game's retail installer has screens of its own; nothing here imitates them.
+/// </summary>
+public sealed class InstallPanel : IDisposable {
 	/// <summary>What one frame of the panel left it at.</summary>
 	public enum Outcome {
 		Open,
@@ -27,14 +58,13 @@ sealed class Es1InstallPanel : IDisposable {
 	}
 
 	private readonly LocalizationTable _localization;
+	private readonly IDiscInstaller _installer;
 	private readonly NativePathPicker.FileFilter _imageFilter;
 	private string _sourcePath = "";
 	private string _destination = "";
 	private GameDisc? _source;
-	private Es1Installer? _installer;
-	private long _bytes;
+	private bool _opened;
 	private string? _sourceMessage;
-	private bool _sourceOk;
 	private string? _error;
 	private string? _done;
 
@@ -46,8 +76,9 @@ sealed class Es1InstallPanel : IDisposable {
 	private readonly object _progressGate = new();
 	private InstallProgress _progress;
 
-	public Es1InstallPanel(LocalizationTable localization) {
+	public InstallPanel(LocalizationTable localization, IDiscInstaller installer) {
 		_localization = localization;
+		_installer = installer;
 		_imageFilter = new NativePathPicker.FileFilter(_localization.GetStringOrKey("install.image_filter"), ["iso", "bin", "cue"]);
 	}
 
@@ -63,7 +94,8 @@ sealed class Es1InstallPanel : IDisposable {
 		TakePick();
 		TakeInstall();
 
-		ImGui.TextWrapped(_localization.GetStringOrKey("es1_install.message"));
+		string prefix = _installer.KeyPrefix;
+		ImGui.TextWrapped(_localization.GetStringOrKey(prefix + ".message"));
 		ImGui.Spacing();
 
 		bool locked = Busy || _picking != null || _done != null;
@@ -88,21 +120,23 @@ sealed class Es1InstallPanel : IDisposable {
 		if (NativePathPicker.IsAvailable) {
 			ImGui.SameLine();
 			if (ImGui.Button(folderLabel)) {
-				Pick(source: true, _localization.GetStringOrKey("es1_install.picker_folder_title"), _sourcePath, owner, null);
+				Pick(source: true, _localization.GetStringOrKey(prefix + ".picker_folder_title"), _sourcePath, owner, null);
 			}
 			ImGui.SameLine();
 			if (ImGui.Button(imageLabel)) {
-				Pick(source: true, _localization.GetStringOrKey("es1_install.picker_image_title"), _sourcePath, owner, _imageFilter);
+				Pick(source: true, _localization.GetStringOrKey(prefix + ".picker_image_title"), _sourcePath, owner, _imageFilter);
 			}
 		}
 
 		if (_sourceMessage != null) {
-			if (_sourceOk) {
+			if (_opened) {
 				ImGui.TextUnformatted(_sourceMessage);
 			} else {
 				Error(_sourceMessage);
 			}
 		}
+
+		_installer.DrawChoices();
 
 		ImGui.SeparatorText(_localization.GetStringOrKey("install.destination"));
 		string browseLabel = _localization.GetStringOrKey("install_prompt.browse");
@@ -120,7 +154,7 @@ sealed class Es1InstallPanel : IDisposable {
 
 		ImGui.Spacing();
 		ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1f, 0.8f, 0.4f, 1f));
-		ImGui.TextWrapped(_localization.GetStringOrKey("es1_install.note"));
+		ImGui.TextWrapped(_localization.GetStringOrKey(prefix + ".note"));
 		ImGui.PopStyleColor();
 
 		if (_error != null) {
@@ -134,6 +168,7 @@ sealed class Es1InstallPanel : IDisposable {
 			}
 
 			float fraction = progress.BytesTotal > 0 ? (float)progress.BytesDone / progress.BytesTotal : 0f;
+			// File is null until the copy's first report, which comes only after the plan is checked and a chunk read.
 			ImGui.ProgressBar(fraction, new Vector2(-1f, 0f), string.IsNullOrEmpty(progress.File) ? ""
 				: string.Format(_localization.GetStringOrKey("install.copying"), progress.File, progress.FileIndex + 1, progress.FileCount));
 		} else if (_done != null) {
@@ -155,7 +190,7 @@ sealed class Es1InstallPanel : IDisposable {
 				outcome = Outcome.Installed;
 			}
 		} else {
-			ImGui.BeginDisabled(locked || _installer == null);
+			ImGui.BeginDisabled(locked || !_opened);
 			if (row.Button(goLabel)) {
 				StartInstall();
 			}
@@ -171,6 +206,15 @@ sealed class Es1InstallPanel : IDisposable {
 		}
 
 		return outcome;
+	}
+
+	/// <summary><paramref name="bytes"/> in whole megabytes, rounded up, as the panel's strings show sizes.</summary>
+	public static long Megabytes(long bytes) => (bytes + (1 << 20) - 1) >> 20;
+
+	private static void Error(string text) {
+		ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1f, 0.45f, 0.4f, 1f));
+		ImGui.TextWrapped(text);
+		ImGui.PopStyleColor();
 	}
 
 	private void Pick(bool source, string title, string initial, nint owner, NativePathPicker.FileFilter? filter) {
@@ -198,7 +242,7 @@ sealed class Es1InstallPanel : IDisposable {
 		}
 	}
 
-	// Opens the source field's disc and measures the install, replacing whatever was open.
+	// Opens the source field's disc and hands it to the game, replacing whatever was open.
 	private void OpenSource() {
 		CloseSource();
 		string path = _sourcePath.Trim().Trim('"');
@@ -228,32 +272,29 @@ sealed class Es1InstallPanel : IDisposable {
 			return;
 		}
 
-		_installer = Es1Installer.Identify(_source);
-		if (_installer == null) {
-			_sourceMessage = string.Format(_localization.GetStringOrKey("es1_install.not_es1"), full,
-				Es1Installer.ScriptPath, HercWorks.Core.Io.Transform.RetailGameDetector.Es1Marker);
+		_opened = _installer.Open(_source, full, out string message);
+		if (!_opened) {
 			CloseSource();
-			return;
 		}
 
-		_bytes = _installer.PlanBytes();
-		_sourceOk = true;
-		_sourceMessage = string.Format(_localization.GetStringOrKey("es1_install.found"), (_bytes + (1 << 20) - 1) >> 20);
+		_sourceMessage = message;
 	}
 
 	private void CloseSource() {
+		if (_opened) {
+			_installer.Close();
+		}
+
 		_source?.Dispose();
 		_source = null;
-		_installer = null;
-		_bytes = 0;
-		_sourceOk = false;
+		_opened = false;
 		_sourceMessage = null;
 	}
 
 	private void StartInstall() {
 		_error = null;
 		string path = _destination.Trim().Trim('"');
-		if (_installer is not { } installer || _source is not { } source) {
+		if (!_opened || _source is not { } source) {
 			return;
 		}
 
@@ -270,7 +311,7 @@ sealed class Es1InstallPanel : IDisposable {
 			return;
 		}
 
-		if (installer.CheckDestination(destination) is { } problem) {
+		if (DiscCopy.CheckDestination(source, destination) is { } problem) {
 			_error = string.Format(_localization.GetStringOrKey(problem switch {
 				DiscCopy.DestinationProblem.IsAFile => "install.destination_file",
 				DiscCopy.DestinationProblem.NotEmpty => "install.destination_not_empty",
@@ -279,11 +320,13 @@ sealed class Es1InstallPanel : IDisposable {
 			return;
 		}
 
-		if (DiscCopy.FreeSpace(destination) is { } free && free < _bytes) {
-			_error = string.Format(_localization.GetStringOrKey("install.no_space"), (_bytes + (1 << 20) - 1) >> 20, free >> 20);
+		long needed = _installer.Bytes;
+		if (DiscCopy.FreeSpace(destination) is { } free && free < needed) {
+			_error = string.Format(_localization.GetStringOrKey("install.no_space"), Megabytes(needed), free >> 20);
 			return;
 		}
 
+		var copy = _installer.Copy(destination);
 		var cancellation = new CancellationTokenSource();
 		// Only the latest report is kept, for the frame loop to read; a retry starts from none, not the last run's.
 		lock (_progressGate) {
@@ -297,14 +340,7 @@ sealed class Es1InstallPanel : IDisposable {
 		});
 		_cancellation = cancellation;
 		_destination = destination;
-		string disc = source.Location;
-		_installing = Task.Run(() => {
-			installer.Install(destination, progress, cancellation.Token);
-			// The disc kept for the movies; a failed write is logged, and the install stands without it.
-			if (Es1Disc.Check(disc, out _) == null) {
-				Es1Disc.Remember(disc);
-			}
-		});
+		_installing = Task.Run(() => copy(progress, cancellation.Token));
 	}
 
 	private void TakeInstall() {
@@ -317,8 +353,8 @@ sealed class Es1InstallPanel : IDisposable {
 		_cancellation = null;
 		if (finished.IsCompletedSuccessfully) {
 			Installed = _destination;
-			_done = string.Format(_localization.GetStringOrKey("es1_install.done"), _destination);
-			Console.WriteLine($"Installed Metaltech: Earthsiege into {_destination}.");
+			_done = string.Format(_localization.GetStringOrKey(_installer.KeyPrefix + ".done"), _destination);
+			Console.WriteLine($"Installed {_installer.GameName} into {_destination}.");
 		} else if (finished.Exception?.InnerException is OperationCanceledException || finished.IsCanceled) {
 			_error = _localization.GetStringOrKey("install.cancelled");
 		} else {
@@ -326,12 +362,6 @@ sealed class Es1InstallPanel : IDisposable {
 			Console.Error.WriteLine($"The install failed: {reason}");
 			_error = string.Format(_localization.GetStringOrKey("install.failed"), reason);
 		}
-	}
-
-	private static void Error(string text) {
-		ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1f, 0.45f, 0.4f, 1f));
-		ImGui.TextWrapped(text);
-		ImGui.PopStyleColor();
 	}
 
 	/// <summary>Cancels a running copy and waits for it to clean up, then closes the source.</summary>
