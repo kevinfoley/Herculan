@@ -1,5 +1,6 @@
 using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
+using Herculan.Engine.Games;
 using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Input;
@@ -55,6 +56,9 @@ public sealed class HostSession(string installRoot, LocalizationTable localizati
 	/// (<see cref="RetailInstalls.Remember"/>); <c>--ask-install</c> turns it off.
 	/// </summary>
 	public bool RememberInstall { get; init; } = true;
+
+	/// <inheritdoc cref="GameRunContext.Games"/>
+	public IReadOnlyList<GameIdentity> Games { get; init; } = [];
 
 	public LocalizationTable Localization { get; } = localization;
 

@@ -14,7 +14,8 @@ static class PrintScreenFiles {
 
 	/// <summary>
 	/// Has <paramref name="window"/>'s captures written under the install <paramref name="installRoot"/> names at capture
-	/// time: the Earthsiege 2 session's, which may change install meanwhile. A capture while it names none is not written.
+	/// time: the running game's (<see cref="Games.IGameModule.ActiveInstall"/>), which may change install meanwhile. A capture
+	/// while it names none is not written.
 	/// </summary>
 	public static void Attach(HostWindow window, Func<string?> installRoot) =>
 		window.PrintScreenCaptured += (width, height, rgb) => {

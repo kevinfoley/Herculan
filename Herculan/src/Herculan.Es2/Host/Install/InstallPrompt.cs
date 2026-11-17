@@ -1,11 +1,10 @@
 using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
-using HercWorks.Core.Io.Transform;
 
 namespace Herculan.Es2.Host.Install;
 
 /// <summary>
-/// Earthsiege 2's install prompt: the engine's (<see cref="InstallPromptWindow"/>) for <see cref="RetailGame.Earthsiege2"/>,
+/// Earthsiege 2's install prompt: the engine's (<see cref="InstallPromptWindow"/>) for <see cref="Es2GameModule.Identity"/>,
 /// with a third button that installs from a disc first (<see cref="InstallWindow"/>). The Settings menu asks the same way
 /// (<see cref="Create"/>).
 /// </summary>
@@ -17,7 +16,7 @@ public static class InstallPrompt {
 	/// </summary>
 	internal static PathPrompt Create(LocalizationTable localization, string dismissKey, string initialPath = "",
 			string? messageKey = null, string? alternativeKey = null) =>
-		InstallPromptWindow.Create(localization, RetailGame.Earthsiege2, dismissKey, initialPath, messageKey, alternativeKey);
+		InstallPromptWindow.Create(localization, Es2GameModule.Identity, dismissKey, initialPath, messageKey, alternativeKey);
 
 	/// <summary>
 	/// Shows the prompt until the player picks an install, makes one from a disc, or gives up. Returns the install root,
@@ -29,7 +28,7 @@ public static class InstallPrompt {
 	public static string? Run(LocalizationTable localization, string fontPath, string? refused = null,
 			string dismissKey = "install_prompt.quit") {
 		while (true) {
-			var (chosen, install) = InstallPromptWindow.Run(localization, fontPath, RetailGame.Earthsiege2, refused, dismissKey,
+			var (chosen, install) = InstallPromptWindow.Run(localization, fontPath, Es2GameModule.Identity, refused, dismissKey,
 				"install_prompt.install");
 			refused = null;
 			if (!install) {

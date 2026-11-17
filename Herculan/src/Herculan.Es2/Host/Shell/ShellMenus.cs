@@ -39,7 +39,8 @@ sealed class ShellMenus : IFrontEndMenus {
 		_controller.Saved += file => PadPointerSettingsChanged?.Invoke(file.Mouse);
 		_tweaks = new TweaksMenu(TweakSettings.Current, session.Localization);
 		_settings = new SettingsWindow(session, () => RequestClose(restartRequested));
-		var game = new GameMenu(session.Localization, RetailGame.Earthsiege2, other => RequestClose(() => GameSwitch.Request(other)));
+		var game = new GameMenu(session.Localization, session.Games, Es2GameModule.Identity.Game,
+			other => RequestClose(() => GameSwitch.Request(other)));
 		_menuBar = new HostMenuBar(session.Localization, session.Keys, _tweaks, _settings, _controller,
 			openEditor: () => RequestClose(editorRequested), customMissions: customMissions, manualOpening: () => OnlineManual.Opening,
 			game: game);

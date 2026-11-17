@@ -1,12 +1,11 @@
 using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
-using HercWorks.Core.Io.Transform;
 
 namespace Herculan.Es1.Host.Install;
 
 /// <summary>
 /// Metaltech: Earthsiege's install prompt: the engine's (<see cref="InstallPromptWindow"/>) for
-/// <see cref="RetailGame.Earthsiege1"/>, with a third button that installs from a disc first (<see cref="Es1InstallPanel"/>,
+/// <see cref="Es1GameModule.Identity"/>, with a third button that installs from a disc first (<see cref="Es1InstallPanel"/>,
 /// in a <see cref="StartupWindow"/> of its own).
 /// </summary>
 public static class Es1InstallPrompt {
@@ -20,7 +19,7 @@ public static class Es1InstallPrompt {
 	/// </summary>
 	public static string? Run(LocalizationTable localization, string fontPath, string? refused, string dismissKey) {
 		while (true) {
-			var (chosen, install) = InstallPromptWindow.Run(localization, fontPath, RetailGame.Earthsiege1, refused, dismissKey,
+			var (chosen, install) = InstallPromptWindow.Run(localization, fontPath, Es1GameModule.Identity, refused, dismissKey,
 				"install_prompt.install");
 			refused = null;
 			if (!install) {

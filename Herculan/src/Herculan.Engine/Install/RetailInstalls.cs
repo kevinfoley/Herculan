@@ -1,4 +1,5 @@
 using Herculan.Engine.Content;
+using Herculan.Engine.Games;
 using Herculan.Engine.Platform;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform;
@@ -12,54 +13,35 @@ namespace Herculan.Engine.Install;
 /// <see cref="RetailGameDetector"/> tells apart. Retail has no counterpart: each game's installer wrote its own paths.
 /// </summary>
 public static class RetailInstalls {
-	/// <summary>Earthsiege 2's environment variable, which <see cref="Locate"/> checks first.</summary>
-	public const string Es2PathVariable = "ES2_GAME_PATH";
-
-	/// <summary>Metaltech: Earthsiege's environment variable, which <see cref="Locate"/> checks first.</summary>
-	public const string Es1PathVariable = "ES1_GAME_PATH";
-
-	/// <summary>The games, in the order the start-up chooser lists them.</summary>
-	public static IReadOnlyList<RetailGame> Games { get; } = [RetailGame.Earthsiege2, RetailGame.Earthsiege1];
-
-	/// <summary>The environment variable that names <paramref name="game"/>'s install.</summary>
-	public static string PathVariable(RetailGame game) => game == RetailGame.Earthsiege1 ? Es1PathVariable : Es2PathVariable;
-
 	/// <summary>
-	/// The folder name <see cref="Locate"/> looks for beside the running binary and in each folder above it: <c>ES2</c>
-	/// or <c>ES1</c>.
+	/// Where <paramref name="game"/>'s last install is remembered: its <see cref="GameIdentity.RememberedPathFileName"/> in
+	/// <see cref="UserConfig.Folder"/>.
 	/// </summary>
-	public static string FolderName(RetailGame game) => game == RetailGame.Earthsiege1 ? "ES1" : "ES2";
-
-	/// <summary>
-	/// Where <paramref name="game"/>'s last install is remembered, in <see cref="UserConfig.Folder"/>: <c>install-path.txt</c>
-	/// for Earthsiege 2 and <c>es1-install-path.txt</c> for Metaltech: Earthsiege. Each holds one line, the path.
-	/// </summary>
-	public static string RememberedPathFile(RetailGame game) =>
-		UserConfig.PathOf(game == RetailGame.Earthsiege1 ? "es1-install-path.txt" : "install-path.txt");
+	public static string RememberedPathFile(GameIdentity game) => UserConfig.PathOf(game.RememberedPathFileName);
 
 	/// <summary>Whether <paramref name="path"/> is an install root of either game: a directory holding the archive directory.</summary>
 	public static bool IsInstallRoot(string path) =>
 		Directory.Exists(path) && Directory.Exists(GameContent.ArchiveDirectory(path));
 
 	/// <summary>Whether <paramref name="path"/> is an install root (<see cref="IsInstallRoot"/>) that holds <paramref name="game"/>.</summary>
-	public static bool IsInstallOf(string path, RetailGame game) =>
-		IsInstallRoot(path) && RetailGameDetector.Detect(path) == game;
+	public static bool IsInstallOf(string path, GameIdentity game) =>
+		IsInstallRoot(path) && RetailGameDetector.Detect(path) == game.Game;
 
 	/// <summary>
 	/// Resolves <paramref name="game"/>'s install root, in order: an explicit <paramref name="explicitPath"/> (a command
-	/// line argument), the game's environment variable (<see cref="PathVariable"/>), the install last used
-	/// (<see cref="Remember"/>), then a <see cref="FolderName"/> folder beside the running binary or any folder above it,
+	/// line argument), the game's environment variable (<see cref="GameIdentity.PathVariable"/>), the install last used
+	/// (<see cref="Remember"/>), then a <see cref="GameIdentity.FolderName"/> folder beside the running binary or any folder above it,
 	/// which covers a sibling install checked out beside this repo, reached from <c>src/Herculan.Engine.Host/bin/...</c>.
 	/// Each must hold that game (<see cref="IsInstallOf"/>). Returns null when nothing matched, so the caller can ask the
 	/// player or print something more useful than a stack trace. An explicit path that is not an install is null too,
 	/// without trying the rest: a path the player typed is never silently swapped for another.
 	/// </summary>
-	public static string? Locate(RetailGame game, string? explicitPath = null) {
+	public static string? Locate(GameIdentity game, string? explicitPath = null) {
 		if (!string.IsNullOrWhiteSpace(explicitPath)) {
 			return IsInstallOf(explicitPath, game) ? Path.GetFullPath(explicitPath) : null;
 		}
 
-		string? fromEnvironment = Environment.GetEnvironmentVariable(PathVariable(game));
+		string? fromEnvironment = Environment.GetEnvironmentVariable(game.PathVariable);
 		if (!string.IsNullOrWhiteSpace(fromEnvironment) && IsInstallOf(fromEnvironment, game)) {
 			return Path.GetFullPath(fromEnvironment);
 		}
@@ -72,7 +54,7 @@ public static class RetailInstalls {
 		// Walk up from the binary looking for a sibling folder — covers running straight out of the repo without any
 		// configuration, which is the normal development case.
 		for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory != null; directory = directory.Parent) {
-			string candidate = CaseInsensitivePath.Combine(directory.FullName, FolderName(game));
+			string candidate = CaseInsensitivePath.Combine(directory.FullName, game.FolderName);
 			if (IsInstallOf(candidate, game)) {
 				return Path.GetFullPath(candidate);
 			}
@@ -82,15 +64,14 @@ public static class RetailInstalls {
 	}
 
 	/// <summary>
-	/// Records <paramref name="installRoot"/> as the last install used of the game it holds (<see cref="RetailGameDetector"/>),
-	/// which <see cref="Locate"/> tries before searching. A failed write is logged and otherwise ignored: the next launch
-	/// searches again.
+	/// Records <paramref name="installRoot"/> as the last install used of <paramref name="game"/>, which <see cref="Locate"/>
+	/// tries before searching. A failed write is logged and otherwise ignored: the next launch searches again.
 	/// </summary>
-	public static void Remember(string installRoot) =>
-		UserConfig.Write(RememberedPathFile(RetailGameDetector.Detect(installRoot)), Path.GetFullPath(installRoot));
+	public static void Remember(GameIdentity game, string installRoot) =>
+		UserConfig.Write(RememberedPathFile(game), Path.GetFullPath(installRoot));
 
 	/// <summary>The install last remembered for <paramref name="game"/>, whether or not it is still there; null for none.</summary>
-	public static string? Remembered(RetailGame game) {
+	public static string? Remembered(GameIdentity game) {
 		string path = RememberedPathFile(game);
 		try {
 			return File.Exists(path) && File.ReadAllText(path).Trim() is { Length: > 0 } remembered ? remembered : null;

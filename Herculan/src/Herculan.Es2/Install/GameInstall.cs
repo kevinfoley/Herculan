@@ -7,6 +7,7 @@ using HercWorks.Vol;
 using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
+using Herculan.Es2.Host;
 using Herculan.Es2.Content;
 using Herculan.Es2.World;
 
@@ -18,14 +19,11 @@ namespace Herculan.Es2.Install;
 /// here means a directory containing a <c>VOL</c> folder with the game's archives in it.
 /// </summary>
 public static class GameInstall {
-	/// <summary>Environment variable checked first, so a developer can point at any install (<see cref="RetailInstalls.Es2PathVariable"/>).</summary>
-	public const string PathVariable = RetailInstalls.Es2PathVariable;
-
 	/// <summary>Earthsiege 2's install root as <see cref="RetailInstalls.Locate"/> resolves it.</summary>
-	public static string? Locate(string? explicitPath = null) => RetailInstalls.Locate(RetailGame.Earthsiege2, explicitPath);
+	public static string? Locate(string? explicitPath = null) => RetailInstalls.Locate(Es2GameModule.Identity, explicitPath);
 
 	/// <summary>Whether <paramref name="path"/> is an Earthsiege 2 install root (<see cref="RetailInstalls.IsInstallOf"/>).</summary>
-	public static bool IsInstallRoot(string path) => RetailInstalls.IsInstallOf(path, RetailGame.Earthsiege2);
+	public static bool IsInstallRoot(string path) => RetailInstalls.IsInstallOf(path, Es2GameModule.Identity);
 
 	/// <summary>What DBSIM mounts of the install and of the disc <see cref="OpenDisc"/> opens.</summary>
 	public static GameContent MountSimulator(string installRoot) {

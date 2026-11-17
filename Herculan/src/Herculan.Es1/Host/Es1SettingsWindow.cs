@@ -184,7 +184,7 @@ sealed class Es1SettingsWindow : IDrawnMenuBarPanel {
 	private void OpenPrompt(PromptKind kind) {
 		string? disc = _disc;
 		_prompt = kind switch {
-			PromptKind.Install => InstallPromptWindow.Create(_localization, RetailGame.Earthsiege1, "general.cancel", _installRoot,
+			PromptKind.Install => InstallPromptWindow.Create(_localization, Es1GameModule.Identity, "general.cancel", _installRoot,
 				"es1_settings.install_message"),
 			PromptKind.DiscFolder => new PathPrompt(_localization, "es1_disc_prompt", "general.cancel", DiscRefusal,
 				disc != null && !Es1Disc.IsImage(disc) ? disc : ""),

@@ -1,13 +1,13 @@
 using System.Numerics;
+using Herculan.Engine.Games;
 using Herculan.Engine.Localization;
-using HercWorks.Core.Io.Transform;
 using ImGuiNET;
 
 namespace Herculan.Engine.Install;
 
 /// <summary>
 /// The window a launch with no install named opens first, unless a game was saved to start without asking
-/// (<see cref="StartupGame"/>): a button for each game (<see cref="RetailInstalls.Games"/>), with the folder its install
+/// (<see cref="StartupGame"/>): a button for each game the host runs, with the folder its install
 /// was found in or a line saying none was, "Don't ask again", and Quit at the foot. Choosing a game whose install was not
 /// found is the host's to answer, with that game's install prompt. This engine's own; retail has no counterpart.
 /// </summary>
@@ -23,25 +23,22 @@ public sealed class GameChooser {
 	}
 
 	private readonly LocalizationTable _localization;
-	private readonly IReadOnlyDictionary<RetailGame, string?> _found;
+	private readonly IReadOnlyList<(GameIdentity Game, string? Found)> _games;
 	private bool _dontAskAgain;
 
-	/// <param name="found">Each game's install root as found at start-up, or null where none was.</param>
+	/// <param name="games">Each game in the order listed, with its install root as found at start-up, or null where none was.</param>
 	/// <param name="dontAskAgain">Whether "Don't ask again" starts ticked, as it is when the player comes back to the chooser.</param>
-	public GameChooser(LocalizationTable localization, IReadOnlyDictionary<RetailGame, string?> found, bool dontAskAgain = false) {
+	public GameChooser(LocalizationTable localization, IReadOnlyList<(GameIdentity Game, string? Found)> games, bool dontAskAgain = false) {
 		_localization = localization;
-		_found = found;
+		_games = games;
 		_dontAskAgain = dontAskAgain;
 	}
 
 	/// <summary>The game chosen; set once <see cref="Draw"/> has returned <see cref="Outcome.Chosen"/>.</summary>
-	public RetailGame? Chosen { get; private set; }
+	public GameIdentity? Chosen { get; private set; }
 
 	/// <summary>Whether "Don't ask again" is ticked.</summary>
 	public bool DontAskAgain => _dontAskAgain;
-
-	/// <summary>The string of <paramref name="game"/>'s name.</summary>
-	public static string NameKey(RetailGame game) => game == RetailGame.Earthsiege1 ? "game.earthsiege1" : "game.earthsiege2";
 
 	/// <summary>Draws the chooser into the current window, filling it to its foot.</summary>
 	public Outcome Draw() {
@@ -51,15 +48,15 @@ public sealed class GameChooser {
 
 		var style = ImGui.GetStyle();
 		var buttonSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight() + style.FramePadding.Y * 2f);
-		foreach (var game in RetailInstalls.Games) {
-			ImGui.PushID((int)game);
-			if (ImGui.Button(_localization.GetStringOrKey(NameKey(game)), buttonSize)) {
+		foreach (var (game, found) in _games) {
+			ImGui.PushID((int)game.Game);
+			if (ImGui.Button(_localization.GetStringOrKey(game.NameKey), buttonSize)) {
 				Chosen = game;
 				outcome = Outcome.Chosen;
 			}
 
 			ImGui.PushStyleColor(ImGuiCol.Text, style.Colors[(int)ImGuiCol.TextDisabled]);
-			ImGui.TextWrapped(_found.GetValueOrDefault(game) ?? _localization.GetStringOrKey("chooser.not_found"));
+			ImGui.TextWrapped(found ?? _localization.GetStringOrKey("chooser.not_found"));
 			ImGui.PopStyleColor();
 			ImGui.PopID();
 			ImGui.Spacing();
@@ -85,9 +82,9 @@ public sealed class GameChooser {
 	/// Shows the chooser in a window of its own (<see cref="StartupWindow"/>) until the player chooses a game or quits.
 	/// Returns the game, or null when the player chose Quit or closed the window, and whether "Don't ask again" was ticked.
 	/// </summary>
-	public static (RetailGame? Game, bool DontAskAgain) Run(LocalizationTable localization, string fontPath,
-			IReadOnlyDictionary<RetailGame, string?> found, bool dontAskAgain = false) {
-		var chooser = new GameChooser(localization, found, dontAskAgain);
+	public static (GameIdentity? Game, bool DontAskAgain) Run(LocalizationTable localization, string fontPath,
+			IReadOnlyList<(GameIdentity Game, string? Found)> games, bool dontAskAgain = false) {
+		var chooser = new GameChooser(localization, games, dontAskAgain);
 		var outcome = Outcome.Open;
 		StartupWindow.Run(localization, "chooser.window_title", WindowWidth, WindowHeight, fontPath,
 			_ => (outcome = chooser.Draw()) != Outcome.Open);

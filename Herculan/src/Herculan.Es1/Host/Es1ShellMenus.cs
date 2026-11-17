@@ -1,5 +1,5 @@
 using HercWorks.Core.Io;
-using HercWorks.Core.Io.Transform;
+using Herculan.Engine.Games;
 using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Menus;
@@ -36,17 +36,19 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 	/// The Tweaks window edits <see cref="TweakSettings.Current"/>, which the host has loaded with ES1's catalog; the
 	/// Settings window shows <paramref name="installRoot"/>, the install the turn runs on.
 	/// </summary>
+	/// <param name="games">Every game the host runs, which the "Game" menu offers a switch to (<see cref="GameMenu"/>).</param>
 	/// <param name="inMission">Whether the bar is over a mission rather than the shell (the class summary).</param>
-	public Es1ShellMenus(LocalizationTable localization, string installRoot, bool inMission = false) {
+	public Es1ShellMenus(LocalizationTable localization, string installRoot, IReadOnlyList<GameIdentity> games,
+			bool inMission = false) {
 		_localization = localization;
 		_tweaks = new TweaksMenu(TweakSettings.Current, localization, offered: Es1TweakSettingDefinitions.Offered);
-		var game = inMission ? null : new GameMenu(localization, RetailGame.Earthsiege1, other => {
+		var game = inMission ? null : new GameMenu(localization, games, Es1GameModule.Identity.Game, other => {
 			GameSwitch.Request(other);
 			CloseRequested?.Invoke();
 		});
 		// A change of install or disc starts the launcher again, through the "Switch to" request to this same game.
 		var settings = new Es1SettingsWindow(localization, installRoot, inMission ? null : root => {
-			GameSwitch.Request(RetailGame.Earthsiege1, root);
+			GameSwitch.Request(Es1GameModule.Identity.Game, root);
 			CloseRequested?.Invoke();
 		});
 		// The install's copy of the controller map seeds the player's while it is missing, as at a mission start.

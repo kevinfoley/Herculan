@@ -1,6 +1,7 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Editor;
 using Herculan.Engine.Install;
+using Herculan.Es2.Host;
 using Herculan.Es2.Install;
 
 // The mission editor on its own: find the install and run the editor (EditorHost) over it. The game runs the
@@ -12,7 +13,7 @@ string? installRoot = GameInstall.Locate(args.Length > 0 ? args[0] : null);
 if (installRoot == null) {
 	Console.Error.WriteLine(
 		"Could not find an Earthsiege 2 installation.\n" +
-		$"Pass its path as the first argument, or set {GameInstall.PathVariable}.\n" +
+		$"Pass its path as the first argument, or set {Es2GameModule.Identity.PathVariable}.\n" +
 		$"The path should be the folder containing the '{GameContent.ArchiveFolderName}' directory.");
 	return 1;
 }
@@ -20,7 +21,7 @@ if (RetailInstalls.IsOnDisc(installRoot)) {
 	Console.Error.WriteLine($"{installRoot}: The CD cannot be used as the install location because save files cannot be written to the CD.");
 	return 1;
 }
-RetailInstalls.Remember(installRoot);
+RetailInstalls.Remember(Es2GameModule.Identity, installRoot);
 
 GameContent? shellContent = null;
 EditorHost.Run(new EditorLaunch(installRoot, GameInstall.MountSimulator(installRoot),

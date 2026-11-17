@@ -7,7 +7,8 @@ using Herculan.Es2.Install;
 namespace Herculan.Engine.Host;
 
 /// <summary>
-/// The mission editor's turn, handed to Earthsiege 2's <see cref="Launcher"/> as its <see cref="EditorTurn"/>: the
+/// The mission editor's turn, handed to Earthsiege 2's <see cref="Es2GameModule"/>, which gives it to its
+/// <see cref="Launcher"/> as its <see cref="EditorTurn"/>: the
 /// editor's assembly references the game's, so the game cannot call it.
 /// </summary>
 static class HostEditorTurn {

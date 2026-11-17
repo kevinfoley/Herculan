@@ -393,7 +393,7 @@ sealed class SettingsWindow : IDisposable, IDrawnMenuBarPanel {
 				default:
 					_session.InstallRoot = path!;
 					if (_session.RememberInstall) {
-						RetailInstalls.Remember(path!);
+						RetailInstalls.Remember(Es2GameModule.Identity, path!);
 					}
 					break;
 			}
