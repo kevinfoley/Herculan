@@ -2,6 +2,7 @@ using System.Numerics;
 using Herculan.Engine;
 using HercWorks.Disc;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Platform;
 using Herculan.Es2.Install;
@@ -324,15 +325,15 @@ sealed class InstallPanel : IDisposable {
 
 		if (installer.CheckDestination(destination) is { } problem) {
 			_error = string.Format(_localization.GetStringOrKey(problem switch {
-				RetailInstaller.DestinationProblem.IsAFile => "install.destination_file",
-				RetailInstaller.DestinationProblem.NotEmpty => "install.destination_not_empty",
+				DiscCopy.DestinationProblem.IsAFile => "install.destination_file",
+				DiscCopy.DestinationProblem.NotEmpty => "install.destination_not_empty",
 				_ => "install.destination_inside_disc",
 			}), destination);
 			return;
 		}
 
 		long needed = _sizeBytes?[(int)_size] ?? 0;
-		if (RetailInstaller.FreeSpace(destination) is { } free && free < needed) {
+		if (DiscCopy.FreeSpace(destination) is { } free && free < needed) {
 			_error = string.Format(_localization.GetStringOrKey("install.no_space"), (needed + (1 << 20) - 1) >> 20, free >> 20);
 			return;
 		}

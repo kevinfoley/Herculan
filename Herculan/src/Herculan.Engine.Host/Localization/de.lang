@@ -668,3 +668,11 @@ install.cancelled              Die Installation wurde abgebrochen, und das berei
 install.failed                 Die Installation ist fehlgeschlagen, und das bereits Kopierte wurde entfernt: {0}
 install.done                   Earthsiege 2 ist in {0} installiert.
 install.use                    Diese Installation verwenden
+es1_install.window_title       HERCULAN Engine — Metaltech: Earthsiege installieren
+es1_install.message            Installieren Sie Metaltech: Earthsiege von seiner CD in einen neuen Ordner und kopieren Sie dabei, was die vollständige Installation des Original-Installationsprogramms kopiert. Der Datenträger kann ein CD-Laufwerk, eine Kopie der CD oder ein Datenträgerabbild (.iso, .bin oder .cue) sein. Vom Datenträger wird nichts ausgeführt.
+es1_install.picker_folder_title Ordner des Metaltech: Earthsiege-Datenträgers auswählen
+es1_install.picker_image_title Metaltech: Earthsiege-Datenträgerabbild auswählen
+es1_install.not_es1            {0} ist kein Metaltech: Earthsiege-Datenträger: Er enthält kein {1} oder kein {2}.
+es1_install.found              Metaltech: Earthsiege, vollständige Installation ({0:N0} MB)
+es1_install.note               HERCULAN richtet den Ton als Sound Blaster 16 mit FM-Musik ein, eine Wahl, die das Original-Programm SOUNDSET anbietet. Die Filme spielt es von diesem Datenträger ab: Lassen Sie den Datenträger oder das Abbild, wo es ist, oder wählen Sie in den Einstellungen einen anderen. Die Programme des Originalspiels werden ebenfalls kopiert; um sie unter DOS zu starten, binden Sie die CD als Laufwerk D: ein.
+es1_install.done               Metaltech: Earthsiege ist in {0} installiert.

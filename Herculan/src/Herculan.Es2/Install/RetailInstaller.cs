@@ -2,14 +2,12 @@ using System.Text;
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Es2.Audio;
 using Herculan.Es2.Shell;
 using Herculan.Es2.World;
 
 namespace Herculan.Es2.Install;
-
-/// <summary>How far an install has got, for a progress bar.</summary>
-public readonly record struct InstallProgress(int FileIndex, int FileCount, string File, long BytesDone, long BytesTotal);
 
 /// <summary>
 /// Installs Earthsiege 2 from a retail disc — a directory or an image (<see cref="GameDisc"/>) — into a directory,
@@ -180,43 +178,11 @@ public sealed class RetailInstaller {
 		_ => GameLanguage.English,
 	};
 
-	/// <summary>The bytes <paramref name="plan"/> copies; a file missing from the disc counts as nothing.</summary>
-	public long PlanBytes(IReadOnlyList<(string Source, string Destination)> plan) =>
-		plan.Sum(file => {
-			using var stream = _source.OpenRead(file.Source);
-			return stream?.Length ?? 0;
-		});
+	/// <summary>The bytes <paramref name="plan"/> copies (<see cref="DiscCopy.PlanBytes"/>).</summary>
+	public long PlanBytes(IReadOnlyList<(string Source, string Destination)> plan) => DiscCopy.PlanBytes(_source, plan);
 
-	/// <summary>Why a directory cannot be installed into (<see cref="CheckDestination"/>).</summary>
-	public enum DestinationProblem {
-		IsAFile,
-		NotEmpty,
-		InsideDisc,
-	}
-
-	/// <summary>
-	/// Why <paramref name="destination"/> cannot be installed into, or null when it can: it must be a new or empty
-	/// directory, outside the source when the source is a directory.
-	/// </summary>
-	public DestinationProblem? CheckDestination(string destination) {
-		string full = Path.GetFullPath(destination);
-		if (File.Exists(full)) {
-			return DestinationProblem.IsAFile;
-		}
-
-		if (Directory.Exists(full) && Directory.EnumerateFileSystemEntries(full).Any()) {
-			return DestinationProblem.NotEmpty;
-		}
-
-		if (_source.Image == null) {
-			string source = Path.TrimEndingDirectorySeparator(Path.GetFullPath(_source.Location)) + Path.DirectorySeparatorChar;
-			if ((full + Path.DirectorySeparatorChar).StartsWith(source, StringComparison.OrdinalIgnoreCase)) {
-				return DestinationProblem.InsideDisc;
-			}
-		}
-
-		return null;
-	}
+	/// <summary>Why <paramref name="destination"/> cannot be installed into (<see cref="DiscCopy.CheckDestination"/>), or null when it can.</summary>
+	public DiscCopy.DestinationProblem? CheckDestination(string destination) => DiscCopy.CheckDestination(_source, destination);
 
 	/// <summary>
 	/// Why the source cannot be written into <c>drive.cfg</c> as the install's disc, or null when it can: a disc
@@ -225,17 +191,9 @@ public sealed class RetailInstaller {
 	public GameInstall.DiscDirectoryProblem? CheckSource() =>
 		_source.Image == null ? GameInstall.CheckDiscDirectory(_source.Location) : null;
 
-	/// <summary>The bytes free on the drive holding <paramref name="destination"/>, or null when that cannot be told.</summary>
-	public static long? FreeSpace(string destination) {
-		try {
-			return new DriveInfo(Path.GetPathRoot(Path.GetFullPath(destination))!).AvailableFreeSpace;
-		} catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException) {
-			return null;
-		}
-	}
-
 	/// <summary>
-	/// Copies <see cref="Plan"/>, with or without <paramref name="discFiles"/>, into <paramref name="destination"/>, then writes <c>BATCH.EXE</c>'s three files:
+	/// Copies <see cref="Plan"/>, with or without <paramref name="discFiles"/>, into <paramref name="destination"/>
+	/// (<see cref="DiscCopy.Copy"/>), then writes <c>BATCH.EXE</c>'s three files:
 	/// <list type="number">
 	/// <item><c>data\drive.cfg</c>: the disc folder and the install, one per line. From an image, the disc line is
 	/// <c>.</c> and the image goes on HERCULAN's own line (<see cref="Drive.DiscImage"/>).</item>
@@ -249,54 +207,12 @@ public sealed class RetailInstaller {
 	/// disc, or there is not room for it.</exception>
 	public void Install(string destination, Size size, Language language, bool discFiles,
 			IProgress<InstallProgress>? progress = null, CancellationToken cancellation = default) {
-		string root = Path.GetFullPath(destination);
-		if (CheckDestination(root) is { } refusal) {
-			throw new InvalidOperationException($"{root} cannot be installed into: {refusal}.");
-		}
-
 		if (CheckSource() is { } discProblem) {
 			throw new InvalidOperationException($"{_source.Location} cannot go into {Drive.FileName}: {discProblem}.");
 		}
 
-		var plan = Plan(size, language, discFiles);
-		if (plan.FirstOrDefault(file => !_source.FileExists(file.Source)) is { Source: not null } missing) {
-			throw new InvalidOperationException($"The disc has no {missing.Source}.");
-		}
-
-		long total = PlanBytes(plan);
-		if (FreeSpace(root) is { } free && free < total) {
-			throw new InvalidOperationException($"{root} has {free:N0} bytes free; the install needs {total:N0}.");
-		}
-
-		bool created = !Directory.Exists(root);
-		var written = new List<string>();
-		try {
-			Directory.CreateDirectory(root);
-			var buffer = new byte[1 << 20];
-			long done = 0;
-			for (int i = 0; i < plan.Count; i++) {
-				var (source, relative) = plan[i];
-				string target = Under(root, relative);
-				Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-				using var input = _source.OpenRead(source)
-					?? throw new InvalidOperationException($"The disc has no {source}.");
-				written.Add(target);
-				using (var output = new FileStream(target, FileMode.CreateNew, FileAccess.Write)) {
-					for (int read; (read = input.Read(buffer)) > 0;) {
-						cancellation.ThrowIfCancellationRequested();
-						output.Write(buffer, 0, read);
-						done += read;
-						progress?.Report(new InstallProgress(i, plan.Count, relative, done, total));
-					}
-				}
-			}
-
-			WriteConfiguration(root, language, written);
-			progress?.Report(new InstallProgress(plan.Count, plan.Count, "", total, total));
-		} catch {
-			Undo(root, created, written);
-			throw;
-		}
+		DiscCopy.Copy(_source, destination, Plan(size, language, discFiles),
+			(root, written) => WriteConfiguration(root, language, written), progress, cancellation);
 	}
 
 	private void WriteConfiguration(string root, Language language, List<string> written) {
@@ -318,13 +234,7 @@ public sealed class RetailInstaller {
 		File.Copy(readme, copy);
 	}
 
-	// Every destination is one of Plan's constants; this keeps it so should one ever be wrong.
-	private static string Under(string root, string relative) {
-		string full = Path.GetFullPath(Path.Combine(root, relative));
-		return full.StartsWith(Path.TrimEndingDirectorySeparator(root) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
-			? full
-			: throw new InvalidOperationException($"{relative} is outside the install.");
-	}
+	private static string Under(string root, string relative) => DiscCopy.Under(root, relative);
 
 	/// <summary>
 	/// <paramref name="language"/>'s folder on the disc, which holds its manual and readme (and in v1.10 its
@@ -335,27 +245,4 @@ public sealed class RetailInstaller {
 		Language.German => ("GERMAN", "GER"),
 		_ => ("ENGLISH", "ENG"),
 	};
-
-	// Removes what an install that failed wrote: its files, then the directories left empty, then the
-	// destination itself when the install made it.
-	private static void Undo(string root, bool created, List<string> written) {
-		try {
-			foreach (string file in written.Where(File.Exists)) {
-				File.Delete(file);
-			}
-
-			foreach (string directory in Directory.EnumerateDirectories(root, "*", SearchOption.AllDirectories)
-					.OrderByDescending(path => path.Length)) {
-				if (!Directory.EnumerateFileSystemEntries(directory).Any()) {
-					Directory.Delete(directory);
-				}
-			}
-
-			if (created && !Directory.EnumerateFileSystemEntries(root).Any()) {
-				Directory.Delete(root);
-			}
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
-			Console.Error.WriteLine($"Could not remove the partial install in {root}: {ex.Message}");
-		}
-	}
 }

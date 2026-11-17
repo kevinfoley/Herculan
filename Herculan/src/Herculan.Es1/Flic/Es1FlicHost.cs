@@ -31,7 +31,8 @@ public static class Es1FlicHost {
 	/// <summary>The default <c>Flic_DecodeSound</c> gives <c>pathFlic</c>.</summary>
 	public const string DefaultPathFlic = @".\";
 
-	private const string FlicPlayerSection = "FlicPlayer", PathFlicKey = "pathFlic";
+	/// <summary><c>RESOURCE.CFG</c>'s section and key that name the flics' sound folder.</summary>
+	public const string FlicPlayerSection = "FlicPlayer", PathFlicKey = "pathFlic";
 
 	/// <summary>The most a flic or a sound read from a disc may hold; the retail flics are under 6 MB.</summary>
 	public const long MaxFileBytes = 64L << 20;

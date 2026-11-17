@@ -8,7 +8,7 @@ namespace Herculan.Engine.Install;
 /// The prompt the host opens when <see cref="RetailInstalls.Locate"/> finds no install of the game to run, or at once
 /// under <c>--ask-install</c>: it asks the player for that game's folder, by the platform's own folder picker or by a
 /// typed path, and accepts only a folder that holds that game (<see cref="RetailInstalls.IsInstallOf"/>) and is not on a
-/// disc. A game may add a third button, as Earthsiege 2 does to install from a disc. Its strings are the game's
+/// disc. A game may add a third button, as both games do to install from a disc. Its strings are the game's
 /// <see cref="KeyPrefix"/>'s, beside the shared <c>install_prompt.browse</c>, <c>picker_open</c>, <c>picker_failed</c>,
 /// <c>quit</c>, <c>back</c> and <c>on_disc</c>. Retail has no equivalent; each game's installer wrote the path for it.
 /// </summary>

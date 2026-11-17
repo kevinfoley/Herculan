@@ -1,6 +1,7 @@
 using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
+using Herculan.Es1.Host.Install;
 using Herculan.Es2.Host.Install;
 using HercWorks.Core.Io.Transform;
 
@@ -87,7 +88,7 @@ static class StartupInstall {
 
 		beforePrompt?.Invoke();
 		return game == RetailGame.Earthsiege1
-			? InstallPromptWindow.Run(localization, fontPath, game, onDisc, dismissKey).Chosen
+			? Es1InstallPrompt.Run(localization, fontPath, onDisc, dismissKey)
 			: InstallPrompt.Run(localization, fontPath, onDisc, dismissKey);
 	}
 
