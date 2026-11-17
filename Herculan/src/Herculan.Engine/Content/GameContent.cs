@@ -82,8 +82,10 @@ public sealed class GameContent {
 	/// <c>VolumeGroup_AddVolume</c> (<c>00467e90</c>) inserts each loaded archive after every one of
 	/// equal or higher precedence, so of two equal archives the first loaded is searched first.
 	/// <c>findfirst</c> lists a directory in the file system's order; this lists it by name, which
-	/// changes nothing for retail data: every <c>folder\name</c> two equal-precedence archives of one
-	/// program share has the same content in both, in v1.0 and in v1.10. Names are compared ignoring
+	/// changes nothing for ES2's retail data: every <c>folder\name</c> two equal-precedence archives of one
+	/// program share has the same content in both, in v1.0 and in v1.10. ES1's simulator's <c>SIMVOL0</c> and
+	/// <c>ZONES</c> differ in <c>ZONE6</c> and <c>ZONE8</c>, and name order is the order each of ES1's install
+	/// layouts loads them in (docs/es1/formats/streams.md#the-volume-group). Names are compared ignoring
 	/// case, where retail's comparison is exact.</para>
 	///
 	/// <para>Retail stops before scanning when the group already holds <see cref="MaxArchives"/>, but

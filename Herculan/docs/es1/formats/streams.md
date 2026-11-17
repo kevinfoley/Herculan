@@ -94,11 +94,21 @@ A volume is one open `.VOL` archive. ES1's archives have ES2's layout ([VOL arch
 
 ## The volume group
 
-`g_VolumeGroup` is a `0x29`-byte object: up to 10 volume pointers from `+0` and their count at `+0x28`, where ES2's group holds `0x1e`. The volumes are kept in descending order of their search precedence, and `VolumeGroup_FindEntry` takes the entry from the first volume that has it.
+`g_VolumeGroup` is a `0x29`-byte object: up to 10 volume pointers from `+0` and their count at `+0x28`, where ES2's group holds `0x1e`. The volumes are kept in descending order of their search precedence, and `VolumeGroup_FindEntry` takes the entry from the first volume that has it. `VolumeGroup_AddVolume` moves a new volume past only those of lower precedence, so one of equal precedence goes after every volume already held and, of two that hold the same path, the one loaded first answers, as in ES2 ([ES2's archives](../../retail/formats/vol-archive.md#which-archives-are-mounted)).
 
 `VolRStream_SetGroup(mask, extension, dir, dirFirst)` makes the group on its first call and refills it on later ones through `VolumeGroup_SetGroup`. That removes the volumes whose program mask shares no bit with `mask`, then loads each file matching `vol\*<extension>`, once under `dir` and once without it (`dir` first when `dirFirst` is nonzero), whose `vol\<name>` is not loaded already, passing `mask` to the volume loader. It tests the limit of 10 once, before it scans; the install's `VOL\` holds seven volumes. `VolRStream_LoadVolume` adds one named volume, with the mask `0xffffffff`, unless one of that name is loaded.
 
 `main` (`00059350`) sets the volume buffer size to `0x200` and then calls `VolRStream_SetGroup` with mask 1, extension `.vol`, the directory `ALT_DRIVE` names (null unless `-c` was given) and `dirFirst` set when `PREFER_ALT` is ([starting](../simulation/main-loop.md#starting--sim_main-00059350)), so of the install's archives the simulator loads `SIMVOL0`, `SIMSOUND`, `SIMVOICE` and `ZONES`. When that call makes the group, `VolumeGroup_Ctor` sets the buffer size to `0x400` before it loads a volume.
+
+All seven archives have precedence 5, so the order the simulator loads them in decides which answers for a path two of them hold, and in each of the installer's three layouts ([`ES.BAT`](../shell/launcher.md#the-installers-esbat)) it loads `SIMVOL0` before `ZONES`:
+
+| Install | Where the two are | Order |
+|---|---|---|
+| full | both in the install's `VOL\`, copied there by `copy %2:vol\*.vol .` | the first pass, over the install's folder, lists them in the order they were copied into it, which is the order `COPY` lists the CD's `VOL\` in: by name, as ISO 9660 sorts a directory's records |
+| medium | `SIMVOL0` copied to the hard drive's `VOL\`, `ZONES` left on the CD | the launcher passes `-c` when it finds the flic player on the CD ([a program's command line](../shell/launcher.md#a-programs-command-line--launcher_buildargs-00000518)), and with `PREFER_ALT` set the first pass is over `ALT_DRIVE`'s folder, the hard drive's |
+| minimum | both on the CD | the pass over the CD's `VOL\` finds both, by name |
+
+Where `SIMVOL0` and `ZONES` share a name, then, the simulator reads `SIMVOL0`'s entry ([the zone files](zone-terrain.md#the-retail-files)). Of the seven archives only those two hold zone files, and the shell mounts `ZONES` alone of them.
 
 ## The RLE and LZH filters
 

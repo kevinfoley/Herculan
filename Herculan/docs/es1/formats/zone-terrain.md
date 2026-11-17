@@ -44,7 +44,7 @@ The angles go to the object's orientation block, whose rotation `Context_GetTran
 
 `SIMVOL0.VOL` holds 15 and `ZONES.VOL` 91, all 4 + 20 × *n* bytes; 5,129 records in all, from 1 to 184 a file. In every record Z is 0, the first two angles are 0, and the heading is a multiple of `0x800`, a 32nd of a turn. Shape indices run 0 to 12. The word at `0x00` is 0 to 3: 0 in 14 of `SIMVOL0`'s files and 1 in `ZONE106.DAT`; 0, 1, 2 and 3 in 21, 33, 19 and 18 of `ZONES`'.
 
-The simulator mounts both archives (`SIMVOL0`'s program mask is 1, `ZONES`' `0x101`), the shell only `ZONES`. Eight names are in both: `ZONE0`, `ZONE1`, `ZONE2`, `ZONE3`, `ZONE106` and `ZONE1570` with the same bytes, `ZONE6` and `ZONE8` with different ones ([Open](#open)). Seven are only in `SIMVOL0`: `ZONE7`, `ZONE10`, `ZONE25`, `ZONE26`, `ZONE30`, `ZONE31` and `ZONE32`.
+The simulator mounts both archives (`SIMVOL0`'s program mask is 1, `ZONES`' `0x101`), the shell only `ZONES`. Eight names are in both: `ZONE0`, `ZONE1`, `ZONE2`, `ZONE3`, `ZONE106` and `ZONE1570` with the same bytes, `ZONE6` and `ZONE8` with different ones. The simulator loads `SIMVOL0` first and reads its entries, `ZONE6.DAT` of 444 bytes and `ZONE8.DAT` of 164, where the shell reads `ZONES`' 404 and 64 ([the volume group](streams.md#the-volume-group)); no retail mission's header patch names zone 6 or 8. Seven are only in `SIMVOL0`: `ZONE7`, `ZONE10`, `ZONE25`, `ZONE26`, `ZONE30`, `ZONE31` and `ZONE32`.
 
 ## `dat\<theater>`, the shapes' dividing lines
 
@@ -137,4 +137,3 @@ The shell's `TSObj_Ctor`, (object, shape), allocates `0x32` bytes when given no 
 
 - **Open:** what the word at `0x00` is. It holds 0 to 3, as a theater index does, and neither loader reads it after storing it; whether it names the zone's theater, and in which program's order.
 - **Open:** whether the shell and the simulator load different theaters for a retail mission. With header word 0 at 0, the simulator loads `dgs\desert` and the shell `dgs\temper`; which of the two the zones' shapes are authored for is not read.
-- **Open:** which archive's `ZONE6.DAT` and `ZONE8.DAT` the simulator reads. ES1's volume code has not been read against ES2's precedence rules ([ES2's archives](../../retail/formats/vol-archive.md#which-archives-are-mounted)).

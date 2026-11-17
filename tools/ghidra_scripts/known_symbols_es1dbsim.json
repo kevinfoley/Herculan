@@ -32980,7 +32980,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolumeGroup_AddVolume",
-      "description": "(group, mask, path) in stack order: Volume_LoadVolume (00055dc8)(VolumeGroup_BufferSize, mask, path) in stack order, and when that returns a volume, inserts it so the list stays in descending order of the byte at volume +0x1c, then increments the count byte +0x28. It does not test the count. ES2's VolumeGroup_AddVolume (DBSIM 00467e90).",
+      "description": "(group, mask, path) in stack order: Volume_LoadVolume (00055dc8)(VolumeGroup_BufferSize, mask, path) in stack order, and when that returns a volume, walks the slots up to the count, swapping the volume in hand with a held one whose byte at volume +0x1c is lower and storing it in the first empty slot, so the list stays in descending order of that byte and a volume of equal precedence goes after every one already held; then increments the count byte +0x28. It does not test the count. ES2's VolumeGroup_AddVolume (DBSIM 00467e90).",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
       "verified": {
         "bytes": "000565a4+123",

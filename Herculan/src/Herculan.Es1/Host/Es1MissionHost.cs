@@ -215,9 +215,10 @@ public static class Es1MissionHost {
 			return 1;
 		}
 
-		// The simulator mounts SIMVOL0 (program mask 1) and ZONES (0x101), and searches them by ES2's precedence rule.
-		// ES1's own volume code has not been read (docs/es1/formats/zone-terrain.md#open). ES1 takes its CD drive from ALT_DRIVE, not
-		// drive.cfg, so no disc is mounted. ES1 reads no file that varies by language, so the language is English.
+		// The simulator mounts SIMVOL0 (program mask 1) and ZONES (0x101) by ES2's precedence rule, which ES1's volume group shares;
+		// MountInstall's name order loads SIMVOL0 first, as every install layout does, so its ZONE6 and ZONE8 answer
+		// (docs/es1/formats/streams.md#the-volume-group). ES1 takes its CD drive from ALT_DRIVE, not drive.cfg, so no disc is
+		// mounted. ES1 reads no file that varies by language, so the language is English.
 		var content = GameContent.MountInstall(installRoot, disc: null, Voln.DbsimProgram, GameLanguage.English);
 		// Unlike retail, the HERCs and the cockpit are loaded before the zone. The scene is therefore built in the live palette, with
 		// the scheme of the player's chassis already installed (Es1ZoneScene.Palette). With no player's machine, nothing is installed.
