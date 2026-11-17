@@ -15,7 +15,10 @@ namespace Herculan.Es2.View;
 /// <para><b>This engine's own camera, not retail's.</b> Every number below was picked to frame a
 /// HERC nicely. Retail's outside view is <see cref="ViewCamera"/>'s orbit, steered by the controls
 /// (docs/retail/simulation/external-views.md); this one exists because a mouse drag is easier to use, and
-/// only the tweak reaches it.</para>
+/// only the tweak reaches it. It circles the point retail's orbit does, the subject's
+/// <see cref="SimObject.ViewMounts"/> orbit centre, so it frames whatever the chain views as retail's would: a
+/// HERC's torso, 1400 to 1600 units above its origin, and the RAZOR's origin itself, where its type record puts
+/// the centre.</para>
 ///
 /// <para><see cref="Place"/> is stateless — it takes the orbit angles rather than owning them — so
 /// the host is the one holding them between frames (alongside the drag that moves them), the same
@@ -25,15 +28,8 @@ public static class ExternalCamera {
 	/// <summary>How far the eye orbits from the machine, in metres.</summary>
 	public const float DistanceMeters = 18f;
 
-	/// <summary>How far above the machine's origin the eye sits at zero orbit pitch, in metres.</summary>
-	public const float HeightMeters = 12f;
-
-	/// <summary>
-	/// How high up the machine the eye orbits around and stays aimed at, in metres above its origin —
-	/// roughly torso height on a retail HERC, so the machine sits in frame rather than at the bottom
-	/// edge.
-	/// </summary>
-	public const float AimHeightMeters = 7f;
+	/// <summary>How far above the orbit centre the eye starts, in metres, before the player has dragged anything.</summary>
+	public const float StartHeightMeters = 5f;
 
 	/// <summary>
 	/// Least clearance kept above the ground under the eye, in metres, so orbiting into a rising slope
@@ -52,18 +48,17 @@ public static class ExternalCamera {
 	public const float MaxOrbitPitchRadians = MathF.PI / 4f;
 
 	/// <summary>
-	/// The orbit pitch, in radians, that reproduces this view's original fixed framing — eye
-	/// <see cref="HeightMeters"/> up, aimed at a point <see cref="AimHeightMeters"/> up — for a host to
-	/// seed its own orbit state with before the player has dragged anything.
+	/// The orbit pitch, in radians, that puts the eye <see cref="StartHeightMeters"/> above the orbit centre, for a host
+	/// to seed its own orbit state with before the player has dragged anything.
 	/// </summary>
-	public static readonly float DefaultOrbitPitchRadians = MathF.Atan2(HeightMeters - AimHeightMeters, DistanceMeters);
+	public static readonly float DefaultOrbitPitchRadians = MathF.Atan2(StartHeightMeters, DistanceMeters);
 
 	private static int Units(float meters) => (int)(meters * WorldScale.WorldUnitsPerMeter);
 
 	/// <summary>
-	/// Points <paramref name="camera"/> at a point <see cref="AimHeightMeters"/> above
-	/// <paramref name="subject"/>'s origin, from <see cref="DistanceMeters"/> away on the orbit
-	/// <paramref name="orbitYawBam"/> and <paramref name="orbitPitchBam"/> describe.
+	/// Points <paramref name="camera"/> at <paramref name="subject"/>'s orbit centre, from
+	/// <see cref="DistanceMeters"/> away on the orbit <paramref name="orbitYawBam"/> and
+	/// <paramref name="orbitPitchBam"/> describe.
 	/// <paramref name="terrain"/> is optional and only used for the ground clearance floor.
 	/// </summary>
 	/// <param name="orbitYawBam">
@@ -81,10 +76,10 @@ public static class ExternalCamera {
 		// read as a huge positive value and clamp up to the top instead of down to the bottom.
 		orbitPitchBam = Math.Clamp((int)(short)(orbitPitchBam & 0xffff), -MaxOrbitPitch, MaxOrbitPitch);
 
-		// The point the camera orbits and stays aimed at — torso height above the machine's origin,
-		// not the origin itself.
-		var subjectPosition = subject.Position;
-		var center = new Vec3i(subjectPosition.X, subjectPosition.Y, subjectPosition.Z + Units(AimHeightMeters));
+		// The point the camera orbits and stays aimed at: the orbit centre through the subject's frame,
+		// as ViewCamera puts retail's.
+		var orbitCentre = subject.ViewMounts.OrbitCentre;
+		var center = subject.WorldFrame.TransformPoint(orbitCentre.X, orbitCentre.Y, orbitCentre.Z);
 
 		// A HERC's forward vector is (-sin h, cos h) in world XY (see MissionScene.TransformOf), so
 		// directly behind it is the negation of that; orbitYawBam turns the eye further around from
