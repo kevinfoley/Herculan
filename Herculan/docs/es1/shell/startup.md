@@ -239,5 +239,5 @@ After the loop, in order:
 - **Open:** what reads `Shell_MSwitchGiven`: `es2_xref.py` finds the parser's store only.
 - **Open:** what reaches `Shell_QuitKeyCallback`: `es2_xref.py` finds no branch to it and no stored pointer.
 - **Open:** what reads `000aa7a2` and `000aa7a4`, the frame-time scale: the nine small functions from `00011b63` to `00011d9f` `es2_xref.py --decode` finds.
-- **Open:** what `Shell_InitDevices`' `0005152c` does, and what the displays `00082750` and `00082754` and the object `ShellSound_ButtonSound` (`0007fd00`) are beside `Shell_CreateDisplay`'s `000ab616`.
+- **Open:** what `Shell_InitDevices`' `0005152c` does, and what the display `00082750` and the object `ShellSound_ButtonSound` (`0007fd00`) are beside `Shell_CreateDisplay`'s `000ab616`.
 - **Open:** a retail check of the frame's pace under DOSBox-X: a breakpoint on `Shell_FrameTick` (`00012974`) with the main menu up stops 60 times a second, on every second interrupt.

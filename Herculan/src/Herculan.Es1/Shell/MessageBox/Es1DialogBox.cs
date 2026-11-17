@@ -194,8 +194,8 @@ public abstract class Es1DialogBox {
 	/// </summary>
 	public void Draw(short mode) {
 		var dialog = Dialog;
-		// PLACEHOLDER: retail draws through the render context installed when it runs, whose alignment +0x231 decides where a
-		// line's pen goes (message-box.md's Open); here a full-screen context draws from the pen, alignment 0.
+		// Retail draws in Shell_CreateDisplay's context 00082754, alignment 0, so each line from its point
+		// (docs/es1/rendering/screen-pages.md#the-pages); a full-screen canvas draws the same.
 		var canvas = new Es1PanelCanvas(dialog.Display, Es1ShellScreens.FullScreen);
 		short radio = dialog.RadioOption();
 		if (!TopStrip) {
