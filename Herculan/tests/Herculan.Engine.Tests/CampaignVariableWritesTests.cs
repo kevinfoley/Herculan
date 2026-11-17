@@ -1,4 +1,4 @@
-using Herculan.Engine.Editor;
+using Herculan.Es2.Editor;
 using Herculan.Es2.Sim;
 using Herculan.Es2.Terrain;
 using Herculan.Es2.World;

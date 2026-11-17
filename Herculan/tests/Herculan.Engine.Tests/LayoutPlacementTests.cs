@@ -1,6 +1,6 @@
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io.Transform.Common;
-using Herculan.Engine.Editor;
+using Herculan.Es2.Editor;
 using Herculan.Engine.Numerics;
 using Herculan.Es2.World;
 using Xunit;

@@ -1,5 +1,5 @@
 using Herculan.Engine.Content;
-using Herculan.Engine.Editor;
+using Herculan.Es2.Editor;
 using Herculan.Engine.Platform;
 using Herculan.Es2.Host;
 using Herculan.Es2.Install;

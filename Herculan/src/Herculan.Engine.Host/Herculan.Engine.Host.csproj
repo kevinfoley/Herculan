@@ -18,7 +18,7 @@
     <ProjectReference Include="..\Herculan.Engine\Herculan.Engine.csproj" />
     <ProjectReference Include="..\Herculan.Es1\Herculan.Es1.csproj" />
     <ProjectReference Include="..\HercWorks.Help\HercWorks.Help.csproj" />
-    <ProjectReference Include="..\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj" />
+    <ProjectReference Include="..\Herculan.Es2.Editor\Herculan.Es2.Editor.csproj" />
     <ProjectReference Include="..\Herculan.Es2\Herculan.Es2.csproj" />
   </ItemGroup>
 
@@ -28,9 +28,9 @@
 
   <!-- Linked from the editor host rather than copied: one font file, two hosts. -->
   <ItemGroup>
-    <None Include="..\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Herculan.Es2.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Herculan.Es2.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Herculan.Es2.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- The window icon (WindowIcon), linked from Branding/ like the font above: loose files, since the artwork is not

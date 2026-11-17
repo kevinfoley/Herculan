@@ -1,5 +1,5 @@
 using HercWorks.Help.Html;
-using Herculan.Engine.Editor;
+using Herculan.Es2.Editor;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

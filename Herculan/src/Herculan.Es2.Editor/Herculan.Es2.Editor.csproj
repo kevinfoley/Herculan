@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The mission editor as a library: run on its own by Herculan.Es2.Host.Editor, and as a turn of the game's
+       own loop by Herculan.Engine.Host. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Herculan.Es2.Editor</RootNamespace>
+    <AssemblyName>Herculan.Es2.Editor</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Herculan.Engine\Herculan.Engine.csproj" />
+    <ProjectReference Include="..\HercWorks.Help\HercWorks.Help.csproj" />
+    <ProjectReference Include="..\Herculan.Es2\Herculan.Es2.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Herculan.Engine.Tests" />
+  </ItemGroup>
+
+  <!-- The manual the Help window shows (HelpWindow), embedded so that every build of either host carries it, a
+       single-file publish included, with no copy to find beside the executable. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\docs\herculan\editor-manual.md" LogicalName="editor-manual.md" />
+  </ItemGroup>
+
+</Project>

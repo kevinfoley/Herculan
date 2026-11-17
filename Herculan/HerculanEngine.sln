@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herculan.Engine", "src\Herc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herculan.Engine.Host", "src\Herculan.Engine.Host\Herculan.Engine.Host.csproj", "{5AE1C463-C335-4BFE-97AD-16F25A4A8129}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herculan.Engine.Host.Editor", "src\Herculan.Engine.Host.Editor\Herculan.Engine.Host.Editor.csproj", "{4DFEF819-E0F6-4E9F-96FD-8A8F1B2EF057}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herculan.Es2.Host.Editor", "src\Herculan.Es2.Host.Editor\Herculan.Es2.Host.Editor.csproj", "{4DFEF819-E0F6-4E9F-96FD-8A8F1B2EF057}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
@@ -35,7 +35,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HercWorks.Disc.Tests", "tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herculan.Es1", "src\Herculan.Es1\Herculan.Es1.csproj", "{6259DB1D-7D3B-4D18-9B66-7A50A5AD1AB0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herculan.Engine.Editor", "src\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj", "{643A145E-6B0E-4474-9B74-A3750BEE1E5B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herculan.Es2.Editor", "src\Herculan.Es2.Editor\Herculan.Es2.Editor.csproj", "{643A145E-6B0E-4474-9B74-A3750BEE1E5B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Herculan.Engine.Host.Tests", "tests\Herculan.Engine.Host.Tests\Herculan.Engine.Host.Tests.csproj", "{0016E830-DB18-4BE8-8258-0CDB8BF3F12E}"
 EndProject

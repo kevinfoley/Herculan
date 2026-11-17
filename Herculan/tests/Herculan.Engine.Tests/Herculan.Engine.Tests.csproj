@@ -15,8 +15,8 @@
   <ItemGroup>
     <Compile Include="..\Shared\ImGuiLayoutCheck.cs" Link="Shared\ImGuiLayoutCheck.cs" />
     <!-- The editor's faces, which PropertiesPanelLayoutTests lays the panel out in. -->
-    <None Include="..\..\src\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\..\src\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\Herculan.Es2.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\Herculan.Es2.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,7 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Herculan.Engine\Herculan.Engine.csproj" />
     <ProjectReference Include="..\..\src\Herculan.Es1\Herculan.Es1.csproj" />
-    <ProjectReference Include="..\..\src\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj" />
+    <ProjectReference Include="..\..\src\Herculan.Es2.Editor\Herculan.Es2.Editor.csproj" />
     <ProjectReference Include="..\..\src\Herculan.Es2\Herculan.Es2.csproj" />
   </ItemGroup>
 

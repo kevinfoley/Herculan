@@ -1,6 +1,6 @@
 # Mission editor design
 
-Why the mission editor (`Herculan.Engine.Editor`, with its `.MSN` editing in `HercWorks.Core`'s `Data/File/Msn/`) works the way it does: the retail facts and the decisions each part of it rests on. What it does for a mission designer is the [manual](editor-manual.md); how a class does its part is that class's doc comment. "The editor's choice" marks behavior this engine chose where retail gives no answer, and "the user's choice" one the user decided. Retail counts are over the 62 `.MSN` files with campaign conditions not applied, from `HercWorks.Query`.
+Why the mission editor (`Herculan.Es2.Editor`, with its `.MSN` editing in `HercWorks.Core`'s `Data/File/Msn/`) works the way it does: the retail facts and the decisions each part of it rests on. What it does for a mission designer is the [manual](editor-manual.md); how a class does its part is that class's doc comment. "The editor's choice" marks behavior this engine chose where retail gives no answer, and "the user's choice" one the user decided. Retail counts are over the 62 `.MSN` files with campaign conditions not applied, from `HercWorks.Query`.
 
 ## The `.MSN` is the document
 

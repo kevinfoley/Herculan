@@ -3,7 +3,7 @@ using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
-using Herculan.Engine.Editor;
+using Herculan.Es2.Editor;
 using Herculan.Es2.Install;
 using Herculan.Es2.Shell;
 using Xunit;

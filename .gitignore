@@ -18,10 +18,10 @@ Herculan/src/Herculan.Engine/bin/
 Herculan/src/Herculan.Engine/obj/
 Herculan/src/Herculan.Engine.Host/bin/
 Herculan/src/Herculan.Engine.Host/obj/
-Herculan/src/Herculan.Engine.Host.Editor/bin/
-Herculan/src/Herculan.Engine.Host.Editor/obj/
-Herculan/src/Herculan.Engine.Editor/bin/
-Herculan/src/Herculan.Engine.Editor/obj/
+Herculan/src/Herculan.Es2.Host.Editor/bin/
+Herculan/src/Herculan.Es2.Host.Editor/obj/
+Herculan/src/Herculan.Es2.Editor/bin/
+Herculan/src/Herculan.Es2.Editor/obj/
 convert_dts-master/
 Earthsiege2Setup/
 *.pdf
@@ -78,3 +78,4 @@ MoreImages/
 Publishing.md
 Screenshots/
 Logs/
+ISOs/
