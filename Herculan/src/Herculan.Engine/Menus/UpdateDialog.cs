@@ -62,7 +62,7 @@ public sealed class UpdateDialog {
 		}
 
 		ImGui.TextWrapped(string.Format(_localization.GetStringOrKey("update.message"),
-			ReleaseCheck.Display(latest), ReleaseCheck.Display(UpdateChecks.Current)));
+			latest, UpdateChecks.Current));
 		ImGui.Dummy(new Vector2(0, ScaledImGui.Scaled(10)));
 		LocalizedImGuiHelpers.DrawButtonRow(_localization, _buttons);
 

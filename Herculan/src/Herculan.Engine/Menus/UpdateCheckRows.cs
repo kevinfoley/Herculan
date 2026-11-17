@@ -50,14 +50,14 @@ public sealed class UpdateCheckRows {
 		switch (result.Status) {
 			case ReleaseCheckStatus.NewerAvailable:
 				ImGui.TextWrapped(string.Format(_localization.GetStringOrKey("update.message"),
-					ReleaseCheck.Display(result.Latest!), ReleaseCheck.Display(UpdateChecks.Current)));
+					result.Latest, UpdateChecks.Current));
 				if (ImGui.Button(_localization.GetStringOrKey("update.view_release"))) {
 					UpdateChecks.OpenPage(result.Page!);
 				}
 				break;
 			case ReleaseCheckStatus.UpToDate:
 				ImGui.TextWrapped(string.Format(_localization.GetStringOrKey("settings.up_to_date"),
-					ReleaseCheck.Display(UpdateChecks.Current)));
+					UpdateChecks.Current));
 				break;
 			default:
 				ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1f, 0.45f, 0.4f, 1f));

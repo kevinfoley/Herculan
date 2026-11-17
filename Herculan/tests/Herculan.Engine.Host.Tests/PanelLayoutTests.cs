@@ -70,7 +70,7 @@ public class PanelLayoutTests {
 		["About"] = new(Screen, localization => MenuBar(localization, (bar, _) => bar.About.IsOpen = true)),
 		["Welcome"] = new(Screen, localization => MenuBar(localization, (bar, _) => bar.Welcome.Raise())),
 		["Update"] = new(Screen, localization => MenuBar(localization, (bar, _) =>
-			bar.Update.Offer(new ReleaseCheckResult(ReleaseCheckStatus.NewerAvailable, new Version(10, 20, 30), "https://example.com/")))),
+			bar.Update.Offer(new ReleaseCheckResult(ReleaseCheckStatus.NewerAvailable, new ReleaseVersion(new Version(10, 20, 30)), "https://example.com/")))),
 	};
 
 	public static IEnumerable<object[]> Cases() =>

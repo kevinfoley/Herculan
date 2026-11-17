@@ -47,7 +47,7 @@ public static class UpdateChecks {
 	}
 
 	/// <summary>This build's version.</summary>
-	public static Version Current { get; } = ReleaseCheck.ParseVersion(AboutWindow.DisplayVersion()) ?? new Version(0, 0, 0, 0);
+	public static ReleaseVersion Current { get; } = ReleaseVersion.Parse(AboutWindow.DisplayVersion()) ?? new ReleaseVersion(new Version(0, 0));
 
 	/// <summary>Starts this run's automatic check, when the setting is on and it has not been started already.</summary>
 	public static void StartAutomatic() {
@@ -90,8 +90,8 @@ public static class UpdateChecks {
 	}
 
 	private static string Describe(ReleaseCheckResult result) => result.Status switch {
-		ReleaseCheckStatus.NewerAvailable => $"Update check: HERCULAN {ReleaseCheck.Display(result.Latest!)} is available; this is {ReleaseCheck.Display(Current)}.",
-		ReleaseCheckStatus.UpToDate => $"Update check: this is the latest release ({ReleaseCheck.Display(Current)}).",
+		ReleaseCheckStatus.NewerAvailable => $"Update check: HERCULAN {result.Latest} is available; this is {Current}.",
+		ReleaseCheckStatus.UpToDate => $"Update check: this is the latest release ({Current}).",
 		_ => $"Update check failed: {result.Error}.",
 	};
 }

@@ -2,7 +2,8 @@
 #   git tag v0.9.0
 #   git push origin v0.9.0
 # The tag must match <Version> in Herculan/Directory.Build.props, so the number in the files and the number on
-# the release cannot drift apart. The release is created as a draft: review it on GitHub, then publish it.
+# the release cannot drift apart. The release is created as a draft: review it on GitHub, then publish it. A version
+# with a label (2.0.0-alpha.1) is created as a pre-release.
 name: Release
 
 on:
@@ -69,6 +70,8 @@ jobs:
             exit 1
           }
           "version=$tag" >> $env:GITHUB_OUTPUT
+          # A labelled version (2.0.0-alpha.1) is a pre-release, which a full release's update check never offers.
+          "prerelease=$(if ($tag.Contains('-')) { '--prerelease' } else { '' })" >> $env:GITHUB_OUTPUT
 
       - name: Build
         run: |
@@ -109,7 +112,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
-          gh release create "${{ github.ref_name }}" --draft --generate-notes
+          gh release create "${{ github.ref_name }}" --draft --generate-notes ${{ steps.version.outputs.prerelease }}
           --title "HERCULAN ${{ steps.version.outputs.version }}"
           "HERCULAN-${{ steps.version.outputs.version }}-win-x64.zip"
           "HercWorksCSharp-${{ steps.version.outputs.version }}-win-x64.zip"
