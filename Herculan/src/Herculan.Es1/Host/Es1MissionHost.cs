@@ -379,6 +379,9 @@ public static class Es1MissionHost {
 		// HERCULAN's pause menu over the mission. The controller's PauseMenu input raises it (Start by default).
 		var pauseHost = new Es1PauseMenuHost(() => simulation?.Runner, () => frameLoop);
 		var pauseMenu = new PauseMenu(menuLayer.Menus.Localization, pauseHost);
+
+		// The mouse outside view's drag, which takes the left button from the game while it can turn the orbit.
+		var mouseOrbit = chain != null ? new Es1MouseOrbit(chain, () => free || pauseMenu.IsOpen) : null;
 		bool pauseInputHeld = false;
 		bool menuBarInputHeld = false;
 
@@ -515,6 +518,7 @@ public static class Es1MissionHost {
 			hostMouse.Pointer = () => presenter?.CockpitPointer(window.FramebufferSize, window.ClientSize)
 				?? Es1ScreenPresenter.Pointer(window.FramebufferSize, window.ClientSize);
 			hostMouse.HostHasPointer = () => window.ImGuiWantsMouse;
+			hostMouse.HostTakesLeftButton = () => mouseOrbit?.Up == true;
 			if (mouse != null) {
 				hostMouse.Attach(mouse);
 			}
@@ -574,6 +578,7 @@ public static class Es1MissionHost {
 			}
 
 			var runner = simulation?.Advance();
+			mouseOrbit?.Update(window.HasFocus ? mouse : null, window.ImGuiWantsMouse);
 
 			// Each press of the pause menu's input opens the menu, or closes it to resume. Holding it does nothing more. It is read only
 			// while the window has focus.

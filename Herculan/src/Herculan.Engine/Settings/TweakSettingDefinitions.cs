@@ -32,10 +32,18 @@ public static class TweakSettingDefinitions {
 	/// where it builds its keyboard axes.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FasterKeyboardAiming = new("tweak.faster_keyboard_aiming", TweakCategory.Functional, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
+	/// Drive the outside view with the mouse instead of the controls: drag with the left button to swing the camera round
+	/// the HERC, which stays under the player's control throughout, and the cockpit's keys keep working. Retail hands the
+	/// stick and arrow keys to the camera and makes <c>Enter</c> swap them back. Each game turns its own orbit by the
+	/// <see cref="View.MouseOrbitDrag"/> it reads.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> MouseOutsideView = new("tweak.mouse_external_view", TweakCategory.Functional, defaultValue: false, recommendedValue: false);
 	#endregion
 
 	/// <summary>Every core tweak setting, listed before a game's own in the Tweaks menu.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
-		HighResolutionWidescreen, SmootherTurretMovement, FasterKeyboardAiming,
+		HighResolutionWidescreen, SmootherTurretMovement, FasterKeyboardAiming, MouseOutsideView,
 	};
 }

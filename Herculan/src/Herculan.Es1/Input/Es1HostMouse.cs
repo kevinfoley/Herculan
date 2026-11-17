@@ -64,6 +64,14 @@ public sealed class Es1HostMouse {
 
 	private bool HostHas => HostHasPointer?.Invoke() == true;
 
+	/// <summary>
+	/// <b>This engine's own:</b> whether the host takes the left button, as the mouse outside view's drag does
+	/// (<see cref="View.Es1MouseOrbit"/>). While it does, a left press is not an event, and a left release is one only
+	/// for a left button the word holds, as for <see cref="HostHasPointer"/>; moves and the other buttons are the
+	/// game's. With none, the game has the left button throughout.
+	/// </summary>
+	public Func<bool>? HostTakesLeftButton { get; set; }
+
 	// A host move came while the host's layer had the pointer, so the driver's pointer is not where the host's is.
 	private bool _moveHeld;
 
@@ -192,7 +200,11 @@ public sealed class Es1HostMouse {
 		}
 	}
 
-	/// <summary>One host button event: the button's bit set or cleared, and its press or release event at the pointer. Other buttons are not the driver's three.</summary>
+	/// <summary>
+	/// One host button event: the button's bit set or cleared, and its press or release event at the pointer. Other buttons
+	/// are not the driver's three. One the host has (<see cref="HostHasPointer"/>, <see cref="HostTakesLeftButton"/>) is
+	/// not an event, unless it releases a bit the word holds.
+	/// </summary>
 	internal void OnButton(MouseButton button, bool down) {
 		if (!DriverEnabled) {
 			return;
@@ -204,7 +216,8 @@ public sealed class Es1HostMouse {
 			MouseButton.Middle => (MiddleBit, MiddlePressed, MiddleReleased),
 			_ => ((ushort)0, (byte)0, (byte)0),
 		};
-		if (bit == 0 || (HostHas && (down || (Buttons & bit) == 0))) {
+		bool withheld = HostHas || (bit == LeftBit && HostTakesLeftButton?.Invoke() == true);
+		if (bit == 0 || (withheld && (down || (Buttons & bit) == 0))) {
 			return;
 		}
 

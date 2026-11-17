@@ -30,8 +30,7 @@ public sealed class CockpitView {
 	// ExternalCamera's own fixed framing; both only move once the player drags.
 	private float _orbitYaw = 0f;
 	private float _orbitPitch = ExternalCamera.DefaultOrbitPitchRadians;
-	private bool _orbitDragging = false;
-	private System.Numerics.Vector2 _orbitLastMouse = System.Numerics.Vector2.Zero;
+	private readonly MouseOrbitDrag _orbitDrag = new();
 
 	// The tick's camera axes and trigger, built with the machine's controls each frame and handed to the
 	// chain on each tick — Sim_PollPlayerInput's arguments to Cam_Steer (00401c74).
@@ -134,7 +133,7 @@ public sealed class CockpitView {
 	// outside view the player steers, not the ones the game steers itself.
 	public bool MouseOutsideView =>
 		Chain is { Mode: ExternalViewMode.Outside, DeathCameraRunning: false, PanelOrbitRunning: false }
-		&& TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.MouseExternalView);
+		&& TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.MouseOutsideView);
 
 	/// <summary>Whether the camera is circling the player behind the [F12] preferences panel — see <see cref="AdvancePanelOrbit"/>.</summary>
 	public bool PanelOrbitUp => Chain is { PanelOrbitRunning: true };
@@ -250,21 +249,10 @@ public sealed class CockpitView {
 	/// drag started before switching views doesn't carry over.
 	/// </summary>
 	public void ReadOrbitDrag(IMouse? mouse, bool imguiWantsMouse) {
-		if (MouseOutsideView && ExternalViewActive && mouse != null && !imguiWantsMouse) {
-			bool dragging = mouse.IsButtonPressed(MouseButton.Left);
-			var mousePosition = mouse.Position;
-			if (dragging && _orbitDragging) {
-				var delta = mousePosition - _orbitLastMouse;
-				_orbitYaw += delta.X * ExternalCamera.OrbitSensitivity;
-				_orbitPitch = Math.Clamp(
-					_orbitPitch - delta.Y * ExternalCamera.OrbitSensitivity,
-					-ExternalCamera.MaxOrbitPitchRadians, ExternalCamera.MaxOrbitPitchRadians);
-			}
-			_orbitDragging = dragging;
-			_orbitLastMouse = mousePosition;
-		} else {
-			_orbitDragging = false;
-		}
+		var delta = _orbitDrag.Read(mouse, MouseOutsideView && ExternalViewActive && !imguiWantsMouse);
+		_orbitYaw += delta.X * MouseOrbitDrag.RadiansPerPixel;
+		_orbitPitch = Math.Clamp(_orbitPitch - delta.Y * MouseOrbitDrag.RadiansPerPixel,
+			-ExternalCamera.MaxOrbitPitchRadians, ExternalCamera.MaxOrbitPitchRadians);
 	}
 
 	/// <summary>The pan and the glance, a frame on.</summary>

@@ -1,7 +1,6 @@
 using Herculan.Engine.Settings;
 using Herculan.Engine;
 using Herculan.Es2.Cockpit;
-using Herculan.Es2.View;
 
 namespace Herculan.Es2.Settings;
 
@@ -194,14 +193,6 @@ public static class Es2TweakSettingDefinitions {
 
 	#region FUNCTIONAL
 	/// <summary>
-	/// Drive the outside view with the mouse instead of the controls: drag with the left button to
-	/// swing the camera round the HERC, which stays under the player's control throughout, and the
-	/// cockpit's keys keep working. Retail hands the stick and arrow keys to the camera and makes
-	/// [Enter] swap them back. See <see cref="ExternalCamera"/>.
-	/// </summary>
-	public static readonly TweakSettingDefinition<bool> MouseExternalView = new("tweak.mouse_external_view", TweakCategory.Functional, defaultValue: false, recommendedValue: false);
-
-	/// <summary>
 	/// Build each order the Heads-Down Display transmits from scratch. Retail reuses one order record
 	/// and overwrites only the half the new order picks, so DEFEND POSITION on bare ground can guard a
 	/// unit an earlier order named instead. See <see cref="HddCommandScreen.Transmit"/>.
@@ -298,7 +289,7 @@ public static class Es2TweakSettingDefinitions {
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		ShowCorrectStats, ShowAccurateSpeed, RoundShieldBalance, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, HddWeaponIconsOnTop, EverySquadmateReply, FixComputerMessagePreference,
-		MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
+		FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
 		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, GuardHoldsUntilDestroyed, FixGunsightDrag, FixRaptorIIPerspective, ResetCountersOnReplay, SquadmateClearOfTransport, FailWhileEngaged,
 		AutoFillSaveName, AutoSaveSlot10, PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue, PerPixelDepthSorting,

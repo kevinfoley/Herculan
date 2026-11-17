@@ -316,7 +316,9 @@ public sealed class Es1Simulation {
 
 				break;
 			case Tab or Enter:
-				if (views?.CurrentView == Es1CockpitViews.ExternalView) {
+				// Under the mouse outside view the controls stay on the machine there, so there is nothing to swap.
+				if (views?.CurrentView == Es1CockpitViews.ExternalView
+						&& !(Es1ViewChain.MouseOrbit && chain.View == Es1ViewChain.OutsideView)) {
 					chain.ToggleCameraControl();
 				}
 

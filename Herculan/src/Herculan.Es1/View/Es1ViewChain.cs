@@ -1,3 +1,4 @@
+using Herculan.Engine.Settings;
 using Herculan.Es1.Input;
 using Herculan.Es1.Sim;
 
@@ -88,15 +89,26 @@ public sealed class Es1ViewChain {
 	public short CaptionFrames { get; set; }
 
 	/// <summary>
+	/// <b>This engine's own:</b> whether the mouse turns the outside view (<see cref="TweakSettingDefinitions.MouseOutsideView"/>,
+	/// <see cref="Es1MouseOrbit"/>). Under it the outside view never gives the camera the controls, whichever object it
+	/// views, so <see cref="Apply"/> and <see cref="ViewObject"/> leave <c>InputDrivesCamera</c> clear there, and
+	/// <c>Tab</c> and <c>Enter</c> swap nothing.
+	/// </summary>
+	public static bool MouseOrbit => TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.MouseOutsideView);
+
+	/// <summary>
 	/// <c>ViewChain_Apply</c> (<c>0005894c</c>), at the tick's step 5. While the manager has a change staged and the
 	/// pending view differs, it becomes the view: 1 puts the camera in mode 0 and gives it the controls as preferred; 2
 	/// views the player in mode 2 with the controls on the machine; 3 views <see cref="Chosen"/> in mode 1 and sets the
 	/// caption's frames. With nothing staged, the outside view on the player takes the preference into
-	/// <c>InputDrivesCamera</c>. Then the caption is drawn while its frames count down.
+	/// <c>InputDrivesCamera</c>, or under <see cref="MouseOrbit"/> the outside view on any object clears it. Then the
+	/// caption is drawn while its frames count down.
 	/// </summary>
 	public void Apply(Es1ControlsState controls) {
 		if (Manager?.Staged != true) {
-			if (View == OutsideView && ReferenceEquals(Viewed, LocalPlayer)
+			if (View == OutsideView && MouseOrbit) {
+				controls.InputDrivesCamera = false;
+			} else if (View == OutsideView && ReferenceEquals(Viewed, LocalPlayer)
 					&& controls.InputDrivesCamera != CameraControlPreferred) {
 				controls.InputDrivesCamera = CameraControlPreferred;
 			}
@@ -131,7 +143,7 @@ public sealed class Es1ViewChain {
 	/// camera, in mode 1; or the first with no object is copied from the camera, becomes it and is attached to the
 	/// target; with neither, the spare, built on the first call, the same way. Then <paramref name="target"/> is
 	/// <see cref="Viewed"/>, and the camera has the controls for any object but the player, and as preferred for the
-	/// player.
+	/// player; under <see cref="MouseOrbit"/>, for none.
 	/// </summary>
 	public void ViewObject(Es1Mech target, Es1ControlsState controls) {
 		bool placed = false;
@@ -160,7 +172,7 @@ public sealed class Es1ViewChain {
 		}
 
 		Viewed = target;
-		controls.InputDrivesCamera = !ReferenceEquals(target, LocalPlayer) || CameraControlPreferred;
+		controls.InputDrivesCamera = !MouseOrbit && (!ReferenceEquals(target, LocalPlayer) || CameraControlPreferred);
 	}
 
 	/// <summary>

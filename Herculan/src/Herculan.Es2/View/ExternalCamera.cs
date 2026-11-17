@@ -8,9 +8,9 @@ using Herculan.Es2.Terrain;
 namespace Herculan.Es2.View;
 
 /// <summary>
-/// The outside view under <see cref="Settings.Es2TweakSettingDefinitions.MouseExternalView"/> — an orbit
-/// camera the player drags round the object being viewed with the mouse, always facing back at it,
-/// drawn over the whole window.
+/// The outside view under <see cref="Engine.Settings.TweakSettingDefinitions.MouseOutsideView"/> — an orbit
+/// camera the player drags round the object being viewed with the mouse (<see cref="Engine.View.MouseOrbitDrag"/>),
+/// always facing back at it, drawn over the whole window.
 ///
 /// <para><b>This engine's own camera, not retail's.</b> Every number below was picked to frame a
 /// HERC nicely. Retail's outside view is <see cref="ViewCamera"/>'s orbit, steered by the controls
@@ -57,9 +57,6 @@ public static class ExternalCamera {
 	/// seed its own orbit state with before the player has dragged anything.
 	/// </summary>
 	public static readonly float DefaultOrbitPitchRadians = MathF.Atan2(HeightMeters - AimHeightMeters, DistanceMeters);
-
-	/// <summary>Orbit speed while dragging, in radians of yaw/pitch per pixel of mouse movement.</summary>
-	public const float OrbitSensitivity = 0.0025f;
 
 	private static int Units(float meters) => (int)(meters * WorldScale.WorldUnitsPerMeter);
 

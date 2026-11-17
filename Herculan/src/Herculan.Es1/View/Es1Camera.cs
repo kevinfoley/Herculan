@@ -298,6 +298,28 @@ public sealed class Es1Camera {
 		Position = centre + Behind(View);
 	}
 
+	/// <summary>
+	/// <b>This engine's own</b>, the mouse outside view's turn (<see cref="Es1MouseOrbit"/>): in mode 1, the orbit's heading
+	/// turned by <paramref name="heading"/> and its pitch by <paramref name="pitch"/>, held to ±<see cref="PitchLimit"/>.
+	/// A pitch that would put the eye below <see cref="Floor"/> is not taken unless it raises the eye, since with no zoom
+	/// rate <see cref="Update"/> would hold the camera where it stood until the drag came back up. A positive pitch lowers
+	/// the eye.
+	/// </summary>
+	public void TurnOrbit(short heading, short pitch) {
+		if (Mode != Orbit || Object is not { } target) {
+			return;
+		}
+
+		short turned = (short)Math.Clamp(_orbitPitch + pitch, -PitchLimit, PitchLimit);
+		var centre = target.Frame.TransformPoint(OrbitCentre.X, OrbitCentre.Y, OrbitCentre.Z);
+		var eye = centre + Behind((turned, _orbitRoll, (short)(_orbitHeading + heading + target.Rotation.Z)));
+		if (eye.Z >= Floor || turned < _orbitPitch) {
+			_orbitPitch = turned;
+		}
+
+		_orbitHeading += heading;
+	}
+
 	/// <summary>The view's rotation of (0, −<see cref="Distance"/>, 0), the eye's offset from the orbit's centre.</summary>
 	private Vec3i Behind((short X, short Y, short Z) view) =>
 		Transform3.FromEuler(view.X, view.Y, view.Z).RotateVector(0, -Distance, 0);
