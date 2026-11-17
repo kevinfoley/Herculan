@@ -18,7 +18,7 @@ namespace Herculan.Es1.Sim;
 /// wait of two. Retail's floor counts a two-interrupt frame as 25 ms, so on a machine that keeps up it plays at 1.5
 /// times real time (the frame's retrace wait, ported, ends before the second interrupt there); three interrupts are
 /// 25 ms, so the game plays in real time as on the hardware of its day. The user's choice,
-/// docs/herculan/plan-es1-first-mission.md#decisions, decision 2; listed in <c>KNOWN_ISSUES.md</c>.</para>
+/// docs/herculan/plan-es1-first-mission.md#decisions, decision 2; listed in <c>KNOWN_ISSUES_ES1.md</c>.</para>
 /// </summary>
 public sealed class Es1SimClock {
 	/// <summary>The divisor <c>Sim_StartMission</c> builds the timer with, <c>DVTimer_Ctor(0, 0x26d3)</c> (docs/es1/simulation/timer.md#the-rate).</summary>

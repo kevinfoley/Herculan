@@ -61,11 +61,19 @@ public static class Es1TweakSettingDefinitions {
 	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Projectiles.Es1Bullet.RealTimeLife"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> RealTimeRoundLife = new("tweak.es1_real_time_round_life", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
+
+	/// <summary>
+	/// A flyer steps its type's speed along its nose per 40 ms rather than per tick, about Earthsiege 2's flyer speed at any
+	/// frame rate. This engine's invention.
+	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice (plan decision 34,
+	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Sim.Es1FlyerFlight.Es2Speed"/>.</para>
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> Es2FlyerSpeed = new("tweak.es1_es2_flyer_speed", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
 	#endregion
 
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels, RealTimeRoundLife,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed,
 	};
 
 	/// <summary>
@@ -79,6 +87,6 @@ public static class Es1TweakSettingDefinitions {
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> Offered = new[] {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming,
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels, RealTimeRoundLife,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed,
 	};
 }

@@ -1,5 +1,7 @@
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
 using Herculan.Es1.Ai;
+using Herculan.Es1.Settings;
 
 namespace Herculan.Es1.Sim;
 
@@ -8,7 +10,7 @@ namespace Herculan.Es1.Sim;
 /// each tick, three turn rates added to the attitude, and the steps below that set the rates and the pitch. The type
 /// record's fields are <see cref="Es1FlyerType.Data"/>, whose names are ES2's; each use says what ES1's code reads the
 /// field as (docs/es1/formats/bullets-skimmer-dat.md#datskimmerdat). Every step is per tick, not scaled by the tick
-/// length, as retail's are.
+/// length, as retail's are, but for the step along the nose under <see cref="Es2Speed"/>.
 /// </summary>
 public static class Es1FlyerFlight {
 	/// <summary><c>Flyer_PitchToAltitude</c>'s run against which the height error makes the pitch.</summary>
@@ -22,6 +24,31 @@ public static class Es1FlyerFlight {
 
 	/// <summary>The ground warning's countdown reload, about 0.6 seconds.</summary>
 	public const short GroundWarningHold = 1500;
+
+	/// <summary>
+	/// Whether a flyer's per-tick steps count 40 ms of the tick rather than a tick, from
+	/// <see cref="Es1TweakSettingDefinitions.Es2FlyerSpeed"/>: each is × <c>SimTickDelta</c> / 102.4, the tick delta of
+	/// 40 ms, so a flyer flies and turns at any frame rate as it would at Earthsiege 2's 25 Hz tick, whose flyer steps are
+	/// also per tick (docs/retail/simulation/ai-flyers.md#the-move--flyer_movementtick-004218c4). The steps are the move
+	/// along the nose, the three rates added to the attitude, <see cref="PitchCommand"/>'s slew limit and
+	/// <see cref="ApplyFlightCommand"/>'s roll-rate step. A <c>SKIMMER</c>'s 1000 then makes 25,000 units (150 m) a second,
+	/// against Earthsiege 2's <c>SKIMMER</c> cruising at 875 a tick, 21,875 units (131 m); retail's steps 1000 each tick,
+	/// 40,000 units a second at the 25 ms tick of <see cref="Es1SimClock"/> and 60,000 at retail's 60 frames a second. The
+	/// stored values keep retail's: the forward speed <c>+0x1c9</c>, read for the rocket's launch speed and the formation
+	/// throttle, and the rates, read by <see cref="SteerAndFly"/>. Each scaled step is rounded, losing up to half a unit a
+	/// tick. This engine's invention; off, retail's steps.
+	/// </summary>
+	public static bool Es2Speed => TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.Es2FlyerSpeed);
+
+	/// <summary><c>SimTickDelta</c> for 40 ms, Earthsiege 2's tick at its 25 Hz cap: 0.4 of the Q8 100 ms unit, ×10 to keep it whole.</summary>
+	private const int StepTickDelta10 = 1024;
+
+	/// <summary>
+	/// A per-tick step this tick: <paramref name="step"/>, or with <see cref="Es2Speed"/> the step × <c>SimTickDelta</c>
+	/// × 10 / <see cref="StepTickDelta10"/>, rounded away from 0, so a step that is not 0 stays so.
+	/// </summary>
+	private static short PerTick(short step, Es1SimClock clock) =>
+		Es2Speed ? (short)Math.Round(step * clock.TickDelta * 10.0 / StepTickDelta10, MidpointRounding.AwayFromZero) : step;
 
 	/// <summary><c>Flyer_ApplyFlightCommand</c>'s roll command limit, either side.</summary>
 	public const short FullRollCommand = 0x100;
@@ -37,10 +64,10 @@ public static class Es1FlyerFlight {
 	/// <c>Math_RateLimitedMoveToward</c> moves the pitch <c>+6</c> toward <paramref name="pitch"/> by at most the record's
 	/// <c>+0</c> (<see cref="HercWorks.Core.Data.File.Dat.Sim.Es1FlyerSimData.SpeedTurn"/>), and <c>+0x2c</c> is cleared.
 	/// </summary>
-	public static void PitchCommand(Es1Flyer flyer, short pitch) {
+	public static void PitchCommand(Es1Flyer flyer, short pitch, Es1SimClock clock) {
 		var rotation = flyer.Rotation;
 		short current = rotation.X;
-		SimMath.RateLimitedMoveToward(ref current, pitch, flyer.Type.Data.SpeedTurn);
+		SimMath.RateLimitedMoveToward(ref current, pitch, PerTick(flyer.Type.Data.SpeedTurn, clock));
 		flyer.Rotation = (current, rotation.Y, rotation.Z);
 		flyer.RotationWord = 0;
 	}
@@ -50,12 +77,12 @@ public static class Es1FlyerFlight {
 	/// ground warning set the altitude is <c>Math_Q8Multiply</c>(<see cref="LookAhead"/>, the warning's figure); then
 	/// <see cref="PitchCommand"/> with <c>Math_Atan2Guarded</c> of the height error over <see cref="AltitudeRun"/>.
 	/// </summary>
-	public static void PitchToAltitude(Es1Flyer flyer, int altitude) {
+	public static void PitchToAltitude(Es1Flyer flyer, int altitude, Es1SimClock clock) {
 		if (flyer.GroundWarning) {
 			altitude = SimMath.Q8MultiplyRounded(LookAhead, flyer.GroundWarningFigure);
 		}
 
-		PitchCommand(flyer, (short)SimTrig.Atan2Guarded(altitude - flyer.Position.Z, AltitudeRun));
+		PitchCommand(flyer, (short)SimTrig.Atan2Guarded(altitude - flyer.Position.Z, AltitudeRun), clock);
 	}
 
 	/// <summary>
@@ -68,23 +95,23 @@ public static class Es1FlyerFlight {
 	/// (<see cref="HercWorks.Core.Data.File.Dat.Sim.Es1FlyerSimData.CameraPartId"/>), taken modulo 32 as <c>SAR</c> takes
 	/// it; then <see cref="PitchCommand"/> with the pitch plus 16 × the pitch command, as an <c>int16</c>.
 	/// </summary>
-	public static void ApplyFlightCommand(Es1Flyer flyer, short pitchCommand, short rollCommand) {
+	public static void ApplyFlightCommand(Es1Flyer flyer, short pitchCommand, short rollCommand, Es1SimClock clock) {
 		var data = flyer.Type.Data;
 		short roll = Math.Clamp(rollCommand, (short)-FullRollCommand, FullRollCommand);
 		var rates = flyer.Rates;
 		short rollRate = rates.Roll;
-		SimMath.RateLimitedMoveToward(ref rollRate, (short)SimMath.Q8MultiplyRounded(roll, data.SpeedReverse), data.TurnAccelDecel);
+		SimMath.RateLimitedMoveToward(ref rollRate, (short)SimMath.Q8MultiplyRounded(roll, data.SpeedReverse), PerTick(data.TurnAccelDecel, clock));
 		short headingRate = (short)(-flyer.Rotation.Y >> (data.CameraPartId & 0x1f));
 		flyer.Rates = (rates.Pitch, rollRate, headingRate);
-		PitchCommand(flyer, (short)((pitchCommand << 4) + flyer.Rotation.X));
+		PitchCommand(flyer, (short)((pitchCommand << 4) + flyer.Rotation.X), clock);
 	}
 
 	/// <summary>
 	/// <c>Flyer_CommandRoll</c> (<c>0001b76c</c>)(<paramref name="flyer"/>, <paramref name="roll"/>):
 	/// <see cref="ApplyFlightCommand"/>(flyer, 0, (roll − the roll <c>+8</c>) &gt;&gt; 4).
 	/// </summary>
-	public static void CommandRoll(Es1Flyer flyer, short roll) =>
-		ApplyFlightCommand(flyer, 0, (short)((roll - flyer.Rotation.Y) >> 4));
+	public static void CommandRoll(Es1Flyer flyer, short roll, Es1SimClock clock) =>
+		ApplyFlightCommand(flyer, 0, (short)((roll - flyer.Rotation.Y) >> 4), clock);
 
 	/// <summary>
 	/// <c>Flyer_SteerAndFly</c> (<c>0001b8c4</c>)(<paramref name="flyer"/>, <paramref name="leader"/>,
@@ -95,7 +122,7 @@ public static class Es1FlyerFlight {
 	/// roll at most its negation and the command negative, to the negated limit; otherwise
 	/// <see cref="ApplyFlightCommand"/>(flyer, 0, command). The multiplies are ES1's rounding ones.
 	/// </summary>
-	public static void SteerAndFly(Es1Flyer flyer, Es1Flyer? leader, short steering) {
+	public static void SteerAndFly(Es1Flyer flyer, Es1Flyer? leader, short steering, Es1SimClock clock) {
 		short limit = flyer.Type.Data.MaxBankAngle;
 		short roll = flyer.Rotation.Y;
 		short rate = flyer.Rates.Heading;
@@ -108,11 +135,11 @@ public static class Es1FlyerFlight {
 
 		command = (short)(command + SimMath.Q10MultiplyRounded(HeadingRateGain, rate));
 		if (limit - BankBand <= roll && command > 0) {
-			CommandRoll(flyer, limit);
+			CommandRoll(flyer, limit, clock);
 		} else if (roll <= -(limit - BankBand) && command < 0) {
-			CommandRoll(flyer, (short)-limit);
+			CommandRoll(flyer, (short)-limit, clock);
 		} else {
-			ApplyFlightCommand(flyer, 0, command);
+			ApplyFlightCommand(flyer, 0, command, clock);
 		}
 	}
 
@@ -140,11 +167,12 @@ public static class Es1FlyerFlight {
 		var velocity = flyer.Velocity;
 		velocity.Y = flyer.Type.Data.SpeedForward;
 		flyer.Velocity = velocity;
-		flyer.Position = flyer.Frame.TransformPoint(velocity.X, velocity.Y, velocity.Z);
+		flyer.Position = flyer.Frame.TransformPoint(velocity.X, PerTick(flyer.Type.Data.SpeedForward, globals.Clock), velocity.Z);
 
 		var (pitch, roll, heading) = flyer.Rotation;
 		var rates = flyer.Rates;
-		flyer.Rotation = ((short)(pitch + rates.Pitch), (short)(roll + rates.Roll), (short)(heading + rates.Heading));
+		var clock = globals.Clock;
+		flyer.Rotation = ((short)(pitch + PerTick(rates.Pitch, clock)), (short)(roll + PerTick(rates.Roll, clock)), (short)(heading + PerTick(rates.Heading, clock)));
 		flyer.RotationWord = 0;
 
 		var start = flyer.Position;

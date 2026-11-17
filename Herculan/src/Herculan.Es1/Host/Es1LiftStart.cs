@@ -45,7 +45,7 @@ internal static class Es1LiftStart {
 	/// retrace the last pass's wait ended on, and all 115 passes would run in one host frame. Retail's pass took as long as
 	/// the machine drew it; this gives it the play frame's minimum on the hardware of its day, so the ride lasts about
 	/// 3.3 s (115 passes of two 70 Hz retraces). The user's choice, plan decision 24
-	/// (docs/herculan/plan-es1-first-mission.md#decisions); listed in <c>KNOWN_ISSUES.md</c>.
+	/// (docs/herculan/plan-es1-first-mission.md#decisions); listed in <c>KNOWN_ISSUES_ES1.md</c>.
 	/// </summary>
 	public static TimeSpan PassDrawTime => TimeSpan.FromSeconds(Es1SimClock.InterruptsPerTick / (double)Es1SimClock.InterruptsPerSecond);
 

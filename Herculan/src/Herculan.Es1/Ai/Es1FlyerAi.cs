@@ -82,7 +82,7 @@ public static class Es1FlyerAi {
 	/// </summary>
 	public static void FollowStep(Es1Flyer flyer, Es1SimGlobals globals) {
 		if (IsLeader(flyer)) {
-			LeadRouteStep(flyer);
+			LeadRouteStep(flyer, globals);
 		} else {
 			FormationStep(flyer, globals);
 		}
@@ -99,7 +99,7 @@ public static class Es1FlyerAi {
 	/// <see cref="Es1FlyerFlight.PitchToAltitude"/>(flyer, <see cref="CruiseAltitude"/>). The flyer steers at the waypoint
 	/// it read even when the cursor has just stepped past it.
 	/// </summary>
-	public static void LeadRouteStep(Es1Flyer flyer) {
+	public static void LeadRouteStep(Es1Flyer flyer, Es1SimGlobals globals) {
 		// Retail reads the group through +0x3f unchecked; a flyer with no group has no waypoint here.
 		var group = flyer.Group;
 		var waypoint = group?.WaypointAt(group.RouteCursor + 1);
@@ -117,9 +117,9 @@ public static class Es1FlyerAi {
 		short steering = waypoint is { } point
 			? (short)SimMath.Q10MultiplyRounded(RouteSteerGain, (short)(Es1MissionGroup.HeadingToward(flyer.Position, point) - flyer.Heading))
 			: (short)0;
-		Es1FlyerFlight.SteerAndFly(flyer, null, steering);
+		Es1FlyerFlight.SteerAndFly(flyer, null, steering, globals.Clock);
 		flyer.FormationThrottle = LeaderThrottle;
-		Es1FlyerFlight.PitchToAltitude(flyer, CruiseAltitude);
+		Es1FlyerFlight.PitchToAltitude(flyer, CruiseAltitude, globals.Clock);
 	}
 
 	/// <summary>
@@ -148,8 +148,8 @@ public static class Es1FlyerAi {
 			steering = unchecked((short)(-0x8000 - steering));
 		}
 
-		Es1FlyerFlight.SteerAndFly(flyer, leader, steering);
-		Es1FlyerFlight.PitchToAltitude(flyer, CruiseAltitude);
+		Es1FlyerFlight.SteerAndFly(flyer, leader, steering, globals.Clock);
+		Es1FlyerFlight.PitchToAltitude(flyer, CruiseAltitude, globals.Clock);
 		if (distance <= ThrottleRange) {
 			FormationThrottle(flyer, StationLead, steering, (short)distance, leader);
 		} else {

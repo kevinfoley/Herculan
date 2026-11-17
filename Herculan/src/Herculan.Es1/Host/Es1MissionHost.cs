@@ -752,7 +752,7 @@ public static class Es1MissionHost {
 			_ => [],
 		};
 
-		// The faces are lit by the sun alone, which diverges from retail (KNOWN_ISSUES.md). Retail's NAV MAP and command-screen map
+		// The faces are lit by the sun alone, which diverges from retail (KNOWN_ISSUES_ES1.md). Retail's NAV MAP and command-screen map
 		// faces are also lit by the effect lights chosen for the last object drawn by a world pass, still in the state they had then
 		// (docs/es1/rendering/polygon-shading.md#effect-lights). The rect views' items carry no light anchor.
 		renderer.Backdrop = null;

@@ -753,7 +753,7 @@ public sealed class Es1ViewManager {
 	/// plus the current view's, toward the side it came from. Then the far half's page is shown, the near one drawn on,
 	/// the pair swapped, the slid page put back on its own origin and the far half copied onto it.
 	///
-	/// <para><b>This engine's own</b> (plan decision 30, KNOWN_ISSUES.md): a step that leaves the screen's canvas column
+	/// <para><b>This engine's own</b> (plan decision 30, KNOWN_ISSUES_ES1.md): a step that leaves the screen's canvas column
 	/// (<see cref="ScreenCanvasPoint"/>) further than <see cref="GlanceReach"/> from view 0's does not wait for its
 	/// retrace, so a window that already shows part of the side panel slides only until the panel's outer edge meets the
 	/// window's edge, as ES2's port does, and the steps beyond happen at once. The retrace wait after the slide, the far

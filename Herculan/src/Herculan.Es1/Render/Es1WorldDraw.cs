@@ -18,7 +18,7 @@ namespace Herculan.Es1.Render;
 /// <c>LightManager_SelectLightsForObject</c> picks for it (<see cref="SceneItem.LightAnchor"/>).
 ///
 /// <para>Retail paints the object list sorted, farthest first, with no depth test; the shapes and HERCs here are drawn
-/// with it, a divergence the user chose (KNOWN_ISSUES.md). The shadows keep retail's order against them: they are drawn
+/// with it, a divergence the user chose (KNOWN_ISSUES_ES1.md). The shadows keep retail's order against them: they are drawn
 /// in a pass of their own before the objects, so every object paints over them.</para>
 /// </summary>
 public sealed class Es1WorldDraw {

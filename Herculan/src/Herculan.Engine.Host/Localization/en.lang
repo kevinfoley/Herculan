@@ -89,6 +89,8 @@ tweak.es1_no_free_repair_level.display_name  No free repair level
 tweak.es1_no_free_repair_level.description  On the SYSTEM REPAIR screen, PROCEED keeps only the repairs you paid for with + and −. Retail repairs the item to the level the STATUS list shows, which after a + is one level more than you paid for.
 tweak.es1_real_time_round_life.display_name  Full cannon range
 tweak.es1_real_time_round_life.description  Rounds from the ATC20, ATC35, ATC50 and EMP fly the same distance at any frame rate: about 510 m for an autocannon and 360 m for an EMP. Retail counts a round's flight in frames, so on a fast computer its rounds stop short. An autocannon round there stops after about 130 m, and an EMP round after 90 m.
+tweak.es1_es2_flyer_speed.display_name  Earthsiege 2 flyer speed
+tweak.es1_es2_flyer_speed.description  Flyers fly and turn at about the pace they do in Earthsiege 2, around 150 m a second, at any frame rate. Retail moves and turns a flyer the same amount every frame, so the faster the game runs, the faster its flyers fly and turn. At HERCULAN's frame rate they would fly at about 240 m a second.
 tweaks.title                   Tweaks
 tweaks.description             Tweaks alter game behavior, generally either to fix bugs or provide quality-of-life enhancements. For the closest-to-vanilla experience (bugs included), click "None" to disable all tweaks.
 tweaks.note                    Some minor cosmetic bugs and potential crashes are not reproduced in HERCULAN. Support for modern input devices and alternate control schemes is always available via the Controller menu.

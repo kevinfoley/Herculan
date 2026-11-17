@@ -136,7 +136,7 @@ public static class Es1FlyerAttack {
 				flyer.AttackPhase = RunningIn;
 			}
 
-			Es1FlyerFlight.PitchToAltitude(flyer, Es1FlyerAi.CruiseAltitude);
+			Es1FlyerFlight.PitchToAltitude(flyer, Es1FlyerAi.CruiseAltitude, globals.Clock);
 		} else if (flyer.AttackPhase == RunningIn) {
 			if (range < RunInRange) {
 				RunInStep(flyer, point, error, globals);
@@ -151,7 +151,7 @@ public static class Es1FlyerAttack {
 
 		if (flyer.AttackPhase < 2) {
 			flyer.FormationThrottle = Es1FlyerAi.LeaderThrottle;
-			Es1FlyerFlight.SteerAndFly(flyer, null, error);
+			Es1FlyerFlight.SteerAndFly(flyer, null, error, globals.Clock);
 		}
 	}
 
@@ -161,9 +161,9 @@ public static class Es1FlyerAttack {
 	/// </summary>
 	private static void RunInStep(Es1Flyer flyer, Vec3i point, short error, Es1SimGlobals globals) {
 		if (flyer.GroundWarning) {
-			Es1FlyerFlight.PitchToAltitude(flyer, 0);
+			Es1FlyerFlight.PitchToAltitude(flyer, 0, globals.Clock);
 		} else {
-			Es1FlyerFlight.PitchCommand(flyer, Es1ShotSweep.ElevationAngle(flyer.Position, point));
+			Es1FlyerFlight.PitchCommand(flyer, Es1ShotSweep.ElevationAngle(flyer.Position, point), globals.Clock);
 		}
 
 		if (!flyer.RunInLatch) {
