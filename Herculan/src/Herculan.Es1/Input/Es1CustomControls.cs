@@ -7,7 +7,7 @@ namespace Herculan.Es1.Input;
 /// <summary>
 /// One frame of a Custom profile as the input read takes it (<see cref="Es1CustomControls.Read"/>).
 /// </summary>
-/// <param name="Steering">The steering function, in the port's calibrated ±128 (<see cref="IEs1GamePort"/>).</param>
+/// <param name="Steering">The steering function, ±256 under the squared response, as a stick's record gives it.</param>
 /// <param name="Throttle">The throttle function, the same.</param>
 /// <param name="Twist">The turret twist function, the same.</param>
 /// <param name="Pitch">The turret pitch function, the same.</param>
@@ -28,9 +28,10 @@ public sealed record Es1CustomFrame(int Steering, int Throttle, int Twist, int P
 /// block, Fire onto the trigger and the four views onto the block's buttons 4–7 (<see cref="Es1PlayerInputReader.Custom"/>); every
 /// other action goes in as the key ES1 gives it (<see cref="ChordOf"/>, <see cref="Es1CustomKeys"/>).
 ///
-/// <para>An axis reads as the port gives a calibrated stick: the device's travel as ±128, inverted as the profile says,
+/// <para>An axis reads as a calibrated stick's record gives it: the device's travel as ±128, inverted as the profile says,
 /// 0 across the profile's deadzone and the rest of the travel spread over the whole range, as the calibration's center
-/// band leaves it (docs/es1/simulation/joystick.md#normalising-an-axis).</para>
+/// band leaves it (docs/es1/simulation/joystick.md#normalising-an-axis), then squared to ±256 as every retail device's
+/// response is (docs/es1/simulation/joystick.md#the-record), with the profile's deadzone as its only band.</para>
 ///
 /// <para>A throttle the profile reads as a lever (<see cref="ControllerProfile.ThrottleReading"/>) gives a throttle
 /// position instead (<see cref="LeverTarget"/>), which the input read turns into the rate that takes the throttle
@@ -40,6 +41,9 @@ public sealed record Es1CustomFrame(int Steering, int Throttle, int Twist, int P
 /// </summary>
 public sealed class Es1CustomControls {
 	private const int FullScale = 128;
+
+	// The squared response's shift, the calibration shift 7 less 1.
+	private const int ResponseShift = 6;
 
 	// Full throttle, Es1Locomotion.ThrottleFull, and the setting under which Earthsiege 2's lever reads idle.
 	private const int ThrottleFull = 0x400;
@@ -107,7 +111,7 @@ public sealed class Es1CustomControls {
 
 		int setting;
 		if (_profile.ThrottleReading == ThrottleReading.Bipolar) {
-			setting = -Axis(device, AxisFunction.Throttle) * ThrottleFull / FullScale;
+			setting = -Calibrated(device, AxisFunction.Throttle) * ThrottleFull / FullScale;
 		} else {
 			int raw = (int)MathF.Round(Math.Clamp(device.Axis(axis.Index), -1f, 1f) * FullScale);
 			int deadzone = 2 * Math.Clamp(axis.Deadzone, 0, FullScale - 1);
@@ -125,7 +129,19 @@ public sealed class Es1CustomControls {
 	/// <summary>The first input bound to <paramref name="action"/> held on <paramref name="device"/>, or null for none.</summary>
 	public ControllerInput? HeldInput(ControllerState device, KeyAction action) => _profile.HeldInput(device, action, razor: false);
 
+	// A function's axis under the squared response every retail device is built with, mode 1 of Joystick_ReadWithResponse
+	// (docs/es1/simulation/joystick.md#the-record): the square of the calibrated value over 64, its sign the value's, so
+	// full deflection is ±256 as the keyboard's whole entry is. The profile's deadzone is the only band: retail's band of
+	// 25 and its rescale are what Calibrated's deadzone and spread already do at the default 25, and retail's zeroing of
+	// a squared output under 25 is left out.
 	private int Axis(ControllerState device, AxisFunction function) {
+		int value = Calibrated(device, function);
+		int squared = (value * value) >> ResponseShift;
+		return value < 0 ? -squared : squared;
+	}
+
+	// A function's axis as the port gives a calibrated stick, before the response: ±128, 0 across the deadzone.
+	private int Calibrated(ControllerState device, AxisFunction function) {
 		var axis = _profile.Axis(function);
 		if (!axis.IsBound) {
 			return 0;
