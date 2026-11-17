@@ -197,7 +197,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 				} else {
 					ImGui.SeparatorText(Text("controller.controls"));
 					ControlRows(device);
-					if (_rows.ReadsDeadzone || _rows.HatLabelKey != null || _rows.Options.Count > 0) {
+					if (_rows.ReadsDeadzone || (_rows.HatLabelKey != null && _rows.HatDiagonalsOption) || _rows.Options.Count > 0) {
 						ImGui.SeparatorText(Text("controller.options"));
 						Options();
 					}
@@ -533,7 +533,7 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 			Tooltip("controller.deadzone_tip");
 		}
 
-		if (_rows.HatLabelKey != null) {
+		if (_rows.HatLabelKey != null && _rows.HatDiagonalsOption) {
 			bool diagonals = _draft.HatDiagonals;
 			if (ImGui.Checkbox(Text("controller.hat_diagonals") + "###diagonals", ref diagonals)) {
 				_draft = _draft with { HatDiagonals = diagonals };

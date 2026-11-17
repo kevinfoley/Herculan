@@ -21,8 +21,8 @@ public sealed class Es1ThrustmasterFcsDevice : Es1JoystickDevice {
 	/// axis cleared and axis 3's normalised value, the joystick object's <c>+0x21</c>, turned into one hat byte: with
 	/// t = −1 &lt;&lt; s, below t − (t &gt;&gt; 3) sets <c>+0x14</c>, and each next threshold, 1 &lt;&lt; (s − 2)
 	/// higher, sets <c>+0x16</c>, <c>+0x15</c> and <c>+0x17</c>; −112, −80, −48 and −16 for s = 7. A value of 0, or one
-	/// from the last threshold up, sets none (docs/es1/simulation/joystick.md#hats-and-throttles). Which direction each
-	/// byte is is Open there.
+	/// from the last threshold up, sets none (docs/es1/simulation/joystick.md#hats-and-throttles): up, right, down and
+	/// left (docs/es1/simulation/joystick.md#the-hat-on-the-port).
 	/// </summary>
 	public override Es1JoystickRecord ReadState() {
 		var record = ReadWithResponse();

@@ -232,6 +232,20 @@ Four classes read slot `+4` through their own function, each running `Joystick_R
 - **`IMFlightstickPro_ReadState` (`0004c164`)**: `IMFlightstick_ReadState`, then, when buttons 0 and 1 (`+0x10`, `+0x11`) are both held, buttons 2 and 3 pick one hat byte, both held `+0x14`, button 2 alone `+0x15`, button 3 alone `+0x16`, neither `+0x17`, and the four button bytes are cleared. So while buttons 0 and 1 are held together the device reports the hat and no button.
 - **`IMThrustmasterRCS_ReadState` (`0004c034`)**: negates the record's third axis `+8`, its one axis.
 
+### The hat on the port
+
+**The record's hat bytes `+0x14`–`+0x17` are up, down, right and left; the FCS sent its hat as five levels of the port's fourth axis line, and the Flightstick Pro as combinations of its four buttons, one direction at a time.** The bytes reach the cockpit as buttons 4–7, from which `CockpitView_PollViewDevice` queues view commands 1, 0, 4 and 5 ([keys and the view device](cockpit-panel.md#keys-and-the-view-device)). ES2's same function queues 1 and 0 off its hat's up and down ([the hat](../../retail/simulation/joystick-input.md#the-hat)), and 4 and 5 are the glance right and left ([the pages a view change moves](cockpit-views.md#the-pages-a-view-change-moves)).
+
+| Byte | Button | View command | Direction | FCS axis 3, *s* = 7 | Flightstick Pro buttons held |
+|---|---|---|---|---|---|
+| `+0x14` | 4 | 1 | up | −128 | 0, 1, 2, 3 |
+| `+0x16` | 6 | 4, the glance right | right | −96 | 0, 1, 3 |
+| `+0x15` | 5 | 0 | down | −64 | 0, 1, 2 |
+| `+0x17` | 7 | 5, the glance left | left | −32 | 0, 1 |
+| none | | | centred | 0 | none of these |
+
+DOSBox-X's emulation of the two sticks gives the hardware's side (`src/gui/sdl_mapper.cpp`). Its FCS (`CFCSBindGroup::DecodeHatPosition`) moves the second stick's Y, port axis 3, to −1.0 for up, −0.5 right, 0 down, +0.5 left and +1.0 centred: the hat rests at one end of the line's travel and sweeps clockwise to the other in four even steps. With the center band calibrated at the rest, those are −128, −96, −64, −32 and 0, and `IMThrustmasterFCS_ReadState`'s thresholds lie halfway between them, setting the bytes in the sweep's order ([hats and throttles](#hats-and-throttles)). Its Flightstick Pro (`CCHBindGroup::UpdateJoystick`) holds port buttons 4–7 for up, 4–6 for down, 4, 5 and 7 for right and 4 and 5 for left, which `IMFlightstickPro_ReadState` reads as the table's bytes.
+
 ### What each configuration reads
 
 `Input_MergeJoystickRecord` ors each enabled device's record into the live block: the four axes into `+0xd`, `+0x11`, `+0x15` and `+0x19`, the eight bytes `+0x10`–`+0x17` into `+0x1d`–`+0x24`, and `+0x18` and `+0x19` into `+0x26` and `+0x27` ([the live block](input.md#the-live-block--input_polldeviceblock-0004c2d0)). The input read takes stick X as `+0xd`, Y as `+0x11`, the third and fourth axes as `+0x15` and `+0x19`, buttons 0–3 as `+0x1d`–`+0x20` and buttons 4–7 as `+0x21`–`+0x24` ([the configurations](input.md#the-joystick-configurations)). Per option 7:
@@ -240,7 +254,7 @@ Four classes read slot `+4` through their own function, each running `Joystick_R
 |---|---|---|---|---|---|---|
 | 1 | stick X, Y | 0 | 0 | buttons 0, 1; 0, 0 | 0 | `3`, `3` |
 | 2 | stick X, Y | second stick's X | second stick's Y | buttons 0–3 | 0 | `0xf`, `0xf` |
-| 3 | stick X, Y | 0 | 0 | buttons 0–3 | the hat from axis 3 | `0xb`, `0xf` |
+| 3 | stick X, Y | 0 | 0 | buttons 0–3 | the hat from axis 3 ([the hat](#the-hat-on-the-port)) | `0xb`, `0xf` |
 | 4 | stick X, Y | 0 | the throttle from axis 3 | buttons 0, 1; 0, 0 | 0 | `0xb`, `3` |
 | 5 | stick X, Y | 0 | the throttle from axis 3 | buttons 0–3, or 0 with the hat | the hat from buttons 0–3 | `0xb`, `0xf` |
 
@@ -319,7 +333,6 @@ Globals: `JoystickClaimedAxes` and `JoystickClaimedAxisCount`, bytes, `0009571c`
 - **Open:** `es2_xref.py` finds no reference to `DVJoystick_DetectOnStack`, the four tracking functions, `DVJoystick_WaitForFlag`, `DVJoystick_WaitForFlagClear` or `DVJoystick_ReadFlag`, in `ES1DBSIM` or `ES1GO`, nor to `JoystickDevice_TrackRange` (`0004ba80`, `ES1GO 00026187`).
 - **Open:** the calibration panel ([`preferences.md`'s Open](preferences.md#open)), `00049a7c`, `00049bbc`, `00049f30` and `0004a0e8` by `es2_xref.py`'s callers of the device tracking functions, the save and `DVJoystick_SetRanges`/`GetRanges`. `ES1GO`'s callers of its device functions, `ControlsPanel_ApplyDevices` (`00006bed`), `Input_CreateJoystickDevices` (`000087ff`) and `00007956`, are the shell's counterpart.
 - **Open:** a retail check of the default calibration under DOSBox-X with a stick and option 7 at 1: with `data\joy1.cal` renamed away, the HERC turns one way at most, whichever side the stick is pushed to, where with a calibrated `joy1.cal` it turns both ways.
-- **Open:** which hat direction each of the record's bytes `+0x14`–`+0x17` is, and so what buttons 4–7 do in the input read. A retail check under DOSBox-X's `joysticktype=fcs` with option 7 at 3, and `joysticktype=ch` with option 7 at 5: press each hat direction and note what the HERC or the view does.
 - **Open:** under options 4 and 5, [the configurations](input.md#the-joystick-configurations) name no source for the fourth axis, where the Flightstick classes put their throttle. A retail check under `joysticktype=ch` with option 7 at 4: move the throttle wheel and watch the throttle gauge.
 - **Open:** `es2_fieldscan.py` over `00048000`–`0004c300` finds the constructors' writes of the class number `+0x81` and no read (the same scan finds `Joystick_ReadWithResponse`'s read of `+0x86` at `0004b9f6`); the record's `+0x1a`, which holds `+0x86`, is past the bytes `Input_MergeJoystickRecord` merges.
 - **Open:** `es2_xref.py --decode` finds seven reads of `ES1GO`'s `Joystick_DeadZone` (`000a045c`) and two of `Joystick_ThrottleDeadZone` (`000a045e`), and no write; both lie past the image's file bytes. While they are 0, `ES1GO`'s response has no band and no rescale, and its throttle no zero band.

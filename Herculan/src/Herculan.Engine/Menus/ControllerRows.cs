@@ -20,6 +20,9 @@ public sealed record ControllerRows {
 	/// </summary>
 	public string? HatLabelKey { get; init; }
 
+	/// <summary>Whether a game with a hat row also shows the hat diagonals option; false for one that reads a diagonal as centred.</summary>
+	public bool HatDiagonalsOption { get; init; } = true;
+
 	/// <summary>How many of the map's BUTTON rows the game reads, from BUTTON 1, at most <see cref="JoystickCapabilities.MaxButtons"/>.</summary>
 	public required int ButtonRows { get; init; }
 

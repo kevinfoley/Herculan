@@ -72,6 +72,8 @@ public sealed class Es1JoystickDevices {
 		var port = _port;
 		var globals = Globals;
 		byte option7 = preferences.StickConfiguration;
+		// This engine's own: the port wires the controller's hat as the named stick wired its own, before detection.
+		port.Wire(option7);
 		Es1JoystickDevice? first = option7 switch {
 			1 or 2 => new Es1Joystick1Device(SquaredResponse, port, globals),
 			3 => new Es1ThrustmasterFcsDevice(SquaredResponse, port, globals),

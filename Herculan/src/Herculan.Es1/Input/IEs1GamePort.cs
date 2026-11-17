@@ -31,4 +31,12 @@ public interface IEs1GamePort {
 	/// set bit for a held button (docs/es1/simulation/joystick.md#reading-the-buttons).
 	/// </summary>
 	byte Buttons { get; }
+
+	/// <summary>
+	/// <b>This engine's own:</b> which stick option 7 (<paramref name="stickConfiguration"/>) says is on the port, so a
+	/// modern controller's hat can arrive on the lines that stick used for it. Called before the devices are built, so
+	/// detection sees the wiring. A port with no hat to wire ignores it.
+	/// </summary>
+	void Wire(byte stickConfiguration) {
+	}
 }

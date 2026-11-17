@@ -16,7 +16,8 @@ public sealed class Es1FlightstickProDevice : Es1FlightstickDevice {
 	/// <c>IMFlightstickPro_ReadState</c> (<c>0004c164</c>): <c>IMFlightstick_ReadState</c>, then, while buttons 0 and 1
 	/// are both held, buttons 2 and 3 pick one hat byte, both <c>+0x14</c>, 2 alone <c>+0x15</c>, 3 alone
 	/// <c>+0x16</c>, neither <c>+0x17</c>, and the four button bytes are cleared
-	/// (docs/es1/simulation/joystick.md#hats-and-throttles). Which direction each byte is is Open there.
+	/// (docs/es1/simulation/joystick.md#hats-and-throttles): up, down, right and left
+	/// (docs/es1/simulation/joystick.md#the-hat-on-the-port).
 	/// </summary>
 	public override Es1JoystickRecord ReadState() {
 		var record = base.ReadState();

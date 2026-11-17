@@ -11,16 +11,43 @@ namespace Herculan.Es1.Input;
 /// <para>The port axes take the map's roles as the game port's own wiring puts the 1990s controls on its lines
 /// (docs/es1/simulation/joystick.md#the-classes, docs/es1/simulation/joystick.md#what-each-configuration-reads): axis 0
 /// the stick X role, 1 the stick Y role, 2 the rudder role (a second stick's X, the RCS pedals), and 3 the throttle role
-/// (a second stick's Y, the Flightstick's throttle, the FCS's hat line). An axis answers detection while a device is
-/// attached, its map is known and the map gives that role an axis. Buttons 0–3 are the map's logical buttons 1–4, a
-/// button the device keeps for the host (<see cref="ControllerDevice.Reserved"/>) reading up.</para>
+/// (a second stick's Y, the Flightstick's throttle). An axis answers detection while a device is attached, its map is
+/// known and the map gives that role an axis. Buttons 0–3 are the map's logical buttons 1–4, a button the device keeps
+/// for the host (<see cref="ControllerDevice.Reserved"/>) reading up.</para>
+///
+/// <para>The map's hat arrives as the stick option 7 names (<see cref="Wire"/>) sent its own
+/// (docs/es1/simulation/joystick.md#the-hat-on-the-port): under the Thrustmaster FCS, on axis 3 in place of the throttle
+/// role, which then answers detection whenever the map is known; under the Flightstick Pro, on buttons 0–3, in place of
+/// the buttons while it is pushed; under any other stick, on no line. Those sticks sent one direction at a time, so a
+/// diagonal reads centred, as Earthsiege 2 reads one, whatever the map's <see cref="JoystickDeviceMap.HatDiagonals"/>
+/// says.</para>
 /// </summary>
 public sealed class Es1ControllerPort : IEs1GamePort {
+	/// <summary>Option 7's Thrustmaster FCS and CH Flightstick Pro (docs/es1/simulation/joystick.md#building-the-devices).</summary>
+	private const byte ThrustmasterFcs = 3, FlightstickPro = 5;
+
+	/// <summary>
+	/// The FCS's hat on axis 3 for up, right, down and left: the line's travel, from up's end to the rest at the other,
+	/// over −128 to 0 in five even steps, the middle of each of <c>IMThrustmasterFCS_ReadState</c>'s bands
+	/// (docs/es1/simulation/joystick.md#the-hat-on-the-port). Centred reads 0.
+	/// </summary>
+	private const int FcsHatUp = -JoystickReading.RawFull, FcsHatStep = JoystickReading.RawFull / 4;
+
+	/// <summary>
+	/// The Flightstick Pro's hat on buttons 0–3 for up, down, right and left: buttons 0 and 1 with both of 2 and 3, 2
+	/// alone, 3 alone or neither (docs/es1/simulation/joystick.md#the-hat-on-the-port).
+	/// </summary>
+	private const byte ProHatUp = 0xf, ProHatDown = 0x7, ProHatRight = 0xb, ProHatLeft = 0x3;
+
 	private readonly Func<JoystickDeviceMap?> _map;
 	private readonly Func<int, float> _axis;
 	private readonly Func<int, bool> _button;
+	private readonly Func<int, JoystickHat> _hat;
 	private readonly Func<bool> _anyButton;
 	private readonly MappedController? _controller;
+
+	// Option 7 as Wire last gave it.
+	private byte _stickConfiguration;
 
 	// The Custom profile read for the device, and the device and shape it was read for.
 	private Es1CustomControls? _custom;
@@ -35,11 +62,13 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	/// <param name="button">Whether a device button is held, false for one the host keeps.</param>
 	/// <param name="anyButton">Whether any device button is held, the host's own among them; none answers false.</param>
 	/// <param name="controller">The controller whose Custom profile <see cref="Custom"/> reads; none reads none.</param>
+	/// <param name="hat">A device hat's directions, centred for one it does not have; with none, every hat is centred.</param>
 	public Es1ControllerPort(Func<JoystickDeviceMap?> map, Func<int, float> axis, Func<int, bool> button,
-			Func<bool>? anyButton = null, MappedController? controller = null) {
+			Func<bool>? anyButton = null, MappedController? controller = null, Func<int, JoystickHat>? hat = null) {
 		_map = map;
 		_axis = axis;
 		_button = button;
+		_hat = hat ?? (_ => JoystickHat.None);
 		_anyButton = anyButton ?? (() => false);
 		_controller = controller;
 	}
@@ -50,7 +79,8 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 		index => controller.Device?.Axis(index) ?? 0f,
 		index => controller.Device?.BindableButton(index) == true,
 		() => controller.Device?.AnyButton() == true,
-		controller);
+		controller,
+		index => controller.Device?.Hat(index) ?? JoystickHat.None);
 
 	/// <summary>
 	/// <b>This engine's own:</b> the device's Custom profile while it is in Custom mode
@@ -129,7 +159,11 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	public Func<bool>? Muted { get; set; }
 
 	/// <inheritdoc/>
-	public bool AxisAnswers(int axis) => _map() is { } map && RoleAxis(map, axis) != JoystickDeviceMap.Unmapped;
+	public void Wire(byte stickConfiguration) => _stickConfiguration = stickConfiguration;
+
+	/// <inheritdoc/>
+	public bool AxisAnswers(int axis) => _map() is { } map
+		&& ((HatOnAxis3 && axis == 3) || RoleAxis(map, axis) != JoystickDeviceMap.Unmapped);
 
 	/// <inheritdoc/>
 	public int ReadAxis(int axis) {
@@ -141,30 +175,61 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 			0 => positions.StickX,
 			1 => positions.StickY,
 			2 => positions.Rudder,
+			3 when HatOnAxis3 => positions.Hat switch {
+				JoystickHat.North => FcsHatUp,
+				JoystickHat.East => FcsHatUp + FcsHatStep,
+				JoystickHat.South => FcsHatUp + 2 * FcsHatStep,
+				JoystickHat.West => FcsHatUp + 3 * FcsHatStep,
+				_ => 0,
+			},
 			3 => positions.Throttle,
 			_ => 0,
 		};
 	}
 
 	/// <inheritdoc/>
-	public byte Buttons => Read() is { } positions ? positions.Buttons : (byte)0;
+	public byte Buttons {
+		get {
+			if (Read() is not { } positions) {
+				return 0;
+			}
+
+			if (_stickConfiguration != FlightstickPro) {
+				return positions.Buttons;
+			}
+
+			return positions.Hat switch {
+				JoystickHat.North => ProHatUp,
+				JoystickHat.South => ProHatDown,
+				JoystickHat.East => ProHatRight,
+				JoystickHat.West => ProHatLeft,
+				_ => positions.Buttons,
+			};
+		}
+	}
 
 	/// <summary>
-	/// What the port reads through <paramref name="map"/>: each role's axis in <see cref="JoystickReading.RawFull"/> units
-	/// and buttons 0–3, the map's logical buttons 1–4.
+	/// What the port reads through <paramref name="map"/>: each role's axis in <see cref="JoystickReading.RawFull"/> units,
+	/// the hat at one of its four directions or centred, and buttons 0–3, the map's logical buttons 1–4. Which line the
+	/// hat goes on is the wiring's (<see cref="Wire"/>).
 	/// </summary>
 	/// <param name="map">The map the device is read through.</param>
 	/// <param name="axis">A device axis as a fraction of its travel, −1 to +1, 0 for one it does not have.</param>
 	/// <param name="button">Whether a device button is held, false for one the host keeps.</param>
-	public static JoystickPositions Read(JoystickDeviceMap map, Func<int, float> axis, Func<int, bool> button) {
-		// PLACEHOLDER: the controller's hat is put on no port line. Which hat direction each of the record's bytes
-		// +0x14-+0x17 is stays Open (docs/es1/simulation/joystick.md#open), until the retail check it lists under
-		// DOSBox-X's joysticktype=fcs with option 7 at 3 and joysticktype=ch with option 7 at 5.
-		var positions = map.ReadPositions(axis, button, JoystickHat.None);
-		return positions with { Buttons = (byte)(positions.Buttons & 0xf) };
+	/// <param name="hat">A device hat's directions, centred for one it does not have.</param>
+	public static JoystickPositions Read(JoystickDeviceMap map, Func<int, float> axis, Func<int, bool> button,
+			Func<int, JoystickHat> hat) {
+		var positions = map.ReadPositions(axis, button, hat(map.HatIndex));
+		var cardinal = positions.Hat is JoystickHat.North or JoystickHat.South or JoystickHat.East or JoystickHat.West
+			? positions.Hat
+			: JoystickHat.None;
+		return positions with { Hat = cardinal, Buttons = (byte)(positions.Buttons & 0xf) };
 	}
 
-	private JoystickPositions? Read() => _map() is { } map && !Quiet() ? Read(map, _axis, _button) : null;
+	// Whether the wiring puts the hat on axis 3, the FCS's.
+	private bool HatOnAxis3 => _stickConfiguration == ThrustmasterFcs;
+
+	private JoystickPositions? Read() => _map() is { } map && !Quiet() ? Read(map, _axis, _button, _hat) : null;
 
 	// Whether Muted holds the port, or its release wait does.
 	private bool Quiet() {
