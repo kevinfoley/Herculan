@@ -217,10 +217,9 @@ public static class SquadOrders {
 	/// for. Everything else scores zero for everyone, so the group is simply walked in range order.
 	///
 	/// <para>The original's score is a stack local it only assigns inside that switch, so for a verb
-	/// with no case every member carries whatever the stack held before the call. That ties them all
-	/// and walks the group in range order when the leftover is -1 or more, and tells nobody when it
-	/// is below. Zero takes the first outcome without reading uninitialised memory; which one retail
-	/// lands on is open — docs/retail/simulation/ai-squadmates.md, "Open".</para>
+	/// with no case every member carries whatever the stack held before the call. Zero gives the
+	/// outcome retail shows for FLASH COMM's <c>JOIN ON ME</c>, every squadmate told in range order,
+	/// without reading uninitialised memory — docs/retail/simulation/ai-squadmates.md#the-two-ways-an-order-leaves-the-cockpit.</para>
 	/// </summary>
 	private static int Suitability(SquadCommand verb, MechObject member) {
 		bool committed = member.Behaviour.State is { Committed: true };

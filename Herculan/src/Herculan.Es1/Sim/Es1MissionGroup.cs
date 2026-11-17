@@ -480,8 +480,12 @@ public sealed class Es1MissionGroup {
 			short best = -1;
 			Es1Mech? chosen = null;
 			for (int i = 0; i < Members.Count; i++) {
-				if (told[i] || Members[i] is not Es1Mech member || member.Destroyed || ReferenceEquals(member, issuer)
-						|| OrderScore(member, order.Verb) is not { } score || best > score) {
+				if (told[i] || Members[i] is not Es1Mech member || member.Destroyed || ReferenceEquals(member, issuer)) {
+					continue;
+				}
+
+				short score = OrderScore(member, order.Verb);
+				if (best > score) {
 					continue;
 				}
 
@@ -516,18 +520,18 @@ public sealed class Es1MissionGroup {
 	/// <summary>
 	/// The broadcast's score of <paramref name="member"/> for <paramref name="verb"/>, 1 or 0: for verbs 0, 2 and 5 its
 	/// behaviour state's flag 1 (the descriptor's byte <c>+9</c>) clear, for 1, 8 and <c>0xf</c> set; for 4 its radar
-	/// <c>+0x90</c> off, for 7 on. PLACEHOLDER: for any other verb retail assigns no score, and every member carries the one
-	/// leftover stack value, told in range order when it is −1 or more and not at all below; the stack value is not known,
-	/// so here no member is scored and none is told.
+	/// <c>+0x90</c> off, for 7 on. Any other verb scores 0, telling every member in range order: retail assigns such a verb
+	/// no score and leaves a stack leftover, and 0 gives the outcome ES2's retail game shows for FLASH COMM's
+	/// <c>JOIN ON ME</c> (docs/es1/simulation/mission-groups.md#the-squad-order-broadcast).
 	/// </summary>
-	private static short? OrderScore(Es1Mech member, short verb) {
+	private static short OrderScore(Es1Mech member, short verb) {
 		bool committed = member.Behaviour.Descriptor?.Flags[1] ?? false;
 		return verb switch {
 			0 or 2 or 5 => committed ? (short)0 : (short)1,
 			1 or 8 or 0xf => committed ? (short)1 : (short)0,
 			Es1SquadOrder.RadarOnVerb => member.RadarOn ? (short)0 : (short)1,
 			Es1SquadOrder.RadarOffVerb => member.RadarOn ? (short)1 : (short)0,
-			_ => null,
+			_ => 0,
 		};
 	}
 
