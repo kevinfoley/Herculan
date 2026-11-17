@@ -258,6 +258,71 @@ public sealed class Es1WeaponMounts {
 	public void SetTrackLatch() => TrackLatch = true;
 
 	/// <summary>
+	/// <c>WeaponMounts_IdleAllCapacitors</c> (<c>0000d1c4</c>)(manager): each mount's wake (<see cref="Es1WeaponMount.Wake"/>).
+	/// </summary>
+	public void IdleAllCapacitors() {
+		foreach (var mount in Mounts) {
+			mount?.Wake();
+		}
+	}
+
+	/// <summary>The codes <see cref="HandleCommand"/> takes, set-1 scancodes from <c>WeaponMounts_CommandCodes</c> (<c>00091598</c>): <c>Z</c>, <c>B</c>, <c>W</c> and <c>Alt+W</c>.</summary>
+	public const ushort IdleKey = 0x2c, NextChainKey = 0x30, NextWeaponKey = 0x11, PreviousWeaponKey = 0x211;
+
+	/// <summary>The power-level codes: <c>-</c> and <c>=</c>, keypad <c>-</c> and keypad <c>+</c>; the second of each pair raises.</summary>
+	public const ushort PowerDownKey = 0x0c, PowerUpKey = 0x0d, KeypadPowerDownKey = 0x4a, KeypadPowerUpKey = 0x4e;
+
+	/// <summary><c>Alt+1</c> to <c>Alt+9</c>, which toggle rows 0 to 8 in the current chain.</summary>
+	public const ushort FirstRowToggleKey = 0x202, LastRowToggleKey = 0x20a;
+
+	/// <summary>
+	/// <c>WeaponMounts_HandleCommand</c> (<c>0000d4b4</c>)(manager, <paramref name="code"/>)
+	/// (docs/es1/simulation/weapon-mounts.md#arming-chaining-and-linking): <see cref="IdleKey"/> runs
+	/// <see cref="IdleAllCapacitors"/>; <see cref="NextChainKey"/> steps the current chain, 0 past 2, and sets the
+	/// chain-changed byte; <see cref="NextWeaponKey"/> and <see cref="PreviousWeaponKey"/> step the selection by +1 and −1
+	/// and clear single fire; the power-level codes, with a mount armed, adjust its power level
+	/// (<see cref="Es1WeaponMount.AdjustPowerLevel"/>), up on <see cref="PowerUpKey"/> and <see cref="KeypadPowerUpKey"/>;
+	/// <see cref="FirstRowToggleKey"/> to <see cref="LastRowToggleKey"/> run <see cref="ToggleChainMember"/> with the row.
+	/// True for those codes whatever they did, false for any other.
+	/// </summary>
+	public bool HandleCommand(ushort code) {
+		// Retail runs it on the player's local manager alone; a base manager has no chains, an engine guard.
+		if (!IsLocal) {
+			return false;
+		}
+
+		switch (code) {
+			case IdleKey:
+				IdleAllCapacitors();
+				return true;
+			case NextChainKey:
+				// Retail steps +0x1c itself before it calls WeaponMounts_SetChain with the new chain, so SetChain finds the
+				// chain unchanged and does nothing: no step off an armed mount the new chain leaves out, and no console
+				// update until the per-frame pass copies the chain into the console's block on the chain-changed byte.
+				CurrentChain = CurrentChain + 1 > 2 ? 0 : CurrentChain + 1;
+				ChainChanged = true;
+				return true;
+			case NextWeaponKey or PreviousWeaponKey:
+				StepSelection(code == NextWeaponKey ? 1 : -1);
+				SingleFire = false;
+				return true;
+			case PowerDownKey or PowerUpKey or KeypadPowerDownKey or KeypadPowerUpKey:
+				// A hole at the armed index, which retail calls through and the selection never rests on, is skipped, an
+				// engine guard.
+				if (ArmedIndex >= 0) {
+					Mounts[ArmedIndex]?.AdjustPowerLevel(code is PowerUpKey or KeypadPowerUpKey);
+				}
+
+				return true;
+			case >= FirstRowToggleKey and <= LastRowToggleKey:
+				ToggleChainMember((short)(code - FirstRowToggleKey));
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	/// <summary>
 	/// <c>WeaponMounts_PerFrameUpdate</c> (<c>0000cf78</c>)(manager, <paramref name="range"/>), from
 	/// <c>Player_PerFrameCockpitUpdate</c> (docs/es1/simulation/weapon-mounts.md#the-per-frame-pass--weaponmounts_perframeupdate-0000cf78):
 	/// with the electro-optical launch's step pending and its missile no longer flown, the selection stepped on and single

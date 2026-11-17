@@ -357,6 +357,25 @@ public sealed class Es1WeaponMount {
 		}
 	}
 
+	/// <summary>The step <c>WeaponMount_AdjustPowerLevel</c> moves the charge target by.</summary>
+	public const short PowerStep = 0x50;
+
+	/// <summary>
+	/// Slot <c>+0x3c</c>, the power level: an energy or ELF mount's <c>WeaponMount_AdjustPowerLevel</c> (<c>0000b820</c>),
+	/// the charge target moved by <see cref="PowerStep"/>, up when <paramref name="up"/> is set and down when not, held
+	/// to 0..<see cref="FullCharge"/>, and the power hand-off and its twin set, so the gauge push sends it out to the
+	/// charge bar; every other class's <c>WeaponMount_AdjustPowerLevelNoOp</c> (<c>0000c6ed</c>).
+	/// </summary>
+	public void AdjustPowerLevel(bool up) {
+		if (Kind is not (Es1MountKind.Energy or Es1MountKind.Elf)) {
+			return;
+		}
+
+		ChargeTarget = (short)Math.Clamp(ChargeTarget + (up ? PowerStep : -PowerStep), 0, FullCharge);
+		PowerHandOff = true;
+		_powerHandOffPending = true;
+	}
+
 	/// <summary>
 	/// <c>WeaponMount_RangeAllows</c> (<c>0000ac14</c>)(mount, <paramref name="range"/>): the template's minimum range &lt;
 	/// <paramref name="range"/> &lt; its range, both bounds exclusive (docs/es1/simulation/weapon-mounts.md#readiness).

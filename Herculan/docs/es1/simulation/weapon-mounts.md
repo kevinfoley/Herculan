@@ -88,11 +88,13 @@ These are ES2's ([arming, chaining and linking](../../retail/simulation/weapon-m
 | Code | Action |
 |---|---|
 | `0x2c` | `WeaponMounts_IdleAllCapacitors` |
-| `0x30` | the next chain, wrapping after 2, through `WeaponMounts_SetChain`, and `+0x16` set to 1 |
+| `0x30` | `+0x1c` stepped to the next chain, wrapping after 2, then passed to `WeaponMounts_SetChain`, and `+0x16` set to 1 |
 | `0x11`, `0x211` | `WeaponMounts_StepSelection` by +1 or −1, and single fire `+0x18` cleared |
 | `0x0c`, `0x0d` | with a mount armed, its power-level slot `+0x3c` with whether the code was `0x0d` |
 | `0x4a`, `0x4e` | the same, with whether the code was `0x4e` |
 | `0x202`–`0x20a` | `WeaponMounts_ToggleChainMember` with the code less `0x202` |
+
+**`0x30` changes the chain without moving the selection.** `+0x1c` already holds the new chain when `WeaponMounts_SetChain` is called, so `SetChain` finds no change and returns: a mount armed outside the new chain stays armed, and the console's chain button changes only on the next per-frame pass, which copies `+0x1c` into the console's block because `+0x16` is set ([the per-frame pass](#the-per-frame-pass--weaponmounts_perframeupdate-0000cf78)). A chain button or `` ` `` reaches `SetChain` with a different chain, which steps the selection.
 
 ES2's (`00410f78`) handles the same codes with ten row codes, `0x202`–`0x20b`. `es2_xref.py` finds one call, from `Mech_HandleCommand` (`00011050`, [the cockpit](mech.md#the-cockpit)), which passes the manager of `PlayerMech` (`000bc42a`).
 

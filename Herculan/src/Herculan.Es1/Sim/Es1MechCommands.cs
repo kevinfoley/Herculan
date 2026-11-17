@@ -41,8 +41,9 @@ public static class Es1MechCommands {
 	/// </summary>
 	public static short HandleCommand(Es1Mech machine, Es1Mech playerMech, ushort code, Es1DevKeySteps steps,
 			Es1SimGlobals globals) {
-		// PLACEHOLDER: WeaponMounts_HandleCommand (0000d4b4)(PlayerMech's manager +0x198, code), the weapon keys, takes
-		// nothing until plan steps 6 and 7 port the mounts' keys.
+		if (playerMech.Mounts?.HandleCommand(code) == true) {
+			return 1;
+		}
 
 		switch (code) {
 			case Keypad5:
