@@ -15,7 +15,7 @@ body:
       label: Known issues
       description: Some bugs are faithful copies of bugs in the original game, and some are already known.
       options:
-        - label: I checked [KNOWN_ISSUES.md](https://github.com/kevinfoley/Herculan/blob/main/Herculan/KNOWN_ISSUES.md) and this bug isn't listed there.
+        - label: I checked [KNOWN_ISSUES_ES2.md](https://github.com/kevinfoley/Herculan/blob/main/Herculan/KNOWN_ISSUES_ES2.md) and this bug isn't listed there.
           required: true
 
   - type: dropdown

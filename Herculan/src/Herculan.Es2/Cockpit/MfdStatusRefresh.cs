@@ -25,7 +25,7 @@ namespace Herculan.Es2.Cockpit;
 ///
 /// <para><b>The latch.</b> Each paint (<c>MfdStatusScreen_Paint</c>, <c>0043a5a0</c>) first latches the parked
 /// subject at <c>+0x3e</c>, holding a lost one that is <see cref="SimObject.Neutralised"/> for
-/// <see cref="DeadHoldTicks"/>. The hold flag's stale arming is reproduced (KNOWN_ISSUES.md).</para>
+/// <see cref="DeadHoldTicks"/>. The hold flag's stale arming is reproduced (KNOWN_ISSUES_ES2.md).</para>
 /// </summary>
 public sealed class MfdStatusRefresh {
 	/// <summary>How far ahead <c>MfdDisplay_Update</c> sets the next refresh, in coarse ticks — <c>0x1e</c>.</summary>

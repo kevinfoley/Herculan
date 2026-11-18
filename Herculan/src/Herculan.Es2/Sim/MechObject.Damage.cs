@@ -454,7 +454,7 @@ public sealed partial class MechObject {
 			// which asks for a cockpit that came out of the hit less damaged than it went in; taking
 			// each test from the other reading turns it into the upward crossing it reads as
 			// intended to be. This is a non-vanilla tweak. See SystemMessages.DamageLevelCritical
-			// and KNOWN_ISSUES.md.
+			// and KNOWN_ISSUES_ES2.md.
 			if (world.Tweaks.GetSettingValue(Es2TweakSettingDefinitions.CriticalDamageMessage) && LocallyPiloted
 					&& before < CockpitShakeDamageLimit && CockpitShakeDamageLimit < after
 					&& (componentIndex == CockpitFrontComponent

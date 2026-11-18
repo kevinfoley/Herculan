@@ -12,7 +12,7 @@ sealed class ShellManual(string installRoot, GameDisc? disc, GameInProgress game
 	// The options committed and all 54 saved, then the help file — here through OnlineManual, since there is no WinHelp
 	// to hand it to. Retail first leaves full screen and writes option 6 to match, and stops the shell's sound; this
 	// stays full screen behind the browser, so option 6 is left as it is, and leaves the sound to the focus change
-	// (ShellAudio.FocusChanged), so a browser that never takes the focus leaves the music playing (KNOWN_ISSUES.md).
+	// (ShellAudio.FocusChanged), so a browser that never takes the focus leaves the music playing (KNOWN_ISSUES_ES2.md).
 	public void Open() {
 		game.Options.Commit();
 		game.Options.Save(Enumerable.Range(0, Prefs.Length).ToArray());

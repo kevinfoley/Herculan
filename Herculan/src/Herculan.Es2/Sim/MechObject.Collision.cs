@@ -163,7 +163,7 @@ public sealed partial class MechObject {
 	/// <para><b>The impact point mixes two frames</b>, and that is the original's arithmetic: X and Y
 	/// are the world midpoint of the two machines, but Z is the lower of the two cockpit-eye nodes'
 	/// <i>model-space</i> heights — roughly torso height above each machine's own feet — used as
-	/// though it were a world height. Reproduced as-is; see KNOWN_ISSUES.md.</para>
+	/// though it were a world height. Reproduced as-is; see KNOWN_ISSUES_ES2.md.</para>
 	/// </summary>
 	private void CollisionDamage(SimWorld world, MechObject other) {
 		// Rotation only: the original copies the two matrices without their translations, so this is

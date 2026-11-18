@@ -252,7 +252,7 @@ public sealed class ShellWeaponsScreen {
 	///
 	/// <para>The original selects that bay through <c>Squad_SelectBay</c> under the previous tab's rule,
 	/// because the tab handler stores 2 in <c>CurrentTabIndex</c> (<c>0047581c</c>) only after the entry — a retail bug, recorded
-	/// in KNOWN_ISSUES.md. This engine applies the arming tab's rule, which takes any finished machine.</para>
+	/// in KNOWN_ISSUES_ES2.md. This engine applies the arming tab's rule, which takes any finished machine.</para>
 	/// </summary>
 	public void Enter(ShellHangar hangar, int bay) {
 		_hangar = hangar;

@@ -9,7 +9,7 @@ Reimplementation of Earthsiege 2 (1996) in C#, reverse-engineered from the retai
 - `Herculan/docs/retail/rendering/` — rendering behaviour (DBSIM): terrain, shapes, lighting, fog and sky, polygon fill
 - `Herculan/docs/retail/shell/` — shell behaviour (VSHELL): campaign, career, armory, front end
 - `Herculan/docs/herculan/planning.md` — architecture decisions and their rationale
-- `Herculan/KNOWN_ISSUES.md` — retail bugs, and where this engine diverges from retail
+- `Herculan/KNOWN_ISSUES_ES2.md` — retail bugs, and where this engine diverges from retail
 
 Build: `dotnet build Herculan/HerculanEngine.sln` (engine) and `Herculan/HercWorksMDK.sln` (toolkit).
 Tests: `dotnet test Herculan/HerculanEngine.sln`. Keep both at 0 warnings.
@@ -55,7 +55,7 @@ The docs state what is true now. How the project got there belongs in `git log`.
    user applies those two, and work on a doc's open tasks skips them. Those are the only status
    terms — never "not ported", "untraced", "unresolved", "undecoded". The body
    states what is known and may link to [Open](#open); it carries no tasks and no hedges
-   ("plausibly", "unconfirmed") — a hypothesis is an Open item. `KNOWN_ISSUES.md` and `ROADMAP.md`
+   ("plausibly", "unconfirmed") — a hypothesis is an Open item. `KNOWN_ISSUES_ES2.md` and `ROADMAP.md`
    keep their own structure.
 
 9. **Retail docs describe retail.** `docs/retail/` says what the original does, not what HERCULAN
@@ -63,7 +63,7 @@ The docs state what is true now. How the project got there belongs in `git log`.
    departures from retail go in doc comments on the C# that implements them, citing the doc
    section, so an engine change never has to hunt for prose to update (rule 5 decides which is
    which). A retail doc may link to an engine doc, but it does not name C# types. The engine docs are
-   `docs/herculan/`, `KNOWN_ISSUES.md` and `ROADMAP.md`.
+   `docs/herculan/`, `KNOWN_ISSUES_ES2.md` and `ROADMAP.md`.
 
 `tools/scripts/doc_lint.py` enforces 1, 4, 6 and 8, warns on a doc over 70 KB (`doc-too-long`:
 split it by topic), and runs automatically after any edit under

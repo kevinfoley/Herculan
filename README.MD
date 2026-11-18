@@ -138,7 +138,7 @@ Some less-technical docs which may be of interest to players and fans of the ser
 - [Cut content](Herculan/docs/retail/cut-content.md): a summary of some of the more interesting unfinished features that can be found in the game's code and data.
 - [Launch options](Herculan/docs/retail/launch-options.md): a list of all of retail's command-line launch options, including the all-important `-eggplant` flag.
 - [Retail builds](Herculan/docs/retail/retail-builds.md): describes the differences between v1.0 and v1.10 (this doc is more technical).
-- [Known Issues](Herculan/KNOWN_ISSUES.md): contains a detailed list of bugs and other mistakes in _Earthsiege 2_ (of which there are _many_).
+- [Known Issues](Herculan/KNOWN_ISSUES_ES2.md): contains a detailed list of bugs and other mistakes in _Earthsiege 2_ (of which there are _many_).
 
 ## Building from source
 

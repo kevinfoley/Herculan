@@ -351,7 +351,7 @@ public sealed class PilotControls {
 			|| (Bindings.ButtonLatched(0) && !fireRowIsTrigger);
 
 		// Under the developer flag an arrow held with Ctrl or Alt is a move or turn key, and this engine
-		// takes it off the steering and throttle axes. Retail keeps it on them — see KNOWN_ISSUES.md.
+		// takes it off the steering and throttle axes. Retail keeps it on them — see KNOWN_ISSUES_ES2.md.
 		bool arrowsAreCommands = _developerKeys.Enabled && (CtrlHeld(keys) || AltHeld(keys));
 		var keyboardAxes = _view.Pan.HeadsDownViewIndex
 			? PilotAxes.Centred

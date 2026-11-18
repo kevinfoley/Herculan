@@ -353,7 +353,7 @@ public sealed class HddCommandScreen {
 	/// POSITION armed, steps <see cref="PickedUnit"/> to the next unit
 	/// <c>HddCommandScreen_CycleUnit</c> (<c>0044ef08</c>) finds and makes it the pick.
 	///
-	/// <para>Two departures, both in KNOWN_ISSUES.md. With PATROL GRIDPOINT or GOTO GRIDPOINT armed the original
+	/// <para>Two departures, both in KNOWN_ISSUES_ES2.md. With PATROL GRIDPOINT or GOTO GRIDPOINT armed the original
 	/// still makes whatever unit <see cref="PickedUnit"/> holds the pick; this picks nothing there and answers
 	/// as the original does with no unit held. And the original's step never ends when the held unit has been
 	/// deleted from the live list; this starts from the list's head instead.</para>

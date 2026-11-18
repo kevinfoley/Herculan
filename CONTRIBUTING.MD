@@ -4,7 +4,7 @@ Thanks for your interest in contributing to HERCULAN Engine or HercWorks CSharp.
 
 ## Reporting a bug
 
-Before submitting a bug report, please check [KNOWN_ISSUES.md](Herculan/KNOWN_ISSUES.md). The bug you found may be an original retail bug, or it may be a known issue with HERCULAN Engine.
+Before submitting a bug report, please check [KNOWN_ISSUES_ES2.md](Herculan/KNOWN_ISSUES_ES2.md). The bug you found may be an original retail bug, or it may be a known issue with HERCULAN Engine.
 
 When reporting a bug, please be as specific as possible about how you were playing the game (e.g. on Windows with a CD, on Steam Deck with a GoldGames ISO, etc.), what you were doing ("I was playing Alpha Sector mission 2"), and what went wrong ("a Cybrid Herc walked through the terrain!"). If an error occurred, make sure to include the error message (copy and paste if you can, screenshot if you can't). Reports that directly compare behavior in HERCULAN to behavior in retail are particularly helpful!
 

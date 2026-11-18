@@ -7,7 +7,7 @@ namespace HercWorks.Core.Io.Transform.Shell;
 
 /// <summary>
 /// Ported from org.hercworks.core.io.transform.shell.HercsStartTransformer.
-/// See KNOWN_ISSUES.md — the write path looks hardpoints up by the loop index (0..count-1)
+/// See KNOWN_ISSUES_ES2.md — the write path looks hardpoints up by the loop index (0..count-1)
 /// rather than by the actual hardpoint ID stored as each dictionary key on read, which assumes
 /// hardpoint IDs are always contiguous and zero-based.
 /// </summary>

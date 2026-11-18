@@ -211,7 +211,7 @@ public sealed partial class FlyerObject {
 	/// <para><b>Verbs 1, 2 and 6 install nothing here</b>, and neither does an empty order slot. The
 	/// original puts the aircraft in a "state" made of its own code bytes
 	/// (docs/retail/simulation/ai-flyers.md#orders--flyer_aiselectbehaviour-00422d00, and
-	/// KNOWN_ISSUES.md); this engine leaves the aircraft in the state it has instead.</para>
+	/// KNOWN_ISSUES_ES2.md); this engine leaves the aircraft in the state it has instead.</para>
 	/// </summary>
 	private void SelectBehaviour() {
 		switch (Group?.OrderVerb ?? MissionGroup.NoOrder) {

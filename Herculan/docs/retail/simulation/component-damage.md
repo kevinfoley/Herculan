@@ -74,7 +74,7 @@ The names of the slots are [the file's](../formats/dmg-damage-file.md#the-two-in
 
 **`+0xb0` is the exception: it re-arms.** `Mech_PerTickSystemsUpdate` clears it (`0041ab25`) on the player's own machine every tick that `front + rear` exceeds `0x5dc` (1500), so `SHIELDS CRITICAL` is hysteretic — it fires under 500 and can fire again once the array has rebuilt past 1500, with the band between the two thresholds leaving the latch as it was. The same byte is what the MFD status screen reads for its `SHIELDS DN` condition, so that indicator clears itself on the same threshold.
 
-**`0x2e` and `0x2f` share a predicate, and it does not test sides**: the attacker is the machine the player is flying, and the victim is that machine's own selected target (`mech+0x1a4`). Nothing is asked about whose side the victim was on. `0x2e` has **three** call sites — this endpoint, the flyer's `+0x74` (`Flyer_ComponentDamageWrite`) and `Base_ApplyDamage` (`00404d70`) — so it covers a HERC, an aircraft and a building alike. What the missing side test costs is in [`../../../KNOWN_ISSUES.md`](../../../KNOWN_ISSUES.md).
+**`0x2e` and `0x2f` share a predicate, and it does not test sides**: the attacker is the machine the player is flying, and the victim is that machine's own selected target (`mech+0x1a4`). Nothing is asked about whose side the victim was on. `0x2e` has **three** call sites — this endpoint, the flyer's `+0x74` (`Flyer_ComponentDamageWrite`) and `Base_ApplyDamage` (`00404d70`) — so it covers a HERC, an aircraft and a building alike. What the missing side test costs is in [`../../../KNOWN_ISSUES_ES2.md`](../../../KNOWN_ISSUES_ES2.md).
 
 ### Going out of the fight
 

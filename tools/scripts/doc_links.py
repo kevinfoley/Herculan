@@ -43,7 +43,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 DEFAULT_TARGETS = [
     os.path.join("Herculan", "docs"),
     os.path.join("Herculan", "ROADMAP.md"),
-    os.path.join("Herculan", "KNOWN_ISSUES.md"),
+    os.path.join("Herculan", "KNOWN_ISSUES_ES2.md"),
     "README.MD",
 ]
 

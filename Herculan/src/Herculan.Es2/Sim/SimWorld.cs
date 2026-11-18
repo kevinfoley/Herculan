@@ -357,7 +357,7 @@ public sealed class SimWorld {
 	///
 	/// <para>A full pool gives null. <b>None of the three spawners checks for that</b>: each goes on
 	/// to write the position (or, in the HERC's case, the Z) through the pointer it got, which is a
-	/// crash in the original (KNOWN_ISSUES.md). Here each caller simply does without the shape.</para>
+	/// crash in the original (KNOWN_ISSUES_ES2.md). Here each caller simply does without the shape.</para>
 	/// </summary>
 	internal GroundShape? SpawnGroundShape(int shapeIndex, Vec3i position) {
 		if (_groundShapes.Count >= GroundShape.PoolSize) {

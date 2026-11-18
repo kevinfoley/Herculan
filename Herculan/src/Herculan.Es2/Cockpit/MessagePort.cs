@@ -178,7 +178,7 @@ public sealed class MessagePort {
 	/// <para>This queue departs from <c>MessagePort_Enqueue</c> (<c>00434e8c</c>) on purpose: retail's
 	/// post into a full queue frees the wrong record, and a post that goes ahead of a queued message
 	/// loses the last one. This one keeps every message it should. See
-	/// docs/retail/simulation/cockpit-message-port.md, "The queue", and KNOWN_ISSUES.md.
+	/// docs/retail/simulation/cockpit-message-port.md, "The queue", and KNOWN_ISSUES_ES2.md.
 	/// <see cref="SquadMessagePort.Post"/> queues the same way.</para>
 	/// </summary>
 	/// <param name="messageId">The flat <c>SYSTEM.STR</c> id — see <see cref="SystemMessages"/>.</param>

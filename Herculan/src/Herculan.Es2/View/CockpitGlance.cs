@@ -29,7 +29,7 @@ public enum GlanceSide {
 /// strip off the window's edge. The travel is therefore <i>reach</i>-limited: it stops when the side
 /// panel's outer edge meets the window's edge (<see cref="CockpitScreenLayout.GlanceReachPanels"/>).
 /// In a 4:3 window the reach is exactly one panel and this is retail's glance; in wider ones it is
-/// shorter. This limit is this engine's invention; KNOWN_ISSUES.md carries it.</para>
+/// shorter. This limit is this engine's invention; KNOWN_ISSUES_ES2.md carries it.</para>
 ///
 /// <para>The speed follows <see cref="CockpitPan"/>'s reasoning: the original slide is untimed, so
 /// only its step count is recoverable — 320 columns at <c>0x14</c> a step in the 320-wide mode is

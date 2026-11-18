@@ -25467,7 +25467,7 @@
       "type": "data",
       "confidence": "high",
       "name": "DamageLevelColors",
-      "description": "Six int16 palette entries, {14, 13, 12, 11, 10, 39}, indexed by damage level. Six colours against only four damage words in estext.bin, which is the retail overrun recorded in KNOWN_ISSUES.md.",
+      "description": "Six int16 palette entries, {14, 13, 12, 11, 10, 39}, indexed by damage level. Six colours against only four damage words in estext.bin, which is the retail overrun recorded in KNOWN_ISSUES_ES2.md.",
       "source": "docs/retail/shell/weapons-and-repair.md#the-condition-readout"
     },
     {

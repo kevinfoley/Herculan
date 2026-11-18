@@ -11,7 +11,7 @@ namespace Herculan.Es2.Host.Simulator;
 /// <summary>
 /// The keys that act on the window rather than the game: [/] for the on-line manual, and the full-screen toggle
 /// and its ways out. Each acts once per press, ignoring auto-repeats: a held [Alt+Enter] toggles once per repeat in
-/// the original, which this does not reproduce (KNOWN_ISSUES.md).
+/// the original, which this does not reproduce (KNOWN_ISSUES_ES2.md).
 /// </summary>
 sealed class WindowKeys : ISystemButtonActions {
 	private readonly EngineWindow _window;
@@ -38,7 +38,7 @@ sealed class WindowKeys : ISystemButtonActions {
 
 	/// <summary>
 	/// OnlineManual_Raise (0045f054) then Help_Show (004668c0), which leaves full screen before its WinHelpA
-	/// call; this stays full screen behind the browser (KNOWN_ISSUES.md). The [/] key and the right-hand system
+	/// call; this stays full screen behind the browser (KNOWN_ISSUES_ES2.md). The [/] key and the right-hand system
 	/// button both come here.
 	/// </summary>
 	public void OpenManual() => OnlineManual.Open(_manualRoot, _disc);

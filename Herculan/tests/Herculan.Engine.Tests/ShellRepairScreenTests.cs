@@ -206,7 +206,7 @@ public class ShellRepairScreenTests {
 	/// <summary>
 	/// The retail string overrun: six levels, four words. Levels 4 and 5 read <c>0x6c</c> and
 	/// <c>0x6d</c> — <c>% Complete</c> and <c>Unassigned</c> — and the port reproduces that rather than
-	/// clamping; see Herculan/KNOWN_ISSUES.md. Pinned so that a later change which "fixes" it has to do
+	/// clamping; see Herculan/KNOWN_ISSUES_ES2.md. Pinned so that a later change which "fixes" it has to do
 	/// so deliberately.
 	/// </summary>
 	[Fact]

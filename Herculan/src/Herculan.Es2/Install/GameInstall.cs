@@ -230,7 +230,7 @@ public static class GameInstall {
 	/// <para>Retail looks on the disc only (<c>DriveCfg_PrefixPath</c>, <c>0045ee44</c>;
 	/// <c>Path_UnderDriveCfg</c>, VSHELL <c>0040d429</c>). Falling back to the install is this engine's,
 	/// so an install copied whole, whose <c>drive.cfg</c> still names a CD drive that is gone, keeps its
-	/// movies, manual and instructor; see KNOWN_ISSUES.md.</para>
+	/// movies, manual and instructor; see KNOWN_ISSUES_ES2.md.</para>
 	/// </summary>
 	public static Stream? OpenDiscFile(string installRoot, GameDisc? disc, string relativePath) {
 		if (disc?.OpenRead(relativePath) is { } onDisc) {

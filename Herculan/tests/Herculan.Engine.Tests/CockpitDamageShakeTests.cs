@@ -119,7 +119,7 @@ public class CockpitDamageShakeTests {
 	/// <summary>
 	/// <b>The retail quirk.</b> A second hit inside the window clears the band and then declines to
 	/// seed a new one, because the flash's timer is still armed and only its expiry clears that. So
-	/// the view goes still for the rest of the shake. See KNOWN_ISSUES.md.
+	/// the view goes still for the rest of the shake. See KNOWN_ISSUES_ES2.md.
 	/// </summary>
 	[Fact]
 	public void ASecondHitStopsTheViewShakeInsteadOfRestartingIt() {

@@ -307,7 +307,7 @@ public sealed partial class HeightGrid {
 	/// unwritten</b>, so its weapon-fire caller measures a distance to whatever an earlier call left
 	/// on the stack. Uninitialised memory cannot be reproduced, so the point where the step meets
 	/// the ground stands in (<see cref="GroundCrossing"/>). That point is not retail, and is listed in
-	/// KNOWN_ISSUES.md; the line-of-sight callers read only the hit, which is v1.0's.</para>
+	/// KNOWN_ISSUES_ES2.md; the line-of-sight callers read only the hit, which is v1.0's.</para>
 	/// </summary>
 	private bool Resolve(int cellX, int cellY, int fromX, int fromY, int fromZ, int toX, int toY, int toZ,
 			ThinRayRules rules, out Vec3i hitPoint) {

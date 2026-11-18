@@ -317,7 +317,7 @@ Real and universal; confirmed against the retail build.
 
 A run stride is ~2× a walk stride but takes 5/6 the time, and `animRate = speed` in both gaits. Crossing `typeRec+0x2e` therefore roughly doubles actual ground speed while the HUD number moves continuously. Per-Herc run/walk u/tick ratio: 1.76–2.43.
 
-The HUD's 315/1024 constant is calibrated for the run gait only. Below the threshold — 50–60% of the throttle range — a Herc physically moves about half what the readout claims. See [`KNOWN_ISSUES.md`](../../../KNOWN_ISSUES.md).
+The HUD's 315/1024 constant is calibrated for the run gait only. Below the threshold — 50–60% of the throttle range — a Herc physically moves about half what the readout claims. See [`KNOWN_ISSUES_ES2.md`](../../../KNOWN_ISSUES_ES2.md).
 
 ## Damage effects on movement
 

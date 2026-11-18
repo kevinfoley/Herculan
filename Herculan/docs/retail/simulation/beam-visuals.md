@@ -85,7 +85,7 @@ The fill is winding-agnostic — `Raster_DrawPolygonEitherWinding` (`004841af`) 
 
 The jagged branch does not return. Control drops into the straight-beam code below it, which draws `points[0]`→`points[1]` — for a chain, node zero with and without the width, a stub one half-width long standing at the muzzle — and the enclosing loop runs once per quad, so the identical stub is redrawn `nodeCount` times. It takes the straight path's `BEAMTEX` frame, not the chain's flat colour, and the half-width pixel floor makes it wider than it is long at any real range: a ~4 px orange-white dash at the muzzle.
 
-Nothing in the fire path spawns a muzzle visual for this to be part of — `Bullet_FireBurst` does one thing at the muzzle point, the sound. Logged in [`../../../KNOWN_ISSUES.md`](../../../KNOWN_ISSUES.md).
+Nothing in the fire path spawns a muzzle visual for this to be part of — `Bullet_FireBurst` does one thing at the muzzle point, the sound. Logged in [`../../../KNOWN_ISSUES_ES2.md`](../../../KNOWN_ISSUES_ES2.md).
 
 Retail reference: `Reference/Simulator3.jpg` shows an ELF as a thin bright yellow zigzag.
 

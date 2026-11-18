@@ -166,7 +166,7 @@ A visibly-mounted hardpoint then throws its own gun as a debris object ([`destru
 | `Bullet` | Sets the refire scale `mount+0x63 = 0x400 - steps * 0x66` |
 | `Beam` | Neither |
 
-**A damaged gun fires faster, not slower.** `WeaponMount_PrepareShot` arms `Q10Multiply(mount+0x63, template+0x4c)`, so halving the scale halves the delay. It reads backwards for damage and it is what the original does; see [`KNOWN_ISSUES.md`](../../../KNOWN_ISSUES.md).
+**A damaged gun fires faster, not slower.** `WeaponMount_PrepareShot` arms `Q10Multiply(mount+0x63, template+0x4c)`, so halving the scale halves the delay. It reads backwards for damage and it is what the original does; see [`KNOWN_ISSUES_ES2.md`](../../../KNOWN_ISSUES_ES2.md).
 
 `WeaponMount_ConditionChangedEnergy` (`0040ee38`), the energy and ELF classes: the base first, then the charge rate `+0x7f` is reset to 20 and, with the reading past `0x80`, lowered by `Q10(20, steps * 100)` — 19, 17, 15, 13 and 11 over the five steps. **A damaged energy weapon recharges more slowly**, and nothing else about it changes: no cook-off roll and no refire scale, whatever its `PROJ.DAT` type. The Targeting Pod's own slot is in [`equipment-pods.md`](equipment-pods.md#where-a-pod-reads-its-damage); the other pods keep the base.
 

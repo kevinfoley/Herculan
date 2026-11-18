@@ -685,7 +685,7 @@ public sealed class ShellRepairScreen {
 
 	/// <summary>
 	/// The colour per damage band, the in-image table at <c>004765ca</c>. The last two belong to bands
-	/// whose words are a retail mistake; see Herculan/KNOWN_ISSUES.md.
+	/// whose words are a retail mistake; see Herculan/KNOWN_ISSUES_ES2.md.
 	/// </summary>
 	private static readonly byte[] BandColors = { 14, 13, 12, 11, 10, 39 };
 
@@ -747,7 +747,7 @@ public sealed class ShellRepairScreen {
 	/// The condition words, which the screen indexes by damage level. The run is four words long —
 	/// <c>Nominal</c>, <c>Light</c>, <c>Moderate</c>, <c>Heavy</c> — for six levels, so level 4 reads
 	/// <c>0x6c</c> <c>% Complete</c> and level 5 <c>0x6d</c> <c>Unassigned</c>, the two unrelated
-	/// entries that follow. See Herculan/KNOWN_ISSUES.md and docs/retail/shell/weapons-and-repair.md, "The Condition
+	/// entries that follow. See Herculan/KNOWN_ISSUES_ES2.md and docs/retail/shell/weapons-and-repair.md, "The Condition
 	/// readout".
 	/// </summary>
 	private const int FirstConditionWordText = 0x68;

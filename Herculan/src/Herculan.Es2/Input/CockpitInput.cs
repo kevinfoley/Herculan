@@ -88,7 +88,7 @@ public readonly record struct CockpitDrag(CockpitWidgetId Id, CockpitSurface Sur
 ///
 /// <para><b>The double-click flag lasts one click here.</b> The original's global is cleared only as
 /// the queue drains its next record, so a key that presses the MFD's XMIT before then finds it still
-/// set. Recorded as a divergence in KNOWN_ISSUES.md; the mechanism is
+/// set. Recorded as a divergence in KNOWN_ISSUES_ES2.md; the mechanism is
 /// docs/retail/simulation/cockpit-input.md#4-once-per-frame-the-real-clickpressdrag-logic.</para>
 /// </summary>
 public sealed class CockpitInput {

@@ -187,7 +187,7 @@ public sealed class SystemMessages {
 
 	/// <summary>
 	/// <c>DAMAGE LEVEL CRITICAL</c>. Posted by <see cref="Sim.MechObject.ApplyDirectFireDamage"/>, under a tweak.
-	/// Unreachable in retail; see KNOWN_ISSUES.md.
+	/// Unreachable in retail; see KNOWN_ISSUES_ES2.md.
 	/// </summary>
 	public const int DamageLevelCritical = 0x12;
 

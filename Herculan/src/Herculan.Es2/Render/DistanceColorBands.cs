@@ -19,7 +19,7 @@ namespace Herculan.Es2.Render;
 /// <c>004cfa08</c> set, and <c>WorldShades_ResetRamps</c>, which runs while <c>0049aef2</c> (0 in the image) is set. A tag
 /// with no list leaves the ramps as the last object drawn left them in the original; here it leaves them as the palette
 /// has them, since nothing here carries ramp state from one object's draw to the next. Of retail shapes, only the ground
-/// vehicles' (tag 10) have Gouraud faces under such a tag; KNOWN_ISSUES.md lists it.</para>
+/// vehicles' (tag 10) have Gouraud faces under such a tag; KNOWN_ISSUES_ES2.md lists it.</para>
 /// </summary>
 public sealed class DistanceColorBands : IBandRampSource {
 	/// <summary>The shape radius from which a structure's distance takes the second offset.</summary>

@@ -197,7 +197,7 @@ public static class ShellTrainingLaunch {
 	///
 	/// <para><paramref name="wholeSquad"/> puts the last squadmate on strength too, which retail's build never does: this
 	/// engine's departure for a mission <c>gam\career.dat</c> does not list, which retail has no path for (the user's
-	/// choice, <c>KNOWN_ISSUES.md</c>). The practice missions and the demos keep the retail build.</para>
+	/// choice, <c>KNOWN_ISSUES_ES2.md</c>). The practice missions and the demos keep the retail build.</para>
 	/// </summary>
 	internal static int BuildSquad(GameContent content, SimulatorPreferences options, int row, bool instantAction,
 			MissionGenerator mission, ShellHangar hangar, bool wholeSquad) {

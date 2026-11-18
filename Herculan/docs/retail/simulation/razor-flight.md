@@ -55,7 +55,7 @@ The `Flyer` class ([`ai-flyers.md`](ai-flyers.md)) carries the same block as its
 | `+0x2f1` | i32 x3 | Last tick's position, negated and rotated — the inverse translation |
 | `+0x2fd` | i32 | The heading rate the current bank is producing |
 
-`mech+0x28e`, the walker speed scalar, is **never written** on a flight path. That is deliberate — `Mech_GetSpeed` branches specifically to avoid it — and it is why the cockpit throttle gauge's speed bar sits dead on a RAZOR (see [`KNOWN_ISSUES.md`](../../../KNOWN_ISSUES.md)).
+`mech+0x28e`, the walker speed scalar, is **never written** on a flight path. That is deliberate — `Mech_GetSpeed` branches specifically to avoid it — and it is why the cockpit throttle gauge's speed bar sits dead on a RAZOR (see [`KNOWN_ISSUES_ES2.md`](../../../KNOWN_ISSUES_ES2.md)).
 
 ## Axis remapping
 
@@ -166,7 +166,7 @@ The components are the game's own, from `STRINGS0` group 14, the flyer damage-re
 
 Component 4 being the *left* nacelle settles the frame's handedness: its probe sits at negative X, so **-X is port and +X starboard**.
 
-**Both nacelle contacts are reported at the left nacelle's point.** The right nacelle's branch tests its own probe point but hands `Mech_ApplyDirectFireDamage` the address of the left one, so a right-nacelle strike draws its impact effect on the wrong side. See [`KNOWN_ISSUES.md`](../../../KNOWN_ISSUES.md).
+**Both nacelle contacts are reported at the left nacelle's point.** The right nacelle's branch tests its own probe point but hands `Mech_ApplyDirectFireDamage` the address of the left one, so a right-nacelle strike draws its impact effect on the wrong side. See [`KNOWN_ISSUES_ES2.md`](../../../KNOWN_ISSUES_ES2.md).
 
 ### The probes share one transform
 

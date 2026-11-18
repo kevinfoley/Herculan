@@ -101,7 +101,7 @@ sealed class KeyboardRouting {
 	// here at the user's request so switching away keeps full screen (EngineWindow.ToggleFullScreen). Each then writes option 6
 	// from the window and, with the preferences screen up, relights its display group; otherwise it
 	// commits the options without their handlers and writes all 54. Alt+Enter skips the gate here at the user's request,
-	// so it works during the intro movies and the startup sequence too (KNOWN_ISSUES.md).
+	// so it works during the intro movies and the startup sequence too (KNOWN_ISSUES_ES2.md).
 	private void DisplayHotkey(Key key, bool released) {
 		var keyboard = _window.Keyboard;
 		if (keyboard == null) {

@@ -34,7 +34,7 @@ These hold for every function, field and global named under this plan, and equal
 
 1. **A name is finished only when its logic is accounted for.** Each newly named or re-read function ends in exactly one of these states:
    - **Ported** — the C# that implements it cites it (`Mech_LocomotionTick (00416a04)`) and links the doc section, and the retail doc describes the behaviour.
-   - **Recorded** — the logic the engine lacks is an `**Unported:**` bullet in the `## Open` section of the topic doc that owns it, or an `**Open:**` bullet when what it does is not yet established. A behaviour gap the player would notice is also a `KNOWN_ISSUES.md` or `ROADMAP.md` entry as those files' own scopes decide. <!-- doc-lint: ok -->
+   - **Recorded** — the logic the engine lacks is an `**Unported:**` bullet in the `## Open` section of the topic doc that owns it, or an `**Open:**` bullet when what it does is not yet established. A behaviour gap the player would notice is also a `KNOWN_ISSUES_ES2.md` or `ROADMAP.md` entry as those files' own scopes decide. <!-- doc-lint: ok -->
    - **Not engine-relevant** — infrastructure the engine replaces wholesale (DOS drivers, Borland runtime, VOL streams, the SOS audio layer) or a helper whose effect is fully covered by a ported caller. The `known_symbols` description says what it does; nothing else is needed.
 
    "Not engine-relevant" is a claim. Make it only when the function's effect is understood, never as the default for a function that was not read closely.

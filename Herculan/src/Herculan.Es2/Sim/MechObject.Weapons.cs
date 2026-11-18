@@ -165,7 +165,7 @@ public sealed partial class MechObject {
 
 		// The front/rear test is evaluated here and the RESULT handed to an accessor that expects a
 		// heading — both 0 and 1 land in its front quadrant, so the front shield is what comes back
-		// whichever way the target is facing. Reproduced; see KNOWN_ISSUES.md.
+		// whichever way the target is facing. Reproduced; see KNOWN_ISSUES_ES2.md.
 		short shield = target.ShieldByHeading(
 			(short)((ushort)(aspect + BinaryAngle.QuarterTurn) < (ushort)BinaryAngle.HalfTurn ? 1 : 0));
 

@@ -350,7 +350,7 @@ public sealed class CockpitCommands(CockpitDisplays displays, CockpitView view, 
 
 			// A comm box selects its pilot, and selecting the one already selected drops it, where the
 			// original's case 10-12 turns that click away and keeps the selection — a divergence recorded in
-			// KNOWN_ISSUES.md; see docs/retail/simulation/heads-down-display.md#selecting-a-pilot. Selecting a
+			// KNOWN_ISSUES_ES2.md; see docs/retail/simulation/heads-down-display.md#selecting-a-pilot. Selecting a
 			// pilot from the damage screen also switches back to the command display, which is what that
 			// case does before it selects.
 			case HddLayout.Widget.PilotBox0 or HddLayout.Widget.PilotBox1 or HddLayout.Widget.PilotBox2

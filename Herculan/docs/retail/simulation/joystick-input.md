@@ -212,7 +212,7 @@ Outside the camera branch, while button 0's latch holds with state 1 the input r
 
 #### `HDD VIEW` can only leave
 
-The case picks between F7 and [Esc] on `CockpitViewManager_Published` (`00429820`), and it tests **the pointer, not a field of it** — so it asks whether the cockpit view manager exists, not which view is up. `CockpitViewManager_LoadViews` publishes that pointer (`004cfa20`) while the cockpit is being built, through `CockpitViewManager_Publish` (`00429810`) with its own `this`; of the 23 references to the address in DBSIM that is the one store, so by the time `Sim_PollPlayerInput` runs the pointer is non-null and the button sends [Esc]. A button bound to `HDD VIEW` can therefore leave the heads-down display and never enter it; see [`../../../KNOWN_ISSUES.md`](../../../KNOWN_ISSUES.md). The two branches read as the toggle the action's name promises.
+The case picks between F7 and [Esc] on `CockpitViewManager_Published` (`00429820`), and it tests **the pointer, not a field of it** — so it asks whether the cockpit view manager exists, not which view is up. `CockpitViewManager_LoadViews` publishes that pointer (`004cfa20`) while the cockpit is being built, through `CockpitViewManager_Publish` (`00429810`) with its own `this`; of the 23 references to the address in DBSIM that is the one store, so by the time `Sim_PollPlayerInput` runs the pointer is non-null and the button sends [Esc]. A button bound to `HDD VIEW` can therefore leave the heads-down display and never enter it; see [`../../../KNOWN_ISSUES_ES2.md`](../../../KNOWN_ISSUES_ES2.md). The two branches read as the toggle the action's name promises.
 
 #### One action per tick
 

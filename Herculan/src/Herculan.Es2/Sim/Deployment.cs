@@ -138,7 +138,7 @@ public static class Deployment {
 	///
 	/// <para>A structure whose group has not arrived is gathered like any other, as in the original,
 	/// whose gather makes no group-action test: it blocks while it is not drawn. See
-	/// docs/retail/simulation/mission-deployment.md ("The deployment gate") and KNOWN_ISSUES.md.</para>
+	/// docs/retail/simulation/mission-deployment.md ("The deployment gate") and KNOWN_ISSUES_ES2.md.</para>
 	/// </summary>
 	/// <param name="excluded">
 	/// The gather's third argument, one structure it passes over: a ground vehicle names itself, so it

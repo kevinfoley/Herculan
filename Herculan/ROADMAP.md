@@ -1,6 +1,6 @@
 # Roadmap — work not yet done
 
-Everything the HERCULAN Engine does not implement yet, in one place. This is the counterpart of [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md), which records things that *are* implemented but behave differently from retail. If a feature is missing entirely it belongs here; if it is present and wrong it belongs there.
+Everything the HERCULAN Engine does not implement yet, in one place. This is the counterpart of [`KNOWN_ISSUES_ES2.md`](KNOWN_ISSUES_ES2.md), which records things that *are* implemented but behave differently from retail. If a feature is missing entirely it belongs here; if it is present and wrong it belongs there.
 
 Each entry names the doc that owns the subject. **That doc is authoritative** for how much is reverse-engineered and how much is still unknown — this file only tracks that the porting work is outstanding.
 

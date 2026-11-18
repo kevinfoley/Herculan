@@ -231,7 +231,7 @@ public readonly record struct MfdStatusSubject(
 	///
 	/// <para>With <see cref="Es2TweakSettingDefinitions.ShowTargetDistanceInMeters"/> on, both releases print what the
 	/// F4 scanner's <c>TRG:</c> would: metres of the ground-plane range, at least 1 unit, so the two screens agree.
-	/// Neither release does this; it is the tweak's own reading (KNOWN_ISSUES.md, the F5 range entry).</para>
+	/// Neither release does this; it is the tweak's own reading (KNOWN_ISSUES_ES2.md, the F5 range entry).</para>
 	/// </summary>
 	public static int Range(Sim.SimObject subject, Sim.SimObject? viewer, bool v110, bool scannerRange) {
 		if (viewer == null) {

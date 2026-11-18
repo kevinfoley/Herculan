@@ -186,7 +186,7 @@ public sealed partial class MechObject : IFlightBody {
 	/// <para><b>The probes share one stale transform, as in the original</b>, taken before the move
 	/// and written into by each ray probe, so most probes test the pre-move position or a displaced
 	/// point. A retail bug, reproduced — see
-	/// docs/retail/simulation/razor-flight.md#the-probes-share-one-transform and KNOWN_ISSUES.md.</para>
+	/// docs/retail/simulation/razor-flight.md#the-probes-share-one-transform and KNOWN_ISSUES_ES2.md.</para>
 	///
 	/// <para><b>It closes with the gun convergence</b>, every tick and whatever state the airframe is
 	/// in: the guns toe in on the range to the selected target (<see cref="GunConvergenceRange"/>) or
@@ -348,7 +348,7 @@ public sealed partial class MechObject : IFlightBody {
 	/// </summary>
 	/// <param name="reported">
 	/// Where a contact is reported: the left nacelle's point for both, as in the original, whose
-	/// right-hand branch passes the left point's address (KNOWN_ISSUES.md).
+	/// right-hand branch passes the left point's address (KNOWN_ISSUES_ES2.md).
 	/// </param>
 	private void NacelleProbe(SimWorld world, Vec3i rayOrigin, int component, ref Transform3 shared,
 			int airSpeed, int rollAway, Vec3i reported) {

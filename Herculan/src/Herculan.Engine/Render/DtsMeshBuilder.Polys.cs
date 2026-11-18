@@ -333,7 +333,7 @@ public static partial class DtsMeshBuilder {
 		// frame corner each slot is mapped with. A Gouraud poly's back is the ring reversed, its
 		// normals left in list order (BackReordersCorners). The original lights slot j with corner j's
 		// own position as well as its normal; the shader measures an effect light's point term at the
-		// corner the slot draws, which KNOWN_ISSUES.md lists. A textured triangle drawn swapped puts the
+		// corner the slot draws, which KNOWN_ISSUES_ES2.md lists. A textured triangle drawn swapped puts the
 		// borrowed point and frame corner 3 in slot 1, which is what swapping slots 1 and 3 of a
 		// four-slot array holding three corners leaves there.
 		short[] indexes = group.Indexes!;
@@ -520,7 +520,7 @@ public static partial class DtsMeshBuilder {
 	/// map; a degenerate or non-convex quad stays affine. Retail's own fill steps u and v linearly in
 	/// screen space (docs/retail/rendering/dts-texture-binding.md#screen-linear-and-perspective-correct-fills),
 	/// which is also free of the kink but differs from this map wherever the quad's depth varies across
-	/// it; KNOWN_ISSUES.md lists the divergence.</para>
+	/// it; KNOWN_ISSUES_ES2.md lists the divergence.</para>
 	///
 	/// <para>The crossing is solved as a least-squares one rather than a planar intersection because
 	/// a DTS quad is not guaranteed to be planar.</para>

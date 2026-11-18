@@ -142,7 +142,7 @@ public sealed class ShellHost : IDisposable {
 
 		// Shell_Main (00401525) opens avi\pt1.avi through Path_UnderDriveCfg (0040d429) and, failing,
 		// shows 'Please insert ESII CD and restart' and quits. This warns and carries on without the movies;
-		// see KNOWN_ISSUES.md.
+		// see KNOWN_ISSUES_ES2.md.
 		if (!GameInstall.DiscFileExists(session.InstallRoot, session.Disc, DiscCheckMovie)) {
 			Console.Error.WriteLine($"No {DiscCheckMovie} on the disc or in the install: the shell's movies will not play.");
 		}
