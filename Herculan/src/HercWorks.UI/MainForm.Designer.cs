@@ -19,6 +19,7 @@ partial class MainForm {
 	/// method with the code editor.
 	/// </summary>
 	private void InitializeComponent() {
+		components = new System.ComponentModel.Container();
 		_menuStrip = new MenuStrip();
 		_fileMenuItem = new ToolStripMenuItem();
 		_openVolMenuItem = new ToolStripMenuItem();
@@ -42,6 +43,9 @@ partial class MainForm {
 		_modelViewerMenuItem = new ToolStripMenuItem();
 		_compareHercsMenuItem = new ToolStripMenuItem();
 		_compareWeaponsMenuItem = new ToolStripMenuItem();
+		_volPanel = new Panel();
+		_volFilter = new TextBox();
+		_volFilterTimer = new System.Windows.Forms.Timer(components);
 		_volTree = new TreeView();
 		_fileDetails = new ListView();
 		_fileDetailsPropertyColumn = new ColumnHeader();
@@ -52,6 +56,7 @@ partial class MainForm {
 		_statusStrip = new StatusStrip();
 		_statusLabel = new ToolStripStatusLabel();
 		_menuStrip.SuspendLayout();
+		_volPanel.SuspendLayout();
 		_viewAssetPanel.SuspendLayout();
 		_statusStrip.SuspendLayout();
 		SuspendLayout();
@@ -216,13 +221,39 @@ partial class MainForm {
 		_compareWeaponsMenuItem.Text = "Compare &Weapons...";
 		_compareWeaponsMenuItem.Click += OnOpenCompareWeapons;
 		// 
+		// _volPanel
+		//
+		_volPanel.Controls.Add(_volTree);
+		_volPanel.Controls.Add(_volFilter);
+		_volPanel.Dock = DockStyle.Left;
+		_volPanel.Location = new Point(0, 24);
+		_volPanel.Name = "_volPanel";
+		_volPanel.Size = new Size(320, 565);
+		_volPanel.TabIndex = 1;
+		//
+		// _volFilter
+		//
+		_volFilter.Dock = DockStyle.Top;
+		_volFilter.Location = new Point(0, 0);
+		_volFilter.Name = "_volFilter";
+		_volFilter.PlaceholderText = "Filter by name";
+		_volFilter.Size = new Size(320, 23);
+		_volFilter.TabIndex = 0;
+		_volFilter.TextChanged += OnVolFilterChanged;
+		_volFilter.KeyDown += OnVolFilterKeyDown;
+		//
+		// _volFilterTimer
+		//
+		_volFilterTimer.Interval = 250;
+		_volFilterTimer.Tick += OnVolFilterTimerTick;
+		//
 		// _volTree
-		// 
-		_volTree.Dock = DockStyle.Left;
+		//
+		_volTree.Dock = DockStyle.Fill;
 		_volTree.HideSelection = false;
-		_volTree.Location = new Point(0, 24);
+		_volTree.Location = new Point(0, 23);
 		_volTree.Name = "_volTree";
-		_volTree.Size = new Size(320, 565);
+		_volTree.Size = new Size(320, 542);
 		_volTree.TabIndex = 1;
 		_volTree.BeforeExpand += OnExpandTreeNode;
 		_volTree.AfterSelect += OnTreeSelect;
@@ -298,7 +329,7 @@ partial class MainForm {
 		Controls.Add(_contentTree);
 		Controls.Add(_fileDetails);
 		Controls.Add(_viewAssetPanel);
-		Controls.Add(_volTree);
+		Controls.Add(_volPanel);
 		Controls.Add(_statusStrip);
 		Controls.Add(_menuStrip);
 		MainMenuStrip = _menuStrip;
@@ -306,6 +337,8 @@ partial class MainForm {
 		Text = "HercWorks MDK";
 		_menuStrip.ResumeLayout(false);
 		_menuStrip.PerformLayout();
+		_volPanel.ResumeLayout(false);
+		_volPanel.PerformLayout();
 		_viewAssetPanel.ResumeLayout(false);
 		_statusStrip.ResumeLayout(false);
 		_statusStrip.PerformLayout();
@@ -338,6 +371,9 @@ partial class MainForm {
 	private ToolStripMenuItem _modelViewerMenuItem;
 	private ToolStripMenuItem _compareHercsMenuItem;
 	private ToolStripMenuItem _compareWeaponsMenuItem;
+	private Panel _volPanel;
+	private TextBox _volFilter;
+	private System.Windows.Forms.Timer _volFilterTimer;
 	private TreeView _volTree;
 	private ListView _fileDetails;
 	private ColumnHeader _fileDetailsPropertyColumn;

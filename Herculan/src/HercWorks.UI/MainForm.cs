@@ -2,7 +2,6 @@ using HercWorks.Core.Io.Transform;
 using HercWorks.Vol;
 using HercWorks.Vol.Io;
 using HercWorks.Vol.Util;
-using System.Diagnostics;
 using System.Media;
 
 namespace HercWorks.UI;
@@ -35,13 +34,46 @@ namespace HercWorks.UI;
 /// covers data\script.dat (the VSHELL→DBSIM handoff DBSIM actually simulates) via the
 /// Edit menu's Mission Script editor and data\player.mec (the player's own squad, which
 /// script.dat deliberately does not carry) via its Player Squad editor; the source .msn
-/// files script.dat is generated from are still a stubbed disabled menu entry. Control layout lives in MainForm.Designer.cs so the form can
+/// files script.dat is generated from are still a stubbed disabled menu entry. The filter box above the VOL tree
+/// narrows it to the files whose name contains the typed text (see RebuildVolTree). Control layout lives in MainForm.Designer.cs so the form can
 /// be opened in the WinForms visual designer; this file holds only state and
 /// event-handler logic.
 /// </summary>
 public partial class MainForm : Form {
 	private Voln? _currentVol;
 	private VolEntry? _selectedEntry;
+
+	/// <summary>
+	/// One archive the VOL tree lists: a <c>.VOL</c> in the install's <c>VOL</c> folder, or one opened from elsewhere
+	/// through File ▸ Open VOL. It is read on first expand or select, or when the filter needs every archive's file
+	/// names, and kept from then on. The tree is rebuilt from these on each filter change, so they, not the tree
+	/// nodes, are what holds the parsed archives.
+	/// </summary>
+	private sealed class VolSource(string path) {
+		public string Path { get; } = path;
+		public string FileName => System.IO.Path.GetFileName(Path);
+		public Voln? Vol { get; set; }
+
+		/// <summary>The last read failed. The filter skips it rather than retrying on every keystroke; a user's expand, select or open retries.</summary>
+		public bool LoadFailed { get; set; }
+	}
+
+	private readonly List<VolSource> _volSources = new();
+
+	/// <summary>The filter the tree currently shows, trimmed; empty for the full listing.</summary>
+	private string _shownFilter = string.Empty;
+
+	/// <summary>
+	/// The tags of the nodes expanded in the full listing, captured when a filter starts so clearing it puts the
+	/// tree back as the user left it.
+	/// </summary>
+	private readonly HashSet<object> _unfilteredExpansion = new(ReferenceEqualityComparer.Instance);
+
+	/// <summary>The tag of the node the details pane shows, reselected when the tree is rebuilt.</summary>
+	private object? _selectedTag;
+
+	/// <summary>Set while RebuildVolTree replaces the nodes, so the selection and expansion it restores do not reload the details pane or read archives.</summary>
+	private bool _rebuildingTree;
 
 	/// <summary>
 	/// Backs the WAV branch of OnViewAsset. Kept as a field rather than a local so a second "View
@@ -95,14 +127,16 @@ public partial class MainForm : Form {
 	}
 
 	private void ShowGameDirectoryStatus() {
-		_statusLabel.Text = GamePaths.IsConfigured
-			? $"Earthsiege 2 directory: {GamePaths.GameDirectory}"
-			: "No Earthsiege 2 directory set — use File ▸ Set Earthsiege 2 Folder to pick ES.EXE.";
+		_statusLabel.Text = GameDirectoryStatusText();
 
-		if (_volTree.GetNodeCount(false) == 0) {
+		if (_volSources.Count == 0) {
 			LoadVolList();
 		}
 	}
+
+	private static string GameDirectoryStatusText() => GamePaths.IsConfigured
+		? $"Earthsiege 2 directory: {GamePaths.GameDirectory}"
+		: "No Earthsiege 2 directory set — use File ▸ Set Earthsiege 2 Folder to pick ES.EXE.";
 
 	/// <summary>
 	/// Distinct per-dialog identity so Windows remembers this dialog's last-visited folder
@@ -122,24 +156,16 @@ public partial class MainForm : Form {
 	/// Load a list of VOL files in the game directory and display each one in the VOL tree.
 	/// </summary>
 	private void LoadVolList() {
-		_volTree.Nodes.Clear();
+		_volSources.Clear();
 		if (GamePaths.IsConfigured) {
 			var path = Path.Join(GamePaths.GameDirectory, "VOL");
-			var filePaths = Directory.GetFiles(path);
-			foreach (var file in filePaths) {
-				if (Path.GetExtension(file).ToUpper() == ".VOL") {
-					string fileName = Path.GetFileName(file);
-					var node = new TreeNode(fileName) { Name = fileName, Tag = file };
-					_volTree.Nodes.Add(node);
-
-					// Add a placeholder child node so that the + (expand) icon appears next
-					// to the VOL node. When the VOL node is expanded, we'll remove the
-					// placeholder and load the VOL's actual file list.
-					var placeholderChild = new TreeNode("...");
-					node.Nodes.Add(placeholderChild);
+			foreach (var file in Directory.GetFiles(path)) {
+				if (Path.GetExtension(file).Equals(".VOL", StringComparison.OrdinalIgnoreCase)) {
+					_volSources.Add(new VolSource(file));
 				}
 			}
 		}
+		RebuildVolTree();
 	}
 
 	private void OnOpenVol(object? sender, EventArgs e) {
@@ -154,90 +180,278 @@ public partial class MainForm : Form {
 			return;
 		}
 
-		TryLoadVol(dialog.FileName);
+		string fullPath = Path.GetFullPath(dialog.FileName);
+		var source = _volSources.Find(s => string.Equals(Path.GetFullPath(s.Path), fullPath, StringComparison.OrdinalIgnoreCase));
+		if (source is null) {
+			source = new VolSource(fullPath);
+			_volSources.Add(source);
+		}
+
+		if (!EnsureLoaded(source, userAsked: true)) {
+			return;
+		}
+
+		_currentVol = source.Vol;
+		RebuildVolTree();
+		if (FindNodeByTag(_volTree.Nodes, source) is { } node) {
+			_volTree.SelectedNode = node;
+			node.EnsureVisible();
+		}
 	}
 
-	private bool TryLoadVol(string path) {
+	/// <summary>
+	/// Reads <paramref name="source"/>'s archive unless it is already read. <paramref name="userAsked"/> is set when
+	/// the user expanded, selected or opened this archive: then a failure is shown in a message box and a success in
+	/// the status bar. The filter reads quietly and does not retry an archive that has already failed.
+	/// </summary>
+	private bool EnsureLoaded(VolSource source, bool userAsked) {
+		if (source.Vol is not null) {
+			return true;
+		}
+		if (source.LoadFailed && !userAsked) {
+			return false;
+		}
+
 		try {
-			_currentVol = VolFileReader.ParseVolFile(path);
-			PopulateTree(_currentVol);
+			var vol = VolFileReader.ParseVolFile(source.Path);
+			source.Vol = vol;
+			source.LoadFailed = false;
+			if (userAsked) {
+				_statusLabel.Text = $"Loaded {source.FileName} — {vol.FilesSet.Length} files, {vol.Folders.Count} folders.";
+			}
 			return true;
 		} catch (Exception ex) {
-			MessageBox.Show(this, $"Failed to load VOL file:\n{ex.Message}", "Error",
-				MessageBoxButtons.OK, MessageBoxIcon.Error);
+			source.LoadFailed = true;
+			if (userAsked) {
+				MessageBox.Show(this, $"Failed to load VOL file:\n{ex.Message}", "Error",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
 			return false;
 		}
 	}
 
 	private void OnExpandTreeNode(object sender, TreeViewCancelEventArgs e) {
-		if (e.Node is not null) {
-			if (e.Node.Tag is string fileName) {
-				TryLoadVol(fileName);
-			}
+		if (!_rebuildingTree && e.Node is { Tag: VolSource { Vol: null } source } node && !LoadVolNode(node, source)) {
+			e.Cancel = true;
 		}
 	}
 
-	private void PopulateTree(Voln vol) {
-		Debug.Assert(!string.IsNullOrEmpty(vol.FileName), $"Invalid vol {vol}");
-
-		TreeNode root;
-		var nodes = _volTree.Nodes.Find(vol.FileName, true);
-
-		if (nodes.Length == 0) {
-			root = new TreeNode(vol.FileName);
-			_volTree.Nodes.Add(root);
-		} else {
-			if (nodes.Length > 1) {
-				Debug.WriteLine($"Warning: Found multiple nodes matching {vol.FileName}");
+	/// <summary>Reads an archive the tree shows unread and swaps its placeholder child for its folders.</summary>
+	private bool LoadVolNode(TreeNode node, VolSource source) {
+		bool loaded = EnsureLoaded(source, userAsked: true);
+		_volTree.BeginUpdate();
+		try {
+			node.Nodes.Clear();
+			if (source.Vol is { } vol) {
+				AddFolderNodes(node, vol, _shownFilter, matchedWithin: null);
 			}
-			root = nodes[0];
+		} finally {
+			_volTree.EndUpdate();
 		}
-
-		root.Tag = vol;
-		// Remove placeholder node.
-		if (root.GetNodeCount(false) == 1 && root.Nodes[0].Tag is null) {
-			root.Nodes.RemoveAt(0);
-		}
-
-		// Populate child nodes now if not already loaded
-		if (root.GetNodeCount(false) == 0) {
-			foreach (var kv in vol.Folders.OrderBy(f => f.Key)) {
-				var dirNode = new TreeNode(kv.Value.Label) { Tag = kv.Value };
-				foreach (var file in kv.Value.Files) {
-					dirNode.Nodes.Add(new TreeNode(file.FileName) { Tag = file });
-				}
-				root.Nodes.Add(dirNode);
-			}
-			_statusLabel.Text = $"Loaded {vol.FileName} — {vol.FilesSet.Length} files, {vol.Folders.Count} folders.";
-		}
+		return loaded;
 	}
 
 	private void OnTreeSelect(object? sender, TreeViewEventArgs e) {
+		if (_rebuildingTree) {
+			return;
+		}
+
 		_fileDetails.Items.Clear();
 		_contentTree.Nodes.Clear();
+		_selectedTag = e.Node?.Tag;
 
-		if (e.Node is not null) {
-			if (e.Node.Tag is VolEntry entry) {
-				_currentVol = FindParentVol(e.Node);
-				SelectVolEntry(entry);
-			} else if (e.Node.Tag is string fileName) {
-				TryLoadVol(fileName);
-			} else if (e.Node.Tag is Voln vol) {
-				_currentVol = vol;
+		if (e.Node?.Tag is VolEntry entry) {
+			_currentVol = FindParentVol(e.Node);
+			SelectVolEntry(entry);
+		} else if (e.Node?.Tag is VolSource source) {
+			if (source.Vol is null) {
+				LoadVolNode(e.Node, source);
 			}
+			_currentVol = source.Vol;
 		}
 	}
 
-	private Voln? FindParentVol(TreeNode treeNode) {
-		TreeNode currentNode = treeNode.Parent;
-		while (currentNode is not null) {
-			if (currentNode.Tag is Voln vol) {
+	private static Voln? FindParentVol(TreeNode treeNode) {
+		for (var node = treeNode.Parent; node is not null; node = node.Parent) {
+			if (node.Tag is VolSource { Vol: { } vol }) {
 				return vol;
 			}
-			currentNode = currentNode.Parent;
 		}
 		return null;
 	}
+
+	/// <summary>Restarts the debounce, so the tree is rebuilt once typing pauses rather than on every keystroke.</summary>
+	private void OnVolFilterChanged(object? sender, EventArgs e) {
+		_volFilterTimer.Stop();
+		_volFilterTimer.Start();
+	}
+
+	private void OnVolFilterTimerTick(object? sender, EventArgs e) {
+		_volFilterTimer.Stop();
+		if (_volFilter.Text.Trim() != _shownFilter) {
+			RebuildVolTree();
+		}
+	}
+
+	/// <summary>Escape clears the filter; Enter applies it at once instead of waiting for the debounce.</summary>
+	private void OnVolFilterKeyDown(object? sender, KeyEventArgs e) {
+		if (e.KeyCode == Keys.Escape && _volFilter.TextLength > 0) {
+			_volFilter.Clear();
+			e.SuppressKeyPress = true;
+		} else if (e.KeyCode == Keys.Enter) {
+			OnVolFilterTimerTick(sender, e);
+			e.SuppressKeyPress = true;
+		}
+	}
+
+	/// <summary>
+	/// Rebuilds the VOL tree for the filter box's text. An empty filter lists every archive, restoring the expansion
+	/// the full listing had when a filter started. Otherwise every archive is read first, and the tree keeps a file
+	/// whose name contains the text (case-insensitive), along with its folder and archive, expanded to show it; a folder
+	/// or archive whose own name matches keeps all its files and stays collapsed. The selected node is reselected
+	/// when it is still listed.
+	/// </summary>
+	private void RebuildVolTree() {
+		string filter = _volFilter.Text.Trim();
+		if (filter.Length > 0) {
+			LoadAllVols();
+		}
+
+		if (_shownFilter.Length == 0) {
+			_unfilteredExpansion.Clear();
+			CollectExpanded(_volTree.Nodes, _unfilteredExpansion);
+		}
+
+		var matchedWithin = new List<TreeNode>();
+		int fileCount = 0;
+		TreeNode? selected = null;
+
+		_rebuildingTree = true;
+		_volTree.BeginUpdate();
+		try {
+			_volTree.Nodes.Clear();
+			foreach (var source in _volSources) {
+				if (BuildVolNode(source, filter, matchedWithin, ref fileCount) is { } node) {
+					_volTree.Nodes.Add(node);
+				}
+			}
+
+			var toExpand = filter.Length > 0
+				? matchedWithin
+				: AllNodes(_volTree.Nodes).Where(n => n.Tag is not null && _unfilteredExpansion.Contains(n.Tag)).ToList();
+			foreach (var node in toExpand) {
+				node.Expand();
+			}
+
+			if (_selectedTag is not null && FindNodeByTag(_volTree.Nodes, _selectedTag) is { } match) {
+				_volTree.SelectedNode = match;
+				selected = match;
+			}
+		} finally {
+			_volTree.EndUpdate();
+			_rebuildingTree = false;
+		}
+		selected?.EnsureVisible();
+
+		if (filter.Length > 0) {
+			string unread = string.Join(", ", _volSources.Where(s => s.LoadFailed).Select(s => s.FileName));
+			_statusLabel.Text = $"{fileCount} files match \"{filter}\"." + (unread.Length > 0 ? $" Could not read {unread}." : string.Empty);
+		} else if (_shownFilter.Length > 0) {
+			_statusLabel.Text = GameDirectoryStatusText();
+		}
+		_shownFilter = filter;
+	}
+
+	/// <summary>Reads every listed archive not read yet, for a filter that has to see all their file names.</summary>
+	private void LoadAllVols() {
+		if (_volSources.All(s => s.Vol is not null || s.LoadFailed)) {
+			return;
+		}
+
+		_statusLabel.Text = "Reading VOL files…";
+		_statusStrip.Update();
+		Cursor.Current = Cursors.WaitCursor;
+		try {
+			foreach (var source in _volSources) {
+				EnsureLoaded(source, userAsked: false);
+			}
+		} finally {
+			Cursor.Current = Cursors.Default;
+		}
+	}
+
+	/// <summary>
+	/// The node for <paramref name="source"/> under <paramref name="filter"/>, or null when nothing in it matches.
+	/// Nodes kept only because something inside them matched go in <paramref name="matchedWithin"/> to be expanded.
+	/// </summary>
+	private static TreeNode? BuildVolNode(VolSource source, string filter, List<TreeNode> matchedWithin, ref int fileCount) {
+		var node = new TreeNode(source.FileName) { Name = source.FileName, Tag = source };
+		bool showAll = filter.Length == 0 || NameMatches(source.FileName, filter);
+
+		if (source.Vol is null) {
+			if (!source.LoadFailed) {
+				// Placeholder child, so the archive shows an expand icon before it is read.
+				node.Nodes.Add(new TreeNode("..."));
+			}
+			return showAll ? node : null;
+		}
+
+		fileCount += AddFolderNodes(node, source.Vol, showAll ? string.Empty : filter, matchedWithin);
+		if (showAll) {
+			return node;
+		}
+		if (node.Nodes.Count == 0) {
+			return null;
+		}
+		matchedWithin.Add(node);
+		return node;
+	}
+
+	/// <summary>Adds <paramref name="vol"/>'s folders and files under <paramref name="volNode"/>, filtered; returns the number of files added.</summary>
+	private static int AddFolderNodes(TreeNode volNode, Voln vol, string filter, List<TreeNode>? matchedWithin) {
+		int fileCount = 0;
+		foreach (var folder in vol.Folders.OrderBy(f => f.Key).Select(f => f.Value)) {
+			bool showAll = filter.Length == 0 || NameMatches(folder.Label, filter);
+			var folderNode = new TreeNode(folder.Label) { Tag = folder };
+			foreach (var file in folder.Files) {
+				if (showAll || NameMatches(file.FileName, filter)) {
+					folderNode.Nodes.Add(new TreeNode(file.FileName) { Tag = file });
+				}
+			}
+
+			if (showAll || folderNode.Nodes.Count > 0) {
+				volNode.Nodes.Add(folderNode);
+				fileCount += folderNode.Nodes.Count;
+				if (!showAll) {
+					matchedWithin?.Add(folderNode);
+				}
+			}
+		}
+		return fileCount;
+	}
+
+	private static bool NameMatches(string? name, string filter) =>
+		name is not null && name.Contains(filter, StringComparison.OrdinalIgnoreCase);
+
+	private static IEnumerable<TreeNode> AllNodes(TreeNodeCollection nodes) {
+		foreach (TreeNode node in nodes) {
+			yield return node;
+			foreach (var child in AllNodes(node.Nodes)) {
+				yield return child;
+			}
+		}
+	}
+
+	private static void CollectExpanded(TreeNodeCollection nodes, HashSet<object> expanded) {
+		foreach (var node in AllNodes(nodes)) {
+			if (node.IsExpanded && node.Tag is not null) {
+				expanded.Add(node.Tag);
+			}
+		}
+	}
+
+	private static TreeNode? FindNodeByTag(TreeNodeCollection nodes, object tag) =>
+		AllNodes(nodes).FirstOrDefault(n => ReferenceEquals(n.Tag, tag));
 
 	private void SelectVolEntry(VolEntry? entry) {
 		_selectedEntry = entry;
