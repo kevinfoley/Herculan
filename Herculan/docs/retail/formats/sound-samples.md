@@ -18,8 +18,14 @@ The sample files DBSIM's sound layer plays: the catalog's effects in `SIMSOUND.V
 
 In the v1.0 install the three voice archives are byte-identical (7,042,407 bytes each), all labelled `SIMVOICE\`, and the v1.0 installer lists the other two as 4-byte files. v1.10's are recordings in their own language: `SIMVOICF.VOL` (7,261,567 bytes) and `SIMVOICG.VOL` (6,610,094 bytes), labelled `SIMVOICF\` and `SIMVOICG\`, with the same 213 entry names ([`../retail-builds.md`](../retail-builds.md)). Only the cockpit computer is translated: 57 of the 66 `CVM_*.WAV` in French and 53 in German differ from the English, and all 147 squadmate clips are the English recordings.
 
+**The squadmate clips are as long as ES1's.** ES1's `SIMVOICE.VOL` holds the same 147 names as headerless 8-bit samples played at 11,025 Hz ([ES1's files](../../es1/formats/sound-samples.md#which-files)). For 145 of them, ES2's clip is a 44-byte header and exactly twice as many sample bytes, and 211 of the archive's 213 headers give 8-bit mono at 22,050 Hz. `P4_01000` and `P4_28000` differ in length from ES1's. Whether the 145 are ES1's recordings at the higher rate is [Open](#open).
+
 ## Rejected readings
 
 | Reading | Why it is wrong |
 |---|---|
 | A `.wav` name resolves under one directory | It resolves under `HMI\` or `HMX\` depending on the low-memory flag, and the two banks are not identical — v1.0's `HMX\` has no `EXPLO5.WAV`. |
+
+## Open
+
+- **Open:** whether ES2's 145 squadmate clips that are twice the length in bytes of ES1's are ES1's recordings at 22,050 Hz ([voice clips](#voice-clips)). The sizes agree to the byte; a comparison of the samples themselves would settle it.

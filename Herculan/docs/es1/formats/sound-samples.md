@@ -23,7 +23,7 @@ The first two are frameless, with no Ghidra function. ES2's `Sound_StaticInit` (
 | `SHELL0` | `res32\` | 3 `.SFX`, 14 `.RAW` | the shell's name table, which holds `BUTTON.SFX`, `XXXXXXXX.SFX`, `MENUCLSA.RAW`, `MENUOPN2.RAW` and `XXXXXXXX.RAW` ([the shell's names](#the-shells-names)) |
 | `SPEECH` | `snc\` | 161 `.RAW` | the talking heads' lip-sync lists, each line played with its `.SNC` script ([loading a line](../shell/message-box.md#loading-a-line)) |
 
-`ROSEY1.SFX` and eleven `res32\` `.RAW` files are not in the shell's table; what plays them is [Open](#open).
+`ROSEY1.SFX` and eleven `res32\` `.RAW` files are not in the shell's table; what plays them is [Open](#open). ES2's `SIMVOICE.VOL` holds the same 147 squadmate clip names ([ES2's voice clips](../../retail/formats/sound-samples.md#voice-clips)).
 
 ## Layout
 
