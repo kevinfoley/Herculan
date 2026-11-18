@@ -87,6 +87,8 @@ tweak.es1_extended_detail_range.display_name  Erweiterte Detailreichweite
 tweak.es1_extended_detail_range.description  HERCs, Flieger und Gebäude behalten ihre feineren Modelle bis zur dreifachen üblichen Entfernung, sodass sie nicht mehr grob werden, solange sie noch nah genug sind, um sie deutlich zu sehen. Die Einstellung SHAPES bestimmt weiterhin die feinste gezeigte Detailstufe. Das Originalspiel wechselt schon in geringer Entfernung zu den gröberen Modellen, auch mit SHAPES auf dem höchsten Wert.
 tweak.es1_fix_cockpit_edge_flicker.display_name  Flackern am Cockpitrand beheben
 tweak.es1_fix_cockpit_edge_flicker.description  Der linke Rand des Cockpits bleibt ruhig, wenn Sie aus der Außenansicht zurückkehren. Das Originalspiel kopiert beim Wiederherstellen des Cockpits eine Spalte zu viel, wodurch die äußerste linke Spalte des Cockpits in jedem zweiten Bild um eine Zeile verschoben ist und flackert.
+tweak.es1_fix_crew_cancel_bay.display_name  Überlappende HERCs in der HERC-Bucht beheben
+tweak.es1_fix_crew_cancel_bay.description  Behebt einen Fehler des Originalspiels, durch den sich HERCs in der HERC-Bucht überlappen konnten, nachdem Sie im Bildschirm CREW die HERC-Zuweisungen Ihrer Staffel umgestellt und dann auf Cancel geklickt hatten.
 tweak.es1_no_free_repair_level.display_name  Keine kostenlose Reparaturstufe
 tweak.es1_no_free_repair_level.description  Im Bildschirm SYSTEM REPAIR behält PROCEED nur die Reparaturen, die Sie mit + und − bezahlt haben. Das Originalspiel repariert das Teil bis zu der Stufe, die die Liste STATUS zeigt, und die ist nach einem + eine Stufe höher als bezahlt.
 tweak.es1_real_time_round_life.display_name  Volle Kanonenreichweite

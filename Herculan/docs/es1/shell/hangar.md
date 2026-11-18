@@ -123,7 +123,7 @@ Both kind-16 pictures are picture tiles ([the picture tile](menu-controls.md#the
 | HERC | 1624 | `0002d2f7` | `CrewAssignMenu_SelectColumn` with the next column's tile, 1618 going round to 1615 |
 | the insignia | 1611 | `0002d320` | nothing |
 
-CANCEL's `CareerRecord_SelectPilot` runs before the slots are put back, so it selects the slot the pilot holds after the changes; the bay's draw selects the player's slot again ([showing a bay](#showing-a-bay)).
+CANCEL's `CareerRecord_SelectPilot` runs before the slots are put back, so it selects the slot the pilot holds after the changes. When the changes moved the player to another HERC, that slot is not the one the bay shows, and the bay's draw ([showing a bay](#showing-a-bay)) erases that slot's HERC, which is not in the picture, then draws the player's HERC again over itself, with the current pilot the player's entry and so no wipes. Each of the HERC's sprites then saves the HERC's own picture as its background ([sprites](../formats/herc-diagrams.md#sprites)), so the next change of bay, HERCS on ARMAMENT among them, erases the player's HERC back to itself and draws the next HERC over it.
 
 **The keys.** `dlg\menu1610.dlg` lists HERC (record 1) before ACCEPT (record 6), both with `Space`, and NONE (record 5) before CANCEL (record 7), both with `Esc`. `DUIWindow_FindControlByKey` (`0001bd41`) takes the first control that is not inactive with the key, so `Space` always presses HERC and never ACCEPT, and `Esc` presses NONE while it is active and CANCEL while it is inactive: at the opening and while column 0 is picked.
 

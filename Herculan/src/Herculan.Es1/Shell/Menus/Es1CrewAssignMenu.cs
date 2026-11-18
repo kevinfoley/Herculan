@@ -3,6 +3,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Data.File.Dyn;
+using Herculan.Engine.Settings;
+using Herculan.Es1.Settings;
 using Herculan.Es1.Ttm;
 using Herculan.Es1.View;
 
@@ -172,12 +174,17 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 				AssignSelectedSlot();
 				break;
 			case Cancel:
-				// 0002d220: the record's current pilot selected before the slots are put back.
+				// 0002d220: the record's current pilot selected before the slots are put back, unless CancelRestoresFirst.
 				if (hangar != null && _record != null) {
 					hangar.SelectedSlot = OpenedSlot;
+					bool restoreFirst = CancelRestoresFirst;
+					if (restoreFirst) {
+						RestoreOpenedSlots(_record);
+					}
+
 					_record.SelectPilot(OpenedPilot, hangar);
-					for (int i = 0; i < Es1CareerRecord.PilotCount; i++) {
-						_record.Pilots[i].Slot = OpenedSlots[i];
+					if (!restoreFirst) {
+						RestoreOpenedSlots(_record);
 					}
 				}
 
@@ -199,6 +206,22 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 			case InsigniaTile:
 				// 0002d320: nothing.
 				break;
+		}
+	}
+
+	/// <summary>
+	/// Whether CANCEL puts each entry's slot back before it makes <see cref="OpenedPilot"/> the current pilot, so that
+	/// <c>CareerRecord_SelectPilot</c> selects the slot the service bay shows. Off, retail's order, it selects the slot the
+	/// pilot holds after the changes, and when that is another HERC the bay's HERC is drawn over itself
+	/// (docs/es1/shell/hangar.md#the-buttons). <b>This engine's own</b>, from
+	/// <see cref="Es1TweakSettingDefinitions.FixCrewCancelBay"/>.
+	/// </summary>
+	public static bool CancelRestoresFirst => TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.FixCrewCancelBay);
+
+	/// <summary>Each entry's slot <c>+8</c> back to its word of <see cref="OpenedSlots"/>, CANCEL's loop.</summary>
+	private void RestoreOpenedSlots(Es1CareerRecord record) {
+		for (int i = 0; i < Es1CareerRecord.PilotCount; i++) {
+			record.Pilots[i].Slot = OpenedSlots[i];
 		}
 	}
 
