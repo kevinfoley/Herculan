@@ -28,7 +28,8 @@ namespace Herculan.Es1.Shell;
 ///
 /// <para><b>Engine guard:</b> closing the window ends the shell as EXIT TO DOS and the quit question's PROCEED do
 /// through <c>Shell_QuitFlag</c>: the pass in progress is left where it stands, as though the flag had been set, and the
-/// shutdown runs with <c>Shell_ExitCode</c> as it stands, the code the start read unless a screen set it.</para>
+/// shutdown runs with <c>Shell_ExitCode</c> 0, as theirs do. Keeping the code as it stands would write back the 3 or 4 a
+/// start from a mission read, and every later start would open that mission's results again.</para>
 /// </summary>
 public static class Es1ShellHost {
 	/// <summary>The window's title.</summary>
@@ -181,6 +182,10 @@ public static class Es1ShellHost {
 			}
 
 			// The window's close, the engine guard of the class summary, or the loop's end.
+			if (!_screens.QuitFlag) {
+				_screens.ExitCode = 0;
+			}
+
 			_screens.QuitFlag = true;
 			return Shutdown();
 		}

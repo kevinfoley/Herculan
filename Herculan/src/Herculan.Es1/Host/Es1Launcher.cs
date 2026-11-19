@@ -21,8 +21,8 @@ namespace Herculan.Es1.Host;
 ///
 /// <para><b>Engine guard:</b> a window closed by the player, a termination signal (<see cref="TerminationSignal"/>), or
 /// the "Game" menu's "Switch to" (<see cref="GameSwitch"/>) has no DOS counterpart: it ends the loop after the program it
-/// closed, whatever <c>data\exit.cfg</c> then holds, as ES2's launcher does. The shell's close writes the code it started
-/// with (the class summary of <see cref="Es1ShellHost"/>), which would otherwise run the shell or a mission again. A
+/// closed, whatever <c>data\exit.cfg</c> then holds, as ES2's launcher does; a mission's close leaves the 0 its start wrote,
+/// and the shell's close writes 0 (the class summary of <see cref="Es1ShellHost"/>). A
 /// <c>--screenshot</c> run, which has nobody to close the window, ends the loop after the first shell turn, another
 /// engine guard.</para>
 /// </summary>
