@@ -63,14 +63,10 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// <para><b>Not retail, awaiting the user's decision:</b> with no player's machine (only the free camera), no tick runs.
 /// Retail's controls read <c>LocalPlayerMech</c> without checking it, so retail has no behavior to port for this case.</para>
 ///
-/// <para>F switches to a free camera, an engine aid with no retail counterpart. The free camera shows the world over the whole
-/// window, with the player's machine drawn. The simulator still reads every key, so the keys that move the free camera also
-/// drive the machine. While the cockpit is shown, the host's pointer is hidden over the window and the cockpit's cursor takes
-/// its place. The free camera shows the pointer, and hides it only while the right button is held to look around.</para>
-///
-/// <para>G, another engine aid, switches the ground between textured and banded (<see cref="Es1BackdropOptions.ToggleGround"/>).
-/// With a simulation running, it overrides the choice of preferences option 5 until it is pressed again, without writing the
-/// option. With no simulation, it switches the viewer's own option 5.</para>
+/// <para>With no cockpit view for the player's machine, or no player's machine, the world is shown from a free camera over the
+/// whole window, an engine aid with no retail counterpart. The simulator still reads every key, so the keys that move the free
+/// camera also drive the machine. While the cockpit is shown, the host's pointer is hidden over the window and the cockpit's
+/// cursor takes its place. The free camera shows the pointer, and hides it only while the right button is held to look around.</para>
 ///
 /// <para>Closing the window quits. Esc quits only when there is no player's machine, since with one Esc is the simulator's key
 /// (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8). The mission also quits when it ends: through
@@ -86,8 +82,8 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// <see cref="FrontEndWindow.BeginFrame"/>, <see cref="Es1ControllerPort.JoystickMenuBarInput"/>). The pointer at the top of
 /// the window does not raise it. The mission keeps running under the bar, as Earthsiege 2's does. The controller is muted while
 /// the bar or one of its windows is up (<see cref="Es1SimulationStart.MenuBarWindow"/>). While the pointer is over the bar or
-/// one of its windows, the system's pointer shows and the cockpit receives no mouse events. The engine aids' keys do nothing while
-/// a field in one of those windows is being typed into.</para>
+/// one of its windows, the system's pointer shows and the cockpit receives no mouse events. The free camera's keys do nothing
+/// while a field in one of those windows is being typed into.</para>
 /// </summary>
 public static class Es1MissionHost {
 	/// <summary>The clear color used when the theater's sky cannot be built. It is a mid gray, plainly not a retail sky.</summary>
@@ -261,8 +257,11 @@ public static class Es1MissionHost {
 			Console.Error.WriteLine("No cockpit view for the player's machine: the free camera only.");
 		}
 
-		Console.WriteLine("Keypad drives the HERC; F free camera (RMB + mouse to look, WASD/arrows, Q/E, Shift), " +
-			"G textured/banded ground; close the window to quit" + (player == null ? " (or Esc)." : "."));
+		if (views == null) {
+			Console.WriteLine("Free camera: RMB + mouse to look, WASD/arrows, Q/E, Shift.");
+		}
+
+		Console.WriteLine("Close the window to quit" + (player == null ? " (or Esc)." : "."));
 		string source = tape != null ? Path.GetFileName(tape.FilePath) : missionName ?? "data\\script.dat";
 		return Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {source}, zone {header[1]}",
 			tape, recording, window, Es1Sound.MissionStartDevices(installRoot, soundOn), silent,
@@ -370,8 +369,6 @@ public static class Es1MissionHost {
 		bool free = manager == null;
 		bool looking = false;
 		bool lookNeedsResync = false;
-		bool groundKeyHeld = false;
-		bool freeKeyHeld = false;
 		Vector2 lastMousePos = Vector2.Zero;
 
 		bool escapeQuits = false;
@@ -633,22 +630,8 @@ public static class Es1MissionHost {
 
 			scene.Clouds?.Advance(deltaSeconds);
 
-			// The engine aids' keys do nothing while you type in a menu bar field.
+			// The free camera's keys do nothing while you type in a menu bar field.
 			bool aidKeys = !window.ImGuiWantsKeyboard;
-			bool groundKey = aidKeys && keyboard?.IsKeyPressed(Key.G) == true;
-			if (groundKey && !groundKeyHeld) {
-				backdropOptions.ToggleGround();
-			}
-
-			groundKeyHeld = groundKey;
-
-			bool freeKey = aidKeys && keyboard?.IsKeyPressed(Key.F) == true;
-			if (freeKey && !freeKeyHeld && manager != null) {
-				free = !free;
-				camera = new Camera();
-			}
-
-			freeKeyHeld = freeKey;
 
 			// After the pointer is grabbed, the first sample only re-syncs. See comments on lookNeedsResync in the mission editor's
 			// Program.cs.

@@ -42,12 +42,11 @@ public class Es1LiveSceneOptionsTests {
 	}
 
 	/// <summary>
-	/// Option 5 textures the ground at 241 and bands it at 240, and only with a texture loaded; the <c>G</c> key overrides
-	/// that choice until pressed again and leaves the option as it was. Catches <c>&gt;=</c> for <c>&gt;</c>, the key
-	/// writing the option, and an override that never lets go.
+	/// Option 5 textures the ground at 241 and bands it at 240, and only with a texture loaded. Catches <c>&gt;=</c> for
+	/// <c>&gt;</c>.
 	/// </summary>
 	[Fact]
-	public void TheGroundIsTexturedAbove240AndTheKeyOverridesItWithoutWritingTheOption() {
+	public void TheGroundIsTexturedAbove240() {
 		var preferences = Es1Preferences.Default;
 		var options = new Es1BackdropOptions(preferences);
 
@@ -55,14 +54,6 @@ public class Es1LiveSceneOptionsTests {
 		Assert.True(options.Textured(hasTexture: true));
 		Assert.False(options.Textured(hasTexture: false));
 		preferences.SetOption(true, 240, Es1Preferences.GroundOption);
-		Assert.False(options.Textured(hasTexture: true));
-
-		options.ToggleGround();
-		Assert.True(options.Textured(hasTexture: true));
-		Assert.Equal(240, preferences[Es1Preferences.GroundOption]);
-		Assert.Equal(240, options.GroundDetail);
-
-		options.ToggleGround();
 		Assert.False(options.Textured(hasTexture: true));
 	}
 
