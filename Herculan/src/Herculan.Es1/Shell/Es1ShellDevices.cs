@@ -281,8 +281,15 @@ public sealed class Es1ShellDevices {
 	/// <summary><c>Shell_FrameTick</c> (<c>00012974</c>): <see cref="FrameDue"/> set.</summary>
 	private void FrameTick() => FrameDue = true;
 
-	/// <summary><c>Shell_WaitTick</c> (<c>0004bbdd</c>): <see cref="WaitCount"/> up by 1.</summary>
-	private void WaitTick() => WaitCount++;
+	/// <summary>
+	/// <c>Shell_WaitTick</c> (<c>0004bbdd</c>): <see cref="WaitCount"/> up by 1. Then the song's background fade stepped
+	/// (<see cref="Es1ShellSound.StepBackgroundFade"/>), on the tick retail's fade waits for and in no timer slot of its
+	/// own, so the slots retail's callbacks take are unchanged.
+	/// </summary>
+	private void WaitTick() {
+		WaitCount++;
+		Sound.StepBackgroundFade();
+	}
 
 	/// <summary>
 	/// <c>Shell_BlinkTick</c> (<c>00012933</c>): the counter up to 20 with the flag as it was, then <see cref="BlinkOn"/>

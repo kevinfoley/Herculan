@@ -60,6 +60,12 @@ public static class Es1TweakSettingDefinitions {
 	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Es1CrewAssignMenu.CancelRestoresFirst"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixCrewCancelBay = new("tweak.es1_fix_crew_cancel_bay", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);
+
+	/// <summary>
+	/// The shell's song fades out behind the next screen rather than holding the shell until it ends (plan decision 37,
+	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Shell.Es1ShellSound.SkipPause"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> SkipScreenPause = new("tweak.es1_skip_screen_pause", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -89,7 +95,7 @@ public static class Es1TweakSettingDefinitions {
 
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, ProceedKeepsLevels,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause, ProceedKeepsLevels,
 		RealTimeRoundLife, Es2FlyerSpeed,
 	};
 
@@ -105,7 +111,7 @@ public static class Es1TweakSettingDefinitions {
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> Offered = new[] {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming, TweakSettingDefinitions.MouseOutsideView,
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, ProceedKeepsLevels,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause, ProceedKeepsLevels,
 		RealTimeRoundLife, Es2FlyerSpeed,
 	};
 }

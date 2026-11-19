@@ -1,6 +1,8 @@
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Io;
 using Herculan.Engine.Audio;
+using Herculan.Engine.Settings;
+using Herculan.Es1.Settings;
 using Herculan.Es1.Sim;
 using Herculan.Es1.Sound;
 
@@ -141,9 +143,15 @@ public sealed class Es1ShellSound {
 	/// slot <c>+0x10</c> while <see cref="MusicOption"/> is set. The object is made and loaded with the option off, so
 	/// that the MUSIC box (<see cref="SetMusicPlaying"/>) has one to play. An object not made is not loaded or played, an
 	/// engine guard where retail calls through a null object.
+	/// <para>With <see cref="SkipPause"/> nothing is waited for: <see cref="PlayMusicAfterFade"/>.</para>
 	/// </summary>
 	public IEnumerable<Es1ShellWait> PlayMusic(short track) {
 		if (Manager is not { } manager) {
+			yield break;
+		}
+
+		if (SkipPause) {
+			PlayMusicAfterFade(track);
 			yield break;
 		}
 
@@ -151,9 +159,14 @@ public sealed class Es1ShellSound {
 			yield return wait;
 		}
 
+		CreateMusic(manager, track);
+	}
+
+	/// <summary><see cref="PlayMusic"/>'s steps after <see cref="StopMusic"/>: <see cref="MusicObject"/> made, loaded, repeated and played.</summary>
+	private void CreateMusic(Es1SoundManager manager, short track) {
 		MusicObject = manager.CreateObject(2, 0, track);
 		if (MusicObject is not { } music) {
-			yield break;
+			return;
 		}
 
 		music.LoadSample();
@@ -164,11 +177,135 @@ public sealed class Es1ShellSound {
 	}
 
 	/// <summary>
+	/// The "Skip pause between screens" tweak, <see cref="Es1TweakSettingDefinitions.SkipScreenPause"/>: the song's
+	/// fades (<see cref="FadeOut"/>, and <see cref="PlayMusic"/>'s through <see cref="StopMusic"/>) run in the background
+	/// at retail's rate, one volume step a <c>Shell_WaitTick</c>, rather than holding the shell until they end. Retail
+	/// shows a screen whose song changed only once the last song has faded; with the tweak it shows at once. The new song
+	/// still starts once the last has faded and been destroyed, as in retail. This engine's invention.
+	/// </summary>
+	public static bool SkipPause => TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.SkipScreenPause);
+
+	// The background fade SkipPause runs: the song fading, whether it is stopped and destroyed at the end, and the volume
+	// the next tick sets.
+	private Es1SoundObject? _fading;
+	private bool _fadingStops;
+	private sbyte _nextVolume;
+
+	// The track PlayMusic left to start once the song's background fade ends.
+	private short? _pendingTrack;
+
+	/// <summary>
+	/// <see cref="PlayMusic"/> under <see cref="SkipPause"/>: <paramref name="track"/> left to start once no song fades;
+	/// <see cref="MusicObject"/>, when set, faded in the background to be stopped and destroyed, and cleared. With no song
+	/// to fade and none fading the track starts now. A track asked for while the last still fades replaces any left
+	/// waiting.
+	/// </summary>
+	private void PlayMusicAfterFade(short track) {
+		_pendingTrack = track;
+		if (MusicObject is { } music) {
+			BeginBackgroundFade(music, stopAfter: true);
+			MusicObject = null;
+		} else if (_fading == null) {
+			StartPendingTrack();
+		}
+	}
+
+	/// <summary>
+	/// A background fade of <paramref name="sound"/> begun, its first step, the volume it has, set now as
+	/// <see cref="FadeOut"/>'s first is. A fade of another song is ended first (<see cref="EndBackgroundFade"/>); a fade of
+	/// this one goes on, now to stop it when <paramref name="stopAfter"/> is set. A song at volume 0 or less ends its fade
+	/// at once, as retail's loop sets nothing for it.
+	/// </summary>
+	private void BeginBackgroundFade(Es1SoundObject sound, bool stopAfter) {
+		if (_fading == sound) {
+			_fadingStops |= stopAfter;
+			return;
+		}
+
+		EndBackgroundFade();
+		_fading = sound;
+		_fadingStops = stopAfter;
+		sbyte volume = unchecked((sbyte)sound.GetVolume());
+		if (volume <= 0) {
+			_nextVolume = 0;
+			FinishBackgroundFade();
+			return;
+		}
+
+		sound.SetVolume(volume);
+		_nextVolume = (sbyte)(volume - 1);
+	}
+
+	/// <summary>
+	/// One tick of the background fade, which <c>Shell_WaitTick</c> runs: the next volume set while it is above 0, so that
+	/// the fade takes as many ticks as <see cref="FadeOut"/>'s waits; after the last, <see cref="FinishBackgroundFade"/>.
+	/// Nothing with no fade.
+	/// </summary>
+	public void StepBackgroundFade() {
+		if (_fading is not { } sound) {
+			return;
+		}
+
+		if (_nextVolume > 0) {
+			sound.SetVolume(_nextVolume);
+			_nextVolume--;
+			return;
+		}
+
+		FinishBackgroundFade();
+	}
+
+	/// <summary>The background fade ended (<see cref="EndBackgroundFade"/>) and the track left waiting started (<see cref="StartPendingTrack"/>).</summary>
+	private void FinishBackgroundFade() {
+		EndBackgroundFade();
+		StartPendingTrack();
+	}
+
+	/// <summary>
+	/// The background fade ended where it stands: its song stopped and destroyed when it was to be, otherwise, when cut
+	/// short, set to volume 1, where <see cref="FadeOut"/> leaves it. No track starts.
+	/// </summary>
+	private void EndBackgroundFade() {
+		if (_fading is not { } sound) {
+			return;
+		}
+
+		_fading = null;
+		if (_fadingStops) {
+			sound.Stop();
+			sound.Destroy();
+		} else if (_nextVolume > 0) {
+			sound.SetVolume(1);
+		}
+	}
+
+	/// <summary>The track <see cref="PlayMusicAfterFade"/> left, made and played as <see cref="PlayMusic"/> makes it; nothing with none or no manager.</summary>
+	private void StartPendingTrack() {
+		if (_pendingTrack is not { } track || Manager is not { } manager) {
+			return;
+		}
+
+		_pendingTrack = null;
+		CreateMusic(manager, track);
+	}
+
+	/// <summary>
 	/// <c>ShellMusic_Stop</c> (<c>00020a18</c>): with <see cref="MusicObject"/> set, <see cref="FadeOut"/> of it, its slot
 	/// <c>+0x14</c> (stop), its slot <c>+8</c> with 3 (destroyed), and the object cleared. The fade runs whether or not the
 	/// song plays.
+	/// <para>With <see cref="SkipPause"/> the song, and any still fading, is stopped and destroyed at once with no fade,
+	/// and no song waiting for a fade's end starts: the shell is closing.</para>
 	/// </summary>
 	public IEnumerable<Es1ShellWait> StopMusic() {
+		if (SkipPause) {
+			EndBackgroundFade();
+			_pendingTrack = null;
+			MusicObject?.Stop();
+			MusicObject?.Destroy();
+			MusicObject = null;
+			yield break;
+		}
+
 		if (MusicObject is not { } music) {
 			yield break;
 		}
@@ -186,8 +323,15 @@ public sealed class Es1ShellSound {
 	/// <c>ShellMusic_FadeOut</c> (<c>000209e0</c>)(<paramref name="sound"/>): for each value from the low byte of
 	/// <c>SoundObject_GetVolume</c>, signed, down to 1, the object's slot <c>+0x2c</c> with the value, then
 	/// <c>Shell_WaitTicks</c>(1): a volume of 100 fades over 100 ticks.
+	/// <para>With <see cref="SkipPause"/> the same steps run in the background (<see cref="StepBackgroundFade"/>) and
+	/// nothing is waited for.</para>
 	/// </summary>
 	public IEnumerable<Es1ShellWait> FadeOut(Es1SoundObject sound) {
+		if (SkipPause) {
+			BeginBackgroundFade(sound, stopAfter: false);
+			yield break;
+		}
+
 		for (sbyte volume = unchecked((sbyte)sound.GetVolume()); volume > 0; volume--) {
 			sound.SetVolume(volume);
 			foreach (var wait in _waitTicks(1)) {
@@ -229,6 +373,8 @@ public sealed class Es1ShellSound {
 	/// engine guard.
 	/// </summary>
 	public void Shutdown() {
+		_pendingTrack = null;
+		EndBackgroundFade();
 		MusicObject?.Stop();
 		MusicObject?.Destroy();
 		MusicObject = null;
