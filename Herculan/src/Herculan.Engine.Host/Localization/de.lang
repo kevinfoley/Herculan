@@ -600,6 +600,25 @@ keys.row.stop_tape             Die Wiedergabe einer Eingabeaufzeichnung beenden.
 keys.row.menu_bar              Die Menüleiste von HERCULAN öffnen; erneut drücken, um sie zu verlassen.
 keys.row.menu_back             Die Menüleiste oder eines ihrer Fenster verlassen, solange es offen ist.
 keys.row.copy_frame            Im Vollbild das Bild in die Zwischenablage kopieren.
+keys.row.es1_turret_full_speed  Den Turm mit voller Geschwindigkeit drehen oder neigen. Die Turmtasten allein bewegen ihn mit einem Viertel davon.
+keys.row.es1_center_turret     Den Turm auf den Rumpf ausrichten, außer die automatische Zielverfolgung hält ihn auf ein Ziel.
+keys.row.es1_stick_mode        Mit einem Joystick zwischen MOVEMENT CONTROL, die den HERC steuert, und TURRET CONTROL, die den Turm richtet, wechseln.
+keys.row.es1_keypad_turret     Mit dem Joystick auf MOVEMENT CONTROL stattdessen den Turm richten, mit einem Viertel der Geschwindigkeit, oder mit gehaltener Alt-Taste mit voller.
+keys.row.es1_throttle_direction  Den Schub nur vorwärts stellen, danach zwischen nur vorwärts und nur rückwärts wechseln. Bei nur rückwärts fährt die Vor-Taste den HERC rückwärts und die Zurück-Taste hält ihn an.
+keys.row.es1_wcs_throttle      Mit WCS im CONTROLS-Feld eingeschaltet den Schub stufenweise vor und zurück stellen.
+keys.row.es1_select_row        Waffenreihe 1 bis 9 wählen. In der Reihe des ECM stattdessen das ECM ein- oder ausschalten.
+keys.row.es1_link_weapon       Die gewählte Waffe mit der gleichen, mit der sie ein Paar bildet, verbinden, oder die Verbindung lösen.
+keys.row.es1_next_chain        Nächste und vorige Feuerkette.
+keys.row.es1_next_chain_keep_weapon  Nächste Feuerkette; die gewählte Waffe bleibt gewählt, auch wenn sie nicht in dieser Kette ist.
+keys.row.es1_power_level       Die Energiestufe der gewählten Energiewaffe um eine Stufe pro Druck erhöhen oder senken.
+keys.row.es1_turret_tracking   Automatische Zielverfolgung ein oder aus.
+keys.row.es1_scanner_radar_mode  Im SCANNER-Bild das Radar zwischen aktiv und passiv umschalten.
+keys.row.es1_radar_range       Die Radarreichweite ändern.
+keys.row.es1_command_squadmate  Truppmitglied 1, 2 oder 3 wählen, um ihm einen Befehl zu geben, auch aus der Schadensanzeige.
+keys.row.es1_camera_next       Den nächsten HERC Ihres Trupps ansehen.
+keys.row.es1_panel_step        In einem Feld die nächste oder die vorige Schaltfläche wählen.
+keys.row.es1_panel_next_wcs    In einem Feld, mit WCS im CONTROLS-Feld eingeschaltet, die nächste Schaltfläche wählen.
+keys.row.es1_freeze_tape       Während eine Eingabeaufzeichnung abgespielt oder aufgenommen wird, das Spiel anhalten, und erneut drücken, um fortzufahren.
 keycap.ctrl                    Strg
 keycap.alt                     Alt
 keycap.shift                   Umschalt

@@ -169,7 +169,7 @@ sealed class SimulatorHost : IDisposable {
 		// mission has no shell turn to restart, so Settings shows the folders greyed.
 		_tweaks = new TweaksMenu(TweakSettings.Current, session.Localization);
 		_controller = new ControllerWindow(session.Localization, () => _start.DataDirectory, Es2ControllerRows.Create());
-		_menuBar = new HostMenuBar(session.Localization, session.Keys, _tweaks, new SettingsWindow(session, restartShell: null),
+		_menuBar = new HostMenuBar(session.Localization, KeyList.Of(session.Keys), _tweaks, new SettingsWindow(session, restartShell: null),
 			_controller, developerMode ? _debugPanel : null, scripting: _scripting, manualOpening: () => OnlineManual.Opening);
 
 		// The -SPRUNKNOWN keys, and the Alt+S freeze a replay honours without them.

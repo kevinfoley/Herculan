@@ -21,8 +21,7 @@ namespace Herculan.Engine.Menus;
 /// <list type="bullet">
 /// <item>"Game", a menu over the shell only (<see cref="GameMenu"/>).</item>
 /// <item>Debug and Mission Scripting, over a mission only and only under <c>--developer</c>.</item>
-/// <item>Settings, Controller, Keys and Tweaks. A host greys any of these by passing none. ES1's shell greys Keys, which
-/// has no ES1 counterpart yet.</item>
+/// <item>Settings, Controller, Keys and Tweaks. A host greys any of these by passing none.</item>
 /// <item>Accessibility.</item>
 /// <item>Editor, which leaves the shell for the mission editor, and is greyed over a mission.</item>
 /// <item>Custom Missions, over the shell only.</item>
@@ -54,7 +53,7 @@ public sealed class HostMenuBar : IEscapeMenu {
 	private bool _panelWasOpen;
 	private bool _highlightWasShowing;
 
-	/// <param name="keys">The key map the Keys window lists, or null to grey the item.</param>
+	/// <param name="keys">The keys the Keys window lists, or null to grey the item.</param>
 	/// <param name="tweaks">The Tweaks window, or null to grey the item.</param>
 	/// <param name="settings">The Settings window, or null to grey the item.</param>
 	/// <param name="controller">The Controller window, or null to grey the item.</param>
@@ -65,7 +64,7 @@ public sealed class HostMenuBar : IEscapeMenu {
 	/// <param name="accessibilitySettings">The settings the Accessibility window offers (<see cref="AccessibilityMenu"/>), or null for all.</param>
 	/// <param name="manualOpening">Whether the on-line manual is being opened, which the bar shows a notice for, or null for a bar without the notice.</param>
 	/// <param name="game">The "Game" menu, or null for a bar without it.</param>
-	public HostMenuBar(LocalizationTable localization, KeyMap? keys, TweaksMenu? tweaks, IDrawnMenuBarPanel? settings,
+	public HostMenuBar(LocalizationTable localization, KeyList? keys, TweaksMenu? tweaks, IDrawnMenuBarPanel? settings,
 			IDrawnMenuBarPanel? controller, IMenuBarPanel? debug = null, Action? openEditor = null, IMenuBarPanel? scripting = null,
 			IDrawnMenuBarPanel? customMissions = null, IReadOnlyCollection<A11ySettingDefinition<bool>>? accessibilitySettings = null,
 			Func<bool>? manualOpening = null, GameMenu? game = null) {

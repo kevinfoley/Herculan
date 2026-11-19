@@ -602,6 +602,25 @@ keys.row.stop_tape             Stop an input tape that is playing back.
 keys.row.menu_bar              Raise HERCULAN's menu bar; press again to back out of it.
 keys.row.menu_back             While the menu bar or one of its windows is up, back out of it.
 keys.row.copy_frame            While full screen, copy the frame to the clipboard.
+keys.row.es1_turret_full_speed  Twist or pitch the turret at full speed. The turret keys alone move it at a quarter of that.
+keys.row.es1_center_turret     Center the turret on the body, unless Automatic Turret Tracking is holding it on a target.
+keys.row.es1_stick_mode        With a joystick, switch it between MOVEMENT CONTROL, which drives the HERC, and TURRET CONTROL, which aims the turret.
+keys.row.es1_keypad_turret     With the joystick on MOVEMENT CONTROL, aim the turret instead, at a quarter speed, or at full speed with Alt held.
+keys.row.es1_throttle_direction  Make the throttle forward only, then switch it between forward only and reverse only. In reverse only, the throttle-forward key backs the HERC up and the throttle-back key brings it to a stop.
+keys.row.es1_wcs_throttle      With WCS on in the CONTROLS panel, step the throttle forward and back.
+keys.row.es1_select_row        Select weapon row 1 to 9. On the ECM's row, switch the ECM on or off instead.
+keys.row.es1_link_weapon       Link the selected weapon with the identical one it pairs with, or unlink them.
+keys.row.es1_next_chain        Next and previous firing chain.
+keys.row.es1_next_chain_keep_weapon  Next firing chain, leaving the selected weapon selected even when it is not in that chain.
+keys.row.es1_power_level       Raise or lower the selected energy weapon's power level, one step a press.
+keys.row.es1_turret_tracking   Automatic Turret Tracking on or off.
+keys.row.es1_scanner_radar_mode  On the SCANNER screen, switch the radar between active and passive.
+keys.row.es1_radar_range       Change the radar range.
+keys.row.es1_command_squadmate  Pick squadmate 1, 2 or 3 to give an order to, also from the damage detail.
+keys.row.es1_camera_next       Look at the next HERC in your squad.
+keys.row.es1_panel_step        On a panel, select the next or the previous button.
+keys.row.es1_panel_next_wcs    On a panel, with WCS on in the CONTROLS panel, select the next button.
+keys.row.es1_freeze_tape       While an input tape plays back or records, freeze the game, and press again to go on.
 keycap.ctrl                    Ctrl
 keycap.alt                     Alt
 keycap.shift                   Shift

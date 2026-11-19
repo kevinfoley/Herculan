@@ -7,12 +7,13 @@ using ImGuiNET;
 namespace Herculan.Engine.Menus;
 
 /// <summary>
-/// The floating "Keys" window opened from the menu bar: every fixed keyboard key of a <see cref="KeyMap"/>, read-only,
-/// as a collapsible section per <see cref="KeySection"/> in the map's order, each a table of the keys and what they do
-/// (<see cref="KeyRows"/>), with a filter over both columns at the top. Each key is shown as the player's keyboard and
-/// interface language name it (<see cref="KeyLabels"/>), from a layout of the window's own that it takes up again every
-/// frame it is open, so a layout switched with the window up shows on the next frame. The window is HERCULAN's own.
-/// The title-bar close, Close and [Esc] (<see cref="HostMenuBar.BackOut"/>) close it.
+/// The floating "Keys" window opened from the menu bar: a game's fixed keyboard keys, read-only, as a collapsible
+/// section per <see cref="KeyListSection"/> of a <see cref="KeyList"/>, each a table of the keys and what they do, with
+/// a filter over both columns at the top. Earthsiege 2's list is its <see cref="KeyMap"/>'s (<see cref="KeyList.Of"/>).
+/// Each key is shown as the player's keyboard and interface language name it (<see cref="KeyLabels"/>), from a layout of
+/// the window's own that it takes up again every frame it is open, so a layout switched with the window up shows on the
+/// next frame. The window is HERCULAN's own. The title-bar close, Close and [Esc] (<see cref="HostMenuBar.BackOut"/>)
+/// close it.
 /// </summary>
 public sealed class KeysWindow {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
@@ -28,31 +29,29 @@ public sealed class KeysWindow {
 	];
 
 	private readonly LocalizationTable _localization;
-	private readonly KeyMap _map;
+	private readonly KeyList _list;
 	private readonly KeyboardLayout _layout = new(VkToScancode.KeyOf);
 	private readonly KeyLabels _labels;
-	private readonly KeySection[] _sections;
 
 	// A section's rows that pass the filter, as drawn: reused every frame.
 	private readonly List<(string Keys, string Description)> _matches = [];
 	private string _filter = "";
 
-	public KeysWindow(LocalizationTable localization, KeyMap map) {
+	public KeysWindow(LocalizationTable localization, KeyList list) {
 		_localization = localization;
-		_map = map;
-		_labels = new KeyLabels(localization, _layout);
-		_sections = SectionsOf(map).ToArray();
+		_list = list;
+		_labels = new KeyLabels(localization, _layout, list.Naming);
 	}
 
 	/// <summary>Whether the window is open. Set by the menu bar; see <see cref="HostMenuBar"/>.</summary>
 	public bool IsOpen { get; set; }
 
-	/// <summary>Every <c>.lang</c> entry the window shows for <paramref name="map"/>, the key labels' among them.</summary>
-	public static IEnumerable<string> Entries(KeyMap map) =>
+	/// <summary>Every <c>.lang</c> entry the window shows for <paramref name="list"/>, the key labels' among them.</summary>
+	public static IEnumerable<string> Entries(KeyList list) =>
 		WindowEntries
-			.Concat(SectionsOf(map).Select(SectionEntry))
-			.Concat(KeyRows.All.Select(row => row.Description))
-			.Concat(KeyLabels.Entries(map, KeyRows.All))
+			.Concat(list.Sections.Select(section => section.Heading))
+			.Concat(list.Sections.SelectMany(section => section.Rows).Select(row => row.Description))
+			.Concat(KeyLabels.Entries(list.Chords))
 			.Distinct();
 
 	/// <summary>
@@ -101,14 +100,11 @@ public sealed class KeysWindow {
 	// Each section with a row that passes the filter, open while there is a filter so its matches show.
 	private void Sections(string filter) {
 		bool any = false;
-		foreach (var section in _sections) {
+		for (int index = 0; index < _list.Sections.Length; index++) {
+			var section = _list.Sections[index];
 			_matches.Clear();
-			foreach (var row in KeyRows.All) {
-				if (row.Section != section) {
-					continue;
-				}
-
-				string keys = _labels.Of(_map, row, Ellipsis);
+			foreach (var row in section.Rows) {
+				string keys = _labels.Of(row, Ellipsis);
 				string description = Text(row.Description);
 				if (filter.Length == 0 || keys.Contains(filter, StringComparison.OrdinalIgnoreCase)
 						|| description.Contains(filter, StringComparison.OrdinalIgnoreCase)) {
@@ -125,11 +121,11 @@ public sealed class KeysWindow {
 				ImGui.SetNextItemOpen(true);
 			}
 
-			if (!ImGui.CollapsingHeader(Text(SectionEntry(section)) + "###section" + (int)section, ImGuiTreeNodeFlags.DefaultOpen)) {
+			if (!ImGui.CollapsingHeader(Text(section.Heading) + "###section" + index, ImGuiTreeNodeFlags.DefaultOpen)) {
 				continue;
 			}
 
-			if (!ImGui.BeginTable("##keys" + (int)section, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingStretchProp)) {
+			if (!ImGui.BeginTable("##keys" + index, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingStretchProp)) {
 				continue;
 			}
 
@@ -151,9 +147,6 @@ public sealed class KeysWindow {
 			ImGui.TextDisabled(Text("keys.no_match"));
 		}
 	}
-
-	// The sections in the order the map first gives each.
-	private static IEnumerable<KeySection> SectionsOf(KeyMap map) => map.Bindings.Select(binding => binding.Section).Distinct();
 
 	/// <summary>The <c>.lang</c> key of a section's heading, which the Controller window's action lists share.</summary>
 	internal static string SectionEntry(KeySection section) => section switch {

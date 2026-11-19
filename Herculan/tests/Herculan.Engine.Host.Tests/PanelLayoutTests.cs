@@ -122,7 +122,7 @@ public class PanelLayoutTests {
 		var settings = new SettingsWindow(session, restartShell: () => { });
 		// Every Earthsiege 2 row too, as the host holds them: the Accessibility window lists A11ySettings.Current's.
 		A11ySettings.Current = new A11ySettings(Es2A11ySettingDefinitions.All);
-		var bar = new HostMenuBar(localization, KeyMap.Default, new TweaksMenu(new TweakSettings(Es2TweakSettingDefinitions.All, Es2TweakSettingDefinitions.FileName), localization), settings,
+		var bar = new HostMenuBar(localization, KeyList.Of(KeyMap.Default), new TweaksMenu(new TweakSettings(Es2TweakSettingDefinitions.All, Es2TweakSettingDefinitions.FileName), localization), settings,
 			new ControllerWindow(localization, () => null, Es2ControllerRows.Create()));
 		bar.Show();
 		open(bar, settings);

@@ -19,7 +19,8 @@ namespace Herculan.Engine.Input;
 /// any retail binary: a key whose GLFW name is a letter is that letter, a key in a letter's US place whose name is
 /// no letter is no key (its letter is elsewhere on the layout), and the digits and symbols stay where they are.</para>
 ///
-/// <para><see cref="Printed"/> names a game key for a key list by what is printed on the key that makes it.</para>
+/// <para><see cref="Printed"/> names a game key for a key list by what is printed on the key that makes it, and
+/// <see cref="PrintedAt"/> a physical key by what is printed on it.</para>
 /// </summary>
 public sealed class KeyboardLayout {
 	/// <summary>
@@ -72,6 +73,7 @@ public sealed class KeyboardLayout {
 	// What is printed on the key that makes each Movable key, by index (Printed), and elsewhere than Windows the GLFW
 	// name it was made from, so an unchanged name is not upper-cased again every frame.
 	private readonly string?[] _printed = UsPrinted.ToArray();
+	private readonly string?[] _printedAt = UsPrinted.ToArray();
 	private readonly string?[] _names = new string?[Movable.Length];
 	private nint _windowsLayout;
 	private bool _built;
@@ -101,6 +103,21 @@ public sealed class KeyboardLayout {
 	public string? Printed(Key key) {
 		int index = Array.IndexOf(Movable, key);
 		return index >= 0 ? _printed[index] : null;
+	}
+
+	/// <summary>
+	/// What is printed on the key in <paramref name="physical"/>'s US place, upper-cased, for a key a layout can move;
+	/// null for every other key. It names a key for a game that reads keys by their place, as a DOS game reading the
+	/// keyboard's scancodes does, where <see cref="Printed"/> names one for a game that reads virtual-key codes.
+	///
+	/// <para>On Windows it is the letter or digit of the virtual-key code the key sends under the layout, or else the
+	/// character <c>MapVirtualKeyExW</c>'s <c>MAPVK_VK_TO_CHAR</c> gives that code; elsewhere a digit is itself and any
+	/// other key GLFW's name for it. When neither gives a character, it is the US symbol. Refreshed with the translation
+	/// (<see cref="Refresh"/>).</para>
+	/// </summary>
+	public string? PrintedAt(Key physical) {
+		int index = Array.IndexOf(Movable, physical);
+		return index >= 0 ? _printedAt[index] : null;
 	}
 
 	/// <summary>Whether any physical key the game reads as <paramref name="key"/> is down.</summary>
@@ -138,12 +155,15 @@ public sealed class KeyboardLayout {
 			if (OperatingSystem.IsWindows()) {
 				key = WindowsKeyOf(Movable[i], _windowsLayout);
 				_printed[i] = IsLetterOrDigit(Movable[i]) ? UsPrinted[i] : WindowsCharacterOf(Movable[i], _windowsLayout) ?? UsPrinted[i];
+				_printedAt[i] = WindowsCharacterAt(Movable[i], _windowsLayout) ?? UsPrinted[i];
 			} else {
 				string? name = KeyName(Movable[i]);
 				key = PrintedKeyOf(Movable[i], name);
 				if (name != _names[i] || !_built) {
 					_names[i] = name;
 					_printed[i] = IsLetterOrDigit(Movable[i]) || string.IsNullOrEmpty(name) ? UsPrinted[i] : name.ToUpperInvariant();
+					_printedAt[i] = Movable[i] is >= Key.Number0 and <= Key.Number9 || string.IsNullOrEmpty(name)
+						? UsPrinted[i] : name.ToUpperInvariant();
 				}
 			}
 
@@ -191,6 +211,24 @@ public sealed class KeyboardLayout {
 		}
 
 		char c = (char)(MapVirtualKeyExW((uint)virtualKey, MapVkVkToChar, layout) & 0x7fffffff);
+		return c == 0 || char.IsControl(c) ? null : char.ToUpperInvariant(c).ToString();
+	}
+
+	// What a Windows layout prints on a physical key: the letter or digit of the virtual-key code it sends, else that
+	// code's character, less the dead-key bit, upper-cased; null for none.
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
+	private static string? WindowsCharacterAt(Key physical, nint layout) {
+		int scancode = GlfwApi.Value.GetKeyScancode((int)physical);
+		if (scancode < 0) {
+			return null;
+		}
+
+		uint virtualKey = MapVirtualKeyExW((uint)scancode, MapVkVscToVkEx, layout);
+		if (virtualKey is >= '0' and <= '9' or >= 'A' and <= 'Z') {
+			return ((char)virtualKey).ToString();
+		}
+
+		char c = virtualKey == 0 ? '\0' : (char)(MapVirtualKeyExW(virtualKey, MapVkVkToChar, layout) & 0x7fffffff);
 		return c == 0 || char.IsControl(c) ? null : char.ToUpperInvariant(c).ToString();
 	}
 

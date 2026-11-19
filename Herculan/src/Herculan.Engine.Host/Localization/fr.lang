@@ -600,6 +600,25 @@ keys.row.stop_tape             Arrêter la lecture d'un enregistrement des comma
 keys.row.menu_bar              Ouvrir la barre de menus d'HERCULAN ; appuyer de nouveau pour en sortir.
 keys.row.menu_back             Quitter la barre de menus ou l'une de ses fenêtres, quand elle est ouverte.
 keys.row.copy_frame            En plein écran, copier l'image dans le presse-papiers.
+keys.row.es1_turret_full_speed  Tourner ou incliner la tourelle à pleine vitesse. Les touches de tourelle seules la déplacent au quart de cette vitesse.
+keys.row.es1_center_turret     Centrer la tourelle sur le corps, sauf si le suivi automatique de la tourelle la maintient sur une cible.
+keys.row.es1_stick_mode        Avec un joystick, passer de MOVEMENT CONTROL, qui pilote le HERC, à TURRET CONTROL, qui pointe la tourelle, et inversement.
+keys.row.es1_keypad_turret     Avec le joystick sur MOVEMENT CONTROL, pointer plutôt la tourelle, au quart de la vitesse, ou à pleine vitesse avec Alt maintenue.
+keys.row.es1_throttle_direction  Limiter le régime moteur à la marche avant, puis basculer entre marche avant seule et marche arrière seule. En marche arrière seule, la touche avant fait reculer le HERC et la touche arrière l'arrête.
+keys.row.es1_wcs_throttle      Avec WCS activé dans le panneau CONTROLS, régler le régime moteur cran par cran en avant et en arrière.
+keys.row.es1_select_row        Sélectionner la rangée d'armes 1 à 9. Sur la rangée de l'ECM, activer ou désactiver plutôt l'ECM.
+keys.row.es1_link_weapon       Relier l'arme sélectionnée à l'arme identique avec laquelle elle fait la paire, ou les délier.
+keys.row.es1_next_chain        Chaîne de tir suivante et précédente.
+keys.row.es1_next_chain_keep_weapon  Chaîne de tir suivante, en gardant l'arme sélectionnée même si elle n'est pas dans cette chaîne.
+keys.row.es1_power_level       Augmenter ou baisser le niveau de puissance de l'arme à énergie sélectionnée, d'un cran par pression.
+keys.row.es1_turret_tracking   Suivi automatique de la tourelle activé ou désactivé.
+keys.row.es1_scanner_radar_mode  Sur l'écran SCANNER, faire passer le radar d'actif à passif, et inversement.
+keys.row.es1_radar_range       Changer la portée du radar.
+keys.row.es1_command_squadmate  Choisir le coéquipier 1, 2 ou 3 à qui donner un ordre, aussi depuis le détail des dégâts.
+keys.row.es1_camera_next       Regarder le HERC suivant de votre escouade.
+keys.row.es1_panel_step        Sur un panneau, sélectionner le bouton suivant ou précédent.
+keys.row.es1_panel_next_wcs    Sur un panneau, avec WCS activé dans le panneau CONTROLS, sélectionner le bouton suivant.
+keys.row.es1_freeze_tape       Pendant la lecture ou l'enregistrement des commandes, figer la partie, et appuyer à nouveau pour reprendre.
 keycap.ctrl                    Ctrl
 keycap.alt                     Alt
 keycap.shift                   Maj

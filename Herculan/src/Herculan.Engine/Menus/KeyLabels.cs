@@ -7,17 +7,17 @@ using Silk.NET.Input;
 namespace Herculan.Engine.Menus;
 
 /// <summary>
-/// A key's text in a key list, built when drawn from a <see cref="KeyMap"/> chord: what is printed on the player's own
-/// keyboard for a letter, digit or symbol (<see cref="KeyboardLayout.Printed"/>), and the interface language's name,
-/// from the <c>keycap.*</c> entries, for a modifier or any other key. A chord's parts are joined by "+", a line's
-/// chords by ", ", and a numbered run reads "first … last".
+/// A key's text in a key list, built when drawn from a chord: what is printed on the player's own keyboard for a
+/// letter, digit or symbol, by the list's <see cref="KeyNaming"/>, and the interface language's name, from the
+/// <c>keycap.*</c> entries, for a modifier or any other key. A chord's parts are joined by "+", a line's chords by
+/// ", ", and a numbered run reads "first … last".
 /// </summary>
-sealed class KeyLabels(LocalizationTable localization, KeyboardLayout layout) {
+sealed class KeyLabels(LocalizationTable localization, KeyboardLayout layout, KeyNaming naming) {
 	private const string ChordSeparator = ", ";
 
 	/// <summary>A row's keys, as one string.</summary>
 	/// <param name="runJoin">What goes between a run's first key and its last.</param>
-	public string Of(KeyMap map, KeyRow row, string runJoin) {
+	public string Of(KeyListRow row, string runJoin) {
 		var text = new StringBuilder();
 		foreach (var entry in row.Keys) {
 			if (text.Length > 0) {
@@ -25,7 +25,7 @@ sealed class KeyLabels(LocalizationTable localization, KeyboardLayout layout) {
 			}
 
 			if (entry.RunEnd is { } end) {
-				text.Append(Of(map, entry.Held[0])).Append(runJoin).Append(Of(map, end));
+				text.Append(Of(entry.Held[0])).Append(runJoin).Append(Of(end));
 				continue;
 			}
 
@@ -34,7 +34,7 @@ sealed class KeyLabels(LocalizationTable localization, KeyboardLayout layout) {
 					text.Append('+');
 				}
 
-				text.Append(Of(map, entry.Held[i]));
+				text.Append(Of(entry.Held[i]));
 			}
 		}
 
@@ -42,8 +42,7 @@ sealed class KeyLabels(LocalizationTable localization, KeyboardLayout layout) {
 	}
 
 	/// <summary>One chord: its modifiers, in the order <see cref="KeyChord.ToString"/> gives them, then its key.</summary>
-	public string Of(KeyMap map, KeyRef key) {
-		var chord = map.Chords(key.Action)[key.Chord];
+	public string Of(KeyChord chord) {
 		var text = new StringBuilder();
 		foreach (var (modifier, entry) in Modifiers) {
 			if (chord.Modifiers.HasFlag(modifier)) {
@@ -56,7 +55,7 @@ sealed class KeyLabels(LocalizationTable localization, KeyboardLayout layout) {
 
 	/// <summary>A key on its own: as printed on the keyboard when the layout can move it, else by name.</summary>
 	public string Of(Key key) {
-		if (layout.Printed(key) is { } printed) {
+		if ((naming == KeyNaming.Position ? layout.PrintedAt(key) : layout.Printed(key)) is { } printed) {
 			return printed;
 		}
 
@@ -67,17 +66,16 @@ sealed class KeyLabels(LocalizationTable localization, KeyboardLayout layout) {
 			: text;
 	}
 
-	/// <summary>Every <c>.lang</c> entry the labels of <paramref name="rows"/> are built from.</summary>
-	public static IEnumerable<string> Entries(KeyMap map, IEnumerable<KeyRow> rows) {
-		var chords = rows.SelectMany(row => row.Keys).SelectMany(entry => entry.Shown)
-			.Select(key => map.Chords(key.Action)[key.Chord]).ToList();
+	/// <summary>Every <c>.lang</c> entry the labels of <paramref name="chords"/> are built from.</summary>
+	public static IEnumerable<string> Entries(IEnumerable<KeyChord> chords) {
+		var list = chords.ToList();
 		foreach (var (modifier, entry) in Modifiers) {
-			if (chords.Any(chord => chord.Modifiers.HasFlag(modifier))) {
+			if (list.Any(chord => chord.Modifiers.HasFlag(modifier))) {
 				yield return entry;
 			}
 		}
 
-		foreach (var key in chords.Select(chord => chord.Key).Distinct()) {
+		foreach (var key in list.Select(chord => chord.Key).Distinct()) {
 			if (Array.IndexOf(KeyboardLayout.Movable, key) >= 0) {
 				continue;
 			}

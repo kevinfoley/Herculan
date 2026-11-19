@@ -23,6 +23,8 @@ The tweak replaces the outside view's controls: the mouse swings the camera, the
 
 During a tape replay, the menu bar's keys and `Ctrl+E` stay with the player's own keyboard and every other key comes from the tape; under `--demo` any key ends the demo.
 
+In *Metaltech: Earthsiege* the menu bar's Keys lists the simulator's keys ([`../es1/key-bindings.md`](../es1/key-bindings.md)), less the developer keys and `Z`, then `Shift+Esc`, `Esc` and `Alt+Enter`. Since the game reads a key by its place on the keyboard, each key is named by what the player's keyboard prints on the key in that place: on a French AZERTY keyboard the command display's ATTACK ENEMY shows as `Q`.
+
 ## Gamepad in the menus
 
 The menu bar and its windows work with a gamepad alone, in a mission and in the front end, through Dear ImGui's own gamepad navigation:

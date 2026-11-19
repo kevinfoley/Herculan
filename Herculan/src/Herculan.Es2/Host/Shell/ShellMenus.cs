@@ -41,7 +41,7 @@ sealed class ShellMenus : IFrontEndMenus {
 		_settings = new SettingsWindow(session, () => RequestClose(restartRequested));
 		var game = new GameMenu(session.Localization, session.Games, Es2GameModule.Identity.Game,
 			other => RequestClose(() => GameSwitch.Request(other)));
-		_menuBar = new HostMenuBar(session.Localization, session.Keys, _tweaks, _settings, _controller,
+		_menuBar = new HostMenuBar(session.Localization, KeyList.Of(session.Keys), _tweaks, _settings, _controller,
 			openEditor: () => RequestClose(editorRequested), customMissions: customMissions, manualOpening: () => OnlineManual.Opening,
 			game: game);
 	}

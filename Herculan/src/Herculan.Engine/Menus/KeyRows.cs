@@ -28,7 +28,7 @@ sealed record KeyRow(KeySection Section, string Description, ImmutableArray<KeyR
 /// How the <see cref="KeysWindow"/> lays out a <see cref="KeyMap"/>'s actions: which actions share a line, which of
 /// their chords it shows, and what the line says. The order and wording follow docs/retail/key-bindings.md for the
 /// retail keys and docs/herculan/herculan-key-bindings.md for HERCULAN's own. The keys themselves are read from the map
-/// when drawn (<see cref="KeyLabels"/>), so this names actions, never keys.
+/// when the window's list is built (<see cref="KeyList.Of"/>), so this names actions, never keys.
 ///
 /// <para>Where the retail doc gives a line one key of several the map binds, as the arrows over their keypad twins, it
 /// shows that one. A line may restate another section's action with what it does there, as the outside view's arrows,
