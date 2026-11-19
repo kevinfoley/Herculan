@@ -421,13 +421,15 @@ public static class Es1MissionHost {
 
 			models = Es1MechModels.Upload(gl, content, world.Types.Values.OfType<Es1MechType>(), scene);
 			disposables.Add(models);
-			var projectileDraw = new Es1ProjectileDraw(gl, content, scene, world.Globals.Projectiles);
-			disposables.Add(projectileDraw);
-			// The palette that the effects' billboards are shown through. It is the zone's until the live palette changes.
+			// The palette that the effects' and gun rounds' billboards are shown through. It is the zone's until the live
+			// palette changes.
 			var billboardPalette = scene.Palette != null ? new PaletteTexture(gl, scene.Palette) : null;
 			if (billboardPalette != null) {
 				disposables.Add(billboardPalette);
 			}
+
+			var projectileDraw = new Es1ProjectileDraw(gl, content, scene, world.Globals.Projectiles, billboardPalette);
+			disposables.Add(projectileDraw);
 
 			var explosionDraw = new Es1ExplosionDraw(gl, content, scene, world.Globals.Explosions, billboardPalette);
 			disposables.Add(explosionDraw);

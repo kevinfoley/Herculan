@@ -129,8 +129,8 @@ public sealed class Es1WorldDraw {
 		.Concat(Flyers?.Items ?? []).Concat(Structures?.Items ?? []).Concat(Projectiles?.Items ?? [])
 		.Concat(Explosions?.Items ?? []).Concat(Debris?.Items ?? []).Concat(Smoke?.Items ?? []);
 
-	/// <summary>The impact effects' and the smoke balls' billboards, drawn after <see cref="Objects"/>.</summary>
-	public IReadOnlyList<SpriteBatch> Sprites => [.. Explosions?.Sprites ?? [], .. Smoke?.Sprites ?? []];
+	/// <summary>The gun rounds', the impact effects' and the smoke balls' billboards, drawn after <see cref="Objects"/>.</summary>
+	public IReadOnlyList<SpriteBatch> Sprites => [.. Projectiles?.Sprites ?? [], .. Explosions?.Sprites ?? [], .. Smoke?.Sprites ?? []];
 
 	/// <summary>
 	/// The objects <c>ObjList_DrawFrameObjects</c> draws, each with its items, in the order <see cref="Objects"/> lists
@@ -180,7 +180,7 @@ public sealed class Es1WorldDraw {
 
 		Flyers?.Update(camera, focalShift, flat);
 		Structures?.Update(camera, focalShift, flat);
-		Projectiles?.Update(camera, flat);
+		Projectiles?.Update(camera, focalShift, flat);
 		Explosions?.Update(camera, focalShift, flat);
 		Debris?.Update(camera, focalShift, flat);
 		Smoke?.Update(camera, focalShift, flat);

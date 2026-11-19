@@ -14,8 +14,11 @@ namespace Herculan.Es1.Render;
 /// The projectile pool's share of the frame (docs/es1/rendering/polygon-shading.md#the-object-list): every element of
 /// <c>g_ProjectilePool</c> whose position's Z is not negative and that lies within its type tag's last distance band.
 /// A missile and a gun round draw through their shape instance, their file's copy of <c>TS_OBJ</c>'s render, as the
-/// zone's shapes draw, on the cell their sequence stands on, in the ramps of tag 3's band; a beam tracer draws its quads
-/// in its palette color, <c>BeamTracer_Draw</c> (<c>ES1DBSIM 000087e0</c>, docs/es1/simulation/projectiles.md#drawing--beamtracer_draw-000087e0).
+/// zone's shapes draw, on the cell their sequence stands on, in the ramps of tag 3's band; a gun round's bitmap parts,
+/// which the two <c>EMP</c> rounds are made of, are Earthsiege's upright billboards out of <c>dba\bullets</c>
+/// (<see cref="SpriteBatch.UprightFocalPixels"/>), shown through the live palette as the impact effects' are
+/// (<see cref="Es1ExplosionDraw"/>). A beam tracer draws its quads in its palette color, <c>BeamTracer_Draw</c>
+/// (<c>ES1DBSIM 000087e0</c>, docs/es1/simulation/projectiles.md#drawing--beamtracer_draw-000087e0).
 ///
 /// <para>The tracer's quads are a mesh of their own each frame, unlit faces of the palette index, in world space with
 /// the identity model transform, which the GPU clips at the near plane as retail's <c>Poly_ClipRingToNearPlane</c> does;
@@ -28,27 +31,31 @@ public sealed class Es1ProjectileDraw : IDisposable {
 	private readonly List<IDisposable> _owned = new();
 	private readonly List<SceneItem> _items = new();
 	private readonly List<GpuMesh> _beamMeshes = new();
-	private readonly uint? _bulletTexture;
+	private readonly Dictionary<TSObject, SpriteQuad[][]> _sprites = new(ReferenceEqualityComparer.Instance);
+	private readonly List<SpriteBatch> _batches = new();
+	private readonly (TextureAtlas Atlas, uint Texture)? _bulletBank;
+	private readonly PaletteTexture? _palette;
 	private readonly GL _gl;
 
 	/// <summary>
 	/// Uploads every cell of every root of <c>dts\rockets</c> and <c>dts\bullets</c>, the second textured from
-	/// <c>dba\bullets</c>, the bank <c>Bullet_LoadResources</c> stores in each of its roots.
+	/// <c>dba\bullets</c>, the bank <c>Bullet_LoadResources</c> stores in each of its roots, and pulls each bullet root's
+	/// billboards, which are shown through <paramref name="palette"/>, the live palette; with none the bank is not uploaded.
 	/// </summary>
-	public Es1ProjectileDraw(GL gl, GameContent content, Es1ZoneScene scene, Es1ProjectilePool pool) {
+	public Es1ProjectileDraw(GL gl, GameContent content, Es1ZoneScene scene, Es1ProjectilePool pool, PaletteTexture? palette) {
 		_gl = gl;
 		_scene = scene;
 		_pool = pool;
+		_palette = palette;
 
-		TextureAtlas? bulletAtlas = null;
-		if (scene.Palette != null && content.Read("dba", "BULLETS.DBA") is { } bankBytes
-				&& new DynamixBitmapArrayTransformer().Parse(bankBytes) is { } bank) {
-			bulletAtlas = TextureAtlas.Build(bank, scene.Palette);
-			if (bulletAtlas != null) {
-				var texture = bulletAtlas.Upload(gl, indexed: true);
-				_owned.Add(texture);
-				_bulletTexture = texture.Handle;
-			}
+		if (palette != null && content.Read("dba", "BULLETS.DBA") is { } bankBytes
+				&& new DynamixBitmapArrayTransformer().Parse(bankBytes) is { } bank
+				&& TextureAtlas.Build(bank, scene.Palette, transparentIndex0: true) is { } atlas) {
+			// The bank's indices, which the faces and the billboards both sample, index 0 left unpainted as the impact
+			// effects' is (Es1ExplosionDraw).
+			var texture = atlas.Upload(gl, indexed: true);
+			_owned.Add(texture);
+			_bulletBank = (atlas, texture.Handle);
 		}
 
 		foreach (var root in pool.RocketShapes) {
@@ -56,12 +63,16 @@ public sealed class Es1ProjectileDraw : IDisposable {
 		}
 
 		foreach (var root in pool.BulletShapes) {
-			UploadCells(root, bulletAtlas);
+			UploadCells(root, _bulletBank?.Atlas);
+			_sprites.TryAdd(root, DtsSpriteBuilder.Build(root));
 		}
 	}
 
 	/// <summary>The missiles', gun rounds' and beam tracers' items the last <see cref="Update"/> placed.</summary>
 	public IReadOnlyList<SceneItem> Items => _items;
+
+	/// <summary>The gun rounds' billboards the last <see cref="Update"/> placed.</summary>
+	public IReadOnlyList<SpriteBatch> Sprites => _batches;
 
 	/// <summary>
 	/// One mesh per cell frame of <paramref name="root"/>, as many as its longest sequence holds; a cell with no geometry
@@ -88,12 +99,14 @@ public sealed class Es1ProjectileDraw : IDisposable {
 
 	/// <summary>
 	/// The pool's elements placed for <paramref name="camera"/>, walked back from the end as <c>ObjList_RebuildFrame</c>
-	/// adds them: each missile and gun round an item on its shape's cell, each beam tracer one of its quads
+	/// adds them, under a projection whose <c>Raster_FocalShift</c> is <paramref name="focalShift"/>: each missile and gun
+	/// round an item on its shape's cell and a gun round its billboards, each beam tracer one of its quads
 	/// (<see cref="BeamItem"/>). With <paramref name="flatRamps"/> each takes <c>WorldShades_ResetRamps</c>' ramps
 	/// (<see cref="Es1Shading.FlatBlock"/>) rather than its distance band's.
 	/// </summary>
-	public void Update(Camera camera, bool flatRamps = false) {
+	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		_items.Clear();
+		_batches.Clear();
 		foreach (var mesh in _beamMeshes) {
 			mesh.Dispose();
 		}
@@ -121,16 +134,20 @@ public sealed class Es1ProjectileDraw : IDisposable {
 			}
 
 			int cell = projectile.DrawnCellFrame;
-			if (cell < 0 || cell >= cells.Length || cells[cell] is not { } mesh) {
-				continue;
+			var transform = WorldScale.ToRenderMatrix(projectile.Frame);
+			bool bullet = projectile is Es1Bullet;
+			if (cell >= 0 && cell < cells.Length && cells[cell] is { } mesh) {
+				_items.Add(new SceneItem(mesh, transform, bullet ? _bulletBank?.Texture : null) {
+					RampBlock = flatRamps ? shading.FlatBlock : shading.Block(Es1Projectile.TypeTag, distance),
+					// The effect lights are picked by its position and its shape's radius, slot +0x14's.
+					LightAnchor = (projectile.Position, (shape as TSBasePart)?.Radius ?? 0),
+				});
 			}
 
-			uint? texture = projectile is Es1Bullet ? _bulletTexture : null;
-			_items.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(projectile.Frame), texture) {
-				RampBlock = flatRamps ? shading.FlatBlock : shading.Block(Es1Projectile.TypeTag, distance),
-				// The effect lights are picked by its position and its shape's radius, slot +0x14's.
-				LightAnchor = (projectile.Position, (shape as TSBasePart)?.Radius ?? 0),
-			});
+			if (bullet && _bulletBank is { } bank && _sprites.TryGetValue(shape, out var sprites) && sprites.Length > 0) {
+				_batches.Add(new SpriteBatch(sprites, bank.Atlas, bank.Texture, transform, cell,
+					UprightFocalPixels: 1 << focalShift, PaletteHandle: _palette?.Handle));
+			}
 		}
 	}
 
