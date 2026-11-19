@@ -74,6 +74,25 @@ public sealed class Es1Preferences {
 	public static Es1Preferences Default => new(new byte[OptionCount], null);
 
 	/// <summary>
+	/// The 17 bytes the launcher writes to a missing <c>data\prefs.cfg</c>, where retail's runs <c>DETECT.EXE</c>
+	/// (docs/es1/shell/launcher.md#starting--launcher_main-000005cc), whose output is not known. <b>This engine's choice,
+	/// the user's:</b> MUSIC and SOUNDS on, RADIO text and voice, HORIZON on, SKY, GROUND and SHAPES at 255 (the shell's
+	/// DETAIL MAX), the mouse on, and the joystick options and the MISSION PARAMS at 0.
+	/// </summary>
+	public static byte[] FirstRunOptions() {
+		var options = new byte[OptionCount];
+		options[MusicOption] = 1;
+		options[SoundsOption] = 1;
+		options[RadioOption] = 2;
+		options[HorizonOption] = 1;
+		options[SkyOption] = 0xff;
+		options[GroundOption] = 0xff;
+		options[DetailOption] = 0xff;
+		options[MouseOption] = 1;
+		return options;
+	}
+
+	/// <summary>
 	/// The options from the bytes of <c>data\prefs.cfg</c>, or all 0 for null, a file that does not open: the read of
 	/// <c>Prefs_Load</c> and its two copies. A file shorter than 17 bytes gives 0 for the bytes it lacks. No handler runs.
 	/// </summary>

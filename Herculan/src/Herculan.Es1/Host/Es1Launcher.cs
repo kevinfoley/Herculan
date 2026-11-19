@@ -3,6 +3,7 @@ using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Content;
 using Herculan.Es1.Flic;
+using Herculan.Es1.Input;
 using Herculan.Es1.Install;
 using Herculan.Es1.Shell;
 using Herculan.Es1.Sim;
@@ -113,10 +114,15 @@ public static class Es1Launcher {
 			switch (state) {
 				case 1:
 					// data\prefs.cfg opened rb to see that it is there. PLACEHOLDER: DETECT.EXE, which retail runs when it is
-					// not, is not ported; the shell then loads every option as 0 (Es1Preferences.FromFile of no file).
+					// not, is not ported; Es1Preferences.FirstRunOptions is written in its place.
 					if (!Opens(prefixes.Path(PrefsPath))) {
 						string detect = flicPlayerFound ? flics!.OtherPath(DetectProgram) : prefixes.Path(DetectProgram);
-						Console.Error.WriteLine($"PLACEHOLDER: data\\prefs.cfg is missing and {detect}{(flicPlayerFound ? " " + AltDriveSwitch : "")}, which ESCD.EXE runs then, is not ported.");
+						try {
+							File.WriteAllBytes(prefixes.Path(PrefsPath), Es1Preferences.FirstRunOptions());
+							Console.WriteLine($"PLACEHOLDER: data\\prefs.cfg is missing; this engine's first-run options are written in place of {detect}{(flicPlayerFound ? " " + AltDriveSwitch : "")}, which ESCD.EXE runs then.");
+						} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+							Console.Error.WriteLine($"data\\prefs.cfg is missing and does not open for writing ({ex.Message}); the shell loads every option as 0.");
+						}
 					}
 
 					if (flicPlayerFound) {
