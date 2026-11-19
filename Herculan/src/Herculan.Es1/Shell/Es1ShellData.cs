@@ -310,13 +310,13 @@ public sealed class Es1ShellData {
 
 	/// <summary>
 	/// The start-up's step 14 (docs/es1/formats/styles-dat.md#the-loads): <c>Widget_LoadStylesAndFonts</c>
-	/// (<c>00002818</c>), which loads <c>dat\styles</c>, puts <c>dfn\title</c>, <c>cpylw</c>, <c>active</c>,
+	/// (<c>00002818</c>), which loads <c>dat\styles</c>, puts <c>dfn\title</c>, <c>gray</c>, <c>active</c>,
 	/// <c>pushed</c>, <c>inactive</c>, <c>nm_green</c> and <c>nm_red1</c> into the font slots 0 to 6 over what
 	/// <see cref="Load"/> put there, and loads <c>dba\corners</c>; then <c>Shell_Main</c>'s own loads of
 	/// <c>CFG\styles.dat</c> and <c>res32\corners.dba</c> over those two.
 	/// </summary>
 	public void LoadStylesAndFonts(GameContent content) {
-		string[] names = ["TITLE", "CPYLW", "ACTIVE", "PUSHED", "INACTIVE", "NM_GREEN", "NM_RED1"];
+		string[] names = ["TITLE", "GRAY", "ACTIVE", "PUSHED", "INACTIVE", "NM_GREEN", "NM_RED1"];
 		for (int i = 0; i < names.Length; i++) {
 			Fonts[i] = HudFont.Load(content, names[i], "dfn");
 		}

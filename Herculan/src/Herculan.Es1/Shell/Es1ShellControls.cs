@@ -109,6 +109,7 @@ public sealed class Es1ShellControls {
 		var widgets = new Es1WidgetResources {
 			Styles = data.Styles,
 			Title = data.Fonts[0],
+			// The shell's slot 1 is gray, where the simulator's widgets have cpylw.
 			Cpylw = data.Fonts[1],
 			Active = data.Fonts[2],
 			Pushed = data.Fonts[3],

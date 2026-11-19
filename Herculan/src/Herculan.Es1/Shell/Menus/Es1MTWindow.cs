@@ -26,7 +26,7 @@ public sealed class Es1MTWindow : Es1DUIWindow {
 	/// <summary>The window id whose picture is drawn at random from five, <c>res32\menu&lt;9999 − r&gt;.dba</c>.</summary>
 	public const short LoadingWindow = 9999;
 
-	/// <summary>The font slots of <c>title</c> (<c>000aacc6</c>) and of the labels: <c>cpylw</c> (<c>000aacca</c>), <c>active</c> (<c>000aacce</c>), <c>nm_green</c> (<c>000aacda</c>) and <c>cstats_2</c> (<c>000aacea</c>).</summary>
+	/// <summary>The font slots of <c>title</c> (<c>000aacc6</c>) and of the labels: <c>gray</c> (<c>000aacca</c>), <c>active</c> (<c>000aacce</c>), <c>nm_green</c> (<c>000aacda</c>) and <c>cstats_2</c> (<c>000aacea</c>).</summary>
 	private const int TitleFontSlot = 0, LabelFontSlot = 1, ActiveFontSlot = 2, GreenFontSlot = 5, Stats2FontSlot = 9;
 
 	/// <summary>The plate's colors: its top and left edges, its right, its bottom.</summary>
@@ -39,7 +39,7 @@ public sealed class Es1MTWindow : Es1DUIWindow {
 	/// <paramref name="rect"/>): <c>DUIWindow_Ctor</c> over the rect; <c>res32\menu&lt;id&gt;.dba</c> loaded, id 9999's
 	/// number drawn with <c>Math_RandomBelow</c>(5) (<see cref="Es1ShellRandom.Below"/>); the title font; the label font,
 	/// <c>nm_green</c> for the windows 999, 1240 and 4444, <c>cstats_2</c> for 1610 and 1800, <c>active</c> for 1920 (the six
-	/// ids at <c>00081174</c>) and <c>cpylw</c> for any other; the title copied, empty for none; no labels and no hotspots.
+	/// ids at <c>00081174</c>) and <c>gray</c> for any other; the title copied, empty for none; no labels and no hotspots.
 	/// </summary>
 	public Es1MTWindow(Es1MenuContext context, short id, string? title, Es1Rect rect) : base(context.Display, rect) {
 		_context = context;

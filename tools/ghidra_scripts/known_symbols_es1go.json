@@ -817,7 +817,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_LoadStylesAndFonts",
-      "description": "No arguments: WidgetStyles_Load (00044aa4)(dat\\styles); then dfn\\title, cpylw, active, pushed, inactive, nm_green and nm_red1 each through 0004b757, its result to the dwords Shell_Fonts (000aacc6) to 000aacde, four bytes apart; then dba\\corners through Resource_LoadBitmapArray (0004b7df) into 000ab4ee. ES1DBSIM's Widget_LoadStylesAndFonts (00045e10) with the last two fonts green6x8 and red6x8. Caller found by es2_xref: 00012ec7, which then loads CFG\\styles.dat with WidgetStyles_Load and res32\\corners.dba with Resource_LoadBitmapArray (0004b7df).",
+      "description": "No arguments: WidgetStyles_Load (00044aa4)(dat\\styles); then dfn\\title, gray, active, pushed, inactive, nm_green and nm_red1 (the strings 0007d9a5 to 0007d9d0) each through 0004b757, its result to the dwords Shell_Fonts (000aacc6) to 000aacde, four bytes apart; then dba\\corners through Resource_LoadBitmapArray (0004b7df) into 000ab4ee. ES1DBSIM's Widget_LoadStylesAndFonts (00045e10) with the second font cpylw and the last two green6x8 and red6x8. Caller found by es2_xref: 00012ec7, which then loads CFG\\styles.dat with WidgetStyles_Load and res32\\corners.dba with Resource_LoadBitmapArray (0004b7df).",
       "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
       "verified": {
         "bytes": "00002818+243",
@@ -31933,7 +31933,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Shell_Fonts",
-      "description": "14 dwords, 000aacc6 to 000aacfa: the shell's font handles, which Shell_LoadData (00020630) loads and Widget_LoadStylesAndFonts (00002818) overwrites the first seven of. Entry 5, 000aacda, is nm_green, the text box's font.",
+      "description": "14 dwords, 000aacc6 to 000aacfa: the shell's font handles, which Shell_LoadData (00020630) loads and Widget_LoadStylesAndFonts (00002818) overwrites the first seven of with the same seven files, title, gray, active, pushed, inactive, nm_green and nm_red1. Entry 5, 000aacda, is nm_green, the text box's font.",
       "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads"
     },
     {
