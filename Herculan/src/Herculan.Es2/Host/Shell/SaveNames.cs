@@ -14,8 +14,8 @@ namespace Herculan.Es2.Host.Shell;
 /// </summary>
 sealed class SaveNames {
 	/// <summary>
-	/// The row the debrief's auto-save writes: the tenth, which reads <c>10.</c>. Retail's own slot 10 is the hidden
-	/// current-game autosave, a different slot.
+	/// The row the debrief's auto-save writes: the screen's last. Retail's own slot 10 is the hidden current-game
+	/// autosave, a different slot.
 	/// </summary>
 	public const int AutoSaveRow = ShellSaveScreen.RowCount - 1;
 
@@ -47,7 +47,7 @@ sealed class SaveNames {
 
 	/// <summary>
 	/// The debrief's auto-save under the tweak: the game in progress written to <see cref="AutoSaveRow"/> as ACCEPT
-	/// writes a row, named <c>AUTO SAVE</c> and the game's own name.
+	/// writes a row, named by the <c>save.auto_save_name</c> text around the game's own name.
 	/// </summary>
 	public void AutoSaveAfterDebrief() {
 		if (!TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.AutoSaveSlot10) || GameName() is not { } name) {

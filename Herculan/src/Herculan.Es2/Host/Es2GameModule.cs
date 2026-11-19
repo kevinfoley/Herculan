@@ -26,25 +26,49 @@ public sealed class Es2GameModule(EditorTurn editor) : IGameModule {
 
 	GameIdentity IGameModule.Identity => Identity;
 
+	/// <inheritdoc/>
+	/// <remarks>Earthsiege 2's are <see cref="Es2A11ySettingDefinitions.All"/>.</remarks>
 	public IReadOnlyList<A11ySettingDefinition<bool>> AccessibilitySettings => Es2A11ySettingDefinitions.All;
 
+	/// <inheritdoc/>
 	public string? FirstOwnOption => _options.FirstOwnOption;
 
+	/// <inheritdoc/>
+	/// <remarks>The <see cref="HostSession.InstallRoot"/> of the session <see cref="Run"/> holds.</remarks>
 	public string? ActiveInstall => _session?.InstallRoot;
 
+	/// <inheritdoc/>
+	/// <remarks>Earthsiege 2's is <see cref="Es2OptionParser.Usage"/>.</remarks>
 	public string Usage => Es2OptionParser.Usage;
 
+	/// <inheritdoc/>
+	/// <remarks>The flags are <see cref="Es2OptionParser"/>'s, parsed into this module's <see cref="Es2Options"/>.</remarks>
 	public bool TryParseOption(string[] args, ref int i, List<string> errors) => Es2OptionParser.TryParse(_options, args, ref i, errors);
 
+	/// <inheritdoc/>
+	/// <remarks>The checks are <see cref="Es2OptionParser.Check"/>'s.</remarks>
 	public void CheckOptions(CommonOptions options, List<string> errors) => Es2OptionParser.Check(_options, options, errors);
 
+	/// <inheritdoc/>
+	/// <remarks>
+	/// The one such run is <c>--install</c>: <see cref="DiscInstall.Run"/>, when both its source and its destination were
+	/// given.
+	/// </remarks>
 	public int? RunWithoutInstall() => _options is { InstallSource: { } source, InstallDestination: { } destination }
 		? DiscInstall.Run(source, destination, _options.InstallSize, _options.InstallLanguage, _options.InstallDiscFiles)
 		: null;
 
+	/// <inheritdoc/>
+	/// <remarks>Earthsiege 2's prompt is <see cref="InstallPrompt.Run"/>.</remarks>
 	public string? AskForInstall(LocalizationTable localization, string fontPath, string? refused, string dismissKey) =>
 		InstallPrompt.Run(localization, fontPath, refused, dismissKey);
 
+	/// <inheritdoc/>
+	/// <remarks>
+	/// Opens a <see cref="HostSession"/> on the install, first writing into <c>data\drive.cfg</c> a disc image found the
+	/// way the install was when the one it names opens no disc, then runs what the class summary lists. A switched run
+	/// (<see cref="GameRunContext.Switched"/>) always goes to the shell loop.
+	/// </remarks>
 	public int Run(GameRunContext context) {
 		var common = context.Options;
 		_options.MissionPath = common.MissionPath;

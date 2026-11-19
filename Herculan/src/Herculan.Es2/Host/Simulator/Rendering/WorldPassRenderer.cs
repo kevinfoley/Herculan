@@ -83,8 +83,8 @@ sealed class WorldPassRenderer : IDisposable {
 	/// Whether this frame's passes leave the player's own machine out: while looking out of its cockpit, the
 	/// cockpit node the eye rides sits well inside the torso, so its geometry would wrap the camera and fill the
 	/// canopy. The draw table's skip for the object the camera rides leaves it out of the same passes, as the
-	/// original's does (ObjectDrawTable). The observer camera and the external view both put it back, which is
-	/// the only way to see the machine you are flying.
+	/// original's does (ObjectDrawTable). The observer camera and the external view both put it back, and are the
+	/// only views that show the player's own machine.
 	/// </summary>
 	public bool LeavePlayerOut { get; set; }
 
@@ -102,14 +102,22 @@ sealed class WorldPassRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// The MFD's MISSILE CAM, from inside the overlay's pass over the forward panel: the world as
-	/// MfdMissileViewScreen_Paint draws it, from the camera the screen placed, into the screen's own rect. It is
-	/// the cockpit view's draw again with four things changed, all of them the paint's own: no sky — the overlay
-	/// has already flooded the rect with the colour the paint floods it with — the terrain untextured whatever
-	/// TERRAIN TEXTURE says, every object submitted, the machine being flown among them and the ground shapes
-	/// within range of this camera, since the view object is the camera and not the cockpit, and every level
-	/// of detail picked by size on this screen from this camera. The cockpit's items are put back after it.
+	/// Draws the MFD's MISSILE CAM, from inside the overlay's pass over the forward panel: the world as
+	/// <c>MfdMissileViewScreen_Paint</c> (<c>0043fe1c</c>) draws it, from the camera the screen placed, into the screen's
+	/// own rect. The cockpit's items are put back after it.
 	/// </summary>
+	/// <remarks>
+	/// It is the cockpit view's draw again with four changes, all of them the paint's own:
+	/// <list type="bullet">
+	/// <item>No sky: the overlay has already flooded the rect with the colour the paint floods it with.</item>
+	/// <item>The terrain is untextured whatever TERRAIN TEXTURE says.</item>
+	/// <item>
+	/// Every object is submitted, the machine being flown among them, with the ground shapes within range of this camera,
+	/// since the view object is the camera and not the cockpit.
+	/// </item>
+	/// <item>Every level of detail is picked by size on this screen from this camera.</item>
+	/// </list>
+	/// </remarks>
 	public void DrawMissileView(GL gl, int x, int y, int width, int height, Camera view, Camera cockpitCamera) {
 		view.FarPlane = cockpitCamera.FarPlane;
 
@@ -162,8 +170,7 @@ sealed class WorldPassRenderer : IDisposable {
 	//
 	// This is the only view of the animation system there is. The mesh is baked at the shape's default
 	// pose and drawn with one matrix per object (see DtsMeshBuilder.ResolveGroupOffset), so a playing
-	// walk cycle moves nothing on screen; before this, the only observable output of the whole thread
-	// was where the player's eye ended up. Bones are drawn through solid geometry on purpose — the
+	// walk cycle moves nothing on screen. Bones are drawn through solid geometry on purpose: the
 	// skeleton is inside the model it belongs to.
 	private void DrawSkeleton(Camera view, int viewportWidth, int viewportHeight) {
 		if (!_debugOptions.DrawSkeleton || _pilotMech == null) {

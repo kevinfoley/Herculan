@@ -19,10 +19,11 @@ sealed class PauseMenuHost(SimulatorFrame frame, ModalPanels panels, MissionOutc
 	/// <inheritdoc/>
 	public void Hold() => frame.Pause();
 
-	/// <summary>
-	/// Mouse events go on being queued for the cockpit while the frame is held, so a click on the menu would land on the
-	/// console behind it once the mission runs on; they are dropped as it resumes.
-	/// </summary>
+	/// <inheritdoc/>
+	/// <remarks>
+	/// Drops the mouse events queued for the cockpit while the frame was held, so that a click on the menu does not land on
+	/// the console behind it once the mission runs on.
+	/// </remarks>
 	public void Resume() {
 		frame.Unpause();
 		cockpit.Reset();

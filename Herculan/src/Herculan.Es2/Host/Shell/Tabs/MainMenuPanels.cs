@@ -119,7 +119,7 @@ sealed class MainMenuPanels {
 		}
 	}
 
-	/// <summary>PRACTICE MISSIONS, 004318ab: MainMenu_Hide, PracticeScreen_Show (0044bc92), then the mode to 0.</summary>
+	/// <summary>PRACTICE MISSIONS, MainMenu_OnPracticeMissions (004318ab): MainMenu_Hide, PracticeScreen_Show (0044bc92), then the mode to 0.</summary>
 	public void OpenPractice() {
 		_practiceScreen ??= new ShellPracticeScreen(_game.Options);
 		_practiceScreen.Show();
@@ -167,7 +167,7 @@ sealed class MainMenuPanels {
 		}
 	}
 
-	// INSTANT ACTION, 004312a6: InstantAction_Active (0047363c) set, training mode, then InstantAction_SelectDemo (0044befb) —
+	// INSTANT ACTION, MainMenu_OnInstantAction (004312a6): InstantAction_Active (0047363c) set, training mode, then InstantAction_SelectDemo (0044befb) —
 	// row 8 + option 46 selected, option 46 stepped modulo 3, the options committed and all saved — and
 	// Begin Mission's path from the new career on. The original blanks the screen first, full screen,
 	// or shows and hides the palette scope in a window, whose black fill the window closing straight
@@ -218,8 +218,8 @@ sealed class MainMenuPanels {
 		_repaint();
 	}
 
-	// SKILL LEVEL (0043c01d) steps the skill; CANCEL (0043c098) is Registration_Hide then MainMenu_Show;
-	// ACCEPT (0043c0fb) hides the screen and starts the career (CampaignScreens.StartCampaign).
+	// SKILL LEVEL (Registration_StepSkill, 0043c01d) steps the skill; CANCEL (Registration_OnCancel, 0043c098) is Registration_Hide then MainMenu_Show;
+	// ACCEPT (Registration_OnAccept, 0043c0fb) hides the screen and starts the career (CampaignScreens.StartCampaign).
 	private void ClickRegistration(ShellRegistrationButton button) {
 		switch (button) {
 			case ShellRegistrationButton.SkillLevel:
@@ -237,7 +237,7 @@ sealed class MainMenuPanels {
 		_repaint();
 	}
 
-	// VIEW DEMO, 0043156f: the screen blanked, full screen only, then exit code 5 and the loop's end. The
+	// VIEW DEMO, MainMenu_OnViewDemo (0043156f): the screen blanked, full screen only, then exit code 5 and the loop's end. The
 	// launcher answers 5 by starting the simulator with -D, which the caller does here.
 	private void ViewDemo() {
 		_outcome.Blanked = _window.FullScreen;
@@ -245,7 +245,7 @@ sealed class MainMenuPanels {
 		_window.Close();
 	}
 
-	// SAVE/RESTORE, 00431498: hide the menu, set the campaign mode to 1 (Shell_SetCampaignMode (0040e69e)), point the
+	// SAVE/RESTORE, MainMenu_OnSaveRestore (00431498): hide the menu, set the campaign mode to 1 (Shell_SetCampaignMode (0040e69e)), point the
 	// save screen's EXIT back here, and enter it.
 	private void OpenSaveRestore() {
 		_game.SetMode(ShellCampaignMode.Campaign);
@@ -255,7 +255,7 @@ sealed class MainMenuPanels {
 		_repaint();
 	}
 
-	// QUIT, 00431727: blank the screen (Shell_BlankScreen, 0040723d) and end the main loop, with no prompt
+	// QUIT, MainMenu_OnQuit (00431727): blank the screen (Shell_BlankScreen, 0040723d) and end the main loop, with no prompt
 	// and no exit code of its own, so the shell returns the 0 its startup left and the launcher stops
 	// (docs/retail/shell/main-menu.md#quit). The loop's common exit autosaves after the window's run returns.
 	private void Quit() {
@@ -263,7 +263,7 @@ sealed class MainMenuPanels {
 		_window.Close();
 	}
 
-	// PREFERENCES, 0043150c: MainMenu_Hide, then PreferencesScreen_Enter (004366b5), which seeds the
+	// PREFERENCES, MainMenu_OnPreferences (0043150c): MainMenu_Hide, then PreferencesScreen_Enter (004366b5), which seeds the
 	// checkboxes from the options and shows the screen.
 	private void OpenPreferences() {
 		_preferencesScreen ??= new ShellPreferencesScreen(_game.Options,
@@ -297,8 +297,8 @@ sealed class MainMenuPanels {
 	}
 
 	// The five parameter labels step their option, forward on the left release and back on the right
-	// (0044bf29-0044c21d). Main Menu (0044c2da) hides the screen and shows the menu. Begin Mission
-	// (0044c396) is BeginPractice.
+	// (PracticeScreen_OnDamage (0044bf29) to PracticeScreen_OnHercType (0044c21d)). Main Menu (PracticeScreen_OnMainMenu,
+	// 0044c2da) hides the screen and shows the menu. Begin Mission (PracticeScreen_OnBeginMission, 0044c396) is BeginPractice.
 	private void ClickPracticeButton(ShellPracticeButton button) {
 		if (_practiceScreen == null) {
 			return;
@@ -320,7 +320,7 @@ sealed class MainMenuPanels {
 		_repaint();
 	}
 
-	// Begin Mission (0044c396): the options committed and saved to prefs.cfg, then LaunchTraining on the
+	// Begin Mission, PracticeScreen_OnBeginMission (0044c396): the options committed and saved to prefs.cfg, then LaunchTraining on the
 	// lit row.
 	private void BeginPractice() {
 		_game.Options.Commit();

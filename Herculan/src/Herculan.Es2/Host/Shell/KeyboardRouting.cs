@@ -92,16 +92,14 @@ sealed class KeyboardRouting {
 	}
 
 	// MainWndProc (00404a2c)'s display keys (docs/retail/shell/main-menu.md#full-screen-asks-first), each gated
-	// on no movie playing and the startup sequence being over. Alt+Enter toggles full screen on the Enter key's release,
-	// VSHELL's Display_ToggleFullScreen (00407085): retail sets an exclusive 640x480 8-bit display mode with the window's
-	// frame pushed off the screen, confines the pointer to the screen and centres it, and going back releases DirectDraw,
-	// which restores the desktop's mode, and centres the window; here the window covers the monitor at its current mode
-	// instead (FrontEndWindow.ToggleFullScreen), a divergence the user chose so that no display mode changes;
-	// Alt+Tab, Alt+Esc and Ctrl+Esc leave it on either edge (Display_LeaveFullScreen, 0040722e), Alt+Tab left out
-	// here at the user's request so switching away keeps full screen (EngineWindow.ToggleFullScreen). Each then writes option 6
-	// from the window and, with the preferences screen up, relights its display group; otherwise it
-	// commits the options without their handlers and writes all 54. Alt+Enter skips the gate here at the user's request,
-	// so it works during the intro movies and the startup sequence too (KNOWN_ISSUES_ES2.md).
+	// on no movie playing and the startup sequence being over. Alt+Enter toggles full screen on the Enter key's release
+	// (Display_ToggleFullScreen, 00407085), and Alt+Esc and Ctrl+Esc leave it on either edge (Display_LeaveFullScreen,
+	// 0040722e). Each then writes option 6 from the window and, with the preferences screen up, relights its display
+	// group; otherwise it commits the options without their handlers and writes all 54.
+	// This engine departs from retail three ways. Full screen covers the monitor at its current mode rather than setting
+	// retail's exclusive display mode, so no display mode changes (FrontEndWindow.ToggleFullScreen). Alt+Tab does not
+	// leave full screen, so switching away keeps it (EngineWindow.ToggleFullScreen). Alt+Enter skips the gate, so it
+	// works during the intro movies and the startup sequence too (KNOWN_ISSUES_ES2.md).
 	private void DisplayHotkey(Key key, bool released) {
 		var keyboard = _window.Keyboard;
 		if (keyboard == null) {

@@ -90,7 +90,7 @@ sealed class CanvasContent {
 		}
 
 		// Tabs 2-7 switch palette through the scope, whose paint blacks out everything below the
-		// strip; the tab's screen, if one is ported, draws over that. The lunar movie plays over the
+		// strip; the tab's screen draws over that. The lunar movie plays over the
 		// same fill.
 		bool filled = ShellPalette.FillsScope(_screen.SelectedTab) || _movies.ScopeFilled;
 		if (filled) {

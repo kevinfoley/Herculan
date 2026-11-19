@@ -31,8 +31,7 @@ sealed class ShellCanvas : IDisposable {
 
 	/// <summary>
 	/// Which palette a tab is drawn through: Shell_SelectTabPalette (0043b162)'s, unless --shell-palette
-	/// pins one entry everywhere. A tab with no screen ported shows only the strip over the scope's black
-	/// fill, so its palette colours the strip alone, as retail's does.
+	/// pins one entry everywhere.
 	/// </summary>
 	public static string PaletteFor(string? pinnedPalette, int tab, ShellMissionView missionView, int campaignStage) {
 		if (pinnedPalette != null) {
@@ -83,9 +82,8 @@ sealed class ShellCanvas : IDisposable {
 		_renderer?.Dispose();
 		_renderer = new ShellRenderer(_gl, Art);
 
-		// The new renderer has no content texture, and the old one's was resolved through the old
-		// palette anyway — so the tab's content is rasterized again through the palette it is now
-		// being drawn in. TabNavigation.Activate calls CanvasContent.Repaint after this returns.
+		// The new renderer has no content texture until the next CanvasContent.Repaint rasterizes the tab's content
+		// through the new palette.
 	}
 
 	public void Draw(ShellScreenLayout layout, ShellScreen screen) => _renderer?.Draw(layout, screen);

@@ -25,22 +25,42 @@ public static class Launcher {
 	}
 
 	/// <summary>
-	/// The front end and the simulator in turn, each one's exit code the next one's state. Rock &amp; Roll closes
-	/// the shell on 2 and hands back a mission; VIEW DEMO closes it on 5, which the launcher answers with -D, a
-	/// demo tape; the mission's own code then brings the shell back up, 3 into the debrief and 6 after a demo;
-	/// and 0, QUIT's, ends the run. The original spawns an executable per turn, each opening and closing a window of
-	/// its own; here each is a turn in this one process's one window (<see cref="HostWindow"/>), which shows black
-	/// between turns where the original showed whatever was behind it, and the mission's loading screen while a
-	/// mission loads. The files between turns cross through the install's <c>data\</c>, as the original's do. The
-	/// <c>--shell-*</c> staging flags stage the first turn only; each later turn starts in the mode the last one
-	/// ended in. Every simulator launch is handed the count of those before it, as -R&lt;n&gt;. The Settings menu's
-	/// restart is this engine's own turn: the shell again, on whatever install the session now names. So is the
-	/// Editor item's: the mission editor, whose Back to game brings the shell up again as the restart does, whose Play
-	/// runs its mission and then brings the editor back on it, and whose window closing ends the run as the shell's does.
-	/// So is Custom Missions' Play: the mission it hands over, then the shell again as after the editor, however the
-	/// mission ended, with no debrief; the window closing in the mission ends the run. The "Game" menu's "Switch to" ends
-	/// the run after the shell's turn, leaving the window open for the other game (<see cref="GameSwitch"/>).
+	/// Runs the front end and the simulator in turn, as <c>ES.EXE</c> does, with each turn's exit code choosing the next
+	/// turn and the state it starts in (docs/retail/command-line.md#the-loop). Each simulator launch is given the count of
+	/// launches before it, as retail's <c>-R&lt;n&gt;</c> is. Returns the exit code that ended the run.
 	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// Retail spawns an executable per turn, each with a window of its own. Here every turn runs in the one
+	/// <see cref="HostWindow"/>, which shows black between turns where retail showed whatever was behind it, and the
+	/// mission's loading screen while a mission loads. Files pass between turns through the install's <c>data\</c> folder,
+	/// as retail's do.
+	/// </para>
+	/// <para>
+	/// <c>--shell-tab</c> and <c>--shell-practice</c> stage the first shell turn only; the other <c>--shell-*</c> flags
+	/// apply to every shell turn. Each later shell turn starts in the campaign mode the previous one ended in.
+	/// </para>
+	/// <para>
+	/// Three shell exits are this engine's own, outside retail's codes:
+	/// </para>
+	/// <list type="bullet">
+	/// <item><see cref="ShellHost.SettingsRestartCode"/>: the shell runs again, on whatever install the session now names.</item>
+	/// <item>
+	/// <see cref="ShellHost.EditorExitCode"/>: the mission editor runs. Its "Back to game" brings the shell back up; its
+	/// "Play" runs the mission and then reopens the editor on it.
+	/// </item>
+	/// <item>
+	/// <see cref="ShellHost.CustomMissionExitCode"/>: the mission "Custom Missions" hands over runs, and the shell comes back
+	/// up however the mission ended, with no debrief.
+	/// </item>
+	/// </list>
+	/// <para>
+	/// Closing the window ends the run with 0 in the shell, in the editor, and in a mission that the editor's "Play" or
+	/// "Custom Missions" started; so does a termination signal after any turn. The
+	/// "Game" menu's "Switch to" ends it with 0 after the shell's turn, leaving the window open for the other game
+	/// (<see cref="GameSwitch"/>). "VIEW DEMO" with <c>--record</c> given ends it with 1.
+	/// </para>
+	/// </remarks>
 	public static int RunShellLoop(HostSession session, HostWindow window, Es2Options options, EditorTurn editor) {
 		var shell = options.Shell;
 		var staging = new SimulatorStaging(options.StagedStart, options.StagedScreenshot, screenshotRun: options.ScreenshotPath != null);

@@ -25,7 +25,7 @@ sealed class HddGamepad {
 	private const float StickAtRest = 0.2f;
 	private const float TriggerAtRest = 0.25f;
 
-	// GLFW's standard gamepad layout: the left and right sticks, and triggers.
+	// The left and right sticks' indices in GLFW's standard gamepad layout.
 	private const int LeftStick = 0;
 	private const int RightStick = 1;
 
@@ -119,7 +119,7 @@ sealed class HddGamepad {
 	/// <summary>
 	/// Up, down, left or right (0-3) for a push past half the stick's travel, whichever of its axes is the larger; the
 	/// arrow already held while the push stays past a little over a third; none (-1) otherwise. GLFW reads a stick pushed up as
-	/// negative Y. <see cref="PanelGamepad"/> leans on it too.
+	/// negative Y. <see cref="PanelGamepad"/> steps its focus with it too.
 	/// </summary>
 	public static int ArrowOf(Vector2 stick, int held) {
 		float push = stick.Length();

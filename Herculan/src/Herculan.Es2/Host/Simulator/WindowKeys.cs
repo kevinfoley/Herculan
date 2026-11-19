@@ -47,10 +47,9 @@ sealed class WindowKeys : ISystemButtonActions {
 	/// Video_ToggleFullscreen (004666c4). Retail takes DirectDraw exclusive at the 3D view's size, an 8-bit
 	/// display mode, with the window topmost over it, confines the pointer to the screen and centres it;
 	/// going back releases DirectDraw and restores the window rect it saved on the way in
-	/// (docs/retail/simulation/cockpit-input.md, "The two system buttons"). Here it is the same move the front end
-	/// makes for VSHELL's toggle (FrontEndWindow.ToggleFullScreen): the window covers its monitor at the monitor's own mode, the
-	/// cockpit scaled into it as it is in a window, which is the divergence the user chose there so that
-	/// no display mode changes.
+	/// (docs/retail/simulation/cockpit-input.md, "The two system buttons"). This engine makes the same move the front end
+	/// makes for VSHELL's toggle (FrontEndWindow.ToggleFullScreen): the window covers its monitor at the monitor's own
+	/// mode, with the cockpit scaled into it as it is in a window, so that no display mode changes.
 	/// </summary>
 	public void ToggleFullScreen() => _window.ToggleFullScreen(_input.Mouse);
 
@@ -78,22 +77,30 @@ sealed class WindowKeys : ISystemButtonActions {
 	}
 
 	/// <summary>
-	/// The simulator's two full-screen key paths. [Alt+Enter] is command 0x21c, which Sim_DispatchCommand
-	/// offers Sim_HandleWindowKey (0045fd60) after the widget tree, so it comes through the dispatcher's
-	/// own input — a replaying tape's keys during a replay. During a replay Input_ReadPlayerInput also
-	/// offers Sim_HandleWindowKey the live keyboard's command, so the player's own [Alt+Enter] works too.
-	/// Retail's -B stops a replay toggling; this host has no -B. [Alt+Enter] also toggles here while a modal
-	/// panel (the pause panel among them) holds the input, which is this engine's choice, made without
-	/// settling whether retail's panel loops reach the dispatcher for it; the panels ignore an [Enter] with
-	/// [Alt] held (ModalPanels.PanelKey), so the toggle never also presses a panel button. The other path
-	/// is Key_WndProcHook (00477ae0), which hands 0x20f [Alt+Tab], 0x201 [Alt+Esc] and 0x401 [Ctrl+Esc] to
-	/// Video_LeaveFullscreen (004668b0) before anything else sees a key, so those read the live keyboard
-	/// always. [Alt+Tab] is left out here at the user's request, so switching away keeps the window full
-	/// screen behind the one switched to, as a modern game's does (EngineWindow.ToggleFullScreen). The hook
-	/// matches them before SimCommandMask strips [Shift], so with [Shift] held they are other codes;
-	/// [Alt+Enter] goes through the mask, so [Shift] does not matter to it. Both act on the key going down,
-	/// as the hook passes a key-down message on and marks a key-up one.
+	/// Reads the simulator's two full-screen key paths
+	/// (docs/retail/simulation/cockpit-input.md#the-two-system-buttons). Both act on the key going down, as retail's hook
+	/// passes a key-down message on and marks a key-up one.
 	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// [Alt+Enter] toggles full screen. It is command 0x21c, which Sim_DispatchCommand offers Sim_HandleWindowKey
+	/// (0045fd60) after the widget tree, so it comes through the dispatcher's own input: a replaying tape's keys during a
+	/// replay. During a replay Input_ReadPlayerInput also offers Sim_HandleWindowKey the live keyboard's command, so the
+	/// player's own [Alt+Enter] works too. Retail's -B stops a replay toggling; this host has no -B. It goes through
+	/// SimCommandMask, so [Shift] does not matter to it.
+	/// </para>
+	/// <para>
+	/// This engine also toggles on [Alt+Enter] while a modal panel, the pause panel among them, holds the input. The
+	/// panels ignore an [Enter] with [Alt] held (ModalPanels.PanelKey), so the toggle never also presses a panel button.
+	/// </para>
+	/// <para>
+	/// [Alt+Esc] (0x201) and [Ctrl+Esc] (0x401) leave full screen. Retail's Key_WndProcHook (00477ae0) hands them, with
+	/// [Alt+Tab] (0x20f), to Video_LeaveFullscreen (004668b0) before anything else sees a key, so they read the live
+	/// keyboard always. The hook matches them before SimCommandMask strips [Shift], so with [Shift] held they are other
+	/// codes. This engine leaves [Alt+Tab] out, so switching away keeps the window full screen behind the one switched to
+	/// (EngineWindow.ToggleFullScreen).
+	/// </para>
+	/// </remarks>
 	public void ReadFullScreenKeys() {
 		bool replaying = _tape.Playing;
 		var liveKeys = _input.LiveKeys;

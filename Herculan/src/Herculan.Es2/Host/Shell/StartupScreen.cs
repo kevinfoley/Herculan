@@ -7,7 +7,7 @@ namespace Herculan.Es2.Host.Shell;
 /// The startup sequence that first brings the main menu up, drawn through palette 1 as the startup
 /// installs it before showing the sequence. A run staged on another screen, or for a screenshot,
 /// starts without it — the staging flags are this engine's own. A return from a mission puts it up only
-/// where the debrief sends the player back to the menu (CampaignScreens.ReturnFromMission).
+/// where the debrief sends the player back to the menu (<see cref="CampaignScreens.ReturnFromMission"/>).
 /// </summary>
 sealed class StartupScreen {
 	private readonly ShellCanvas _canvas;

@@ -331,14 +331,15 @@ public sealed class ShellHost : IDisposable {
 			_menu.OpenPractice();
 		}
 
-		// The startup's two intro movies (Shell_BuildScreensAndStart, 004012b0), played before the startup
-		// sequence — except after a demo, whose -X6 goes straight to the sequence, after a mission, whose -X3
-		// goes to the debrief, and after the Settings menu's restart, the editor or a custom mission, which go to the
-		// sequence as a demo's does.
+		// A return from a custom mission opens the Custom Missions window again.
 		if (_returnCode == CustomMissionExitCode) {
 			_customMissions.Open();
 		}
 
+		// The startup's two intro movies (Shell_BuildScreensAndStart, 004012b0), played before the startup
+		// sequence — except after a demo, whose -X6 goes straight to the sequence, after a mission, whose -X3
+		// goes to the debrief, and after the Settings menu's restart, the editor or a custom mission, which go to the
+		// sequence as a demo's does.
 		if (_fromMission) {
 			_loop.ReturnFromMission();
 		} else if (_startup.Present
@@ -436,10 +437,10 @@ public sealed class ShellHost : IDisposable {
 		var layout = ShellScreenLayout.Create(framebuffer.X, framebuffer.Y);
 		var (canvasX, canvasY) = layout.WindowToCanvas(windowX, windowY);
 
-		// The map's intro runs as the original's does, in a loop of its own that takes nothing but a
-		// button going down or Esc or Space, each of which skips to its closing zoom
-		// (ShellMap_RunIntro (0040146a)). Every widget is out of reach until it ends — a divergence from
-		// retail.
+		// The map's intro takes nothing but a button going down or Esc or Space, each of which skips to its closing
+		// zoom, as ShellMap_RunIntro (0040146a) does (docs/retail/shell/mission-map.md#the-intro). Every widget is out
+		// of reach until it ends, so a click that skips never reaches the button under the pointer; whether retail
+		// delivers it once the intro ends is not established (KNOWN_ISSUES_ES2.md).
 		if (_mission.IntroUp() is { } intro) {
 			if (_buttons.SkipPressed(mouse, _window.Keyboard)) {
 				intro.Skip();

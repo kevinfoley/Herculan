@@ -62,16 +62,11 @@ sealed class CockpitRenderer : IDisposable {
 	// world runs straight across the panel seams at any pitch. Each panel's pass shares that camera and
 	// viewport and differs only in the scissor it is drawn under.
 	//
-	// The whole composite also slides vertically with the Heads-Down Display pan. The original's cockpit
-	// is a canvas twice the screen's height with the forward view's art at canvas row 0 and the HDD's at
-	// row 474, both blitted during mission bring-up, and switching between them is a scroll of the
-	// display window over that canvas — never a redraw (see CockpitViewGeometry, and CockpitPan for the
-	// transition's own machinery). This reproduces the same geometry with two quads at fixed canvas
-	// offsets and a moving window: the three cockpit panels are offset up by the pan distance, the HDD
-	// panel sits one travel-distance below them, and the 3D viewports ride along with their panels so
-	// the world scrolls out of frame exactly as the art does. The two views' art overlaps by six rows on
-	// the canvas — HB1 starts at row 474 and HB0 runs to 479 — and the original resolves that by blitting
-	// view 1 before view 0, so the draw order below does the same.
+	// The whole composite also slides vertically with the Heads-Down Display pan. Retail's cockpit is one canvas
+	// that the display window scrolls over (docs/retail/simulation/cockpit-views.md#cockpit-canvas; CockpitPan for the
+	// transition). This reproduces the same geometry with two quads at fixed canvas offsets and a moving window: the
+	// three cockpit panels are offset up by the pan distance, the HDD panel sits one travel-distance below them, and the
+	// 3D viewports ride along with their panels so the world scrolls out of frame exactly as the art does.
 	public void DrawThreePanelCockpitView(GL gl, int totalWidth, int totalHeight) {
 		// One placement for the whole frame, shared with the input path so a widget's click region cannot
 		// drift from the art it was drawn over — see CockpitScreenLayout.
@@ -82,9 +77,9 @@ sealed class CockpitRenderer : IDisposable {
 		var cockpitCamera = CloneCamera(_view.Camera);
 		cockpitCamera.PrincipalPoint = CockpitPrincipalPoint(layout.Center, world, CockpitViewGeometry.ForwardViewIndex);
 
-		// First, so the six-row overlap where the two views' art meets on the canvas resolves the way the
-		// original's VRAM does. Sim_InitMissionSession (004614fc) blits view 1 and then view 0, so HB0's
-		// bottom rows win over HB1's top rows and no sliver of the HDD shows under the dashboard at rest.
+		// First, so the six rows where the two views' art overlaps on the canvas (HB1 starts at row 474 and HB0 runs to
+		// 479) resolve the way retail's VRAM does. Sim_InitMissionSession (004614fc) blits view 1 and then view 0, so
+		// HB0's bottom rows win over HB1's top rows and no sliver of the HDD shows under the dashboard at rest.
 		if (_textures.HeadsDown != null && layout.HeadsDown is { } headsDown) {
 			DrawHeadsDownWorld(gl, headsDown);
 			_headsDown.Draw(headsDown.Viewport.X, headsDown.Viewport.Y,
@@ -305,9 +300,8 @@ sealed class CockpitRenderer : IDisposable {
 	// The three forward panels share one viewport and the forward view's centre, and that is retail's
 	// arithmetic rather than a simplification: a glance's centre is its own .VUE pair offset by its canvas
 	// origin, which puts it at the forward view's reticle, off the glance's inner edge — see
-	// docs/retail/simulation/cockpit-views.md, "The side glances are one image plane". Without a .VUE the fallback
-	// is APOCA's, which is a guess — but a far better one than the middle of the window, which is wrong
-	// for every herc in the game.
+	// docs/retail/simulation/cockpit-views.md, "The side glances are one image plane". Without a .VUE this engine falls
+	// back to APOCA's centre rather than the middle of the window, which is no herc's.
 	private Vector2 CockpitPrincipalPoint(CockpitScreenLayout.PlacedSurface surface, CockpitScreenLayout.Viewport world,
 			int viewIndex) {
 		var (centerX, centerY) = _view.ViewGeometry?.ProjectionCenter(viewIndex)

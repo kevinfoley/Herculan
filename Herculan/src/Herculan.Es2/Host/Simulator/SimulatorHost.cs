@@ -232,10 +232,10 @@ sealed class SimulatorHost : IDisposable {
 		}
 	}
 
-	// The player's own cockpit canopy art + HUD, drawn as three simultaneous panels (front/left/right) rather
-	// than the original's single keyboard-panned view — see docs/herculan/planning.md's Milestone 8 section and
-	// docs/retail/simulation/cockpit-views.md for why. Falls back to a single full-window 3D view when there's no
-	// player.mec or its cockpit assets are missing (e.g. a raw script.dat with no accompanying player.mec).
+	// The player's own cockpit canopy art and HUD, which this engine draws as three panels side by side (front, left,
+	// right) where retail shows one view at a time (CockpitRenderer.DrawThreePanelCockpitView;
+	// docs/retail/simulation/cockpit-views.md#views). Null, for a single full-window 3D view, when the mission has no
+	// player.mec (a bare script.dat run from the command line) or its cockpit art is missing.
 	// The theater's palette is the live palette — all 256 slots — with only this herc's own 24-entry
 	// cockpit colour scheme installed over slots 42-65. See CockpitPalette.
 	// Every other machine in the mission goes in with it: F5 draws the *target's* paper doll, and a doll
@@ -277,9 +277,9 @@ sealed class SimulatorHost : IDisposable {
 	private int RunWindow() {
 		_window.Run();
 
-		// Sim_Run's write-back (0045f3ee): option 6 against the live state, set through Prefs_SetOption and saved
-		// alone through Prefs_SaveOption -- a read-modify-write of that one byte. See SimulatorStartup for the one
-		// exception.
+		// Sim_Run's write-back (0045f3ee): option 6 against the live state, set through Prefs_SetOption (0045993c) and
+		// saved alone through Prefs_SaveOption (00459b64), a read-modify-write of that one byte. A run kept windowed that
+		// is still windowed when it ends writes nothing (SimulatorStart.KeptWindowed, decided in SimulatorStartup).
 		byte fullScreenNow = (byte)(_window.FullScreen ? 1 : 0);
 		if (_preferences[Prefs.DisplayModeOption] != fullScreenNow && !(_start.KeptWindowed && !_window.FullScreen)) {
 			_preferences.Set(Prefs.DisplayModeOption, fullScreenNow);
@@ -287,13 +287,13 @@ sealed class SimulatorHost : IDisposable {
 		}
 
 		// Sim_Shutdown (00461eec) runs however the mission ends: Mission_WriteResults (0042412c) writes results.dat and
-		// the counters back over mission.var beside the mission, and the exit code says where ES.EXE goes next. The
-		// original writes into the install's data\; a mission run straight from the install's own files writes
-		// nothing there (a divergence from retail), and a --screenshot run ends the host (a unique HERCULAN feature).
+		// the counters back over mission.var beside the mission, and the exit code says where ES.EXE goes next. Retail
+		// always writes into the install's data\. This engine writes only after a shell launch or a tape, and a mission
+		// run from the command line writes nothing; a --screenshot run returns 0.
 		//
-		// A window closed by the player is the original's WM_CLOSE, which dispatches [Ctrl+Q] (0x410) outside a
-		// demo and raises DemoAbort in one. This window cannot refuse the close, so the EXIT EARTHSIEGE? panel is
-		// not asked and its QUIT is taken as answered; a demo simply ends.
+		// A window closed by the player is retail's WM_CLOSE, which dispatches [Ctrl+Q] (0x410) outside a demo and raises
+		// DemoAbort in one. This window cannot refuse the close, so the "EXIT EARTHSIEGE?" panel is not asked and its QUIT
+		// is taken as answered; a demo ends.
 		if (!_outcome.Over && !_start.DemoTape && _options.ScreenshotPath == null) {
 			_outcome.QuitGame = true;
 		}
@@ -348,13 +348,13 @@ sealed class SimulatorHost : IDisposable {
 		_controller.Attach(input);
 		_controller.Saved += _joystick.Configure;
 
-		// WinMain's toggle, after the pointer is known so it is confined and centred as Video_ToggleFullscreen's is.
+		// WinMain's (00465288) toggle, after the pointer is known so it is confined and centred as
+		// Video_ToggleFullscreen's (004666c4) is.
 		_windowKeys.StartFullScreen(_start.StartFullScreen);
 
-		// No fixed-function face culling. DTS geometry is not reliably wound — the WinForms model viewer
-		// reached the same conclusion and never culls by winding either — so culling by it would punch
-		// holes in the mech rather than save fill rate. The format's own front/back choice, which does
-		// leave faces undrawn, is made per poly in the scene shader instead: see MeshVertex.Side.
+		// No fixed-function face culling: DTS geometry is not reliably wound, so culling by winding would punch holes
+		// in the HERC. The format's own front/back choice, which does leave faces undrawn, is made per poly in the scene
+		// shader instead (MeshVertex.Side).
 		gl.Disable(EnableCap.CullFace);
 
 		// The load is done: Sim_InitMissionSession takes the loading screen down to black before the first frame.
@@ -425,14 +425,15 @@ sealed class SimulatorHost : IDisposable {
 		_debugProbes.Sample(_view.PilotMech);
 	}
 
-	// The host's own actions: the menu bar, the pause menu and the two radials, on the inputs a Custom profile binds them
-	// to (CustomHostActions), or in Original mode on a gamepad's Select/Back, Start and stick clicks (GamepadHostButtons),
-	// which an Original map never reads (ControllerDevice.Reserved). The menu bar's input raises the bar or backs out of
-	// it, as [Shift+Esc] does, and puts ImGui's navigation on the bar it leaves up; the pause menu's raises the menu or
-	// resumes from it; and the radials' work the radials. A radial's choice goes
-	// in as its key, held in the live keyboard for this one frame before the frame reads its keys, so the cockpit takes
-	// it through its own keys and a recording takes the key itself: an order as its [Alt] key on FLASH COMM, a screen
-	// as its function key. Nothing is read while the window is out of focus.
+	// Reads the host's own actions: the menu bar, the pause menu and the two radials. A Custom profile binds them
+	// (CustomHostActions); in Original mode they are a gamepad's Select/Back, Start and stick clicks (GamepadHostButtons),
+	// which an Original map never reads (ControllerDevice.Reserved). Nothing is read while the window is out of focus.
+	//
+	// The menu bar's input raises the bar or backs out of it, as [Shift+Esc] does, and puts ImGui's navigation on the
+	// bar it leaves up. The pause menu's input raises the menu or resumes from it. A radial's choice goes in as its key,
+	// held in the live keyboard for this one frame before the frame reads its keys, so the cockpit takes it through its
+	// own keys and a recording takes the key itself: an order as its [Alt] key on FLASH COMM, a screen as its function
+	// key.
 	private void ReadGamepad() {
 		_input.LiveKeys?.HeldByHost.Clear();
 		_input.LiveKeys?.RepeatedByHost.Clear();
@@ -565,8 +566,8 @@ sealed class SimulatorHost : IDisposable {
 	}
 
 	// The terrain's texture, or none when the player has TERRAIN TEXTURE off — prefs option 8, which in
-	// the original reaches the draw as TerrainTexturingEnabled (004aab2c) and is tested per triangle by
-	// Terrain_DrawCellQuad. The mesh here is built once at zone load and carries both treatments already:
+	// retail reaches the draw as TerrainTexturingEnabled (004aab2c) and is tested per triangle by
+	// Terrain_DrawCellQuad (0046d344). The mesh here is built once at zone load and carries both treatments already:
 	// every vertex holds the untextured fill's palette index beside its atlas UV (see TerrainMeshBuilder),
 	// and the shader fills from it when no texture is bound. So the switch is the texture binding and nothing else, and it
 	// applies on the frame it is thrown, as the original's does.
@@ -613,9 +614,8 @@ sealed class SimulatorHost : IDisposable {
 		}
 
 		// The panel goes over whatever view is up. The cockpit path above draws through three sub-window
-		// viewports and leaves the last one set, so the full-window viewport is restored first —
-		// otherwise the panel is squeezed into the right-hand cockpit panel's rectangle and mostly
-		// scissored away, which is why it only ever appeared in the external view.
+		// viewports and leaves the last one set, so the full-window viewport is restored first; otherwise the panel
+		// would be squeezed into the right-hand cockpit panel's rectangle and mostly scissored away.
 		gl.Viewport(0, 0, (uint)Math.Max(size.X, 1), (uint)Math.Max(size.Y, 1));
 
 		if (_art?.Sprites is { } panelSprites && _textures.HudSprites != null) {

@@ -8,7 +8,8 @@ namespace Herculan.Es2.Host.Shell;
 sealed class ShellOutcome {
 	/// <summary>
 	/// <c>Shell_SetExitCode</c>'s code: the 0 the startup leaves, <see cref="ShellHost.DemoExitCode"/>,
-	/// <see cref="ShellHost.SettingsRestartCode"/> or <see cref="ShellHost.EditorExitCode"/>.
+	/// <see cref="ShellHost.SettingsRestartCode"/>, <see cref="ShellHost.EditorExitCode"/> or
+	/// <see cref="ShellHost.CustomMissionExitCode"/>.
 	/// </summary>
 	public int ExitCode { get; set; }
 

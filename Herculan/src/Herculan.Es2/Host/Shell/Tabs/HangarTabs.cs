@@ -31,8 +31,8 @@ sealed class HangarTabs {
 	// reads them, on the tab's entry and the armory's clicks, since the preferences screen changes them.
 	private ShellRepairScreen _repairScreen;
 
-	// The squad panel's three-quarter view, which the crew tab shows (and WEAPONS and BUILD would), and
-	// the crew screen's two portrait banks.
+	// The squad panel's three-quarter view, which the crew, weapons and build screens show, and the crew screen's two
+	// portrait banks.
 	private readonly ShellBayPictures _bayPictures;
 	private readonly ShellCrewPortraits _crewPortraits;
 	private ShellCrewScreen? _crewScreen;
@@ -177,7 +177,7 @@ sealed class HangarTabs {
 		_repaint();
 	}
 
-	// REPAIR (00434b2d), REPAIR ALL (00434c59) and CANCEL (00434d73). Each refills the rows and the readout
+	// REPAIR (Repair_OnRepair, 00434b2d), REPAIR ALL (Repair_OnRepairAll, 00434c59) and CANCEL (Repair_OnCancel, 00434d73). Each refills the rows and the readout
 	// panels after it, which the repaint does here.
 	private void ClickRepairButton(ShellRepairButton button) {
 		switch (button) {
@@ -259,7 +259,7 @@ sealed class HangarTabs {
 		}
 	}
 
-	// BUILD's handler (00446f3e) orders the chassis; SCRAP's (00446ee0) puts the dialog up.
+	// BUILD's handler (Build_OnBuild, 00446f3e) orders the chassis; SCRAP's (Build_OnScrap, 00446ee0) puts the dialog up.
 	private void ClickBuildButton(ShellBuildButton button) {
 		if (_buildScreen == null) {
 			return;
@@ -274,15 +274,15 @@ sealed class HangarTabs {
 		_repaint();
 	}
 
-	// Both SCRAP handlers, the build tab's (00446ee0) and the repair tab's (00434d15): 00447711 quotes
-	// the selected bay's machine and shows the dialog.
+	// Both SCRAP handlers, the build tab's (Build_OnScrap, 00446ee0) and the repair tab's (Repair_OnScrap, 00434d15):
+	// ScrapDialog_Show (00447711) quotes the selected bay's machine and shows the dialog.
 	private void OpenScrapDialog(int bay) {
 		_dialogs.Scrap.Open(bay, (_repairCosts?.ScrapValue(_game.Hangar.Bay(bay)) ?? 0) / ShellRepairCosts.KilogramsPerTon);
 		_repaint();
 	}
 
-	// CANCEL (00447c38) only takes the dialog down. ACCEPT (00447c96) takes it down, scraps the bay
-	// (0040e757), and on the repair tab moves to the first bay holding a finished machine; the build
+	// CANCEL (ScrapDialog_OnCancel, 00447c38) only takes the dialog down. ACCEPT (ScrapDialog_OnAccept, 00447c96) takes it
+	// down, scraps the bay (Hangar_ScrapSelected, 0040e757), and on the repair tab moves to the first bay holding a finished machine; the build
 	// tab keeps the bay, now empty, and regates.
 	private void ClickScrapDialogButton(ShellScrapDialogButton button) {
 		if (_dialogs.WeaponScrap.IsOpen) {
@@ -301,7 +301,7 @@ sealed class HangarTabs {
 		_repaint();
 	}
 
-	// The weapon dialog's CANCEL (00447d59) only takes it down. ACCEPT (WeaponScrapDialog_OnAccept,
+	// The weapon dialog's CANCEL (WeaponScrapDialog_OnCancel, 00447d59) only takes it down. ACCEPT (WeaponScrapDialog_OnAccept,
 	// 00447db7) takes it down, sells the whole stock (Armory_ScrapWeapons, 0040e7b2), trims or refills
 	// the queue by the build mode (Armory_RefreshQueue, 00412413), and refreshes the rows and readout.
 	private void ClickWeaponScrapDialogButton(ShellScrapDialogButton button) {
@@ -403,7 +403,7 @@ sealed class HangarTabs {
 		_repaint();
 	}
 
-	// Clear (00449ef4) takes the lit weapon's units off the queue. Scrap (Armory_OnScrap, 00449e78) puts
+	// Clear (Armory_OnClear, 00449ef4) takes the lit weapon's units off the queue. Scrap (Armory_OnScrap, 00449e78) puts
 	// the weapon scrap dialog up on the lit weapon's stock.
 	private void ClickArmoryButton(ShellArmoryButton button) {
 		if (_armoryScreen == null) {

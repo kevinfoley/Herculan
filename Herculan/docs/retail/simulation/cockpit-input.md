@@ -512,5 +512,6 @@ A dash is a click that hits no strip at all. The heads-down view is the one plac
 - **Open:** whether the system buttons show and take clicks in the external view. `SystemButtons_PaintForPointer` runs at the end of every `Sim_RenderFrame` and `CockpitMouse_ProcessQueue` from every `Input_ReadPlayerInput`, neither gated on view 4, but where view 4's canvas context puts a blit has not been traced.
 - **Deferred:** whether anything draws the `.DCI` cursor slots (§9). A search for the displacements `+0x226`, `+0x236` and `+0x23a` finds only the cursor-slot functions and `ColorSchemePanels_LoadAll`, and the image-change hooks they call are empty in driver 3.
 - **Deferred:** whether anything reaches `Widget_SetHitShape` (`0045234c`), the circular hit form's setter (§6), or `Widget_NotifySelfAndChildren_Thunk` (`00452bac`); `es2_xref.py` finds no caller of either.
+- **Open:** whether `Alt+Enter` (`0x21c`) reaches `Sim_HandleWindowKey` while an alert panel's own modal loop holds the input ([`alert-panels.md`](alert-panels.md)).
 - **Open:** whether other sim-driven HUD elements (weapon damage fill, hardpoint state boxes) use the shield rocker's flag-then-dirty-bit handoff between the sim tick and the paint pass (§8).
 

@@ -17,8 +17,9 @@ namespace Herculan.Es2.Host.Simulator;
 /// The mission's loading screen: <c>Sim_InitMissionSession</c> (<c>004614fc</c>) choosing it with
 /// <c>Sim_ReadLoadingScreenChoice</c> (<c>004613b4</c>) and showing it with <c>Sim_ShowLoadingScreen</c>
 /// (<c>00461344</c>), up while the mission loads (docs/retail/simulation/mission-loading.md). It is held in the host's
-/// window (<see cref="HostWindow.Hold"/>) and comes down when the mission's turn starts. The <c>hba</c> picture is the
-/// one panel mode 3 takes, as every other bank this engine's cockpit draws is (<see cref="HudSpriteSheet"/>).
+/// window (<see cref="HostWindow.Hold"/>) and comes down when the mission's turn starts. It always shows the 640x480
+/// <c>hba</c> picture, the one retail loads in panel mode 3, since this engine's cockpit draws every bank from <c>hba</c>
+/// (<see cref="HudSpriteSheet"/>).
 /// </summary>
 sealed class LoadingScreen(HostWindow window) : IDisposable {
 	private RgbaImage? _image;
@@ -51,10 +52,9 @@ sealed class LoadingScreen(HostWindow window) : IDisposable {
 	public void PumpEvents() => window.PumpEvents();
 
 	/// <summary>
-	/// <c>Sim_ReadLoadingScreenChoice</c>'s choice as the resource name <c>Sim_InitMissionSession</c> builds from it:
-	/// <c>LD_</c>, then <c>FLYR</c> when the fifth <c>int16</c> of <c>player.mec</c>, the player's machine type, is
-	/// 8 (the RAZOR) and <c>HERC</c> otherwise, then the theater in the script's first <c>int16</c>, plus one. Null when
-	/// either file cannot be read that far.
+	/// The loading screen's resource name for the mission at <paramref name="scriptPath"/>, built from the script's theater
+	/// and the player's machine type in <c>player.mec</c> as <c>Sim_InitMissionSession</c> builds it
+	/// (docs/retail/simulation/mission-loading.md#which-picture). Null when either file cannot be read that far.
 	/// </summary>
 	public static string? NameFor(string scriptPath) {
 		if (ReadInt16(scriptPath, 0) is not { } theater
@@ -76,7 +76,8 @@ sealed class LoadingScreen(HostWindow window) : IDisposable {
 		}
 	}
 
-	// Frame 0 of the bitmap through the screen's own palette, which Palette_UploadWhole installs whole before the blit.
+	// Frame 0 of the bitmap through the screen's own dpl palette, which retail installs (Palette_UploadWhole, 00481ed4)
+	// before the blit.
 	private static RgbaImage? Decode(GameContent content, string name) {
 		if (content.Read("dpl", name + ".DPL") is not { } paletteBytes
 			|| new DynamixPaletteTransformer().Parse(paletteBytes) is not DynamixPalette palette

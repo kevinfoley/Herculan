@@ -53,7 +53,7 @@ sealed class ShellDialogs {
 
 	/// <summary>
 	/// The dialogs that paint over the screen beneath them; REPLAY MISSION? and the DEBUG dialog paint alone
-	/// (CanvasContent.Repaint). <paramref name="lit"/> is the widget a press has lit.
+	/// (<see cref="CanvasContent.Repaint"/>). <paramref name="lit"/> is the widget a press has lit.
 	/// </summary>
 	public void PaintOver(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		Scrap.Paint(surface, text, sprites, lit);
