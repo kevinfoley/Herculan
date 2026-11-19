@@ -1,0 +1,92 @@
+THIRD-PARTY NOTICES
+
+The HERCULAN Engine includes the third-party components below. Each is used under its own licence, not under the MIT licence in LICENSE.txt.
+
+
+1. Nuked-OPL3 1.8 (as Herculan.Opl3.dll, a C# port)
+   Copyright (C) 2013-2020 Nuke.YKT
+   https://github.com/nukeykt/Nuked-OPL3
+   Licence: GNU Lesser General Public License, version 2.1 or later. The text is Herculan.Opl3.COPYING.txt beside the HERCULAN executable. The ported source is Herculan/src/Herculan.Opl3/ in the HERCULAN repository. You may replace Herculan.Opl3.dll with a modified copy built from that source.
+
+
+2. OpenAL Soft 1.23.1 (soft_oal.dll on Windows, libopenal.so on Linux)
+   Copyright (C) 1999-2007 by authors
+   https://openal-soft.org
+   Source: https://github.com/kcat/openal-soft/tree/1.23.1
+   The binary is the unmodified build distributed in the Silk.NET.OpenAL.Soft.Native 1.23.1 package (https://github.com/dotnet/Silk.NET).
+   Licence: GNU Library General Public License, version 2 or (at your option) any later version. HERCULAN distributes it under version 2.1 (the GNU Lesser General Public License), whose text is Herculan.Opl3.COPYING.txt beside the HERCULAN executable. You may replace this file with another build of OpenAL Soft.
+
+
+3. Open Sans (Assets/Fonts/Open_Sans/)
+   Copyright 2020 The Open Sans Project Authors (https://github.com/googlefonts/opensans)
+   Licence: SIL Open Font License, version 1.1. The text is Assets/Fonts/Open_Sans/OFL.txt beside the HERCULAN executable.
+
+
+4. GLFW 3.4 (glfw3.dll on Windows, libglfw.so.3 on Linux)
+   Copyright (c) 2002-2006 Marcus Geelnard
+   Copyright (c) 2006-2019 Camilla Löwy
+   https://www.glfw.org
+
+   This software is provided 'as-is', without any express or implied
+   warranty. In no event will the authors be held liable for any damages
+   arising from the use of this software.
+
+   Permission is granted to anyone to use this software for any purpose,
+   including commercial applications, and to alter it and redistribute it
+   freely, subject to the following restrictions:
+
+   1. The origin of this software must not be misrepresented; you must not
+      claim that you wrote the original software. If you use this software
+      in a product, an acknowledgment in the product documentation would
+      be appreciated but is not required.
+
+   2. Altered source versions must be plainly marked as such, and must not
+      be misrepresented as being the original software.
+
+   3. This notice may not be removed or altered from any source
+      distribution.
+
+
+5. Components under the MIT License
+
+   Silk.NET 2.23.0
+     Copyright (c) 2019-2020 Ultz Limited
+     Copyright (c) 2021- .NET Foundation and Contributors
+     https://github.com/dotnet/Silk.NET
+
+   ImGui.NET 1.90.8.1
+     Copyright (c) 2017 Eric Mellino and ImGui.NET contributors
+     https://github.com/ImGuiNET/ImGui.NET
+
+   cimgui (cimgui.dll on Windows, libcimgui.so on Linux)
+     Copyright (c) 2015 Stephan Dilly
+     https://github.com/cimgui/cimgui
+
+   Dear ImGui (built into cimgui)
+     Copyright (c) 2014-2024 Omar Cornut
+     https://github.com/ocornut/imgui
+
+   .NET runtime (built into the HERCULAN executable)
+     Copyright (c) .NET Foundation and Contributors
+     https://github.com/dotnet/runtime
+     The runtime's own third-party notices: https://github.com/dotnet/runtime/blob/main/THIRD-PARTY-NOTICES.TXT
+
+   Each of the components above is under the following licence, with its own copyright notice:
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.

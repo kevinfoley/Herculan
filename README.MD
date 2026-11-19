@@ -218,6 +218,8 @@ The result lands in `Herculan/src/Herculan.Engine.Host/bin/publish/<profile>/`; 
 
 Great thanks to Subject9x (developer of the original herc-works-mdk repository), Crow, and any other contributors for the initial reverse-engineering work that helped make this possible.
 
+The HERCULAN Engine's OPL3 (AdLib/Sound Blaster) music emulation is a C# port of [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) by Nuke.YKT, used under the LGPL 2.1 or later. The engine also ships [OpenAL Soft](https://openal-soft.org), [GLFW](https://www.glfw.org), [Silk.NET](https://github.com/dotnet/Silk.NET), [Dear ImGui](https://github.com/ocornut/imgui) and the [Open Sans](https://github.com/googlefonts/opensans) font; see [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) for their licenses.
+
 ## AI disclosure
 
 Development of HercWorks CSharp and HERCULAN Engine has been largely powered by Claude (with extensive prompting, testing, and feedback from a human). AI-generated documentation and code may contain mistakes. See the accompanying LICENSE file for copyright information.

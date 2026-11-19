@@ -31,6 +31,14 @@
     <None Include="..\Herculan.Es2.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\Herculan.Es2.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\Herculan.Es2.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The font's licence, which the OFL requires to travel with the font. -->
+    <None Include="..\Herculan.Es2.Host.Editor\Assets\Fonts\Open_Sans\OFL.txt" Link="Assets\Fonts\Open_Sans\OFL.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <!-- The notices of the third-party components the engine ships (OpenAL Soft, GLFW, cimgui, Silk.NET and others),
+       a file of its own beside the executable in every build and publish. -->
+  <ItemGroup>
+    <None Include="..\..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
   <!-- The window icon (WindowIcon), linked from Branding/ like the font above: loose files, since the artwork is not
