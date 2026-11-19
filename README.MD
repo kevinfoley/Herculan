@@ -1,46 +1,59 @@
 ![HERCULAN Engine logo](Branding/HERCULAN%20Engine%20Logo%20Solid%20600.png)
 
-# The HERCULAN Engine
+# The HERCULAN Project
 
-The HERCULAN Engine is an unofficial full reimplementation of _[Earthsiege 2](https://en.wikipedia.org/wiki/Earthsiege_2)_ (developed by Dynamix and published by Sierra in 1996), with support for modern operating systems, powered by .NET.
+The HERCULAN Project is an unofficial engine and modding toolkit for _[Metaltech: Earthsiege](https://en.wikipedia.org/wiki/Metaltech:_Earthsiege)_ (ES1) and _[Earthsiege 2](https://en.wikipedia.org/wiki/Earthsiege_2)_ (ES2), the classic mech simulator games developed by Dynamix and published by Sierra in 1994 and 1996. The source code for these games has never been released, so everything in HERCULAN was constructed through reverse engineering.
 
-## HercWorks CSharp
+The project has two major components:
 
-A fundamental feature of the HERCULAN Engine is HercWorks CSharp, a toolset for viewing (and sometimes editing) data files from _Earthsiege 2_. HercWorks CSharp is a C#/.NET rewrite and extension of [herc-works-mdk](https://github.com/Subject9x/herc-works-mdk), originally by Subject9x. HercWorks CSharp builds upon the original Java library, fixing bugs and expanding the scope of the reverse-engineering work. Unlike the original Java library, HercWorks CSharp currently does not support exporting data to JSON. New to HercWorks CSharp is a graphical user interface, built with Windows Forms (and therefore only available on Windows devices for now).
+- **The HERCULAN Engine**, for playing the games on modern computers.
+- **HercWorks CSharp**, a modding toolkit for viewing, and in some cases editing, the games' data files.
 
-Great thanks to Subject9x (developer of the original herc-works-mdk repository), Crow, and any other contributors for the initial reverse-engineering work that helped make this possible.
+## The HERCULAN Engine
 
-## The engine
-
-The HERCULAN Engine is a modern reimplementation of _Earthsiege 2_. Because the source code for _Earthsiege 2_ has never been released, HERCULAN Engine was constructed entirely through reverse engineering.
+The HERCULAN Engine is a cross-platform reimplementation of the engine used in _Earthsiege_ and _Earthsiege 2_. It can be used with the original game files to play on current operating systems with modern joysticks and controllers.
 
 ### Features
 
-- Play all of _Earthsiege 2_, at any resolution, with support for widescreen and ultra-widescreen monitors (menus render at 4:3).
+- Play _Earthsiege_ (base game only) and _Earthsiege 2_, at any resolution, with support for widescreen/ultra-widescreen (menus render at 4:3).
 - Supports modern joysticks and gamepads, with customizable bindings (the original keyboard bindings are not currently customizable).
-- Hardware-accelerated rendering that almost perfectly matches retail's software renderer.
+- Hardware-accelerated rendering that almost perfectly matches the original software renderers.
 - Runs on Windows and Linux, with potential macOS support in the future.
-- Full support for retail's file formats, including saved games.
-- Compatible with real CDs and with ISOs (no mounting required).
-- Built-in installer for copying the files from a retail CD or ISO to your drive, supporting Minimum, Medium, and Maximum installation methods.
-- Support for the full retail 1.0 release, 1.0 Hi-Rez Studios release (which has no music) and the 1.10 GoldGames release.
-- Support for version 1.10's French and German languages (note that many "French" and "German" voiceover files are duplicates of the original English files).
+- Full support for the original file formats, including saved games.
+- Compatible with real CDs and with disc images (`.iso`, `.bin`, `.cue`; no mounting required).
+- Built-in installer for copying the game files from a CD or disc image to your drive.
 - Video files play with custom decoders implemented in-engine - no more dependency on outdated and unsafe codecs.
-- Support for playing music from the original CD, and caching it to your computer.
-- A Tweaks menu to optionally fix retail bugs and add minor QoL tweaks.
-- Custom WinHelp (.HLP) parser; view the original "On-line manual" interactively in your browser.
-- A Mission Editor (currently in beta).
+- A Tweaks menu to optionally fix vanilla bugs and add minor QoL tweaks.
+- Support for English, French, and German in the HERCULAN UI. In-game support requires a compatible game version; see below.
+- ES2-only features:
+    - Support for playing music from the original CD or a compatible disc image, and caching it to your computer.
+    - Custom WinHelp (.HLP) parser; view the original "On-line manual" interactively in your browser.
+    - A Mission Editor (currently in beta).
 
-### Using the engine
+### Screenshots
 
-To use the HERCULAN Engine, you will need a copy of the original game files. _Earthsiege 2_ is a copyrighted work. While a legal owner of the copyright has previously released the game for free, I do not have a license to distribute the original game files and they are not included in this repository. The original download directly from the copyright holder is no longer available, but there are mirrors and other websites which still have the files available. Always consult local law before downloading the game from third-party websites. Use caution when downloading files from "abandonware" websites, as they could be infected with malware. Alternatively, you can purchase an original retail CD-ROM (no longer manufactured, but still available from some online markets). I am not aware of any digital marketplace that sells _Earthsiege 2_.
+<div align="center">
+  <figure>
+    <img src="Images/ES1%20Gameplay.png" alt="ES1 Gameplay" width="400">
+    <p><em>ES1 Gameplay, piloting the Colossus.</em></p>
+  </figure>
+</div>
 
-Download the engine for your platform from the [Releases](https://github.com/kevinfoley/Herculan/releases) page. You don't need to install .NET; the runtime is built into the executable.
+<div align="center">
+  <figure>
+    <img src="Images/Samson%20Cockpit.png" alt="ES2 Gameplay" width="400">
+    <p><em>ES2 Gameplay, piloting the Samson.</em></p>
+  </figure>
+</div>
 
-- **Windows:** unzip `HERCULAN-<version>-win-x64.zip` anywhere and run `Herculan.exe`. The same page has `HercWorksCSharp-<version>-win-x64.zip` for the HercWorks CSharp tools, which are Windows-only.
-- **Linux:** extract `HERCULAN-<version>-linux-x64.tar.gz` anywhere (`tar xzf HERCULAN-<version>-linux-x64.tar.gz`) and run `HERCULAN/Herculan`.
+<div align="center">
+  <figure>
+    <img src="Images/Mission%20Editor.png" alt="Mission Editor" width="400">
+    <p><em>The Mission Editor</em></p>
+  </figure>
+</div>
 
-When you run the engine, it will ask you where _Earthsiege 2_ is installed; you'll also have the option of using HERCULAN to install the _Earthsiege 2_ files from a CD or ISO.
+### Getting started
 
 #### System requirements
 
@@ -48,26 +61,59 @@ When you run the engine, it will ask you where _Earthsiege 2_ is installed; you'
 - **Windows:** Windows 10 or later.
 - **Linux:** a distribution with glibc 2.34 or newer. That covers Ubuntu 22.04, Debian 12, Fedora 35, RHEL 9 and Linux Mint 21 or later, as well as rolling distributions such as Arch and SteamOS 3 (Steam Deck). Older releases such as Ubuntu 20.04 and Debian 11 are not supported; the engine fails at startup with ``version `GLIBC_2.34' not found``. Distributions built on musl instead of glibc, such as Alpine, are not supported.
 
-On Linux, the engine also uses the following from your system. Desktop installs normally have all of them, but a minimal install may not:
+On Linux, the engine also requires the following components, included with most desktop environments:
 
-- An OpenGL 3.3 driver: Mesa (for AMD and Intel GPUs, and for NVIDIA GPUs using the open-source driver) or NVIDIA's proprietary driver.
+- An OpenGL 3.3 driver: Mesa or an NVIDIA proprietary driver.
 - An X11 or Wayland desktop session.
-- ICU, the Unicode library .NET relies on (package `libicu` or `icu`, depending on the distribution). Without it, the engine exits at startup saying it couldn't find a valid ICU package.
+- ICU, a Unicode library (package `libicu` or `icu`, depending on the distribution).
 - A sound system: PipeWire, PulseAudio or ALSA.
 
-#### Settings and tweaks
+#### 1. Get the original game
 
-HERCULAN Engine has a custom menu bar which is normally hidden. Press Shift+Esc to toggle visibility of the menu bar; the first time the main menu comes up, a welcome message says so. The bar has three buttons, each of which opens a new menu:
+To use the HERCULAN Engine, you will need a copy of the original game files. _Metaltech: Earthsiege_ and _Earthsiege 2_ are copyrighted works. While the legal owner of the copyrights (Hi-Rez Studios) has previously released the games for free, I do not have a license to distribute the original game files and they are not included in this repository. The original download directly from Hi-Rez Studios is no longer available, but there are mirrors and other websites which still have the files available. Always consult local law before downloading the game from third-party websites, and use caution when downloading files from "abandonware" websites, as they could be infected with malware. Alternatively, you can purchase an original retail CD-ROM (no longer manufactured, but still available from some online markets). I am not aware of any digital marketplace that sells either game.
 
-- Settings: Here you can adjust the install location or change the selected language.
-- Tweaks: Here you can toggle tweaks which fix vanilla bugs or otherwise alter vanilla behavior.
-- About: The engine's version and license.
+HERCULAN supports the following versions of the original games:
 
-The engine's own menu text lives in the `.lang` files in the `Localization` folder, which can be edited, or added to for a new language, after install. Each file names itself on its `language.name` line, and any line a translation lacks is read from `en.lang`.
+- _Metaltech: Earthsiege_ version 1.0 (tested with the 1996 CD re-release; the original 1994 release should work as well). The expansion is _not_ currently supported.
+- _Earthsiege 2_ version 1.0 (either the 1996 CD or the Hi-Rez ISO) and version 1.10 (the 1997 "Gold Games 2" release).
+
+HERCULAN can use an existing install already on your computer, an original CD, or a compatible disc image (`.iso`, `.bin`, `.cue`).
+
+**Abandonware releases which do not use the original file structure are not supported**.
+
+#### 2. Download HERCULAN
+
+Download the engine for your platform from the [Releases](https://github.com/kevinfoley/Herculan/releases) page. You don't need to install .NET; the runtime is built into the executable.
+
+- **Windows:** unzip `HERCULAN-<version>-win-x64.zip` anywhere and run `Herculan.exe`. The same page has `HercWorksCSharp-<version>-win-x64.zip` for the HercWorks CSharp tools, which are Windows-only.
+- **Linux:** extract `HERCULAN-<version>-linux-x64.tar.gz` anywhere (`tar xzf HERCULAN-<version>-linux-x64.tar.gz`) and run `HERCULAN/Herculan`.
+
+#### 3. First launch
+
+After you select which game you want to play, HERCULAN will look for an existing install. If an existing install isn't found, HERCULAN will give you the option of manually locating an existing install, or creating a new install from a CD or disc image.
+
+An install from a disc leaves some files on the disc, such as the movies and _Earthsiege 2_'s music, so keep the CD or disc image where it is after installing.
+
+### Playing
+
+#### The menu bar
+
+HERCULAN Engine has a custom menu bar which is normally hidden. To open the menu bar, do any of the following:
+- While in the shell (menus), move the cursor to the top-left of the window.
+- Press Shift+Esc.
+- On a gamepad, press the button formerly known as Select (modern gamepads may label this "Back", "View", "-", or a variety of other names).
+
+From the menu bar, you can access Settings, Controller, Tweaks, Accessibility, and more (some functions are disabled during gameplay).
+
+#### Languages
+
+HERCULAN's own UI comes with support for English, French, and German. The text lives in the `.lang` files in the `Localization` folder; custom languages can be added to this folder after installation.
+
+Version 1.10 of _Earthsiege 2_ supports French and German in-game (though some voiceover audio is always in English); by default, HERCULAN will synchronize your language selection when possible.
 
 ### What the engine is not
 
-HERCULAN Engine is a reimplementation of _Earthsiege 2_, **not** a remake. There are currently **no plans** for any of the following:
+HERCULAN Engine is a reimplementation, **not** a remake/remaster. There are currently **no plans** for any of the following:
 
 - Enhanced graphics (other than basic quality of life changes like support for higher resolutions and widescreen displays)
 - Gameplay changes or balance adjustments (other than bug fixes)
@@ -76,7 +122,13 @@ HERCULAN Engine is a reimplementation of _Earthsiege 2_, **not** a remake. There
 
 Higher tickrates/smoother motion are under consideration for a future update, but are not a priority right now.
 
-## Screenshots
+## HercWorks CSharp
+
+HercWorks CSharp is a toolset for reading and writing data files from _Earthsiege_ and _Earthsiege 2_. It is a C#/.NET rewrite and extension of [herc-works-mdk](https://github.com/Subject9x/herc-works-mdk), originally by Subject9x. HercWorks CSharp builds upon the original Java library, fixing bugs and expanding the scope of the reverse-engineering work. Unlike the original Java library, HercWorks CSharp currently does not support exporting data to JSON.
+
+HercWorks CSharp is used as a library by HERCULAN Engine for reading the original data files. Additionally, HercWorks CSharp is offered as a standalone application with a graphical user interface built with Windows Forms (and therefore only available on Windows devices for now).
+
+### Screenshots
 
 <div align="center">
   <figure>
@@ -113,32 +165,25 @@ Higher tickrates/smoother motion are under consideration for a future update, bu
   </figure>
 </div>
 
-<div align="center">
-  <figure>
-    <img src="Images/Mission%20Editor.png" alt="Mission Editor" width="400">
-    <p><em>The Mission Editor</em></p>
-  </figure>
-</div>
-
-<div align="center">
-  <figure>
-    <img src="Images/Samson%20Cockpit.png" alt="Samson Cockpit" width="400">
-    <p><em>Gameplay, piloting the Samson.</em></p>
-  </figure>
-</div>
-
 ## Documentation
 
-This repository includes extensive documentation on _Earthsiege 2_. For a full list, see the [docs folder](Herculan/docs).
+This repository includes extensive documentation on both games, most of it technical: file formats, how the original programs behave, and how HERCULAN is built. _Earthsiege_ is covered in [`docs/es1`](Herculan/docs/es1) and _Earthsiege 2_ is covered in [`docs/retail`](Herculan/docs/retail).
 
-Some less-technical docs which may be of interest to players and fans of the series:
+Some less technical docs that may interest players and fans of the series:
 
-- [Key bindings](Herculan/docs/retail/key-bindings.md): a full list of key bindings in retail, most of which are implemented in HERCULAN as well.
-- [Campaign continuity](Herculan/docs/retail/campaign-continuity.md): a breakdown of how campaign mission results carry forward to future missions.
-- [Cut content](Herculan/docs/retail/cut-content.md): a summary of some of the more interesting unfinished features that can be found in the game's code and data.
-- [Launch options](Herculan/docs/retail/launch-options.md): a list of all of retail's command-line launch options, including the all-important `-eggplant` flag.
-- [Retail builds](Herculan/docs/retail/retail-builds.md): describes the differences between v1.0 and v1.10 (this doc is more technical).
-- [Known Issues](Herculan/KNOWN_ISSUES_ES2.md): contains a detailed list of bugs and other mistakes in _Earthsiege 2_ (of which there are _many_).
+### Earthsiege 2
+
+- [Key bindings](Herculan/docs/retail/key-bindings.md): every key in the original game, most of which HERCULAN implements as well.
+- [Campaign continuity](Herculan/docs/retail/campaign-continuity.md): how a campaign mission's result carries forward to later missions.
+- [Cut content](Herculan/docs/retail/cut-content.md): unfinished features left in the game's code and data.
+- [Launch options](Herculan/docs/retail/launch-options.md): the original game's command-line options, including the all-important `-eggplant` flag.
+- [Retail builds](Herculan/docs/retail/retail-builds.md): the differences between v1.0 and v1.10 (more technical).
+- [Known issues](Herculan/KNOWN_ISSUES_ES2.md): bugs and other mistakes in the original game (of which there are _many_), and where HERCULAN differs.
+
+### Metaltech: Earthsiege
+
+- [Cut content](Herculan/docs/es1/cut-content.md): unfinished features left in the game's code and data.
+- [Known issues](Herculan/KNOWN_ISSUES_ES1.md): bugs in the original game, and where HERCULAN differs.
 
 ## Building from source
 
@@ -158,7 +203,7 @@ dotnet publish src/Herculan.Engine.Host -p:PublishProfile=linux-x64
 
 The result lands in `Herculan/src/Herculan.Engine.Host/bin/publish/<profile>/`; copy that whole folder. Either profile can be published from Windows or Linux. Windows does not record Linux's execute permission, so a Linux build published on Windows needs `chmod +x Herculan` before it runs, and has to be packaged on Linux (a zip made on Windows loses the permission again).
 
-## Project Structure
+## Project structure
 
 - **`Herculan/`** — Main project directory
   - **`HercWorksMDK.sln`** — Visual Studio solution for HercWorks CSharp (WinForms tool)
@@ -169,9 +214,11 @@ The result lands in `Herculan/src/Herculan.Engine.Host/bin/publish/<profile>/`; 
 - **`Images/`** — Screenshots of the HercWorks UI and engine
 - **`Branding/`** — The HERCULAN Engine logo and icon artwork (not MIT-licensed; see its README)
 
-For details on specific reverse-engineering work and file format documentation, see the files in `Herculan/docs/`.
+## Acknowledgements
 
-## AI Disclosure
+Great thanks to Subject9x (developer of the original herc-works-mdk repository), Crow, and any other contributors for the initial reverse-engineering work that helped make this possible.
+
+## AI disclosure
 
 Development of HercWorks CSharp and HERCULAN Engine has been largely powered by Claude (with extensive prompting, testing, and feedback from a human). AI-generated documentation and code may contain mistakes. See the accompanying LICENSE file for copyright information.
 
@@ -180,3 +227,5 @@ Custom missions included in HERCULAN were created entirely by human hand.
 ## License
 
 See the accompanying LICENSE file. The HERCULAN Engine logo and icon artwork are not covered by that license; see [Branding/README.md](Branding/README.md) for how they may be used.
+
+HERCULAN is not affiliated with or endorsed by Hi-Rez Studios, Dynamix, or Sierra. _Metaltech_, _Earthsiege_ and related names are trademarks of their respective owners.
