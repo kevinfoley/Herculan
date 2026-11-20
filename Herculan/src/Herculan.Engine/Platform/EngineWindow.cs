@@ -27,7 +27,7 @@ public sealed class EngineWindow : IDisposable {
 	/// <summary>Raised once, as the turn starts, with the GL context and the turn's input context.</summary>
 	public event Action<GL, IInputContext>? Load;
 
-	/// <summary>Raised each frame before <see cref="Render"/>, with the elapsed seconds.</summary>
+	/// <summary>Raised each frame before <see cref="Render"/>, with the elapsed seconds, held to <see cref="DebuggerMaximumDeltaSeconds"/> while a debugger is attached.</summary>
 	public event Action<double>? Update;
 
 	/// <summary>Raised each frame to draw, with the elapsed seconds and the GL context.</summary>
@@ -181,8 +181,20 @@ public sealed class EngineWindow : IDisposable {
 			return;
 		}
 
+		if (System.Diagnostics.Debugger.IsAttached && deltaSeconds > DebuggerMaximumDeltaSeconds) {
+			deltaSeconds = DebuggerMaximumDeltaSeconds;
+		}
+
 		Update?.Invoke(deltaSeconds);
 	}
+
+	/// <summary>
+	/// The longest frame <see cref="Update"/> reports while a debugger is attached. This engine's own clamp, not retail's:
+	/// a debugger break would otherwise come back as one frame holding the whole pause, which ES1's timer callbacks
+	/// (the music sequencer among them) replay an interrupt at a time before the game moves on. Without a debugger the
+	/// frame's real time is passed through.
+	/// </summary>
+	private const double DebuggerMaximumDeltaSeconds = 0.25;
 
 	internal void RaiseRender(double deltaSeconds, GL gl) => Render?.Invoke(deltaSeconds, gl);
 
