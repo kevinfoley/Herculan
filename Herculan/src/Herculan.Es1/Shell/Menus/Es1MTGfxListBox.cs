@@ -177,8 +177,9 @@ public sealed class Es1MTGfxListBox : Es1DUIControl {
 	/// Slot <c>+0x2c</c>, the value a release posts: <c>0001ab2c</c>, the slider's position, from the rect's height less
 	/// the thumb rect <c>+0x2e</c>'s and the range <see cref="Count"/> − <see cref="Min"/>, in the compiler's floating
 	/// point.
-	/// PLACEHOLDER: the thumb rect is one the constructor never fills, and CREW's handler reads only the target; the value
-	/// is unported and the base's 1 is posted, until a menu that reads it lands.
+	/// UNUSED: the thumb rect is one the constructor never fills, and the value is unported; the base's 1 is posted. The
+	/// retail menus' kind-16 controls are CREW's 1611 and 1615 to 1618 and PREFERENCES' 1914 to 1916, whose handlers read
+	/// only the target.
 	/// </summary>
 	public override short GetValue() => 1;
 

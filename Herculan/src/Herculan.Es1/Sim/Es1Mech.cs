@@ -611,9 +611,9 @@ public sealed class Es1Mech : IEs1SimObject {
 	public IEs1SimObject? SquadTarget { get; set; }
 
 	/// <summary>
-	/// <c>+0x1e0</c>, the squad order's second object, or null. PLACEHOLDER: no writer is known; <c>Mech_ReceiveSquadOrder</c>
-	/// does not write it (ES2's verb <c>0xc</c> stores its subject there) and a text search of the decompile finds none, so
-	/// it holds null (docs/es1/simulation/mech-ai.md#the-fields).
+	/// <c>+0x1e0</c>, the squad order's second object, which <see cref="AiGoalPosition"/> reads for verb 3. Nothing here
+	/// writes it, so it holds null: <c>Mech_ReceiveSquadOrder</c> does not write it (ES2's verb <c>0xc</c> stores its subject
+	/// there), and what else might is docs/es1/simulation/ai-squadmates.md#open.
 	/// </summary>
 	public IEs1SimObject? SquadSecondObject { get; set; }
 

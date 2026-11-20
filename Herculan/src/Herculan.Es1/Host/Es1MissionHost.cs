@@ -228,8 +228,10 @@ public static class Es1MissionHost {
 			// Flyer_LoadResources (0001c558) asserts when datforms does not open.
 			var flyerFormations = new Es1FlyerFormationsTransformer().Parse(content.ReadRequired("dat", "FFORMS.DAT"))
 				?? new Es1FlyerFormations();
-			// PLACEHOLDER: Sim_StartMission's step 6 sets option 1 to 0 around the spawn (Prefs_SetOption(1, 0, 1), then
-			// Prefs_RevertOption(1, 1)). That leaves Prefs_PreviousOptions[1] changed, which is not ported. Here the spawn runs before
+			// NO EFFECT: Sim_StartMission's step 6 sets option 1 to 0 around the spawn (Prefs_SetOption(1, 0, 1), then
+			// Prefs_RevertOption(1, 1)). That leaves Prefs_PreviousOptions[1] changed, which is not ported: the one reader of
+			// Prefs_PreviousOptions es2_xref.py finds, Prefs_UndoSetOption, has one caller, Prefs_LimitDetailInLowMemory, which
+			// passes option 6. Here the spawn runs before
 			// Sound_Init, with no sound manager, so it plays nothing. Retail's spawn is silent the same way when the digital sounds are
 			// off.
 			world = Es1World.Spawn(script, content, formations, flyerFormations);

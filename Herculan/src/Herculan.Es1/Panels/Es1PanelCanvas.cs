@@ -274,8 +274,11 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 		int cx = (rect.X0 + rect.X1) >> 1, cy = (rect.Y0 + rect.Y1) >> 1;
 		int a = Math.Abs(rect.X1 - rect.X0) >> 1, b = Math.Abs(rect.Y1 - rect.Y0) >> 1;
 		if (a == 0 || b == 0) {
-			// PLACEHOLDER: the degenerate ellipse's line, drawn under a pen whose mode is a stack word the function never
+			// UNREACHED: the degenerate ellipse's line, drawn under a pen whose mode is a stack word the function never
 			// writes (docs/retail/rendering/polygon-fill.md#ellipses); what it draws is not settled, so nothing is drawn.
+			// Retail draws none: the shell map's pen has a radius of 3, none of the 123 retail .TTM scripts holds a circle
+			// command (0xa404, 0xa424), and es2_xref.py finds no call of the other callers, ES1GO's 0004bafc and 0006638c
+			// and ES1DBSIM's 00076cdc.
 			return;
 		}
 

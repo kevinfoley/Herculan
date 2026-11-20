@@ -85,9 +85,11 @@ public sealed class Es1ViewCaption {
 	/// <summary>
 	/// <c>HudFont_DrawString</c>: glyph after glyph from <paramref name="x"/>, each advancing by its width, each blitted
 	/// by <c>HudFont_DrawGlyph</c> (<c>00069d64</c>) with its top row at <paramref name="y"/> less the font's ink height
-	/// (docs/es1/simulation/cockpit-widgets.md), its index-0 pixels left as they were. PLACEHOLDER: the underline
+	/// (docs/es1/simulation/cockpit-widgets.md), its index-0 pixels left as they were. NO EFFECT: the underline
 	/// <c>HudFont_DrawGlyph</c> draws along the pen's row while the installed render context's <c>+0x230</c> is set is not
-	/// drawn; what that byte holds in the 3D render context is unread.
+	/// drawn. The 3D render context <c>000b5b6e</c> is <c>Sim_StartMission</c>'s <c>GLViewport_Ctor</c>(0) (<c>0005a723</c>),
+	/// which clears <c>+0x230</c>, and <c>es2_fieldscan.py --binary ES1DBSIM 230</c> finds no other write to a render
+	/// context's <c>+0x230</c> but <c>Cockpit_CreateCanvasContext</c>'s 0.
 	/// </summary>
 	private void DrawString(Es1VideoMemory display, string text, int x, int y) {
 		int pen = x;

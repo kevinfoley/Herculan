@@ -27,9 +27,10 @@ namespace Herculan.Es1.Ttm;
 /// <see cref="Es1TtmManager.DefaultContext"/> when it has none: the clock's is the cockpit's canvas context, the shell's
 /// default the full-screen context. So a script draws in the context's coordinates on the display's draw page, cut to
 /// its rect. The shell's draws add their boxes to the shell's dirty list (<see cref="Es1TtmManager.Dirty"/>).
-/// PLACEHOLDER: the simulator's <c>DirtyBox_Add</c> boxes are not kept; <c>es2_xref.py</c> finds no reference to the
+/// NO EFFECT: the simulator's <c>DirtyBox_Add</c> boxes are not kept; <c>es2_xref.py</c> finds no reference to the
 /// simulator's <c>DirtyList_Flush</c> (<c>00083e80</c>), the copy that would read them
-/// (docs/es1/rendering/screen-pages.md#open).</para>
+/// (docs/es1/rendering/screen-pages.md#open), nor to <c>00083e00</c>, the list head's one other reader besides
+/// <c>DirtyList_Insert</c> and <c>DirtyList_Prune</c>.</para>
 ///
 /// <para>A run is an iterator of the monitor's retraces (<see cref="RunWaiting"/>): the shell's fades upload a palette a
 /// step at a time, each upload waiting for a vertical retrace as the driver's palette routine does

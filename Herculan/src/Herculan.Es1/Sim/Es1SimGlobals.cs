@@ -372,12 +372,9 @@ public interface IEs1SimObject : IEs1Placed {
 
 	/// <summary>
 	/// <c>+0xa0</c>, ES2's "scored a kill", which <see cref="Es1MissionGroup.AnyMemberScoredAKill"/> reads
-	/// (docs/es1/simulation/mission-status.md#the-fields). PLACEHOLDER: clear on every object: no ES1 doc names a writer,
-	/// ES1's kill credit (<see cref="Es1MechOutOfAction.CreditNeutralisedTarget"/>), where ES2 sets it, does not, and
-	/// <c>es2_fieldscan.py --binary ES1DBSIM a0</c> finds no write to <c>+0xa0</c> of a simulated object: its three writes
-	/// are the gunsight's child list and the two weapon gauges', while its read in <c>Group_AnyMemberScoredAKill</c>
-	/// (<c>0000f0c0</c>) is found. A write through a base the scan cannot resolve, or a constructor's block fill, stays
-	/// possible.
+	/// (docs/es1/simulation/mission-status.md#the-fields). Clear on every object, as nothing here writes it: ES1's kill
+	/// credit (<see cref="Es1MechOutOfAction.CreditNeutralisedTarget"/>), where ES2 sets it, does not, and what else might is
+	/// docs/es1/simulation/mission-status.md#open.
 	/// </summary>
 	bool ScoredAKill => false;
 

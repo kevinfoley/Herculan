@@ -211,8 +211,8 @@ public sealed class Es1AnimationControl : Es1DUIControl {
 	/// Slot <c>+0x2c</c>, the value a release posts: <c>0001ab2c</c>, the slider's position, from the rect's height less
 	/// the thumb rect <c>+0x2e</c>'s and the range <see cref="Count"/> − <see cref="Min"/>, in the compiler's floating
 	/// point.
-	/// PLACEHOLDER: the thumb rect is one the constructor never fills, and ARMING's 1803 case reads only the target; the
-	/// value is unported and the base's 1 is posted, until a menu that reads it lands.
+	/// UNUSED: the thumb rect is one the constructor never fills, and the value is unported; the base's 1 is posted. The one
+	/// kind-17 control in the retail menus is ARMING's 1803, whose case reads only the target.
 	/// </summary>
 	public override short GetValue() => 1;
 

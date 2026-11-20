@@ -97,8 +97,9 @@ public static class Es1Launcher {
 				return 0;
 		}
 
-		// 5. PLACEHOLDER: data\es.got, which holds step 2's free-memory figure and which no reader is known of
-		// (launcher.md's Open), is not written: step 2's figure has no counterpart.
+		// 5. NO EFFECT: data\es.got, which holds step 2's free-memory figure, is not written: step 2's figure has no
+		// counterpart, and a search of GO.EXE, DBSIM.EXE, DETECT.EXE and PLAYFLIC.EXE for the string es.got finds no reader
+		// (launcher.md's Open).
 		// 6. Mem_InitHeap(20,000): this engine has no fixed heap.
 		// 7. Launcher_SaveVideoMode, the BIOS's equipment byte and video mode, and at the end Launcher_RestoreVideoMode: this
 		// engine sets no DOS video mode, so there is nothing to save or restore.
