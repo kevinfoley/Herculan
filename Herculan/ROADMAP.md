@@ -27,6 +27,7 @@ Metaltech: Earthsiege loads a single mission into its zone viewer — opening wi
 - (Deferred) **`DBSIM.EXE`'s `-C` and `-t` switches.** The cockpit's chassis and the pilot in the first comm box are logged and dropped rather than handed to the simulator. → [`docs/es1/simulation/main-loop.md`](docs/es1/simulation/main-loop.md#the-command-line)
 - **How long a Metaltech: Earthsiege flic's palette fade takes.** Only the speed of the DAC's port writes paces it, and the engine uses an estimate until it is measured. → [`docs/es1/formats/dfl-flic.md`](docs/es1/formats/dfl-flic.md#open)
 - **The pictures of Metaltech: Earthsiege's menu windows 1501 and 1700.** Each names a bitmap file the install lacks, and what retail then draws is unread, so the engine draws none. → [`docs/es1/formats/dlg-menu-dialogs.md`](docs/es1/formats/dlg-menu-dialogs.md#open)
+- **The expansion pack, Earthsiege Battleset 1.** Its battle set, shell and simulator are not ported, so an install with the expansion is refused as a Metaltech: Earthsiege install. → [`docs/es1/formats/bst-battle-sets.md`](docs/es1/formats/bst-battle-sets.md)
 
 ## Debugging features
 - **A launch option that disables the AI.** Every unit but the player's stays stationary, though it can still be damaged and destroyed. → [`docs/herculan/herculan-command-line.md`](docs/herculan/herculan-command-line.md#developer)

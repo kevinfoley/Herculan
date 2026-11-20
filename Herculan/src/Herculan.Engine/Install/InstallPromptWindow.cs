@@ -30,8 +30,8 @@ public static class InstallPromptWindow {
 	/// <summary>
 	/// Why <paramref name="path"/> cannot be <paramref name="game"/>'s install, in the player's language, or null when it can:
 	/// it has no archive folder, it holds another game (Metaltech: Earthsiege's is told by
-	/// <see cref="RetailGameDetector.Es1Marker"/>), or it is on a disc (<see cref="RetailInstalls.IsOnDisc"/>), which can
-	/// hold every folder of an install but none of its saves.
+	/// <see cref="RetailGameDetector.Es1Marker"/>), the game refuses it (<see cref="GameIdentity.InstallRefusal"/>), or it is
+	/// on a disc (<see cref="RetailInstalls.IsOnDisc"/>), which can hold every folder of an install but none of its saves.
 	/// </summary>
 	public static string? Refusal(LocalizationTable localization, GameIdentity game, string path) {
 		string prefix = game.PromptKeyPrefix;
@@ -41,6 +41,10 @@ public static class InstallPromptWindow {
 
 		if (RetailGameDetector.Detect(path) != game.Game) {
 			return string.Format(localization.GetStringOrKey(prefix + ".other_game"), path, RetailGameDetector.Es1Marker);
+		}
+
+		if (game.InstallRefusal?.Invoke(localization, path) is { } refused) {
+			return refused;
 		}
 
 		return RetailInstalls.IsOnDisc(path) ? localization.GetStringOrKey("install_prompt.on_disc") : null;

@@ -154,6 +154,7 @@ es1_install_prompt.accept      Utiliser ce dossier
 es1_install_prompt.no_path     Tapez ou collez le chemin du dossier de Metaltech: Earthsiege.
 es1_install_prompt.not_an_install {0} n'est pas un dossier de Metaltech: Earthsiege : il ne contient aucun dossier {1}.
 es1_install_prompt.other_game  {0} n'est pas un dossier de Metaltech: Earthsiege : il ne contient aucun fichier {1}.
+es1_install_prompt.expansion   L'extension Earthsiege Battleset 1 est installée dans {0} : son dossier VOL contient {1}. HERCULAN ne prend pas encore en charge l'extension. Choisissez un dossier de Metaltech: Earthsiege sans l'extension.
 chooser.window_title           HERCULAN Engine — Choisir un jeu
 chooser.message                À quel jeu voulez-vous jouer ?
 chooser.not_found              HERCULAN n'a pas trouvé ce jeu. Choisissez-le pour indiquer son dossier.

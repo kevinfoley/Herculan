@@ -1,4 +1,5 @@
 using HercWorks.Core.Io.Transform;
+using Herculan.Engine.Localization;
 
 namespace Herculan.Engine.Games;
 
@@ -19,5 +20,9 @@ namespace Herculan.Engine.Games;
 /// <param name="PromptKeyPrefix">
 /// The prefix of the game's own install prompt strings (<see cref="Install.InstallPromptWindow"/>).
 /// </param>
+/// <param name="InstallRefusal">
+/// Why an install root that holds the game cannot be used all the same, in the player's language, or null when it can;
+/// <see cref="Install.InstallPromptWindow.Refusal"/> asks it after the engine's own tests. Null when the game refuses none.
+/// </param>
 public sealed record GameIdentity(RetailGame Game, string NameKey, string FolderName, string PathVariable,
-	string RememberedPathFileName, string PromptKeyPrefix);
+	string RememberedPathFileName, string PromptKeyPrefix, Func<LocalizationTable, string, string?>? InstallRefusal = null);

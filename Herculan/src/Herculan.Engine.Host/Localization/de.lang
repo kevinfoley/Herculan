@@ -154,6 +154,7 @@ es1_install_prompt.accept      Diesen Ordner verwenden
 es1_install_prompt.no_path     Geben Sie den Pfad zum Ordner von Metaltech: Earthsiege ein oder fügen Sie ihn ein.
 es1_install_prompt.not_an_install {0} ist kein Ordner von Metaltech: Earthsiege: Er enthält keinen Ordner {1}.
 es1_install_prompt.other_game  {0} ist kein Ordner von Metaltech: Earthsiege: Er enthält keine Datei {1}.
+es1_install_prompt.expansion   In {0} ist die Erweiterung Earthsiege Battleset 1 installiert: Der Ordner VOL enthält {1}. HERCULAN unterstützt die Erweiterung noch nicht. Wählen Sie einen Ordner von Metaltech: Earthsiege ohne sie.
 chooser.window_title           HERCULAN Engine — Spiel auswählen
 chooser.message                Welches Spiel möchten Sie spielen?
 chooser.not_found              HERCULAN hat dieses Spiel nicht gefunden. Wählen Sie es, um seinen Ordner anzugeben.

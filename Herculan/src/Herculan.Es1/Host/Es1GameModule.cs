@@ -2,6 +2,7 @@ using Herculan.Engine.Games;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Settings;
 using Herculan.Es1.Host.Install;
+using Herculan.Es1.Install;
 using Herculan.Es1.Settings;
 using HercWorks.Core.Io.Transform;
 
@@ -17,9 +18,13 @@ namespace Herculan.Es1.Host;
 /// <c>-D</c> do, and <c>--record</c> records one, as its <c>-r</c> does.
 /// </summary>
 public sealed class Es1GameModule : IGameModule {
-	/// <summary>Metaltech: Earthsiege's identity: <c>ES1_GAME_PATH</c>, an <c>ES1</c> folder, <c>es1-install-path.txt</c>.</summary>
+	/// <summary>
+	/// Metaltech: Earthsiege's identity: <c>ES1_GAME_PATH</c>, an <c>ES1</c> folder, <c>es1-install-path.txt</c>, and an
+	/// install with the expansion refused (<see cref="Es1Build.InstallRefusal"/>).
+	/// </summary>
 	public static GameIdentity Identity { get; } = new(RetailGame.Earthsiege1, NameKey: "game.earthsiege1", FolderName: "ES1",
-		PathVariable: "ES1_GAME_PATH", RememberedPathFileName: "es1-install-path.txt", PromptKeyPrefix: "es1_install_prompt");
+		PathVariable: "ES1_GAME_PATH", RememberedPathFileName: "es1-install-path.txt", PromptKeyPrefix: "es1_install_prompt",
+		InstallRefusal: Es1Build.InstallRefusal);
 
 	private readonly Es1Options _options = new();
 	private string? _running;
