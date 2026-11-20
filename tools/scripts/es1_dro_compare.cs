@@ -24,8 +24,10 @@
 //   --search S    align at the first key-on in the song's first S seconds after which the port's next 64 writes are
 //                 the capture's, for a capture that starts in the middle of a song; default 0, the song's first key-on
 //   --prelude S   a song played, then stopped as ShellMusic_Stop stops one but with no fade, before <song> starts, for
-//                 a capture whose song follows another: the stop's pitch bends and the voices' instruments carry over
-//   --prelude-ms M  how long the prelude plays, default 10000
+//                 a capture whose song follows another: the stop's pitch bends and the voices' instruments carry over;
+//                 a comma-separated list plays each in turn, for the session's songs since the driver opened, whose
+//                 stops' bends all mark their channels
+//   --prelude-ms M  how long each prelude plays, default 10000
 //   --switch-at-ms T  plays <song>, one of the simulator's three calm songs, through the simulator's sound path
 //                 instead: Sound_Init with the catalog, Music_Tick once a frame, and at T ms into the song what
 //                 Music_Tick's check sets on seeing an enemy, so that the song fades and its battle song follows; no
@@ -114,10 +116,18 @@ byte[]? Read(string folder, string name) => shell.Read(folder, name) ?? sim.Read
 string? Folder(string name) => new[] { "res32", "hmi" }.FirstOrDefault(f => Read(f, name) != null);
 string? folder = Folder(songName);
 string? preludeName = options.GetValueOrDefault("prelude");
-string? preludeFolder = preludeName == null ? null : Folder(preludeName);
-if (folder == null || preludeName != null && preludeFolder == null) {
-	Console.Error.WriteLine($"{(folder == null ? songName : preludeName)} is in neither res32\\ nor hmi\\");
+string[] preludeNames = preludeName?.Split(',') ?? [];
+string?[] preludeFolders = [.. preludeNames.Select(Folder)];
+if (folder == null) {
+	Console.Error.WriteLine($"{songName} is in neither res32\\ nor hmi\\");
 	return 1;
+}
+
+for (int i = 0; i < preludeNames.Length; i++) {
+	if (preludeFolders[i] == null) {
+		Console.Error.WriteLine($"{preludeNames[i]} is in neither res32\\ nor hmi\\");
+		return 1;
+	}
 }
 
 var chip = new RecordingChip();
@@ -133,7 +143,7 @@ if (switchAt < 0) {
 		return 1;
 	}
 
-	manager.SetSampleNames([.. Es1ShellSound.Names, $@"{folder}\{songName}", .. preludeName == null ? Array.Empty<string>() : [$@"{preludeFolder}\{preludeName}"]]);
+	manager.SetSampleNames([.. Es1ShellSound.Names, $@"{folder}\{songName}", .. preludeNames.Select((name, i) => $@"{preludeFolders[i]}\{name}")]);
 } else {
 	// The simulator's path: Sound_Init with the catalog, whose rows the songs are; a timer that never runs, since the
 	// loop below ticks the songs itself.
@@ -164,14 +174,14 @@ Es1SoundObject? Start(short index) {
 }
 
 int tick = 0;
-if (preludeName != null) {
-	var prelude = Start((short)(Es1ShellSound.Names.Length + 1));
+for (int i = 0; i < preludeNames.Length; i++) {
+	var prelude = Start((short)(Es1ShellSound.Names.Length + 1 + i));
 	if (prelude == null) {
-		Console.Error.WriteLine($"{preludeName} does not play");
+		Console.Error.WriteLine($"{preludeNames[i]} does not play");
 		return 1;
 	}
 
-	for (int end = Option("prelude-ms", 10000) * 120 / 1000; tick < end; tick++) {
+	for (int end = tick + Option("prelude-ms", 10000) * 120 / 1000; tick < end; tick++) {
 		chip.Tick = tick;
 		manager.Midi.Tick();
 	}

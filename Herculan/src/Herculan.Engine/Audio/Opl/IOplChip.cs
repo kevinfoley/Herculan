@@ -5,9 +5,10 @@ namespace Herculan.Engine.Audio.Opl;
 /// module D). The interface is this engine's own, not read from any binary: its two calls are what a driver does to the
 /// real chip and what the mixer needs from it, so the emulator behind it can be replaced without touching the driver.
 ///
-/// <para>Time is the caller's. A register write takes effect from the next frame <see cref="Generate"/> produces, so a
-/// caller that times its writes, as a driver run from a timer interrupt does, generates the frames up to each write's time
-/// before making it.</para>
+/// <para>Time is the caller's. A register write takes effect in a frame <see cref="Generate"/> produces after it, in the
+/// order the writes were made and spaced as the real chip's settling time spaces a driver's writes, so that a key-off and
+/// the key-on after it are each seen; a caller that times its writes, as a driver run from a timer interrupt does,
+/// generates the frames up to each write's time before making it.</para>
 /// </summary>
 public interface IOplChip {
 	/// <summary>The frames a second <see cref="Generate"/> produces: the chip's own rate, which the mixer resamples.</summary>
