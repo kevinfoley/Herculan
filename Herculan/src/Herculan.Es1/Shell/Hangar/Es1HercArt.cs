@@ -163,10 +163,11 @@ public sealed class Es1HercArt {
 	}
 
 	/// <summary>
-	/// <c>HercArt_FreeChassisBanks</c> (<c>000228aa</c>)(<paramref name="chassis"/>): each of the chassis' five banks that
+	/// <c>HercArt_FreeChassisBanks</c> (<c>000228aa</c>): each of the chassis' five banks that
 	/// is loaded destroyed and its table's entry nulled, so the next <see cref="Need"/> loads it again.
 	/// <c>HercArt_FreeAllBanks</c> (<c>00022981</c>) runs it for the eight.
 	/// </summary>
+	/// <param name="chassis">The chassis whose banks are freed.</param>
 	public void FreeChassisBanks(short chassis) {
 		if (chassis is < 0 or >= ChassisCount) {
 			return;
@@ -206,12 +207,14 @@ public sealed class Es1HercArt {
 		bank != null && frame >= 0 && frame < bank.Count ? bank[frame] : null;
 
 	/// <summary>
-	/// <c>HercLayout_Find</c> (<c>00022024</c>)(<paramref name="weapon"/>, <paramref name="mount"/>,
-	/// <paramref name="chassis"/>): the first of the chassis' mount's records whose weapon is the weapon, or null. Retail
+	/// <c>HercLayout_Find</c> (<c>00022024</c>): the first of the chassis' mount's records whose weapon is the weapon, or null. Retail
 	/// tests neither the mount nor the chassis; a mount or chassis the tables do not hold has no records here, an engine
 	/// guard. With <see cref="FixRhinoTopMount"/>, a record of <see cref="RhinoTopMountPoints"/> comes back with its points
 	/// moved.
 	/// </summary>
+	/// <param name="weapon">The weapon number.</param>
+	/// <param name="mount">The mount number.</param>
+	/// <param name="chassis">The chassis number.</param>
 	public Es1HercLayoutItem? Find(short weapon, short mount, short chassis) {
 		if (chassis is < 0 or >= ChassisCount || Layouts[chassis] is not { } layout || mount < 0 || mount >= layout.Mounts.Length) {
 			return null;

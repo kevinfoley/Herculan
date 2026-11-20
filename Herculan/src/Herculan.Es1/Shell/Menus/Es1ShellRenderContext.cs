@@ -42,11 +42,15 @@ public sealed class Es1ShellRenderContext {
 	public Es1PanelCanvas Canvas => Translate ? new Es1PanelCanvas(Display, Rect) : new Es1PanelCanvas(Display, Rect, (Rect.X0, Rect.Y0));
 
 	/// <summary>
-	/// <c>HudFont_DrawString</c> (<c>000520d8</c>)(<paramref name="font"/>, <paramref name="text"/>, pen), the code of
+	/// <c>HudFont_DrawString</c> (<c>000520d8</c>), the code of
 	/// <c>ES1DBSIM</c>'s: with <see cref="Alignment"/> 1 the pen moved right by <see cref="FieldWidth"/> less the text's width
 	/// (<c>HudFont_MeasureString</c>), with 2 by half of that, the shift arithmetic; then the glyphs from the pen
 	/// (<see cref="Es1PanelCanvas.DrawString"/>). The underline byte <c>+0x230</c> is never set on a shell context.
 	/// </summary>
+	/// <param name="font">The font, or null.</param>
+	/// <param name="text">The text, or null.</param>
+	/// <param name="x">The pen's X.</param>
+	/// <param name="y">The pen's Y.</param>
 	public void DrawString(HudFont? font, string? text, int x, int y) {
 		if (font == null || text == null) {
 			return;

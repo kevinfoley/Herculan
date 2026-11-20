@@ -81,10 +81,12 @@ public sealed class Es1HangarBay {
 	public Es1HercDiagram? SelectedDiagram => Hangar is { } hangar && SelectedHerc is { } herc ? Diagrams.Of(hangar, hangar.SelectedSlot, herc) : null;
 
 	/// <summary>
-	/// <c>TtmEntry_AssignSlot</c> (<c>00012047</c>)(<paramref name="slot"/>, <paramref name="entry"/>): the slot stored in
+	/// <c>TtmEntry_AssignSlot</c> (<c>00012047</c>): the slot stored in
 	/// the entry's word <c>+1</c> when that is −99, answering true; otherwise false with nothing changed. Retail writes past
 	/// the entries unchecked; such an entry answers false here, an engine guard.
 	/// </summary>
+	/// <param name="slot">The slot stored.</param>
+	/// <param name="entry">The script entry's index.</param>
 	public bool AssignSlot(short slot, short entry) {
 		if (Entries is not { } entries || entry < 0 || entry >= entries.Length || entries[entry].Slot != Es1TtmEntry.NoSlot) {
 			return false;
@@ -101,7 +103,8 @@ public sealed class Es1HangarBay {
 		}
 	}
 
-	/// <summary><c>TtmEntry_FreeSlot</c> (<c>000120ba</c>)(<paramref name="slot"/>): −99 in every entry holding the slot.</summary>
+	/// <summary><c>TtmEntry_FreeSlot</c> (<c>000120ba</c>): −99 in every entry holding the slot.</summary>
+	/// <param name="slot">The slot freed.</param>
 	public void FreeSlot(short slot) {
 		foreach (var entry in Entries ?? []) {
 			if (entry.Slot == slot) {
@@ -111,8 +114,7 @@ public sealed class Es1HangarBay {
 	}
 
 	/// <summary>
-	/// <c>HangarBay_AssignSlotScripts</c> (<c>000120f9</c>)(<paramref name="slot"/>, <paramref name="mode"/>)
-	/// (docs/es1/shell/repair-and-build.md#the-hangars-selection): the slot given its scripts and its two page words, by
+	/// <c>HangarBay_AssignSlotScripts</c> (<c>000120f9</c>) (docs/es1/shell/repair-and-build.md#the-hangars-selection): the slot given its scripts and its two page words, by
 	/// mode, the draws on <c>Shell_RandomState</c> in this order. 0: entry 6; <see cref="FirstPages"/> a draw below 5,
 	/// <see cref="SecondPages"/> 2. 2: entry slot + 9; the first page 3 plus a draw below 2 for slot 0 and a draw below 5
 	/// for any other, the second a draw below 5 for the slot's chassis below 5 (−1 for none) and below 3 for the others.
@@ -122,6 +124,8 @@ public sealed class Es1HangarBay {
 	/// draw below 3; then the second page a draw below 5. Any other mode does nothing. Retail writes the page words of a
 	/// slot past the eight unchecked; such a slot's words are not kept here, an engine guard, its draws still made.
 	/// </summary>
+	/// <param name="slot">The hangar slot.</param>
+	/// <param name="mode">The mode, 0 to 2.</param>
 	public void AssignSlotScripts(short slot, short mode) {
 		switch (mode) {
 			case 0:
@@ -304,13 +308,15 @@ public sealed class Es1HangarBay {
 	private IEnumerable<Es1ShellWait> Run(byte handle) => _scripts()?.RunScript(handle) ?? [];
 
 	/// <summary>
-	/// <c>Herc_DrawInBay</c> (<c>000241f9</c>)(<paramref name="herc"/>, <paramref name="remaining"/>)
-	/// (docs/es1/shell/hangar.md#drawing-the-herc-into-its-bay): the body drawn, the damage marks
+	/// <c>Herc_DrawInBay</c> (<c>000241f9</c>) (docs/es1/shell/hangar.md#drawing-the-herc-into-its-bay): the body drawn, the damage marks
 	/// (<see cref="Es1HercDiagrams.DrawDamageMarks"/>), one run of group script 1, the mounts
 	/// (<see cref="Es1HercDiagrams.DrawMounts"/>), and one run each of scripts 0 and 2. With <c>Shell_LowMemory</c>
 	/// (<c>0007fd09</c>) set it first builds the diagram with <paramref name="remaining"/>; this engine never sets that
 	/// byte, so the diagram drawn is the one the hangar keeps (<see cref="Es1HercDiagrams.Of"/>).
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="slot">The HERC's slot.</param>
+	/// <param name="remaining">The remaining build stage, as <see cref="Es1HercDiagrams.Build"/> takes it.</param>
 	public IEnumerable<Es1ShellWait> DrawInBay(Es1HercRecord herc, short slot, short remaining) {
 		_ = remaining;
 		var diagram = Hangar is { } hangar ? Diagrams.Of(hangar, slot, herc) : null;
@@ -327,10 +333,12 @@ public sealed class Es1HangarBay {
 	}
 
 	/// <summary>
-	/// <c>Herc_EraseFromBay</c> (<c>000241cd</c>)(<paramref name="herc"/>): the mounts erased
+	/// <c>Herc_EraseFromBay</c> (<c>000241cd</c>): the mounts erased
 	/// (<see cref="Es1HercDiagrams.EraseMounts"/>) and the body. With <c>Shell_LowMemory</c> set it then frees the
 	/// diagram, which this engine never does.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="slot">The HERC's slot.</param>
 	public void EraseFromBay(Es1HercRecord herc, short slot) {
 		var diagram = Hangar is { } hangar ? Diagrams.Of(hangar, slot, herc) : null;
 		Diagrams.EraseMounts(herc, _surface);
@@ -419,8 +427,7 @@ public sealed class Es1HangarBay {
 	}
 
 	/// <summary>
-	/// <c>Hangar_BuildIntoSelected</c> (<c>00029d68</c>)(<paramref name="chassis"/>)
-	/// (docs/es1/shell/repair-and-build.md#build--screen-2000), nothing for a selected slot of −1:
+	/// <c>Hangar_BuildIntoSelected</c> (<c>00029d68</c>) (docs/es1/shell/repair-and-build.md#build--screen-2000), nothing for a selected slot of −1:
 	/// <see cref="Es1Hangar.MarkedSlotWord"/> set to the chassis' word of <c>Chassis_BuildMissions</c> (<c>000808d8</c>,
 	/// <see cref="Es1CareerAfterMission.MarkedHercMissions"/>) and <see cref="Es1Hangar.Dword"/> to its price in tons
 	/// (<see cref="Es1RepairCosts.ChassisPrices"/>); a HERC of the chassis with every mount empty
@@ -430,6 +437,7 @@ public sealed class Es1HangarBay {
 	/// not set; and the HERC count up 1. Retail reads the tables and stores the slot with no bounds test; a chassis outside
 	/// the eight or a slot outside the array builds nothing here, engine guards.
 	/// </summary>
+	/// <param name="chassis">The chassis built.</param>
 	public void BuildIntoSelected(short chassis) {
 		if (Hangar is not { } hangar || hangar.SelectedSlot == -1) {
 			return;
@@ -450,13 +458,14 @@ public sealed class Es1HangarBay {
 	}
 
 	/// <summary>
-	/// <c>Hangar_ShowSlot</c> (<c>00029651</c>)(<paramref name="slot"/>) (docs/es1/shell/hangar.md#showing-a-bay): the
+	/// <c>Hangar_ShowSlot</c> (<c>00029651</c>) (docs/es1/shell/hangar.md#showing-a-bay): the
 	/// selected HERC taken out (<see cref="LeaveSelectedHerc"/>); the marked slot −1 when it is the selected slot and that
 	/// holds no HERC; for slot −1 the first empty slot (<see cref="Es1Hangar.FindFreeSlot"/>), and with none the selection
 	/// stepped to a HERC no pilot holds (<see cref="Es1Hangar.NextUnpilotedHercSlot"/>) and taken; the slot selected and
 	/// shown (<see cref="ShowSelectedHerc"/>); then no mount selected (<see cref="SelectMount"/>(−1)). With no hangar
 	/// nothing is shown here, an engine guard.
 	/// </summary>
+	/// <param name="slot">The slot shown, or −1 for the first empty one.</param>
 	public IEnumerable<Es1ShellWait> ShowSlot(short slot) {
 		if (Hangar is not { } hangar) {
 			yield break;
@@ -531,7 +540,7 @@ public sealed class Es1HangarBay {
 	}
 
 	/// <summary>
-	/// <c>Hangar_SelectNext</c> (<c>0002986f</c>)(<paramref name="mode"/>) (docs/es1/shell/repair-and-build.md#the-hangars-selection):
+	/// <c>Hangar_SelectNext</c> (<c>0002986f</c>) (docs/es1/shell/repair-and-build.md#the-hangars-selection):
 	/// the selected HERC taken out; by mode, 0 <see cref="Es1Hangar.NextHercSlot"/>, 1 <see cref="Es1CareerRecord.NextPilot"/>
 	/// of the roster's current record, 2 <see cref="Es1Hangar.NextUnpilotedHercSlot"/>, 3
 	/// <see cref="Es1Hangar.SelectMarkedSlot"/> and, with a marked slot then, <see cref="AssignSlotScripts"/>(it, 1); then the
@@ -539,6 +548,7 @@ public sealed class Es1HangarBay {
 	/// (<see cref="ShowSelectedHerc"/>), no mount selected and the picture wiped in (<see cref="Es1ScreenBlinds.Copy"/>(8,
 	/// the visible page, the draw page)).
 	/// </summary>
+	/// <param name="mode">The selection mode: 0 the next HERC, 1 the next pilot, 2 the next unpiloted HERC, 3 the marked slot.</param>
 	public IEnumerable<Es1ShellWait> SelectNext(short mode) {
 		LeaveSelectedHerc();
 		if (Hangar is { } hangar) {
@@ -571,11 +581,12 @@ public sealed class Es1HangarBay {
 	}
 
 	/// <summary>
-	/// <c>Hangar_SelectPrev</c> (<c>00029946</c>)(<paramref name="mode"/>): <see cref="SelectNext"/> stepping back for modes 0
+	/// <c>Hangar_SelectPrev</c> (<c>00029946</c>): <see cref="SelectNext"/> stepping back for modes 0
 	/// to 2 (<see cref="Es1Hangar.PrevHercSlot"/>, <see cref="Es1CareerRecord.PrevPilot"/> of the roster's current record,
 	/// <see cref="Es1Hangar.PrevUnpilotedHercSlot"/>), with no mode 3, and wiping and showing only when the selected slot
 	/// is then not −1.
 	/// </summary>
+	/// <param name="mode">The selection mode, 0 to 2, as for <see cref="SelectNext"/>.</param>
 	public IEnumerable<Es1ShellWait> SelectPrev(short mode) {
 		LeaveSelectedHerc();
 		if (Hangar is not { } hangar) {
@@ -622,9 +633,10 @@ public sealed class Es1HangarBay {
 	}
 
 	/// <summary>
-	/// <c>Hangar_SelectMount</c> (<c>00029a14</c>)(<paramref name="mount"/>): on the selected HERC, when there is one,
+	/// <c>Hangar_SelectMount</c> (<c>00029a14</c>): on the selected HERC, when there is one,
 	/// <see cref="Es1HercDiagrams.HighlightMount"/>(HERC, mount).
 	/// </summary>
+	/// <param name="mount">The mount, or −1 for none.</param>
 	public void SelectMount(short mount) {
 		if (SelectedHerc is { } herc && SelectedDiagram != null) {
 			Diagrams.HighlightMount(herc, mount, _surface);
@@ -656,7 +668,7 @@ public sealed class Es1HangarBay {
 	private const short EmptyMountUnit = 100;
 
 	/// <summary>
-	/// <c>Hangar_FitWeapon</c> (<c>00029abc</c>)(<paramref name="weapon"/>) (docs/es1/shell/arming.md#fitting-a-weapon), on
+	/// <c>Hangar_FitWeapon</c> (<c>00029abc</c>) (docs/es1/shell/arming.md#fitting-a-weapon), on
 	/// the selected HERC's current mount and the stock <c>[000aad62]</c>, the roster's stock 0: nothing when the mount
 	/// carries the weapon already; the incoming unit 100 for 17 and otherwise <see cref="Es1WeaponStock.Take"/> of the
 	/// weapon's stack, nothing when that is −1; the mounts erased; unless the mount was empty, its condition
@@ -666,6 +678,7 @@ public sealed class Es1HangarBay {
 	/// reads the selected slot's HERC before testing it and pops the unit before it finds the slot empty; with no HERC
 	/// nothing is done here, an engine guard.
 	/// </summary>
+	/// <param name="weapon">The weapon fitted.</param>
 	public void FitWeapon(short weapon) {
 		if (SelectedHerc is not { } herc || SelectedDiagram == null) {
 			return;

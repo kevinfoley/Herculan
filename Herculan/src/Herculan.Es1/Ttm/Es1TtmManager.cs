@@ -153,10 +153,12 @@ public sealed class Es1TtmManager {
 	public Es1TtmPlayer? Script(int handle) => handle >= 0 && handle < _handles.Length ? _handles[handle] : null;
 
 	/// <summary>
-	/// <c>Ttm_Configure</c> (<c>000464b0</c>)(<paramref name="backgroundPage"/>, <paramref name="defaultContext"/>,
-	/// <paramref name="count"/>): the count, the default render context, the shell's display (this manager's already) and
+	/// <c>Ttm_Configure</c> (<c>000464b0</c>): the count, the default render context, the shell's display (this manager's already) and
 	/// the page <i>a</i>, and the prefix cleared with <c>Ttm_SetPathPrefix</c>(0).
 	/// </summary>
+	/// <param name="backgroundPage">The background page.</param>
+	/// <param name="defaultContext">The default render context, or null.</param>
+	/// <param name="count">The number of script handles.</param>
 	public void Configure(int backgroundPage, Func<Es1PanelCanvas>? defaultContext, byte count) {
 		Count = count;
 		DefaultContext = defaultContext;
@@ -165,11 +167,13 @@ public sealed class Es1TtmManager {
 	}
 
 	/// <summary>
-	/// <c>Ttm_AllocHandles</c> (<c>ES1DBSIM 00069780</c>, <c>ES1GO 0004670e</c>)(<paramref name="timerCount"/>): the table
+	/// <c>Ttm_AllocHandles</c> (<c>ES1DBSIM 00069780</c>, <c>ES1GO 0004670e</c>): the table
 	/// of <see cref="Count"/> empty handles, and <c>Ttm_TimerTick</c> registered on the PC timer at the count
 	/// (docs/es1/simulation/timer.md#callbacks). The timer it would build when GL slot 0 is empty is
 	/// <paramref name="clock"/>: <c>Sim_StartMission</c>'s in the simulator, <c>Shell_Timer</c> in the shell. Answers 1.
 	/// </summary>
+	/// <param name="timerCount">The interrupt count between the scripts' ticks.</param>
+	/// <param name="clock">The timer the scripts' tick is registered on.</param>
 	public bool AllocHandles(int timerCount, Es1SimClock clock) {
 		_handles = new Es1TtmPlayer?[Count];
 		TimerSlot = clock.AddCallback(timerCount, TimerTick);
@@ -194,12 +198,15 @@ public sealed class Es1TtmManager {
 	public byte Open(int mode, int loop, string name) => Open(mode, loop, null, name);
 
 	/// <summary>
-	/// <c>Ttm_Open</c> (<c>ES1DBSIM 00069848</c>, <c>ES1GO 0004680a</c>)(<paramref name="mode"/>, <paramref name="loop"/>,
-	/// <paramref name="context"/>, <paramref name="name"/>): the first empty handle takes a new script loaded with
+	/// <c>Ttm_Open</c> (<c>ES1DBSIM 00069848</c>, <c>ES1GO 0004680a</c>): the first empty handle takes a new script loaded with
 	/// <see cref="Es1TtmPlayer.Load"/>; <see cref="NoHandle"/> when the count is 0, every handle holds a script, or the
 	/// load answers anything but 0, the script then destroyed and the handle emptied. The context is the shell's
 	/// <i>c</i>, the script's <c>+0x2c</c>; the simulator's load takes none.
 	/// </summary>
+	/// <param name="mode">The script's initial mode.</param>
+	/// <param name="loop">The script's loop flag.</param>
+	/// <param name="context">The script's render context, or null.</param>
+	/// <param name="name">The script file's name.</param>
 	public byte Open(int mode, int loop, Func<Es1PanelCanvas>? context, string name) {
 		int handle = Array.IndexOf(_handles, null);
 		if (Count == 0 || handle < 0) {
@@ -217,11 +224,12 @@ public sealed class Es1TtmManager {
 	}
 
 	/// <summary>
-	/// <c>Ttm_Close</c> (<c>000469da</c>)(<paramref name="handle"/>): the script destroyed, its sound with it
+	/// <c>Ttm_Close</c> (<c>000469da</c>): the script destroyed, its sound with it
 	/// (<see cref="Es1TtmPlayer.DestroySound"/>), and the handle emptied, 1; 0 for an empty handle, whose message retail
 	/// formats into a buffer it does not use. A handle past the table, which retail reads beyond it, answers 0 here, an
 	/// engine guard.
 	/// </summary>
+	/// <param name="handle">The script's handle.</param>
 	public bool Close(byte handle) {
 		if (Script(handle) is not { } script) {
 			return false;
@@ -259,7 +267,9 @@ public sealed class Es1TtmManager {
 	/// </summary>
 	public bool SetPage(short page, byte handle) => Script(handle) is { } script && script.SetPage(page);
 
-	/// <summary><c>Ttm_SetMode</c> (<c>00046948</c>)(<paramref name="mode"/>, <paramref name="handle"/>): the script's mode set, 1; 0 for an empty handle.</summary>
+	/// <summary><c>Ttm_SetMode</c> (<c>00046948</c>): the script's mode set, 1; 0 for an empty handle.</summary>
+	/// <param name="mode">The mode set.</param>
+	/// <param name="handle">The script's handle.</param>
 	public bool SetMode(int mode, byte handle) {
 		if (Script(handle) is not { } script) {
 			return false;
@@ -269,7 +279,9 @@ public sealed class Es1TtmManager {
 		return true;
 	}
 
-	/// <summary><c>Ttm_SetLoop</c> (<c>00046991</c>)(<paramref name="loop"/>, <paramref name="handle"/>): the script's loop flag set, 1; 0 for an empty handle.</summary>
+	/// <summary><c>Ttm_SetLoop</c> (<c>00046991</c>): the script's loop flag set, 1; 0 for an empty handle.</summary>
+	/// <param name="loop">The loop flag set.</param>
+	/// <param name="handle">The script's handle.</param>
 	public bool SetLoop(int loop, byte handle) {
 		if (Script(handle) is not { } script) {
 			return false;
@@ -279,27 +291,32 @@ public sealed class Es1TtmManager {
 		return true;
 	}
 
-	/// <summary><c>Ttm_GetPage</c> (<c>0004669f</c>)(<paramref name="handle"/>): the script's page, or <c>0xffff</c> for an empty handle.</summary>
+	/// <summary><c>Ttm_GetPage</c> (<c>0004669f</c>): the script's page, or <c>0xffff</c> for an empty handle.</summary>
+	/// <param name="handle">The script's handle.</param>
 	public ushort GetPage(byte handle) => Script(handle) is { } script ? (ushort)script.Page : (ushort)0xffff;
 
 	/// <summary>
-	/// <c>Ttm_GetMode</c> (<c>000466cc</c>)(<paramref name="handle"/>): the script's mode. Retail reads an empty handle's
+	/// <c>Ttm_GetMode</c> (<c>000466cc</c>): the script's mode. Retail reads an empty handle's
 	/// slot as a script; here an empty handle answers <see cref="Es1TtmPlayer.Hidden"/>, an engine guard, so a script that
 	/// did not open counts as ended.
 	/// </summary>
+	/// <param name="handle">The script's handle.</param>
 	public int GetMode(byte handle) => Script(handle)?.Mode ?? Es1TtmPlayer.Hidden;
 
-	/// <summary><c>Ttm_GetLoop</c> (<c>000466ed</c>)(<paramref name="handle"/>): the script's loop flag; 0 for an empty handle here, where retail reads the empty slot.</summary>
+	/// <summary><c>Ttm_GetLoop</c> (<c>000466ed</c>): the script's loop flag; 0 for an empty handle here, where retail reads the empty slot.</summary>
+	/// <param name="handle">The script's handle.</param>
 	public int GetLoop(byte handle) => Script(handle)?.Loop ?? 0;
 
-	/// <summary><c>Ttm_SetPathPrefix</c> (<c>0004692d</c>)(<paramref name="prefix"/>): the prefix stored, the one before returned.</summary>
+	/// <summary><c>Ttm_SetPathPrefix</c> (<c>0004692d</c>): the prefix stored, the one before returned.</summary>
+	/// <param name="prefix">The new prefix, or null for none.</param>
 	public string? SetPathPrefix(string? prefix) {
 		string? before = PathPrefix;
 		PathPrefix = prefix;
 		return before;
 	}
 
-	/// <summary><c>Ttm_SetDefaultContext</c> (<c>000467ef</c>)(<paramref name="context"/>): <see cref="DefaultContext"/> stored, the one before returned.</summary>
+	/// <summary><c>Ttm_SetDefaultContext</c> (<c>000467ef</c>): <see cref="DefaultContext"/> stored, the one before returned.</summary>
+	/// <param name="context">The new default render context, or null.</param>
 	public Func<Es1PanelCanvas>? SetDefaultContext(Func<Es1PanelCanvas>? context) {
 		var before = DefaultContext;
 		DefaultContext = context;
@@ -307,11 +324,12 @@ public sealed class Es1TtmManager {
 	}
 
 	/// <summary>
-	/// <c>Ttm_RunScript</c> (<c>000465da</c>)(<paramref name="handle"/>), the shell's: nothing for <see cref="NoHandle"/>;
+	/// <c>Ttm_RunScript</c> (<c>000465da</c>), the shell's: nothing for <see cref="NoHandle"/>;
 	/// otherwise <see cref="Ticked"/> cleared, the handle's script run with <c>TtmScript_Run</c>(script, the ticks pending),
 	/// and that many taken off the count. It does not wait for a tick. The waits are the script's fades'
 	/// (<see cref="Es1TtmPlayer.RunWaiting"/>).
 	/// </summary>
+	/// <param name="handle">The script's handle.</param>
 	public IEnumerable<Es1ShellWait> RunScript(byte handle) {
 		if (handle == NoHandle) {
 			yield break;

@@ -459,13 +459,16 @@ public sealed class Es1BasePool {
 	public Es1BaseTypes? Types { get; set; }
 
 	/// <summary>
-	/// <c>Base_Construct</c> (<c>00003cbc</c>)(<paramref name="side"/>, <paramref name="record"/>): the type record of the
+	/// <c>Base_Construct</c> (<c>00003cbc</c>): the type record of the
 	/// record's type; the side's tables, the animated and static ones of side 0 or of the enemy; by the type, plain (0–4
 	/// and 7) from the static table, radar mast (5, 6) or armed (8) from the animated one, its entry <c>+0x02</c>; then
 	/// the structure (<see cref="Es1Base"/>). Null when the pool is full, where retail's radar arm writes its byte through
 	/// the null; for a type above 8, which retail builds through a pointer it never sets; and for a type whose shape did
 	/// not load, which retail asserts on: engine guards.
 	/// </summary>
+	/// <param name="side">The side, 0 or the enemy's.</param>
+	/// <param name="record">The structure's script record.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public Es1Base? Construct(short side, Es1ScriptBase record, Es1SimGlobals globals) {
 		if (_live.Count >= Capacity || Types?[record.Type] is not { } type || record.Type > Es1Base.ArmedType) {
 			return null;

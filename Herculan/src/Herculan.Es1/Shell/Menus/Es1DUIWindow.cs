@@ -533,7 +533,7 @@ public class Es1DUIWindow {
 	}
 
 	/// <summary>
-	/// <c>DUIWindow_KeySubscriber</c> (<c>0001ba73</c>)(<paramref name="code"/>) (docs/es1/shell/menu-input.md#the-keys), the
+	/// <c>DUIWindow_KeySubscriber</c> (<c>0001ba73</c>) (docs/es1/shell/menu-input.md#the-keys), the
 	/// keyboard subscriber <see cref="Activate"/> registers for the window's key list: 1 while
 	/// <see cref="Es1MenuGlobals.KeysEnabled"/> is clear; then the repeat test and the release conversion, below; the
 	/// code kept as <see cref="Es1MenuGlobals.LastKey"/>; 2 for a code with <c>Alt</c>, <c>Ctrl</c> or <c>Shift</c>
@@ -547,6 +547,8 @@ public class Es1DUIWindow {
 	/// makes the code the last one's release only for the code <c>0x7f</c> after an odd press. Ported as the binary has
 	/// them; a held key's repeats press its control again, which shows nothing new.</para>
 	/// </summary>
+	/// <param name="globals">The menu globals.</param>
+	/// <param name="code">The key code.</param>
 	public static int KeySubscriber(Es1MenuGlobals globals, ushort code) {
 		if (!globals.KeysEnabled) {
 			return Es1Keyboard.Claimed;
@@ -588,7 +590,7 @@ public class Es1DUIWindow {
 	}
 
 	/// <summary>
-	/// <c>DUIWindow_HandleNavKey</c> (<c>0001cc86</c>)(<paramref name="code"/>) (docs/es1/shell/menu-input.md#the-keys), the
+	/// <c>DUIWindow_HandleNavKey</c> (<c>0001cc86</c>) (docs/es1/shell/menu-input.md#the-keys), the
 	/// dialog's key handler: nothing without an active window; otherwise by the seven codes of the table at
 	/// <c>0007f0e0</c>. <c>Tab</c> puts the pressed control up and changed, with no slot called, and moves the focus to the
 	/// next focusable control, wrapping by the remainder of the count; <c>Shift+Tab</c> and <c>Alt+Tab</c> move it to the
@@ -598,6 +600,8 @@ public class Es1DUIWindow {
 	/// <para><b>Engine guard:</b> retail divides by the control count and walks until a focusable control turns up, so a
 	/// window with no controls faults and one with no focusable control hangs; here either leaves the focus as it is.</para>
 	/// </summary>
+	/// <param name="globals">The menu globals.</param>
+	/// <param name="code">The key code.</param>
 	public static void HandleNavKey(Es1MenuGlobals globals, ushort code) {
 		if (globals.Active is not { } window) {
 			return;

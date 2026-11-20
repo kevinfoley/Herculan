@@ -399,13 +399,16 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 	public static Es1HotspotHandler BayNumberHandler(Es1MenuContext context) => (render, rect, id) => DrawBayNumber(context, render, rect, id);
 
 	/// <summary>
-	/// <c>PilotPortraitHotspot_Draw</c> (<c>00017a19</c>)(<paramref name="rect"/>, <paramref name="id"/>)
-	/// (docs/es1/shell/hangar.md#the-screen), on the roster's record its word <c>+7</c> names, read from the roster in
+	/// <c>PilotPortraitHotspot_Draw</c> (<c>00017a19</c>) (docs/es1/shell/hangar.md#the-screen), on the roster's record its word <c>+7</c> names, read from the roster in
 	/// either mode, with <i>n</i> = id − 1611: frame (entry <i>n</i>'s word <c>+0</c>) of
 	/// <see cref="Es1MenuBanks.CrewPortraits"/> blitted at the rect's corner plus (1, 1); then, while the record's byte
 	/// <c>+1</c> is set and the entry's byte <c>+0xa</c> is 0, frame 0 of <see cref="Es1MenuBanks.CrewMesh"/> at the
 	/// corner. Retail reads an entry, and a frame, past their arrays unchecked; either draws nothing here, an engine guard.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="render">The render context drawn through.</param>
+	/// <param name="rect">The hotspot's rectangle.</param>
+	/// <param name="id">The hotspot's control id.</param>
 	private static void DrawPortrait(Es1MenuContext context, Es1ShellRenderContext render, Es1Rect rect, short id) {
 		int n = id - InsigniaTile;
 		var record = context.Mission.Roster.CurrentRecord;
@@ -425,7 +428,7 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 		bank != null && index >= 0 && index < bank.Count ? bank[index] : null;
 
 	/// <summary>
-	/// <c>PilotLinesHotspot_Draw</c> (<c>00017b4a</c>)(<paramref name="rect"/>, <paramref name="id"/>) (docs/es1/shell/hangar.md#the-screen), with
+	/// <c>PilotLinesHotspot_Draw</c> (<c>00017b4a</c>) (docs/es1/shell/hangar.md#the-screen), with
 	/// <i>n</i> = id − 1619 and the record <c>CareerRecord_Current</c>'s: the font <c>nm_ylw</c> for the record's current
 	/// pilot <c>+0x12</c> and <c>nm_white</c> otherwise; the alignment 0; the rect filled and framed in
 	/// <see cref="LinesColor"/>; then four lines from (left + 2, top + 7), 8 apart: the name, for the player's entry
@@ -436,6 +439,10 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 	/// <c>Herc_OverallCondition</c>, 0 for an empty slot. Retail reads an entry past the four unchecked, and draws through
 	/// a null name; either draws nothing here, engine guards.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="render">The render context drawn through.</param>
+	/// <param name="rect">The hotspot's rectangle.</param>
+	/// <param name="id">The hotspot's control id.</param>
 	private static void DrawLines(Es1MenuContext context, Es1ShellRenderContext render, Es1Rect rect, short id) {
 		int n = id - FirstLines;
 		var mission = context.Mission;
@@ -482,10 +489,13 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 	}
 
 	/// <summary>
-	/// <c>PilotEntry_Name</c> (<c>00015fc0</c>)(<paramref name="record"/>, <paramref name="entry"/>): none when the pilot
+	/// <c>PilotEntry_Name</c> (<c>00015fc0</c>): none when the pilot
 	/// names are not loaded, otherwise name <c>+2</c> of group <c>+0</c>. A group or name outside the file's gives none
 	/// here, an engine guard.
 	/// </summary>
+	/// <param name="data">The shell's data.</param>
+	/// <param name="record">The career record.</param>
+	/// <param name="entry">The pilot entry's index.</param>
 	private static string? PilotName(Es1ShellData data, Es1CareerRecord record, int entry) {
 		var pilot = record.Pilots[entry];
 		return data.PilotNames?.Groups is { } groups && pilot.NameGroup >= 0 && pilot.NameGroup < groups.Length
@@ -495,11 +505,15 @@ public sealed class Es1CrewAssignMenu : Es1Menu {
 	}
 
 	/// <summary>
-	/// <c>BayNumberHotspot_Draw</c> (<c>00017d9f</c>)(<paramref name="rect"/>, <paramref name="id"/>) (docs/es1/shell/hangar.md#the-screen), with <i>n</i>
+	/// <c>BayNumberHotspot_Draw</c> (<c>00017d9f</c>) (docs/es1/shell/hangar.md#the-screen), with <i>n</i>
 	/// = id − 1615 and the record <c>CareerRecord_Current</c>'s: for a slot <c>+8</c> of 0 or more, the alignment 0 and
 	/// <c>%d</c> (<c>0007ed72</c>) of the slot + 1 in <c>big_red</c> at the rect's corner plus (3, 8). Nothing is drawn
 	/// under it. An entry past the four draws nothing here, an engine guard.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="render">The render context drawn through.</param>
+	/// <param name="rect">The hotspot's rectangle.</param>
+	/// <param name="id">The hotspot's control id.</param>
 	private static void DrawBayNumber(Es1MenuContext context, Es1ShellRenderContext render, Es1Rect rect, short id) {
 		int n = id - FirstTile;
 		if (context.Mission.CurrentRecord is not { } record || n is < 0 or >= Es1CareerRecord.PilotCount) {

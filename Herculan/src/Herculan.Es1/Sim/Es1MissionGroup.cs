@@ -598,11 +598,14 @@ public static class Es1Formation {
 	}
 
 	/// <summary>
-	/// <c>Formation_RotateAndAddOffset</c> (<c>0000d9a0</c>)(<paramref name="member"/>, <paramref name="position"/>,
-	/// <paramref name="offset"/>): the offset's X and Y turned by the frame of the group's first member, and its Z unturned,
+	/// <c>Formation_RotateAndAddOffset</c> (<c>0000d9a0</c>): the offset's X and Y turned by the frame of the group's first member, and its Z unturned,
 	/// added to the position (docs/es1/formats/formations-dat.md#where-a-member-stands). Retail reads the first member
 	/// unchecked; with none the member's own frame turns it here, an engine guard.
 	/// </summary>
+	/// <param name="member">The member placed.</param>
+	/// <param name="group">The member's group.</param>
+	/// <param name="position">The position the offset is added to.</param>
+	/// <param name="offset">The member's formation offset.</param>
 	public static Vec3i RotateAndAddOffset(IEs1SimObject member, Es1MissionGroup group, Vec3i position, Vec3i offset) {
 		var leader = group.Members.Count > 0 && group.Members[0] is IEs1SimObject first ? first : member;
 		var (x, y) = Rotate2D(leader.Frame, offset.X, offset.Y);

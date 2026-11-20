@@ -107,18 +107,20 @@ public sealed class Es1FlyerTypes {
 	public short Count { get; private set; }
 
 	/// <summary>
-	/// <c>FlyerType_RecordIndex</c> (<c>0001c678</c>)(<paramref name="type"/>): the type's byte in the slot table,
+	/// <c>FlyerType_RecordIndex</c> (<c>0001c678</c>): the type's byte in the slot table,
 	/// <see cref="NoRecord"/> when it has none. Retail indexes the two bytes unchecked; a type outside them answers
 	/// <see cref="NoRecord"/> here, an engine guard.
 	/// </summary>
+	/// <param name="type">The flyer type.</param>
 	public byte RecordIndex(short type) => type is >= 0 and < TypeCount ? _recordIndex[type] : NoRecord;
 
 	/// <summary>
-	/// <c>FlyerType_Register</c> (<c>0001c688</c>)(<paramref name="type"/>): a type with no record takes the count as its
+	/// <c>FlyerType_Register</c> (<c>0001c688</c>): a type with no record takes the count as its
 	/// record and the count goes up by 1; the <c>.DMG</c> and collision slots it reserves are the type's own fields here.
 	/// Retail writes a type outside the two bytes unchecked, over the name list's pointer; such a type registers nothing
 	/// here, an engine guard.
 	/// </summary>
+	/// <param name="type">The flyer type registered.</param>
 	public void Register(short type) {
 		if (type is >= 0 and < TypeCount && _recordIndex[type] == NoRecord) {
 			_recordIndex[type] = (byte)Count++;

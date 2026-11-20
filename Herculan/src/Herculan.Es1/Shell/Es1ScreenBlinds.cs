@@ -22,8 +22,7 @@ public sealed class Es1ScreenBlinds {
 	}
 
 	/// <summary>
-	/// <c>Screen_BlindsCopy</c> (<c>0004bc0d</c>)(<paramref name="passes"/>, <paramref name="to"/>, <paramref name="from"/>,
-	/// flag): the display's source page set to <paramref name="from"/> and its draw page to <paramref name="to"/>; for each
+	/// <c>Screen_BlindsCopy</c> (<c>0004bc0d</c>): the display's source page set to <paramref name="from"/> and its draw page to <paramref name="to"/>; for each
 	/// pass <i>i</i> below <paramref name="passes"/>, the region of rows <i>r</i> to <i>r</i> + 1, columns 0 to <c>0x13f</c>,
 	/// copied for <i>r</i> = <i>i</i>, <i>i</i> + <paramref name="passes"/>, … below <see cref="RowCount"/>
 	/// (<c>Region_CopyBetweenPages</c>), then a tick waited (<c>Shell_WaitTicks</c>(1)); then both pages put back. The flag
@@ -31,6 +30,9 @@ public sealed class Es1ScreenBlinds {
 	/// <c>Shell_DrawScreen</c> leaves in clip mode 2 around the open window; how <c>Region_CopyBetweenPages</c> treats that
 	/// mode's regions is unread, so the copies here take the full screen in clip mode 1.
 	/// </summary>
+	/// <param name="passes">The number of passes the rows are interleaved over.</param>
+	/// <param name="to">The page copied to.</param>
+	/// <param name="from">The page copied from.</param>
 	public IEnumerable<Es1ShellWait> Copy(short passes, int to, int from) {
 		var display = _devices.Display;
 		int keptSource = display.SourcePage, keptDraw = display.DrawPage;
@@ -52,11 +54,13 @@ public sealed class Es1ScreenBlinds {
 	}
 
 	/// <summary>
-	/// <c>Screen_BlindsClear</c> (<c>0004c053</c>)(<paramref name="passes"/>, <paramref name="color"/>, flag): the draw page
+	/// <c>Screen_BlindsClear</c> (<c>0004c053</c>): the draw page
 	/// cleared to the color (<c>VGA8_ClearPage</c>, the raster's <c>0008663c</c>), <see cref="Copy"/>(passes, the visible
 	/// page, the draw page, flag), then the region <c>0009aff8</c>, the full screen, copied from page 2 onto the draw page
 	/// with the source page put back after.
 	/// </summary>
+	/// <param name="passes">The number of passes the rows are interleaved over.</param>
+	/// <param name="color">The color the draw page is cleared to.</param>
 	public IEnumerable<Es1ShellWait> Clear(short passes, byte color) {
 		var display = _devices.Display;
 		display.ClearPage(display.DrawPage, color);

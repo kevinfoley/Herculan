@@ -937,13 +937,14 @@ public sealed class Es1ViewManager {
 	}
 
 	/// <summary>
-	/// <c>CockpitView_SetShakeBand</c> (<c>000243d4</c>)(<paramref name="amplitude"/>), nothing in view 4 or while a change
+	/// <c>CockpitView_SetShakeBand</c> (<c>000243d4</c>), nothing in view 4 or while a change
 	/// is staged: both offsets the canvas origin; the band [<i>y</i> − amplitude, <i>y</i>] in view 1 and [<i>y</i>,
 	/// <i>y</i> + amplitude] in the others. In views 2 and 3 both offsets' <i>x</i> is 0 and the strip is saved
 	/// (<c>Region_Save</c>, from the source page) and filled with <see cref="BorderColor"/> on the draw page and on
 	/// <c>+0x88</c>, <c>+0x8c</c> left the draw page, with the clip mode and translation at 0. The total zeroed and the
 	/// shake armed.
 	/// </summary>
+	/// <param name="amplitude">The shake's amplitude.</param>
 	internal void SetShakeBand(int amplitude) {
 		if (CurrentView == Es1CockpitViews.ExternalView || Staged) {
 			return;
@@ -973,13 +974,14 @@ public sealed class Es1ViewManager {
 	}
 
 	/// <summary>
-	/// <c>CockpitView_StepShake</c> (<c>00024564</c>)(<paramref name="step"/>), while armed and not in view 4: the moving
+	/// <c>CockpitView_StepShake</c> (<c>00024564</c>), while armed and not in view 4: the moving
 	/// offset's <i>y</i> moved by up to the step toward the farther of the band's two rows, the low one when both are as
 	/// far; both pages' origins, <c>+0x8c</c>'s then <c>+0x88</c>'s, set to their own plus the moving offset,
 	/// which scrolls the screen; the current view's clip regions moved up by the move
 	/// (<see cref="Es1ClipBlock.MoveRows"/>); the move added to <see cref="ShakeTotal"/>; and the cockpit moved by (0,
 	/// −move) (<see cref="Es1Cockpit.TranslateForView"/>).
 	/// </summary>
+	/// <param name="step">The largest move the offset makes.</param>
 	internal void StepShake(int step) {
 		if (!ShakeArmed || CurrentView == Es1CockpitViews.ExternalView) {
 			return;

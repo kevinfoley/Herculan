@@ -94,9 +94,10 @@ public sealed class Es1CareerRoster {
 	public Es1CareerRecord CurrentRecord => Current is >= 0 and < RecordCount ? Records[Current] : Records[0];
 
 	/// <summary>
-	/// <c>PilotEntry_Condition</c> (<c>0001618d</c>)(<paramref name="record"/>, its <c>+0xe</c>): the player's pilot's
+	/// <c>PilotEntry_Condition</c> (<c>0001618d</c>), taking the entry's <c>+0xe</c>: the player's pilot's
 	/// condition. Retail reads the entry with no bounds test; an entry past the four reads 0 here, an engine guard.
 	/// </summary>
+	/// <param name="record">The career record.</param>
 	public static short PlayerCondition(Es1CareerRecord record) =>
 		record.PlayerEntry is >= 0 and < Es1CareerRecord.PilotCount ? record.Pilots[record.PlayerEntry].Condition : (short)0;
 
@@ -220,10 +221,12 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <c>Words_RandomPermutation</c> (<c>000162f4</c>)(<paramref name="n"/>, words): the words set to −1, then for <i>i</i>
+	/// <c>Words_RandomPermutation</c> (<c>000162f4</c>): the words set to −1, then for <i>i</i>
 	/// from 0 to <paramref name="n"/> − 1, <i>i</i> put in the (<i>k</i> + 1)-th word still −1, <i>k</i> a draw below
 	/// <paramref name="n"/> − <i>i</i> on <paramref name="randomBelow"/>: a random order of 0 to <paramref name="n"/> − 1.
 	/// </summary>
+	/// <param name="n">The number of words permuted.</param>
+	/// <param name="randomBelow">The draw below a bound.</param>
 	public static short[] RandomPermutation(short n, Func<short, int> randomBelow) {
 		var words = Enumerable.Repeat((short)-1, n).ToArray();
 		for (short i = 0; i < n; i++) {
@@ -507,17 +510,19 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <c>Career_PeekNextCampaign</c> (<c>00015aa5</c>)(<paramref name="record"/>) (docs/es1/shell/between-missions.md#moving-on):
+	/// <c>Career_PeekNextCampaign</c> (<c>00015aa5</c>) (docs/es1/shell/between-missions.md#moving-on):
 	/// <see cref="Es1BattleSet.PeekNextCampaign"/> of the loaded battle set for <see cref="OutcomeChoice"/>, the record's
 	/// position and campaign. With no battle set, as when its file did not read, the answer is 0, an engine guard.
 	/// </summary>
+	/// <param name="record">The career record.</param>
 	public short PeekNextCampaign(Es1CareerRecord record) =>
 		_data.BattleSet?.PeekNextCampaign(OutcomeChoice(), record.Position, record.Campaign) ?? 0;
 
 	/// <summary>
-	/// <c>Career_AdvanceCampaign</c> (<c>00015a5a</c>)(<paramref name="record"/>): <see cref="Es1BattleSet.Advance"/> on the
+	/// <c>Career_AdvanceCampaign</c> (<c>00015a5a</c>): <see cref="Es1BattleSet.Advance"/> on the
 	/// record's position and campaign; true when the campaign changed. With no battle set the record stays, an engine guard.
 	/// </summary>
+	/// <param name="record">The career record.</param>
 	public bool AdvanceCampaign(Es1CareerRecord record) {
 		if (_data.BattleSet is not { } set) {
 			return false;
@@ -554,12 +559,12 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <c>Career_BuildMissionPath</c> (<c>00015a13</c>)(<paramref name="record"/>)
-	/// (docs/es1/formats/bst-battle-sets.md#a-careers-missions): <see cref="GetMissionName"/> for <see cref="OutcomeChoice"/>,
+	/// <c>Career_BuildMissionPath</c> (<c>00015a13</c>) (docs/es1/formats/bst-battle-sets.md#a-careers-missions): <see cref="GetMissionName"/> for <see cref="OutcomeChoice"/>,
 	/// the record's position <c>+8</c> and campaign <c>+6</c>, formatted as <c>msn\%s</c> into <see cref="Es1ShellMission.Path"/>
 	/// with the text's path set (<see cref="Es1ShellMission.SetPath"/>). Returns the name, or null when none is found,
 	/// which leaves both paths as they were.
 	/// </summary>
+	/// <param name="record">The career record.</param>
 	private string? BuildMissionPath(Es1CareerRecord record) {
 		if (GetMissionName(OutcomeChoice(), record.Position, record.Campaign) is not { } name) {
 			return null;
@@ -617,11 +622,13 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <c>Inventory_CopyThroughScratch</c> (<c>00027cb3</c>)(<paramref name="from"/>, <paramref name="to"/>): the stock
+	/// <c>Inventory_CopyThroughScratch</c> (<c>00027cb3</c>): the stock
 	/// <paramref name="from"/> written as <c>car\scratch.arm</c> and read into the stock <paramref name="to"/>, which reverses
 	/// each slot's words; the file is deleted after. Here the write and the read are made in memory, to the same result, and
 	/// no file is written.
 	/// </summary>
+	/// <param name="from">The index of the stock copied.</param>
+	/// <param name="to">The index of the stock overwritten.</param>
 	private void CopyStock(int from, int to) => Stocks[to].Read(Stocks[from].ToFile());
 
 	/// <summary>A record's <c>memmove</c>: a copy of its <c>0x1f7</c> bytes.</summary>
@@ -647,11 +654,12 @@ public sealed class Es1CareerRoster {
 	};
 
 	/// <summary>
-	/// <c>Hangar_ReadFromSave</c> (<c>00028bd6</c>)(<paramref name="list"/>, the hangar file): the file's lists before
+	/// <c>Hangar_ReadFromSave</c> (<c>00028bd6</c>): the file's lists before
 	/// <paramref name="list"/> passed over (<c>HercList_Skip</c>) and the next read into a hangar (<see cref="Es1Hangar.Read"/>).
 	/// Retail reads whatever a file that does not open gives; here such a file, or a list outside the 41, gives an empty
 	/// hangar, reported, an engine guard.
 	/// </summary>
+	/// <param name="list">The index of the hangar list read.</param>
 	private Es1Hangar ReadHangar(short list) {
 		if (LogEntry is { } entry && ReadHangarFile(HangarFilePath(entry), report: true) is { } file && list is >= 0 and < RecordCount) {
 			return Es1Hangar.Read(file.Lists[list]);

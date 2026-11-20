@@ -167,12 +167,13 @@ public sealed class Es1ShellMission {
 	}
 
 	/// <summary>
-	/// <c>SingleMission_BuildPath</c> (<c>00036649</c>)(<paramref name="index"/>): the list <paramref name="index"/> of
+	/// <c>SingleMission_BuildPath</c> (<c>00036649</c>): the list <paramref name="index"/> of
 	/// <see cref="Es1ShellData.SingleMissions"/>, or for −1 the list <c>Math_RandomBelow</c>(the count) draws; a name drawn
 	/// from it (<see cref="Es1ShellRandom.PickRandom"/>) as <c>msn\%s</c> into <see cref="Path"/>; and
 	/// <see cref="TextPath"/> set. Returns the name, or null when there is no list or name to take, where retail reads past
 	/// its arrays, an engine guard that leaves both paths as they were.
 	/// </summary>
+	/// <param name="index">The list index, or −1 for a random list.</param>
 	public string? BuildSingleMissionPath(short index) {
 		if (_data.Random is not { } random) {
 			return null;
@@ -391,11 +392,12 @@ public sealed class Es1ShellMission {
 	}
 
 	/// <summary>
-	/// <c>MissionVar_ReadFlag</c> (<c>0003628d</c>)(<paramref name="index"/>) (docs/es1/formats/eng-mission-text.md#reading-a-block):
+	/// <c>MissionVar_ReadFlag</c> (<c>0003628d</c>) (docs/es1/formats/eng-mission-text.md#reading-a-block):
 	/// the <c>int16</c> at twice the index in <c>data\mission.var</c>, which it opens for each read. Retail asserts at
 	/// <c>mission.cpp</c> line <c>0x4b</c> when the file does not open and reads past its end as the stream gives; here
 	/// either reads 0, reported for a file that does not open, an engine guard.
 	/// </summary>
+	/// <param name="index">The flag's index.</param>
 	public short ReadFlag(short index) {
 		byte[] bytes;
 		try {

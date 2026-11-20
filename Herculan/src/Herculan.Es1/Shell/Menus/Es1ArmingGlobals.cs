@@ -93,10 +93,12 @@ public sealed class Es1ArmingGlobals {
 	}
 
 	/// <summary>
-	/// <c>Arming_WeaponListPosition</c> (<c>000370ec</c>)(<paramref name="weapon"/>): the first <i>i</i> below 17 whose
+	/// <c>Arming_WeaponListPosition</c> (<c>000370ec</c>): the first <i>i</i> below 17 whose
 	/// word of <see cref="ListLines"/> is not 0 and equals the weapon's line, or 17. The words past the list's end take
 	/// part as they stand.
 	/// </summary>
+	/// <param name="mode">The arming mode whose list is searched.</param>
+	/// <param name="weapon">The weapon number.</param>
 	public short WeaponListPosition(short mode, short weapon) {
 		short line = LineOf(mode, weapon);
 		for (short i = 0; i < EmptyMount; i++) {
@@ -109,10 +111,12 @@ public sealed class Es1ArmingGlobals {
 	}
 
 	/// <summary>
-	/// <c>Arming_WeaponAtListPosition</c> (<c>0003714e</c>)(<paramref name="position"/>): the first weapon 0 to 17 whose
+	/// <c>Arming_WeaponAtListPosition</c> (<c>0003714e</c>): the first weapon 0 to 17 whose
 	/// line equals word <paramref name="position"/> of <see cref="ListLines"/>, or 17. Retail reads a position past the
 	/// list's room unchecked; such a position answers 17 here, an engine guard.
 	/// </summary>
+	/// <param name="mode">The arming mode whose list is read.</param>
+	/// <param name="position">The position in the weapon list.</param>
 	public short WeaponAtListPosition(short mode, short position) {
 		if (position < 0 || position >= ListLines.Length) {
 			return EmptyMount;
@@ -129,8 +133,7 @@ public sealed class Es1ArmingGlobals {
 	}
 
 	/// <summary>
-	/// <c>Arming_BuildWeaponList</c> (<c>000371ad</c>)(<paramref name="mount"/>, <paramref name="chassis"/>)
-	/// (docs/es1/shell/arming.md#the-weapon-list): <see cref="ListLines"/> filled from the mode's table and ended with −1,
+	/// <c>Arming_BuildWeaponList</c> (<c>000371ad</c>) (docs/es1/shell/arming.md#the-weapon-list): <see cref="ListLines"/> filled from the mode's table and ended with −1,
 	/// and returned. A weapon is offered when <c>CareerRecord_Current</c>'s equipment state makes it available
 	/// (<c>00037383</c>, a byte-for-byte copy of <c>Tech_IsAvailable</c>, <see cref="Es1EquipmentState.IsAvailable"/>) or
 	/// its stack in the stock <c>[000aad62]</c> is not empty (<see cref="Es1WeaponStock.CountIn"/>). For mount −1 each
@@ -139,6 +142,9 @@ public sealed class Es1ArmingGlobals {
 	/// record nothing is available, a layout the tables lack has no records, and the list stops at its room, engine
 	/// guards.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="mount">The mount, or −1 for every weapon.</param>
+	/// <param name="chassis">The chassis number.</param>
 	public short[] BuildWeaponList(Es1MenuContext context, short mount, short chassis) {
 		var mission = context.Mission;
 		var equipment = mission.CurrentRecord?.Equipment;

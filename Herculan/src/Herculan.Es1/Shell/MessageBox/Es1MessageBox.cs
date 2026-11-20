@@ -246,10 +246,12 @@ public sealed class Es1MessageBox {
 	}
 
 	/// <summary>
-	/// <c>Mission_OutcomeGrade</c> (<c>00036837</c>)(<paramref name="ordinal"/>, <paramref name="kind"/>): the ordinal's
+	/// <c>Mission_OutcomeGrade</c> (<c>00036837</c>): the ordinal's
 	/// entry of the table at <c>000810f4</c> for the kinds 0, 1, 2 and 6 and of <c>00081108</c> for any other. Retail reads
 	/// with no bounds test; an ordinal past the table is grade 0 here, an engine guard.
 	/// </summary>
+	/// <param name="ordinal">The outcome's ordinal.</param>
+	/// <param name="kind">The message box kind.</param>
 	internal static short OutcomeGrade(short ordinal, short kind) {
 		short[] grades = kind is 0 or 1 or 2 or 6 ? GradesA : GradesB;
 		return ordinal >= 0 && ordinal < grades.Length ? grades[ordinal] : (short)0;
@@ -270,7 +272,7 @@ public sealed class Es1MessageBox {
 	}
 
 	/// <summary>
-	/// <c>MessageBox_PickT1Line</c> (<c>00037bf0</c>)(<paramref name="kind"/>) (docs/es1/shell/message-box.md#the-kinds): sets
+	/// <c>MessageBox_PickT1Line</c> (<c>00037bf0</c>) (docs/es1/shell/message-box.md#the-kinds): sets
 	/// the line word <c>0008159c</c>, <see cref="_t1Lines"/>' first, and returns it. Kind 5: line 2, the new campaign's.
 	/// Kind 6: line 3 plus <c>Math_RandomBelow</c>(<c>Shell_RandomState</c>, 4), or below 6 when the current career
 	/// record's missions played <c>+0xa</c> is not 0. Kind 7, after a career's mission: the second line <c>0008159e</c>
@@ -284,6 +286,7 @@ public sealed class Es1MessageBox {
 	/// as it was. Any other kind returns the line as it was. A draw without the generator is 0, and no record reads as none
 	/// played, engine guards.
 	/// </summary>
+	/// <param name="kind">The message box kind.</param>
 	public short PickT1Line(short kind) {
 		switch (kind) {
 			case 6: {
@@ -358,11 +361,12 @@ public sealed class Es1MessageBox {
 	private static short T1List(short line) => line >= 0 && line < T1Lists.Length ? T1Lists[line] : (short)0;
 
 	/// <summary>
-	/// <c>Ttm_SetMode</c> (<c>00046948</c>)(<paramref name="mode"/>, handle) for the backdrop's scripts 6 and 3, the handle bytes
+	/// <c>Ttm_SetMode</c> (<c>00046948</c>) for the backdrop's scripts 6 and 3, the handle bytes
 	/// at the dword <c>0007e718</c> + <c>0x12</c> and + 9 (<see cref="Es1ShellBackdrop.GroupTtms"/>), in that order:
 	/// mode 2 as kinds 5 to 11 load their line, 0 as their answer closes it. Retail reads the bytes through a null dword
 	/// when the backdrop opened none, and past the entries; here no call is made then, an engine guard.
 	/// </summary>
+	/// <param name="mode">The script mode.</param>
 	private void SetBackdropScriptsMode(int mode) {
 		if (_backdrop.GroupTtms is not { } entries || _scripts() is not { } scripts) {
 			return;
@@ -545,13 +549,16 @@ public sealed class Es1MessageBox {
 	}
 
 	/// <summary>
-	/// <c>Shell_PlayTtmInPlace</c> (<c>00037dce</c>)(<paramref name="name"/>) (docs/es1/shell/message-box.md#the-answer):
+	/// <c>Shell_PlayTtmInPlace</c> (<c>00037dce</c>) (docs/es1/shell/message-box.md#the-answer):
 	/// the script opened playing on the scripts' default render context (<c>Ttm_Open</c>(0, 0, 0, name)); then a frame
 	/// shown, the script run and the input read, until the script's mode is not playing, the input's key word is not 0 or
 	/// its first button is down. A script still playing, so cut short, has the draw page and page 2 cleared, a frame shown
 	/// and the new draw page cleared. Then the script closed and the palette <c>0007fcd0</c> cleared. No page is cleared
 	/// before, and the default render context is left as it is.
 	/// </summary>
+	/// <param name="name">The script's name.</param>
+	/// <param name="presentFrame"><c>Shell_PresentFrame</c>, which shows each frame.</param>
+	/// <param name="pollDeviceBlock"><c>Input_PollDeviceBlock</c>, which the input is read from.</param>
 	private IEnumerable<Es1ShellWait> PlayTtmInPlace(string name, Func<IEnumerable<Es1ShellWait>> presentFrame,
 			Func<Es1LiveBlock> pollDeviceBlock) {
 		if (_scripts() is not { } scripts) {

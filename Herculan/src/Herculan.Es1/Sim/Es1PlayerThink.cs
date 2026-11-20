@@ -159,7 +159,9 @@ public static class Es1PlayerThink {
 		return (uint)(error + DataLinkArc) < 2 * DataLinkArc;
 	}
 
-	/// <summary><c>Math_DistanceBetweenPoints2D</c> (<c>00063c64</c>)(<paramref name="a"/>, <paramref name="b"/>): <c>Math_FastMagnitude2D</c>(b − a).</summary>
+	/// <summary><c>Math_DistanceBetweenPoints2D</c> (<c>00063c64</c>): <c>Math_FastMagnitude2D</c>(b − a).</summary>
+	/// <param name="a">The first point.</param>
+	/// <param name="b">The second point.</param>
 	internal static int DistanceBetweenPoints2D(Vec3i a, Vec3i b) => SimMath.FastMagnitude2D(b.X - a.X, b.Y - a.Y);
 
 	/// <summary><c>Math_DistanceBetweenPoints</c> (<c>00063c20</c>): <c>Math_FastMagnitude3D</c> of the differences.</summary>

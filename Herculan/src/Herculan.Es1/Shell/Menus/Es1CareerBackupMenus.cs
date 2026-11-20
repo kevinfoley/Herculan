@@ -208,7 +208,7 @@ public sealed class Es1CareerStatsAlert : Es1Menu {
 	public static Es1HotspotHandler StatsHandler(Es1MenuContext context) => (render, rect, _) => DrawStats(context, render, rect);
 
 	/// <summary>
-	/// <c>CareerStatsHotspot_Draw</c> (<c>0001705e</c>)(<paramref name="rect"/>, id) (docs/es1/shell/career.md#the-stats),
+	/// <c>CareerStatsHotspot_Draw</c> (<c>0001705e</c>) (docs/es1/shell/career.md#the-stats),
 	/// in the window's render context: the alignment 0, the rect filled and framed in <see cref="PanelColor"/>; the ten
 	/// <c>eng\watext.bin</c> labels in <c>cstats_2</c>; the values in <c>cstats_1</c>, each <c>sprintf</c>'d with
 	/// <c>%d</c>, the salvage with <c>%ld KG</c> (<c>0007ed3b</c>). The career's name, the position, the salvage and the
@@ -217,6 +217,9 @@ public sealed class Es1CareerStatsAlert : Es1Menu {
 	/// careers-log entry and a pilot entry past the four; here such a name, or such a pilot's kills, is not drawn, engine
 	/// guards.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="render">The render context drawn through.</param>
+	/// <param name="rect">The hotspot's rectangle.</param>
 	private static void DrawStats(Es1MenuContext context, Es1ShellRenderContext render, Es1Rect rect) {
 		var data = context.Data;
 		var roster = context.Mission.Roster;

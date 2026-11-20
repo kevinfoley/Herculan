@@ -36,11 +36,12 @@ public static class Es1MechDamage {
 	public static readonly short[] DifficultyScale = [2800, 2000, 1400, 1000];
 
 	/// <summary>
-	/// <c>Damage_ScaleByDifficulty</c> (<c>0001f82c</c>)(<paramref name="figure"/>)
-	/// (docs/es1/simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c): Q10 by
+	/// <c>Damage_ScaleByDifficulty</c> (<c>0001f82c</c>) (docs/es1/simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c): Q10 by
 	/// <see cref="DifficultyScale"/> at <see cref="Es1SimGlobals.DifficultyIndex"/>. Retail reads past the table for a word
 	/// outside 0 to 3; the figure stands then, an engine guard.
 	/// </summary>
+	/// <param name="figure">The damage figure scaled.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static short ScaleByDifficulty(short figure, Es1SimGlobals globals) {
 		int i = globals.DifficultyIndex;
 		return i >= 0 && i < DifficultyScale.Length ? (short)SimMath.Q10MultiplyRounded(figure, DifficultyScale[i]) : figure;
@@ -203,8 +204,7 @@ public static class Es1MechDamage {
 	}
 
 	/// <summary>
-	/// <c>Mech_ComponentDamageWrite</c> (<c>00013250</c>)(<paramref name="machine"/>, <paramref name="attacker"/>,
-	/// <paramref name="damage"/>, <paramref name="component"/>), the endpoint every writer ends in
+	/// <c>Mech_ComponentDamageWrite</c> (<c>00013250</c>), the endpoint every writer ends in
 	/// (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250):
 	/// <list type="number">
 	/// <item>nothing on the player's machine while the mode is 0 and header word 6 is 1, nor on a component whose
@@ -217,6 +217,11 @@ public static class Es1MechDamage {
 	/// past <c>0xc0</c>, otherwise <see cref="Es1Mech.ReactorDamaged"/> past <c>0x80</c>.</item>
 	/// </list>
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="attacker">The object that fired, or null.</param>
+	/// <param name="damage">The damage.</param>
+	/// <param name="component">The component's index.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void ComponentDamageWrite(Es1Mech machine, IEs1SimObject? attacker, short damage, short component,
 			Es1SimGlobals globals) {
 		if (machine.IsPlayer && globals.MissionModeFlag == 0 && globals.HeaderWord6 == 1) {
@@ -260,13 +265,17 @@ public static class Es1MechDamage {
 	public const short ReactorCriticalReading = 0xc0, ReactorDamagedReading = 0x80;
 
 	/// <summary>
-	/// <c>Mech_ApplyExplosiveDamage</c> (<c>00013a7c</c>)(<paramref name="machine"/>, <paramref name="attacker"/>,
-	/// <paramref name="radius"/>, <paramref name="point"/>, <paramref name="damage"/>)
-	/// (docs/es1/simulation/mech.md#a-blast--mech_applyexplosivedamage-00013a7c): no facing and no shields; each
+	/// <c>Mech_ApplyExplosiveDamage</c> (<c>00013a7c</c>) (docs/es1/simulation/mech.md#a-blast--mech_applyexplosivedamage-00013a7c): no facing and no shields; each
 	/// occupied component in turn whose roll, the generator's low 12 bits, falls under <see cref="BlastOdds"/> is placed
 	/// (<see cref="Es1Mech.ComponentPosition"/>), and one nearer the point than <paramref name="radius"/> takes
 	/// <paramref name="damage"/> × (radius − distance) / radius through <see cref="ComponentDamageWrite"/>.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="attacker">The object that fired, or null.</param>
+	/// <param name="radius">The blast's radius.</param>
+	/// <param name="point">The blast's center.</param>
+	/// <param name="damage">The damage.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void ApplyExplosiveDamage(Es1Mech machine, IEs1SimObject? attacker, short radius, Vec3i point,
 			short damage, Es1SimGlobals globals) {
 		if (machine.Damage is not { } header) {
@@ -286,12 +295,15 @@ public static class Es1MechDamage {
 	}
 
 	/// <summary>
-	/// <c>Damage_ExplosiveBlastSweep</c> (<c>0001f75c</c>)(<paramref name="damage"/>, <paramref name="radius"/>,
-	/// <paramref name="point"/>) (docs/es1/simulation/world.md#blasts--damage_explosiveblastsweep-0001f75c): the mech pool
+	/// <c>Damage_ExplosiveBlastSweep</c> (<c>0001f75c</c>) (docs/es1/simulation/world.md#blasts--damage_explosiveblastsweep-0001f75c): the mech pool
 	/// oldest first, as <c>Pool_Prev</c> walks it from the end, each machine whose group holds no action and whose position is nearer the point than the radius
 	/// taking <see cref="ApplyExplosiveDamage"/> with no attacker; answers whether any did. Retail reads the group
 	/// unchecked; a machine with none is taken as holding no action.
 	/// </summary>
+	/// <param name="damage">The damage.</param>
+	/// <param name="radius">The blast's radius.</param>
+	/// <param name="point">The blast's center.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static bool ExplosiveBlastSweep(short damage, short radius, Vec3i point, Es1SimGlobals globals) {
 		bool any = false;
 		for (int i = 0; i < globals.MechPool.Count; i++) {
@@ -306,12 +318,15 @@ public static class Es1MechDamage {
 	}
 
 	/// <summary>
-	/// <c>Mech_SpreadImpactDamage</c> (<c>00013078</c>)(<paramref name="machine"/>, <paramref name="odds"/>,
-	/// <paramref name="damage"/>) (docs/retail/simulation/component-damage.md#spread-impact-damage--mech_spreadimpactdamage-00417a04):
+	/// <c>Mech_SpreadImpactDamage</c> (<c>00013078</c>) (docs/retail/simulation/component-damage.md#spread-impact-damage--mech_spreadimpactdamage-00417a04):
 	/// nothing for a damage of 0; otherwise each occupied component whose roll, the generator's low byte, is under
 	/// <paramref name="odds"/> takes Q8(<see cref="Es1DamageHeader.TotalArmor"/>, <c>Math_RandomBelow</c>(damage) +
 	/// damage / 2) through <see cref="ComponentDamageWrite"/> with no attacker.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="odds">The roll each component must fall under to take damage.</param>
+	/// <param name="damage">The damage.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void SpreadImpactDamage(Es1Mech machine, short odds, short damage, Es1SimGlobals globals) {
 		if (damage == 0 || machine.Damage is not { } header) {
 			return;
@@ -332,7 +347,7 @@ public static class Es1MechDamage {
 	public const short WreckLegOdd = 7, WreckLegEven = 8, WreckRearLegOdd = 0xd, WreckRearLegEven = 0xe;
 
 	/// <summary>
-	/// <c>Mech_ApplyStartingCondition</c> (<c>00012f20</c>)(<paramref name="machine"/>, <paramref name="condition"/>), from a
+	/// <c>Mech_ApplyStartingCondition</c> (<c>00012f20</c>), from a
 	/// block-6 record's <c>0x68</c> (docs/retail/simulation/component-damage.md#starting-condition--mech_applystartingcondition-004178e8):
 	/// a condition outside 0 to <c>0x4f</c> spreads nothing. Under <c>0x14</c>, a wreck: component 7 for an odd draw or 8
 	/// for an even one written off with <see cref="Es1DamageHeader.FinishOff"/>, and 13 or 14 the same way on a chassis
@@ -341,6 +356,9 @@ public static class Es1MechDamage {
 	/// <c>0x28</c> to <c>0x3b</c>: <c>0x50</c>. <c>0x3c</c> to <c>0x4f</c>: <c>0x32</c>. Then
 	/// <see cref="SpreadImpactDamage"/> at the damage + <c>0x19</c>.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="condition">The starting condition, 0 to <c>0x4f</c>.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void ApplyStartingCondition(Es1Mech machine, short condition, Es1SimGlobals globals) {
 		short damage = 0;
 		if (condition >= 0 && condition < 0x50) {
@@ -384,8 +402,7 @@ public static class Es1MechDamage {
 	public const short OutnumberedImpact = 0x40;
 
 	/// <summary>
-	/// <c>Mech_ApplyOutnumberedDamage</c> (<c>00015a5c</c>)(<paramref name="machine"/>)
-	/// (docs/es1/simulation/mech.md#small-functions): unless the machine is clear of threats
+	/// <c>Mech_ApplyOutnumberedDamage</c> (<c>00015a5c</c>) (docs/es1/simulation/mech.md#small-functions): unless the machine is clear of threats
 	/// (<see cref="IsClearOfThreats"/>), the HERCs of the mech pool, oldest first, that are neither disarmed, immobilized nor
 	/// destroyed, whose group holds no action and that stand within <see cref="OutnumberedHercRange"/>, each counting its
 	/// record's <c>+0x54</c> to the friendly sum when its group's side is the machine's and to the hostile one otherwise,
@@ -394,6 +411,8 @@ public static class Es1MechDamage {
 	/// for a structure whose type's <c>+0x34</c> is not 0, the GUN TOWER; the friendly sum less <see cref="OutnumberedAllowance"/>, floored at 0; then one <see cref="SpreadImpactDamage"/> of
 	/// <see cref="OutnumberedImpact"/> for each <see cref="OutnumberedStrengthPerImpact"/> the hostile sum is above it.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void ApplyOutnumberedDamage(Es1Mech machine, Es1SimGlobals globals) {
 		if (IsClearOfThreats(machine, globals)) {
 			return;
@@ -454,7 +473,7 @@ public static class Es1MechDamage {
 	public const int ThreatRangeTarget = 100000, ThreatRange = 80000;
 
 	/// <summary>
-	/// <c>Mission_IsClearOfThreats</c> (<c>0000f744</c>)(<paramref name="subject"/>) (docs/es1/simulation/mission-status.md#clear-of-threats):
+	/// <c>Mission_IsClearOfThreats</c> (<c>0000f744</c>) (docs/es1/simulation/mission-status.md#clear-of-threats):
 	/// over the live objects whose group holds no action, on the other side from the subject's group, and neither
 	/// disarmed, immobilized nor destroyed: when the subject's group is not <c>LocalPlayerMech</c>'s and the object's
 	/// group targets the subject (<see cref="Es1MissionGroup.IsOrderTarget"/>), not clear if that group's route has a
@@ -463,6 +482,8 @@ public static class Es1MechDamage {
 	/// otherwise. Retail reads the groups and <c>LocalPlayerMech</c> unchecked; an object with no group is passed over and
 	/// a missing one matches nothing here.
 	/// </summary>
+	/// <param name="subject">The object tested.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static bool IsClearOfThreats(IEs1SimObject subject, Es1SimGlobals globals) {
 		var group = subject.Group;
 		var playerGroup = globals.LocalPlayerMech?.Group;

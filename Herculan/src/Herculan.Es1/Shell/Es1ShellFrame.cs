@@ -363,7 +363,9 @@ public sealed class Es1ShellFrame {
 		return keyboard.Mode != Es1Keyboard.Int9Mode ? _devices.BiosKeys.Read() : (ushort)0;
 	}
 
-	/// <summary><c>Input_LatchButton</c> (<c>0004de18</c>)(<paramref name="value"/>, <paramref name="button"/>), button 1 to 4.</summary>
+	/// <summary><c>Input_LatchButton</c> (<c>0004de18</c>), button 1 to 4.</summary>
+	/// <param name="value">The value latched.</param>
+	/// <param name="button">The button, 1 to 4.</param>
 	public void LatchButton(byte value, int button) {
 		_latched[button - 1] = true;
 		_latchedValue[button - 1] = value;

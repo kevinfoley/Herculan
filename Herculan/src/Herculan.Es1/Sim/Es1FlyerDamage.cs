@@ -87,8 +87,7 @@ public static class Es1FlyerDamage {
 	}
 
 	/// <summary>
-	/// <c>Flyer_ComponentDamageWrite</c> (<c>0001b290</c>)(<paramref name="flyer"/>, <paramref name="attacker"/>,
-	/// <paramref name="damage"/>, <paramref name="component"/>): <see cref="Es1DamageHeader.ApplyDamageAndCascade"/>, and
+	/// <c>Flyer_ComponentDamageWrite</c> (<c>0001b290</c>): <see cref="Es1DamageHeader.ApplyDamageAndCascade"/>, and
 	/// when that answers 1 for component 0:
 	/// <list type="number">
 	/// <item><see cref="KillMessage"/> when the attacker is <c>LocalPlayerMech</c> and the flyer that machine's target;</item>
@@ -102,6 +101,11 @@ public static class Es1FlyerDamage {
 	/// Answers whether it did. Retail calls the attacker's slot with no null test; its one caller,
 	/// <see cref="HitTest"/>, passes the shot's owner, which is never null here.
 	/// </summary>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="attacker">The object that fired.</param>
+	/// <param name="damage">The damage written.</param>
+	/// <param name="component">The component's index.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static bool ComponentDamageWrite(Es1Flyer flyer, IEs1SimObject attacker, short damage, short component,
 			Es1SimGlobals globals) {
 		if (flyer.Damage is not { } header || !header.ApplyDamageAndCascade(damage, component, globals) || component != 0) {

@@ -120,12 +120,14 @@ public sealed class Es1DirtyList {
 	}
 
 	/// <summary>
-	/// <c>DirtyList_Flush</c> (<c>000413db</c>)(<paramref name="drawPage"/>, <paramref name="sourcePage"/>): the display's
+	/// <c>DirtyList_Flush</c> (<c>000413db</c>): the display's
 	/// source and draw pages set; each record of delay 0 copied from the source page to the draw page as the inclusive
 	/// rect {<i>x</i>, <i>y</i>, <i>x</i> + width, <i>y</i> + height}, cut to the flush context's clip rect, so one column
 	/// and one row past the box; every record's delay lowered by 1; the two pages put back; and
 	/// <c>DirtyList_Prune</c> (<c>0004109c</c>), every record whose delay is now below 0 freed.
 	/// </summary>
+	/// <param name="drawPage">The page the records are copied to.</param>
+	/// <param name="sourcePage">The page the records are copied from.</param>
 	public void Flush(int drawPage, int sourcePage) {
 		int keptDraw = _display.DrawPage, keptSource = _display.SourcePage;
 		_display.SourcePage = sourcePage;

@@ -114,11 +114,13 @@ public sealed class Es1Action {
 	}
 
 	/// <summary>
-	/// <c>Action_TestTriggerForGroup</c> (<c>0001cd30</c>)(<paramref name="group"/>, action): <see cref="TestTrigger"/> with
+	/// <c>Action_TestTriggerForGroup</c> (<c>0001cd30</c>): <see cref="TestTrigger"/> with
 	/// each member's position in turn, true at the first that answers; a member the pool had no object for is passed over.
 	/// PLACEHOLDER: with no member retail answers the word its frame leaves at <c>[EBP−0x14]</c>,
 	/// which nothing in the function writes, and it is not known; false here.
 	/// </summary>
+	/// <param name="group">The group whose members are tested.</param>
+	/// <param name="vars">The mission variable words (<c>MissionVars</c>).</param>
 	public bool TestTriggerForGroup(Es1MissionGroup group, short[] vars) {
 		foreach (var entry in group.Members) {
 			if (entry is IEs1SimObject member && TestTrigger(member.Position, vars)) {

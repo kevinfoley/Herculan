@@ -81,8 +81,7 @@ public sealed class Es1VoiceLines {
 	}
 
 	/// <summary>
-	/// <c>SpeechLine_Load</c> (<c>0004e0f0</c>)(<paramref name="scriptName"/>, <paramref name="voiceName"/>)
-	/// (docs/es1/formats/sound-samples.md#voice-lines): the slot whose key is <see cref="VoiceKey"/> of the voice's name;
+	/// <c>SpeechLine_Load</c> (<c>0004e0f0</c>) (docs/es1/formats/sound-samples.md#voice-lines): the slot whose key is <see cref="VoiceKey"/> of the voice's name;
 	/// with none, a slot from <see cref="EvictLru"/>, none when it gives none, which takes the key and is marked taken.
 	/// On that slot, with a sound manager and <see cref="Es1Sound.SpeechEnabled"/> set, the voice's path
 	/// <c>simvoice\&lt;voice name&gt;.sfx</c> is named as the slot's index (<see cref="Es1SoundManager.SetSampleName"/>,
@@ -92,6 +91,9 @@ public sealed class Es1VoiceLines {
 	/// <c>000981c4</c>; answers the slot. A slot found by its key keeps the sample and script it has, so a second
 	/// squadmate of the same voice bank saying the same line moves to the first one's script.
 	/// </summary>
+	/// <param name="scriptName">The lip-sync script's file name.</param>
+	/// <param name="voiceName">The voice's name.</param>
+	/// <param name="now">The clock, which becomes the slot's last use.</param>
 	/// <param name="read">The volumes' reader, (folder, file name) to a file's bytes; none reads no script.</param>
 	public Es1SpeechSlot? LoadLine(string scriptName, string voiceName, uint now, Func<string, string, byte[]?>? read) {
 		int key = VoiceKey(voiceName);
@@ -122,12 +124,13 @@ public sealed class Es1VoiceLines {
 	}
 
 	/// <summary>
-	/// <c>Voice_KeyOfName</c> (<c>0004e208</c>)(<paramref name="name"/>), the key <see cref="LoadLine"/> finds a voice by: on an upper-cased copy,
+	/// <c>Voice_KeyOfName</c> (<c>0004e208</c>), the key <see cref="LoadLine"/> finds a voice by: on an upper-cased copy,
 	/// (character 1 − <c>'0'</c>) × <c>0x1000000</c> plus characters 3 to 7 read as five decimal digits, each
 	/// character's value less <c>'0'</c>, so <c>P1_01000</c> keys to <c>0x1000000</c> + 1000. A character past the
 	/// name's end reads 0 here, an engine guard; the names <see cref="Hdd.Es1HddCommBox.BeginMessage"/> builds are
 	/// always long enough.
 	/// </summary>
+	/// <param name="name">The voice's name.</param>
 	public static int VoiceKey(string name) {
 		string upper = name.ToUpperInvariant();
 		int number = 0;
@@ -165,14 +168,17 @@ public sealed class Es1VoiceLines {
 	}
 
 	/// <summary>
-	/// <c>Snc_Load</c> (<c>0004e4a8</c>)(<paramref name="slot"/>, <paramref name="sound"/>, <paramref name="name"/>)
-	/// (docs/es1/formats/snc-lip-sync.md#the-simulators-scripts): <c>snc\&lt;name&gt;</c>'s <c>int32</c> length of bytes,
+	/// <c>Snc_Load</c> (<c>0004e4a8</c>) (docs/es1/formats/snc-lip-sync.md#the-simulators-scripts): <c>snc\&lt;name&gt;</c>'s <c>int32</c> length of bytes,
 	/// read through <see cref="LipSyncScriptTransformer"/>, into the slot's script, then <see cref="Terminator"/>;
 	/// <paramref name="sound"/> stored at <c>+0</c> (<see cref="Es1SpeechSlot.LineSound"/>), its byte <c>+0x16</c>
 	/// cleared when there is one. A missing or unreadable file, which retail reads from unopened, leaves the terminator
 	/// alone, and a script longer than the buffer is cut to leave room for it, engine guards; ES2's 556 scripts hold at
 	/// most 56 bytes (docs/retail/formats/snc-lip-sync.md#layout).
 	/// </summary>
+	/// <param name="slot">The speech slot.</param>
+	/// <param name="sound">The slot's sound object, or null.</param>
+	/// <param name="name">The script's name.</param>
+	/// <param name="read">The volumes' reader, (folder, file name) to a file's bytes; none reads no script.</param>
 	private static void Load(Es1SpeechSlot slot, Es1SoundObject? sound, string name, Func<string, string, byte[]?>? read) {
 		slot.LineSound = sound;
 		if (sound != null) {
@@ -205,13 +211,14 @@ public sealed class Es1VoiceLines {
 	}
 
 	/// <summary>
-	/// <c>Snc_Start</c> (<c>0004e518</c>)(<paramref name="slot"/>), as the face begins to talk
+	/// <c>Snc_Start</c> (<c>0004e518</c>), as the face begins to talk
 	/// (docs/es1/formats/snc-lip-sync.md#playing-a-line): the cursor at the script's start, the frame from
 	/// <see cref="ReadFrame"/> and the due count from <see cref="ReadDueTime"/>, and the slot queued at that count
 	/// (<see cref="Enqueue"/>). Then, with a sound object (<see cref="Es1SpeechSlot.LineSound"/>),
 	/// <see cref="Es1Sound.SpeechEnabled"/> set and a frame other than 0, answers the object's play
 	/// (<see cref="Es1SoundObject.Play"/>), which the effects' switch does not gate; otherwise true.
 	/// </summary>
+	/// <param name="slot">The speech slot.</param>
 	public bool Start(Es1SpeechSlot slot) {
 		slot.Cursor = 0;
 		slot.Frame = ReadFrame(slot);
@@ -262,10 +269,11 @@ public sealed class Es1VoiceLines {
 	}
 
 	/// <summary>
-	/// <c>Snc_Step</c> (<c>0004e5f8</c>)(<paramref name="slot"/>): the frame from <see cref="ReadFrame"/>; unless that is
+	/// <c>Snc_Step</c> (<c>0004e5f8</c>): the frame from <see cref="ReadFrame"/>; unless that is
 	/// −1, the due count from <see cref="ReadDueTime"/> and the slot queued at it. The terminator read as a frame ends
 	/// the line with nothing queued.
 	/// </summary>
+	/// <param name="slot">The speech slot.</param>
 	private void Step(Es1SpeechSlot slot) {
 		slot.Frame = ReadFrame(slot);
 		if (slot.Frame != -1) {
@@ -275,18 +283,20 @@ public sealed class Es1VoiceLines {
 	}
 
 	/// <summary>
-	/// <c>Snc_ReadFrame</c> (<c>0004e59c</c>)(<paramref name="slot"/>): the byte at the cursor, unsigned, the cursor one
+	/// <c>Snc_ReadFrame</c> (<c>0004e59c</c>): the byte at the cursor, unsigned, the cursor one
 	/// on; −1 for <see cref="Terminator"/>.
 	/// </summary>
+	/// <param name="slot">The speech slot.</param>
 	private static short ReadFrame(Es1SpeechSlot slot) {
 		byte value = Read(slot);
 		return value == Terminator ? (short)-1 : value;
 	}
 
 	/// <summary>
-	/// <c>Snc_ReadDueTime</c> (<c>0004e5c4</c>)(<paramref name="slot"/>): the byte at the cursor, unsigned, plus
+	/// <c>Snc_ReadDueTime</c> (<c>0004e5c4</c>): the byte at the cursor, unsigned, plus
 	/// <see cref="Clock"/>, the cursor one on; −1 for <see cref="Terminator"/>.
 	/// </summary>
+	/// <param name="slot">The speech slot.</param>
 	private uint ReadDueTime(Es1SpeechSlot slot) {
 		byte value = Read(slot);
 		return value == Terminator ? uint.MaxValue : value + Clock;
@@ -302,12 +312,14 @@ public sealed class Es1VoiceLines {
 	}
 
 	/// <summary>
-	/// <c>Snc_Enqueue</c> (<c>0004e624</c>)(<paramref name="slot"/>, <paramref name="due"/>): when the count is above 0
+	/// <c>Snc_Enqueue</c> (<c>0004e624</c>): when the count is above 0
 	/// and the first pointer's entry is due after <paramref name="due"/>, compared unsigned, 1 off the count and the
 	/// pointers after the first moved down one place, as many as the new count; then {due, slot} stored at the entry the
 	/// count indexes, the first pointer pointed at it and 1 on the count. With the count at <see cref="QueueCapacity"/>,
 	/// where retail writes past the entries, nothing is queued, an engine guard.
 	/// </summary>
+	/// <param name="slot">The speech slot queued.</param>
+	/// <param name="due">The clock count the slot is due at.</param>
 	private void Enqueue(Es1SpeechSlot slot, uint due) {
 		if (QueueCount > 0 && _order[0] >= 0 && _entries[_order[0]].Due > due) {
 			QueueCount--;

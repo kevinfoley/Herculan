@@ -232,7 +232,7 @@ public sealed class Es1AnimationControl : Es1DUIControl {
 	}
 
 	/// <summary>
-	/// <c>Menu_OpenControlTtms</c> (<c>00037996</c>)(<paramref name="id"/>), which <c>Menu_BuildFromDlg</c> hands a
+	/// <c>Menu_OpenControlTtms</c> (<c>00037996</c>), which <c>Menu_BuildFromDlg</c> hands a
 	/// kind-17 control: for 1803 the scripts <c>w1800w00.ttm</c> to <c>w1800w09.ttm</c> and <c>w1800w10.ttm</c> to
 	/// <c>w1800w13.ttm</c> into bytes 0 to 13 and <c>w1800r00.ttm</c> to <c>w1800r03.ttm</c> into bytes 14 to 17, each
 	/// opened playing, not looping, on the render context <c>0007fcdc</c> (<see cref="Es1ShellScreens.WindowContext"/>)
@@ -240,6 +240,8 @@ public sealed class Es1AnimationControl : Es1DUIControl {
 	/// Returns the bytes, <paramref name="context"/>'s one array (<see cref="Es1MenuContext.ControlScripts"/>). The runs'
 	/// fade waits are passed over, as a handler's are, and with no scripts every byte is no handle, engine guards.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="id">The control's id.</param>
 	public static byte[] OpenScripts(Es1MenuContext context, short id) {
 		byte[] handles = context.ControlScripts;
 		var scripts = context.Screens.Scripts;
@@ -274,7 +276,9 @@ public sealed class Es1AnimationControl : Es1DUIControl {
 		}
 	}
 
-	/// <summary><c>Menu_CloseControlTtms</c> (<c>00037aac</c>)(<paramref name="handles"/>): each of the 18 bytes that is not <c>0xff</c> closed with <c>Ttm_Close</c>.</summary>
+	/// <summary><c>Menu_CloseControlTtms</c> (<c>00037aac</c>): each of the 18 bytes that is not <c>0xff</c> closed with <c>Ttm_Close</c>.</summary>
+	/// <param name="scripts">The script manager, or null.</param>
+	/// <param name="handles">The 18 script handle bytes.</param>
 	public static void CloseScripts(Es1TtmManager? scripts, byte[] handles) {
 		foreach (byte handle in handles) {
 			if (handle != Es1TtmManager.NoHandle) {

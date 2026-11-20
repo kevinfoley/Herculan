@@ -140,13 +140,14 @@ public sealed class Es1SimClock {
 	public const int CallbackSlots = 16;
 
 	/// <summary>
-	/// <c>Timer_AddCallback</c> (<c>0006d289</c>; the shell's <c>ES1GO 00056509</c>)(<paramref name="count"/>,
-	/// <paramref name="callback"/>) (docs/es1/simulation/timer.md#callbacks): the lowest free slot of
+	/// <c>Timer_AddCallback</c> (<c>0006d289</c>; the shell's <c>ES1GO 00056509</c>) (docs/es1/simulation/timer.md#callbacks): the lowest free slot of
 	/// <see cref="CallbackSlots"/> takes the callback, run on every <paramref name="count"/>th interrupt from now, and the
 	/// answer is the slot + 1; 0 with every slot taken. Retail also answers 0 with no timer installed, which this clock always
 	/// is. <c>Time_SimClockTimerTick</c>, the simulator's slot 0 in retail, is this clock's own count and not a slot here,
 	/// so the simulator's slots answer one less than retail's and it has one more free.
 	/// </summary>
+	/// <param name="count">The number of interrupts between runs.</param>
+	/// <param name="callback">The callback run.</param>
 	public int AddCallback(int count, Action callback) {
 		ArgumentOutOfRangeException.ThrowIfLessThan(count, 1);
 		int slot = Array.IndexOf(_callbacks, null);
@@ -160,9 +161,10 @@ public sealed class Es1SimClock {
 	}
 
 	/// <summary>
-	/// <c>Timer_RemoveCallback</c> (<c>0006d337</c>; the shell's <c>ES1GO 000565b7</c>)(<paramref name="slot"/>): for a slot
+	/// <c>Timer_RemoveCallback</c> (<c>0006d337</c>; the shell's <c>ES1GO 000565b7</c>): for a slot
 	/// of 1 to <see cref="CallbackSlots"/>, slot − 1 freed, true when it was taken; false otherwise.
 	/// </summary>
+	/// <param name="slot">The slot, 1 to <see cref="CallbackSlots"/>.</param>
 	public bool RemoveCallback(int slot) {
 		if (slot < 1 || slot > CallbackSlots || _callbacks[slot - 1] == null) {
 			return false;

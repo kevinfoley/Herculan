@@ -60,10 +60,13 @@ public static class Es1FlyerFlight {
 	public const short HeadingRateGain = 1100, LeaderRateGain = 200;
 
 	/// <summary>
-	/// <c>Flyer_PitchCommand</c> (<c>ES1DBSIM 0001b6c0</c>)(<paramref name="flyer"/>, <paramref name="pitch"/>):
+	/// <c>Flyer_PitchCommand</c> (<c>ES1DBSIM 0001b6c0</c>):
 	/// <c>Math_RateLimitedMoveToward</c> moves the pitch <c>+6</c> toward <paramref name="pitch"/> by at most the record's
 	/// <c>+0</c> (<see cref="HercWorks.Core.Data.File.Dat.Sim.Es1FlyerSimData.SpeedTurn"/>), and <c>+0x2c</c> is cleared.
 	/// </summary>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="pitch">The pitch commanded.</param>
+	/// <param name="clock">The simulation clock.</param>
 	public static void PitchCommand(Es1Flyer flyer, short pitch, Es1SimClock clock) {
 		var rotation = flyer.Rotation;
 		short current = rotation.X;
@@ -73,10 +76,13 @@ public static class Es1FlyerFlight {
 	}
 
 	/// <summary>
-	/// <c>Flyer_PitchToAltitude</c> (<c>0001b708</c>)(<paramref name="flyer"/>, <paramref name="altitude"/>): with the
+	/// <c>Flyer_PitchToAltitude</c> (<c>0001b708</c>): with the
 	/// ground warning set the altitude is <c>Math_Q8Multiply</c>(<see cref="LookAhead"/>, the warning's figure); then
 	/// <see cref="PitchCommand"/> with <c>Math_Atan2Guarded</c> of the height error over <see cref="AltitudeRun"/>.
 	/// </summary>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="altitude">The altitude commanded.</param>
+	/// <param name="clock">The simulation clock.</param>
 	public static void PitchToAltitude(Es1Flyer flyer, int altitude, Es1SimClock clock) {
 		if (flyer.GroundWarning) {
 			altitude = SimMath.Q8MultiplyRounded(LookAhead, flyer.GroundWarningFigure);
@@ -86,8 +92,7 @@ public static class Es1FlyerFlight {
 	}
 
 	/// <summary>
-	/// <c>Flyer_ApplyFlightCommand</c> (<c>0001b794</c>)(<paramref name="flyer"/>, <paramref name="pitchCommand"/>,
-	/// <paramref name="rollCommand"/>): the roll command held to ±<see cref="FullRollCommand"/>; the roll rate
+	/// <c>Flyer_ApplyFlightCommand</c> (<c>0001b794</c>): the roll command held to ±<see cref="FullRollCommand"/>; the roll rate
 	/// <c>+0x18c</c> moved toward <c>Math_Q8Multiply</c>(the command, the record's <c>+2</c>,
 	/// <see cref="HercWorks.Core.Data.File.Dat.Sim.Es1FlyerSimData.SpeedReverse"/>) by at most the record's <c>+8</c>
 	/// (<see cref="HercWorks.Core.Data.File.Dat.Sim.Es1FlyerSimData.TurnAccelDecel"/>); the heading rate <c>+0x18e</c> the
@@ -95,6 +100,10 @@ public static class Es1FlyerFlight {
 	/// (<see cref="HercWorks.Core.Data.File.Dat.Sim.Es1FlyerSimData.CameraPartId"/>), taken modulo 32 as <c>SAR</c> takes
 	/// it; then <see cref="PitchCommand"/> with the pitch plus 16 × the pitch command, as an <c>int16</c>.
 	/// </summary>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="pitchCommand">The pitch command.</param>
+	/// <param name="rollCommand">The roll command.</param>
+	/// <param name="clock">The simulation clock.</param>
 	public static void ApplyFlightCommand(Es1Flyer flyer, short pitchCommand, short rollCommand, Es1SimClock clock) {
 		var data = flyer.Type.Data;
 		short roll = Math.Clamp(rollCommand, (short)-FullRollCommand, FullRollCommand);
@@ -107,21 +116,27 @@ public static class Es1FlyerFlight {
 	}
 
 	/// <summary>
-	/// <c>Flyer_CommandRoll</c> (<c>0001b76c</c>)(<paramref name="flyer"/>, <paramref name="roll"/>):
+	/// <c>Flyer_CommandRoll</c> (<c>0001b76c</c>):
 	/// <see cref="ApplyFlightCommand"/>(flyer, 0, (roll − the roll <c>+8</c>) &gt;&gt; 4).
 	/// </summary>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="roll">The roll commanded.</param>
+	/// <param name="clock">The simulation clock.</param>
 	public static void CommandRoll(Es1Flyer flyer, short roll, Es1SimClock clock) =>
 		ApplyFlightCommand(flyer, 0, (short)((roll - flyer.Rotation.Y) >> 4), clock);
 
 	/// <summary>
-	/// <c>Flyer_SteerAndFly</c> (<c>0001b8c4</c>)(<paramref name="flyer"/>, <paramref name="leader"/>,
-	/// <paramref name="steering"/>): the command −steering &gt;&gt; 4 plus Q10(<see cref="HeadingRateGain"/>, the heading
+	/// <c>Flyer_SteerAndFly</c> (<c>0001b8c4</c>): the command −steering &gt;&gt; 4 plus Q10(<see cref="HeadingRateGain"/>, the heading
 	/// rate), the rate first less, with a leader, Q10(<see cref="LeaderRateGain"/>, Q14(the leader's heading rate,
 	/// cos(heading − the leader's heading))), each sum an <c>int16</c>. With the roll at least the bank limit (the record's
 	/// <c>+0xe</c>) less <see cref="BankBand"/> and the command positive, <see cref="CommandRoll"/> to the limit; with the
 	/// roll at most its negation and the command negative, to the negated limit; otherwise
 	/// <see cref="ApplyFlightCommand"/>(flyer, 0, command). The multiplies are ES1's rounding ones.
 	/// </summary>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="leader">The leader, or null.</param>
+	/// <param name="steering">The steering error.</param>
+	/// <param name="clock">The simulation clock.</param>
 	public static void SteerAndFly(Es1Flyer flyer, Es1Flyer? leader, short steering, Es1SimClock clock) {
 		short limit = flyer.Type.Data.MaxBankAngle;
 		short roll = flyer.Rotation.Y;

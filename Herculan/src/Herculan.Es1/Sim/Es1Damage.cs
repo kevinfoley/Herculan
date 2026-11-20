@@ -160,12 +160,14 @@ public sealed class Es1DamageHeader {
 	private short Component(int index) => index >= 0 && index < Components ? ComponentDamage[index] : (short)0;
 
 	/// <summary>
-	/// <c>Component_AddDamage</c> (<c>00009c88</c>)(<paramref name="damage"/>, <paramref name="maximum"/>,
-	/// <paramref name="entry"/>): an entry not already negative takes the damage as an <c>int16</c> sum, and one that
+	/// <c>Component_AddDamage</c> (<c>00009c88</c>): an entry not already negative takes the damage as an <c>int16</c> sum, and one that
 	/// reaches the maximum writes the excess back through <paramref name="damage"/> and becomes <see cref="Destroyed"/>;
 	/// answers whether the entry is negative. A sum past 32767 wraps negative with neither written
 	/// (docs/es1/formats/dmg-damage-file.md#the-damage-header).
 	/// </summary>
+	/// <param name="damage">The damage added; receives the excess when the entry reaches the maximum.</param>
+	/// <param name="maximum">The entry's maximum.</param>
+	/// <param name="entry">The entry's damage word.</param>
 	public static bool AddDamage(ref short damage, short maximum, ref short entry) {
 		if (entry >= 0) {
 			entry = unchecked((short)(entry + damage));
@@ -179,12 +181,14 @@ public sealed class Es1DamageHeader {
 	}
 
 	/// <summary>
-	/// <c>Component_SpillIntoDependents</c> (<c>0000979c</c>)(<paramref name="piece"/>, maxima, <paramref name="damage"/>,
-	/// internals): the weights of the dependents not yet negative summed as an <c>int16</c>, the one
+	/// <c>Component_SpillIntoDependents</c> (<c>0000979c</c>): the weights of the dependents not yet negative summed as an <c>int16</c>, the one
 	/// <c>Math_RandomBelow</c> of the sum falls on given the damage (<see cref="AddDamage"/>), and the draw repeated with
 	/// the excess while that destroys it; answers whether no dependent was left standing. <paramref name="random"/> is the
 	/// simulation's generator, <c>000b5bd4</c>.
 	/// </summary>
+	/// <param name="piece">The damaged piece.</param>
+	/// <param name="damage">The damage spilled.</param>
+	/// <param name="random">The simulation's generator.</param>
 	private bool SpillIntoDependents(Es1DamagePiece piece, short damage, SimRandom random) {
 		while (true) {
 			short sum = 0;

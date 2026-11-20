@@ -94,11 +94,12 @@ public sealed class Es1MenuBanks {
 		id is InsigniaTile or ArmingAnimation || id is >= FirstHercTile and <= LastHercTile || id is >= FirstCheckTile and <= LastCheckTile;
 
 	/// <summary>
-	/// <c>Shell_FreeBitmapArraySlot</c> (<c>00037924</c>)(<paramref name="bank"/>): the first of <c>000813d4</c>,
+	/// <c>Shell_FreeBitmapArraySlot</c> (<c>00037924</c>): the first of <c>000813d4</c>,
 	/// <c>000813d8</c> and <c>000813dc</c> that holds the bank destroyed (<c>GLBitmapArray_Dtor</c>(bank, 3)) and cleared;
 	/// any other bank left. So the first of the four HERC tiles destroyed frees <see cref="Mechs"/> and the next ones find
 	/// it cleared. None of <see cref="ForControl"/>'s cases loads <c>000813d8</c>, which holds none here.
 	/// </summary>
+	/// <param name="bank">The bitmap bank freed.</param>
 	public void Free(IReadOnlyList<DynamixBitmap>? bank) {
 		if (bank == null) {
 			return;

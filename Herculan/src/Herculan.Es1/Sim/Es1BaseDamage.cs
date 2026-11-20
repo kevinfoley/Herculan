@@ -34,7 +34,7 @@ public static class Es1BaseDamage {
 	public const short WreckSmokeKind = 1, WreckSmokePart = -1;
 
 	/// <summary>
-	/// <c>Base_DirectFireHitTest</c> (<c>ES1DBSIM 00003a58</c>)(<paramref name="structure"/>, <paramref name="shot"/>), slot
+	/// <c>Base_DirectFireHitTest</c> (<c>ES1DBSIM 00003a58</c>), slot
 	/// <c>+0x24</c>:
 	/// <list type="number">
 	/// <item>the shot's armor figure <c>+4</c> through <see cref="Es1MechDamage.ScaleByDifficulty"/> when the side of the
@@ -54,6 +54,9 @@ public static class Es1BaseDamage {
 	/// that is not kept here. It reads the owner's group unchecked; an owner with no group is not scaled here, an engine
 	/// guard. A shot with no effects makes no effect.
 	/// </summary>
+	/// <param name="structure">The structure tested.</param>
+	/// <param name="shot">The shot.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static int HitTest(Es1Base structure, Es1Shot shot, Es1SimGlobals globals) {
 		short armorFigure = shot.Armor;
 		if (shot.Owner.Group?.Side == 0) {
@@ -104,8 +107,7 @@ public static class Es1BaseDamage {
 	}
 
 	/// <summary>
-	/// <c>Base_ApplyDamage</c> (<c>00003978</c>)(<paramref name="structure"/>, <paramref name="attacker"/>,
-	/// <paramref name="damage"/>): the damage added to <see cref="Es1Base.Damage"/> (<c>int16</c>), and when that passes the
+	/// <c>Base_ApplyDamage</c> (<c>00003978</c>): the damage added to <see cref="Es1Base.Damage"/> (<c>int16</c>), and when that passes the
 	/// type's hit points <c>+0x08</c>:
 	/// <list type="number">
 	/// <item><see cref="KillMessage"/> when the attacker is <c>LocalPlayerMech</c> and the structure that machine's target;</item>
@@ -119,6 +121,10 @@ public static class Es1BaseDamage {
 	/// Retail calls the attacker's slot with no null test; its one caller, <see cref="HitTest"/>, passes the shot's owner,
 	/// which is never null here.
 	/// </summary>
+	/// <param name="structure">The structure damaged.</param>
+	/// <param name="attacker">The object that fired.</param>
+	/// <param name="damage">The damage added.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void ApplyDamage(Es1Base structure, IEs1SimObject attacker, short damage, Es1SimGlobals globals) {
 		structure.Damage = (short)(structure.Damage + damage);
 		short hitPoints = structure.Type.HitPoints;

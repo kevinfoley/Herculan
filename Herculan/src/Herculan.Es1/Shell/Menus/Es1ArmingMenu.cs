@@ -495,7 +495,7 @@ public sealed class Es1ArmingMenu : Es1Menu {
 	public static Es1HotspotHandler MissileInfoHandler(Es1MenuContext context) => (render, rect, id) => DrawMissileInfo(context, render, rect);
 
 	/// <summary>
-	/// <c>Arming_DrawWeaponInfo</c> (<c>0002d5bf</c>)(<paramref name="rect"/>, id) (docs/es1/shell/arming.md#the-panel), with
+	/// <c>Arming_DrawWeaponInfo</c> (<c>0002d5bf</c>) (docs/es1/shell/arming.md#the-panel), with
 	/// <i>w</i> <see cref="Es1ArmingGlobals.ShownWeapon"/> and <i>l</i>, <i>t</i> the rect's corner: nothing for 17;
 	/// otherwise the text cleared, the bands from the corner to (122, 59) and from (12, 98) to the far corner, or the whole
 	/// rect while memory is low, each the box their two corners span; the alignment 0; TYPE: and RANGE: at (<i>l</i> + 5,
@@ -507,6 +507,9 @@ public sealed class Es1ArmingMenu : Es1Menu {
 	/// (<i>l</i> + 30, <i>t</i> + 15); while memory is low, frame <i>w</i> of <see cref="Es1ArmingGlobals.LowMemPictures"/>
 	/// at <see cref="PicturePoints"/>[<i>w</i>]. Each line number is a 16-bit sum.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="render">The render context drawn through.</param>
+	/// <param name="rect">The panel's rectangle.</param>
 	private static void DrawWeaponInfo(Es1MenuContext context, Es1ShellRenderContext render, Es1Rect rect) {
 		var arming = context.Arming;
 		short weapon = arming.ShownWeapon;
@@ -561,13 +564,16 @@ public sealed class Es1ArmingMenu : Es1Menu {
 	}
 
 	/// <summary>
-	/// <c>Arming_DrawMissileInfo</c> (<c>0002dacf</c>)(<paramref name="rect"/>, id) (docs/es1/shell/arming.md#the-panel),
+	/// <c>Arming_DrawMissileInfo</c> (<c>0002dacf</c>) (docs/es1/shell/arming.md#the-panel),
 	/// with <i>m</i> <see cref="Es1ArmingGlobals.ShownMissileType"/>: only while a mount is selected
 	/// (<c>Herc_MountHighlightShown</c>) and <i>m</i> is not 5; while memory is low the rect cleared; the alignment 0;
 	/// TYPE: and RANGE: as <see cref="DrawWeaponInfo"/> draws them; in <c>nm_ylw</c> <c>0x106</c> + <i>m</i> at (<i>l</i>
 	/// + 30, <i>t</i> + 6) and <c>0x10b</c> + <i>m</i> at (<i>l</i> + 30, <i>t</i> + 15); while memory is low, frame
 	/// <i>m</i> + 14 of <see cref="Es1ArmingGlobals.LowMemPictures"/> at <see cref="PicturePoints"/>[<i>m</i> + 14].
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="render">The render context drawn through.</param>
+	/// <param name="rect">The panel's rectangle.</param>
 	private static void DrawMissileInfo(Es1MenuContext context, Es1ShellRenderContext render, Es1Rect rect) {
 		var arming = context.Arming;
 		short type = arming.ShownMissileType;

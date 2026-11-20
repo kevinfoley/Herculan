@@ -189,10 +189,12 @@ public static class Es1ShotSweep {
 	}
 
 	/// <summary>
-	/// <c>Math_ElevationAngle</c> (<c>00063cf0</c>)(<paramref name="a"/>, <paramref name="b"/>): the elevation of
+	/// <c>Math_ElevationAngle</c> (<c>00063cf0</c>): the elevation of
 	/// <paramref name="b"/> seen from <paramref name="a"/>, <c>Math_Atan2Guarded</c> of the ground distance and the height
 	/// difference (docs/es1/simulation/world.md#functions).
 	/// </summary>
+	/// <param name="a">The viewpoint.</param>
+	/// <param name="b">The point seen.</param>
 	public static short ElevationAngle(Vec3i a, Vec3i b) =>
 		(short)SimTrig.Atan2Guarded(b.Z - a.Z, SimMath.FastMagnitude2D(b.X - a.X, b.Y - a.Y));
 }

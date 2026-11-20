@@ -129,13 +129,15 @@ public sealed class Es1LipSyncPlayer {
 	}
 
 	/// <summary>
-	/// <c>maybe_SncList_PlayEntry</c> (<c>000453be</c>)(<paramref name="a"/>, <paramref name="b"/>), from
+	/// <c>maybe_SncList_PlayEntry</c> (<c>000453be</c>), from
 	/// <c>DigitalDialogBox_Ctor</c> (docs/es1/shell/message-box.md#loading-a-line): a line still playing stopped; the list
 	/// <paramref name="a"/> for <paramref name="b"/> 1, <paramref name="a"/> + 8 for 2, 10 for 3 and 0 otherwise loaded
 	/// (<see cref="LoadList"/>); and line <paramref name="line"/>'s first name, its lip-sync script, loaded
 	/// (<see cref="LoadScript"/>). Retail reads the lines without a bounds test; a line the list does not hold, or a list
 	/// index past the eleven, loads no script here, an engine guard.
 	/// </summary>
+	/// <param name="a">The base list number.</param>
+	/// <param name="b">The list selector, 1 to 3.</param>
 	/// <param name="line"><c>MessageBox_Line</c> (<c>000aad5c</c>).</param>
 	public IEnumerable<Es1ShellWait> PlayEntry(short a, byte b, short line) {
 		if (Playing) {

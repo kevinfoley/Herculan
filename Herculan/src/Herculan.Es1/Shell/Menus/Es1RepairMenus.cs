@@ -248,13 +248,16 @@ public sealed class Es1ScrapAlert : Es1Menu {
 	private Es1HangarBay? Bay => Context.Screens.Bay;
 
 	/// <summary>
-	/// <c>Hangar_FormatScrapValue</c> (<c>0002a1aa</c>)(<paramref name="text"/>), which <c>Menu_BuildFromDlg</c> applies to
+	/// <c>Hangar_FormatScrapValue</c> (<c>0002a1aa</c>), which <c>Menu_BuildFromDlg</c> applies to
 	/// menu 4444's kind-1 text holding <c>#</c>: <see cref="Es1RepairCosts.ScrapValue"/> (<c>Herc_FrameValue</c>,
 	/// <c>00038d6c</c>) of the selected slot's HERC, divided unsigned by 1000, formatted with <c>%3d</c> (<c>00080940</c>),
 	/// and its first three characters copied over the first <c>#</c> and the two characters after it. Retail reads the
 	/// selected slot's HERC with no test and writes past a text that ends sooner; with no HERC the text is kept here, and a
 	/// shorter text keeps its length, engine guards.
 	/// </summary>
+	/// <param name="text">The text holding the <c>#</c> placeholder.</param>
+	/// <param name="hangar">The hangar, or null.</param>
+	/// <param name="costs">The repair costs.</param>
 	public static string FormatValue(string text, Es1Hangar? hangar, Es1RepairCosts costs) {
 		int at = text.IndexOf('#', StringComparison.Ordinal);
 		if (at < 0 || hangar?.HercIn(hangar.SelectedSlot) is not { } herc) {

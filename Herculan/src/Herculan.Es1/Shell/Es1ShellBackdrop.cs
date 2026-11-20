@@ -134,13 +134,14 @@ public sealed class Es1ShellBackdrop {
 	public short GroupTtmList { get; private set; } = -1;
 
 	/// <summary>
-	/// <c>ShellBackdrop_OpenGroupTtms</c> (<c>00011f19</c>)(<paramref name="group"/>) (docs/es1/shell/menus.md#the-backdrop):
+	/// <c>ShellBackdrop_OpenGroupTtms</c> (<c>00011f19</c>) (docs/es1/shell/menus.md#the-backdrop):
 	/// with entries, each destroyed with <c>TtmEntry_Dtor</c> (<c>00011edd</c>), which closes its script, and the array
 	/// cleared; the list group / 1000 − 1; when the lists' count is not 0, that list's count of entries made with
 	/// <c>TtmEntry_Ctor</c> (<c>0001201b</c>), each with its name opened playing, not looping, on the default render
 	/// context (<c>Ttm_Open</c>(0, 0, 0, name)), its handle in the entry. A list of no names leaves no array. Retail indexes
 	/// the lists with no bounds test; a group past them opens none here, an engine guard.
 	/// </summary>
+	/// <param name="group">The backdrop group, whose list is <c>group / 1000 − 1</c>.</param>
 	private void OpenGroupTtms(short group) {
 		var scripts = Scripts?.Invoke();
 		if (GroupTtms is { } entries) {
@@ -221,9 +222,11 @@ public sealed class Es1ShellBackdrop {
 	}
 
 	/// <summary>
-	/// <c>Shell_BackdropForScreen</c> (<c>00040afa</c>)(<paramref name="current"/>, <paramref name="screen"/>): the group
+	/// <c>Shell_BackdropForScreen</c> (<c>00040afa</c>): the group
 	/// of the screen among the 20 numbers at <c>000821a8</c>, and <paramref name="current"/> for any other.
 	/// </summary>
+	/// <param name="current">The current backdrop group.</param>
+	/// <param name="screen">The screen number.</param>
 	public short ForScreen(short current, short screen) => screen switch {
 		1000 or 1200 or 1100 or 1310 or 1320 or 9999 => 1000,
 		1490 => 7000,

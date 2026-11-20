@@ -118,8 +118,7 @@ public sealed class Es1HercDiagrams {
 	private Es1HercDiagram State(Es1HercRecord herc) => _diagrams.GetValue(herc, _ => new Es1HercDiagram());
 
 	/// <summary>
-	/// <c>Herc_BuildDiagram</c> (<c>00023883</c>)(<paramref name="herc"/>, <paramref name="remaining"/>)
-	/// (docs/es1/formats/herc-diagrams.md#the-hercs-diagram): the current mount −1 and <see cref="MountHighlightShown"/>
+	/// <c>Herc_BuildDiagram</c> (<c>00023883</c>) (docs/es1/formats/herc-diagrams.md#the-hercs-diagram): the current mount −1 and <see cref="MountHighlightShown"/>
 	/// cleared; the chassis' <c>WEP1</c> and <c>OUTL</c> banks taken, each loaded the first time; the body
 	/// (<see cref="SetBodyPicture"/>); on chassis 7 a new shoulder piece, on the others none; with a mount count other
 	/// than 0 new mount pictures and outlines; then per mount the record's changes
@@ -130,6 +129,8 @@ public sealed class Es1HercDiagrams {
 	/// <see cref="ColossusTopShown"/> set; last, with a shoulder piece and the byte clear, the piece set to no bitmap at
 	/// (0, 0). Every sprite keeps its background in a buffer of its own.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="remaining">The remaining build stage, as <see cref="SetBodyPicture"/> takes it.</param>
 	public void Build(Es1HercRecord herc, short remaining) {
 		var diagram = State(herc);
 		diagram.Built = true;
@@ -168,11 +169,12 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_FreeDiagram</c> (<c>0002330e</c>)(<paramref name="herc"/>): the mount pictures' sprites and the outlines
+	/// <c>Herc_FreeDiagram</c> (<c>0002330e</c>): the mount pictures' sprites and the outlines
 	/// destroyed (<see cref="Es1Sprite.Dtor"/>) and their arrays nulled, the shoulder piece destroyed and nulled. With
 	/// <c>Shell_LowMemory</c> (<c>0007fd09</c>) set it also frees the chassis' banks and nulls <c>+0x9c</c> and
 	/// <c>+0xa0</c>; this engine never sets that byte.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
 	public void Free(Es1HercRecord herc) {
 		if (!_diagrams.TryGetValue(herc, out var diagram)) {
 			return;
@@ -199,9 +201,10 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_Dtor</c> (<c>000232a4</c>)(<paramref name="herc"/>, flags): <see cref="Free"/>, and the body's sprite
+	/// <c>Herc_Dtor</c> (<c>000232a4</c>): <see cref="Free"/>, and the body's sprite
 	/// destroyed (<see cref="Es1Sprite.Dtor"/>); the HERC's own free is the collector's here.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
 	public void Destroy(Es1HercRecord herc) {
 		Free(herc);
 		if (_diagrams.TryGetValue(herc, out var diagram)) {
@@ -211,13 +214,15 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_SetBodyPicture</c> (<c>00023605</c>)(<paramref name="herc"/>, <paramref name="remaining"/>)
-	/// (docs/es1/formats/herc-diagrams.md#the-body): the body set by the chassis and <paramref name="remaining"/>: 0, the
+	/// <c>Herc_SetBodyPicture</c> (<c>00023605</c>) (docs/es1/formats/herc-diagrams.md#the-body): the body set by the chassis and <paramref name="remaining"/>: 0, the
 	/// <c>WEP1</c> frame 0 at the chassis' body point; on chassis 2 to 4 for 1, and on 5 to 7 for 1 or 2, the <c>BILD</c>
 	/// frame <paramref name="remaining"/> − 1 at the chassis' building point of that frame, the bank loaded the first time;
 	/// on chassis 0 and 1 for any other, on 2 to 4 for 2 and on 5 to 7 for 3, no bitmap at the body point; any other value,
 	/// or a chassis past 7, leaves the body as it was.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="diagram">The HERC's diagram.</param>
+	/// <param name="remaining">The remaining build stage.</param>
 	private void SetBodyPicture(Es1HercRecord herc, Es1HercDiagram diagram, short remaining) {
 		short chassis = herc.Chassis;
 		if (chassis is < 0 or >= Es1HercArt.ChassisCount) {
@@ -239,8 +244,7 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>MountPicture_Set</c> (<c>00022d78</c>)(<paramref name="picture"/>, <paramref name="value"/>,
-	/// <paramref name="weapon"/>, <paramref name="mount"/>, <paramref name="chassis"/>): the record <see cref="Es1HercArt.Find"/>
+	/// <c>MountPicture_Set</c> (<c>00022d78</c>): the record <see cref="Es1HercArt.Find"/>
 	/// gives stored, and the sprite set at the record's first point: for weapon 17 to no bitmap at (0, 0); for a value
 	/// below <c>0x33</c> to frame (the record's frame − 1) of the chassis' <c>WEPD</c> bank, loaded the first time, at
 	/// <see cref="Es1HercArt.DamagedPicturePoint"/>, which is the first point but for a tweak's correction; at
@@ -248,6 +252,11 @@ public sealed class Es1HercDiagrams {
 	/// through a null record for a weapon the mount's records do not hold; the sprite is left as it was here then, an
 	/// engine guard.
 	/// </summary>
+	/// <param name="picture">The mount's picture, whose sprite is set.</param>
+	/// <param name="value">The mount's status word.</param>
+	/// <param name="weapon">The weapon number.</param>
+	/// <param name="mount">The mount number.</param>
+	/// <param name="chassis">The chassis number.</param>
 	private void SetMountPicture(Es1MountPicture picture, short value, short weapon, short mount, short chassis) {
 		picture.Record = Art.Find(weapon, mount, chassis);
 		if (weapon == Es1HercArt.EmptyMount) {
@@ -286,12 +295,14 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_DrawMounts</c> (<c>00024670</c>)(<paramref name="herc"/>) (docs/es1/formats/herc-diagrams.md#drawing-the-diagram):
+	/// <c>Herc_DrawMounts</c> (<c>00024670</c>) (docs/es1/formats/herc-diagrams.md#drawing-the-diagram):
 	/// for each place below the mount count, <i>m</i> the mount <c>Herc_MountDrawOrder</c> puts there, the mount picture's
 	/// sprite drawn; then, while <see cref="MountHighlightShown"/> is set and <i>m</i> is the current mount, its outline;
 	/// then, on chassis 7 with <see cref="ColossusTopShown"/> set and <i>m</i> 3, the shoulder piece; each only when its
 	/// array is set.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="surface">The sprite surface drawn to.</param>
 	public void DrawMounts(Es1HercRecord herc, Es1SpriteSurface surface) {
 		var diagram = State(herc);
 		for (int place = 0; place < herc.Weapons.Length; place++) {
@@ -308,9 +319,11 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_EraseMounts</c> (<c>00024561</c>)(<paramref name="herc"/>): the sprites <see cref="DrawMounts"/> draws
+	/// <c>Herc_EraseMounts</c> (<c>00024561</c>): the sprites <see cref="DrawMounts"/> draws
 	/// erased in the reverse order, each place's shoulder piece and outline before its picture.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="surface">The sprite surface drawn to.</param>
 	public void EraseMounts(Es1HercRecord herc, Es1SpriteSurface surface) {
 		var diagram = State(herc);
 		for (int place = herc.Weapons.Length - 1; place >= 0; place--) {
@@ -328,7 +341,7 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_DrawDamageMarks</c> (<c>00024366</c>)(<paramref name="herc"/>) (docs/es1/formats/herc-diagrams.md#the-damage-marks):
+	/// <c>Herc_DrawDamageMarks</c> (<c>00024366</c>) (docs/es1/formats/herc-diagrams.md#the-damage-marks):
 	/// the chassis' <c>DMG1</c> bank loaded the first time; for each group <i>g</i>, 0 to 5, the level
 	/// <see cref="Es1RepairCosts.LevelForCondition"/> gives for external area <i>g</i>'s mean
 	/// (<see cref="Es1HercRecord.ExternalAverage"/>), and for a level of 1 to 3 each mark of the group's list for that
@@ -337,6 +350,8 @@ public sealed class Es1HercDiagrams {
 	/// bank's frames with no bounds test; such a level draws nothing, and a frame outside the bank is not drawn, engine
 	/// guards.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="surface">The sprite surface drawn to.</param>
 	public void DrawDamageMarks(Es1HercRecord herc, Es1SpriteSurface surface) {
 		short chassis = herc.Chassis;
 		var bank = Art.Need(Es1HercArt.Bank.DamageMarks, chassis);
@@ -361,10 +376,12 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_HighlightMount</c> (<c>00024326</c>)(<paramref name="herc"/>, <paramref name="mount"/>)
-	/// (docs/es1/formats/herc-diagrams.md#the-mount-highlight): the mounts erased, <paramref name="mount"/> made current,
+	/// <c>Herc_HighlightMount</c> (<c>00024326</c>) (docs/es1/formats/herc-diagrams.md#the-mount-highlight): the mounts erased, <paramref name="mount"/> made current,
 	/// <see cref="MountHighlightShown"/> set for a mount other than −1 and cleared for −1, the mounts drawn.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="mount">The mount made current, or −1 for none.</param>
+	/// <param name="surface">The sprite surface drawn to.</param>
 	public void HighlightMount(Es1HercRecord herc, short mount, Es1SpriteSurface surface) {
 		EraseMounts(herc, surface);
 		State(herc).CurrentMount = mount;
@@ -373,10 +390,12 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_HighlightNextMount</c> (<c>000242a6</c>)(<paramref name="herc"/>): the mounts erased, the current mount plus
+	/// <c>Herc_HighlightNextMount</c> (<c>000242a6</c>): the mounts erased, the current mount plus
 	/// 1 modulo the mount count, <see cref="MountHighlightShown"/> set, the mounts drawn. Retail divides by a mount count
 	/// of 0; such a HERC keeps its current mount here, an engine guard.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="surface">The sprite surface drawn to.</param>
 	public void HighlightNextMount(Es1HercRecord herc, Es1SpriteSurface surface) {
 		EraseMounts(herc, surface);
 		var diagram = State(herc);
@@ -389,9 +408,11 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_HighlightPreviousMount</c> (<c>000242e8</c>)(<paramref name="herc"/>): the mounts erased, the current mount
+	/// <c>Herc_HighlightPreviousMount</c> (<c>000242e8</c>): the mounts erased, the current mount
 	/// less 1, below 0 the last, <see cref="MountHighlightShown"/> set, the mounts drawn.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="surface">The sprite surface drawn to.</param>
 	public void HighlightPreviousMount(Es1HercRecord herc, Es1SpriteSurface surface) {
 		EraseMounts(herc, surface);
 		var diagram = State(herc);
@@ -405,9 +426,11 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_HideMountHighlight</c> (<c>00024287</c>)(<paramref name="herc"/>): the mounts erased,
+	/// <c>Herc_HideMountHighlight</c> (<c>00024287</c>): the mounts erased,
 	/// <see cref="MountHighlightShown"/> cleared and the mounts drawn; the current mount stays.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="surface">The sprite surface drawn to.</param>
 	public void HideMountHighlight(Es1HercRecord herc, Es1SpriteSurface surface) {
 		EraseMounts(herc, surface);
 		MountHighlightShown = false;
@@ -418,22 +441,26 @@ public sealed class Es1HercDiagrams {
 	public short CurrentMount(Es1HercRecord herc) => State(herc).CurrentMount;
 
 	/// <summary>
-	/// <c>Herc_CurrentMountWeapon</c> (<c>00024a6f</c>)(<paramref name="herc"/>): the current mount's weapon, or 17 when
+	/// <c>Herc_CurrentMountWeapon</c> (<c>00024a6f</c>): the current mount's weapon, or 17 when
 	/// there is no current mount or no mount. Retail reads a current mount past the mounts unchecked; 17 here, an engine
 	/// guard.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
 	public short CurrentMountWeapon(Es1HercRecord herc) {
 		short mount = CurrentMount(herc);
 		return mount >= 0 && mount < herc.Weapons.Length ? herc.Weapons[mount] : Es1HercArt.EmptyMount;
 	}
 
-	/// <summary><c>Herc_CurrentMountStatus</c> (<c>00024b51</c>)(<paramref name="herc"/>): <c>Herc_GetMountStatus</c> (<c>00024b23</c>) of the current mount, 0 for none (<see cref="Es1HercRecord.MountStatus"/>).</summary>
+	/// <summary><c>Herc_CurrentMountStatus</c> (<c>00024b51</c>): <c>Herc_GetMountStatus</c> (<c>00024b23</c>) of the current mount, 0 for none (<see cref="Es1HercRecord.MountStatus"/>).</summary>
+	/// <param name="herc">The HERC.</param>
 	public short CurrentMountStatus(Es1HercRecord herc) => herc.MountStatus(CurrentMount(herc));
 
 	/// <summary>
-	/// <c>Herc_SetCurrentMountStatus</c> (<c>00024aea</c>)(<paramref name="herc"/>, <paramref name="value"/>): for a current
+	/// <c>Herc_SetCurrentMountStatus</c> (<c>00024aea</c>): for a current
 	/// mount, its status word in the block. A mount past the block's ten words writes nothing here, an engine guard.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="value">The status word.</param>
 	public void SetCurrentMountStatus(Es1HercRecord herc, short value) {
 		short mount = CurrentMount(herc);
 		if (mount != -1 && mount >= 0 && Es1HercRecord.MountStatusWords + mount < herc.Status.Length) {
@@ -442,9 +469,11 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_SetCurrentMountAmmo</c> (<c>00024a1e</c>)(<paramref name="herc"/>, <paramref name="value"/>): for a current
+	/// <c>Herc_SetCurrentMountAmmo</c> (<c>00024a1e</c>): for a current
 	/// mount, its word <c>+0x18</c>. A mount past the words writes nothing here, an engine guard.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="value">The ammunition word.</param>
 	public void SetCurrentMountAmmo(Es1HercRecord herc, short value) {
 		short mount = CurrentMount(herc);
 		if (mount >= 0 && mount < herc.MountWords.Length) {
@@ -453,8 +482,7 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_SetCurrentMountWeapon</c> (<c>00024788</c>)(<paramref name="herc"/>, <paramref name="weapon"/>)
-	/// (docs/es1/formats/herc-diagrams.md#the-mount-highlight): for a current mount, its weapon becomes 17 when its status
+	/// <c>Herc_SetCurrentMountWeapon</c> (<c>00024788</c>) (docs/es1/formats/herc-diagrams.md#the-mount-highlight): for a current mount, its weapon becomes 17 when its status
 	/// word is 0 and <paramref name="weapon"/> otherwise; its picture (<see cref="SetMountPicture"/> with the current
 	/// mount's status) and its outline set as <see cref="Build"/> sets them, both looked up by <paramref name="weapon"/>.
 	/// When the frame found is not 0: on chassis 7 with mount 2 or 3 current and <see cref="ColossusTopShown"/> clear, the
@@ -463,6 +491,8 @@ public sealed class Es1HercDiagrams {
 	/// becomes 5 for a weapon outside 9 to 11, or 0 for one of them whose word is 5. Retail reads and writes past the
 	/// mounts for a current mount outside them; nothing is done here then, an engine guard.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="weapon">The weapon the mount takes.</param>
 	public void SetCurrentMountWeapon(Es1HercRecord herc, short weapon) {
 		var diagram = State(herc);
 		short mount = diagram.CurrentMount;
@@ -501,12 +531,15 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_GetStatus</c> (<c>00024b86</c>)(<paramref name="herc"/>, <paramref name="index"/>, <paramref name="kind"/>)
+	/// <c>Herc_GetStatus</c> (<c>00024b86</c>)
 	/// as the status lines read it: for <see cref="Internal"/> internal word <paramref name="index"/>, for
 	/// <see cref="External"/> external area <paramref name="index"/>'s mean, for <see cref="MountKind"/> the mount's word,
 	/// and the kind itself for any other. Retail reads the block with no bounds test; an index outside it reads 0 here, an
 	/// engine guard.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="index">The internal word or external area.</param>
+	/// <param name="kind">The kind of status.</param>
 	public static short GetStatus(Es1HercRecord herc, int index, short kind) => kind switch {
 		Internal => index >= 0 && Es1HercRecord.FirstInternalWord + index < herc.Status.Length
 			? herc.Status[Es1HercRecord.FirstInternalWord + index]
@@ -517,14 +550,17 @@ public sealed class Es1HercDiagrams {
 	};
 
 	/// <summary>
-	/// <c>Herc_SetStatus</c> (<c>00024c14</c>)(<paramref name="herc"/>, <paramref name="value"/>, <paramref name="index"/>,
-	/// <paramref name="kind"/>), <c>HercStatus_Set</c> (<c>0001a492</c>) on the HERC's block
+	/// <c>Herc_SetStatus</c> (<c>00024c14</c>), <c>HercStatus_Set</c> (<c>0001a492</c>) on the HERC's block
 	/// (docs/es1/shell/repair-and-build.md#and): for <see cref="External"/> every external word of area
 	/// <paramref name="index"/>'s list (<see cref="Es1HercRecord.ExternalAreas"/>) set to the value (<c>0001a42c</c>), for
 	/// <see cref="Internal"/> internal word <paramref name="index"/>, for <see cref="MountKind"/> the mount's word; any other
 	/// kind writes nothing. Retail writes with no bounds test; an index outside the block writes nothing here, an engine
 	/// guard.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="value">The status written.</param>
+	/// <param name="index">The internal word or external area.</param>
+	/// <param name="kind">The kind of status.</param>
 	public static void SetStatus(Es1HercRecord herc, short value, int index, short kind) {
 		short[] block = herc.Status;
 		switch (kind) {
@@ -552,8 +588,7 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_BuildStatusLines</c> (<c>00024d99</c>)(<paramref name="herc"/>, <paramref name="kind"/>)
-	/// (docs/es1/formats/herc-diagrams.md#the-status-lines): for <see cref="InternalLines"/> or <see cref="Internal"/>
+	/// <c>Herc_BuildStatusLines</c> (<c>00024d99</c>) (docs/es1/formats/herc-diagrams.md#the-status-lines): for <see cref="InternalLines"/> or <see cref="Internal"/>
 	/// <c>eng\watext.bin</c>'s lines <c>0x80</c> to <c>0x88</c>, for <see cref="External"/> lines <c>0x89</c> to
 	/// <c>0x8e</c>, through <c>WaText_LinesFromList</c>, whose lines are the text table's own buffers, so the condition
 	/// <see cref="FormatStatusLines"/> writes over their first three characters stays in <paramref name="text"/>; for
@@ -562,6 +597,9 @@ public sealed class Es1HercDiagrams {
 	/// with null. Retail hands the format whatever its local held for any other kind; such a kind gives no lines here,
 	/// and a line past the table an empty one, engine guards.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="kind">The kind of status lines.</param>
+	/// <param name="text">The <c>eng\watext.bin</c> text table, or null.</param>
 	public static string?[] BuildStatusLines(Es1HercRecord herc, short kind, string[]? text) {
 		string?[] lines;
 		switch (kind) {
@@ -591,14 +629,17 @@ public sealed class Es1HercDiagrams {
 	}
 
 	/// <summary>
-	/// <c>Herc_FormatStatusLine</c> (<c>00024ef4</c>)(<paramref name="herc"/>, <paramref name="index"/>,
-	/// <paramref name="line"/>, <paramref name="kind"/>), whose loop over a list is <c>Herc_FormatStatusLines</c>
+	/// <c>Herc_FormatStatusLine</c> (<c>00024ef4</c>), whose loop over a list is <c>Herc_FormatStatusLines</c>
 	/// (<c>00024f9e</c>): for a line not starting with <c>-</c>, the first three characters of <c>%3d</c> of the status
 	/// (<see cref="GetStatus"/> with <see cref="Internal"/> for <see cref="InternalLines"/> and <see cref="Internal"/>, with
 	/// <see cref="External"/>, or the mount's word for <see cref="MountKind"/>) written over the line's first three. Any
 	/// other kind writes what the buffer held; the line is left here, an engine guard, and a line shorter than three is
 	/// padded with spaces where retail writes past its end.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	/// <param name="index">The line's index.</param>
+	/// <param name="line">The line formatted.</param>
+	/// <param name="kind">The kind of status line.</param>
 	public static string FormatStatusLine(Es1HercRecord herc, int index, string line, short kind) {
 		if (line.StartsWith('-') || kind is not (InternalLines or Internal or External or MountKind)) {
 			return line;

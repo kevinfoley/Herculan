@@ -45,13 +45,14 @@ public sealed class Es1ShellMouse {
 	}
 
 	/// <summary>
-	/// <c>ShellMouse_OnMove</c> (<c>0001c605</c>)(<paramref name="record"/>): nothing unless
+	/// <c>ShellMouse_OnMove</c> (<c>0001c605</c>): nothing unless
 	/// <see cref="Es1MenuGlobals.InputReady"/> is set and a window is active; <see cref="Es1MenuGlobals.InputReady"/>
 	/// cleared for the run; the point stored as <see cref="Es1MenuGlobals.Pointer"/>; while
 	/// <see cref="Es1MenuGlobals.Tracking"/> is set, the pressed control given the point relative to the window through its
 	/// slot <c>+0x38</c> and its slot <c>+0xc</c> called; otherwise, with the point in the window,
 	/// <see cref="Es1DUIWindow.OnDrag"/>. A pressed index past the controls skips the slots, an engine guard.
 	/// </summary>
+	/// <param name="record">The mouse record.</param>
 	private void OnMove(Es1MouseRecord record) {
 		var globals = _globals;
 		if (!globals.InputReady || globals.Active is not { } window) {
@@ -74,11 +75,12 @@ public sealed class Es1ShellMouse {
 	}
 
 	/// <summary>
-	/// <c>ShellMouse_OnLeftPress</c> (<c>0001c7d8</c>)(<paramref name="record"/>): nothing while the message box is up;
+	/// <c>ShellMouse_OnLeftPress</c> (<c>0001c7d8</c>): nothing while the message box is up;
 	/// otherwise <see cref="Es1MenuGlobals.InputReady"/> cleared for the run, and with the point in the active window
 	/// <see cref="Es1DUIWindow.OnPress"/>; with no active window or the point outside it,
 	/// <see cref="Es1MenuGlobals.PressedIndex"/> −1 and the hangar test.
 	/// </summary>
+	/// <param name="record">The mouse record.</param>
 	private void OnLeftPress(Es1MouseRecord record) {
 		var globals = _globals;
 		if (globals.MessageBox.Up) {
@@ -124,7 +126,7 @@ public sealed class Es1ShellMouse {
 	}
 
 	/// <summary>
-	/// <c>ShellMouse_OnLeftRelease</c> (<c>0001caaa</c>)(<paramref name="record"/>): nothing while the message box is up;
+	/// <c>ShellMouse_OnLeftRelease</c> (<c>0001caaa</c>): nothing while the message box is up;
 	/// otherwise <see cref="Es1MenuGlobals.InputReady"/> cleared for the run. With no active window,
 	/// <see cref="Es1MenuGlobals.PressedIndex"/> −1. While <see cref="Es1MenuGlobals.Tracking"/> is set, wherever the point
 	/// is: the pressed control put up and changed, with no slot called, the tracking cleared, its message posted and
@@ -132,6 +134,7 @@ public sealed class Es1ShellMouse {
 	/// <see cref="Es1DUIWindow.OnRelease"/>, and outside it <see cref="Es1MenuGlobals.PressedIndex"/> −1. A pressed index
 	/// past the controls posts nothing, an engine guard.
 	/// </summary>
+	/// <param name="record">The mouse record.</param>
 	private void OnLeftRelease(Es1MouseRecord record) {
 		var globals = _globals;
 		if (globals.MessageBox.Up) {

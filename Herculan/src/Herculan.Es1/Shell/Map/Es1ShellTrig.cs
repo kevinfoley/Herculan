@@ -49,16 +49,19 @@ public static class Es1ShellTrig {
 	}
 
 	/// <summary>
-	/// <c>BuildEulerRotationMatrixQ14</c> (<c>000589c4</c>)(<paramref name="x"/>, <paramref name="y"/>,
-	/// <paramref name="z"/>): the simulator's rotation (<see cref="Transform3.FromEuler(short, short, short)"/>) with
+	/// <c>BuildEulerRotationMatrixQ14</c> (<c>000589c4</c>): the simulator's rotation (<see cref="Transform3.FromEuler(short, short, short)"/>) with
 	/// every cosine read through <see cref="Cos"/> (docs/es1/shell/map.md#the-shapes).
 	/// </summary>
+	/// <param name="x">The X angle.</param>
+	/// <param name="y">The Y angle.</param>
+	/// <param name="z">The Z angle.</param>
 	public static Transform3 Rotation(short x, short y, short z) => Transform3.FromEuler(x, y, z, Cos);
 
 	/// <summary>
-	/// <c>Math_BuildRotation2D</c> (<c>0005533c</c>)(<paramref name="angle"/>): {cos <i>a</i>, sin <i>a</i>, −sin <i>a</i>,
+	/// <c>Math_BuildRotation2D</c> (<c>0005533c</c>): {cos <i>a</i>, sin <i>a</i>, −sin <i>a</i>,
 	/// cos <i>a</i>} in Q14, the sine being <see cref="Cos"/> of the angle less <c>0x4000</c>.
 	/// </summary>
+	/// <param name="angle">The angle.</param>
 	public static (short M0, short M1, short M2, short M3) Rotation2D(short angle) {
 		short cos = Cos(angle);
 		short sin = Cos(unchecked((short)(angle - 0x4000)));

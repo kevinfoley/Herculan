@@ -63,9 +63,10 @@ public sealed class Es1ShellDevices {
 	public short WaitCount { get; set; }
 
 	/// <summary>
-	/// <c>Shell_WaitTicks</c> (<c>0004bbe9</c>)(<paramref name="count"/>): <see cref="WaitCount"/> zeroed, then a wait
+	/// <c>Shell_WaitTicks</c> (<c>0004bbe9</c>): <see cref="WaitCount"/> zeroed, then a wait
 	/// until <see cref="WaitTick"/> has raised it to the count, two interrupts each.
 	/// </summary>
+	/// <param name="count">The number of ticks to wait.</param>
 	public IEnumerable<Es1ShellWait> WaitTicks(short count) {
 		WaitCount = 0;
 		while (WaitCount < count) {

@@ -121,13 +121,15 @@ public sealed class Es1DebriefingMenu : Es1Menu {
 	public static Es1HotspotHandler ResultsHandler(Es1MenuContext context) => (render, rect, _) => DrawResults(context, render, rect);
 
 	/// <summary>
-	/// <c>DebriefingResultsHotspot_Draw</c> (<c>000175d7</c>)(<paramref name="rect"/>, id)
-	/// (docs/es1/shell/debriefing.md#the-results-panel), in the window's render context: the alignment 0, the rect filled
+	/// <c>DebriefingResultsHotspot_Draw</c> (<c>000175d7</c>) (docs/es1/shell/debriefing.md#the-results-panel), in the window's render context: the alignment 0, the rect filled
 	/// and framed in <see cref="PanelColor"/>; the ten <c>eng\watext.bin</c> labels in <c>cstats_2</c>; the values, each
 	/// <c>sprintf</c>'s decimal (<c>%ld</c> for the salvage, <c>%d</c> for the rest), in <c>cstats_1</c>; then the
 	/// alignment 2 with the rect's width as the field width and <see cref="NewTechnology"/> at (<i>x0</i>, <i>y0</i> + 81),
 	/// the alignment left at 2.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="render">The render context drawn through.</param>
+	/// <param name="rect">The hotspot's rectangle.</param>
 	private static void DrawResults(Es1MenuContext context, Es1ShellRenderContext render, Es1Rect rect) {
 		var data = context.Data;
 		var mission = context.Mission;

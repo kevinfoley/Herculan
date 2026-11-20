@@ -292,10 +292,12 @@ public sealed class Es1DigiMidiDriver : IEs1MidiDriver {
 	}
 
 	/// <summary>
-	/// <c>HmiDigiMidi_SampleCallback</c> (<c>00081e1d</c>)(<paramref name="driver"/>, <paramref name="code"/>,
-	/// <paramref name="voice"/>), each start block's callback: with event 2, the voice's end, the voice removed from the
+	/// <c>HmiDigiMidi_SampleCallback</c> (<c>00081e1d</c>), each start block's callback: with event 2, the voice's end, the voice removed from the
 	/// slot that plays through the driver.
 	/// </summary>
+	/// <param name="driver">The driver's handle.</param>
+	/// <param name="code">The event code.</param>
+	/// <param name="voice">The voice.</param>
 	internal void SampleCallback(int driver, int code, int voice) {
 		if (code == 2) {
 			RemoveVoice(_driverSlot[driver], voice);

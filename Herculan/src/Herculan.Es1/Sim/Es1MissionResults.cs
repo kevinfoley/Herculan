@@ -92,11 +92,13 @@ public static class Es1MissionResults {
 	}
 
 	/// <summary>
-	/// <c>Mission_TotalSalvage</c> (<c>0001d434</c>)(<paramref name="group"/>, <i>w</i>), which ignores <i>w</i>:
+	/// <c>Mission_TotalSalvage</c> (<c>0001d434</c>), whose second argument it ignores:
 	/// <see cref="SalvageValue"/> summed over every machine of <c>g_MechPool</c>, oldest first, whose group's side byte
 	/// differs from <paramref name="group"/>'s and that is immobilized or destroyed. Retail reads each machine's group
 	/// unchecked; a machine with none is passed over here, an engine guard.
 	/// </summary>
+	/// <param name="group">The group whose opponents' salvage is totaled.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static int TotalSalvage(Es1MissionGroup group, Es1SimGlobals globals) {
 		int total = 0;
 		foreach (var machine in globals.MechPool) {
@@ -109,7 +111,7 @@ public static class Es1MissionResults {
 	}
 
 	/// <summary>
-	/// <c>Mech_SalvageValue</c> (<c>00014034</c>)(<paramref name="machine"/>): 0 when it is worth no salvage
+	/// <c>Mech_SalvageValue</c> (<c>00014034</c>): 0 when it is worth no salvage
 	/// (<see cref="Es1Mech.WorthNoSalvage"/>); otherwise each mount of its manager whose component, 19 + its hardpoint's
 	/// slot byte (<c>+0x17</c>, signed), reads below <c>0x80</c> (<see cref="Es1DamageHeader.ReadDamagePercent"/>) queued
 	/// for salvage (<see cref="Es1SimGlobals.QueueSalvage"/>) with its weapon id and ((<c>0x100</c> − reading) × 100)
@@ -117,6 +119,8 @@ public static class Es1MissionResults {
 	/// scale, the type record's <c>+0x54</c>), the scale halved when component 0 reads <c>0x100</c>. Retail reads the
 	/// manager and the damage header unchecked; a machine with neither answers 0 and queues nothing here, an engine guard.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static int SalvageValue(Es1Mech machine, Es1SimGlobals globals) {
 		if (machine.WorthNoSalvage || machine.Damage is not { } header) {
 			return 0;
@@ -147,13 +151,15 @@ public static class Es1MissionResults {
 	private const int FirstMountComponent = 0x13;
 
 	/// <summary>
-	/// <c>Group_WriteStatusBlocks</c> (<c>0001d2c8</c>)(<paramref name="group"/>, stream): for each member in order,
+	/// <c>Group_WriteStatusBlocks</c> (<c>0001d2c8</c>): for each member in order,
 	/// <see cref="Es1Mech.ReadDamageReadouts"/>' entries 1 to 13, 20 to 29 and 32 to 41 each written as an <c>int16</c>
 	/// ((<c>0x100</c> − <i>r</i>) × 100) &gt;&gt; 8, then the first three of its kill tallies
 	/// (<see cref="Es1Mech.KillTallies"/>, the 6 bytes at <c>+0x23a</c>): 72 bytes a member. Retail reads every member as
 	/// a HERC; a member that is none, which no player's group holds, writes the block of a machine whose readings are all
 	/// 0 and whose tallies are 0 here, an engine guard.
 	/// </summary>
+	/// <param name="group">The group written.</param>
+	/// <param name="writer">The stream written to.</param>
 	public static void WriteStatusBlocks(Es1MissionGroup group, BinaryWriter writer) {
 		foreach (var member in group.Members) {
 			var machine = member as Es1Mech;

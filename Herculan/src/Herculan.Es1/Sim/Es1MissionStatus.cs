@@ -37,9 +37,11 @@ public readonly record struct Es1MissionBox(int MinX, int MinY, int MaxX, int Ma
 	}
 
 	/// <summary>
-	/// <c>Mission_IsOutsideBox</c> (<c>0000f6b8</c>)(<paramref name="margin"/>, <paramref name="point"/>): false when the
+	/// <c>Mission_IsOutsideBox</c> (<c>0000f6b8</c>): false when the
 	/// point's X and Y lie strictly inside the box widened by the margin on every side, otherwise true.
 	/// </summary>
+	/// <param name="margin">The margin the box is widened by.</param>
+	/// <param name="point">The point tested.</param>
 	public bool IsOutside(int margin, Vec3i point) =>
 		!(MinX - margin < point.X && point.X < MaxX + margin && MinY - margin < point.Y && point.Y < MaxY + margin);
 }

@@ -49,12 +49,14 @@ public sealed class Es1LockTone {
 	public bool PhaseSounded { get; private set; }
 
 	/// <summary>
-	/// <c>Mech_LockTonePlay</c> (<c>0001552c</c>)(<paramref name="machine"/>)
-	/// (docs/es1/simulation/mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0): with the lock lamp lit,
+	/// <c>Mech_LockTonePlay</c> (<c>0001552c</c>) (docs/es1/simulation/mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0): with the lock lamp lit,
 	/// <see cref="WasLocked"/> set and <see cref="LockedSound"/> once in each phase <see cref="PhaseBit"/> of the clock is
 	/// set, the phase's latch cleared while it is clear; with it dark, <see cref="LostSound"/> once when a lock was held,
 	/// otherwise <see cref="TargetChangedSound"/> while the target has just changed.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="clock">The simulation clock.</param>
+	/// <param name="sound">The sound system the tones are played through.</param>
 	public void Play(Es1Mech machine, Es1SimClock clock, Sound.Es1Sound sound) {
 		if (!machine.LockLamp) {
 			if (!WasLocked) {

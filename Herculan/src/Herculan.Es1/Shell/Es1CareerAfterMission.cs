@@ -71,11 +71,12 @@ public sealed class Es1CareerAfterMission {
 	}
 
 	/// <summary>
-	/// <c>Inventory_ResupplyWeapons</c> (<c>00028375</c>)(<paramref name="stock"/>) (docs/es1/shell/between-missions.md#resupply):
+	/// <c>Inventory_ResupplyWeapons</c> (<c>00028375</c>) (docs/es1/shell/between-missions.md#resupply):
 	/// the weapons of <see cref="ResupplyList"/> in order, until five pushes are made: a 100 pushed onto the slot of each the
 	/// current career record makes available (<see cref="Es1EquipmentState.IsAvailable"/>(weapon, 1)) and whose slot holds
 	/// fewer than 2 (<see cref="Es1WeaponStock.CountIn"/>).
 	/// </summary>
+	/// <param name="stock">The weapon stock pushed onto.</param>
 	public void ResupplyWeapons(Es1WeaponStock stock) {
 		int pushes = 0;
 		for (int i = 0; i < ResupplyList.Length && pushes < ResupplyPushes; i++) {
@@ -88,13 +89,15 @@ public sealed class Es1CareerAfterMission {
 	}
 
 	/// <summary>
-	/// <c>CareerRecord_FinishMission</c> (<c>000160cb</c>)(<paramref name="record"/>) (docs/es1/shell/between-missions.md#lost-squadmates):
+	/// <c>CareerRecord_FinishMission</c> (<c>000160cb</c>) (docs/es1/shell/between-missions.md#lost-squadmates):
 	/// <i>n</i> the entries on strength with a slot (<see cref="Es1CareerRecord.CountPilots"/>) and the share
 	/// <c>Career_Salvage</c> / <i>n</i>, divided unsigned; <i>n</i> times the current pilot stepped
 	/// (<see cref="Es1CareerRecord.NextPilot"/>, which moves the hangar's selected slot) and the share stored as its
 	/// <see cref="Es1PilotEntry.PayShare"/>; then <see cref="ReplaceLostPilots"/> and the missions played up 1. Retail
 	/// divides by 0 with no entry counted; here no share is stored then, an engine guard.
 	/// </summary>
+	/// <param name="record">The career record.</param>
+	/// <param name="hangar">The hangar whose selected slot the pilot step moves.</param>
 	public void FinishMission(Es1CareerRecord record, Es1Hangar hangar) {
 		short count = record.CountPilots();
 		if (count > 0) {
@@ -112,8 +115,7 @@ public sealed class Es1CareerAfterMission {
 	}
 
 	/// <summary>
-	/// <c>CareerRecord_ReplaceLostPilots</c> (<c>00015e0b</c>)(<paramref name="record"/>)
-	/// (docs/es1/shell/between-missions.md#lost-squadmates): for each entry <i>i</i>, 0 to 3, on strength with a slot and a
+	/// <c>CareerRecord_ReplaceLostPilots</c> (<c>00015e0b</c>) (docs/es1/shell/between-missions.md#lost-squadmates): for each entry <i>i</i>, 0 to 3, on strength with a slot and a
 	/// condition of 0, the word <c>0007ebca</c> (<see cref="Es1ShellResults.LostPilots"/>) up 1; and when <i>i</i> is not the
 	/// player's entry, with <i>k</i> its word <c>+4</c> and <i>v</i> its word <c>+6</c>: the HERC in its slot scrapped
 	/// (<see cref="ScrapSlot"/>), the entry set up again (<see cref="Es1PilotEntry.InitRandom"/> on <c>Shell_RandomState</c>,
@@ -122,6 +124,8 @@ public sealed class Es1CareerAfterMission {
 	/// before the roster's name groups for an <i>i</i> of 0 that is not the player's; the name group is left as the set-up
 	/// leaves it here then, and a draw with no generator is 0, engine guards.
 	/// </summary>
+	/// <param name="record">The career record.</param>
+	/// <param name="hangar">The hangar whose lost pilots' HERCs are scrapped.</param>
 	public void ReplaceLostPilots(Es1CareerRecord record, Es1Hangar hangar) {
 		for (int i = 0; i < Es1CareerRecord.PilotCount; i++) {
 			var entry = record.Pilots[i];
@@ -152,11 +156,13 @@ public sealed class Es1CareerAfterMission {
 	}
 
 	/// <summary>
-	/// <c>Hangar_ScrapSlot</c> (<c>0002a20d</c>)(<paramref name="slot"/>) (docs/es1/shell/between-missions.md#lost-squadmates):
+	/// <c>Hangar_ScrapSlot</c> (<c>0002a20d</c>) (docs/es1/shell/between-missions.md#lost-squadmates):
 	/// for a slot that is not −1 and holds a HERC, the HERC scrapped (<see cref="ScrapToSalvage"/>(HERC, 0)), destroyed
 	/// (<c>Herc_Dtor</c> (<c>000232a4</c>)(HERC, 3), which frees its diagram, <see cref="Hangar.Es1HercDiagrams.Destroy"/>),
 	/// the slot emptied and the HERC count down 1.
 	/// </summary>
+	/// <param name="hangar">The hangar.</param>
+	/// <param name="slot">The slot, or −1 for none.</param>
 	public void ScrapSlot(Es1Hangar hangar, short slot) {
 		if (hangar.HercIn(slot) is not { } herc) {
 			return;
@@ -169,12 +175,13 @@ public sealed class Es1CareerAfterMission {
 	}
 
 	/// <summary>
-	/// <c>Herc_ScrapToSalvage</c> (<c>00024cec</c>)(<paramref name="herc"/>, <paramref name="value"/>)
-	/// (docs/es1/shell/between-missions.md#lost-squadmates): for each mount below the mount count whose weapon is not
+	/// <c>Herc_ScrapToSalvage</c> (<c>00024cec</c>) (docs/es1/shell/between-missions.md#lost-squadmates): for each mount below the mount count whose weapon is not
 	/// empty, with its per-mount word below 80 the weapon's value × the word / 100 added to <c>Career_Salvage</c>, otherwise
 	/// the word pushed onto the stock's slot of the weapon (<see cref="Es1WeaponStock.Add"/>); then <paramref name="value"/>
 	/// added to <c>Career_Salvage</c>, or, when it is 0, the HERC's <see cref="Es1RepairCosts.ScrapValue"/>.
 	/// </summary>
+	/// <param name="herc">The HERC scrapped.</param>
+	/// <param name="value">The salvage added, or 0 for the HERC's own scrap value.</param>
 	public void ScrapToSalvage(Es1HercRecord herc, int value) {
 		for (int mount = 0; mount < herc.Weapons.Length; mount++) {
 			short weapon = herc.Weapons[mount];
@@ -244,11 +251,13 @@ public sealed class Es1CareerAfterMission {
 		chassis >= 0 && chassis < Es1RepairCosts.ChassisPrices.Length ? Es1RepairCosts.ChassisPrices[chassis] : (short)0;
 
 	/// <summary>
-	/// <c>CareerRecord_AutoRepairSquad</c> (<c>0001601b</c>)(<paramref name="record"/>) (docs/es1/shell/between-missions.md#repairs):
+	/// <c>CareerRecord_AutoRepairSquad</c> (<c>0001601b</c>) (docs/es1/shell/between-missions.md#repairs):
 	/// <see cref="AutoRepairFrom"/> from the entry <see cref="AutoRepairFirst"/> gives for the record's word <c>+0x1f5</c>.
 	/// Retail passes on the register <c>EDI</c> as its caller left it for any other word; such a word repairs none here, an
 	/// engine guard.
 	/// </summary>
+	/// <param name="record">The career record.</param>
+	/// <param name="hangar">The hangar whose HERCs are repaired.</param>
 	public void AutoRepairSquad(Es1CareerRecord record, Es1Hangar hangar) {
 		short mode = record.AutoRepairMode;
 		short first = mode >= 0 && mode < AutoRepairFirst.Length ? AutoRepairFirst[mode] : (short)Es1CareerRecord.PilotCount;
@@ -256,9 +265,12 @@ public sealed class Es1CareerAfterMission {
 	}
 
 	/// <summary>
-	/// <c>CareerRecord_AutoRepairFrom</c> (<c>0001605c</c>)(<paramref name="record"/>, <paramref name="first"/>): for each
+	/// <c>CareerRecord_AutoRepairFrom</c> (<c>0001605c</c>): for each
 	/// entry from <paramref name="first"/> to 3 on strength with a slot, <see cref="RepairAuto"/>(its pay share, its slot).
 	/// </summary>
+	/// <param name="record">The career record.</param>
+	/// <param name="first">The first pilot entry repaired.</param>
+	/// <param name="hangar">The hangar whose HERCs are repaired.</param>
 	public void AutoRepairFrom(Es1CareerRecord record, short first, Es1Hangar hangar) {
 		for (int i = first; i < Es1CareerRecord.PilotCount; i++) {
 			if (record.OnStrengthWithSlot(i)) {
@@ -268,8 +280,7 @@ public sealed class Es1CareerAfterMission {
 	}
 
 	/// <summary>
-	/// <c>Repair_Auto</c> (<c>00029bf3</c>)(<paramref name="budget"/>, <paramref name="slot"/>)
-	/// (docs/es1/shell/between-missions.md#repairs): nothing for −1 or a slot holding no HERC. Otherwise ES2's ladder walk
+	/// <c>Repair_Auto</c> (<c>00029bf3</c>) (docs/es1/shell/between-missions.md#repairs): nothing for −1 or a slot holding no HERC. Otherwise ES2's ladder walk
 	/// with ES1's ladder: from level 0, one level down while the cost, <see cref="Es1RepairCosts.HercCost"/> of the level's
 	/// target (<see cref="Es1RepairCosts.RepairTargets"/>), is above the budget, compared unsigned, and the level is below
 	/// the HERC's own, <see cref="Es1RepairCosts.LevelForCondition"/> of <see cref="Es1HercRecord.OverallCondition"/>. The
@@ -281,6 +292,9 @@ public sealed class Es1CareerAfterMission {
 	/// stores through entry −1 when none is found, over the record's <c>+0x10</c>; nothing is stored here then, an engine
 	/// guard.
 	/// </summary>
+	/// <param name="budget">The amount the repair may spend.</param>
+	/// <param name="slot">The slot repaired, or −1 for none.</param>
+	/// <param name="hangar">The hangar whose HERC is repaired.</param>
 	public void RepairAuto(uint budget, short slot, Es1Hangar hangar) {
 		if (hangar.HercIn(slot) is not { } herc) {
 			return;

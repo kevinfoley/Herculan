@@ -36,11 +36,14 @@ public sealed class Es1ZoneShapes(IReadOnlyList<Es1ShapeObject> objects) {
 	public bool RaycastShapeObjects(Es1Ray ray, out Es1RayHit hit) => Es1ShapeTests.RaycastShapeVolume(Objects, ray, out hit);
 
 	/// <summary>
-	/// <c>Sim_RaycastShapes</c> (<c>00020b70</c>)(<paramref name="clearance"/>, <paramref name="to"/>,
-	/// <paramref name="from"/>, result): the ray from <paramref name="from"/> to <paramref name="to"/>
+	/// <c>Sim_RaycastShapes</c> (<c>00020b70</c>): the ray from <paramref name="from"/> to <paramref name="to"/>
 	/// (<see cref="Es1Ray.Between"/>) against every zone shape, and whether it struck one
 	/// (docs/es1/simulation/terrain.md#a-line-between-two-points--sim_raycastshapes-00020b70).
 	/// </summary>
+	/// <param name="clearance">The ray's clearance.</param>
+	/// <param name="to">The ray's end.</param>
+	/// <param name="from">The ray's start.</param>
+	/// <param name="hit">Receives the hit.</param>
 	public bool RaycastShapes(short clearance, Vec3i to, Vec3i from, out Es1RayHit hit) =>
 		RaycastShapeObjects(Es1Ray.Between(clearance, to, from), out hit);
 }
@@ -132,13 +135,17 @@ public static class Es1ShapeTests {
 	}
 
 	/// <summary>
-	/// <c>Sim_RaycastShapeList</c> (<c>000037e0</c>)(<paramref name="side"/>, <paramref name="ray"/>, result): the
+	/// <c>Sim_RaycastShapeList</c> (<c>000037e0</c>): the
 	/// structures, oldest first, that are a wreck (<see cref="Es1Base.IsWreck"/>) or whose type has no collision model,
 	/// with a side of 0 or more only those whose group's side byte, sign-extended, equals it; and
 	/// <see cref="RaycastShapeVolume"/>'s answer over them (docs/es1/simulation/terrain.md#the-structures-tests). Retail
 	/// reads the group unchecked; a structure with none matches no side here. The 40-entry array is not bounded, as in
 	/// <see cref="GatherWalkCandidates"/>.
 	/// </summary>
+	/// <param name="structures">The structures searched.</param>
+	/// <param name="side">The side whose structures count, or −1 for every side's.</param>
+	/// <param name="ray">The ray.</param>
+	/// <param name="hit">Receives the hit.</param>
 	public static bool RaycastShapeList(IReadOnlyList<Es1Base> structures, short side, Es1Ray ray, out Es1RayHit hit) {
 		var candidates = new List<Es1ShapeObject>();
 		foreach (var structure in structures) {

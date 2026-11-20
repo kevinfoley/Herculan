@@ -292,7 +292,7 @@ public sealed class Es1ShellScreens {
 	private const string ScriptFolder = "res32\\", IntroFolder = "intro\\";
 
 	/// <summary>
-	/// <c>Shell_OpenFirstScreen</c> (<c>0003ba47</c>)(<paramref name="exitCode"/>), the start-up's step 15
+	/// <c>Shell_OpenFirstScreen</c> (<c>0003ba47</c>), the start-up's step 15
 	/// (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47): the scripts set up
 	/// (<c>Ttm_Configure</c>(page 2, the full-screen context, <c>0x32</c>), <c>Ttm_AllocHandles</c>(2) on
 	/// <c>Shell_Timer</c>, the prefix <c>res32\</c> and <c>TtmLists_Load</c>), then by the code: for 3 and 4, back from a
@@ -304,6 +304,7 @@ public sealed class Es1ShellScreens {
 	/// <c>intro\lead_in.ttm</c> unless the first was cut short, <c>intro\iintro.ttm</c> and <c>intro\earth_w.ttm</c>
 	/// (<see cref="PlayTtm"/>); the prefix goes back to <c>res32\</c> as the main menu's case begins.
 	/// </summary>
+	/// <param name="exitCode">The exit code the simulator left, which chooses the screen.</param>
 	/// <param name="playIntro"><c>Shell_PlayIntro</c>, which <c>-A</c> clears.</param>
 	/// <param name="data">The shared data the start-up loaded, which the menus draw with.</param>
 	/// <param name="mission">The mission the menus load, which their handlers reach through the menus' context.</param>
@@ -585,7 +586,7 @@ public sealed class Es1ShellScreens {
 	}
 
 	/// <summary>
-	/// <c>Shell_PlayTtm</c> (<c>0003b8df</c>)(<paramref name="name"/>) (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47):
+	/// <c>Shell_PlayTtm</c> (<c>0003b8df</c>) (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47):
 	/// the draw page and page 2 cleared to colour 0 with <c>VGA8_ClearPage</c>, the raster's slot 35 (<c>0008663c</c>,
 	/// docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps), a frame shown and the new draw page cleared; the
 	/// full-screen render context made the scripts' default; the script opened playing, not looping, on that default
@@ -596,6 +597,9 @@ public sealed class Es1ShellScreens {
 	/// <c>0007fcd0</c> cleared. A script that does not open counts as ended after one frame here (see
 	/// <see cref="Es1TtmManager.GetMode"/>), where retail reads the slot before the handle table.
 	/// </summary>
+	/// <param name="name">The script's name.</param>
+	/// <param name="presentFrame"><c>Shell_PresentFrame</c>, which shows each frame.</param>
+	/// <param name="pollDeviceBlock"><c>Input_PollDeviceBlock</c>, which the input is read from.</param>
 	private IEnumerable<Es1ShellWait> PlayTtm(string name, Func<IEnumerable<Es1ShellWait>> presentFrame,
 			Func<Es1LiveBlock> pollDeviceBlock) {
 		var display = _devices.Display;
@@ -834,11 +838,12 @@ public sealed class Es1ShellScreens {
 		MissionMap is { } map ? Es1ShellMapPaint.Paint(map, _devices.Display) : [];
 
 	/// <summary>
-	/// <c>RenderContext_GetFullScreenAround</c> (<c>0004c53c</c>)(<paramref name="rect"/>): the context <c>00083bc4</c> set to
+	/// <c>RenderContext_GetFullScreenAround</c> (<c>0004c53c</c>): the context <c>00083bc4</c> set to
 	/// clip mode 2 with the four regions at <c>000a0a9c</c>, the screen above the rect, left of it, right of it and below
 	/// it, so a script drawn through it stays off the window (docs/es1/shell/menus.md#drawing-a-screen), and returned
 	/// (<see cref="FullScreenContext"/>).
 	/// </summary>
+	/// <param name="rect">The window's rectangle, which the context stays off.</param>
 	private Func<Es1PanelCanvas> GetFullScreenAround(Es1Rect rect) {
 		_screenRegions = Es1ClipBlock.FromRects(
 			(0, 0, FullScreen.X1, rect.Y0 - 1),
@@ -899,7 +904,7 @@ public sealed class Es1ShellScreens {
 	];
 
 	/// <summary>
-	/// <c>Shell_HandleMessage</c> (<c>0003c7d8</c>)(<paramref name="message"/>), the frame loop's step 4
+	/// <c>Shell_HandleMessage</c> (<c>0003c7d8</c>), the frame loop's step 4
 	/// (docs/es1/shell/menus.md#changing-screens--shell_handlemessage-0003c7d8): the pending message reset; nothing more
 	/// for the code −1; the current menu's handler given the message, which it may change; a <i>back</i> target resolved;
 	/// nothing more for a target not in <c>Shell_ScreenIds</c>; otherwise the current menu closed and destroyed, the
@@ -907,6 +912,8 @@ public sealed class Es1ShellScreens {
 	/// when the old one was 1000, <paramref name="presentFrame"/>), the target's case, the new menu opened, the screens
 	/// moved on and the screen drawn. The answer is <see cref="MessageChangedScreen"/>.
 	/// </summary>
+	/// <param name="message">The message handled.</param>
+	/// <param name="presentFrame"><c>Shell_PresentFrame</c>, which shows the frame after the old backdrop 1000.</param>
 	/// <param name="pollDeviceBlock"><c>Input_PollDeviceBlock</c>, which the scripts read the key or button that cuts them short from.</param>
 	public IEnumerable<Es1ShellWait> HandleMessage(Es1MenuMessage message, Func<IEnumerable<Es1ShellWait>> presentFrame,
 			Func<Es1LiveBlock> pollDeviceBlock) {

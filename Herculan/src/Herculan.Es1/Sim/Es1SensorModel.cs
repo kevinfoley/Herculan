@@ -143,13 +143,16 @@ public static class Es1SensorModel {
 	}
 
 	/// <summary>
-	/// <c>Detection_Sweep</c> (<c>0000e85c</c>)(<paramref name="machine"/>), over every object neither immobilized nor
+	/// <c>Detection_Sweep</c> (<c>0000e85c</c>), over every object neither immobilized nor
 	/// destroyed whose group's action is clear and whose side is 1 (docs/es1/simulation/sensor-model.md#looking-around--detection_sweep-0000e85c):
 	/// the radar's paint within <see cref="RadarRange"/> when either emits and the two are not both radar-visible; then
 	/// within <see cref="ContactScanRange"/>, unless each knows of the other, each one's look through its sensor arc on the
 	/// bearing between them, the machine's turret twist added and the other's half a turn, or with each knowing of the
 	/// other, the engagement within <see cref="EngagementRange"/>.
 	/// </summary>
+	/// <param name="machine">The machine sweeping.</param>
+	/// <param name="globals">The simulation's globals.</param>
+	/// <param name="playerMech">The player's machine.</param>
 	public static void Sweep(IEs1SimObject machine, Es1SimGlobals globals, Es1Mech playerMech) {
 		int scanRange = ContactScanRange(globals);
 		foreach (var other in globals.LiveObjects) {
@@ -196,11 +199,14 @@ public static class Es1SensorModel {
 	}
 
 	/// <summary>
-	/// <c>Detection_LineOfSight</c> (<c>0000e55c</c>)(<paramref name="machine"/>, <paramref name="other"/>): when the
+	/// <c>Detection_LineOfSight</c> (<c>0000e55c</c>): when the
 	/// <i>other's</i> line-of-sight counter is 0, the <i>machine's</i> reloaded with 5000 + a draw below 1000 and the
 	/// machine's cache byte for the other set to whether <c>Sim_RaycastShapes</c>(0, the other's position, the machine's)
 	/// strikes no zone shape; then the cached byte (docs/es1/simulation/sensor-model.md#line-of-sight--detection_lineofsight-0000e55c).
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="other">The other object.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static bool LineOfSight(IEs1SimObject machine, IEs1SimObject other, Es1SimGlobals globals) {
 		if (other.Sensors.LineOfSightCountdown == 0) {
 			machine.Sensors.LineOfSightCountdown = (short)(LineOfSightReload + globals.Random.NextBelow(ReloadJitter));
@@ -212,12 +218,15 @@ public static class Es1SensorModel {
 	}
 
 	/// <summary>
-	/// <c>Detection_ShareContact</c> (<c>0000e618</c>)(<paramref name="spotter"/>, <paramref name="contact"/>): when the two
+	/// <c>Detection_ShareContact</c> (<c>0000e618</c>): when the two
 	/// are on different sides, each object whose group's action is clear on the spotter's side, the spotter included, within
 	/// <see cref="ShareRange"/> of the contact takes it as a contact, and within <see cref="EngagementRange"/> engages the
 	/// contact and runs its own engagement action (docs/es1/simulation/sensor-model.md#passing-a-contact-on--detection_sharecontact-0000e618).
 	/// <c>Mech_ShareContact</c> (<c>0000d760</c>), the base's slot <c>+0x54</c>, calls it for a hit object with the shooter.
 	/// </summary>
+	/// <param name="spotter">The object that spotted the contact.</param>
+	/// <param name="contact">The contact.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void ShareContact(IEs1SimObject spotter, IEs1SimObject contact, Es1SimGlobals globals) {
 		byte side = spotter.Group!.Side;
 		if (side == contact.Group!.Side) {
@@ -241,11 +250,13 @@ public static class Es1SensorModel {
 	}
 
 	/// <summary>
-	/// <c>Detection_DecayContacts</c> (<c>0000e41c</c>)(<paramref name="simObject"/>): its <c>+0x8f</c> cleared, then each
+	/// <c>Detection_DecayContacts</c> (<c>0000e41c</c>): its <c>+0x8f</c> cleared, then each
 	/// object whose group's action is clear, on another side, that it holds as a contact, dropped from both objects'
 	/// contacts unless it lies within <see cref="DecayRange"/> on the ground plane and the line of sight to it is clear
 	/// (docs/es1/simulation/sensor-model.md#decay--detection_decaycontacts-0000e41c).
 	/// </summary>
+	/// <param name="simObject">The object whose contacts decay.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void DecayContacts(IEs1SimObject simObject, Es1SimGlobals globals) {
 		simObject.RadarVisible = false;
 		byte side = simObject.Group!.Side;
@@ -266,7 +277,7 @@ public static class Es1SensorModel {
 	}
 
 	/// <summary>
-	/// <c>Mech_AiEnemySighted</c> (<c>0000e760</c>)(<paramref name="machine"/>, <paramref name="sighted"/>), the HERC's slot
+	/// <c>Mech_AiEnemySighted</c> (<c>0000e760</c>), the HERC's slot
 	/// <c>+0x4c</c> (docs/es1/simulation/sensor-model.md#the-enemy-sighted-callout--mech_aienemysighted-0000e760): the byte
 	/// <c>000af264</c> set; for the player's machine the sighted object's latch set; for another machine the rate limit
 	/// ticked, then, when the sighted object's class is not 1, the machine is in <c>PlayerMech</c>'s group, the latch is
@@ -274,6 +285,10 @@ public static class Es1SensorModel {
 	/// with the rate limit run out, message <see cref="EnemySightedMessage"/> posted on the pilot channel
 	/// (<see cref="Messages.Es1PilotChannel.PostSquadMessage"/>, not forced) and the limit reloaded with 10000.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="sighted">The object sighted.</param>
+	/// <param name="globals">The simulation's globals.</param>
+	/// <param name="playerMech">The player's machine.</param>
 	public static void MechAiEnemySighted(Es1Mech machine, IEs1SimObject sighted, Es1SimGlobals globals, Es1Mech playerMech) {
 		var callout = globals.Sensors;
 		callout.Sighted = true;
@@ -315,10 +330,11 @@ public static class Es1SensorModel {
 	public const int KnownRange = 1000000;
 
 	/// <summary>
-	/// <c>Ai_KnowsObject</c> (<c>0000d808</c>)(<paramref name="machine"/>, <paramref name="simObject"/>)
-	/// (docs/es1/simulation/sim-object-base.md#what-an-ai-machine-knows-and-may-target): the object radar-visible within
+	/// <c>Ai_KnowsObject</c> (<c>0000d808</c>) (docs/es1/simulation/sim-object-base.md#what-an-ai-machine-knows-and-may-target): the object radar-visible within
 	/// <see cref="KnownRange"/> of the machine, or the machine's contact byte for the object's slot set.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="simObject">The object asked about.</param>
 	public static bool KnowsObject(IEs1SimObject machine, IEs1SimObject simObject) =>
 		simObject.RadarVisible && simObject.Position.ApproxDistanceTo(machine.Position) < KnownRange
 		|| Es1SensorTables.Get(machine.Sensors.Contacts, simObject.ListSlot);

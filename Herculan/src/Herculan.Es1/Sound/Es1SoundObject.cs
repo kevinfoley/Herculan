@@ -332,10 +332,12 @@ public sealed class Es1DigiSound : Es1SoundObject {
 	}
 
 	/// <summary>
-	/// Slot <c>+0x28</c>, <c>DigiSound_SetRepeats</c> (<c>00050cbc</c>)(<paramref name="start"/>, <paramref name="end"/>,
-	/// <paramref name="count"/>): while it plays, the count to <see cref="Es1SoundObject.PlayingRepeatCount"/> and to the
+	/// Slot <c>+0x28</c>, <c>DigiSound_SetRepeats</c> (<c>00050cbc</c>): while it plays, the count to <see cref="Es1SoundObject.PlayingRepeatCount"/> and to the
 	/// voice's repeats; else to both counts, with the range.
 	/// </summary>
+	/// <param name="start">The first position repeated.</param>
+	/// <param name="end">The last position repeated.</param>
+	/// <param name="count">The repeat count.</param>
 	public override void SetRepeats(int start, int end, short count) {
 		PlayingRepeatCount = count;
 		if (IsPlaying()) {

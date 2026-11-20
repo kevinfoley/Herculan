@@ -113,9 +113,10 @@ public sealed class Es1RepairCosts {
 	public short WeaponValue(short weapon) => weapon >= 0 && weapon < _weapons.Length ? _weapons[weapon] : (short)0;
 
 	/// <summary>
-	/// <c>Repair_LevelForCondition</c> (<c>000389fb</c>)(<paramref name="condition"/>): the first of the five
+	/// <c>Repair_LevelForCondition</c> (<c>000389fb</c>): the first of the five
 	/// <see cref="RepairLevels"/> at or below the condition, or 0 when none is.
 	/// </summary>
+	/// <param name="condition">The condition, 0 to 100.</param>
 	public static short LevelForCondition(short condition) {
 		for (short level = 0; level < RepairLevels.Length; level++) {
 			if (RepairLevels[level] <= condition) {
@@ -127,11 +128,11 @@ public sealed class Es1RepairCosts {
 	}
 
 	/// <summary>
-	/// <c>Repair_TargetForLevel</c> (<c>00038a30</c>)(<paramref name="level"/>)
-	/// (docs/es1/shell/repair-and-build.md#system-repair--screen-1920): 100, <see cref="RepairTargets"/>[0], for level 0,
+	/// <c>Repair_TargetForLevel</c> (<c>00038a30</c>) (docs/es1/shell/repair-and-build.md#system-repair--screen-1920): 100, <see cref="RepairTargets"/>[0], for level 0,
 	/// and <see cref="RepairTargets"/>[level] + 1, the floor of the level above, as a 16-bit add for any other. Retail
 	/// indexes with no bounds test; a level outside the six words gives 0 here, an engine guard.
 	/// </summary>
+	/// <param name="level">The repair level.</param>
 	public static short TargetForLevel(short level) {
 		if (level is < 0 or >= 6) {
 			return 0;
@@ -141,10 +142,11 @@ public sealed class Es1RepairCosts {
 	}
 
 	/// <summary>
-	/// <c>Repair_FloorForLevel</c> (<c>00038a5c</c>)(<paramref name="level"/>): <see cref="RepairLevels"/>[level], the
+	/// <c>Repair_FloorForLevel</c> (<c>00038a5c</c>): <see cref="RepairLevels"/>[level], the
 	/// level's own floor, level 5 reading <see cref="WordPastLevels"/>. Retail indexes with no bounds test; any other level
 	/// outside the table gives 0 here, an engine guard.
 	/// </summary>
+	/// <param name="level">The repair level.</param>
 	public static short FloorForLevel(int level) => level switch {
 		>= 0 and < 5 => RepairLevels[level],
 		5 => WordPastLevels,
@@ -152,8 +154,7 @@ public sealed class Es1RepairCosts {
 	};
 
 	/// <summary>
-	/// <c>Repair_LevelStepCost</c> (<c>00038a72</c>)(<paramref name="up"/>, <paramref name="condition"/>,
-	/// <paramref name="value"/>) (docs/es1/shell/repair-and-build.md#system-repair--screen-1920), with <i>L</i>
+	/// <c>Repair_LevelStepCost</c> (<c>00038a72</c>) (docs/es1/shell/repair-and-build.md#system-repair--screen-1920), with <i>L</i>
 	/// <see cref="LevelForCondition"/>(condition): 0 for <i>L</i> below 0 or above 4; up, (100 − condition) × value / 100 at
 	/// level 0 and (<see cref="FloorForLevel"/>(<i>L</i> − 1) − condition) × value / 100 at any other; down, (100 −
 	/// <see cref="FloorForLevel"/>(<i>L</i>)) × value / 100 for a condition of 100 and (condition −
@@ -161,6 +162,9 @@ public sealed class Es1RepairCosts {
 	/// truncates toward zero. ES1's port of the function ES2's shell ports in its own repair costs, as
 	/// docs/herculan/planning.md#how-the-two-games-share-code has each game's shell ported apart.
 	/// </summary>
+	/// <param name="up">Whether the step is up a level, otherwise down.</param>
+	/// <param name="condition">The condition, 0 to 100.</param>
+	/// <param name="value">The item's value.</param>
 	public static int LevelStepCost(bool up, short condition, short value) {
 		short level = LevelForCondition(condition);
 		if (level is < 0 or > 4) {
@@ -177,13 +181,16 @@ public sealed class Es1RepairCosts {
 	}
 
 	/// <summary>
-	/// <c>Repair_UnitValueCost</c> (<c>00038bb9</c>)(<paramref name="up"/>, <paramref name="condition"/>,
-	/// <paramref name="index"/>, <paramref name="kind"/>, <paramref name="chassis"/>)
-	/// (docs/es1/shell/repair-and-build.md#system-repair--screen-1920): <see cref="LevelStepCost"/> priced with the
+	/// <c>Repair_UnitValueCost</c> (<c>00038bb9</c>) (docs/es1/shell/repair-and-build.md#system-repair--screen-1920): <see cref="LevelStepCost"/> priced with the
 	/// chassis row's internal word <paramref name="index"/> for <c>0x784</c>, its word <paramref name="index"/> for
 	/// <c>0x785</c>, and <see cref="WeaponValue"/>(<paramref name="index"/>) for <c>0x786</c>, so a weapon is priced by its
 	/// mount's number, not by the weapon it carries; any other kind answers the kind.
 	/// </summary>
+	/// <param name="up">Whether the step is up a level, otherwise down.</param>
+	/// <param name="condition">The condition, 0 to 100.</param>
+	/// <param name="index">The unit's index, which is also the mount number for a weapon.</param>
+	/// <param name="kind">The kind of unit, <c>0x784</c>, <c>0x785</c> or <c>0x786</c>.</param>
+	/// <param name="chassis">The chassis row.</param>
 	public int UnitValueCost(bool up, short condition, short index, short kind, short chassis) => kind switch {
 		InternalKind => LevelStepCost(up, condition, Row(chassis, Es1HercRecord.FirstInternalWord + index)),
 		ExternalKind => LevelStepCost(up, condition, Row(chassis, index)),
@@ -192,19 +199,24 @@ public sealed class Es1RepairCosts {
 	};
 
 	/// <summary>
-	/// <c>Repair_ItemCost</c> (<c>00038b64</c>)(<paramref name="target"/>, <paramref name="condition"/>, <paramref name="value"/>):
+	/// <c>Repair_ItemCost</c> (<c>00038b64</c>):
 	/// 0 when the condition is at or above the target, otherwise (<see cref="RepairTargets"/>[<see cref="LevelForCondition"/>(target)]
 	/// − the condition) × the value / 100, truncated. Its callers pass a level's target, so the first factor is the target.
 	/// </summary>
+	/// <param name="target">The condition repaired to.</param>
+	/// <param name="condition">The condition, 0 to 100.</param>
+	/// <param name="value">The item's value.</param>
 	public static int ItemCost(short target, short condition, short value) =>
 		target <= condition ? 0 : (RepairTargets[LevelForCondition(target)] - condition) * value / 100;
 
 	/// <summary>
-	/// <c>Repair_HercCost</c> (<c>00038c50</c>)(<paramref name="target"/>, <paramref name="herc"/>): the sum of
+	/// <c>Repair_HercCost</c> (<c>00038c50</c>): the sum of
 	/// <see cref="ItemCost"/> over the six external areas' averages (<see cref="Es1HercRecord.ExternalAverage"/>) with the
 	/// row's first six words, internal words 0 to 8 with the row's words from 13, and each mount below the mount count whose
 	/// weapon is not <see cref="EmptyMount"/> and whose per-mount word is not 0 with the weapon's value.
 	/// </summary>
+	/// <param name="target">The condition repaired to.</param>
+	/// <param name="herc">The HERC.</param>
 	public int HercCost(short target, Es1HercRecord herc) {
 		int sum = 0;
 		for (int area = 0; area < ExternalAreas; area++) {

@@ -126,10 +126,11 @@ public sealed class Es1ShellSound {
 	}
 
 	/// <summary>
-	/// <c>ShellSound_PlayClick</c> (<c>0004dde4</c>)(<paramref name="row"/>): for <see cref="ClickRow"/>, with
+	/// <c>ShellSound_PlayClick</c> (<c>0004dde4</c>): for <see cref="ClickRow"/>, with
 	/// <see cref="ButtonSound"/> set, the click played through its slot <c>+0x10</c>, with no stop first; nothing for any
 	/// other row.
 	/// </summary>
+	/// <param name="row">The row of the click.</param>
 	public void PlayClick(short row) {
 		if (row == ClickRow) {
 			ButtonSound?.Play();
@@ -137,7 +138,7 @@ public sealed class Es1ShellSound {
 	}
 
 	/// <summary>
-	/// <c>ShellMusic_Play</c> (<c>00020a70</c>)(<paramref name="track"/>): nothing with no manager; otherwise
+	/// <c>ShellMusic_Play</c> (<c>00020a70</c>): nothing with no manager; otherwise
 	/// <see cref="StopMusic"/>, then <see cref="MusicObject"/> made with <see cref="Es1SoundManager.CreateObject"/>(2, 0,
 	/// track), loaded, its slot <c>+0x28</c> called with (−1, −1, <c>0xffff</c>), the endless repeat, and played through
 	/// slot <c>+0x10</c> while <see cref="MusicOption"/> is set. The object is made and loaded with the option off, so
@@ -145,6 +146,7 @@ public sealed class Es1ShellSound {
 	/// engine guard where retail calls through a null object.
 	/// <para>With <see cref="SkipPause"/> nothing is waited for: <see cref="PlayMusicAfterFade"/>.</para>
 	/// </summary>
+	/// <param name="track">The track number.</param>
 	public IEnumerable<Es1ShellWait> PlayMusic(short track) {
 		if (Manager is not { } manager) {
 			yield break;
@@ -320,12 +322,13 @@ public sealed class Es1ShellSound {
 	}
 
 	/// <summary>
-	/// <c>ShellMusic_FadeOut</c> (<c>000209e0</c>)(<paramref name="sound"/>): for each value from the low byte of
+	/// <c>ShellMusic_FadeOut</c> (<c>000209e0</c>): for each value from the low byte of
 	/// <c>SoundObject_GetVolume</c>, signed, down to 1, the object's slot <c>+0x2c</c> with the value, then
 	/// <c>Shell_WaitTicks</c>(1): a volume of 100 fades over 100 ticks.
 	/// <para>With <see cref="SkipPause"/> the same steps run in the background (<see cref="StepBackgroundFade"/>) and
 	/// nothing is waited for.</para>
 	/// </summary>
+	/// <param name="sound">The sound object faded.</param>
 	public IEnumerable<Es1ShellWait> FadeOut(Es1SoundObject sound) {
 		if (SkipPause) {
 			BeginBackgroundFade(sound, stopAfter: false);

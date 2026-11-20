@@ -106,26 +106,31 @@ public sealed class Es1Cockpit {
 	private static readonly short[] SquadSlotColors = [56, 59, 49, 0];
 
 	/// <summary>
-	/// <c>Squad_IndexOf</c> (<c>0002d5dc</c>)(<paramref name="subject"/>): the slot 0 to 2 of the subject in
+	/// <c>Squad_IndexOf</c> (<c>0002d5dc</c>): the slot 0 to 2 of the subject in
 	/// <see cref="SquadmateMachines"/>, or −1 for none or a null subject.
 	/// </summary>
+	/// <param name="subject">The object looked for, or null.</param>
 	public int SquadIndexOf(IEs1SimObject? subject) =>
 		subject == null ? -1 : Array.FindIndex(SquadmateMachines, machine => ReferenceEquals(machine, subject));
 
 	/// <summary>
-	/// <c>Squad_PilotName</c> (<c>0002e2f4</c>)(<paramref name="slot"/>): <c>HddGauge_Name</c> (<c>0003e830</c>), the name
+	/// <c>Squad_PilotName</c> (<c>0002e2f4</c>): <c>HddGauge_Name</c> (<c>0003e830</c>), the name
 	/// <see cref="Es1HddCommBox.Name"/> of comm box <paramref name="slot"/> of <see cref="Es1SimGlobals.HddDisplayInstance"/>;
 	/// none before a display is built or for a box with no pilot.
 	/// </summary>
+	/// <param name="slot">The squadmate slot, 0 to 2.</param>
 	public string? SquadPilotName(int slot) => Globals.HddDisplayInstance?.CommBoxes[slot].Name;
 
-	/// <summary><c>HudColorTable_Get</c> (<c>0002e2e4</c>)(<paramref name="slot"/>): entry <paramref name="slot"/> of <c>SquadSlotColors</c>, a squadmate slot's color.</summary>
+	/// <summary><c>HudColorTable_Get</c> (<c>0002e2e4</c>): entry <paramref name="slot"/> of <c>SquadSlotColors</c>, a squadmate slot's color.</summary>
+	/// <param name="slot">The squadmate slot, 0 to 2.</param>
 	public static int SquadSlotColor(int slot) => SquadSlotColors[slot];
 
-	/// <summary><c>Pilot_PortraitOf</c> (<c>0002e2b4</c>)(<paramref name="pilot"/>): the pilot's portrait number, <paramref name="pilot"/> / 3, truncating.</summary>
+	/// <summary><c>Pilot_PortraitOf</c> (<c>0002e2b4</c>): the pilot's portrait number, <paramref name="pilot"/> / 3, truncating.</summary>
+	/// <param name="pilot">The pilot's number.</param>
 	public static int PilotPortraitOf(int pilot) => pilot / 3;
 
-	/// <summary><c>Pilot_VoiceBankOf</c> (<c>0002e2c4</c>)(<paramref name="portrait"/>): the voice bank, <paramref name="portrait"/> / 4 + 1, truncating, with 3 made 4.</summary>
+	/// <summary><c>Pilot_VoiceBankOf</c> (<c>0002e2c4</c>): the voice bank, <paramref name="portrait"/> / 4 + 1, truncating, with 3 made 4.</summary>
+	/// <param name="portrait">The portrait number.</param>
 	public static int PilotVoiceBankOf(int portrait) {
 		int bank = portrait / 4 + 1;
 		return bank == 3 ? 4 : bank;
@@ -301,12 +306,12 @@ public sealed class Es1Cockpit {
 	internal bool MouseDoubleClick => _mouse.DoubleClick;
 
 	/// <summary>
-	/// <c>Player_DependentCondition</c> (<c>0002e334</c>)(<paramref name="entry"/>)
-	/// (docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers): <see cref="Es1PaperDoll.ToConditionState"/> of
+	/// <c>Player_DependentCondition</c> (<c>0002e334</c>) (docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers): <see cref="Es1PaperDoll.ToConditionState"/> of
 	/// the damage <c>Mech_ReadEntryDamage</c> (<c>00015868</c>)(the machine, entry, 0) reads (<see cref="Es1Mech.ReadEntryDamage"/>),
 	/// the condition an instrument's feed is in. With no machine, where retail reads through a null pointer, intact, an
 	/// engine guard.
 	/// </summary>
+	/// <param name="entry">The damage entry the instrument reads.</param>
 	internal short DependentCondition(int entry) => Es1PaperDoll.ToConditionState(Machine?.ReadEntryDamage(entry, 0) ?? 0);
 
 	/// <summary>
@@ -460,10 +465,11 @@ public sealed class Es1Cockpit {
 	internal Es1PanelCanvas PushCanvasContext() => new(_views.Display, CanvasRect, CanvasOrigin);
 
 	/// <summary>
-	/// <c>CockpitView_RectCornerVisible</c> (<c>0002b214</c>)(<paramref name="rect"/>): false while the widgets are off;
+	/// <c>CockpitView_RectCornerVisible</c> (<c>0002b214</c>): false while the widgets are off;
 	/// otherwise whether the corner (<i>x0</i>, <i>y0</i>) or (<i>x1</i>, <i>y1</i>) lies in the box whose corner is the
 	/// canvas context's rect corner plus its origin, columns 0 to 319 and rows 0 to 200 from it, both bounds included.
 	/// </summary>
+	/// <param name="rect">The rectangle tested.</param>
 	public bool RectCornerVisible(Es1Rect rect) {
 		if (WidgetsOff) {
 			return false;

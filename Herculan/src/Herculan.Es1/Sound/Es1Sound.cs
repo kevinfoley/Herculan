@@ -153,14 +153,18 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_Init</c> (<c>0004db14</c>)(<paramref name="devices"/>) (docs/es1/formats/sound-samples.md#the-driver):
+	/// <c>Sound_Init</c> (<c>0004db14</c>) (docs/es1/formats/sound-samples.md#the-driver):
 	/// the voice lines' slots (<see cref="Es1VoiceLines.InitSlots"/>); then, with a digital device not 0, the manager over
 	/// <paramref name="backend"/>, the six values stored, <see cref="Es1SoundManager.LoadDrivers"/>, whose answer is not
 	/// read, the memory limit with loading kept from unloading other sounds (<see cref="LowMemoryLimit"/> with it allowed
 	/// in the low-memory mode), the hearing distance, and <see cref="LoadCatalog"/>; and either way the listener's
 	/// countdown <see cref="ListenerFrames"/>.
 	/// </summary>
+	/// <param name="devices">The sound devices chosen.</param>
+	/// <param name="lowMemory">Whether the low-memory mode is on.</param>
+	/// <param name="voiceLines">The voice lines' slots.</param>
 	/// <param name="read">The volumes' reader, (folder, file name) to a file's bytes, which the manager and the catalog read through.</param>
+	/// <param name="backend">The audio backend the manager plays through.</param>
 	/// <param name="timer">The simulator's PC timer, which the manager's drivers put the songs' tick on.</param>
 	/// <param name="fmChip">The chip the FM driver writes to; none makes one (<see cref="Midi.Es1MidiDrivers.FmChip"/>).</param>
 	public void Init(Es1SoundDevices devices, bool lowMemory, Es1VoiceLines voiceLines, Func<string, string, byte[]?> read,
@@ -224,10 +228,11 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_Play</c> (<c>0004de84</c>)(<paramref name="row"/>): with a manager, the row's object played through its
+	/// <c>Sound_Play</c> (<c>0004de84</c>): with a manager, the row's object played through its
 	/// slot <c>+0x10</c> while its kind's switch is on (<see cref="Es1SoundObject.IsCategoryEnabled"/>). A row with no
 	/// object does nothing, an engine guard.
 	/// </summary>
+	/// <param name="row">The catalog row played.</param>
 	public void Play(int row) {
 		if (Manager != null && Catalog(row) is { } sound && sound.IsCategoryEnabled(MusicEnabled != 0, EffectsEnabled != 0)) {
 			sound.Play();
@@ -235,11 +240,12 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_PlayAt</c> (<c>0004deb8</c>)(<paramref name="point"/>, <paramref name="row"/>)
-	/// (docs/es1/formats/sound-samples.md#placed-sounds): with a manager, the row's object placed at the point
+	/// <c>Sound_PlayAt</c> (<c>0004deb8</c>) (docs/es1/formats/sound-samples.md#placed-sounds): with a manager, the row's object placed at the point
 	/// (<see cref="Es1SoundObject.SetPosition"/>), then <see cref="Play"/>. A row with no object does nothing, an engine
 	/// guard.
 	/// </summary>
+	/// <param name="point">The point the sound is placed at.</param>
+	/// <param name="row">The catalog row played.</param>
 	public void PlayAt(Vec3i point, int row) {
 		if (Manager != null && Catalog(row) is { } sound) {
 			sound.SetPosition(point);
@@ -248,8 +254,7 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_OfferPosition</c> (<c>0004dee4</c>)(<paramref name="point"/>, <paramref name="row"/>)
-	/// (docs/es1/formats/sound-samples.md#placed-sounds): with a manager, the point's
+	/// <c>Sound_OfferPosition</c> (<c>0004dee4</c>) (docs/es1/formats/sound-samples.md#placed-sounds): with a manager, the point's
 	/// distance from <see cref="Listener"/> (<c>Math_FastMagnitude3D</c>) and the point kept for the row while its kept
 	/// distance is 0, which <see cref="UpdateListener"/> places the row's object at. Retail's test of a kept distance
 	/// compares the dword with itself (<c>0004df4d</c>), where the new distance belongs, so the first point offered in a
@@ -258,6 +263,8 @@ public sealed class Es1Sound {
 	/// <para>Engine guards: a row past the catalog's object array is not kept, and with no listener yet, where retail
 	/// reads the position through a null pointer, the distance is taken from (0, 0, 0).</para>
 	/// </summary>
+	/// <param name="point">The point offered.</param>
+	/// <param name="row">The catalog row the point is for.</param>
 	public void OfferPosition(Vec3i point, int row) {
 		if (Manager == null || (uint)row >= CatalogCapacity) {
 			return;
@@ -273,14 +280,14 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_UpdateListener</c> (<c>0004df98</c>)(<paramref name="camera"/>)
-	/// (docs/es1/formats/sound-samples.md#placed-sounds): the camera kept as
+	/// <c>Sound_UpdateListener</c> (<c>0004df98</c>) (docs/es1/formats/sound-samples.md#placed-sounds): the camera kept as
 	/// <see cref="Listener"/>; then, with a manager, each catalog row with a point offered placed there and its distance
 	/// cleared, and on every <see cref="ListenerFrames"/>th call the manager's listener given the rotation of (0, 0, 0)
 	/// (<c>BuildEulerRotationMatrixQ14</c>) at the camera's position (<see cref="Es1SoundManager.UpdateListener"/>). A row
 	/// with no object is passed over with its distance cleared, an engine guard. With <see cref="Stereo"/>, the tweak's
 	/// listener is first given the camera's position and view (<see cref="Es1SoundManager.UpdateStereoListener"/>).
 	/// </summary>
+	/// <param name="camera">The camera the listener follows.</param>
 	public void UpdateListener(Es1Camera camera) {
 		Listener = camera;
 		if (Manager == null) {
@@ -309,9 +316,10 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_Stop</c> (<c>0004df70</c>)(<paramref name="row"/>): with a manager, the row's object stopped through its
+	/// <c>Sound_Stop</c> (<c>0004df70</c>): with a manager, the row's object stopped through its
 	/// slot <c>+0x14</c>. A row with no object does nothing, an engine guard.
 	/// </summary>
+	/// <param name="row">The sound catalog's row.</param>
 	public void Stop(int row) {
 		if (Manager != null) {
 			Catalog(row)?.Stop();
@@ -319,15 +327,17 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_IsPlaying</c> (<c>0004e05c</c>)(<paramref name="row"/>): false with no manager, else the row's object's
+	/// <c>Sound_IsPlaying</c> (<c>0004e05c</c>): false with no manager, else the row's object's
 	/// slot <c>+0x30</c>. A row with no object answers false, an engine guard.
 	/// </summary>
+	/// <param name="row">The sound catalog's row.</param>
 	public bool IsPlaying(int row) => Manager != null && Catalog(row)?.IsPlaying() == true;
 
 	/// <summary>
-	/// <c>Sound_Preload</c> (<c>0004dde0</c>)(<paramref name="row"/>): false with no manager, else
+	/// <c>Sound_Preload</c> (<c>0004dde0</c>): false with no manager, else
 	/// <see cref="Es1SoundObject.LoadSample"/> on the row's object. A row with no object answers false, an engine guard.
 	/// </summary>
+	/// <param name="row">The sound catalog's row.</param>
 	public bool Preload(int row) => Manager != null && Catalog(row)?.LoadSample() == true;
 
 	/// <summary>
@@ -349,10 +359,10 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_SetMusicEnabled</c> (<c>0004e294</c>)(<paramref name="on"/>)
-	/// (docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off): when <paramref name="on"/> is 0 and differs from
+	/// <c>Sound_SetMusicEnabled</c> (<c>0004e294</c>) (docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off): when <paramref name="on"/> is 0 and differs from
 	/// <see cref="MusicEnabled"/>, with a manager, <see cref="StopSongs"/>; then stored.
 	/// </summary>
+	/// <param name="on">0 to turn music off, otherwise on.</param>
 	public void SetMusicEnabled(byte on) {
 		if (on != MusicEnabled && on == 0 && Manager != null) {
 			StopSongs();
@@ -362,9 +372,10 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_SetEffectsEnabled</c> (<c>0004e2c8</c>)(<paramref name="on"/>): <see cref="SetMusicEnabled"/> over
+	/// <c>Sound_SetEffectsEnabled</c> (<c>0004e2c8</c>): <see cref="SetMusicEnabled"/> over
 	/// <see cref="EffectsEnabled"/> with <see cref="StopDigitalSounds"/>.
 	/// </summary>
+	/// <param name="on">0 to turn effects off, otherwise on.</param>
 	public void SetEffectsEnabled(byte on) {
 		if (on != EffectsEnabled && on == 0 && Manager != null) {
 			StopDigitalSounds();

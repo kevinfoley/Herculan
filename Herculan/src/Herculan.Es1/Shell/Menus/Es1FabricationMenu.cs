@@ -236,8 +236,7 @@ public sealed class Es1FabricationMenu : Es1Menu {
 	public static Es1HotspotHandler PanelHandler(Es1MenuContext context) => (render, rect, id) => DrawPanel(context, render, rect);
 
 	/// <summary>
-	/// <c>FabricationMenu_DrawPanel</c> (<c>0002845c</c>)(<paramref name="rect"/>, id)
-	/// (docs/es1/shell/repair-and-build.md#build--screen-2000), in the window's render context, the alignment 0: the rect
+	/// <c>FabricationMenu_DrawPanel</c> (<c>0002845c</c>) (docs/es1/shell/repair-and-build.md#build--screen-2000), in the window's render context, the alignment 0: the rect
 	/// filled and framed in <see cref="PanelColor"/>; with a marked HERC (<see cref="Es1Hangar.HasMarkedHerc"/>),
 	/// <c>Fabrication_Chassis</c> (<see cref="Es1MenuGlobals.FabricationChassis"/>) set to the chassis of the HERC in
 	/// <c>Hangar_SelectedSlot</c>, −1 for none; frame <i>chassis</i> of <see cref="Es1MenuBanks.ChassisArt"/> at the
@@ -253,6 +252,9 @@ public sealed class Es1FabricationMenu : Es1Menu {
 	/// <c>Career_Salvage</c> / 1000, unsigned. The field width stays 102. Retail reads the art and the tables at a chassis
 	/// outside the eight unchecked; such a chassis draws no picture and reads 0 from each table here, engine guards.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="render">The render context drawn through.</param>
+	/// <param name="rect">The hotspot's rectangle.</param>
 	private static void DrawPanel(Es1MenuContext context, Es1ShellRenderContext render, Es1Rect rect) {
 		var globals = context.Globals;
 		var data = context.Data;

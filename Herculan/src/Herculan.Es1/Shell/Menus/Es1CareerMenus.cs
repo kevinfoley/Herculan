@@ -185,10 +185,11 @@ public sealed class Es1CareerMenu : Es1Menu {
 	}
 
 	/// <summary>
-	/// <c>Disk_HasFreeBytes</c> (<c>0002a9ad</c>)(<paramref name="bytes"/>): whether the drive the shell's files go to holds
+	/// <c>Disk_HasFreeBytes</c> (<c>0002a9ad</c>): whether the drive the shell's files go to holds
 	/// at least that many free bytes, retail's drive of <c>Path_ApplyAltDrive</c> or the current one. Here the drive is the
 	/// install's, where the career's files go; a drive that does not answer counts as having room, an engine guard.
 	/// </summary>
+	/// <param name="bytes">The number of free bytes required.</param>
 	private bool DiskHasFreeBytes(long bytes) {
 		try {
 			string root = Path.GetPathRoot(Path.GetFullPath(Context.Mission.InstallRoot)) ?? "";

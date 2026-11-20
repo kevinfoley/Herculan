@@ -221,7 +221,7 @@ public sealed class Es1BaseTypes {
 	}
 
 	/// <summary>
-	/// <c>BaseType_LoadShape</c> (<c>000045a4</c>)(<paramref name="side"/>, <paramref name="type"/>): with the type's
+	/// <c>BaseType_LoadShape</c> (<c>000045a4</c>): with the type's
 	/// <c>+0x06</c> 0 the static table, <c>BaseShapes_Static</c> (<c>000bc176</c>) for side 0 and
 	/// <c>BaseShapes_StaticEnemy</c> (<c>000bc17a</c>) for any other, of <c>dgs\bases</c> or <c>dgs\bases_e</c>; otherwise
 	/// <c>BaseShapes_Animated</c> (<c>000bc16c</c>) or <c>BaseShapes_AnimatedEnemy</c> (<c>000bc170</c>), of <c>dts\bases_an</c>
@@ -229,6 +229,8 @@ public sealed class Es1BaseTypes {
 	/// its <c>+0x26</c>; a filled one is left. A type outside the table, which retail reads past it, loads nothing here, an
 	/// engine guard; a chunk the set lacks, where retail asserts, leaves the entry empty.
 	/// </summary>
+	/// <param name="side">The side, 0 or the enemy's.</param>
+	/// <param name="type">The structure type.</param>
 	public void LoadShape(short side, short type) {
 		if (this[type] is not { } record) {
 			return;

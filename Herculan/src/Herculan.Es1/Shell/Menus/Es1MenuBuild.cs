@@ -363,7 +363,7 @@ public static class Es1MenuBuild {
 	}
 
 	/// <summary>
-	/// <c>Menu_ListLines</c> (<c>0003750d</c>)(<paramref name="id"/>): for 1002, the main menu's list,
+	/// <c>Menu_ListLines</c> (<c>0003750d</c>): for 1002, the main menu's list,
 	/// <c>CareerLog_CurrentNameArray</c> (<c>000182f8</c>) of the careers log (docs/es1/shell/main-menu.md#the-list); for
 	/// 1202, the career menu's list, <c>CareerLog_NameLines</c> (<see cref="Es1ShellData.CareerNameLines"/>); for 1223,
 	/// the backup list, <c>Roster_BackupListLines</c> (<see cref="Es1CareerRoster.BackupListLines"/>); for the
@@ -382,6 +382,8 @@ public static class Es1MenuBuild {
 	/// <see cref="NumberLine"/>(0, <c>0xbb</c>); for any id outside the 28 at <c>000812f4</c>, <see cref="LinesFromList"/> of the list at <c>000811a4</c>, which
 	/// numbers none.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="id">The list control's id.</param>
 	public static string?[] ListLines(Es1MenuContext context, short id) {
 		if (id == CareerNameList) {
 			return CurrentCareerName(context.Data.CareerLog);
@@ -442,11 +444,14 @@ public static class Es1MenuBuild {
 	}
 
 	/// <summary>
-	/// <c>Menu_NumberLines</c> (<c>000374af</c>)(<paramref name="value"/>, <paramref name="id"/>): <see cref="NumberLine"/>
+	/// <c>Menu_NumberLines</c> (<c>000374af</c>): <see cref="NumberLine"/>
 	/// of the value on the line the id gives among the four at <c>000812d4</c> (targets at <c>000812e4</c>): 1907
 	/// <c>0xb9</c>, 1906 and 1927 <c>0xba</c>, 1923 <c>0xbb</c>. For any other id retail returns the id itself, which the
 	/// <c>REPNE SCASD</c> left in <c>EAX</c>; here an array holding only its end, an engine guard.
 	/// </summary>
+	/// <param name="data">The shell's data.</param>
+	/// <param name="value">The value shown.</param>
+	/// <param name="id">The list control's id.</param>
 	public static string?[] NumberLines(Es1ShellData data, int value, short id) => id switch {
 		Es1RepairMenu.SalvageList => NumberLine(data, value, SalvageNumberLine),
 		Es1RepairMenu.CostList or StepCostList => NumberLine(data, value, CostNumberLine),
@@ -455,12 +460,15 @@ public static class Es1MenuBuild {
 	};
 
 	/// <summary>
-	/// <c>WaText_NumberLine</c> (<c>00037468</c>)(<paramref name="value"/>, <paramref name="line"/>): a new array of
+	/// <c>WaText_NumberLine</c> (<c>00037468</c>): a new array of
 	/// <c>eng\watext.bin</c> line <paramref name="line"/>'s own buffer, into which the value is printed with <c>%ld</c>,
 	/// and the end. Retail's arrays of one line share its buffer, so a list still holding an earlier one shows the new
 	/// value at its next draw; here the table's line takes the printed value and each array holds its own string. With no
 	/// table, or a line past it, the value is printed and not stored, an engine guard.
 	/// </summary>
+	/// <param name="data">The shell's data.</param>
+	/// <param name="value">The value printed.</param>
+	/// <param name="line">The <c>eng\watext.bin</c> line number.</param>
 	public static string?[] NumberLine(Es1ShellData data, int value, short line) {
 		string printed = value.ToString(CultureInfo.InvariantCulture);
 		if (data.Text is { } table && line >= 0 && line < table.Length) {
@@ -471,11 +479,12 @@ public static class Es1MenuBuild {
 	}
 
 	/// <summary>
-	/// <c>CareerLog_CurrentNameArray</c> (<c>000182f8</c>)(<paramref name="log"/>): with the current entry −1, an array
+	/// <c>CareerLog_CurrentNameArray</c> (<c>000182f8</c>): with the current entry −1, an array
 	/// holding only its end; otherwise the current entry's name and the end. With no log, as <c>CareerLog_Load</c> leaves a
 	/// file that does not open, the current entry is −1. A current entry past the entries reads past them in retail; here
 	/// it gives no name, an engine guard.
 	/// </summary>
+	/// <param name="log">The careers log, or null.</param>
 	public static string?[] CurrentCareerName(HercWorks.Core.Data.File.Dat.Shell.Es1CareerLog? log) {
 		if (log == null || log.Current < 0 || log.Current >= log.Entries.Length) {
 			return [null];
@@ -487,10 +496,12 @@ public static class Es1MenuBuild {
 	}
 
 	/// <summary>
-	/// <c>WaText_LinesFromList</c> (<c>000373fa</c>)(<paramref name="numbers"/>): the lines of <c>eng\watext.bin</c> that
+	/// <c>WaText_LinesFromList</c> (<c>000373fa</c>): the lines of <c>eng\watext.bin</c> that
 	/// the words before the first negative one number, then the end. A number past the table gives an empty line, an engine
 	/// guard for <c>Text_GetString</c>'s missing bounds test.
 	/// </summary>
+	/// <param name="text">The <c>eng\watext.bin</c> text table, or null.</param>
+	/// <param name="numbers">The line numbers, ended by a negative one.</param>
 	public static string?[] LinesFromList(string[]? text, IReadOnlyList<short> numbers) {
 		var lines = new List<string?>();
 		foreach (short number in numbers) {

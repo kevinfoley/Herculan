@@ -50,7 +50,7 @@ public static class Es1BaseTower {
 	public const int ErrorShift = 3;
 
 	/// <summary>
-	/// <c>Base_ArmedThinkTick</c> (<c>00003364</c>)(<paramref name="tower"/>), slot <c>+0x1c</c> of the armed table, for a
+	/// <c>Base_ArmedThinkTick</c> (<c>00003364</c>), slot <c>+0x1c</c> of the armed table, for a
 	/// standing tower (<see cref="Es1Base.Tick"/> hands a destroyed one to <c>Base_ThinkTick</c>):
 	/// <list type="number">
 	/// <item>on each expiry of the retarget countdown, <see cref="Es1Base.TowerTarget"/> =
@@ -65,6 +65,8 @@ public static class Es1BaseTower {
 	/// A sequence the shape gives no frames, which retail divides by, or that lies past the cell array, leaves the cell and
 	/// stops the flash, an engine guard.
 	/// </summary>
+	/// <param name="tower">The armed tower.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void ArmedThinkTick(Es1Base tower, Es1SimGlobals globals) {
 		var clock = globals.Clock;
 		if (clock.CountdownTimerTick(ref tower.RetargetCountdown) == 0) {
@@ -152,8 +154,7 @@ public static class Es1BaseTower {
 	}
 
 	/// <summary>
-	/// <c>Base_AimTurret</c> (<c>00003058</c>)(<paramref name="tower"/>, <paramref name="point"/>)
-	/// (docs/es1/simulation/structures.md#the-turret--base_aimturret-00003058): the point taken into the tower's frame and
+	/// <c>Base_AimTurret</c> (<c>00003058</c>) (docs/es1/simulation/structures.md#the-turret--base_aimturret-00003058): the point taken into the tower's frame and
 	/// then into part <see cref="TurretPart"/>'s posed node, each inverted; the error, <c>Math_EulerToward</c> from the
 	/// node's origin to it. Axis 0 takes the error's X, axis 1 its Z negated, each shifted right <see cref="ErrorShift"/>
 	/// and held to ±<see cref="Es1Turret.AxisFull"/>; for each, the demand Q8(<see cref="Gain"/>, Q8(<i>a</i>,
@@ -165,6 +166,8 @@ public static class Es1BaseTower {
 	/// part's node read from address 0; the tower's frame alone is taken here, as in <see cref="FirePair"/>, an engine
 	/// guard. The first-use byte <c>000aedfc</c> it sets, and does not read, is not kept.
 	/// </summary>
+	/// <param name="tower">The armed tower.</param>
+	/// <param name="point">The point aimed at.</param>
 	public static (short X, short Y, short Z) AimTurret(Es1Base tower, Vec3i point) {
 		var inTower = tower.Frame.Inverted().TransformPoint(point.X, point.Y, point.Z);
 		var node = tower.PartNodeTransform(TurretPart) ?? Transform3.Identity;

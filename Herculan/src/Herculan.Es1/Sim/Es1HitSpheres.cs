@@ -15,14 +15,18 @@ public static class Es1HitSpheres {
 	public const int MagnitudeLimit = 0x7fff;
 
 	/// <summary>
-	/// <c>Mech_SelectStruckComponent</c> (<c>00009064</c>)(<paramref name="model"/>, <paramref name="occupied"/>,
-	/// <paramref name="toMuzzle"/>, <paramref name="ray"/>, the object): the ray's remaining length and
+	/// <c>Mech_SelectStruckComponent</c> (<c>00009064</c>): the ray's remaining length and
 	/// clearance taken from <paramref name="ray"/>, each node's clusters whose component is occupied tested in turn
 	/// (<c>Mech_ComponentGeometryTest_Candidate</c>, <c>00008f84</c>), each hit kept, so the last, which the cuts make the
 	/// nearest, stands. Answers its distance, the remaining length + 1, and its component; null for a miss.
 	/// <paramref name="partNode"/> gives the object's node transform for a part id, which a node whose part id is not
 	/// negative is composed with.
 	/// </summary>
+	/// <param name="model">The collision model's nodes.</param>
+	/// <param name="occupied">The occupancy flag of each component.</param>
+	/// <param name="toMuzzle">The transform into muzzle space.</param>
+	/// <param name="ray">The ray, whose remaining length is cut.</param>
+	/// <param name="partNode">The object's node transform for a part id, or null for none.</param>
 	public static (int Distance, short Component)? SelectStruckComponent(ColliderNode[] model, bool[] occupied,
 			in Transform3 toMuzzle, Es1Ray ray, Func<int, Transform3?> partNode) {
 		var test = new RayTest((uint)ray.Length, ray.Clearance);
@@ -54,10 +58,11 @@ public static class Es1HitSpheres {
 	}
 
 	/// <summary>
-	/// <c>Collision_FindClusterForComponent</c> (<c>0000916c</c>)(<paramref name="model"/>, out part,
-	/// <paramref name="component"/>): the first cluster, node by node, whose component is <paramref name="component"/>
+	/// <c>Collision_FindClusterForComponent</c> (<c>0000916c</c>): the first cluster, node by node, whose component is <paramref name="component"/>
 	/// (<c>Collision_FindClusterInNode</c>, <c>000090fc</c>) and its node's part id; null and 0 when none is.
 	/// </summary>
+	/// <param name="model">The collision model's nodes.</param>
+	/// <param name="component">The component sought.</param>
 	public static (ColliderCluster? Cluster, short Part) FindClusterForComponent(ColliderNode[] model, short component) {
 		foreach (var node in model) {
 			foreach (var cluster in node.Clusters ?? []) {
@@ -181,13 +186,15 @@ public static class Es1HitSpheres {
 		}
 
 		/// <summary>
-		/// <c>Collision_RaySphereTest</c> (<c>000089d4</c>)(<paramref name="cut"/>, <paramref name="radius"/>,
-		/// <paramref name="point"/>), the point in muzzle space with the ray along +Y: with <i>r</i> the clearance plus the
+		/// <c>Collision_RaySphereTest</c> (<c>000089d4</c>), the point in muzzle space with the ray along +Y: with <i>r</i> the clearance plus the
 		/// radius as an <c>int16</c> and <i>m</i> <c>Math_FastMagnitude2D</c>(X, Z), a pass needs Y below the remaining
 		/// length, unsigned, <i>m</i> below <see cref="MagnitudeLimit"/>, and the low 16 bits of <i>m</i> + <i>r</i> below
 		/// those of 2<i>r</i>, unsigned. With <paramref name="cut"/> a pass cuts the remaining length to Y − (<i>r</i> −
 		/// <i>m</i>), or 0 when that is not positive.
 		/// </summary>
+		/// <param name="cut">Whether a pass cuts the remaining length.</param>
+		/// <param name="radius">The sphere's radius.</param>
+		/// <param name="point">The sphere's center in muzzle space.</param>
 		private bool RaySphereTest(bool cut, short radius, Vec3i point) {
 			if ((uint)point.Y >= _remaining) {
 				return false;

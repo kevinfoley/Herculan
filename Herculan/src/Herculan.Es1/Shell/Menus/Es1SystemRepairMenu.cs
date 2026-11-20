@@ -112,11 +112,13 @@ public sealed class Es1SystemRepairMenu : Es1Menu {
 	}
 
 	/// <summary>
-	/// <c>Hangar_SelectedComponentLines</c> (<c>000377cd</c>)(<paramref name="kind"/>), <c>Menu_ListLines</c>' case for
+	/// <c>Hangar_SelectedComponentLines</c> (<c>000377cd</c>), <c>Menu_ListLines</c>' case for
 	/// 1921 and 1924 to 1926 (<c>0003752e</c>), which passes the id as the kind:
 	/// <see cref="Es1HercDiagrams.BuildStatusLines"/>(the selected HERC, kind). With no HERC retail answers the selected
 	/// slot as the lines' address; here no lines, an engine guard.
 	/// </summary>
+	/// <param name="context">The menu context.</param>
+	/// <param name="kind">The control id, which is the kind of status lines.</param>
 	public static string?[] SelectedComponentLines(Es1MenuContext context, short kind) {
 		var hangar = context.Mission.Hangar;
 		return hangar?.HercIn(hangar.SelectedSlot) is { } herc
@@ -335,12 +337,13 @@ public sealed class Es1SystemRepairMenu : Es1Menu {
 	}
 
 	/// <summary>
-	/// <c>Hangar_FormatSelectedStatusLine</c> (<c>00030478</c>)(<paramref name="line"/>, <see cref="ItemLines"/>[line],
-	/// the system): for a selected HERC, <see cref="Es1HercDiagrams.FormatStatusLine"/> of the line, which retail writes in
+	/// <c>Hangar_FormatSelectedStatusLine</c> (<c>00030478</c>), taking <paramref name="line"/>, <see cref="ItemLines"/>[line] and
+	/// the system: for a selected HERC, <see cref="Es1HercDiagrams.FormatStatusLine"/> of the line, which retail writes in
 	/// the line's own buffer; the new line is stored in <see cref="ItemLines"/>, which 1921 holds, and 1921, found in any
 	/// state (<c>DUIWindow_FindControlById</c>), is marked changed. Retail reads <see cref="ItemLines"/> with no test, even
 	/// when the − case finds it 0, and the line past its end; such a line is left here, an engine guard.
 	/// </summary>
+	/// <param name="line">The line's index.</param>
 	private void FormatSelectedStatusLine(short line) {
 		if (SelectedHerc is { } herc && ItemLines is { } lines && line >= 0 && line < lines.Length && lines[line] is { } text) {
 			lines[line] = Es1HercDiagrams.FormatStatusLine(herc, line, text, SystemShown);
