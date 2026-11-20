@@ -80,7 +80,7 @@ public class Es1TtmScriptTests {
 
 	/// <summary>
 	/// The simulator's interpreter has a case for the shell's opcodes but <c>0x5005</c> and the three sound commands
-	/// (docs/es1/formats/ttm-scripts.md#the-simulators-commands).
+	/// (docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-commands).
 	/// </summary>
 	[Fact]
 	public void TheSimulatorDispatchesTheShellsOpcodesButTheRandomJumpAndSounds() {

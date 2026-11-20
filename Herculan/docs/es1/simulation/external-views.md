@@ -1,6 +1,6 @@
-# DBSIM.EXE — the camera
+# DBSIM.EXE — the camera and the views
 
-ES1's simulator places its view through ES2's camera object with fewer modes: a free camera, an orbit around an object, and a camera riding an object's eye, with no chase view and no lock ([ES2's external views](../../retail/simulation/external-views.md)). Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's.
+ES1's simulator places its view through ES2's camera object with fewer modes: a free camera, an orbit around an object, and a camera riding an object's eye, with no chase view and no lock ([ES2's external views](../../retail/simulation/external-views.md)), and moves the main camera between the cockpit, the player's HERC and the squad as ES2's chain of views does ([the views](#the-views--viewchain_apply-0005894c)). Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's.
 
 ## The camera
 
@@ -46,6 +46,29 @@ if eye.z < 100:
 The object's frame is `Context_GetTransform` of its `+6` block, and `centre.z` is the centre's height after that frame. So zooming in or holding still against the ground leaves the camera where it was, and zooming out tilts the orbit so the eye sits at height 100.
 
 **Mode 2, attached.** As ES2's, through the object's vtable (at its `+2`) slot `+0x28`, where ES2's is `+0x24`; with no node, the object's frame and its own euler triple at `+6`.
+
+## The views — `ViewChain_Apply` (`0005894c`)
+
+No arguments; ES2's ([moving between views](../../retail/simulation/external-views.md#moving-between-views--viewchain_apply)), on the view manager's step flag `+0x18` (`CockpitViewManagerPublished`), which `CockpitView_ProcessViewCommand` sets when it stages a command and `CockpitView_StepViewTransition` clears ([switching views](cockpit-views.md#cockpitview_processviewcommand-000226f0)). `ViewChain_CameraControlPreferred` is `000b5bb8`, 1 from `Main_StaticInit`. Against ES2's, it has no view 4, ES1 having no chase view; view 2 views the player alone, ES1 having no `Ctrl+F`; and it sets the camera's mode with no lock test, the camera having no lock ([the camera](#the-camera)). In full:
+
+1. **No change staged** (`+0x18` clear): in view 3 (`ViewChain_View`) with `ViewChain_Viewed` the player (`LocalPlayerMech`), `InputDrivesCamera` = `ViewChain_CameraControlPreferred`.
+2. **A change staged**, with `ViewChain_PendingView` not `ViewChain_View`: `ViewChain_View` = the pending view, and then for view 1 the main camera's (`ViewObjectPtr`) mode `+0x36` = 0 and `InputDrivesCamera` = `ViewChain_CameraControlPreferred`; for view 2 `ViewChain_ViewObject`(`LocalPlayerMech`), mode 2 and `InputDrivesCamera` = 0; for view 3 `ViewChain_ViewObject`(`ViewChain_Chosen`), mode 1 and `ViewChain_CaptionFrames` = 2. A change staged with the pending view already current does nothing here.
+3. **After either**, when `ViewChain_CaptionFrames` is not 0, `ViewChain_DrawCaption` and 1 off the count, so a count of 2 draws the caption on this tick and the next.
+
+**`ViewChain_ViewObject` (`00058a44`)**, (object), is ES2's ([one camera per squadmate](../../retail/simulation/external-views.md#one-camera-per-squadmate--viewchain_viewobject)) on the squad cameras (`000bda9e`, their count the player's group's `+0x12`) and the spare `ViewChain_SpareCamera` (`000b5d38`). It builds the spare on its first call (the guard `000b5d34`): `TSCamera_CtorDefault`, the vtable `00096c5a` at `+0x12`, and `+0x32`, `+0x36`, `+0x44`, `+0x46` and `+0x48` zeroed. It walks the squad cameras in order and stops at the first that either already follows the object (`+0x32`) or follows none: one on the object becomes the main camera (`ViewObjectPtr`) with its mode `+0x36` set to 1; a free one is first made a copy of the main camera with `TSCamera_CopyFrom`, then becomes the main camera and is attached with `Cam_AttachTo`(object). A camera on the object after a free one in the array is not reached. With no camera found it does the same to the spare as to a free one. Then `ViewChain_Viewed` = the object, and `InputDrivesCamera` = 1 for an object other than the player and `ViewChain_CameraControlPreferred` for the player. `ViewChain_Apply`'s two calls enter it through the three `NOP`s at `00058a41`.
+
+**`TSCamera_CopyFrom` (`00057af8`)**, (camera, from), copies every field but the vptr `+0x12`–`+0x15`, where ES2's `ViewChain_ViewObject` copies the fields inline: `TSCamera_CopyBaseFields` (`00057bb4`)(camera, from), entered through its padding `00057bb3`, which runs `TSCamera_CopyPose` (`00057be0`)(camera, from) on the position and the view's euler triple `+0`–`+0x11` and then copies the three dwords `+0x16`, `+0x1a` and `+0x1e`; then the fields `+0x22` to `+0x49` one by one, the object `+0x32` and the mode `+0x36` among them.
+
+**`ViewChain_DrawCaption` (`00058b68`)** is ES2's caption ([what the external view shows](../../retail/simulation/external-views.md#what-the-external-view-shows)) on a 320 × 200 screen with no shift for wider modes. The font is `dfn\green6x8`, the dword `000bd556` that `Widget_LoadStylesAndFonts` fills sixth ([the loads](../formats/styles-dat.md#the-loads)), and *h* its height (`+10`). The band's top row is halfway between the bottom of `ExternalView_GetRect`'s rect (`+0xc`) and row 199, less *h* / 2, and at most 198 − *h*; the band {0, top, 319, top + *h*} is filled with the brush {0, `0x3f`}, with the installed render context's (`000bdbda`) clip mode `+0x208` and translation `+0x20c` at 0 and put back after. `HudFont_DrawString` (`00069e38`) draws two runs with the pen on the band's bottom row, top + *h*:
+
+| x | Text |
+|---|---|
+| 50, the word `00096c3c` | `VIEW: ` and the name of the main camera's object `+0x32`: `YOU` for the player, `Squad_PilotName` for a squadmate (`Squad_IndexOf` not −1), the empty string `00096d19` for any other |
+| 215, the word `00096c3e` | `CONTROL: ` and `CAMERA` while `InputDrivesCamera` is set, `HERC` while it is clear |
+
+The strings are `STRINGS0`'s, the pointers `000bd4c4`[0] to [3] (group 32) and `000bd3e0` (group 14) ([the groups](../formats/str-strings.md#the-groups)). `es2_xref.py` also finds two calls of it from `00057820`.
+
+**`ViewChain_ToggleCameraControl` (`00059dbc`)**, frameless, from `Tab` and `Enter` in the outside view ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)): flips `ViewChain_CameraControlPreferred` (`000b5bb8`) between 0 and 1, and sets `ViewChain_CaptionFrames` to 2 when the camera's object `+0x32` is the player.
 
 ## Open
 

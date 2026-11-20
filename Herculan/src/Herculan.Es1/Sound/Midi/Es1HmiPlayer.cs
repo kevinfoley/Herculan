@@ -42,7 +42,7 @@ public sealed class Es1HmiPlayer(Es1MidiDrivers drivers, Es1HmiSongs songs) {
 	/// as in retail. The walk stops after the fifth slot, where retail's reads on past the table when all five are open.
 	/// The channel's pause flag that retail's version also reads (<c>000a785c</c>), which sends 0 instead, is not ported:
 	/// <c>HmiMidi_PauseSong</c> sets it, and the scan finds no call through the song's vtable slot that reaches that
-	/// function (docs/es1/formats/sound-samples.md#open).
+	/// function (docs/es1/sound/sound-manager.md#open).
 	/// </summary>
 	public void SetMasterVolume(byte volume) {
 		MasterVolume = volume;

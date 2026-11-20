@@ -3,7 +3,7 @@ using Herculan.Engine.Content;
 namespace Herculan.Es1.View;
 
 /// <summary>
-/// What <c>ViewChain_DrawCaption</c> (<c>ES1DBSIM 00058b68</c>) draws with (docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c):
+/// What <c>ViewChain_DrawCaption</c> (<c>ES1DBSIM 00058b68</c>) draws with (docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c):
 /// the font <c>000bd556</c>, <c>dfn\green6x8</c>, the sixth of the seven <c>Widget_LoadStylesAndFonts</c> loads into
 /// <c>000bd542</c>–<c>000bd55a</c> (docs/es1/formats/styles-dat.md); and <c>str\STRINGS0.STR</c>'s group 32, the strings
 /// <c>000bd4c4</c>[0–3] <c>VIEW: </c>, <c>CONTROL: </c>, <c>CAMERA</c> and <c>HERC</c>, and group 14, <c>000bd3e0</c>'s

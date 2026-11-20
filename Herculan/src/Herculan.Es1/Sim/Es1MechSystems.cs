@@ -49,7 +49,7 @@ public sealed class Es1LockTone {
 	public bool PhaseSounded { get; private set; }
 
 	/// <summary>
-	/// <c>Mech_LockTonePlay</c> (<c>0001552c</c>) (docs/es1/simulation/mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0): with the lock lamp lit,
+	/// <c>Mech_LockTonePlay</c> (<c>0001552c</c>) (docs/es1/simulation/mech-systems.md#the-systems-tick--mech_perticksystemsupdate-00014ee0): with the lock lamp lit,
 	/// <see cref="WasLocked"/> set and <see cref="LockedSound"/> once in each phase <see cref="PhaseBit"/> of the clock is
 	/// set, the phase's latch cleared while it is clear; with it dark, <see cref="LostSound"/> once when a lock was held,
 	/// otherwise <see cref="TargetChangedSound"/> while the target has just changed.
@@ -82,7 +82,7 @@ public sealed class Es1LockTone {
 /// <summary>
 /// <c>Mech_PerTickSystemsUpdate</c> (<c>ES1DBSIM 00014ee0</c>), (machine), once a tick from <c>Sim_MainTick</c> for each
 /// machine of <c>g_MechPool</c> whose group holds no action and that is not destroyed
-/// (docs/es1/simulation/mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0): the energy pool shared between the
+/// (docs/es1/simulation/mech-systems.md#the-systems-tick--mech_perticksystemsupdate-00014ee0): the energy pool shared between the
 /// weapons and the shields, the shields message's re-arm, the countdowns, the ECM and missile lock.
 /// </summary>
 public static class Es1MechSystems {

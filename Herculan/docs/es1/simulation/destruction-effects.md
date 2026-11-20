@@ -73,7 +73,7 @@ A tick that answers 1 ends the piece: `Sim_MainTick` destroys it through slot `+
 | `00003a28` | `Base_ApplyDamage` ([damage](structures.md#damage--base_applydamage-00003978)), the structure destroyed | 3 | its position |
 | `00003c71` | the structure's hit test, `Base_DirectFireHitTest` (`00003a58`) ([hits](structures.md#hits--base_directfirehittest-00003a58)), after every hit, destroyed or not | 1 | the hit point |
 | `00009e7d` | `Component_DestroyAndCascade` ([losing a component](component-damage.md#losing-a-component--component_destroyandcascade-00009cd4)) | 3 | the anchor |
-| `00014021` | `Mech_DirectFireHitTest` ([the hit test](mech.md#the-hit-test--mech_directfirehittest-00013b44)) | 1 or 2 | the hit point |
+| `00014021` | `Mech_DirectFireHitTest` ([the hit test](mech-damage.md#the-hit-test--mech_directfirehittest-00013b44)) | 1 or 2 | the hit point |
 | `0001b4fb` | the flyer's hit test, `Flyer_DirectFireHitTest` (`0001b370`), after a hit on a component | 1, or 3 when the hit destroys the flyer (`Flyer_ComponentDamageWrite` (`0001b290`) answers 1, [hits and death](flyers.md#hits-and-death)) | the hit point |
 | `00006058` | `Debris_ThrowGroup` | | |
 | `0000ba90` | `WeaponMount_Destroy` ([losing a mount](weapon-mount-classes.md#losing-a-mount)), the thrown gun | | the mount point |

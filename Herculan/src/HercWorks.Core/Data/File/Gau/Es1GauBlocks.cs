@@ -202,7 +202,7 @@ public class Es1GauHddBlock {
 
 /// <summary>
 /// The cockpit clock's block at 1604 of <see cref="Es1GauFile"/>, which <c>CockpitClock_Create</c> (<c>0002ce98</c>) hands
-/// <c>CockpitClock_Ctor</c> (<c>000433cc</c>) (docs/es1/formats/ttm-scripts.md#the-cockpit-clock): the constructor reads
+/// <c>CockpitClock_Ctor</c> (<c>000433cc</c>) (docs/es1/simulation/cockpit-clock.md): the constructor reads
 /// the rect at 1620 alone, as the gauge base's rect and its three labels'.
 /// </summary>
 public class Es1GauClockBlock {

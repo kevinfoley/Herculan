@@ -86,7 +86,7 @@ public sealed class Es1SimGlobals {
 
 	/// <summary>
 	/// Script.dat header word 6 (<c>000bc4a8</c>), which with <see cref="MissionModeFlag"/> 0 refuses the player's damage at
-	/// 1 (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250).
+	/// 1 (docs/es1/simulation/mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250).
 	/// </summary>
 	public short HeaderWord6 { get; set; }
 

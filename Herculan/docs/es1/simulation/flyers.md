@@ -109,7 +109,7 @@ It returns the flyer. ES2's also builds the flight model's block and starts it a
 
 It returns 1. It does not clamp the flyer to the ground, probe the terrain or play a sound; ES2's (`004218c4`) adds a velocity from the flight model and does all three.
 
-**Its sound.** `Flyer_DispatchMove` (`0001afa8`), the vtable's move slot, plays catalog row 16 at the flyer's position before the move: while the flyer is not destroyed (`+0x93`), `Sound_PlayAt`(position, 16) when the row is not playing and otherwise `Sound_OfferPosition` (`0004dee4`)(position, 16), and once it is destroyed `Sound_Stop`(16). It then calls the state's move with the flyer and returns its answer, 0 for a state without one. `Sound_OfferPosition` keeps the first point offered for the row each frame ([placed sounds](../formats/sound-samples.md#placed-sounds)), so every flyer shares one sound placed at one of them.
+**Its sound.** `Flyer_DispatchMove` (`0001afa8`), the vtable's move slot, plays catalog row 16 at the flyer's position before the move: while the flyer is not destroyed (`+0x93`), `Sound_PlayAt`(position, 16) when the row is not playing and otherwise `Sound_OfferPosition` (`0004dee4`)(position, 16), and once it is destroyed `Sound_Stop`(16). It then calls the state's move with the flyer and returns its answer, 0 for a state without one. `Sound_OfferPosition` keeps the first point offered for the row each frame ([placed sounds](../sound/sound-manager.md#placed-sounds)), so every flyer shares one sound placed at one of them.
 
 ### The player at a flyer's controls
 
@@ -165,7 +165,7 @@ ES2's holds the target's height plus 10000 while extending, turns at 90000, runs
 **`Flyer_ComponentDamageWrite` (`0001b290`)**, (flyer, attacker, damage, component): ES2's ([death](../../retail/simulation/ai-flyers.md#death)). `Component_ApplyDamageAndCascade`(`+0x196`, damage, component) ([component damage](component-damage.md)); when it answers non-zero for component 0:
 
 1. computer message 3, when the attacker is `LocalPlayerMech` and that machine's target `+0x15e` is the flyer (ES2's `0x2e`);
-2. the attacker's slot `+0x64`(attacker, 0, flyer), the kill credit, with no test for a null attacker: for a HERC `Mech_CreditNeutralisedTarget` ([the kill half](mech.md#the-damage-write--mech_componentdamagewrite-00013250)), which reads only the victim's group `+0x3f`, class `+0x162` and destroyed byte `+0x93`, so a flyer counts in the attacker's class-2 tally, the `int16` at `+0x23e`, and the squad's call-outs follow as for any other victim; for a flyer attacker, the base's no-op;
+2. the attacker's slot `+0x64`(attacker, 0, flyer), the kill credit, with no test for a null attacker: for a HERC `Mech_CreditNeutralisedTarget` ([the kill half](mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250)), which reads only the victim's group `+0x3f`, class `+0x162` and destroyed byte `+0x93`, so a flyer counts in the attacker's class-2 tally, the `int16` at `+0x23e`, and the squad's call-outs follow as for any other victim; for a flyer attacker, the base's no-op;
 3. `+0x93` = 1, the radar `+0x90` = 0, `+0x32` = 1 and the position's Z `+0x28` = −100000, so the frame's draw leaves it out ([drawing](#construction--flyer_constructor-0001ac58));
 4. `Mech_ReportOutOfAction`(flyer) ([the out-of-action report](sim-object-base.md#the-out-of-action-report--mech_reportoutofaction-0000d77c)), and `Action_Activate` of the action `+0x170` when there is one;
 5. `Behaviour_SetState`(`+0x47`, `dead`, `000af664`);
@@ -202,7 +202,7 @@ The loads are in the formats' pages: `FlyerSys_RegisterSubsystem` registers `Fly
 | `Flyer_LoadResources`, `FlyerFormation_ElementCtor`, `TexPoly_AngleElementCtorFlyerSysCopy`, `FlyerType_RecordIndex`, `FlyerType_Register`, `FlyerType_LoadResources` | `0001c558`, `0001c618`, `0001c648`, `0001c678`, `0001c688`, `0001c6c8` | `00422d90`, `00423078`, —, `00422e80`, `00422e90`, `00422ed0` |
 | `FlyerTypes_LoadAll`, `FlyerTypes_Free`, `FlyerFormation_GetSlotOffset`, `FlyerSys_RegisterSubsystem` | `0001c770`, `0001c7c4`, `0001c7f0`, `0001c814` | `00422fb4`, `00423018`, `00423044`, `00423068` |
 
-`TexPoly_AngleElementCtorFlyerSysCopy` is the slots' element constructor `FlyerFormation_ElementCtor` passes, entered at its padding `0001c646`. A callee of another file read for these: `Sound_OfferPosition` (`0004dee4`), in [placed sounds](../formats/sound-samples.md#placed-sounds).
+`TexPoly_AngleElementCtorFlyerSysCopy` is the slots' element constructor `FlyerFormation_ElementCtor` passes, entered at its padding `0001c646`. A callee of another file read for these: `Sound_OfferPosition` (`0004dee4`), in [placed sounds](../sound/sound-manager.md#placed-sounds).
 
 ## Globals
 

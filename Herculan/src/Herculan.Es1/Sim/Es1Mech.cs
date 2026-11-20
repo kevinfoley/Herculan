@@ -272,7 +272,7 @@ public sealed class Es1Mech : IEs1SimObject {
 
 	/// <summary>
 	/// <c>+0x1cc</c> and <c>+0x1d0</c>, the shadows and their count; a slot the damage write has destroyed holds null
-	/// (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250).
+	/// (docs/es1/simulation/mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250).
 	/// </summary>
 	public List<Es1Shadow?> Shadows { get; } = new();
 

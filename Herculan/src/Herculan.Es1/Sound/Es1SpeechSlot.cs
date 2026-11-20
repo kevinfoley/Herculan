@@ -56,7 +56,7 @@ public sealed class Es1SpeechSlot {
 
 	/// <summary>
 	/// <c>+0x36</c>: the digital sound <c>SoundCatalog_Load</c> makes on <see cref="SoundIndex"/>; none with no sound
-	/// manager, where retail's is what the allocation left (docs/es1/formats/sound-samples.md#open).
+	/// manager, where retail's is what the allocation left (docs/es1/simulation/sound-catalog.md#open).
 	/// </summary>
 	public Es1SoundObject? Sound { get; internal set; }
 }

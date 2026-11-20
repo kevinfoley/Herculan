@@ -18,7 +18,7 @@ namespace Herculan.Es1.Ttm;
 /// (<c>0004a0e0</c>) (docs/es1/formats/ttm-scripts.md#the-shell,
 /// docs/es1/formats/ttm-scripts.md#the-commands); or the simulator's copy, <c>TtmScript_Ctor</c> (<c>ES1DBSIM
 /// 000797ac</c>)'s <c>0x1c1</c> bytes and its <c>0007a54c</c>, <c>00079a14</c>, <c>0007aa58</c> and <c>0007c01c</c>,
-/// which differs where docs/es1/formats/ttm-scripts.md#the-simulator says. The file is read through
+/// which differs where docs/es1/simulation/cockpit-ttm-scripts.md says. The file is read through
 /// <see cref="Es1TtmScriptTransformer"/>. Each member names the offsets of both copies; the branches on
 /// <see cref="Es1TtmMode"/> are the load, the run, the gates of the commands that act once, the random choice and wait,
 /// the fades, the palette commands, the fixed rect and the dirty boxes.
@@ -171,7 +171,7 @@ public sealed class Es1TtmPlayer {
 
 	/// <summary>
 	/// The simulator's <c>+0x1b5</c>, <c>+0x1b9</c>: the origin the bitmap draws add, which only the constructor writes, 0
-	/// (docs/es1/formats/ttm-scripts.md#open). The shell has none.
+	/// (docs/es1/simulation/cockpit-ttm-scripts.md#open). The shell has none.
 	/// </summary>
 	public (int X, int Y) Origin { get; } = (0, 0);
 
@@ -373,7 +373,7 @@ public sealed class Es1TtmPlayer {
 	}
 
 	/// <summary>
-	/// The simulator's run (docs/es1/formats/ttm-scripts.md#the-simulators-run): the ticks taken off the wait; while it
+	/// The simulator's run (docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-run): the ticks taken off the wait; while it
 	/// stays above 0, the page run unless the mode is <see cref="Hidden"/>; once it is 0 or less, the cycle's count taken
 	/// down by the ticks while colours cycle, reloaded and the palette stepped when it falls below 0
 	/// (<c>TtmScript_CyclePalette</c>, <c>00079d90</c>), the wait reloaded, then by the mode: <see cref="Playing"/> runs
@@ -517,7 +517,7 @@ public sealed class Es1TtmPlayer {
 
 	/// <summary>
 	/// <c>TtmScript_RunPage</c>(script, <paramref name="page"/>), the page's commands from its start until <c>0x0ff0</c>
-	/// (docs/es1/formats/ttm-scripts.md#the-interpreter, docs/es1/formats/ttm-scripts.md#the-simulators-commands):
+	/// (docs/es1/formats/ttm-scripts.md#the-interpreter, docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-commands):
 	/// <c>0x1301</c> and <c>0x1311</c> renumbered to <c>0xc051</c> and <c>0xc061</c>; the seven words after the opcode
 	/// read as <i>a1</i> to <i>a7</i>, whatever its count, and the walk stepped past its arguments by its low four bits,
 	/// past a point list's count and 2<i>n</i> words, <c>TtmScript_CopyArgBytes</c> copying its first (4<i>n</i> &amp;
@@ -666,7 +666,7 @@ public sealed class Es1TtmPlayer {
 	/// <summary>
 	/// The commands of the table at <c>00083880</c> (the shell's 30) or <c>0009ffcc</c> (the simulator's, less
 	/// <c>0x5005</c>) other than the calls, the fades and the random choice (docs/es1/formats/ttm-scripts.md#the-interpreter,
-	/// docs/es1/formats/ttm-scripts.md#the-simulators-commands). The loads, saves and fixed rects act on the shell's first
+	/// docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-commands). The loads, saves and fixed rects act on the shell's first
 	/// run of the page and while the simulator's wait is 0 or less (<c>load</c> below); the palette commands put the
 	/// shell's palette at <c>0007fcd0</c> for the next frame and upload the simulator's.
 	/// </summary>
@@ -1205,7 +1205,7 @@ public sealed class Es1TtmPlayer {
 	/// uploaded; then with the source page the low byte of the draw page and the draw page the visible page, the full
 	/// screen (0, 0) to (319, 199) copied through the context, and again with the draw page
 	/// <see cref="Es1TtmManager.BackgroundPage"/>; the two pages' low bytes put back and the selected palette uploaded
-	/// (docs/es1/formats/ttm-scripts.md#the-simulators-fades). With no palette selected nothing is done, where retail reads
+	/// (docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-fades). With no palette selected nothing is done, where retail reads
 	/// through the empty slot; a step of 0 or less, which loops for ever in retail, makes one pass here.
 	/// </summary>
 	private void FadeOut(short first, short last, short speed) {

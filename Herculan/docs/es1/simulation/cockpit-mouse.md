@@ -4,7 +4,7 @@
 
 ## Where the object files start and end
 
-Two object files hold the simulator's widget root and its mouse, after [the cockpit clock's](../formats/ttm-scripts.md#the-cockpit-clock), whose `CockpitClock_FormatTime` ends with a `RET 4` at `00043780` and one zero byte ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)):
+Two object files hold the simulator's widget root and its mouse, after [the cockpit clock's](cockpit-clock.md), whose `CockpitClock_FormatTime` ends with a `RET 4` at `00043780` and one zero byte ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)):
 
 | Code | Holds | Its end |
 |---|---|---|

@@ -7,7 +7,7 @@ namespace Herculan.Es1.Panels;
 
 /// <summary>
 /// The cockpit clock, the cockpit's <c>+0x1f9</c>, <c>CockpitClock_Ctor</c> (<c>ES1DBSIM 000433cc</c>)'s <c>0x8a</c>
-/// bytes on the <c>.GAU</c> block at 1604 (docs/es1/formats/ttm-scripts.md#the-cockpit-clock): a 24-hour display that
+/// bytes on the <c>.GAU</c> block at 1604 (docs/es1/simulation/cockpit-clock.md): a 24-hour display that
 /// starts at 00:00 and gains a minute a second, its colon lit every other half second, and the slots of its vtable
 /// <c>00094b5a</c> that the cockpit calls. Making it opens the HERC's <c>.TTM</c> script.
 ///
@@ -38,7 +38,7 @@ public sealed class Es1CockpitClock {
 	/// <see cref="AdvanceInterval"/> counts from <paramref name="now"/>.
 	///
 	/// <para>A failed open leaves no script. Retail then reads the dword before the handle table as the script and stores
-	/// the context through it when it is not 0 (docs/es1/formats/ttm-scripts.md#open); here nothing is stored.</para>
+	/// the context through it when it is not 0 (docs/es1/simulation/cockpit-clock.md); here nothing is stored.</para>
 	/// </summary>
 	/// <param name="cockpit">The cockpit, the gauge base's <c>+0x10</c>; <c>CockpitViewInstance</c> is its globals' cockpit, or it when that is none. A cockpit without a machine opens no script, an engine guard.</param>
 	/// <param name="font"><c>ColorSchemePanels</c>' first font, <c>cpblue</c>.</param>

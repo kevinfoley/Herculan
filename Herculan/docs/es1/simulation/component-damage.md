@@ -18,7 +18,7 @@ The code is three object files ([where object files meet](../formats/compiler.md
 
 ## The struck component — `Mech_SelectStruckComponent` (`00009064`)
 
-(model, occupancy flags, object-to-muzzle frame, ray record, object): ES2's ([the test](../../retail/simulation/hit-detection.md#the-test--mech_selectstruckcomponent-0040c9d4)). It sets the hit component `Collision_HitComponent` (`000af134`) to `0xffff` and the hit distance `Collision_HitDistance` (`000af130`) to 0, takes the ray's remaining length `Collision_RayRemaining` (`000bc2a6`) from the ray record's `+4` and the clearance `Collision_RayClearance` (`000bc2aa`) from its `+8`, and runs `Mech_ComponentGeometryTest_Candidate` on each node. It copies the distance and the component to `Collision_HitResult` (`000af138`, a dword and an `int16`) and returns its address, or null when the distance is 0. `es2_xref.py` finds three calls: `Mech_DirectFireHitTest` ([the hit test](mech.md#the-hit-test--mech_directfirehittest-00013b44)), and the hit tests at `00003a58` and `Flyer_DirectFireHitTest` (`0001b370`), slot `+0x24` of the base's and the flyer's tables ([the difficulty scale](world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c)).
+(model, occupancy flags, object-to-muzzle frame, ray record, object): ES2's ([the test](../../retail/simulation/hit-detection.md#the-test--mech_selectstruckcomponent-0040c9d4)). It sets the hit component `Collision_HitComponent` (`000af134`) to `0xffff` and the hit distance `Collision_HitDistance` (`000af130`) to 0, takes the ray's remaining length `Collision_RayRemaining` (`000bc2a6`) from the ray record's `+4` and the clearance `Collision_RayClearance` (`000bc2aa`) from its `+8`, and runs `Mech_ComponentGeometryTest_Candidate` on each node. It copies the distance and the component to `Collision_HitResult` (`000af138`, a dword and an `int16`) and returns its address, or null when the distance is 0. `es2_xref.py` finds three calls: `Mech_DirectFireHitTest` ([the hit test](mech-damage.md#the-hit-test--mech_directfirehittest-00013b44)), and the hit tests at `00003a58` and `Flyer_DirectFireHitTest` (`0001b370`), slot `+0x24` of the base's and the flyer's tables ([the difficulty scale](world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c)).
 
 **`Mech_ComponentGeometryTest_Candidate` (`00008f84`)**, (node, occupancy flags, object-to-muzzle frame, object): ES2's, but for a part the shape lacks.
 
@@ -52,7 +52,7 @@ The code is three object files ([where object files meet](../formats/compiler.md
    - **Added:** when that leaves a dependent standing and the piece's sequence byte `+3` is not −1, the entry of the shape instance's cell array (the `int16` array at `+8` of the instance `+0x2e`) at that sequence is set to 1, the second cell. On ES2's machines that is the damage-shaded cell ([a destroyed component hides its own geometry](../../retail/rendering/mech-shape-drawing.md#a-destroyed-component-hides-its-own-geometry)), and ES2's function has no such step.
    - When it leaves none and the piece's flags (`+5`) have bit 0 set, it clears `ComponentCascade_EffectLatch` (`000af140`), runs `Component_DestroyAndCascade` on the component, and then on the last entry of the list at `maybe_ComponentDependencyList` while its count (byte `+5`) is not 0, taking 1 from the count first; it returns 1.
 
-It returns 0 on every other path. `es2_xref.py` finds three calls: `Mech_ComponentDamageWrite` ([the damage write](mech.md#the-damage-write--mech_componentdamagewrite-00013250)), `Mech_DirectFireHitTest`'s 10000 for a knocked-out mount, and `Flyer_ComponentDamageWrite` (`0001b290`).
+It returns 0 on every other path. `es2_xref.py` finds three calls: `Mech_ComponentDamageWrite` ([the damage write](mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250)), `Mech_DirectFireHitTest`'s 10000 for a knocked-out mount, and `Flyer_ComponentDamageWrite` (`0001b290`).
 
 ## Losing a component — `Component_DestroyAndCascade` (`00009cd4`)
 
@@ -93,7 +93,7 @@ It returns 1.
 | `Component_DestroyAndCascade`, `Component_IsFullyDestroyed`, `Component_ApplyDamageAndCascade` | `00009cd4`, `00009f30`, `00009f7c` | `0040d434`, `0040d9f8`, `0040da38` |
 | `Component_ReadOverallDamage`, `Component_ReadDamagePercent`, `Component_TotalArmor` | `0000a07c`, `0000a16c`, `0000a24c` | `0040db2c`, `0040dbc0`, `0040dc58` |
 
-Callees of other files read for them: `Rotation_Concat` (`00064fe4`), (a, b, out) in the C convention: ES2's (`0047ef4c`), identical after normalisation ([the assembly library](fixed-point-math.md#the-assembly-library)), the rotation-only product `Mech_ComponentDamageWrite` turns the player's disabled HERC with ([the damage write](mech.md#the-damage-write--mech_componentdamagewrite-00013250), step 7).
+Callees of other files read for them: `Rotation_Concat` (`00064fe4`), (a, b, out) in the C convention: ES2's (`0047ef4c`), identical after normalisation ([the assembly library](fixed-point-math.md#the-assembly-library)), the rotation-only product `Mech_ComponentDamageWrite` turns the player's disabled HERC with ([the damage write](mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250), step 7).
 
 ## Globals
 

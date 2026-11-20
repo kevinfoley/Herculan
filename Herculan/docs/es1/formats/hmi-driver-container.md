@@ -1,6 +1,6 @@
 # The HMI driver containers
 
-**The sound drivers ship as three files in `SOS\`, each a run of `.com` driver images behind a short header.** `HMIMDRV.386` holds the MIDI drivers the [music](../sound/song-player.md#the-devices) plays through, `HMIDRV.386` the digital drivers the [sounds](sound-samples.md#the-driver) play through, and `HMIDET.386` the drivers that detect a card. The three share one layout.
+**The sound drivers ship as three files in `SOS\`, each a run of `.com` driver images behind a short header.** `HMIMDRV.386` holds the MIDI drivers the [music](../sound/song-player.md#the-devices) plays through, `HMIDRV.386` the digital drivers the [sounds](../sound/sound-drivers.md#the-driver) play through, and `HMIDET.386` the drivers that detect a card. The three share one layout.
 
 ## Layout
 

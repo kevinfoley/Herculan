@@ -2168,7 +2168,7 @@
       "confidence": "high",
       "name": "Speech_ArchivePresent",
       "description": "1 when fopen opens vol\\speech.vol (closing it again), else 0. es2_xref finds one call, from 00008934 in Prefs_Init (00008920).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-names",
+      "source": "Herculan/docs/es1/shell/sound.md#the-shells-names",
       "verified": {
         "bytes": "000087ce+49",
         "sha1": "f9f7925ad40d",
@@ -15020,7 +15020,7 @@
       "confidence": "high",
       "name": "SoundManager_Ctor",
       "description": "The same statements as ES1DBSIM's SoundManager_Ctor (0004eb40) in different code. es2_xref finds calls from ShellSound_Init (00046235).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00041f64",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00041f64",
       "verified": {
         "bytes": "00041f64+409",
         "sha1": "928648758af2",
@@ -15035,7 +15035,7 @@
       "confidence": "high",
       "name": "SoundManager_Dtor",
       "description": "The same statements as ES1DBSIM's SoundManager_Dtor (0004eccc) in different code. es2_xref finds calls from Shell_AssertCleanupHook (00045a68) and Shell_ShutdownDevices (00046094).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 000420fd",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 000420fd",
       "verified": {
         "bytes": "000420fd+170",
         "sha1": "1d9036963382",
@@ -15050,7 +15050,7 @@
       "confidence": "high",
       "name": "SoundManager_DetectDigitalCard",
       "description": "The same statements as ES1DBSIM's SoundManager_DetectDigitalCard (0004ed68) in different code. es2_xref finds no call or stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 000421a7",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 000421a7",
       "verified": {
         "bytes": "000421a7+218",
         "sha1": "6cd9e76a25ca",
@@ -15065,7 +15065,7 @@
       "confidence": "high",
       "name": "SoundDetect_Init",
       "description": "The same statements as ES1DBSIM's SoundDetect_Init (0004ee30) in different code. es2_xref finds calls from SoundManager_DetectDigitalCard (000421a7).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00042281",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00042281",
       "verified": {
         "bytes": "00042281+72",
         "sha1": "37a661c4dbef",
@@ -15080,7 +15080,7 @@
       "confidence": "high",
       "name": "SoundDetect_FindDevice",
       "description": "The same statements as ES1DBSIM's SoundDetect_FindDevice (0004ee78) in different code. es2_xref finds calls from SoundManager_DetectDigitalCard (000421a7).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 000422c9",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 000422c9",
       "verified": {
         "bytes": "000422c9+145",
         "sha1": "953ef39712fc",
@@ -15095,7 +15095,7 @@
       "confidence": "high",
       "name": "SoundDetect_FindFirst",
       "description": "The same statements as ES1DBSIM's SoundDetect_FindFirst (0004eef4) in different code. es2_xref finds calls from SoundManager_DetectDigitalCard (000421a7).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 0004235a",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 0004235a",
       "verified": {
         "bytes": "0004235a+130",
         "sha1": "15522128b1e8",
@@ -15110,7 +15110,7 @@
       "confidence": "high",
       "name": "SoundDetect_Close",
       "description": "The same statements as ES1DBSIM's SoundDetect_Close (0004ef68) in different code. es2_xref finds calls from SoundManager_DetectDigitalCard (000421a7).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 000423dc",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 000423dc",
       "verified": {
         "bytes": "000423dc+46",
         "sha1": "119dc512b449",
@@ -15125,7 +15125,7 @@
       "confidence": "high",
       "name": "SoundManager_LoadDrivers",
       "description": "The same statements as ES1DBSIM's SoundManager_LoadDrivers (0004ef8c) in different code, its timer callback SoundManager_TimerCallback (000419d8), its MIDI handles 000ab4d8 and 000ab4dc and its defaults block SoundDriver_Defaults (00082310) the shell's own. es2_xref finds calls from ShellSound_Init (00046235).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 0004240a",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 0004240a",
       "verified": {
         "bytes": "0004240a+1144",
         "sha1": "6fed7265f708",
@@ -15140,7 +15140,7 @@
       "confidence": "high",
       "name": "SoundManager_UnloadDrivers",
       "description": "The same statements as ES1DBSIM's SoundManager_UnloadDrivers (0004f3d4) in different code. es2_xref finds calls from SoundManager_Dtor (000420fd).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00042882",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00042882",
       "verified": {
         "bytes": "00042882+259",
         "sha1": "74e17c2c4c8b",
@@ -15200,7 +15200,7 @@
       "confidence": "high",
       "name": "SoundManager_ClearSlot",
       "description": "(manager, slot): clears the object pointer +0x14c[slot]. es2_xref finds no caller; the same statements as ES1DBSIM's SoundManager_ClearSlot (0004f678) in different code.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004f678",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 0004f678",
       "verified": {
         "bytes": "00042ba0+35",
         "sha1": "daecc0c0975a",
@@ -15215,7 +15215,7 @@
       "confidence": "high",
       "name": "SoundManager_CountObjects",
       "description": "The same statements as ES1DBSIM's SoundManager_CountObjects (0004f694) in different code. es2_xref finds no call or stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00042bc3",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00042bc3",
       "verified": {
         "bytes": "00042bc3+54",
         "sha1": "9f56ba9c23fa",
@@ -15275,7 +15275,7 @@
       "confidence": "high",
       "name": "SoundManager_SetMasterVolume",
       "description": "The same statements as ES1DBSIM's SoundManager_SetMasterVolume (0004fae8) in different code. es2_xref finds calls from ShellSound_Init (00046235).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 000430cd",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 000430cd",
       "verified": {
         "bytes": "000430cd+116",
         "sha1": "db45241a09df",
@@ -15290,7 +15290,7 @@
       "confidence": "high",
       "name": "SoundManager_SetDistanceShift",
       "description": "(manager, shift): stores the byte in +0x240. es2_xref finds no caller; the same statements as ES1DBSIM's SoundManager_SetDistanceShift (0004fb48) in different code.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004fb48",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 0004fb48",
       "verified": {
         "bytes": "00043141+25",
         "sha1": "dee3f5786fd5",
@@ -15305,7 +15305,7 @@
       "confidence": "high",
       "name": "SoundManager_SetHearingRange",
       "description": "The same statements as ES1DBSIM's SoundManager_SetHearingRange (0004ffe0) in different code. es2_xref finds no call or stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043ade",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043ade",
       "verified": {
         "bytes": "00043ade+49",
         "sha1": "3b4143caefcb",
@@ -15320,7 +15320,7 @@
       "confidence": "high",
       "name": "SoundManager_SetMemoryLimit",
       "description": "The same statements as ES1DBSIM's SoundManager_SetMemoryLimit (00050008) in different code. es2_xref finds calls from ShellSound_Init (00046235).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043b0f",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043b0f",
       "verified": {
         "bytes": "00043b0f+25",
         "sha1": "0c3a742f08b2",
@@ -15335,7 +15335,7 @@
       "confidence": "high",
       "name": "SoundObject_Ctor",
       "description": "The same statements as ES1DBSIM's SoundObject_Ctor (00050020) in different code. es2_xref finds calls from DigiSound_Ctor (0004446c) and MidiSound_Ctor (0004412a).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043b28",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043b28",
       "verified": {
         "bytes": "00043b28+149",
         "sha1": "d10d71a0e471",
@@ -15350,7 +15350,7 @@
       "confidence": "high",
       "name": "SoundObject_SetPlacedVolume",
       "description": "The same statements as ES1DBSIM's SoundObject_SetPlacedVolume (000500a3) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043bbd",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043bbd",
       "verified": {
         "bytes": "00043bbd+13",
         "sha1": "a1b91231e7d1",
@@ -15365,7 +15365,7 @@
       "confidence": "high",
       "name": "SoundObject_GetVoiceStatus",
       "description": "The same statements as ES1DBSIM's SoundObject_GetVoiceStatus (000500a7) in different code. es2_xref finds 2 stored pointers.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043bca",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043bca",
       "verified": {
         "bytes": "00043bca+12",
         "sha1": "cdfff44e1c27",
@@ -15380,7 +15380,7 @@
       "confidence": "high",
       "name": "SoundObject_Play",
       "description": "The same statements as ES1DBSIM's SoundObject_Play (000500ad) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043bd6",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043bd6",
       "verified": {
         "bytes": "00043bd6+12",
         "sha1": "cdfff44e1c27",
@@ -15395,7 +15395,7 @@
       "confidence": "high",
       "name": "SoundObject_Stop",
       "description": "The same statements as ES1DBSIM's SoundObject_Stop (000500b5) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043be2",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043be2",
       "verified": {
         "bytes": "00043be2+10",
         "sha1": "02b04160c7b8",
@@ -15410,7 +15410,7 @@
       "confidence": "medium",
       "name": "maybe_SoundObject_Resume",
       "description": "The same statements as ES1DBSIM's maybe_SoundObject_Resume (000500bb) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043bec",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043bec",
       "verified": {
         "bytes": "00043bec+10",
         "sha1": "02b04160c7b8",
@@ -15425,7 +15425,7 @@
       "confidence": "medium",
       "name": "maybe_SoundObject_Pause",
       "description": "The same statements as ES1DBSIM's maybe_SoundObject_Pause (000500bf) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043bf6",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043bf6",
       "verified": {
         "bytes": "00043bf6+10",
         "sha1": "02b04160c7b8",
@@ -15440,7 +15440,7 @@
       "confidence": "medium",
       "name": "maybe_SoundObject_SetPitch",
       "description": "The same statements as ES1DBSIM's maybe_SoundObject_SetPitch (000500c3) in different code. es2_xref finds 2 stored pointers.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043c00",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043c00",
       "verified": {
         "bytes": "00043c00+13",
         "sha1": "029e49697cf2",
@@ -15455,7 +15455,7 @@
       "confidence": "high",
       "name": "SoundObject_SetStartWord10",
       "description": "The same statements as ES1DBSIM's SoundObject_SetStartWord10 (000500c7) in different code. es2_xref finds 2 stored pointers.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043c0d",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043c0d",
       "verified": {
         "bytes": "00043c0d+14",
         "sha1": "1550088044a9",
@@ -15470,7 +15470,7 @@
       "confidence": "high",
       "name": "SoundObject_SetVolume",
       "description": "The same statements as ES1DBSIM's SoundObject_SetVolume (000500cb) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043c1b",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043c1b",
       "verified": {
         "bytes": "00043c1b+13",
         "sha1": "a1b91231e7d1",
@@ -15485,7 +15485,7 @@
       "confidence": "high",
       "name": "SoundObject_IsPlaying",
       "description": "The same statements as ES1DBSIM's SoundObject_IsPlaying (000500cf) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043c28",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043c28",
       "verified": {
         "bytes": "00043c28+12",
         "sha1": "cdfff44e1c27",
@@ -15500,7 +15500,7 @@
       "confidence": "high",
       "name": "SoundObject_Dtor",
       "description": "The same statements as ES1DBSIM's SoundObject_Dtor (000500d8) in different code. es2_xref finds calls from DigiSound_Dtor (000444f2) and MidiSound_Dtor (000441c1) and 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043c34",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043c34",
       "verified": {
         "bytes": "00043c34+77",
         "sha1": "17edbd2b805f",
@@ -15530,7 +15530,7 @@
       "confidence": "high",
       "name": "SoundObject_SetPan",
       "description": "The same statements as ES1DBSIM's SoundObject_SetPan (00050150) in different code. es2_xref finds calls from 0004315a and 0004360e.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043cae",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043cae",
       "verified": {
         "bytes": "00043cae+23",
         "sha1": "0b2daf6be89f",
@@ -15545,7 +15545,7 @@
       "confidence": "high",
       "name": "SoundObject_Unload",
       "description": "The same statements as ES1DBSIM's SoundObject_Unload (00050164) in different code. es2_xref finds calls from SoundObject_Dtor (00043c34), SoundManager_SetSampleName (00042f39) and SoundObject_LoadSample (00043d8a).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00043cc5",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00043cc5",
       "verified": {
         "bytes": "00043cc5+197",
         "sha1": "ab5a7038d0cc",
@@ -15575,7 +15575,7 @@
       "confidence": "medium",
       "name": "maybe_SoundObject_SetBranchCallback",
       "description": "The same statements as ES1DBSIM's maybe_SoundObject_SetBranchCallback (00050450) in different code. es2_xref finds no call or stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00044087",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00044087",
       "verified": {
         "bytes": "00044087+48",
         "sha1": "1d9caac83058",
@@ -15590,7 +15590,7 @@
       "confidence": "high",
       "name": "SoundObject_SetRepeatCount",
       "description": "The same statements as ES1DBSIM's SoundObject_SetRepeatCount (00050470) in different code. es2_xref finds 2 stored pointers.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 000440b7",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 000440b7",
       "verified": {
         "bytes": "000440b7+49",
         "sha1": "fe6ec3b38e63",
@@ -15635,7 +15635,7 @@
       "confidence": "high",
       "name": "MidiSound_Dtor",
       "description": "The same statements as ES1DBSIM's MidiSound_Dtor (0005055c) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 000441c1",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 000441c1",
       "verified": {
         "bytes": "000441c1+66",
         "sha1": "97bd5c4b7a96",
@@ -15650,7 +15650,7 @@
       "confidence": "medium",
       "name": "maybe_MidiSound_Pause",
       "description": "The same statements as ES1DBSIM's maybe_MidiSound_Pause (00050594) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00044203",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00044203",
       "verified": {
         "bytes": "00044203+29",
         "sha1": "37bc609dd898",
@@ -15665,7 +15665,7 @@
       "confidence": "medium",
       "name": "maybe_MidiSound_Resume",
       "description": "The same statements as ES1DBSIM's maybe_MidiSound_Resume (000505b0) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00044220",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00044220",
       "verified": {
         "bytes": "00044220+27",
         "sha1": "eef2f8918aec",
@@ -15695,7 +15695,7 @@
       "confidence": "high",
       "name": "MidiSound_Stop",
       "description": "The same statements as ES1DBSIM's MidiSound_Stop (000506f4) in different code. es2_xref finds calls from MidiSound_Dtor (000441c1) and 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 0004437c",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 0004437c",
       "verified": {
         "bytes": "0004437c+70",
         "sha1": "c7a45916bdcf",
@@ -15740,7 +15740,7 @@
       "confidence": "high",
       "name": "MidiSound_SetPlacedVolume",
       "description": "The same statements as ES1DBSIM's MidiSound_SetPlacedVolume (000507c4) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 0004445f",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 0004445f",
       "verified": {
         "bytes": "0004445f+13",
         "sha1": "a1b91231e7d1",
@@ -15770,7 +15770,7 @@
       "confidence": "medium",
       "name": "maybe_DigiSound_Resume",
       "description": "The same statements as ES1DBSIM's maybe_DigiSound_Resume (00050832) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 000444e8",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 000444e8",
       "verified": {
         "bytes": "000444e8+10",
         "sha1": "02b04160c7b8",
@@ -15800,7 +15800,7 @@
       "confidence": "high",
       "name": "DigiSound_SetStartWord10",
       "description": "The same statements as ES1DBSIM's DigiSound_SetStartWord10 (00050870) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00044534",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00044534",
       "verified": {
         "bytes": "00044534+24",
         "sha1": "855b1a388d7c",
@@ -15815,7 +15815,7 @@
       "confidence": "medium",
       "name": "maybe_DigiSound_SetPitch",
       "description": "The same statements as ES1DBSIM's maybe_DigiSound_SetPitch (00050884) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 0004454c",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 0004454c",
       "verified": {
         "bytes": "0004454c+78",
         "sha1": "e5d7173c4c7e",
@@ -15830,7 +15830,7 @@
       "confidence": "high",
       "name": "DigiSound_SetVolume",
       "description": "The same statements as ES1DBSIM's DigiSound_SetVolume (000508c4) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 0004459a",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 0004459a",
       "verified": {
         "bytes": "0004459a+155",
         "sha1": "e6c5f34fb60b",
@@ -15845,7 +15845,7 @@
       "confidence": "high",
       "name": "DigiSound_SetPlacedVolume",
       "description": "The same statements as ES1DBSIM's DigiSound_SetPlacedVolume (00050954) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00044635",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00044635",
       "verified": {
         "bytes": "00044635+79",
         "sha1": "a01afc3a7318",
@@ -15860,7 +15860,7 @@
       "confidence": "medium",
       "name": "maybe_DigiSound_Pause",
       "description": "The same statements as ES1DBSIM's maybe_DigiSound_Pause (000509a0) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00044684",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00044684",
       "verified": {
         "bytes": "00044684+39",
         "sha1": "16c0ed13ebea",
@@ -15905,7 +15905,7 @@
       "confidence": "high",
       "name": "DigiSound_GetVoiceStatus",
       "description": "The same statements as ES1DBSIM's DigiSound_GetVoiceStatus (00050c48) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 0004499a",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 0004499a",
       "verified": {
         "bytes": "0004499a+62",
         "sha1": "57db20b92ffa",
@@ -15935,7 +15935,7 @@
       "confidence": "high",
       "name": "DigiSound_SetRepeats",
       "description": "The same statements as ES1DBSIM's DigiSound_SetRepeats (00050cbc) in different code. es2_xref finds 1 stored pointer.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-copies; ES1GO decompile at 00044a14",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-copies; ES1GO decompile at 00044a14",
       "verified": {
         "bytes": "00044a14+110",
         "sha1": "1cfa73fd187c",
@@ -16277,7 +16277,7 @@
       "confidence": "high",
       "name": "ShellSound_Init",
       "description": "Returns at once while Shell_DebugMode (0007fd08) is set. Opens resource.cfg (Path_ApplyAltDrive, FileRStream_Ctor), asserting 'ERROR: Run soundset first.' (src\\system.cpp line 0x151, severity 5) when it fails, and reads [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress with Profile_GetString (00026d71) and Profile_GetInt (00026bac), the driver numbers and ports through sscanf (000638d1) with '%X'. Closes it and returns when the [SoundFX] driver is 0. Otherwise makes the sound manager ShellSound_Manager (00082768) with SoundManager_Ctor (00041f64)(0), stores the six values in the driver defaults block (00082328, 00082320, 0008231c, 00082324, 00082330, 0008232c), calls SoundManager_LoadDrivers (0004240a)(manager), SoundManager_SetMasterVolume (000430cd)(manager, 0x5f), SoundManager_SetMemoryLimit (00043b0f)(manager, 200000) and SoundManager_SetSampleNames (00042e16) with the 20 names at ShellSound_Names (000828c0), and makes the button sound ShellSound_ButtonSound (0007fd00) with SoundManager_CreateObject (000429db)(manager, 2, 0, 9), loading it with SoundObject_LoadSample (00043d8a). es2_xref finds one call, from 00045df5 in Shell_InitDevices (00045d24).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-names",
+      "source": "Herculan/docs/es1/shell/sound.md#the-shells-names",
       "verified": {
         "bytes": "00046235+634",
         "sha1": "395f77927af7",
@@ -17732,7 +17732,7 @@
       "confidence": "high",
       "name": "ShellSound_PlayClick",
       "description": "(row), its argument removed by this function: for row 0x11 with ShellSound_ButtonSound (0007fd00) set, the object's slot +0x10 (vtable at +0x3b), with no stop first; any other row does nothing. es2_xref finds calls from Widget_ClickSoundAlertCopy (00008954).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-sound-manager; ES1GO decompile and disassembly at 0004dde4",
+      "source": "Herculan/docs/es1/shell/sound.md; ES1GO decompile and disassembly at 0004dde4",
       "verified": {
         "bytes": "0004dde4+52",
         "sha1": "05d9eb36cc01",
@@ -24062,7 +24062,7 @@
       "confidence": "high",
       "name": "HmiDigi_StopSample",
       "description": "(driver, voice), C convention: 10 for a voice above 31; for a voice record (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6) whose word +0x30 has bit 0x8000 set and bit 0x1000 clear, clears bit 0x8000 (the byte +0x31 & 0x7f) and the word +0x34; answers 0 either way, so a busy voice with bit 0x1000 set is not stopped. es2_xref finds calls from DigiSound_Stop (000449d8), maybe_DigiSound_Pause (00044684) and HmiDigiMidi_SendEvent (0006e745). The code of ES1DBSIM's HmiDigi_StopSample (0006dd7f), relocated operands aside.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006dd7f",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing; ES1DBSIM decompile and disassembly at 0006dd7f",
       "verified": {
         "bytes": "0005e537+101",
         "sha1": "710f879e02a8",
@@ -24077,7 +24077,7 @@
       "confidence": "high",
       "name": "HmiDigi_IsVoiceDone",
       "description": "(driver, voice), C convention: 10 for a voice above 31; 1 when bit 0x8000 of the voice record's word +0x30 (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6) is clear, 0 while it is set. es2_xref finds one call, from DigiSound_IsPlaying (00044966), which answers whether it is 0. The code of ES1DBSIM's HmiDigi_IsVoiceDone (0006df9d), relocated operands aside.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006df9d",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing; ES1DBSIM decompile and disassembly at 0006df9d",
       "verified": {
         "bytes": "0005e755+71",
         "sha1": "f7ffc9e2713b",
@@ -24092,7 +24092,7 @@
       "confidence": "high",
       "name": "HmiDigi_CountBusyVoices",
       "description": "(driver), C convention: how many of the driver's 32 voice records (the far pointers at 0008a1e4 + driver * 0xc0 + voice * 6) have bit 0x8000 of their word +0x30 set, the busy voices. es2_xref finds one call, from DigiSound_Play (000446ab), which makes room above 30. The code of ES1DBSIM's HmiDigi_CountBusyVoices (0006e055), relocated operands aside.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006e055",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing; ES1DBSIM decompile and disassembly at 0006e055",
       "verified": {
         "bytes": "0005e80d+64",
         "sha1": "f60dffab16e5",
@@ -24107,7 +24107,7 @@
       "confidence": "high",
       "name": "HmiDigi_SetSampleVolume",
       "description": "(driver, voice, volume), C convention: with bit 0x8000 of the voice record's word +0x30 set (the far pointer at 0008a1e4 + driver * 0xc0 + voice * 6), stores the volume in its word +0x32 and answers the old word; else answers 0. It does not test the voice's range. es2_xref finds calls from DigiSound_SetVolume (0004459a), DigiSound_SetPlacedVolume (00044635) and HmiDigiMidi_SendEvent (0006e745). The code of ES1DBSIM's HmiDigi_SetSampleVolume (0006e0b3), relocated operands aside.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006e0b3",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing; ES1DBSIM decompile and disassembly at 0006e0b3",
       "verified": {
         "bytes": "0005e86b+82",
         "sha1": "ccd41a6c22f1",
@@ -24482,7 +24482,7 @@
       "confidence": "high",
       "name": "Str_ToLowerInPlace",
       "description": "(string), C convention: each byte up to the zero through tolower, in place; returns the string. es2_xref finds calls from SoundManager_CreateObject (000429db) and SoundManager_SetSampleName (00042f39), which lower-case a sample name in place with it. The code of ES1DBSIM's Str_ToLowerInPlace (0006f948), relocated operands aside.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects; ES1DBSIM decompile and disassembly at 0006f948",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects; ES1DBSIM decompile and disassembly at 0006f948",
       "verified": {
         "bytes": "0006028c+38",
         "sha1": "ba182aea7bd1",
@@ -29468,7 +29468,7 @@
       "confidence": "high",
       "name": "ShellSound_ButtonSound",
       "description": "The buttons' click: the sound object ShellSound_Init (00046235) makes on name index 9, res32\\button.sfx, and loads.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-sound-manager"
+      "source": "Herculan/docs/es1/shell/sound.md"
     },
     {
       "address": "0007fd04",
@@ -30089,7 +30089,7 @@
       "confidence": "high",
       "name": "SoundDriver_Defaults",
       "description": "The digital driver's defaults block, 0x1000 then the rate 11025 at 00082314, which SoundManager_LoadDrivers (0004240a) copies; ES1DBSIM's SoundDriver_Defaults (000959ec).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-sound-manager"
+      "source": "Herculan/docs/es1/shell/sound.md"
     },
     {
       "address": "00082576",
@@ -30098,7 +30098,7 @@
       "confidence": "high",
       "name": "SoundObjectVtable",
       "description": "The sound object base's vtable, stored by SoundObject_Ctor (00043b28) and SoundObject_Dtor (00043c34); ES1DBSIM's SoundObjectVtable (00095c46).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-sound-manager"
+      "source": "Herculan/docs/es1/shell/sound.md"
     },
     {
       "address": "000825bc",
@@ -30107,7 +30107,7 @@
       "confidence": "high",
       "name": "MidiSoundVtable",
       "description": "Stored by MidiSound_Ctor (0004412a) and MidiSound_Dtor (000441c1); ES1DBSIM's MidiSoundVtable (00095c82).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-sound-manager"
+      "source": "Herculan/docs/es1/shell/sound.md"
     },
     {
       "address": "0008261c",
@@ -30116,7 +30116,7 @@
       "confidence": "high",
       "name": "DigiSoundVtable",
       "description": "Stored by DigiSound_Ctor (0004446c) and DigiSound_Dtor (000444f2); ES1DBSIM's DigiSoundVtable (00095cd6).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-sound-manager"
+      "source": "Herculan/docs/es1/shell/sound.md"
     },
     {
       "address": "00082658",
@@ -30161,7 +30161,7 @@
       "confidence": "high",
       "name": "ShellSound_Manager",
       "description": "The shell's sound manager, which ShellSound_Init (00046235) makes with SoundManager_Ctor (00041f64) when the [SoundFX] Driver# it reads is not 0, and leaves 0 otherwise; ES1DBSIM's Sound_Manager (000959ac).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-sound-manager"
+      "source": "Herculan/docs/es1/shell/sound.md"
     },
     {
       "address": "000828c0",
@@ -30170,7 +30170,7 @@
       "confidence": "high",
       "name": "ShellSound_Names",
       "description": "The 20 sound names ShellSound_Init (00046235) gives SoundManager_SetSampleNames (00042e16), a pointer each.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-sound-manager"
+      "source": "Herculan/docs/es1/shell/sound.md"
     },
     {
       "address": "00083c04",
@@ -32015,7 +32015,7 @@
       "confidence": "high",
       "name": "SoundManager_Instance",
       "description": "Set to the manager by SoundManager_Ctor (00041f64); ES1DBSIM's SoundManager_Instance (000bd73e).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-sound-manager"
+      "source": "Herculan/docs/es1/shell/sound.md"
     },
     {
       "address": "000ab4e4",
@@ -32024,7 +32024,7 @@
       "confidence": "high",
       "name": "SoundManager_DriversLoaded",
       "description": "Cleared on entry and set on success by SoundManager_LoadDrivers (0004240a); ES1DBSIM's SoundManager_DriversLoaded (000bd8cc).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-sound-manager"
+      "source": "Herculan/docs/es1/shell/sound.md"
     },
     {
       "address": "000ab60a",

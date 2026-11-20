@@ -9242,7 +9242,7 @@
       "confidence": "high",
       "name": "Mech_CreditNeutralisedTarget",
       "description": "(attacker, already immobilised, victim) in stack order, callee-cleaned, slot +0x64 of MechVtable (00091ae6). With the flag 0 and the victim's group side byte (+0x3f, +0x14) not the attacker's: for an attacker in the group of PlayerMech (000bc42a), the player's machine has Group_NearestLiveMember (0001cea4) within 30000 by Math_DistanceBetweenPoints (00063c20) post Ai_PostSquadMessage (0001a188)(member, 0, 5), and any other such attacker posts (attacker, 0, 2); and the attacker's tally int16 at +0x23a + 2 x the victim's class +0x162 goes up one. Then a victim in the player's group other than the player posts (victim, 1, 0x25) when destroyed (+0x93) or (victim, 1, 4). ES2's Mech_CreditNeutralisedTarget (DBSIM 00415710), whose player kill posts nothing, which also latches +0xa6 and counts the player's kills.",
-      "source": "Herculan/docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250; ES1DBSIM decompile at 00010f2c",
+      "source": "Herculan/docs/es1/simulation/mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250; ES1DBSIM decompile at 00010f2c",
       "verified": {
         "bytes": "00010f2c+292",
         "sha1": "4acb5614c570",
@@ -9767,7 +9767,7 @@
       "confidence": "high",
       "name": "Mech_ComponentDamageWrite",
       "description": "(machine, attacker, damage, component) in stack order, callee-cleaned: the damage endpoint. Returns at once for the player's machine (+0x9d) while MissionModeFlag (000bc4a0) is 0 and the header word at 000bc4a8 is 1, or for a component whose occupancy flag (+0x1a4) is clear. Then Component_ApplyDamageAndCascade (00009f7c)(+0x19c, damage, component); WeaponMount_Destroy (0000b968)(mount, 0, machine) for each mount not yet destroyed (+0x49) whose component flag reads 0. Legs, for internals 0 and 1, and 10 and 11 when the type record's +0x4a is above 2: each leg i below the leg count reading 0x100 destroys its shadow, slot i of +0x1cc when not null, through its slot +0xc with 3 and nulls the slot, the count +0x1d0 left as it was; unless immobilised (+0x9e), the count of legs at 0x100 reaching the leg count >> 1 runs, while +0x93 is clear, the attacker's slot +0x64(attacker, 0, machine) for a non-null attacker, Mech_ReportOutOfAction (0000d77c), Action_Activate (0001cc5c) of +0x170 and Behaviour_SetState (0000fdfc)(+0x47, disabled 000af564), then sets +0x9e, posts Computer_PostMessage (0001a154)(7) when the attacker is LocalPlayerMech (000b5b86) and its +0x15e is the machine, and for LocalPlayerMech itself sets the heading +0xa to the third int16 (Z) of Transform_RotationToEuler (0005e988) of Rotation_Concat (00064fe4)(the node transform of the type record's +0xc part, or a null pointer when the shape has no such part, Context_GetTransform (000016e8)(machine + 6)), clears +0x2c and the twist +0x22e, seeks the twist thread +0x1c4, when not null, with AnimThread_SeekToPosition (000620c4)(thread, 0, the type record's +0x1c) and runs SimObject_ApplyRootMotionIfEnabled (0000215c)(machine, 1); otherwise the two sides, legs 0 and 1, each averaged with leg 2 or 3 when the count is 4, latch +0xa3 when either is 0xc1 or more, else +0xa2 when either is above 0x80. Death, while +0x93 is clear, when Component_IsFullyDestroyed (00009f30) reports component 0 or 1 or internal 9 reads 0x100: +0x93 set, the attacker's slot +0x64 with +0x9e, the report and action when +0x9e was clear, +0x90 cleared, message 3 when the attacker is LocalPlayerMech and its +0x15e is the machine, then dead (000af53c), or for a type with +0x4c set +0x32 set, the dword Z +0x28 set to -100000, in limbo (000af514) and every shadow destroyed with the count +0x1d0 zeroed. Last, while +0xa4 and +0xa5 are clear, internal 5 latches +0xa5 past 0xc0 or +0xa4 past 0x80. es2_xref finds six calls: Mech_ApplyStartingCondition (00012f20) twice, Mech_SpreadImpactDamage (00013078), Mech_ApplyExplosiveDamage (00013a7c), Mech_DirectFireHitTest (00013b44) and Mech_BehaviourRamTick (00018278). ES2's Mech_ComponentDamageWrite (DBSIM 00417de4), which also posts the damage warnings, recomputes the shields, grades the legs at 0x8d and 0x50, kills on life support and finishes component 0.",
-      "source": "Herculan/docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250; ES1DBSIM decompile at 00013250",
+      "source": "Herculan/docs/es1/simulation/mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250; ES1DBSIM decompile at 00013250",
       "verified": {
         "bytes": "00013250+2090",
         "sha1": "e44d3462f539",
@@ -9782,7 +9782,7 @@
       "confidence": "high",
       "name": "Mech_ApplyExplosiveDamage",
       "description": "(machine, attacker, radius, point, damage) in stack order, callee-cleaned: for each of 28 components whose occupancy flag (+0x1a4) is set and whose Math_RandomNext (00063af4)(000b5bd4) & 0xfff is under 0x802, the position from slot +0x5c; one closer to the point than the radius by Math_DistanceBetweenPoints (00063c20) takes damage x (radius - distance) / radius through Mech_ComponentDamageWrite (00013250)(machine, attacker, that, component). es2_xref finds four calls: Damage_ExplosiveBlastSweep (0001f75c), Mech_DirectFireHitTest (00013b44) and Mech_CollisionTest (00014174) twice. ES2's Mech_ApplyExplosiveDamage (DBSIM 004187d0), which first passes the damage through the facing's shields.",
-      "source": "Herculan/docs/es1/simulation/mech.md#a-blast--mech_applyexplosivedamage-00013a7c; ES1DBSIM decompile at 00013a7c",
+      "source": "Herculan/docs/es1/simulation/mech-damage.md#a-blast--mech_applyexplosivedamage-00013a7c; ES1DBSIM decompile at 00013a7c",
       "verified": {
         "bytes": "00013a7c+197",
         "sha1": "4cf495a6cc78",
@@ -9797,7 +9797,7 @@
       "confidence": "high",
       "name": "Mech_DirectFireHitTest",
       "description": "(machine, shot), callee-cleaned, slot +0x24 of MechVtable (00091ae6): 0 when the shot's origin is farther than its length + its int16 +8 + the type record's +0x1a. Copies the shot's +6 and +4, both through Damage_ScaleByDifficulty (0001f82c) when the owner's (+0xe) group side byte is 0; an AI machine's radar +0x90 goes on for shot type +0x12 0 or 1 unless the counter +0x201 runs, off with +0x201 = 6000 for type 2. Mech_ShieldAbsorb_DirectFire (0000fca8)(+0x1b8, the +6 copy, the length, the shot in the machine's frame by Transform_Concat (0005ea08), machine); with an entry: +0x8e cleared, +0x21e raised by what the shields took; a stopped shot makes its impact at the entry; otherwise the player's machine posts Computer_PostMessage (0001a154)(8) once, latched on +0xaa; Mech_SelectStruckComponent (00009064)(+0x18c, +0x1a4, frame, shot, machine) picks the component, and on a strike +0x21e takes the +4 copy, the splash Math_Q10Multiply (0005e818)(+4 copy, shot +8), Component_ReadDamagePercent (0000a16c) before, Mech_ComponentDamageWrite (00013250)(machine, owner, rest, component), Mech_ApplyExplosiveDamage (00013a7c)(machine, owner, 500, point, splash) for a splash; on a band change (>> 5), Cockpit_StartHitShake (0002e17c) for the player's component 0 or 1, and ES2's mount roll with WeaponMounts_MountForHardpointSlot (0000ca04), WeaponMount_Destroy (0000b968), Salvage_QueueWeapon (0001f7e8) and Component_ApplyDamageAndCascade (00009f7c). With a non-zero answer and a component reading other than 0x100, Explosion_Construct (00005af0)(0, point, effect 4n + random & 3 of the shot's +0xa table) and, for a strike, Debris_ThrowGroup (00005fb8)(group n of g_DebrisGroups (000bc1c0), point, g_DebrisShapes (000bc1c6)), n 0 stopped, 1 same band, 2 changed. Returns the entry distance. ES2's Mech_DirectFireHitTest (DBSIM 00418ba8) with Mech_ApplyDirectFireDamage (DBSIM 004188c8).",
-      "source": "Herculan/docs/es1/simulation/mech.md#the-hit-test--mech_directfirehittest-00013b44; ES1DBSIM decompile at 00013b44",
+      "source": "Herculan/docs/es1/simulation/mech-damage.md#the-hit-test--mech_directfirehittest-00013b44; ES1DBSIM decompile at 00013b44",
       "verified": {
         "bytes": "00013b44+1262",
         "sha1": "d0ee2e52457f",
@@ -9977,7 +9977,7 @@
       "confidence": "high",
       "name": "Mech_PerTickSystemsUpdate",
       "description": "(machine), callee-cleaned: the pool +0x228 gains Math_IntegrateRateOverTick (00063fa4)(15), Math_Q10Multiply (0005e818)-scaled by 200 with +0xa5 set or 600 with +0xa4 set; the manager's (+0x198) energy slot (vptr +0x10, slot +4)(manager, pool - 1500), Shield_RechargeTick (0000fb2c)(+0x1b8, left), and the pool = rest + 1500 clamped to [0, 10000]. The player's +0xaa clears when front and rear each exceed 300. Timer_CountDown (00064178) on +0x208, +0x20d and +0x212 (expiry zeroes +0x217), Math_CountdownTimerTick (0006410c) on +0x200 and +0x21b (expiry: 4000 and +0x21e zeroed); Mech_ComputeCombatRating (000189f0)(machine) while +0x8e is clear. Mech_GetEcmPodSwitch (00014eb4) sets the target's (+0x15e) +0x9c, Mech_IsEcmSwitchedOn (00014e68) sets +0x9b. The five lock flags at the manager's +6 and +0x95 cleared, WeaponMounts_RoundsByMissileType (0000be6c); with a target: the ECM roll on +0x1fd against a jamming HERC (& 0xfff < 0x334: +0x96 and 5000, else 1500), the reload min(distance >> 2, 0x7fff), and unless +0x97 is set or the twist-adjusted bearing (Math_HeadingToward (00063cc8)) is outside +/-0x3000, ES2's countdowns +0x1ee, +0x1fa, +0x1f1, +0x1f4 set the flags; otherwise the first three reload and +0x97 clears at the end. For the player's machine, +0x95 from the armed mount's subtype (slot +0x64) and Mech_LockTonePlay (0001552c). es2_xref finds one call, from Sim_MainTick (00059700). ES2's Mech_PerTickSystemsUpdate (DBSIM 0041aa5c), with the spawn reactor rate, 500 held back, a line-of-sight test and the Targeting Pod's weight.",
-      "source": "Herculan/docs/es1/simulation/mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0; ES1DBSIM decompile at 00014ee0",
+      "source": "Herculan/docs/es1/simulation/mech-systems.md#the-systems-tick--mech_perticksystemsupdate-00014ee0; ES1DBSIM decompile at 00014ee0",
       "verified": {
         "bytes": "00014ee0+1612",
         "sha1": "d08eb5e63226",
@@ -9992,7 +9992,7 @@
       "confidence": "high",
       "name": "Mech_LockTonePlay",
       "description": "(machine), callee-cleaned: with the lamp +0x95 set, LockTone_WasLocked (00091c5d) = 1 and, while bit 0x40 of the dword 000981c4 is set, Sound_Play (0004de84)(0x15) once per phase on LockTone_PhaseSounded (00091c5c), which that bit's clearing resets; with it clear, Sound_Play(0x16) once when WasLocked is set (clearing it), otherwise 0x14 while +0x97 is set. es2_xref finds one call, from Mech_PerTickSystemsUpdate (00014ee0). ES2's Mech_LockTonePlay (DBSIM 0041b0bc).",
-      "source": "Herculan/docs/es1/simulation/mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0; ES1DBSIM decompile at 0001552c",
+      "source": "Herculan/docs/es1/simulation/mech-systems.md#the-systems-tick--mech_perticksystemsupdate-00014ee0; ES1DBSIM decompile at 0001552c",
       "verified": {
         "bytes": "0001552c+121",
         "sha1": "433ba16c413e",
@@ -14216,7 +14216,7 @@
       "confidence": "high",
       "name": "CockpitChassis_SelectByName",
       "description": "(name) callee-cleaned: compares name with stricmp against the eight chassis names at 00092644 (ROADRUNNER, GUNSLINGER, RAPTOR, TOMAHAWK, PATRIOT, PANTHER, HERCULES, COLOSSUS) and for the first that matches stores its index at the word CockpitOverride_Index (000925f4) and name's address at CockpitOverride_Name (000925f8), the cockpit chassis CockpitClock_Ctor and CockpitViewManager_Ctor (00021dd4) take in place of the HERC's own. es2_xref finds one call, from Sim_ParseCommandLine (00058e74)'s case for the command-line option -C, passing the text after the C.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "source": "Herculan/docs/es1/simulation/cockpit-clock.md",
       "verified": {
         "bytes": "00024394+62",
         "sha1": "6f4d7e1572f0",
@@ -16271,7 +16271,7 @@
       "confidence": "high",
       "name": "Cockpit_LoadPanel",
       "description": "(cockpit, name): keeps Gau_Load (0002b5c4)(ResourcePath_BuildFolderName (00060698)(the folder 00098110 points to, name)) at CockpitGauRecord (00092d3c) and builds the cockpit's objects from it: Cockpit_CreateCanvasContext (0002ad78)'s result at +4, CTLWindow_Ctor (00043cac)(0, it) at +0 (then Widget_ClearPressed (00044310) with it), DialogPort_Ctor (0002f3d8)(0, CockpitGauRecord (00092d3c) + 0x684) at +0x203, a 0x469-byte object from MessagePort_CtorBase (0002eb80)(object, CockpitGauRecord (00092d3c) + 0x694) with 00092f0a at its +0x464 and 0 at +0x468 at +0x207, and the results of Gau_WeaponButtonsWidget (0002ccd8), Gau_EnergyMeterWidget (0002cd3c), Gau_ShieldDisplayWidget (0002cd74), Gau_MfdPanelWidget (0002cdac), Gau_ThrottleWidget (0002cdf0), Gau_RovingGunsightWrapper (0002ce28), Gau_PilotRosterWidget (0002ce60) and CockpitClock_Create (0002ce98), each given the cockpit and CockpitGauRecord (00092d3c), at +0x1dd to +0x1f9. Between them makes the .TTM manager with Ttm_ManagerCtor(0, 0, the installed render context 000bdbda, 10) at CockpitTtmManager (00092d70), sets its prefix ttm\\ (00092f2e) with Ttm_SetPathPrefix and calls Ttm_AllocHandles (00069780)(manager, 2); ends with Ttm_RunAll (000695e0)(manager). es2_xref finds one call, from CockpitViewManager_LoadViews.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "0002c9d8+361",
         "sha1": "380aed199aba",
@@ -16481,7 +16481,7 @@
       "confidence": "high",
       "name": "CockpitClock_Create",
       "description": "(cockpit, description) in stack order, callee-cleaned: makes the cockpit clock with CockpitClock_Ctor (000433cc)(0, cockpit, description + 0x644), stores it at the cockpit's +8 + 4 x the count +0x6c, adds 1 to the count and returns the clock. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1f9.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "source": "Herculan/docs/es1/simulation/cockpit-clock.md",
       "verified": {
         "bytes": "0002ce98+56",
         "sha1": "8369a882ed0b",
@@ -16511,7 +16511,7 @@
       "confidence": "high",
       "name": "Cockpit_DrawFrame",
       "description": "(cockpit): returns at once while the byte Cockpit_SkipFrameDraw (00092d7c) is set. Otherwise: the first time (byte +0x23a 0) calls CockpitView_BuildScrollTriggers (0002d970) and sets +0x23a; calls the +0xc slot of the vtable at +0x76 of the clock +0x1f9 (CockpitClock_Tick), then Cockpit_HitShakeTick (0002e1d8); with the byte +0x20b set calls that slot of +0x1f5 and returns. Else, while the published view manager's +0x18 is 0, calls the +0x14 slot of the table at +0x464 of +0x203; between Cockpit_PushCanvasContext and Cockpit_PopRenderContext calls the +0xc slot of each set object of the nine at +0x70, of +0x1d8 when set, and of +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1e9 and +0x1f5; then Cockpit_RunTtmScripts (0002e0ec), the +0x10 slot of the +0x464 table of +0x207, and Cockpit_UpdateEdgeCursor (0002de48); and with +0x20c set calls TargetSelect_CanTarget (0002d624)(cockpit, +0x20c), clearing +0x20c when that returns 0. es2_xref finds one call, from Sim_RenderFrame.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#each-frame",
       "verified": {
         "bytes": "0002cf28+368",
         "sha1": "09738a915aad",
@@ -16946,7 +16946,7 @@
       "confidence": "high",
       "name": "Cockpit_RunTtmScripts",
       "description": "(): with the installed render context 000bdbda, saves its dwords +0x20c, +0x220 and +0x224, sets them to 1, CockpitViewCanvasOrigin (000afa9c) and 000afaa0, makes it the .TTM default context with Ttm_SetDefaultContext (0006982c)(CockpitTtmManager (00092d70), it), runs the scripts with Ttm_RunAll (000695e0)(CockpitTtmManager (00092d70)), and puts the three back. es2_xref finds calls from Cockpit_DrawFrame (0002cf28) and CockpitView_InvalidateWidgets (0002b4a0), through the padding entry 0002e0e9.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#each-frame",
       "verified": {
         "bytes": "0002e0ec+144",
         "sha1": "4845b52a89dc",
@@ -25466,7 +25466,7 @@
       "confidence": "high",
       "name": "CockpitClock_Ctor",
       "description": "(clock, cockpit, rect): allocates the 0x8a-byte cockpit clock when given none (returning 0 when that fails); builds it with PanelGauge_Ctor (00031318)(clock, cockpit, rect + 0x10) and stores the vtable 00094b5a at +0x76. Opens the HERC's .TTM with Ttm_Open(CockpitTtmManager (00092d70), 0, 0, Path_WithExtension(ttm (00094b72), eight characters of CockpitOverride_Name (000925f8)'s string when CockpitOverride_Name (000925f8) is set, else of +0x58 of the type record +0x188 of CockpitViewInstance's +0x1ff)), takes the handle as a signed byte, and when that handle's entry of the table +5 holds a script stores CockpitViewInstance's +4 at the script's +0x1bd; a failed open's 0xff reads the dword before the table. Copies cpwincrk (00094b76) into the name buffer; sets the strings 00, 00 and : at 000bd504, 000bd508 and 000bd50c; makes three labels with Label_Ctor(0, ColorSchemePanels (00092d40)) at +0x7a, +0x7e and +0x82, each passed to Label_SetRect with 1, 4 and 2 respectively, rect + 0x10 and the point (1, 0), (1, 0) and (0, 0), and their +0x1c set to 0x3f, 0 and 0; sets +0x86 to 000981c4 + 30. es2_xref finds one call, from CockpitClock_Create (0002ce98).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "source": "Herculan/docs/es1/simulation/cockpit-clock.md",
       "verified": {
         "bytes": "000433cc+469",
         "sha1": "fa9e98bc230f",
@@ -25481,7 +25481,7 @@
       "confidence": "high",
       "name": "CockpitClock_Update",
       "description": "(clock): slot +8 of the clock's vtable 00094b5a, entered at 000435ad: calls CockpitClock_Advance (00043658)(clock) through its padding entry.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "source": "Herculan/docs/es1/simulation/cockpit-clock.md",
       "verified": {
         "bytes": "000435b0+15",
         "sha1": "3ad01dc3c098",
@@ -25496,7 +25496,7 @@
       "confidence": "high",
       "name": "CockpitClock_Tick",
       "description": "(clock): slot +0xc of the clock's vtable 00094b5a, entered at 000435bf. Sets the mark +0x75 to 2 while the published view manager's +0x18 is set; while +0x75 is set draws the rect from +4 of the hour label +0x7a to +0xc of the minute label +0x7e with Widget_DrawToCockpit(0, rect, 0) and clears it; when the count 000981c4 is above +0x86, compared unsigned, calls CockpitClock_Advance (00043658), sets +0x86 to the count as read before the call + 30 and +0x75 to 1.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "source": "Herculan/docs/es1/simulation/cockpit-clock.md",
       "verified": {
         "bytes": "000435c0+151",
         "sha1": "221266f984d5",
@@ -25511,7 +25511,7 @@
       "confidence": "high",
       "name": "CockpitClock_Advance",
       "description": "(clock): toggles the byte 00094b56 and, when it becomes 1, adds a minute to the digits HH (000bd504-000bd505) and MM (000bd508-000bd509): minutes 00 to 59, hours 00 to 24, the minute after 24:59 setting all four to 0. When CockpitView_RectCornerVisible(hour label +0x7a's +4) is nonzero, between Cockpit_PushCanvasContext and Cockpit_PopRenderContext sets the hour label's text to 000bd504 and the minute label's (+0x7e) to 000bd508 with Label_SetText, and the colon label's (+0x82) to 000bd50c while 00094b56 is 1. es2_xref finds calls from CockpitClock_Update (000435b0) and CockpitClock_Tick (000435c0), through the padding entry 00043657.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "source": "Herculan/docs/es1/simulation/cockpit-clock.md",
       "verified": {
         "bytes": "00043658+219",
         "sha1": "3f32793aa759",
@@ -29306,7 +29306,7 @@
       "confidence": "high",
       "name": "Sound_Init",
       "description": "(midiPort, port, dma, irq, midiDevice, digiDevice) in stack order: sets the voice-line slot count 000bd73c to 10, or 1 when g_LowMemory is set, and allocates the slots (__vec_new, 0x3a bytes each, to 000bd734) and 100 bytes per slot (000bd738). When digiDevice is non-zero: makes the sound manager Sound_Manager (000959ac) with SoundManager_Ctor (0004eb40), stores the six values over the driver defaults block (00095a08, 00095a00, 000959f8, 000959fc, 00095a0c, 00095a04), runs SoundManager_LoadDrivers (0004ef8c), calls SoundManager_SetMemoryLimit (00050008)(manager, 0xffffffff) and clears the manager's +0x503, or in the low-memory mode SoundManager_SetMemoryLimit (00050008)(manager, 200000) and sets it, calls SoundManager_SetHearingRange (0004ffe0)(manager, 100000), zeroes SoundCatalog_Count (000bd72c) and runs SoundCatalog_Load (0004dc70). Sets Sound_ListenerCountdown (000959b4) to 10 either way. es2_xref finds one call, from Sim_StartMission (0005ab6f).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver",
       "verified": {
         "bytes": "0004db14+298",
         "sha1": "01ae68e3ccec",
@@ -29336,7 +29336,7 @@
       "confidence": "high",
       "name": "SoundCatalog_Load",
       "description": "Loads str\\SOUNDS.STR (ResourcePath_BuildFolderName, StringTable_LoadFromFile into SoundCatalog_StringTable (000b1e44)) and reads it with StringTable_ReadNext into the name array SoundCatalog_Names (000b18a4) and the attribute pointer array SoundCatalog_Attributes (000b1994); passes the names to SoundManager_SetSampleNames (0004f888). For each row up to the first empty name: SoundCatalog_Objects (000bd63c)[row] = SoundManager_CreateObject (0004f4e8)(manager, 2, attribute byte 3, row), then the object's slot +0x28(-1, -1, attribute byte 0) and +0x2c(attribute byte 1), SoundObject_LoadSample when attribute byte 2 is set, and SoundCatalog_OfferedDistance (000b1a84)[row] = 0; the row count is left in SoundCatalog_Count (000bd72c). Then for each voice-line slot (000bd734, stride 0x3a, count 000bd73c) stores the next index past the rows at +0x34 and SoundManager_CreateObject(manager, 0, 0, index) at +0x36. Called last by Sound_Init (0004db14).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-simulators-catalog",
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#the-simulators-catalog",
       "verified": {
         "bytes": "0004dc70+365",
         "sha1": "17ab9733a439",
@@ -29501,7 +29501,7 @@
       "confidence": "high",
       "name": "SpeechLine_Load",
       "description": "(sncName, voiceName) in stack order: finds the voice-line slot (000bd734, stride 0x3a, count 000bd73c) whose +0x2b holds the key Voice_KeyOfName (0004e208) gives for voiceName, and returns it as it is, loading neither sample nor script again; with none, takes a slot from Voice_EvictLru (0004e08c) (returning 0 when it gives none), stores the key at +0x2b and 1 at +0x33, and, when the sound manager Sound_Manager (000959ac) exists and the byte Sound_SpeechEnabled (000959e4) is set, builds simvoice\\<voiceName>.sfx in the slot's +0xe, names it as the slot's index +0x34 with SoundManager_SetSampleName (0004f99c) and loads the slot's sound +0x36 with SoundObject_LoadSample, returning 0 when that fails, with the key and +0x33 already stored and no script loaded; then Snc_Load(slot, sound +0x36, sncName). Stores 000981c4, as read on entry, at +0x2f and returns the slot. es2_xref finds one call, from 0003e1a8 in CommBox_BeginMessage (0003e060).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#voice-lines",
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#voice-lines",
       "verified": {
         "bytes": "0004e0f0+278",
         "sha1": "4934ab8d01eb",
@@ -29516,7 +29516,7 @@
       "confidence": "high",
       "name": "Voice_KeyOfName",
       "description": "(name), callee-cleaned (RET 4): copies name with its zero into a 12-byte stack buffer, its length unchecked, upper-cases the copy with Str_ToUpperInPlace (0006d4b4), and returns (character 1 - '0') * 0x1000000 + characters 3 to 7 read as five decimal digits, each less '0', signed, times 10000, 1000, 100, 10 and 1; P1_01000 gives 0x1000000 + 1000. es2_xref finds one call, from SpeechLine_Load (0004e0f0), by its padding 0004e206, which compares the result with each voice-line slot's +0x2b.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#voice-lines; ES1DBSIM disassembly at 0004e208",
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#voice-lines; ES1DBSIM disassembly at 0004e208",
       "verified": {
         "bytes": "0004e208+138",
         "sha1": "a3cbcf0a7bc8",
@@ -29531,7 +29531,7 @@
       "confidence": "high",
       "name": "Sound_SetMusicEnabled",
       "description": "(on), its argument removed by this function: when on differs from Sound_MusicEnabled (000959b8) and is 0, with the sound manager Sound_Manager (000959ac) set, Sound_StopSongs (0004e2f9); then stores on (zero-extended) in Sound_MusicEnabled. es2_xref finds calls from Prefs_ApplyMusicOption (0004ad0c) and Sim_StartMission (0005b4a1, with 1).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off; ES1DBSIM decompile at 0004e294",
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#turning-songs-and-sounds-off; ES1DBSIM decompile at 0004e294",
       "verified": {
         "bytes": "0004e294+49",
         "sha1": "7f79a8043d8b",
@@ -29546,7 +29546,7 @@
       "confidence": "high",
       "name": "Sound_SetEffectsEnabled",
       "description": "(on), its argument removed by this function: Sound_SetMusicEnabled (0004e294) over Sound_EffectsEnabled (000959bc), calling Sound_StopDigitalSounds (0004e34c) through the two NOPs before it at 0004e34a. es2_xref finds one call, from Prefs_ApplySoundsOption (0004acfc).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off; ES1DBSIM decompile and disassembly at 0004e2c8",
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#turning-songs-and-sounds-off; ES1DBSIM decompile and disassembly at 0004e2c8",
       "verified": {
         "bytes": "0004e2c8+49",
         "sha1": "5d691cf0125d",
@@ -29561,7 +29561,7 @@
       "confidence": "high",
       "name": "Sound_StopSongs",
       "description": "No arguments: Sound_StopDigitalSounds (0004e34c) for songs: with the sound manager Sound_Manager (000959ac) set, for each object slot below the catalog's row count SoundCatalog_Count (000bd72c), SoundManager_GetObject (0004f660); an object whose kind byte +0x17 is set and whose vtable (+0x3b) slot +0x30 answers non-zero is stopped through its slot +0x14. es2_xref finds one call, from Sound_SetMusicEnabled (0004e294).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off; ES1DBSIM decompile at 0004e2f9",
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#turning-songs-and-sounds-off; ES1DBSIM decompile at 0004e2f9",
       "verified": {
         "bytes": "0004e2f9+81",
         "sha1": "ce9ced6355d6",
@@ -29771,7 +29771,7 @@
       "confidence": "high",
       "name": "Sound_StaticInit",
       "description": "Static constructor table entry 000adc64; frameless, with no Ghidra function: __vec_ctor (000610cb)(maybe_Point3I_CtorSoundCopy (0004e6e0) by its padding 0004e6dd, 60, 0xc, SoundCatalog_Positions (000b1b74)) in stack order, then StringTable_Ctor (00044f14)(SoundCatalog_StringTable (000b1e44)), and RET. ES2's Sound_StaticInit (DBSIM 0046349c), which builds the string table alone.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0004e6b0",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0004e6b0",
       "verified": {
         "bytes": "0004e6b0+30",
         "sha1": "1db03bce3d2a",
@@ -29786,7 +29786,7 @@
       "confidence": "high",
       "name": "Sound_StaticDtor",
       "description": "Exit table entry 000adcc8; frameless, with no Ghidra function: OwnedArray_Dtor (00044f48)(SoundCatalog_StringTable (000b1e44), 2) in stack order, and RET. ES2's Sound_StaticDtor (DBSIM 004634cc).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0004e6d0",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0004e6d0",
       "verified": {
         "bytes": "0004e6d0+13",
         "sha1": "c6a4437326ab",
@@ -29801,7 +29801,7 @@
       "confidence": "medium",
       "name": "maybe_Point3I_CtorSoundCopy",
       "description": "(p), its argument removed by this function: allocates 0xc bytes when p is null, returning 0 when that fails, inlines an 8-byte base's constructor and returns p. The sound file's copy of maybe_Point3I_Ctor (000633fc), identical after normalisation by es2_naming diff. Sound_StaticInit (0004e6b0) passes its padding 0004e6dd to __vec_ctor as the element constructor of SoundCatalog_Positions (000b1b74).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0004e6e0",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0004e6e0",
       "verified": {
         "bytes": "0004e6e0+48",
         "sha1": "6e706452f4b4",
@@ -29831,7 +29831,7 @@
       "confidence": "high",
       "name": "MidiSound_LoopCallback",
       "description": "(a, handle, c, flags), the far callback MidiSound_Play (000505c8) registers through HmiMidi_SetLoopCallback (0006ee87): answers 1 when bit 0x80 of flags is clear. Otherwise finds among the 60 slots of SoundManager_Instance (000bd73e) the object with +0x17 set whose word +0x1d is the handle, answering 0 with none; its repeat count is the word +0x23 while slot +0x30 answers non-zero, else +0x21: -1 answers 1, 0 answers 0, any other count c goes back through slot +0x28(-1, -1, c - 1) and answers 1.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 0004e718",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 0004e718",
       "verified": {
         "bytes": "0004e718+155",
         "sha1": "c0aa647dda84",
@@ -29846,7 +29846,7 @@
       "confidence": "high",
       "name": "MidiSound_EndCallback",
       "description": "(a, handle), the far callback MidiSound_Play (000505c8) stores at the song block's +0xc7: finds among the 60 slots of SoundManager_Instance (000bd73e) the object with +0x17 set whose word +0x1d is the handle and stops it through its vtable slot +0x14; returns with none.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 0004e7b4",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 0004e7b4",
       "verified": {
         "bytes": "0004e7b4+69",
         "sha1": "a8fbccbad5e1",
@@ -29861,7 +29861,7 @@
       "confidence": "high",
       "name": "DigiSound_DoneCallback",
       "description": "(a, b, event, voice), the far callback DigiSound_Play (000509c4) puts in the start block's +0x1c: with event 2, sets +0x19 to -1 and the word +0x1d to 0xffff on the first object among the 60 slots of SoundManager_Instance (000bd73e) whose +0x17 is 0 and whose +0x19 is the voice.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 0004e7fc",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 0004e7fc",
       "verified": {
         "bytes": "0004e7fc+90",
         "sha1": "fb8ebf88ad3a",
@@ -29876,7 +29876,7 @@
       "confidence": "high",
       "name": "SoundManager_PrintMono",
       "description": "(manager, count, first): with 00095a10 set, Mono_Clear and clears it; Mono_Printf of the bytes loaded +0x4f6, the limit +0x4fe, the master volume +0x241 and the device ids 00095a04 and 00095a0c, a column header, and one line for each of count slots from first, lettered from 'A': MIDI or DIGI, the handle +0x19, the repeat count (a playing digital sound's from 0006e221(000bd8c8, voice), else +0x23 while it plays or +0x21), 'B' when the far pointer +0x35 is set, the flags +0x0d and the vtable slot +0x0c's answer, the name's size +0x262, '+' when loaded, PLY when slot +0x30 answers non-zero, the volume (+0x31, or a placed sound's +0x32 through Math_MapRange (00065480) from 0-0x7fff to 0-100) and the name; 'empty slot' for no object. es2_xref finds no caller.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-debug-listing; ES1DBSIM decompile at 0004e858",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-debug-listing; ES1DBSIM decompile at 0004e858",
       "verified": {
         "bytes": "0004e858+743",
         "sha1": "7d3907ad73c3",
@@ -29891,7 +29891,7 @@
       "confidence": "high",
       "name": "SoundManager_Ctor",
       "description": "(memory or 0): allocates 0x50c bytes when given none; builds the member at +0x242 inline; clears +0x00-+0x23, +0x24-+0x33, +0x34-+0x9f, +0xa0-+0xcb, +0xcc-+0xd7, +0xd8-+0x133 and the 60 object slots +0x14c; sets +0x23c to 100000, +0x240 to 10, the volume byte +0x241 to 90, SoundManager_Instance (000bd73e) to the manager, the memory limit +0x4fe to 300000, the bytes loaded +0x4f6 and high-water mark +0x4fa to 0, the evict flag +0x503 to 1, the volume stream +0x504 to VolRStream_CtorFromPath(0, \"sos\\sound.vol\") and the timer slot +0x134 to -1.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-sound-manager",
+      "source": "Herculan/docs/es1/sound/sound-manager.md",
       "verified": {
         "bytes": "0004eb40+394",
         "sha1": "ba3dccaa1dc1",
@@ -29906,7 +29906,7 @@
       "confidence": "high",
       "name": "SoundManager_Dtor",
       "description": "(manager, flags), its arguments removed by this function: returns for a null manager; sprintf of 'SoundManager::~SoundManager: max memory used = %d (limit %d)' with +0x4fa and +0x4fe into a stack buffer; SoundManager_UnloadDrivers (0004f3d4); each non-null object of the 60 slots +0x14c destroyed through its vtable slot +0x08 with 3; VolRStream_Close(+0x504); Mem_Delete when bit 0 of flags is set. es2_xref finds no caller.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile at 0004eccc",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver; ES1DBSIM decompile at 0004eccc",
       "verified": {
         "bytes": "0004eccc+153",
         "sha1": "16b00e3378ff",
@@ -29921,7 +29921,7 @@
       "confidence": "high",
       "name": "SoundManager_DetectDigitalCard",
       "description": "(manager, device): SoundDetect_Init (0004ee30)(manager, '.\\', SoundDetect_Buffer (000bd742)); with the device's low word 0, SoundDetect_FindFirst (0004eef4), then SoundDetect_Close (0004ef68); otherwise SoundDetect_FindDevice (0004ee78)(manager, device, buffer). On success copies the buffer's +0x176, +0x172, +0x16e and +0x166 (000bd8b8, 000bd8b4, 000bd8b0, 000bd8a8) over the defaults block's DMA 000959f8, IRQ 000959fc, port 00095a00 and digital device 00095a04 and returns 1; else 0. es2_xref finds no caller.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile at 0004ed68",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver; ES1DBSIM decompile at 0004ed68",
       "verified": {
         "bytes": "0004ed68+197",
         "sha1": "0d049b601cef",
@@ -29936,7 +29936,7 @@
       "confidence": "high",
       "name": "SoundDetect_Init",
       "description": "(manager, path, buffer): copies path with its zero into buffer, or an empty string for a null path, and clears buffer +0x100 and +0x101. es2_xref finds one call, from SoundManager_DetectDigitalCard (0004ed68).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile at 0004ee30",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver; ES1DBSIM decompile at 0004ee30",
       "verified": {
         "bytes": "0004ee30+69",
         "sha1": "06ec60e2356d",
@@ -29951,7 +29951,7 @@
       "confidence": "high",
       "name": "SoundDetect_FindDevice",
       "description": "(manager, device, buffer): 0007235d(buffer); when that returns 0, 00072573(device, buffer + 0x102, buffer + 0x16e); when that returns 0, 00072ce9(buffer + 0x16e); then 00072517 either way, clears buffer +0x100, sets buffer +0x101 when all three returned 0, and returns +0x101. es2_xref finds one call, from SoundManager_DetectDigitalCard (0004ed68).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile at 0004ee78",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver; ES1DBSIM decompile at 0004ee78",
       "verified": {
         "bytes": "0004ee78+121",
         "sha1": "fd1ac4d1defa",
@@ -29966,7 +29966,7 @@
       "confidence": "high",
       "name": "SoundDetect_FindFirst",
       "description": "(manager, buffer): 0007235d(buffer); when that returns 0, 00072901(buffer + 0x102, buffer + 0x16e); when that returns 0, 00072ce9(buffer + 0x16e). With all three 0 it sets buffer +0x100 and +0x101 and returns 1; otherwise 00072517 and returns 0. es2_xref finds one call, from SoundManager_DetectDigitalCard (0004ed68).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile at 0004eef4",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver; ES1DBSIM decompile at 0004eef4",
       "verified": {
         "bytes": "0004eef4+115",
         "sha1": "c99a4b35ef9d",
@@ -29981,7 +29981,7 @@
       "confidence": "high",
       "name": "SoundDetect_Close",
       "description": "(manager, buffer): with buffer +0x100 set, 00072517 and clears it. es2_xref finds calls from SoundManager_DetectDigitalCard (0004ed68).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile at 0004ef68",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver; ES1DBSIM decompile at 0004ef68",
       "verified": {
         "bytes": "0004ef68+33",
         "sha1": "0e70201adae9",
@@ -29996,7 +29996,7 @@
       "confidence": "high",
       "name": "SoundManager_LoadDrivers",
       "description": "(manager): clears SoundManager_DriversLoaded (000bd8cc) and returns 0 unless SoundManager_LoadBanks (0004f6d4) succeeds. Calls HmiTimer_Init (0006d4f5)(0, 1), registers SoundManager_TimerCallback (0004e710) with Timer_AddCallback at a count from the word at 000bdd0c+4 and 120 and keeps the slot at +0x134, calls HmiDigi_InitSystem (0006fdbb)(00095b54) and HmiMidi_InitSystem (00070ed8)(00095b59), clears the block +0xa0's far pointer +4, so that the open loads an image, stores the port 00095a08 at +0xcc, opens the MIDI device 00095a0c with HmiMidi_InitDriver (00071076) on the blocks +0xcc and +0xa0 (handle 000bd8c0) and loads the banks +0x13a and +0x146 into it with HmiMidi_LoadBank (00072275). Fills the digital driver block: device 00095a04 at +0, 0x78 at +4, 8 at +0xc, 1 at +0x10, far pointers to +0xd8 at +0x14 and to +0x24 at +0x1c; port 00095a00, IRQ 000959fc and DMA 000959f8 at +0x24, +0x28 and +0x2c; 0x1000 (SoundDriver_Defaults (000959ec)) at +0xd8, 1 at +0xe4, the rate 11025 (000959f0) at +0xe8, 0x13 at +0xec; the manager's far pointer at +0xb8. Sets 000bd8c8 to 0, calls HmiDigi_InitSystem (0006fdbb)(00095bb8), opens device 0xa005 with HmiMidi_InitDriver on +0xcc and +0xa0 (handle 000bd8c4), loads +0x140 into it with HmiMidi_LoadBank (00072275), calls HmiMidi_SetChannelStealing (0007225a)(0), sets SoundManager_DriversLoaded to 1 and returns 1. Each call's error goes to 000bd8d0. Each failure formats 'SoundManager::loadDrivers: %s' with HmiLib_ErrorText (0006f23d)'s text, passes one or both MIDI handles to HmiMidi_CloseDriver (0007144b)(handle, 1) from the bank loads on, calls HmiDigi_UninitSystem (0006fe28), HmiMidi_UninitSystem (00071064) and HmiTimer_Uninit (0006d5c2)(0), and returns 0. Called from Sound_Init (0004db14).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver",
       "verified": {
         "bytes": "0004ef8c+1093",
         "sha1": "6f80a6eb16d9",
@@ -30011,7 +30011,7 @@
       "confidence": "high",
       "name": "SoundManager_UnloadDrivers",
       "description": "(manager): with SoundManager_DriversLoaded (000bd8cc) set: stops each non-null object of the 60 slots +0x14c through its vtable slot +0x14; HmiMidi_ResetDriver (00071515) on the MIDI handles 000bd8c0 and 000bd8c4, then HmiMidi_CloseDriver (0007144b)(handle, 1) on each; Timer_RemoveCallback of the word +0x134 (its test against -1 compares the word zero-extended, so it always passes); HmiMidi_UninitSystem (00071064); HmiDigi_UninitDriver (000705c5)(000bd8c8, 1, 1); HmiDigi_UninitSystem (0006fe28); clears SoundManager_DriversLoaded. es2_xref finds calls from SoundManager_Dtor (0004eccc) and Sound_Shutdown (0004de08).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile and disassembly at 0004f3d4",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver; ES1DBSIM decompile and disassembly at 0004f3d4",
       "verified": {
         "bytes": "0004f3d4+218",
         "sha1": "19db3ea3a74e",
@@ -30026,7 +30026,7 @@
       "confidence": "high",
       "name": "SoundManager_FindFreeSlot",
       "description": "(manager): the index of the first null pointer among the 60 object slots at +0x14c, or 0xffff.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects",
       "verified": {
         "bytes": "0004f4b0+55",
         "sha1": "270e9d984c3f",
@@ -30041,7 +30041,7 @@
       "confidence": "high",
       "name": "SoundManager_CreateObject",
       "description": "(manager, kind, priority, index) in stack order: returns 0 when index, compared as a signed int16, is above the highest name index byte +0x502, so a negative one reads before the name table, or SoundManager_FindFreeSlot (0004f4b0) gives 0xffff. Looks up the index's name in the table +0x508: with none, kind 2 returns 0 and any other kind goes on with no name; with one, Str_FindBoyerMoore over Str_ToLowerInPlace (0006f948)'s result for it sets the kind to 1 when it holds .hmp, then to 0 when it holds .sfx or .raw. Kind 1 builds MidiSound_Ctor (000504dc)(0, slot, index, name, manager), any other DigiSound_Ctor (000507c8) with the same arguments; stores the object in the slot, calls its slot +0x2c with its byte +0x31, stores the priority at +0x34 and returns it.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects",
       "verified": {
         "bytes": "0004f4e8+373",
         "sha1": "6d0b82057881",
@@ -30056,7 +30056,7 @@
       "confidence": "high",
       "name": "SoundManager_GetObject",
       "description": "(manager, slot): the object pointer in the slot, manager +0x14c + slot*4.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects",
       "verified": {
         "bytes": "0004f660+24",
         "sha1": "62c015606792",
@@ -30071,7 +30071,7 @@
       "confidence": "high",
       "name": "SoundManager_ClearSlot",
       "description": "(manager, slot): clears the object pointer +0x14c[slot]. es2_xref finds no caller.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004f678",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 0004f678",
       "verified": {
         "bytes": "0004f678+28",
         "sha1": "45b7f44400ff",
@@ -30101,7 +30101,7 @@
       "confidence": "high",
       "name": "SoundManager_LoadBanks",
       "description": "(manager): reads sos\\melodic.bnk, sos\\drum.bnk and sos\\drum32.dig whole through the manager's volume stream +0x504 (VolRStream_Open, VolRStream_GetSize, operator new, the stream's read slot +0x1c, VolRStream_Close) and keeps far pointers to them at +0x13a, +0x146 and +0x140; returns 1, or 0 at the first that fails to open, allocate or read.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver",
       "verified": {
         "bytes": "0004f6d4+435",
         "sha1": "5ab80962c350",
@@ -30116,7 +30116,7 @@
       "confidence": "high",
       "name": "SoundManager_SetSampleNames",
       "description": "(manager, names): keeps the null-terminated array of name pointers at +0x508. For each name, an empty one gets size 0; any other is opened through the volume stream +0x504 and its VolRStream_GetSize stored at +0x262[i], and the function returns at once when it fails to open. Each name's data far pointer +0x38e[i] and reference count byte +0x352[i] are cleared. After the last it sets the highest name index +0x502 to the count less one.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#naming-and-loading",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#naming-and-loading",
       "verified": {
         "bytes": "0004f888+276",
         "sha1": "1067969f0cc5",
@@ -30131,7 +30131,7 @@
       "confidence": "high",
       "name": "SoundManager_SetSampleName",
       "description": "(manager, index, name) in stack order: returns 0 for no name, an index above +0x502, or a name in which Str_FindBoyerMoore over Str_ToLowerInPlace (0006f948)'s result finds none of .sfx and .raw (kind 0) and .hmp (kind 1). Every object of the 60 slots on that index must be of that kind (byte +0x17), else it returns 0; each is stopped through its slot +0x14, unloaded by SoundObject_Unload (00050164), has bit 1 of its flags +0xd set and bit 0 cleared, and takes the name. Then stores the name at +0x508[index], opens it through the stream +0x504, stores VolRStream_GetSize at +0x262[index], clears the data far pointer +0x38e[index] and returns 1; 0 when it fails to open.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#naming-and-loading",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#naming-and-loading",
       "verified": {
         "bytes": "0004f99c+330",
         "sha1": "7067ac02db02",
@@ -30146,7 +30146,7 @@
       "confidence": "high",
       "name": "SoundManager_SetMasterVolume",
       "description": "(manager, volume): the volume held to 0-100 (signed char) into +0x241, then each non-null object of the 60 slots +0x14c given its own +0x31 through its vtable slot +0x2c. es2_xref finds no caller.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004fae8",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 0004fae8",
       "verified": {
         "bytes": "0004fae8+94",
         "sha1": "1b21b501748b",
@@ -30161,7 +30161,7 @@
       "confidence": "high",
       "name": "SoundManager_SetDistanceShift",
       "description": "(manager, shift): stores the byte in +0x240. es2_xref finds no caller.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004fb48",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 0004fb48",
       "verified": {
         "bytes": "0004fb48+21",
         "sha1": "3f8f0c9089fa",
@@ -30176,7 +30176,7 @@
       "confidence": "high",
       "name": "SoundManager_UpdateListener",
       "description": "(manager, frame): copies the frame's 8 dwords to +0x242, then for each of the 60 slots +0x14c holding an object with +0x15 set does what SoundObject_UpdatePlacement (0004fdd8) does for one slot, with the frame's position at its dwords 5-7. es2_xref finds one call, from Sound_UpdateListener (0004df98).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile and disassembly at 0004fb60",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile and disassembly at 0004fb60",
       "verified": {
         "bytes": "0004fb60+629",
         "sha1": "7e64497ea642",
@@ -30191,7 +30191,7 @@
       "confidence": "high",
       "name": "SoundObject_UpdatePlacement",
       "description": "(manager, slot): for the slot's object with +0x15 set: R = +0x23c, and with R above 0xffff the shift s = the byte +0x240 and R >>= s, else s = 0; the offset = the object's +0x25/+0x29/+0x2d less the frame's position +0x256/+0x25a/+0x25e, each >> s; d = Math_FastMagnitude3D (0006325a) of it, 1 for 0. With d >= R (signed) vtable slot +0x04(0). Otherwise slot +0x04(+0x31 - d * +0x31 / R); each axis * 0xfff / d; Transform_RotatePoint (0005ef74)((0xfff, 0, 0), the frame's first five dwords, out); p = DotProductVec3Int (000660f2)(out, offset) / 0xfff; SoundObject_SetPan (00050150)(object, 0xffff - 8 * (p + 0xfff)). es2_xref finds one call, from SoundObject_SetPosition (00050120).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004fdd8",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 0004fdd8",
       "verified": {
         "bytes": "0004fdd8+502",
         "sha1": "b1c3d1f3b7db",
@@ -30206,7 +30206,7 @@
       "confidence": "high",
       "name": "SoundManager_SetHearingRange",
       "description": "(manager, range): +0x23c = range, held to 0x3fffc00 (unsigned). es2_xref finds one call, from Sound_Init (0004db14).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004ffe0",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 0004ffe0",
       "verified": {
         "bytes": "0004ffe0+40",
         "sha1": "3047100042da",
@@ -30221,7 +30221,7 @@
       "confidence": "high",
       "name": "SoundManager_SetMemoryLimit",
       "description": "(manager, limit): +0x4fe = limit. es2_xref finds calls from Sound_Init (0004db14).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 00050008",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 00050008",
       "verified": {
         "bytes": "00050008+21",
         "sha1": "d29491a2f1e0",
@@ -30236,7 +30236,7 @@
       "confidence": "high",
       "name": "SoundObject_Ctor",
       "description": "(object or 0): allocates 0x3f bytes for a null object, returning 0 when that fails; builds the position member at +0x25 inline; stores SoundObjectVtable (00095c46) at +0x3b, +0x16 = 0, the word +0x1d = 0xffff, +0x15 = 0, the word +0x21 = 0, +0x31 = 100, the word +0x1f = 0x8000, +0x18 = 0, +0x34 = 0xff, +0x19 = -1, +0x0d = 0, +0x35 = 0 and the word +0x39 = 0; returns the object. es2_xref finds calls from DigiSound_Ctor (000507c8) and MidiSound_Ctor (000504dc).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects; ES1DBSIM decompile at 00050020",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects; ES1DBSIM decompile at 00050020",
       "verified": {
         "bytes": "00050020+131",
         "sha1": "22b0dde582f9",
@@ -30251,7 +30251,7 @@
       "confidence": "high",
       "name": "SoundObject_SetPlacedVolume",
       "description": "(object, volume), slot +0x04 of SoundObjectVtable (00095c46): NOP; RET 8.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000500a3",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000500a3",
       "verified": {
         "bytes": "000500a3+4",
         "sha1": "da32ac57381a",
@@ -30266,7 +30266,7 @@
       "confidence": "high",
       "name": "SoundObject_GetVoiceStatus",
       "description": "(object), slot +0x0c of SoundObjectVtable (00095c46): NOP; returns 0 (RET 4). MidiSoundVtable (00095c82)'s slot +0x0c points at 000500a8, past the NOP.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000500a7",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000500a7",
       "verified": {
         "bytes": "000500a7+6",
         "sha1": "828f6bab1234",
@@ -30281,7 +30281,7 @@
       "confidence": "high",
       "name": "SoundObject_Play",
       "description": "(object), slot +0x10 of SoundObjectVtable (00095c46): three NOPs; returns 0 (RET 4).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000500ad",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000500ad",
       "verified": {
         "bytes": "000500ad+8",
         "sha1": "798c51aa7ee3",
@@ -30296,7 +30296,7 @@
       "confidence": "high",
       "name": "SoundObject_Stop",
       "description": "(object), slot +0x14 of SoundObjectVtable (00095c46): three NOPs; RET 4.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000500b5",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000500b5",
       "verified": {
         "bytes": "000500b5+6",
         "sha1": "0011b5e9ac52",
@@ -30311,7 +30311,7 @@
       "confidence": "medium",
       "name": "maybe_SoundObject_Resume",
       "description": "(object), slot +0x18 of SoundObjectVtable (00095c46): NOP; RET 4.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000500bb",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000500bb",
       "verified": {
         "bytes": "000500bb+4",
         "sha1": "5d5ba9489eeb",
@@ -30326,7 +30326,7 @@
       "confidence": "medium",
       "name": "maybe_SoundObject_Pause",
       "description": "(object), slot +0x1c of SoundObjectVtable (00095c46): NOP; RET 4.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000500bf",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000500bf",
       "verified": {
         "bytes": "000500bf+4",
         "sha1": "5d5ba9489eeb",
@@ -30341,7 +30341,7 @@
       "confidence": "medium",
       "name": "maybe_SoundObject_SetPitch",
       "description": "(object, value), slot +0x20 of SoundObjectVtable (00095c46): NOP; RET 8. MidiSoundVtable (00095c82)'s slot +0x20 points at 000500c4, past the NOP.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000500c3",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000500c3",
       "verified": {
         "bytes": "000500c3+4",
         "sha1": "da32ac57381a",
@@ -30356,7 +30356,7 @@
       "confidence": "high",
       "name": "SoundObject_SetStartWord10",
       "description": "(object, value), slot +0x24 of SoundObjectVtable (00095c46): NOP; RET 8. MidiSoundVtable (00095c82)'s slot +0x24 points at 000500c8, past the NOP.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000500c7",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000500c7",
       "verified": {
         "bytes": "000500c7+4",
         "sha1": "da32ac57381a",
@@ -30371,7 +30371,7 @@
       "confidence": "high",
       "name": "SoundObject_SetVolume",
       "description": "(object, volume), slot +0x2c of SoundObjectVtable (00095c46): NOP; RET 8.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000500cb",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000500cb",
       "verified": {
         "bytes": "000500cb+4",
         "sha1": "da32ac57381a",
@@ -30386,7 +30386,7 @@
       "confidence": "high",
       "name": "SoundObject_IsPlaying",
       "description": "(object), slot +0x30 of SoundObjectVtable (00095c46): NOP; returns 0 (RET 4).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000500cf",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000500cf",
       "verified": {
         "bytes": "000500cf+6",
         "sha1": "828f6bab1234",
@@ -30401,7 +30401,7 @@
       "confidence": "high",
       "name": "SoundObject_Dtor",
       "description": "(object, flags), slot +0x08 of SoundObjectVtable (00095c46) through its padding 000500d5: returns for a null object; stores SoundObjectVtable, SoundObject_Unload (00050164), clears the manager's (+0x11) object slot +0x14c[+0x08], and Mem_Delete when bit 0 of flags is set. es2_xref finds calls from DigiSound_Dtor (00050838) and MidiSound_Dtor (0005055c).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects; ES1DBSIM decompile at 000500d8",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects; ES1DBSIM decompile at 000500d8",
       "verified": {
         "bytes": "000500d8+69",
         "sha1": "75043b66bfea",
@@ -30431,7 +30431,7 @@
       "confidence": "high",
       "name": "SoundObject_SetPan",
       "description": "(object, pan), reached through its padding 0005014d: stores the word in +0x1f. es2_xref finds calls from SoundManager_UpdateListener (0004fb60) and SoundObject_UpdatePlacement (0004fdd8).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 00050150",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 00050150",
       "verified": {
         "bytes": "00050150+20",
         "sha1": "26c0ce790007",
@@ -30446,7 +30446,7 @@
       "confidence": "high",
       "name": "SoundObject_Unload",
       "description": "(object): stops it through its vtable slot +0x14 when slot +0x30 answers non-zero; when bit 0 (loaded) of +0x0d is set, takes one off the manager's (+0x11) byte +0x352[index +0x09], and at 0 Mem_Delete of the far pointer +0x38e[index] (6 bytes each), clears it and takes the size +0x262[index] off the bytes loaded +0x4f6; then clears bit 0. es2_xref finds calls from SoundObject_Dtor (000500d8), SoundManager_SetSampleName (0004f99c) and SoundObject_LoadSample (000501ec).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects; ES1DBSIM decompile at 00050164",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects; ES1DBSIM decompile at 00050164",
       "verified": {
         "bytes": "00050164+135",
         "sha1": "0a84689b1462",
@@ -30476,7 +30476,7 @@
       "confidence": "medium",
       "name": "maybe_SoundObject_SetBranchCallback",
       "description": "(object, offset, selector): with the kind byte +0x17 set, stores the far pointer at +0x35 (offset) and +0x39 (selector), which MidiSound_Play (000505c8) passes to HmiMidi_SetBranchCallback (0006eeae) and SoundManager_PrintMono (0004e858) shows as 'B' in its Br column. es2_xref finds no caller.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects; ES1DBSIM decompile at 00050450",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects; ES1DBSIM decompile at 00050450",
       "verified": {
         "bytes": "00050450+32",
         "sha1": "43a059c878b6",
@@ -30491,7 +30491,7 @@
       "confidence": "high",
       "name": "SoundObject_SetRepeatCount",
       "description": "(object, start, end, count), slot +0x28 of SoundObjectVtable (00095c46) and of MidiSound's MidiSoundVtable (00095c82): the count's word to +0x23 while slot +0x30 answers non-zero, else to +0x21; start and end are not read.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 00050470",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 00050470",
       "verified": {
         "bytes": "00050470+43",
         "sha1": "d099cd6063dc",
@@ -30521,7 +30521,7 @@
       "confidence": "high",
       "name": "MidiSound_Ctor",
       "description": "(memory or 0, slot, index, name, manager) in stack order: allocates 0xcf bytes when given none, runs SoundObject_Ctor (00050020) on the object, sets the vtable +0x3b to MidiSoundVtable (00095c82) and the 32 dwords of the track map +0x3f to 0xff, the name +0, the index +9, the manager +0x11, the kind byte +0x17 to 1 and the slot byte +8; the flags +0xd are 2 with a name, else 0. Returns the object.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects",
       "verified": {
         "bytes": "000504dc+127",
         "sha1": "7786c9919cc4",
@@ -30536,7 +30536,7 @@
       "confidence": "high",
       "name": "MidiSound_Dtor",
       "description": "(object, flags), slot +0x08 of MidiSoundVtable (00095c82) through its padding 0005055b: returns for a null object; stores MidiSoundVtable (00095c82) at +0x3b, MidiSound_Stop (000506f4), SoundObject_Dtor (000500d8)(object, 0), and Mem_Delete when bit 0 of flags is set.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 0005055c",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 0005055c",
       "verified": {
         "bytes": "0005055c+54",
         "sha1": "0aabeb2c99c9",
@@ -30551,7 +30551,7 @@
       "confidence": "medium",
       "name": "maybe_MidiSound_Pause",
       "description": "(object), slot +0x1c of MidiSoundVtable (00095c82) through its padding 00050592: HmiMidi_PauseSong (0006f24d)(the handle +0x19, 1).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 00050594",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 00050594",
       "verified": {
         "bytes": "00050594+25",
         "sha1": "f96d93b1aaf7",
@@ -30566,7 +30566,7 @@
       "confidence": "medium",
       "name": "maybe_MidiSound_Resume",
       "description": "(object), slot +0x18 of MidiSoundVtable (00095c82) through its padding 000505ad: HmiMidi_ResumeSong (0006f362)(the handle +0x19).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 000505b0",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 000505b0",
       "verified": {
         "bytes": "000505b0+23",
         "sha1": "739625b3e820",
@@ -30596,7 +30596,7 @@
       "confidence": "high",
       "name": "MidiSound_Stop",
       "description": "(object), slot +0x14 of MidiSoundVtable (00095c82) through its padding 000506f3: with the handle +0x19 not -1, HmiMidi_StopSong (0006ead9)(handle) and HmiMidi_FreeSong (0006ea3d)(handle), then +0x19 = -1 and the word +0x1d = 0xffff. es2_xref finds one call, from MidiSound_Dtor (0005055c).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 000506f4",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 000506f4",
       "verified": {
         "bytes": "000506f4+57",
         "sha1": "1ef0a1eff0b4",
@@ -30641,7 +30641,7 @@
       "confidence": "high",
       "name": "MidiSound_SetPlacedVolume",
       "description": "(object, volume), slot +0x04 of MidiSoundVtable (00095c82): RET 8.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 000507c4",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 000507c4",
       "verified": {
         "bytes": "000507c4+3",
         "sha1": "a4f5248d9b7d",
@@ -30656,7 +30656,7 @@
       "confidence": "high",
       "name": "DigiSound_Ctor",
       "description": "(memory or 0, slot, index, name, manager) in stack order: allocates 0x50 bytes when given none, runs SoundObject_Ctor (00050020) on the object, sets the vtable +0x3b to DigiSoundVtable (00095cd6), the name +0, the manager +0x11, the index +9, the slot byte +8, +0x3f to 2, the bytes +0x47 and the kind +0x17 to 0, and +0x48 and +0x4c to -1; the flags +0xd are 2 with a name, else 0. Returns the object.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects",
       "verified": {
         "bytes": "000507c8+106",
         "sha1": "1104d6760c07",
@@ -30671,7 +30671,7 @@
       "confidence": "medium",
       "name": "maybe_DigiSound_Resume",
       "description": "(object), slot +0x18 of DigiSoundVtable (00095cd6): two NOPs; RET 4.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly at 00050832",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly at 00050832",
       "verified": {
         "bytes": "00050832+5",
         "sha1": "193b9046c34c",
@@ -30686,7 +30686,7 @@
       "confidence": "high",
       "name": "DigiSound_Dtor",
       "description": "(sound, flags), slot +0x08 of vtable DigiSoundVtable (00095cd6): unless null, resets the vtable to DigiSoundVtable (00095cd6), stops it with DigiSound_Stop (00050c88), calls SoundObject_Dtor (000500d8)(sound, 0), and frees it with operator delete when bit 0 of flags is set.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing",
       "verified": {
         "bytes": "00050838+54",
         "sha1": "b7113a73eb43",
@@ -30701,7 +30701,7 @@
       "confidence": "high",
       "name": "DigiSound_SetStartWord10",
       "description": "(object, value), slot +0x24 of DigiSoundVtable (00095cd6) through its padding 0005086e: +0x3f = the value's low word, zero-extended, which DigiSound_Play (000509c4) puts in the start block's +0x10.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 00050870",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 00050870",
       "verified": {
         "bytes": "00050870+19",
         "sha1": "bd61adee79ee",
@@ -30716,7 +30716,7 @@
       "confidence": "medium",
       "name": "maybe_DigiSound_SetPitch",
       "description": "(object, value), slot +0x20 of DigiSoundVtable (00095cd6) through its padding 00050883: +0x43 = the value when it is 0x8000 to 0xf0000, 0x8000 below, and above 0xf0000 its low word with 0xf0000; sets +0x47 to 1. DigiSound_Play (000509c4) puts +0x43 in the start block's +0x38 while +0x47 is set.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 00050884",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 00050884",
       "verified": {
         "bytes": "00050884+61",
         "sha1": "5acd0033057e",
@@ -30731,7 +30731,7 @@
       "confidence": "high",
       "name": "DigiSound_SetVolume",
       "description": "(object, volume), slot +0x2c of DigiSoundVtable (00095cd6) through its padding 000508c1: for a volume below 0 (signed char), +0x31 = 0 and, with a voice +0x19, HmiDigi_SetSampleVolume (0006e0b3)(000bd8c8, voice, 0); otherwise +0x31 = the volume held to 100 and, with a voice, HmiDigi_SetSampleVolume (0006e0b3)(000bd8c8, voice, +0x31 * 0x7fff * the manager's (+0x11) +0x241 / 10000).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 000508c4",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 000508c4",
       "verified": {
         "bytes": "000508c4+143",
         "sha1": "db1fe2487a81",
@@ -30746,7 +30746,7 @@
       "confidence": "high",
       "name": "DigiSound_SetPlacedVolume",
       "description": "(object, volume), slot +0x04 of DigiSoundVtable (00095cd6) through its padding 00050953: the word +0x32 = volume (signed char) * 0x7fff * the manager's (+0x11) +0x241 / 10000, signed, and with a voice +0x19, HmiDigi_SetSampleVolume (0006e0b3)(000bd8c8, voice, that word).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 00050954",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 00050954",
       "verified": {
         "bytes": "00050954+75",
         "sha1": "7b28b44410c5",
@@ -30761,7 +30761,7 @@
       "confidence": "medium",
       "name": "maybe_DigiSound_Pause",
       "description": "(object), slot +0x1c of DigiSoundVtable (00095cd6) through its padding 0005099f: with a voice +0x19, HmiDigi_StopSample (0006dd7f)(000bd8c8, voice), the call DigiSound_Stop (00050c88) makes, keeping +0x19 and +0x1d.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 000509a0",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 000509a0",
       "verified": {
         "bytes": "000509a0+35",
         "sha1": "5683a567b9a0",
@@ -30776,7 +30776,7 @@
       "confidence": "high",
       "name": "DigiSound_Play",
       "description": "(sound), slot +0x10 of vtable DigiSoundVtable (00095cd6). When HmiDigi_CountBusyVoices (0006e055)(000bd8c8) is above 30, picks among the 60 objects (SoundManager_GetObject on SoundManager_Instance (000bd73e)) the digital one (+0x17 clear) whose slot +0x30 returns non-zero with the lowest SoundObject_GetVolume (0005049c) value below 100, and stops it through its slot +0x14; returns 0 with none. Returns 0 when SoundObject_LoadSample fails. The volume is byte +0x31 * 0x7fff * the manager's byte +0x241 / 10000, or the word +0x32 when the positional byte +0x15 is set; at volume 0 with +0x18 clear it returns 1. Otherwise builds a start block: the data far pointer (manager +0x38e for the index), its size +0x262 as the length at +8, the word +0x21 at +0xc (also copied to +0x23), +0x3f at +0x10, the volume at +0x14, 0x1000 + the slot byte +8 at +0x18, the far callback DigiSound_DoneCallback (0004e7fc) at +0x1c, flags 0x4100 at +0x28 (0x4300 with +0x1f at +0x40 when positional), +0x43 at +0x38 when +0x47 is set, and with +0x21 non-zero and neither +0x48 nor +0x4c -1 those two at +0x30 and +0x34 and the flags' low byte 0x40. Stores the slot in the word +0x1d and HmiDigi_StartSample (0006dad9)(000bd8c8, block) in +0x19; on -1 sets +4 and +0x19 to -1 and +0x1d to 0xffff and returns 0; else returns 1.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing",
       "verified": {
         "bytes": "000509c4+594",
         "sha1": "e8bc170a376a",
@@ -30806,7 +30806,7 @@
       "confidence": "high",
       "name": "DigiSound_GetVoiceStatus",
       "description": "(object), slot +0x0c of DigiSoundVtable (00095cd6) through its padding 00050c47: 0 with the voice +0x19 at -1, else the word +0x30 of the voice's record, through the far pointer at 0009d10c + 000bd8c8 * 0xc0 + voice * 6.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 00050c48",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 00050c48",
       "verified": {
         "bytes": "00050c48+61",
         "sha1": "27abcd38b2ab",
@@ -30821,7 +30821,7 @@
       "confidence": "high",
       "name": "DigiSound_Stop",
       "description": "(sound), slot +0x14 of vtable DigiSoundVtable (00095cd6): when the voice +0x19 is not -1, calls HmiDigi_StopSample (0006dd7f)(000bd8c8, voice), then sets +0x19 to -1 and the word +0x1d to 0xffff.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing",
       "verified": {
         "bytes": "00050c88+52",
         "sha1": "09eeb1886b97",
@@ -30836,7 +30836,7 @@
       "confidence": "high",
       "name": "DigiSound_SetRepeats",
       "description": "(object, start, end, count), slot +0x28 of DigiSoundVtable (00095cd6): while slot +0x30 answers non-zero, the count's word to +0x23 and to the word +0x38 of the voice's record (the far pointer at 0009d10c + 000bd8c8 * 0xc0 + voice * 6); otherwise the count to +0x23 and +0x21, end to +0x48 and start to +0x4c.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM decompile at 00050cbc",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM decompile at 00050cbc",
       "verified": {
         "bytes": "00050cbc+90",
         "sha1": "5f6978951ccb",
@@ -30866,7 +30866,7 @@
       "confidence": "high",
       "name": "HmiTimer_Tick",
       "description": "No arguments, frameless, with no Ghidra function: while HmiTimer_Enabled (000b1ed8) is set and the reentry count HmiTimer_Busy (000b1ee8) is 0, raises the count, makes a far call through the far pointer HmiTimer_Callback (000b1ee0) and lowers the count. es2_xref finds its address stored at 00050de3, in HmiTimer_Install (00050d98), which registers it with Timer_AddCallback (0006d289).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d38",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d38",
       "verified": {
         "bytes": "00050d38+37",
         "sha1": "c681997f9efa",
@@ -30881,7 +30881,7 @@
       "confidence": "high",
       "name": "HmiTimer_TickUnguarded",
       "description": "No arguments, frameless, with no Ghidra function: while HmiTimer_Enabled (000b1ed8) is set, makes a far call through HmiTimer_Callback (000b1ee0), with no reentry count. HmiTimer_TickUnguarded2 (00050d70) has the same bytes. No reference found by es2_xref.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d60",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d60",
       "verified": {
         "bytes": "00050d60+16",
         "sha1": "b6a4a40ec74f",
@@ -30896,7 +30896,7 @@
       "confidence": "high",
       "name": "HmiTimer_TickUnguarded2",
       "description": "No arguments, frameless, with no Ghidra function: the bytes of HmiTimer_TickUnguarded (00050d60). No reference found by es2_xref.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d70",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d70",
       "verified": {
         "bytes": "00050d70+16",
         "sha1": "b6a4a40ec74f",
@@ -30911,7 +30911,7 @@
       "confidence": "high",
       "name": "HmiTimer_Enable",
       "description": "No arguments, frameless: sets HmiTimer_Enabled (000b1ed8) to 1. es2_xref finds calls from the HMI code at HmiTimer_Init (0006d4f5), HmiTimer_Uninit (0006d5c2), HmiTimer_AddEvent (0006d5e6), HmiTimer_SetEventRate (0006d78c) and HmiTimer_RemoveEvent (0006d8d5).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d80",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d80",
       "verified": {
         "bytes": "00050d80+11",
         "sha1": "41c290e1569c",
@@ -30926,7 +30926,7 @@
       "confidence": "high",
       "name": "HmiTimer_Disable",
       "description": "No arguments, frameless: sets HmiTimer_Enabled (000b1ed8) to 0. es2_xref finds calls from the HMI code at HmiTimer_Init (0006d4f5), HmiTimer_Uninit (0006d5c2), HmiTimer_AddEvent (0006d5e6), HmiTimer_SetEventRate (0006d78c) and HmiTimer_RemoveEvent (0006d8d5).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d8c",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d8c",
       "verified": {
         "bytes": "00050d8c+11",
         "sha1": "9a8fe02d3b9b",
@@ -30941,7 +30941,7 @@
       "confidence": "high",
       "name": "HmiTimer_Install",
       "description": "(a, offset, selector), C convention: stores the far pointer selector:offset in HmiTimer_Callback (000b1ee0, the selector at 000b1ee4) and registers HmiTimer_Tick (00050d38) with Timer_AddCallback (0006d289) at a count of (1000000 / Math_Q14Multiply(word +4 of the structure 000bdd0c points to, 0x35a1)) / 60, keeping the slot in the word HmiTimer_Slot (000b1edc). es2_xref finds one call, from the HMI code at HmiTimer_Init (0006d4f5).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM decompile and disassembly at 00050d98",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM decompile and disassembly at 00050d98",
       "verified": {
         "bytes": "00050d98+102",
         "sha1": "e53af2372149",
@@ -30956,7 +30956,7 @@
       "confidence": "high",
       "name": "HmiTimer_Remove",
       "description": "No arguments, frameless: passes the dword at HmiTimer_Slot (000b1edc) to Timer_RemoveCallback (0006d337), the call Ttm_ManagerDtor gives its timer slot. es2_xref finds one call, from the HMI code at HmiTimer_Uninit (0006d5c2).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e00",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e00",
       "verified": {
         "bytes": "00050e00+15",
         "sha1": "d11c63df4133",
@@ -30971,7 +30971,7 @@
       "confidence": "high",
       "name": "HmiTimer_NoOp",
       "description": "Frameless: RET. es2_xref finds one call, from the HMI code at 0006da46, which passes it one argument.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e10",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e10",
       "verified": {
         "bytes": "00050e10+1",
         "sha1": "8bf7b464aaa2",
@@ -30986,7 +30986,7 @@
       "confidence": "high",
       "name": "HmiHook_NoOp",
       "description": "Frameless: RET, with no Ghidra function. es2_xref finds one call, from 0006dacf in the HMI code, a CALL followed by RETF.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e14",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e14",
       "verified": {
         "bytes": "00050e14+1",
         "sha1": "8bf7b464aaa2",
@@ -31001,7 +31001,7 @@
       "confidence": "high",
       "name": "HmiLock_RegionStart",
       "description": "Frameless: RET, with no Ghidra function: a marker. es2_xref finds its address stored at 0006fafd, 0006fb05, 0006fd22 and 0006fd2a, where the HMI code takes HmiLock_RegionEnd (00050e1c) less it as a size and passes it with this address, made a far pointer by maybe_MK_FP (0006d4e2), to a region call: X32_UnlockRegion (00060b91) at 0006fd3b.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e18 and 0006fd1c",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e18 and 0006fd1c",
       "verified": {
         "bytes": "00050e18+1",
         "sha1": "8bf7b464aaa2",
@@ -31016,7 +31016,7 @@
       "confidence": "high",
       "name": "HmiLock_RegionEnd",
       "description": "Frameless: RET, with no Ghidra function, followed by three zero bytes: the end marker of the region HmiLock_RegionStart (00050e18) opens. es2_xref finds its address stored at 0006faf8 and 0006fd1d.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e1c",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e1c",
       "verified": {
         "bytes": "00050e1c+1",
         "sha1": "8bf7b464aaa2",
@@ -33596,7 +33596,7 @@
       "confidence": "high",
       "name": "TSCamera_CopyFrom",
       "description": "(camera, from) in stack order, its arguments removed by this function: TSCamera_CopyBaseFields (00057bb4)(camera, from), entered through the padding at 00057bb3, then copies from's fields +0x22 to +0x49 into the camera one by one. ViewChain_ViewObject (00058a44) seeds a free camera from the current one with it, where ES2's ViewChain_ViewObject copies the fields inline.",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c",
+      "source": "Herculan/docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c",
       "verified": {
         "bytes": "00057af8+143",
         "sha1": "d6e6d39c7869",
@@ -33611,7 +33611,7 @@
       "confidence": "high",
       "name": "TSCamera_CopyBaseFields",
       "description": "(camera, from) in stack order, its arguments removed by this function, entered also through its padding 00057bb3: TSCamera_CopyPose (00057be0)(camera, from) by its padding 00057bde, then copies from's dwords +0x16, +0x1a and +0x1e into the camera. es2_xref finds one call, from TSCamera_CopyFrom (00057af8). ES2's ViewChain_ViewObject copies the same fields inline.",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c",
+      "source": "Herculan/docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c",
       "verified": {
         "bytes": "00057bb4+42",
         "sha1": "bf8fce6dfb13",
@@ -33626,7 +33626,7 @@
       "confidence": "high",
       "name": "TSCamera_CopyPose",
       "description": "(camera, from) in stack order, its arguments removed by this function, entered also through its padding 00057bde: copies from's 18 bytes +0 to +0x11, the position's three dwords and the view's euler triple, into the camera with MOVSD and MOVSB. es2_xref finds one call, from TSCamera_CopyBaseFields (00057bb4).",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c",
+      "source": "Herculan/docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c",
       "verified": {
         "bytes": "00057be0+39",
         "sha1": "be2d03d28df9",
@@ -33746,7 +33746,7 @@
       "confidence": "high",
       "name": "ViewChain_Apply",
       "description": "No arguments; es2_xref finds one call, from Sim_MainTick (00059700). ES2's ViewChain_Apply (DBSIM 0045de14) on CockpitViewManagerPublished's step flag +0x18. With it clear, in view 3 viewing LocalPlayerMech, copies ViewChain_CameraControlPreferred (000b5bb8) to InputDrivesCamera. With it set and ViewChain_PendingView not ViewChain_View, copies it over: view 1 sets the camera's mode +0x36 to 0 and InputDrivesCamera to ViewChain_CameraControlPreferred (000b5bb8); view 2 ViewChain_ViewObject (00058a44)(LocalPlayerMech), mode 2, InputDrivesCamera 0; view 3 ViewChain_ViewObject(ViewChain_Chosen), mode 1, ViewChain_CaptionFrames 2. Then while ViewChain_CaptionFrames is not 0, ViewChain_DrawCaption (00058b68) and 1 off the count. ES2's has view 4, follows ViewChain_Chosen in view 2 under ViewChain_FollowChosen, and tests the camera lock +0x4a.",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c",
+      "source": "Herculan/docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c",
       "verified": {
         "bytes": "0005894c+245",
         "sha1": "dc8c21cd5561",
@@ -33761,7 +33761,7 @@
       "confidence": "high",
       "name": "ViewChain_ViewObject",
       "description": "(object), its argument removed by this function: ES2's ViewChain_ViewObject (DBSIM 0045df18). On its first call (guard 000b5d34) builds ViewChain_SpareCamera (000b5d38) with TSCamera_CtorDefault (0005b944), the vtable 00096c5a at +0x12 and +0x32, +0x36, +0x44, +0x46 and +0x48 zeroed. Over the squad cameras 000bda9e, their count the player's group's (+0x3f) +0x12: one whose object +0x32 is the object becomes ViewObjectPtr with mode +0x36 1; else the first with no object is seeded by TSCamera_CopyFrom (00057af8) from ViewObjectPtr, becomes ViewObjectPtr and Cam_AttachTo (0005923c)(object); with neither, the spare the same way. Then ViewChain_Viewed = object and InputDrivesCamera = ViewChain_CameraControlPreferred (000b5bb8), or 1 for an object other than LocalPlayerMech. es2_xref finds calls from ViewChain_Apply (0005894c), through the NOPs at 00058a41, and from Sim_DispatchCommand (00059df8).",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c",
+      "source": "Herculan/docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c",
       "verified": {
         "bytes": "00058a44+292",
         "sha1": "8438b14f98c8",
@@ -33776,7 +33776,7 @@
       "confidence": "high",
       "name": "ViewChain_DrawCaption",
       "description": "No arguments: ES2's ViewChain_DrawCaption (DBSIM 0045e1ec) at 320 x 200. With the font WidgetFont_Green6x8 (000bd556) and h its +10, the band's top row is half way from ExternalView_GetRect (00024c20)'s +0xc to 199, less h / 2, at most 0xc6 - h; it fills {0, top, 0x13f, top + h} with the brush {0, 0x3f} at the render context's +0x22c, its +0x208 and +0x20c zeroed and put back after. HudFont_DrawString (00069e38) draws at y top + h: 000bd4c4[0] + the name (000bd3e0 for LocalPlayerMech, Squad_PilotName (0002e2f4) for a squad member, 00096d19 otherwise) at x 00096c3c, and 000bd4c4[1] + 000bd4c4[2] with InputDrivesCamera set or [3] with it clear at x 00096c3e.",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c",
+      "source": "Herculan/docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c",
       "verified": {
         "bytes": "00058b68+498",
         "sha1": "51a75d6e6bda",
@@ -39629,7 +39629,7 @@
       "confidence": "high",
       "name": "GLBitmapArray_Dtor",
       "description": "(array, flags), callee-cleaned: returns for none; otherwise stores the vtable 0009b066, destroys each of the count +4 bitmaps of the table +8 that is not 0 through its +0x1c slot with 3, frees the table, and deletes the array when bit 0 of flags is set. The same statements as ES1GO's GLBitmapArray_Dtor (0005343c).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-run",
       "verified": {
         "bytes": "000673c8+145",
         "sha1": "6fdc38f8b09c",
@@ -39743,7 +39743,7 @@
       "confidence": "high",
       "name": "GLPalette_Dtor",
       "description": "(palette, flags), callee-cleaned: returns for none; otherwise stores the vtable 0009b3b6, frees the colours +8 when the word +4 is non-zero, frees each of the word +0xc's eight-byte records' first dword in the table +0x10 and then the table when +0xc is non-zero, stores the vtable 0009b3de and deletes the palette when bit 0 of flags is set. The same statements as ES1GO's GLPalette_Dtor (0005a824).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-fades",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-fades",
       "verified": {
         "bytes": "00069258+159",
         "sha1": "10068c96a98d",
@@ -39803,7 +39803,7 @@
       "confidence": "high",
       "name": "Ttm_ManagerCtor",
       "description": "(manager, a, b, count) in stack order: allocates the 0xb-byte .TTM handle manager when given none (returning 0 when that fails); stores count at its byte +4, b at 0009f248, 000bdd28 at 0009f24c and a at 0009f250; clears the path prefix with Ttm_SetPathPrefix (00069940)(manager, 0) through its padding entry; passes clock() to srand (0007cd4a). es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), with a count of 10.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "00069540+85",
         "sha1": "2b1df90ad88f",
@@ -39818,7 +39818,7 @@
       "confidence": "high",
       "name": "Ttm_ManagerDtor",
       "description": "(manager, flags): returns for none; otherwise passes the timer slot word +9 to Timer_RemoveCallback (0006d337), destroys every handle's script with Ttm_CloseAll (00069a04) through its padding entry, deletes the handle table +5, and deletes the manager when bit 0 of flags is set. ES1GO's Ttm_Shutdown keeps the table in globals. No caller found by es2_xref.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "00069598+71",
         "sha1": "9427beeb60c6",
@@ -39833,7 +39833,7 @@
       "confidence": "high",
       "name": "Ttm_RunAll",
       "description": "(manager): returns 0 while the byte 0009b404 is 0. Otherwise notes the word 0009b406 and the installed render context 000bdbda; stores the default context 0009f248's +4 (0 with none) at +0x44 of the display object 0009f24c, through Raster_SetClipBlock when the display is 000bdd28, and installs the default context with Raster_InstallRenderContext; clears 0009b404; calls TtmScript_Run (00079a14)(script, the noted count) for each handle of the table +5 below the count byte +4 that holds a script; does the same for the noted context, subtracts the noted count from 0009b406 and returns 1. ES1GO's Ttm_RunAll (0004652e) waits for its tick instead of returning. es2_xref finds calls from Cockpit_LoadPanel (0002c9d8) and Cockpit_RunTtmScripts (0002e0ec).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#each-frame",
       "verified": {
         "bytes": "000695e0+275",
         "sha1": "c6b22779155f",
@@ -39848,7 +39848,7 @@
       "confidence": "high",
       "name": "Ttm_TimerTick",
       "description": "(): the timer callback of the simulator's scripts, a frameless stub: sets the byte 0009b404 to 1 and adds 1 to the word 0009b406. ES1GO's Ttm_TimerTick (00046681) first tests a byte the fades set. es2_xref finds its address stored at 0006980b, in Ttm_AllocHandles (00069780).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#each-frame",
       "verified": {
         "bytes": "000696f4+15",
         "sha1": "ac0f4699a985",
@@ -39863,7 +39863,7 @@
       "confidence": "high",
       "name": "Ttm_GetPage",
       "description": "(manager, handle): the page byte +1 of the handle's script, or 0xffff for an empty handle. ES1GO's Ttm_GetPage (0004669f) with the manager's table. No caller found by es2_xref.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "00069704+57",
         "sha1": "82909635060c",
@@ -39878,7 +39878,7 @@
       "confidence": "high",
       "name": "Ttm_GetMode",
       "description": "(manager, handle): the mode dword +0xe of the handle's script, without testing the handle for one. No caller found by es2_xref.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "00069740+31",
         "sha1": "9b75ecc2b059",
@@ -39893,7 +39893,7 @@
       "confidence": "high",
       "name": "Ttm_GetLoop",
       "description": "(manager, handle): the loop flag dword +0x13 of the handle's script, without testing the handle for one. No caller found by es2_xref.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "00069760+31",
         "sha1": "6ee4f808cb00",
@@ -39908,7 +39908,7 @@
       "confidence": "high",
       "name": "Ttm_AllocHandles",
       "description": "(manager, timer count): allocates the handle table +5, a dword per handle of the count byte +4, returning 0 when that fails, and zeroes it; takes 000bdd0c into +0, or DVTimer_Ctor (0006c6f8)(0, 0x4da6) when that is 0, deleting the table and returning 0 when +0 is still 0; registers Ttm_TimerTick (000696f4) with Timer_AddCallback(count, it), stores the slot at the word +9 and returns 1. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), with a count of 2.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "00069780+172",
         "sha1": "1eff818ef8c9",
@@ -39923,7 +39923,7 @@
       "confidence": "high",
       "name": "Ttm_SetDefaultContext",
       "description": "(manager, context): stores context at 0009f248, the default render context Ttm_ManagerCtor (00069540) sets from its b and Ttm_RunAll (000695e0) installs, and returns the one before. es2_xref finds one call, from Cockpit_RunTtmScripts (0002e0ec), which passes the installed render context 000bdbda.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "0006982c+25",
         "sha1": "20af4187906a",
@@ -39938,7 +39938,7 @@
       "confidence": "high",
       "name": "Ttm_Open",
       "description": "(manager, a, b, name) in stack order: returns 0xff when the count byte +4 is 0 or every handle of the table +5 holds a script; otherwise makes a script with TtmScript_Ctor (000797ac)(0) in the first empty handle and loads it with TtmScript_Load (0007a54c)(script, a, b, name), destroying it with TtmScript_Dtor (000799cc)(script, 3), emptying the handle and returning 0xff on a nonzero result; returns the handle's index. ES1GO's Ttm_Open keeps its table in globals and passes a third argument. es2_xref finds one call, from CockpitClock_Ctor (000433cc).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "00069848+186",
         "sha1": "28e730cec1bb",
@@ -39953,7 +39953,7 @@
       "confidence": "high",
       "name": "Ttm_SetPage",
       "description": "(manager, page, handle): when the handle holds a script and page is below its page count byte +0, stores page at +1 and returns 1; otherwise returns 0. Leaves the wait, mode and flags, which ES1GO's TtmScript_SetPage (000470e7) resets. No caller found by es2_xref.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "00069904+59",
         "sha1": "3ff28fbc8870",
@@ -39968,7 +39968,7 @@
       "confidence": "high",
       "name": "Ttm_SetPathPrefix",
       "description": "(manager, prefix): stores the string pointer at 0009f254, the folder TtmScript_BuildPath puts before a .TTM name, and returns the one before. es2_xref finds Cockpit_LoadPanel (0002c9d8) passing ttm\\ (00092f2e).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "00069940+25",
         "sha1": "e84bad42af21",
@@ -39983,7 +39983,7 @@
       "confidence": "high",
       "name": "Ttm_SetMode",
       "description": "(manager, mode, handle): stores mode at the dword +0xe of the handle's script and returns 1, or returns 0 for an empty handle. No caller found by es2_xref.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "0006995c+48",
         "sha1": "8f8d568168f1",
@@ -39998,7 +39998,7 @@
       "confidence": "high",
       "name": "Ttm_SetLoop",
       "description": "(manager, loop, handle): stores loop at the dword +0x13 of the handle's script and returns 1, or returns 0 for an empty handle. No caller found by es2_xref.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "0006998c+48",
         "sha1": "52fa25970673",
@@ -40013,7 +40013,7 @@
       "confidence": "high",
       "name": "Ttm_Close",
       "description": "(manager, handle): when the handle holds a script destroys it with TtmScript_Dtor(script, 3), empties the handle and returns 1; otherwise returns 0. No caller found by es2_xref.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "000699bc+70",
         "sha1": "ef6c1b31a39f",
@@ -40028,7 +40028,7 @@
       "confidence": "high",
       "name": "Ttm_CloseAll",
       "description": "(manager): destroys the script of every handle of the table +5 below the count byte +4 with TtmScript_Dtor(script, 3) and empties the handle. es2_xref finds one call, from Ttm_ManagerDtor (00069598), through the padding entry 00069a02.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "00069a04+98",
         "sha1": "20b409593e52",
@@ -41801,7 +41801,7 @@
       "confidence": "high",
       "name": "Str_ToUpperInPlace",
       "description": "(string), C convention: replaces each byte of string up to its zero with toupper (0007d5a4) of the byte, sign-extended, and returns string, the shape of the C library's strupr. es2_xref finds one call, from Voice_KeyOfName (0004e208).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#voice-lines; ES1DBSIM disassembly at 0006d4b4",
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#voice-lines; ES1DBSIM disassembly at 0006d4b4",
       "verified": {
         "bytes": "0006d4b4+38",
         "sha1": "71b625ca4b9c",
@@ -41960,7 +41960,7 @@
       "confidence": "high",
       "name": "HmiDigi_StopSample",
       "description": "(driver, voice), C convention: 10 for a voice above 31; for a voice record (the far pointer at 0009d10c + driver * 0xc0 + voice * 6) whose word +0x30 has bit 0x8000 set and bit 0x1000 clear, clears bit 0x8000 (the byte +0x31 & 0x7f) and the word +0x34; answers 0 either way, so a busy voice with bit 0x1000 set is not stopped. es2_xref finds calls from DigiSound_Stop (00050c88), maybe_DigiSound_Pause (000509a0) and HmiDigiMidi_SendEvent (00081789).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006dd7f",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing; ES1DBSIM decompile and disassembly at 0006dd7f",
       "verified": {
         "bytes": "0006dd7f+101",
         "sha1": "c6a8fe7a4ed8",
@@ -41975,7 +41975,7 @@
       "confidence": "high",
       "name": "HmiDigi_IsVoiceDone",
       "description": "(driver, voice), C convention: 10 for a voice above 31; 1 when bit 0x8000 of the voice record's word +0x30 (the far pointer at 0009d10c + driver * 0xc0 + voice * 6) is clear, 0 while it is set. es2_xref finds one call, from DigiSound_IsPlaying (00050c18), which answers whether it is 0.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006df9d",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing; ES1DBSIM decompile and disassembly at 0006df9d",
       "verified": {
         "bytes": "0006df9d+71",
         "sha1": "33e9c466bd89",
@@ -41990,7 +41990,7 @@
       "confidence": "high",
       "name": "HmiDigi_CountBusyVoices",
       "description": "(driver), C convention: how many of the driver's 32 voice records (the far pointers at 0009d10c + driver * 0xc0 + voice * 6) have bit 0x8000 of their word +0x30 set, the busy voices. es2_xref finds one call, from DigiSound_Play (000509c4), which makes room above 30.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006e055",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing; ES1DBSIM decompile and disassembly at 0006e055",
       "verified": {
         "bytes": "0006e055+64",
         "sha1": "3320e3939e1a",
@@ -42005,7 +42005,7 @@
       "confidence": "high",
       "name": "HmiDigi_SetSampleVolume",
       "description": "(driver, voice, volume), C convention: with bit 0x8000 of the voice record's word +0x30 set (the far pointer at 0009d10c + driver * 0xc0 + voice * 6), stores the volume in its word +0x32 and answers the old word; else answers 0. It does not test the voice's range. es2_xref finds calls from DigiSound_SetPlacedVolume (00050954), DigiSound_SetVolume (000508c4) and HmiDigiMidi_SendEvent (00081789).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing; ES1DBSIM decompile and disassembly at 0006e0b3",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#playing; ES1DBSIM decompile and disassembly at 0006e0b3",
       "verified": {
         "bytes": "0006e0b3+82",
         "sha1": "80dd47f604af",
@@ -42350,7 +42350,7 @@
       "confidence": "high",
       "name": "Str_ToLowerInPlace",
       "description": "(string), C convention: each byte up to the zero through tolower, in place; returns the string. The sibling of Str_ToUpperInPlace (0006d4b4). es2_xref finds calls from SoundManager_CreateObject (0004f4e8) and SoundManager_SetSampleName (0004f99c), which lower-case a sample name in place with it.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects; ES1DBSIM decompile and disassembly at 0006f948",
+      "source": "Herculan/docs/es1/sound/sound-manager.md#sound-objects; ES1DBSIM decompile and disassembly at 0006f948",
       "verified": {
         "bytes": "0006f948+38",
         "sha1": "4e58a363144e",
@@ -42464,7 +42464,7 @@
       "confidence": "high",
       "name": "HmiMidi_InitDriver",
       "description": "(device, port block, block, handle out) of the HMI library: takes the first of 5 driver slots whose id at 000a130c is 0, returning 0xb with none, stores the device there and copies its 16 bytes from 000a55d8 + (device - 0xa000)*16 to 000a5688. For 0xa005 and 0xa003 copies six far pointers (from HmiDigiMidi_Functions (000a3028) or HmiCallbackMidi_Functions (000a2574)) into the slot's 0x24-byte entry at 000a21b8 and calls its entry +6 with the block's far pointer +0x18/+0x1c, the slot and HmiMidi_DriverArg (000a5984), returning a non-zero result. For any other device clears the far pointer 000a597c. When the block's far pointer +4 is 0 it loads the driver with HmiMidi_LoadDriverImage (00081365), returning a non-zero result, and keeps the two far pointers, the address and the allocation in the block's +4, +0xc, +0x14 and +0x28 and in the slot's 000a127c, 000a129c, 000a12bc and 000a12d0; otherwise it reads them from the block and stores them in the slot's tables except the code far pointer 000a129c. Calls HmiMidi_IsDriverSlotFree (000816f5) and HmiDriver_GetFunctions (00081687) into the slot's entry, sets the slot's flag 000a12e4, stores the slot through the handle pointer, sets 000a597c to the far pointer 0:(the port block's +8) and calls the entry +6 with it and the port block's +4 and +0. A non-zero result is returned with the device, the flag and 000a597c left set; otherwise 000a597c is cleared. For 0xa00a it then calls HmiTimer_AddEvent (0006d5e6)(0x78, ...) with HmiDriver_Call (000816cd)'s answer to request 2, keeping the event at 000a5988. Sets the slot's flag, stores the slot through the handle pointer and returns 0.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver",
       "verified": {
         "bytes": "00071076+981",
         "sha1": "ef275ea3c20a",
@@ -43844,7 +43844,7 @@
       "confidence": "high",
       "name": "TtmScript_Ctor",
       "description": "(script): allocates the 0x1c1-byte .TTM script when given none (returning 0 when that fails); constructs twelve 0x18-byte objects at +0x58 with __vec_ctor; sets the dwords +0x19d and +0x1a5 to 0 and +0x1ad to 4, and zeroes +0x1b5, +0x1b9 and +0x1bd.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "000797ac+211",
         "sha1": "0c428130bd9e",
@@ -43859,7 +43859,7 @@
       "confidence": "high",
       "name": "GLRectangleRegion_Ctor",
       "description": "(region): allocates 0x18 bytes when given none; stores the vtables 0009f25a, 0009f27e and 0009f2a6 in turn, runs the rect's and its points' inlined constructors at +8, then stores the vtable 0009f2ce and 0 at +4, the region type. ES1GO's GLRectangleRegion_Ctor (00046c6c) with the simulator's vtables. es2_xref finds its padding entry 0007987f stored at 000797db, in TtmScript_Ctor (000797ac), for the script's twelve regions.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "00079880+208",
         "sha1": "3423eb07b9e9",
@@ -43874,7 +43874,7 @@
       "confidence": "high",
       "name": "GLRectangleRegion_Dtor",
       "description": "(region, flags): returns for none; otherwise stores the vtables 0009f2ce, 0009f2a6 and 0009f27e in turn and deletes the region when bit 0 of flags is set. ES1GO's GLRectangleRegion_Dtor (00046dc4) with the simulator's vtables. es2_xref finds it at 0009f2ea, the +0x1c slot of the vtable 0009f2ce.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "0007999c+46",
         "sha1": "4b78037926a0",
@@ -43889,7 +43889,7 @@
       "confidence": "high",
       "name": "TtmScript_Dtor",
       "description": "(script, flags): returns at once for a null script; otherwise calls TtmScript_Free (00079f68)(script) through its padding entry, destroys the twelve objects at +0x58 with __vec_dtor, and deletes the script when bit 0 of the flags is set.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "000799cc+59",
         "sha1": "818af8c88c92",
@@ -43904,7 +43904,7 @@
       "confidence": "high",
       "name": "TtmScript_Run",
       "description": "(script, ticks) in stack order, callee-cleaned: notes the default render context 0009f248 and, when the script's +0x1bd is not 0, sets 0009f248 to it and installs it with Raster_InstallRenderContext. Subtracts ticks from the wait word +0x182. While it is above 0: unless the mode dword +0xe is 2, runs the page byte +1 with TtmScript_RunPage (0007aa58). Otherwise: when the byte +0x18a is 1 subtracts ticks from +0x186 and, below 0, reloads it from +0x188 and calls TtmScript_CyclePalette (00079d90); reloads the wait from +0x184; then, for a mode of 3 or less by an unsigned test, through the table 0009f2f4: 0 runs the page, then takes the page +0x178 when it is not -1 (setting it to -1) or else adds 1 to the page and clears the byte +0x12, and when the page has reached the count byte +0 does as mode 3; 1 runs the page; 3, with the loop dword +0x13 1, resets the script with TtmScript_Reset (0007ca44) and sets the mode to 0, and otherwise sets the mode to 2 and leaves the script as it is; 2 goes to the end, as a mode above 3 does. Finally restores and installs the noted context and returns 1. es2_xref finds one call, from Ttm_RunAll (000695e0).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-run",
       "verified": {
         "bytes": "00079a14+318",
         "sha1": "35bb43e0e44f",
@@ -43919,7 +43919,7 @@
       "confidence": "high",
       "name": "TtmScript_BuildPath",
       "description": "(script, name): rewrites the first .SCR in name to .DBM, .BMP to .DBA and .PAL to .DPL (Str_FindBoyerMoore, strncpy of 4), and returns the buffer 000bbbf0 holding the prefix 0009f254, when there is one, followed by the name. ES1GO's also upper-cases the name and rewrites .RAW.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "00079b54+226",
         "sha1": "6ae2cc2f4f29",
@@ -43934,7 +43934,7 @@
       "confidence": "high",
       "name": "TtmScript_FixRect",
       "description": "(script, rect): with the display object 0009f24c's +0x38 set to the low byte of its +0x3c and its +0x3c to 0009f250, Ttm_ManagerCtor's a (each store also copied to 00098dd6 or 00098dda and passed to the routine at 0009df14 or 0009df18 when the display is 000bdd28), copies a type-0 region of rect at (0, 0) with Region_CopyBetweenPages (00066914), passes rect to DirtyBox_Add (0008398c) with 0 (in stack order x0, y0, x1, y1, 0), then puts back the low bytes of the two fields. es2_xref finds calls from TtmScript_RunPage (0007aa58), three, and TtmScript_RunDrawCommand (0007c01c).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-commands",
       "verified": {
         "bytes": "00079c38+344",
         "sha1": "4d0ed6f995df",
@@ -43949,7 +43949,7 @@
       "confidence": "high",
       "name": "TtmScript_CyclePalette",
       "description": "(script): ES1GO's TtmScript_CyclePalette (000472d0) at the simulator's offsets: rotates by one place each of the three six-byte ranges at +0x18b whose direction (+0x18f, +0x195, +0x19b) is not 0 in the palette of the slot table +0x21 selected by +0x25, then uploads it with Palette_UploadWhole. es2_xref finds one call, from TtmScript_Run (00079a14).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-run",
       "verified": {
         "bytes": "00079d90+353",
         "sha1": "a756b88c757b",
@@ -43964,7 +43964,7 @@
       "confidence": "high",
       "name": "TtmScript_FindLabel",
       "description": "(script, label): the first page, in page order below the count byte +0, whose first command in the page table +2 is 0x1101 or 0x1111 with label as its argument, as a byte; 0 when none is. ES1GO's TtmScript_FindLabel (0004741a) also formats a message.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-run",
       "verified": {
         "bytes": "00079ef4+115",
         "sha1": "3807f436c4f0",
@@ -43979,7 +43979,7 @@
       "confidence": "high",
       "name": "TtmScript_Free",
       "description": "(script): resets the script with TtmScript_Reset (0007ca44) through its padding entry, then deletes the unpacked script +6, the page table +2 and the slot tables +0x21 and +0x17 when set. ES1GO's TtmScript_Free (000474bd) also destroys a sound object. es2_xref finds one call, from TtmScript_Dtor, through the padding entry 00079f67.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "00079f68+70",
         "sha1": "705d0089d77a",
@@ -43994,7 +43994,7 @@
       "confidence": "high",
       "name": "TtmScript_SkipString",
       "description": "(script, string): returns the address past the string's NUL, plus one more byte when the string's length is even, so the next opcode word starts on an even offset.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "00079fb0+44",
         "sha1": "b27395a78a98",
@@ -44009,7 +44009,7 @@
       "confidence": "high",
       "name": "TtmScript_CopyArgBytes",
       "description": "(script, source, count): copies count bytes from source, or with a count of 0 the bytes up to its NUL, at most 100 either way, into the buffer 000bbc18, adds a NUL and returns the buffer. ES1GO's TtmScript_CopyArgBytes (0004759d) with the simulator's buffer.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-commands",
       "verified": {
         "bytes": "00079fdc+115",
         "sha1": "f60c7188ca22",
@@ -44024,7 +44024,7 @@
       "confidence": "high",
       "name": "Ttm_TokenName",
       "description": "(ignored, opcode) in stack order, callee-cleaned: Dynamix's name of a .TTM opcode: searches the 128 opcodes at 0009fb14 and jumps (0007a06d) through the table 0009fd14 to a case returning its string, or returns unknown (0009fb0c). The opcodes and the 2,034 bytes of strings from 0009f322 are the same as ES1GO's Ttm_TokenName (00047618)'s. es2_xref finds no reference to it.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-commands",
       "verified": {
         "bytes": "0007a050+1274",
         "sha1": "98418c7353d5",
@@ -44039,7 +44039,7 @@
       "confidence": "high",
       "name": "TtmScript_Load",
       "description": "(script, a, b, name) in stack order, callee-cleaned: loads a .TTM. Opens TtmScript_BuildPath (00079b54)'s path with VolRStream_CtorFromPath and returns 3 when its status is not 0; TtmScript_FindTag (0007cba4) PAG:, reads the size dword and one byte, the page count's low byte; TT3:, reads the size dword and the method byte, returning 2 unless it is 1, then the unpacked length; allocates it at +6 (1 when that fails) and reads it through an RLERStream on the file stream, returning 1 when the file stream's status is then not 0. Closes the file stream, stores the page count byte at +0, count + 1 dwords at +2, +6 + length - 1 at +0xa, 0x18 bytes at +0x21 and +0x17, freeing them and returning 1 when one fails; indexes the pages with TtmScript_IndexPages (0007a940) through its padding entry; zeroes the two blocks and the fields, stores a at +0xe and b at +0x13, 0xff at the bytes +0x178 and +0x179, 10 at the dwords +0x1a1, +0x1a9 and +0x1b1; destroys the streams (RLERStream_DtorCopy (0007a914)'s vtable 0009ff16, VolRStream_Dtor) and returns the index result, 0 or 2. ES1GO's TtmScript_Load does not test the open or the method byte and reads the page count as a word. es2_xref finds one call, from Ttm_Open.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "0007a54c+968",
         "sha1": "7983173be9f3",
@@ -44054,7 +44054,7 @@
       "confidence": "high",
       "name": "RLERStream_DtorCopy",
       "description": "(stream, flags): RLERStream_Dtor's code with the TTM module's copy of RLERStream's vtable, 0009ff16: returns at once for a null stream; otherwise stores that vtable, Stream_BaseDtor(stream, 0), and Mem_Delete when bit 0 of the flags is set.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "0007a914+43",
         "sha1": "49805bfb1ea9",
@@ -44069,7 +44069,7 @@
       "confidence": "high",
       "name": "TtmScript_IndexPages",
       "description": "(script): ES1GO's TtmScript_IndexPages over this script's fields (page count byte +0, page table +2, script +6, last byte +0xa): stores each page's start and steps over commands to the step past an opcode 0x0ff0, returning 2 when the position reaches +0xa at a page's start or after a command, or on low bits 8-14, and 0 with every page found. Strings are skipped with TtmScript_SkipString (00079fb0).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "0007a940+279",
         "sha1": "645334863f6b",
@@ -44084,7 +44084,7 @@
       "confidence": "high",
       "name": "TtmScript_RunPage",
       "description": "(script, page) in stack order, callee-cleaned: ES1GO's TtmScript_RunPage (00048218) at the simulator's offsets, running the page from the page table +2 to its 0x0ff0 and returning 1, with these differences. Its call offsets (depth +0x17a, x +0x17c, y +0x17e) skip the opcodes of the table 0009ffac (targets 0009ffbc, JMP 0007ad1d). It steps over every opcode 0xc000-0xcfff; hands 0xa000-0xafff to TtmScript_RunDrawCommand (0007c01c), returning 0 when that returns 0; finds the rest in the 29 opcodes at 0009ffcc (targets 000a0040, JMP 0007adea), the shell's 30 less 0x5005, and steps over any other. Point lists go through TtmScript_CopyArgBytes (00079fdc). Loads, frees, palette selects, 0x0020, 0x4204, 0x4214, 0x2402, 0x0400, 0xf01f and 0x4124 act while the wait +0x182 is 0 or less; 0x1021 and 0x2022 act once per page through the byte +0x12, 0x2022 as min + labs(rand (0007cd28)() % (max - min)); 0x4114 acts on every run. Palettes are uploaded with Palette_UploadWhole on select and load; bitmap arrays are destroyed with GLBitmapArray_Dtor (000673c8)(array, 3); 0xf01f's bitmap is loaded with ClassItem_LoadResource and its rect fixed with TtmScript_FixRect (00079c38). The fades work on a stack palette set up with GLPalette_Assign (0007bfdc), scale colours a1 to a2 toward black with Palette_ScaleRange (0007cc24) by the step 6 - a4, copy the full screen with Region_CopyBetweenPages (00066914) and destroy the copy with GLPalette_Dtor (00069258). Labels are found with TtmScript_FindLabel (00079ef4). es2_xref finds calls from TtmScript_Run (00079a14), three, and from its own 0x3003 and 0x3303 cases, through the padding entry 0007aa57.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-commands",
       "verified": {
         "bytes": "0007aa58+5508",
         "sha1": "b7e89ff6f203",
@@ -44099,7 +44099,7 @@
       "confidence": "high",
       "name": "GLPalette_Assign",
       "description": "(palette, source): copies the words +4, +6, +0xc, +0xe and the dwords +8 (the colours) and +0x10 from source, leaving the vtable. ES1GO's GLPalette_Assign (0004a08c). es2_xref finds calls from the two fade cases of TtmScript_RunPage (0007aa58).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-fades",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-fades",
       "verified": {
         "bytes": "0007bfdc+63",
         "sha1": "87c35f2bf2f2",
@@ -44114,7 +44114,7 @@
       "confidence": "high",
       "name": "TtmScript_RunDrawCommand",
       "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: ES1GO's TtmScript_RunDrawCommand (0004a213) at the simulator's offsets: matches the opcode against the shell's 22 at 000a00b4 (targets 000a010c, JMP 0007c040) and returns 1 whether or not one matches. The pen +0x228 and fill +0x22c of the default render context 0009f248 are set to the brushes +0x19d, +0x1a5 and +0x1ad. Each draw but 0xa601 passes its box to DirtyBox_Add (0008398c) with 1; the ellipses draw with Raster_DrawEllipse (000831f4) and the sized brush with Bitmap_BlitScaled (00067178); one case serves the twelve bitmap draws, testing the opcode's low four bits, and adds the dwords +0x1b5 and +0x1b9 to the position. 0xa601, while the wait +0x182 is 0 or less, puts the selected region's saved pixels back with Region_Restore at (0, 0) and passes the region's rect to TtmScript_FixRect (00079c38). es2_xref finds one call, from TtmScript_RunPage (0007aa58), through the padding entry 0007c01b.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-commands",
       "verified": {
         "bytes": "0007c01c+2569",
         "sha1": "080bc09746e9",
@@ -44129,7 +44129,7 @@
       "confidence": "high",
       "name": "Point_DefaultCtor",
       "description": "(point): allocates 8 bytes when given none and returns the point as it was. ES1GO's Point_DefaultCtor (0004b37d). es2_xref finds its padding entry 0007ca25 stored at 0007c46f, in the polygon case of TtmScript_RunDrawCommand (0007c01c), which passes it to __vec_new.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-commands",
       "verified": {
         "bytes": "0007ca28+27",
         "sha1": "fa9f212b2026",
@@ -44144,7 +44144,7 @@
       "confidence": "high",
       "name": "TtmScript_Reset",
       "description": "(script): destroys the six palettes of the slot table +0x21 through their +0x1c slot with 3 and the six bitmap arrays of +0x17 with GLBitmapArray_Dtor (000673c8)(array, 3), deletes the twelve saved-pixel buffers at +0x28, zeroing every slot; zeroes the cycling directions +0x18f, +0x195 and +0x19b; sets the mode dword +0xe to 2, the page byte +1 and the palette slot +0x25 to 0, the word +0x178 to -1, the words +0x17a to +0x188 and the byte +0x18a to 0, and the brush colours +0x1a1, +0x1a9 and +0x1b1 to 10. ES1GO's TtmScript_Reset (0004b3c6) at the simulator's offsets; this one leaves the byte +0x12. es2_xref finds calls from TtmScript_Run (00079a14), two, and TtmScript_Free (00079f68), through the padding entry 0007ca43.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-run",
       "verified": {
         "bytes": "0007ca44+352",
         "sha1": "078f902883c5",
@@ -44159,7 +44159,7 @@
       "confidence": "high",
       "name": "TtmScript_FindTag",
       "description": "(script, tag, stream): ES1GO's Stream_FindTag search with the script first, unused: notes the stream's position (slot +8) and reads a byte at a time (slot +0x1c) until the NUL-terminated tag has matched or a read fails; a matching byte advances through the tag, a byte that does not match restarts at the tag's first byte without being tested against it; on a failure seeks (slot +0xc) back. Returns whether the whole tag matched, the stream then just past it.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md",
       "verified": {
         "bytes": "0007cba4+128",
         "sha1": "80fa7b36782a",
@@ -44174,7 +44174,7 @@
       "confidence": "high",
       "name": "Palette_ScaleRange",
       "description": "(script, percent, last, first, source, target): for each colour from first to last inclusive, sets target's colour to source's with each of the three channels multiplied by Math_Q10Multiply by (percent << 10) / 100, and the fourth byte 1. The simulator's fades use it where ES1GO's use Palette_BlendRange (0004b532), which blends toward a colour. es2_xref finds two calls, from the fade cases of TtmScript_RunPage (0007aa58).",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-fades",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-fades",
       "verified": {
         "bytes": "0007cc24+257",
         "sha1": "5a90be240634",
@@ -44204,7 +44204,7 @@
       "confidence": "high",
       "name": "srand",
       "description": "(seed), C convention: stores seed at 000a0164, the state rand (0007cd28) steps. es2_xref finds one call, from Ttm_ManagerCtor (00069540), which passes clock().",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "source": "Herculan/docs/es1/simulation/cockpit-ttm-scripts.md#handles",
       "verified": {
         "bytes": "0007cd4a+10",
         "sha1": "11ff6890a40e",
@@ -46841,7 +46841,7 @@
       "confidence": "high",
       "name": "LockTone_PhaseSounded",
       "description": "byte: Mech_LockTonePlay (0001552c) sets it when the lock tone sounds in a phase of bit 0x40 of 000981c4 and clears it in the other phase. ES2's LockTone_PhaseSounded.",
-      "source": "Herculan/docs/es1/simulation/mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0; ES1DBSIM image at 00091c5c"
+      "source": "Herculan/docs/es1/simulation/mech-systems.md#the-systems-tick--mech_perticksystemsupdate-00014ee0; ES1DBSIM image at 00091c5c"
     },
     {
       "address": "00091c5d",
@@ -46850,7 +46850,7 @@
       "confidence": "high",
       "name": "LockTone_WasLocked",
       "description": "byte: Mech_LockTonePlay (0001552c) sets it while the lamp is lit and clears it after the loss tone. ES2's LockTone_WasLocked.",
-      "source": "Herculan/docs/es1/simulation/mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0; ES1DBSIM image at 00091c5d"
+      "source": "Herculan/docs/es1/simulation/mech-systems.md#the-systems-tick--mech_perticksystemsupdate-00014ee0; ES1DBSIM image at 00091c5d"
     },
     {
       "address": "00091ce0",
@@ -48731,7 +48731,7 @@
       "confidence": "high",
       "name": "Sound_Manager",
       "description": "The simulator's sound manager, made by Sound_Init (0004db14) with SoundManager_Ctor (0004eb40) when the digital device is not 0, and otherwise 0, with which the sound file's calls do nothing. Sound_Shutdown (0004de08) leaves it set.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-sound-manager; ES1DBSIM decompile at 0004db14 and 0004de08"
+      "source": "Herculan/docs/es1/sound/sound-manager.md; ES1DBSIM decompile at 0004db14 and 0004de08"
     },
     {
       "address": "000959b4",
@@ -48740,7 +48740,7 @@
       "confidence": "high",
       "name": "Sound_ListenerCountdown",
       "description": "Sound_UpdateListener (0004df98)'s countdown to its next pass of the listener's frame to SoundManager_UpdateListener (0004fb60), every tenth call; Sound_Init (0004db14) sets it to 10, with or without a manager.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004db14"
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 0004db14"
     },
     {
       "address": "000959b8",
@@ -48749,7 +48749,7 @@
       "confidence": "high",
       "name": "Sound_MusicEnabled",
       "description": "Dword, 0 in the image: preferences' MUSIC switch, stored by Sound_SetMusicEnabled (0004e294) and read by SoundObject_IsCategoryEnabled (0004de50) for a song; es2_xref --decode finds those absolute references and the setter's read.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off; ES1DBSIM disassembly"
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#turning-songs-and-sounds-off; ES1DBSIM disassembly"
     },
     {
       "address": "000959bc",
@@ -48758,7 +48758,7 @@
       "confidence": "high",
       "name": "Sound_EffectsEnabled",
       "description": "Dword, 0 in the image: preferences' SOUNDS switch, stored by Sound_SetEffectsEnabled (0004e2c8) and read by SoundObject_IsCategoryEnabled (0004de50) for a digital sound; es2_xref --decode finds those absolute references and the setter's read.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off; ES1DBSIM disassembly"
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#turning-songs-and-sounds-off; ES1DBSIM disassembly"
     },
     {
       "address": "000959dc",
@@ -48803,7 +48803,7 @@
       "confidence": "high",
       "name": "SoundDriver_Defaults",
       "description": "The sound driver's defaults block, nine dwords: the buffer 0x1000, the rate 11025 (000959f0), 0x78, DMA 1 (000959f8), IRQ 7 (000959fc), port 0x220 (00095a00), digital device 0xe000 (00095a04), MIDI port 0x388 (00095a08) and MIDI device 0xa002 (00095a0c). Sound_Init (0004db14) stores its six values over the last six, and SoundManager_LoadDrivers (0004ef8c) fills the driver's blocks from it.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile at 0004db14"
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver; ES1DBSIM decompile at 0004db14"
     },
     {
       "address": "00095c46",
@@ -48812,7 +48812,7 @@
       "confidence": "high",
       "name": "SoundObjectVtable",
       "description": "The sound object base's vtable, stored by SoundObject_Ctor (00050020) and SoundObject_Dtor (000500d8): slot +0x08 SoundObject_Dtor and +0x28 SoundObject_SetRepeatCount (00050470); the other slots from +0x04 to +0x30 are NOP-opened stubs at SoundObject_SetPlacedVolume (000500a3)-000500d2.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM data at 00095c46"
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM data at 00095c46"
     },
     {
       "address": "00095c82",
@@ -48821,7 +48821,7 @@
       "confidence": "high",
       "name": "MidiSoundVtable",
       "description": "MidiSound's vtable, stored by MidiSound_Ctor (000504dc) and MidiSound_Dtor (0005055c): slots +0x08 MidiSound_Dtor, +0x10 MidiSound_Play, +0x14 MidiSound_Stop, +0x18 maybe_MidiSound_Resume, +0x1c maybe_MidiSound_Pause, +0x28 SoundObject_SetRepeatCount, +0x2c MidiSound_SetVolume, +0x30 MidiSound_IsPlaying, +0x04 MidiSound_SetPlacedVolume, and the base's stubs for +0x0c, +0x20 and +0x24 one byte past their NOPs.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM data at 00095c82"
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM data at 00095c82"
     },
     {
       "address": "00095cd6",
@@ -48830,7 +48830,7 @@
       "confidence": "high",
       "name": "DigiSoundVtable",
       "description": "DigiSound's vtable, stored by DigiSound_Ctor (000507c8): slots +0x04 DigiSound_SetPlacedVolume, +0x08 DigiSound_Dtor, +0x0c DigiSound_GetVoiceStatus, +0x10 DigiSound_Play, +0x14 DigiSound_Stop, +0x18 maybe_DigiSound_Resume, +0x1c maybe_DigiSound_Pause, +0x20 maybe_DigiSound_SetPitch, +0x24 DigiSound_SetStartWord10, +0x28 DigiSound_SetRepeats, +0x2c DigiSound_SetVolume, +0x30 DigiSound_IsPlaying.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM data at 00095cd6"
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM data at 00095cd6"
     },
     {
       "address": "00095d10",
@@ -50882,7 +50882,7 @@
       "confidence": "high",
       "name": "SoundCatalog_Names",
       "description": "60 pointers to the catalog's names, into the loaded SOUNDS.STR buffer SoundCatalog_StringTable (000b1e44): every row StringTable_ReadNext (00045004) reads, empty ones included, 57 from SOUNDS.STR, then the 0 SoundManager_SetSampleNames (0004f888) stops at. ES2's SoundCatalog_Names (DBSIM 004d2b0c).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-simulators-catalog; ES1DBSIM decompile at 0004dc70"
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#the-simulators-catalog; ES1DBSIM decompile at 0004dc70"
     },
     {
       "address": "000b1994",
@@ -50891,7 +50891,7 @@
       "confidence": "high",
       "name": "SoundCatalog_Attributes",
       "description": "60 pointers to the catalog rows' attribute bytes, into the loaded SOUNDS.STR buffer: byte 0 the repeat count, 1 the volume, 2 load at the catalog's load, 3 the priority. ES2's SoundCatalog_Attributes (DBSIM 004d2bfc).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-simulators-catalog; ES1DBSIM decompile at 0004dc70"
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#the-simulators-catalog; ES1DBSIM decompile at 0004dc70"
     },
     {
       "address": "000b1a84",
@@ -50900,7 +50900,7 @@
       "confidence": "high",
       "name": "SoundCatalog_OfferedDistance",
       "description": "60 dwords, one per catalog row: the distance from Sound_Listener (000bd730) of the point Sound_OfferPosition (0004dee4) kept for the row this frame, 0 for none. Sound_UpdateListener (0004df98) places the row at the point and zeroes it; SoundCatalog_Load (0004dc70) zeroes each row it makes.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#placed-sounds; ES1DBSIM decompile at 0004dc70"
+      "source": "Herculan/docs/es1/sound/sound-manager.md#placed-sounds; ES1DBSIM decompile at 0004dc70"
     },
     {
       "address": "000b1b74",
@@ -50909,7 +50909,7 @@
       "confidence": "high",
       "name": "SoundCatalog_Positions",
       "description": "60 12-byte points, one per catalog row, built by Sound_StaticInit (0004e6b0) with maybe_Point3I_CtorSoundCopy (0004e6e0): Sound_UpdateListener (0004df98) passes 000b1b74 + 12 * row to SoundObject_SetPosition for a row whose dword SoundCatalog_OfferedDistance (000b1a84)[row] is set.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#where-the-object-files-start-and-end"
+      "source": "Herculan/docs/es1/sound/sound-manager.md#where-the-object-files-start-and-end"
     },
     {
       "address": "000b1e44",
@@ -50918,7 +50918,7 @@
       "confidence": "high",
       "name": "SoundCatalog_StringTable",
       "description": "The 0x10-byte StringTable SoundCatalog_Load (0004dc70) reads str\\SOUNDS.STR into. Sound_StaticInit (0004e6b0) constructs it and Sound_StaticDtor (0004e6d0) frees its buffer. ES2's SoundCatalog_StringTable (DBSIM 004d2cec).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#where-the-object-files-start-and-end"
+      "source": "Herculan/docs/es1/sound/sound-manager.md#where-the-object-files-start-and-end"
     },
     {
       "address": "000b1e54",
@@ -50945,7 +50945,7 @@
       "confidence": "high",
       "name": "HmiTimer_Enabled",
       "description": "dword: HmiTimer_Tick calls HmiTimer_Callback only while it is set; HmiTimer_Enable sets it to 1 and HmiTimer_Disable to 0.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly"
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly"
     },
     {
       "address": "000b1edc",
@@ -50954,7 +50954,7 @@
       "confidence": "high",
       "name": "HmiTimer_Slot",
       "description": "word: the Timer_AddCallback slot HmiTimer_Install keeps and HmiTimer_Remove passes on.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly"
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly"
     },
     {
       "address": "000b1ee0",
@@ -50963,7 +50963,7 @@
       "confidence": "high",
       "name": "HmiTimer_Callback",
       "description": "6 bytes: the far pointer HmiTimer_Install stores, the offset dword at +0 and the selector word at +4, which HmiTimer_Tick calls.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly"
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly"
     },
     {
       "address": "000b1ee8",
@@ -50972,7 +50972,7 @@
       "confidence": "high",
       "name": "HmiTimer_Busy",
       "description": "dword: HmiTimer_Tick's reentry count, raised around its call through HmiTimer_Callback.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly"
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-digital-drivers-timer; ES1DBSIM disassembly"
     },
     {
       "address": "000b1f6c",
@@ -51170,7 +51170,7 @@
       "confidence": "high",
       "name": "ViewChain_CameraControlPreferred",
       "description": "Whether the outside view starts with the controls on the camera, ES2's ViewChain_CameraControlPreferred (DBSIM 004d259c): 1 from Main_StaticInit (00057414), flipped by ViewChain_ToggleCameraControl (00059dbc), copied into InputDrivesCamera by ViewChain_Apply (0005894c) and ViewChain_ViewObject (00058a44).",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c"
+      "source": "Herculan/docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c"
     },
     {
       "address": "000b5bba",
@@ -51332,7 +51332,7 @@
       "confidence": "high",
       "name": "ViewChain_SpareCamera",
       "description": "The 0x4a-byte camera ViewChain_ViewObject (00058a44) builds on its first call (guard byte 000b5d34) and uses when no squad camera is free, ES2's ViewChain_SpareCamera (DBSIM 004d27d8).",
-      "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c"
+      "source": "Herculan/docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c"
     },
     {
       "address": "000b5e04",
@@ -52664,7 +52664,7 @@
       "confidence": "high",
       "name": "SoundCatalog_Objects",
       "description": "60 sound object pointers, one per catalog row: SoundCatalog_Load (0004dc70) fills rows 0-46 from SOUNDS.STR with SoundManager_CreateObject (0004f4e8), and the start-up's zero fill leaves the rest 0. Sound_Play (0004de84) and its siblings index it unchecked. ES2's SoundCatalog_Voices (DBSIM 004d2cfc) holds voice handles.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#playing-a-row; ES1DBSIM decompile at 0004dc70 and 0004de08"
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#playing-a-row; ES1DBSIM decompile at 0004dc70 and 0004de08"
     },
     {
       "address": "000bd72c",
@@ -52673,7 +52673,7 @@
       "confidence": "high",
       "name": "SoundCatalog_Count",
       "description": "The catalog's row count: the rows SoundCatalog_Load (0004dc70) made objects for, up to the first empty name, 47 from SOUNDS.STR. ES2's SoundCatalog_Count (DBSIM 004d2dec).",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-simulators-catalog; ES1DBSIM decompile at 0004dc70"
+      "source": "Herculan/docs/es1/simulation/sound-catalog.md#the-simulators-catalog; ES1DBSIM decompile at 0004dc70"
     },
     {
       "address": "000bd730",
@@ -52691,7 +52691,7 @@
       "confidence": "high",
       "name": "SoundManager_Instance",
       "description": "Pointer to the sound manager, stored by SoundManager_Ctor (0004eb40); the driver's callbacks MidiSound_LoopCallback (0004e718), MidiSound_EndCallback (0004e7b4) and DigiSound_DoneCallback (0004e7fc), and DigiSound_Play (000509c4), read it.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-vtables; ES1DBSIM disassembly"
+      "source": "Herculan/docs/es1/sound/sound-manager.md#the-vtables; ES1DBSIM disassembly"
     },
     {
       "address": "000bd742",
@@ -52700,7 +52700,7 @@
       "confidence": "high",
       "name": "SoundDetect_Buffer",
       "description": "The block SoundManager_DetectDigitalCard (0004ed68) passes its helpers: a path at +0, bytes +0x100 (open) and +0x101 (found), a block at +0x102 and the hardware block at +0x16e (port +0x16e, IRQ +0x172, DMA +0x176); the digital device id at +0x166.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile"
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver; ES1DBSIM decompile"
     },
     {
       "address": "000bd8cc",
@@ -52709,7 +52709,7 @@
       "confidence": "high",
       "name": "SoundManager_DriversLoaded",
       "description": "Set by SoundManager_LoadDrivers (0004ef8c) when it succeeds; SoundManager_UnloadDrivers (0004f3d4) runs only while it is set and clears it.",
-      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver; ES1DBSIM decompile"
+      "source": "Herculan/docs/es1/sound/sound-drivers.md#the-driver; ES1DBSIM decompile"
     },
     {
       "address": "000bd8e2",

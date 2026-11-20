@@ -16,7 +16,7 @@
 6. It routes each track whose map entry is `0xff` to a driver. Of the track's device ids, in order up to a 0, the first that one of the open drivers (up to five, their ids at `000a130c`) answers wins, and the map entry becomes that driver's slot: `0xa000` is answered by a driver of id `0xa000`, `0xa001` or `0xa008`, `0xa002` by `0xa002` or `0xa009`, and any other id by itself. A track whose first id is 0 goes to slot 0. A track no open driver answers loses its events pointer, keeps `0xff`, and leaves one fewer track playing.
 7. It returns 0, with the slot through the handle pointer.
 
-`MidiSound_Ctor` sets all 32 map entries to `0xff`, so every track is routed this way. Each program opens two MIDI drivers, the shell through its copy of `SoundManager_LoadDrivers` (`ES1GO 0004240a`, [the copies](../formats/sound-samples.md#the-copies)): the MIDI device `resource.cfg`'s `[Music]` `Driver#` names, `0xa002` in the images' defaults, with the melodic and drum banks, and `0xa005` with `sos\drum32.dig` ([sound-samples.md](../formats/sound-samples.md#the-driver)).
+`MidiSound_Ctor` sets all 32 map entries to `0xff`, so every track is routed this way. Each program opens two MIDI drivers, the shell through its copy of `SoundManager_LoadDrivers` (`ES1GO 0004240a`, [the copies](sound-manager.md#the-copies)): the MIDI device `resource.cfg`'s `[Music]` `Driver#` names, `0xa002` in the images' defaults, with the melodic and drum banks, and `0xa005` with `sos\drum32.dig` ([sound-samples.md](sound-drivers.md#the-driver)).
 
 ## Playing
 
@@ -26,7 +26,7 @@
 
 The library keeps 16 timer events, each a far handler and a rate in calls a second, and one divisor, the PC timer divisor it takes the timer to run at (`0009d7dc`). An event's step is its rate over the rate the divisor stands for, `0x1234dc` / divisor, as a 16.16 fraction. `HmiTimer_Dispatch` (`0006da51`) adds each live event's step to its accumulator and, when that passes 1.0, drops the whole part and calls the handler, first storing the event's song slot in `0009d910` when it has one; that byte is how `HmiMidi_SongTick` knows its song. `HmiTimer_AddEvent` lowers the divisor to the new event's own when that is smaller, and so do `HmiTimer_SetEventRate` (`0006d78c`) and `HmiTimer_RemoveEvent` (`0006d8d5`), which sets it for the fastest event left; each then works out every step again. The divisor is only a number: `HmiTimer_SetDivisor` (`0006da37`) stores it and calls `HmiTimer_NoOp`, which writes no port.
 
-`SoundManager_LoadDrivers` starts the timer with `HmiTimer_Init` (`0006d4f5`)(0, 1). Bit 0 of the second argument keeps the library from installing a handler of its own and leaves the divisor at `0xffff`; the dispatcher is called instead by the game's timer callback `SoundManager_TimerCallback` (`0004e710`, `ES1GO 000419d8`), which `SoundManager_LoadDrivers` registers at a count of the interrupts a second over 120, so 1: on every interrupt ([the rate](../simulation/timer.md#the-rate)). A song's event at 120 a second lowers the divisor to `0x1234dc` / 120, its step is then exactly 1.0, and the song ticks once a dispatch. `SoundManager_UnloadDrivers` takes the callback off the timer again ([the driver](../formats/sound-samples.md#the-driver)); a failed load leaves it on.
+`SoundManager_LoadDrivers` starts the timer with `HmiTimer_Init` (`0006d4f5`)(0, 1). Bit 0 of the second argument keeps the library from installing a handler of its own and leaves the divisor at `0xffff`; the dispatcher is called instead by the game's timer callback `SoundManager_TimerCallback` (`0004e710`, `ES1GO 000419d8`), which `SoundManager_LoadDrivers` registers at a count of the interrupts a second over 120, so 1: on every interrupt ([the rate](../simulation/timer.md#the-rate)). A song's event at 120 a second lowers the divisor to `0x1234dc` / 120, its step is then exactly 1.0, and the song ticks once a dispatch. `SoundManager_UnloadDrivers` takes the callback off the timer again ([the driver](sound-drivers.md#the-driver)); a failed load leaves it on.
 
 ### The tick
 
@@ -100,7 +100,7 @@ For `0xa005` and `0xa003` they come from tables in the program, five functions e
 
 ## The devices
 
-**The songs are written for the FM driver: what a song plays depends on the MIDI device the setup chose.** `resource.cfg`'s `[Music]` `Driver#` ([sound-samples.md](../formats/sound-samples.md#the-driver)) holds one of the MIDI devices the setup program `SOUNDSET.EXE` lists in its `SOUNDSET.INI`:
+**The songs are written for the FM driver: what a song plays depends on the MIDI device the setup chose.** `resource.cfg`'s `[Music]` `Driver#` ([sound-samples.md](sound-drivers.md#the-driver)) holds one of the MIDI devices the setup program `SOUNDSET.EXE` lists in its `SOUNDSET.INI`:
 
 | Id | `SOUNDSET.INI`'s name | Answers a track listing |
 |---|---|---|

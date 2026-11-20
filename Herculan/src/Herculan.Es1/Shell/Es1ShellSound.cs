@@ -9,7 +9,7 @@ using Herculan.Es1.Sound;
 namespace Herculan.Es1.Shell;
 
 /// <summary>
-/// The shell's sound manager (docs/es1/formats/sound-samples.md#the-shells-sound-manager): <c>ShellSound_Manager</c>
+/// The shell's sound manager (docs/es1/shell/sound.md): <c>ShellSound_Manager</c>
 /// (<c>ES1GO 00082768</c>), which <see cref="Init"/> makes from <c>resource.cfg</c> at start-up with the 20 names of
 /// <see cref="Names"/> and no catalog, and the one sound it makes, the buttons' click <c>ShellSound_ButtonSound</c>
 /// (<c>0007fd00</c>), which the menus' buttons (<see cref="Menus.Es1MTButton"/>) and the shell's panels
@@ -55,7 +55,7 @@ public sealed class Es1ShellSound {
 
 	/// <summary>
 	/// <c>ShellSound_Names</c> (<c>000828c0</c>): the 20 names the manager is given, each name's index its position
-	/// (docs/es1/formats/sound-samples.md#the-shells-names).
+	/// (docs/es1/shell/sound.md#the-shells-names).
 	/// </summary>
 	public static readonly string[] Names = [
 		@"res32\xxxxxxxx.sfx", @"res32\menu.hmp", @"res32\menu.hmp", @"res32\shella.hmp", @"res32\shellb.hmp",

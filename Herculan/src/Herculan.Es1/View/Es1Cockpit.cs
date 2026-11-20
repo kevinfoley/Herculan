@@ -29,7 +29,7 @@ namespace Herculan.Es1.View;
 /// throttle gauge <c>+0x1ed</c> and the roving gunsight
 /// <c>+0x1f1</c> with the canvas context they draw through and <c>Widget_DrawToCockpit</c>
 /// (docs/es1/simulation/cockpit-panel.md#drawing-it); the clock <c>+0x1f9</c> and the <c>.TTM</c> manager
-/// <c>CockpitTtmManager</c> (docs/es1/formats/ttm-scripts.md#the-simulator); the pilot channel <c>+0x203</c>
+/// <c>CockpitTtmManager</c> (docs/es1/simulation/cockpit-ttm-scripts.md); the pilot channel <c>+0x203</c>
 /// (<see cref="Es1PilotChannel"/>) and the computer's ticker <c>+0x207</c> (<see cref="Es1MessageTicker"/>) with the
 /// squadmates the channel reads (docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers); and the target
 /// selection <c>+0x20c</c> (<see cref="Es1TargetSelection"/>); and the Heads-Down Display <c>+0x1f5</c>
@@ -596,7 +596,7 @@ public sealed class Es1Cockpit {
 
 	/// <summary>
 	/// <c>Cockpit_RunTtmScripts</c> (<c>0002e0ec</c>): <c>Ttm_RunAll</c> on the manager
-	/// (docs/es1/formats/ttm-scripts.md#each-frame). Retail first makes the installed render context, its translation set
+	/// (docs/es1/simulation/cockpit-ttm-scripts.md#each-frame). Retail first makes the installed render context, its translation set
 	/// and its origin the view's canvas origin, the scripts' default context, and puts the three fields back after; the
 	/// clock's script draws through its own (see <see cref="Es1TtmManager"/>).
 	/// </summary>

@@ -7,7 +7,7 @@ namespace Herculan.Es1.Sound;
 
 /// <summary>
 /// The six values <c>Sound_Init</c> (<c>0004db14</c>) stores over the driver defaults block (<c>000959ec</c>), at their
-/// addresses there (docs/es1/formats/sound-samples.md#the-driver); the block's rate and buffer are not among them.
+/// addresses there (docs/es1/sound/sound-drivers.md#the-driver); the block's rate and buffer are not among them.
 /// </summary>
 /// <param name="MidiPort"><c>00095a08</c>.</param>
 /// <param name="Port"><c>00095a00</c>, the digital card's.</param>
@@ -21,7 +21,7 @@ public readonly record struct Es1SoundDevices(ushort MidiPort, ushort Port, byte
 }
 
 /// <summary>
-/// The sound manager (docs/es1/formats/sound-samples.md#the-sound-manager): the one object that owns every sound, its
+/// The sound manager (docs/es1/sound/sound-manager.md): the one object that owns every sound, its
 /// names, the sizes the volume stream reports for them, the loaded data and its count against a limit, and
 /// <see cref="ObjectSlots"/> sound objects. The simulator's and the shell's are one code; each program makes one at
 /// start-up (<c>SoundManager_Ctor</c>, <c>0004eb40</c>; the shell's copy is <c>ES1GO 00041f64</c>).
@@ -192,7 +192,7 @@ public sealed class Es1SoundManager {
 
 	/// <summary>
 	/// <c>SoundManager_CreateObject</c> (<c>0004f4e8</c>)(manager, <paramref name="kind"/>, <paramref name="priority"/>,
-	/// <paramref name="index"/>) (docs/es1/formats/sound-samples.md#sound-objects): none for an index above
+	/// <paramref name="index"/>) (docs/es1/sound/sound-manager.md#sound-objects): none for an index above
 	/// <see cref="HighestIndex"/> or with no slot free. The index's name, lower-cased in the table, decides the kind: one
 	/// holding <c>.hmp</c> is a song, and one holding <c>.sfx</c> or <c>.raw</c> a digital sound, tested in that order;
 	/// with no name, <paramref name="kind"/> 2 gives none. A song is an <see cref="Es1MidiSound"/>, any other kind an
@@ -238,7 +238,7 @@ public sealed class Es1SoundManager {
 
 	/// <summary>
 	/// <c>SoundManager_SetSampleNames</c> (<c>0004f888</c>)(manager, <paramref name="names"/>)
-	/// (docs/es1/formats/sound-samples.md#naming-and-loading): the table, each name's index its position. For each, the
+	/// (docs/es1/sound/sound-manager.md#naming-and-loading): the table, each name's index its position. For each, the
 	/// size the reader gives, 0 for an empty name, and its data and reference count cleared; then
 	/// <see cref="HighestIndex"/> the count less one. A name that does not open ends it there, leaving
 	/// <see cref="HighestIndex"/> as it was. Retail clears the data pointers without freeing them or changing
@@ -267,7 +267,7 @@ public sealed class Es1SoundManager {
 
 	/// <summary>
 	/// <c>SoundManager_SetSampleName</c> (<c>0004f99c</c>)(manager, <paramref name="index"/>, <paramref name="name"/>)
-	/// (docs/es1/formats/sound-samples.md#naming-and-loading): false for no name, an index above
+	/// (docs/es1/sound/sound-manager.md#naming-and-loading): false for no name, an index above
 	/// <see cref="HighestIndex"/>, or a name, lower-cased, holding none of <c>.sfx</c>, <c>.raw</c> and <c>.hmp</c>, tested
 	/// in that order so that <c>.hmp</c> wins. Each object on the index is stopped, unloaded, marked to load and given the
 	/// name; one of another kind ends it with false, the objects before it already renamed. Then the name goes into the
@@ -350,7 +350,7 @@ public sealed class Es1SoundManager {
 
 	/// <summary>
 	/// <c>SoundManager_UpdateListener</c> (<c>0004fb60</c>)(manager, <paramref name="frame"/>)
-	/// (docs/es1/formats/sound-samples.md#placed-sounds): the frame kept, then each of the <see cref="ObjectSlots"/> placed
+	/// (docs/es1/sound/sound-manager.md#placed-sounds): the frame kept, then each of the <see cref="ObjectSlots"/> placed
 	/// as <see cref="UpdatePlacement"/> places one, whose steps its loop repeats inline.
 	/// </summary>
 	public void UpdateListener(Transform3 frame) {
@@ -362,7 +362,7 @@ public sealed class Es1SoundManager {
 
 	/// <summary>
 	/// <c>SoundObject_UpdatePlacement</c> (<c>0004fdd8</c>)(manager, <paramref name="slot"/>)
-	/// (docs/es1/formats/sound-samples.md#placed-sounds): a placed object in the slot faded by its distance from
+	/// (docs/es1/sound/sound-manager.md#placed-sounds): a placed object in the slot faded by its distance from
 	/// <see cref="ListenerFrame"/>'s position, to silence at <see cref="HearingRange"/>, both shifted right by
 	/// <see cref="DistanceShift"/> when the range is above <c>0xffff</c>; and within the range panned by its direction's
 	/// dot product with the frame's rotation of (<c>0xfff</c>, 0, 0), <c>0xffff</c> − 8 × (<i>p</i> + <c>0xfff</c>).
@@ -500,7 +500,7 @@ public sealed class Es1SoundManager {
 	private Es1DigitalDriverBlock DigitalBlock => new(Devices.DigitalDevice, 0x78, 8, 1);
 
 	/// <summary>
-	/// <c>SoundManager_LoadDrivers</c> (<c>0004ef8c</c>)(manager) (docs/es1/formats/sound-samples.md#the-driver):
+	/// <c>SoundManager_LoadDrivers</c> (<c>0004ef8c</c>)(manager) (docs/es1/sound/sound-drivers.md#the-driver):
 	/// <see cref="DriversLoaded"/> cleared, false unless <see cref="LoadBanks"/> succeeds; the MIDI half started with
 	/// <c>sos\</c>, the block's image cleared, and the MIDI device opened in <see cref="MidiHandle"/> on the port block whose
 	/// <c>+0</c> is <see cref="Es1SoundDevices.MidiPort"/>, false when it does not open; then <see cref="MelodicBank"/> and
@@ -681,7 +681,7 @@ public sealed class Es1SoundManager {
 	internal void ClearSlot(int slot) => _objects[slot] = null;
 
 	/// <summary>
-	/// <c>SoundObject_LoadSample</c>'s read (docs/es1/formats/sound-samples.md#naming-and-loading): the object's
+	/// <c>SoundObject_LoadSample</c>'s read (docs/es1/sound/sound-manager.md#naming-and-loading): the object's
 	/// <paramref name="name"/>, which retail reads rather than the table's, as <paramref name="index"/>'s data, one
 	/// reference counted, <see cref="BytesLoaded"/> raised by the index's size on the first and
 	/// <see cref="MostBytesLoaded"/> after it.
@@ -701,7 +701,7 @@ public sealed class Es1SoundManager {
 	}
 
 	/// <summary>
-	/// <c>SoundObject_Unload</c>'s count (docs/es1/formats/sound-samples.md#sound-objects): one reference off
+	/// <c>SoundObject_Unload</c>'s count (docs/es1/sound/sound-manager.md#sound-objects): one reference off
 	/// <paramref name="index"/>, and at none its data freed and its size off <see cref="BytesLoaded"/>.
 	/// </summary>
 	internal void Release(int index) {

@@ -97,7 +97,7 @@ public sealed class Es1Sound {
 	/// Whether placed sounds play in stereo, each panned by where it lies across the camera's view, every frame and on a
 	/// voice already playing (<see cref="Es1SoundManager.UpdateStereoListener"/>); off, every voice plays in the center,
 	/// as retail's do on the mono device the user heard (<see cref="Es1DigitalDriver"/>). Retail's own placement, whose pan
-	/// follows the world's x axis and not the camera's heading (docs/es1/formats/sound-samples.md#placed-sounds), still
+	/// follows the world's x axis and not the camera's heading (docs/es1/sound/sound-manager.md#placed-sounds), still
 	/// runs either way and still sets the volume. This engine's invention, on by default, the user's choice; from
 	/// <see cref="Es1TweakSettingDefinitions.Stereo"/>.
 	/// </summary>
@@ -119,7 +119,7 @@ public sealed class Es1Sound {
 
 	/// <summary>
 	/// The six values from the install's <c>resource.cfg</c> that <c>Sim_StartMission</c>'s step 3 and the shell's
-	/// <c>ShellSound_Init</c> (<c>ES1GO 00046235</c>, docs/es1/formats/sound-samples.md#the-shells-sound-manager) read, the
+	/// <c>ShellSound_Init</c> (<c>ES1GO 00046235</c>, docs/es1/shell/sound.md) read, the
 	/// same statements, as <c>Profile_GetString</c> and <c>Profile_GetInt</c> read it (<see cref="Es1Profile"/>):
 	/// <c>[SoundFX]</c>'s <c>Driver#</c>, an empty one 0 and any other through <c>sscanf</c>'s <c>%X</c>, <c>IRQ</c> and
 	/// <c>DMA</c> through <c>atol</c> with a default of 0, and its <c>PortAddress</c> and <c>[Music]</c>'s <c>Driver#</c> and
@@ -153,7 +153,7 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_Init</c> (<c>0004db14</c>) (docs/es1/formats/sound-samples.md#the-driver):
+	/// <c>Sound_Init</c> (<c>0004db14</c>) (docs/es1/sound/sound-drivers.md#the-driver):
 	/// the voice lines' slots (<see cref="Es1VoiceLines.InitSlots"/>); then, with a digital device not 0, the manager over
 	/// <paramref name="backend"/>, the six values stored, <see cref="Es1SoundManager.LoadDrivers"/>, whose answer is not
 	/// read, the memory limit with loading kept from unloading other sounds (<see cref="LowMemoryLimit"/> with it allowed
@@ -185,7 +185,7 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>SoundCatalog_Load</c> (<c>0004dc70</c>) (docs/es1/formats/sound-samples.md#the-simulators-catalog):
+	/// <c>SoundCatalog_Load</c> (<c>0004dc70</c>) (docs/es1/simulation/sound-catalog.md#the-simulators-catalog):
 	/// <c>str\SOUNDS.STR</c>'s rows, every name to <see cref="Es1SoundManager.SetSampleNames"/>, then for each row up to the
 	/// first empty name the object <see cref="Es1SoundManager.CreateObject"/>(2, attribute byte 3, row), its repeats
 	/// (−1, −1, attribute byte 0), its volume attribute byte 1, and its sample loaded with attribute byte 2 set; then for
@@ -240,7 +240,7 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_PlayAt</c> (<c>0004deb8</c>) (docs/es1/formats/sound-samples.md#placed-sounds): with a manager, the row's object placed at the point
+	/// <c>Sound_PlayAt</c> (<c>0004deb8</c>) (docs/es1/sound/sound-manager.md#placed-sounds): with a manager, the row's object placed at the point
 	/// (<see cref="Es1SoundObject.SetPosition"/>), then <see cref="Play"/>. A row with no object does nothing, an engine
 	/// guard.
 	/// </summary>
@@ -254,7 +254,7 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_OfferPosition</c> (<c>0004dee4</c>) (docs/es1/formats/sound-samples.md#placed-sounds): with a manager, the point's
+	/// <c>Sound_OfferPosition</c> (<c>0004dee4</c>) (docs/es1/sound/sound-manager.md#placed-sounds): with a manager, the point's
 	/// distance from <see cref="Listener"/> (<c>Math_FastMagnitude3D</c>) and the point kept for the row while its kept
 	/// distance is 0, which <see cref="UpdateListener"/> places the row's object at. Retail's test of a kept distance
 	/// compares the dword with itself (<c>0004df4d</c>), where the new distance belongs, so the first point offered in a
@@ -280,7 +280,7 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_UpdateListener</c> (<c>0004df98</c>) (docs/es1/formats/sound-samples.md#placed-sounds): the camera kept as
+	/// <c>Sound_UpdateListener</c> (<c>0004df98</c>) (docs/es1/sound/sound-manager.md#placed-sounds): the camera kept as
 	/// <see cref="Listener"/>; then, with a manager, each catalog row with a point offered placed there and its distance
 	/// cleared, and on every <see cref="ListenerFrames"/>th call the manager's listener given the rotation of (0, 0, 0)
 	/// (<c>BuildEulerRotationMatrixQ14</c>) at the camera's position (<see cref="Es1SoundManager.UpdateListener"/>). A row
@@ -359,7 +359,7 @@ public sealed class Es1Sound {
 	}
 
 	/// <summary>
-	/// <c>Sound_SetMusicEnabled</c> (<c>0004e294</c>) (docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off): when <paramref name="on"/> is 0 and differs from
+	/// <c>Sound_SetMusicEnabled</c> (<c>0004e294</c>) (docs/es1/simulation/sound-catalog.md#turning-songs-and-sounds-off): when <paramref name="on"/> is 0 and differs from
 	/// <see cref="MusicEnabled"/>, with a manager, <see cref="StopSongs"/>; then stored.
 	/// </summary>
 	/// <param name="on">0 to turn music off, otherwise on.</param>

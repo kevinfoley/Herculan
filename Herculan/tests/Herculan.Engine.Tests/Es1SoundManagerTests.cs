@@ -6,8 +6,8 @@ using Xunit;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// The sound manager's loading and voices (docs/es1/formats/sound-samples.md#naming-and-loading,
-/// docs/es1/formats/sound-samples.md#playing), over names whose files are only their sizes.
+/// The sound manager's loading and voices (docs/es1/sound/sound-manager.md#naming-and-loading,
+/// docs/es1/sound/sound-manager.md#playing), over names whose files are only their sizes.
 /// </summary>
 public class Es1SoundManagerTests {
 	/// <summary>

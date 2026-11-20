@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File;
 /// </summary>
 public class Es1SoundSample {
 	/// <summary>
-	/// The rate, in Hz, of the digital-driver block the sound manager builds (docs/es1/formats/sound-samples.md#the-driver);
+	/// The rate, in Hz, of the digital-driver block the sound manager builds (docs/es1/sound/sound-drivers.md#the-driver);
 	/// the sample carries no rate of its own.
 	/// </summary>
 	public const int DriverRate = 11025;

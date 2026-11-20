@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.File;
 /// <summary>
 /// The opcodes of ES1's <c>.TTM</c> commands (<see cref="Es1TtmCommand"/>): Dynamix's own names for them, and the ones the
 /// shell's and the simulator's interpreters have a case for (docs/es1/formats/ttm-scripts.md#the-commands,
-/// docs/es1/formats/ttm-scripts.md#the-simulators-commands).
+/// docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-commands).
 /// </summary>
 public static class Es1TtmOpcodes {
 	/// <summary>

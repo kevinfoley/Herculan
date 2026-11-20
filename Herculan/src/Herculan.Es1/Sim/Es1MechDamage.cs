@@ -49,7 +49,7 @@ public static class Es1MechDamage {
 
 	/// <summary>
 	/// <c>Mech_DirectFireHitTest</c> (<c>00013b44</c>), slot <c>+0x24</c>, (<paramref name="machine"/>,
-	/// <paramref name="shot"/>) (docs/es1/simulation/mech.md#the-hit-test--mech_directfirehittest-00013b44):
+	/// <paramref name="shot"/>) (docs/es1/simulation/mech-damage.md#the-hit-test--mech_directfirehittest-00013b44):
 	/// <list type="number">
 	/// <item>0 when the ray's start is farther from the machine than its clearance, its length and the hit radius;</item>
 	/// <item>the shot's shield and armor figures, each through <see cref="ScaleByDifficulty"/> for an owner on side 0;</item>
@@ -205,7 +205,7 @@ public static class Es1MechDamage {
 
 	/// <summary>
 	/// <c>Mech_ComponentDamageWrite</c> (<c>00013250</c>), the endpoint every writer ends in
-	/// (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250):
+	/// (docs/es1/simulation/mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250):
 	/// <list type="number">
 	/// <item>nothing on the player's machine while the mode is 0 and header word 6 is 1, nor on a component whose
 	/// occupancy flag is clear;</item>
@@ -265,7 +265,7 @@ public static class Es1MechDamage {
 	public const short ReactorCriticalReading = 0xc0, ReactorDamagedReading = 0x80;
 
 	/// <summary>
-	/// <c>Mech_ApplyExplosiveDamage</c> (<c>00013a7c</c>) (docs/es1/simulation/mech.md#a-blast--mech_applyexplosivedamage-00013a7c): no facing and no shields; each
+	/// <c>Mech_ApplyExplosiveDamage</c> (<c>00013a7c</c>) (docs/es1/simulation/mech-damage.md#a-blast--mech_applyexplosivedamage-00013a7c): no facing and no shields; each
 	/// occupied component in turn whose roll, the generator's low 12 bits, falls under <see cref="BlastOdds"/> is placed
 	/// (<see cref="Es1Mech.ComponentPosition"/>), and one nearer the point than <paramref name="radius"/> takes
 	/// <paramref name="damage"/> × (radius − distance) / radius through <see cref="ComponentDamageWrite"/>.

@@ -5,7 +5,7 @@ using Herculan.Es1.Sim;
 namespace Herculan.Es1.View;
 
 /// <summary>
-/// The chain of views and the cameras it moves between (docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c,
+/// The chain of views and the cameras it moves between (docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c,
 /// ES2's docs/retail/simulation/external-views.md#the-chain-of-views): the globals <c>ViewChain_View</c>,
 /// <c>ViewChain_PendingView</c>, <c>ViewChain_Viewed</c>, <c>ViewChain_Chosen</c>,
 /// <c>ViewChain_CameraControlPreferred</c> and <c>ViewChain_CaptionFrames</c>; the current camera

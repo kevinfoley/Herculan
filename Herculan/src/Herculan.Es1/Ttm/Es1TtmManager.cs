@@ -8,7 +8,7 @@ namespace Herculan.Es1.Ttm;
 
 /// <summary>
 /// Which program's <c>.TTM</c> interpreter a <see cref="Es1TtmManager"/> and its scripts are: each program has its own copy,
-/// the simulator's the reduced one (docs/es1/formats/ttm-scripts.md#the-simulator).
+/// the simulator's the reduced one (docs/es1/simulation/cockpit-ttm-scripts.md).
 /// </summary>
 public enum Es1TtmMode {
 	/// <summary><c>ES1DBSIM</c>'s: the cockpit's script.</summary>
@@ -20,10 +20,10 @@ public enum Es1TtmMode {
 
 /// <summary>
 /// A <c>.TTM</c> handle table and the module's globals. In <see cref="Es1TtmMode.Simulator"/> it is
-/// <c>Ttm_ManagerCtor</c> (<c>ES1DBSIM 00069540</c>)'s <c>0xb</c>-byte object (docs/es1/formats/ttm-scripts.md#handles):
+/// <c>Ttm_ManagerCtor</c> (<c>ES1DBSIM 00069540</c>)'s <c>0xb</c>-byte object (docs/es1/simulation/cockpit-ttm-scripts.md#handles):
 /// the handle count <c>+4</c> and table <c>+5</c>, the timer slot <c>+9</c>, the path prefix <c>0009f254</c>, the page
 /// <c>0009f250</c> a fixed rect is copied to, and the tick flag <c>0009b404</c> and count <c>0009b406</c>
-/// (docs/es1/formats/ttm-scripts.md#each-frame); <c>Cockpit_LoadPanel</c> makes the one a mission has. In
+/// (docs/es1/simulation/cockpit-ttm-scripts.md#each-frame); <c>Cockpit_LoadPanel</c> makes the one a mission has. In
 /// <see cref="Es1TtmMode.Shell"/> it is the shell's globals (docs/es1/formats/ttm-scripts.md#the-shell): the count
 /// <c>000829dc</c>, the table <c>000829e0</c>, the timer slot <c>000829e4</c>, the default render context
 /// <c>00082a98</c>, the page <c>00082a9c</c>, the display <c>00082a94</c>, the prefix <c>00082aa0</c>, and the fade
@@ -35,7 +35,7 @@ public enum Es1TtmMode {
 /// context <c>+0x1bd</c> is 0, and the one script a mission opens, the clock's, always has its own; a simulator script
 /// without one draws nothing here. <c>Ttm_ManagerDtor</c> and the simulator's <c>Ttm_GetPage</c>, <c>Ttm_GetMode</c>,
 /// <c>Ttm_GetLoop</c>, <c>Ttm_SetMode</c>, <c>Ttm_SetLoop</c> and <c>Ttm_Close</c> have no caller <c>es2_xref.py</c>
-/// finds (docs/es1/formats/ttm-scripts.md#open); the shell's, which have, are ported and answer as the shell's do in
+/// finds (docs/es1/simulation/cockpit-ttm-scripts.md#open); the shell's, which have, are ported and answer as the shell's do in
 /// either mode, but <see cref="SetPage"/>, whose two copies differ.</para>
 ///
 /// <para>Retail installs a script's render context for its run and puts the installed one back after (the display's
@@ -373,7 +373,7 @@ public sealed class Es1TtmManager {
 	}
 
 	/// <summary>
-	/// <c>Ttm_RunAll</c> (<c>ES1DBSIM 000695e0</c>), the simulator's (docs/es1/formats/ttm-scripts.md#each-frame): false at
+	/// <c>Ttm_RunAll</c> (<c>ES1DBSIM 000695e0</c>), the simulator's (docs/es1/simulation/cockpit-ttm-scripts.md#each-frame): false at
 	/// once while <see cref="Ticked"/> is clear; otherwise the flag cleared, each handle's script run with
 	/// <c>TtmScript_Run</c>(script, the ticks pending), and that many taken off the count. Retail installs the default
 	/// render context around the runs and puts the installed one back; see the class summary.

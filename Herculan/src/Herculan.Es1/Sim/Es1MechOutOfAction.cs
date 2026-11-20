@@ -4,7 +4,7 @@ using Herculan.Es1.Messages;
 namespace Herculan.Es1.Sim;
 
 /// <summary>
-/// How the damage write puts a HERC out of the fight (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250):
+/// How the damage write puts a HERC out of the fight (docs/es1/simulation/mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250):
 /// <c>Mech_ComponentDamageWrite</c>'s (<c>ES1DBSIM 00013250</c>) steps 5 to 8, the legs, the disabled machine and its
 /// death, and what the attacker is told, <c>Mech_CreditNeutralisedTarget</c> (<c>00010f2c</c>).
 /// </summary>
@@ -190,7 +190,7 @@ public static class Es1MechOutOfAction {
 
 	/// <summary>
 	/// <c>Mech_CreditNeutralisedTarget</c> (<c>00010f2c</c>), slot <c>+0x64</c>, (<paramref name="attacker"/>,
-	/// <paramref name="alreadyImmobilized"/>, <paramref name="victim"/>) (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250):
+	/// <paramref name="alreadyImmobilized"/>, <paramref name="victim"/>) (docs/es1/simulation/mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250):
 	/// <list type="number">
 	/// <item>for a victim not already immobilized, on a side other than the attacker's group's: when the attacker is in
 	/// <c>PlayerMech</c>'s group, for <c>PlayerMech</c> itself the nearest live squadmate

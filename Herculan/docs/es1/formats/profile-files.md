@@ -4,7 +4,7 @@
 
 ## Where the object file starts and ends
 
-The code is `00050e20`–`00051f1b`, after [the digital driver's timer](sound-samples.md#the-digital-drivers-timer) and its three zero bytes. The profile functions run to `00051b2f`, the dongle's from `00051b30` to `00051c3b`, and `VGA8_CopyRectBetweenPages` (`00051c3c`, [the simulator's page routines](../rendering/screen-pages.md#the-simulators-own-page-routines)) starts right after the last `RET`, ending with three zero bytes before `00051f1c`. No zero fill, `ConfigPart` run or static initializer stands between the three ([where object files meet](compiler.md#where-object-files-meet-in-the-code)), so whether they are one object file is [Open](#open).
+The code is `00050e20`–`00051f1b`, after [the digital driver's timer](../sound/sound-drivers.md#the-digital-drivers-timer) and its three zero bytes. The profile functions run to `00051b2f`, the dongle's from `00051b30` to `00051c3b`, and `VGA8_CopyRectBetweenPages` (`00051c3c`, [the simulator's page routines](../rendering/screen-pages.md#the-simulators-own-page-routines)) starts right after the last `RET`, ending with three zero bytes before `00051f1c`. No zero fill, `ConfigPart` run or static initializer stands between the three ([where object files meet](compiler.md#where-object-files-meet-in-the-code)), so whether they are one object file is [Open](#open).
 
 ## The file in memory
 
@@ -47,7 +47,7 @@ Step 2 returns before the branch of step 5 that would remove a key for a null va
 
 ## The shell's copy
 
-**`GO.EXE` reads `resource.cfg` with the same readers** ([the shell's sound manager](sound-samples.md#the-shells-sound-manager)). Its `Profile_Load` (`ES1GO 000269f8`), `Profile_GetInt` (`ES1GO 00026bac`), `Profile_GetString` (`ES1GO 00026d71`) and `Profile_Save` (`ES1GO 00027056`) hold the same statements as the simulator's, compiled differently, over `Profile_FileName` (`ES1GO 000ab1e0`), `Profile_Lines` (`ES1GO 000ab1ee`) and `Profile_Dirty` (`ES1GO 00080814`). The readers test the held file's name against the one asked for with `stricmp` where the simulator's use `Str_CompareNoCaseN` with a length of `0xffff`, which compares the same. `es2_xref` finds calls of the two readers only from `ShellSound_Init` (`ES1GO 00046235`). The three functions after `Profile_Save`, `ES1GO 0002716e`, `00027293` and `0002737e`, stand where the writer and its two helpers do ([Open](#open)).
+**`GO.EXE` reads `resource.cfg` with the same readers** ([the shell's sound manager](../shell/sound.md)). Its `Profile_Load` (`ES1GO 000269f8`), `Profile_GetInt` (`ES1GO 00026bac`), `Profile_GetString` (`ES1GO 00026d71`) and `Profile_Save` (`ES1GO 00027056`) hold the same statements as the simulator's, compiled differently, over `Profile_FileName` (`ES1GO 000ab1e0`), `Profile_Lines` (`ES1GO 000ab1ee`) and `Profile_Dirty` (`ES1GO 00080814`). The readers test the held file's name against the one asked for with `stricmp` where the simulator's use `Str_CompareNoCaseN` with a length of `0xffff`, which compares the same. `es2_xref` finds calls of the two readers only from `ShellSound_Init` (`ES1GO 00046235`). The three functions after `Profile_Save`, `ES1GO 0002716e`, `00027293` and `0002737e`, stand where the writer and its two helpers do ([Open](#open)).
 
 ## The dongle
 

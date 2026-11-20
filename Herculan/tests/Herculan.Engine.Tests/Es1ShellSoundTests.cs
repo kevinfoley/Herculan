@@ -12,7 +12,7 @@ using Xunit;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// The shell's sound (docs/es1/formats/sound-samples.md#the-shells-sound-manager): the song's change of track, the
+/// The shell's sound (docs/es1/shell/sound.md): the song's change of track, the
 /// <c>.TTM</c> scripts' sound commands and the talking head's line, over a manager whose every name opens as ten bytes.
 /// </summary>
 public class Es1ShellSoundTests {

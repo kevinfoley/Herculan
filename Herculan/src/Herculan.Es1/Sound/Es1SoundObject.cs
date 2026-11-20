@@ -5,11 +5,11 @@ using Herculan.Es1.Sound.Midi;
 namespace Herculan.Es1.Sound;
 
 /// <summary>
-/// A sound object (docs/es1/formats/sound-samples.md#sound-objects): one name played through the manager, built by
+/// A sound object (docs/es1/sound/sound-manager.md#sound-objects): one name played through the manager, built by
 /// <c>SoundObject_Ctor</c> (<c>00050020</c>) under <see cref="Es1DigiSound"/> or <see cref="Es1MidiSound"/>. Its fields
 /// carry their offsets; the virtual members are the vtable's slots that calls go through, with the base's stubs
 /// (<c>SoundObjectVtable</c>, <c>00095c46</c>) as their defaults. Slots <c>+0x0c</c> and <c>+0x18</c>–<c>+0x24</c>,
-/// which the program's callers do not reach (docs/es1/formats/sound-samples.md#the-vtables), are not ported.
+/// which the program's callers do not reach (docs/es1/sound/sound-manager.md#the-vtables), are not ported.
 /// </summary>
 public abstract class Es1SoundObject {
 	/// <summary>Bit 0 of <see cref="Flags"/>: the name's data is loaded for this object.</summary>
@@ -129,7 +129,7 @@ public abstract class Es1SoundObject {
 
 	/// <summary>
 	/// <c>SoundObject_SetPosition</c> (<c>00050120</c>)(object, <paramref name="point"/>)
-	/// (docs/es1/formats/sound-samples.md#placed-sounds): <see cref="Placed"/> set, the point kept, and the object placed
+	/// (docs/es1/sound/sound-manager.md#placed-sounds): <see cref="Placed"/> set, the point kept, and the object placed
 	/// against the manager's listener (<see cref="Es1SoundManager.UpdatePlacement"/>); with <see cref="Es1Sound.Stereo"/>,
 	/// then panned against the tweak's listener (<see cref="Es1SoundManager.PanStereo"/>).
 	/// </summary>
@@ -161,7 +161,7 @@ public abstract class Es1SoundObject {
 	}
 
 	/// <summary>
-	/// <c>SoundObject_LoadSample</c> (<c>000501ec</c>) (docs/es1/formats/sound-samples.md#naming-and-loading): false without
+	/// <c>SoundObject_LoadSample</c> (<c>000501ec</c>) (docs/es1/sound/sound-manager.md#naming-and-loading): false without
 	/// a name to load, true at once when loaded. When the bytes loaded plus the name's size would pass the limit, false
 	/// unless the manager may unload to fit; then one sound at a time is unloaded, the manager's choice for this object's
 	/// priority, until the sample fits, false when none qualifies. Then the object's name is read whole into its index's
@@ -225,7 +225,7 @@ public abstract class Es1SoundObject {
 }
 
 /// <summary>
-/// A digital sound (docs/es1/formats/sound-samples.md#playing): <c>DigiSound</c>, <c>0x50</c> bytes, vtable
+/// A digital sound (docs/es1/sound/sound-manager.md#playing): <c>DigiSound</c>, <c>0x50</c> bytes, vtable
 /// <c>DigiSoundVtable</c> (<c>00095cd6</c>), built by <c>DigiSound_Ctor</c> (<c>000507c8</c>).
 /// </summary>
 public sealed class Es1DigiSound : Es1SoundObject {
@@ -264,7 +264,7 @@ public sealed class Es1DigiSound : Es1SoundObject {
 	}
 
 	/// <summary>
-	/// Slot <c>+0x10</c>, <c>DigiSound_Play</c> (<c>000509c4</c>) (docs/es1/formats/sound-samples.md#playing): past
+	/// Slot <c>+0x10</c>, <c>DigiSound_Play</c> (<c>000509c4</c>) (docs/es1/sound/sound-manager.md#playing): past
 	/// <see cref="VoiceRoom"/> busy voices, the playing digital sound whose <see cref="Es1SoundObject.GetVolume"/> is the
 	/// lowest below 100 stopped, false with none; the sample loaded, false when that fails; the volume scaled by the
 	/// master volume, or the placed one, and at 0 without <see cref="Es1SoundObject.PlaysSilent"/> true without playing;

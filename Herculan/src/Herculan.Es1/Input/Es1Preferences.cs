@@ -490,7 +490,7 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// The simulator's sound file, which the handlers of options 0 and 1 switch (docs/es1/formats/sound-samples.md#turning-songs-and-sounds-off)
+	/// The simulator's sound file, which the handlers of options 0 and 1 switch (docs/es1/simulation/sound-catalog.md#turning-songs-and-sounds-off)
 	/// and option 2's sets the speech flag of; none for options with no sound, as the shell's and a test's, whose
 	/// handlers then switch nothing.
 	/// </summary>

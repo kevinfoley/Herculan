@@ -25,7 +25,7 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 | 1000 | the throttle's block, [below](#the-throttle-block-at-1000) | the same, with the centre tick's nudge |
 | 1104 | the gunsight's block, [below](#the-gunsight-block-at-1104) | 1088 |
 | 1212 | the Heads-Down Display's block, [below](#the-heads-down-display-block-at-1212) | the same, shifted and biased |
-| 1604 | the cockpit clock's block ([the cockpit clock](ttm-scripts.md#the-cockpit-clock)) | the same, `PanelAmbience`'s |
+| 1604 | the cockpit clock's block ([the cockpit clock](../simulation/cockpit-clock.md)) | the same, `PanelAmbience`'s |
 | 1668, 1684 | the pilot channel's box and the ticker's | the same |
 
 ## The energy meter block at 548

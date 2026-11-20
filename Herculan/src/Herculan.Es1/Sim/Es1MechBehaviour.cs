@@ -20,7 +20,7 @@ public static class Es1MechBehaviour {
 	public const int Patrolling = 7, Travelling = 8, BulldogTravel = 9, SearchDestroy = 10, Sleeping = 11, Skirting = 12,
 		Guarding = 13, DrivingOff = 14, Ramming = 15, Fleeing = 16;
 
-	/// <summary>The descriptor indices the damage write installs (docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250).</summary>
+	/// <summary>The descriptor indices the damage write installs (docs/es1/simulation/mech-damage.md#the-damage-write--mech_componentdamagewrite-00013250).</summary>
 	public const int InLimbo = 17, Dead = 18, Disabled = 19;
 
 	/// <summary><c>BehaviourStateTable</c> (<c>000af26c</c>), descriptor <i>n</i> at <c>+0x28</c> × <i>n</i>.</summary>

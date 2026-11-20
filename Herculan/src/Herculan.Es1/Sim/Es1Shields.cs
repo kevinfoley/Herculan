@@ -55,7 +55,7 @@ public sealed class Es1Shields {
 	/// <c>Shield_RechargeTick</c> (<c>0000fb2c</c>)(block, <paramref name="request"/>), the shields' share of the systems
 	/// tick's pool: the grant is the request held to at most <see cref="MaximumGrant"/> and to the capacity less the
 	/// charge, so a request below 0 would take charge back out of the shields, though the systems tick never passes one,
-	/// its pool never falling under the reserve (docs/es1/simulation/mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0); the front moves by
+	/// its pool never falling under the reserve (docs/es1/simulation/mech-systems.md#the-systems-tick--mech_perticksystemsupdate-00014ee0); the front moves by
 	/// <see cref="FrontSlew"/> toward its share, the charge plus the grant Q10 times the balance, and the rear holds the
 	/// rest. Answers the request less the grant.
 	/// </summary>

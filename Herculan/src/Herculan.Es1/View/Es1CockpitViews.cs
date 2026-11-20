@@ -92,7 +92,7 @@ public sealed class Es1CockpitViews {
 	/// <summary>
 	/// The volumes' reader, (folder, name) to a file's bytes or null, through which the <c>.TTM</c> manager opens the
 	/// HERC's script and the script's commands open their files while the mission runs
-	/// (docs/es1/formats/ttm-scripts.md#the-simulator); none when null.
+	/// (docs/es1/simulation/cockpit-ttm-scripts.md); none when null.
 	/// </summary>
 	public Func<string, string, byte[]?>? Resources { get; }
 

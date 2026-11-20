@@ -1,6 +1,6 @@
 # SB168M.COM, TR8M.COM and TR8ST.COM — the digital driver and its mixer
 
-**The Sound Blaster 16's 8-bit driver images only program the card; a second image, the mixer, adds the busy voices into the buffer the card plays, at a gain linear in each voice's volume.** `HmiDigi_InitDriver` loads both from `SOS\HMIDRV.386` and opens the mixer on the buffer ([loading an image](../formats/hmi-driver-container.md#loading-an-image), [opening](drum-device.md#opening)); the sound objects reach the mixer's voice records through the library's calls ([playing](../formats/sound-samples.md#playing)). Addresses in `sb168m.com` are `ES1SB168M` image offsets. The mixers `tr8m.com` (device `0x1000`, `0x1f34` bytes, for `e015`) and `tr8st.com` (`0x1001`, `0x212a` bytes, for `e016`) are not registered binaries; their addresses are offsets into the image, as `es1_hmi_extract.py` extracts it.
+**The Sound Blaster 16's 8-bit driver images only program the card; a second image, the mixer, adds the busy voices into the buffer the card plays, at a gain linear in each voice's volume.** `HmiDigi_InitDriver` loads both from `SOS\HMIDRV.386` and opens the mixer on the buffer ([loading an image](../formats/hmi-driver-container.md#loading-an-image), [opening](drum-device.md#opening)); the sound objects reach the mixer's voice records through the library's calls ([playing](sound-manager.md#playing)). Addresses in `sb168m.com` are `ES1SB168M` image offsets. The mixers `tr8m.com` (device `0x1000`, `0x1f34` bytes, for `e015`) and `tr8st.com` (`0x1001`, `0x212a` bytes, for `e016`) are not registered binaries; their addresses are offsets into the image, as `es1_hmi_extract.py` extracts it.
 
 ## The card image
 
@@ -43,7 +43,7 @@ A mix routine is built from code fragments. The fragment table at `0x15` has 36 
 
 **For a voice with flag `0x100`, which every digital sound and drum note has, the gain is linear in the voice's volume `+0x32`, re-read on every mix call.** Fragment 3 in `tr8m.com`, `0xa` in `tr8st.com`, multiplies the word `+0x32` by the master word `0x12e4` (`0x7fff` in both images) with a word `IMUL`, then doubles `EDX`, leaving in `BH` bits 23 to 30 of the product: a gain *g* from 0 to 127, about the volume / 256. Per sample, fragment `0x14` turns the byte into a signed one (`XOR 0x80`) and fragment `0x15` multiplies it by *g* (`IMUL BH`) and shifts the product right by 7: the output is (*s* × *g*) >> 7. Fragment 2 adds it to the buffer's byte, taken as signed, with saturation at −128 and 127, and stores it back as unsigned.
 
-A volume below `0x100` is silent, and a sound's loudness follows its volume in 128 steps. `HmiDigi_SetSampleVolume` writes `+0x32`, so a voice already playing takes a new volume at the next mix call. A placed sound's volume is linear in its distance ([placed sounds](../formats/sound-samples.md#placed-sounds)), so its fade is linear in amplitude: the mixer adds no curve of its own.
+A volume below `0x100` is silent, and a sound's loudness follows its volume in 128 steps. `HmiDigi_SetSampleVolume` writes `+0x32`, so a voice already playing takes a new volume at the next mix call. A placed sound's volume is linear in its distance ([placed sounds](sound-manager.md#placed-sounds)), so its fade is linear in amplitude: the mixer adds no curve of its own.
 
 ### The stereo pan
 

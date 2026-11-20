@@ -55,7 +55,7 @@ public sealed class Es1VoiceLines {
 	public short QueueCount { get; private set; }
 
 	/// <summary>
-	/// <c>Sound_Init</c> (<c>0004db14</c>)'s voice lines (docs/es1/formats/sound-samples.md#the-driver), from the mission
+	/// <c>Sound_Init</c> (<c>0004db14</c>)'s voice lines (docs/es1/sound/sound-drivers.md#the-driver), from the mission
 	/// start's step 3: <see cref="SlotCount"/> slots, <see cref="LowMemorySlotCount"/> with <paramref name="lowMemory"/>
 	/// set, each built by <c>VoiceSlot_ElementCtor</c>, and <see cref="ScriptBytes"/> bytes of script for each. Retail
 	/// makes them whether or not it makes the sound manager.
@@ -81,7 +81,7 @@ public sealed class Es1VoiceLines {
 	}
 
 	/// <summary>
-	/// <c>SpeechLine_Load</c> (<c>0004e0f0</c>) (docs/es1/formats/sound-samples.md#voice-lines): the slot whose key is <see cref="VoiceKey"/> of the voice's name;
+	/// <c>SpeechLine_Load</c> (<c>0004e0f0</c>) (docs/es1/simulation/sound-catalog.md#voice-lines): the slot whose key is <see cref="VoiceKey"/> of the voice's name;
 	/// with none, a slot from <see cref="EvictLru"/>, none when it gives none, which takes the key and is marked taken.
 	/// On that slot, with a sound manager and <see cref="Es1Sound.SpeechEnabled"/> set, the voice's path
 	/// <c>simvoice\&lt;voice name&gt;.sfx</c> is named as the slot's index (<see cref="Es1SoundManager.SetSampleName"/>,

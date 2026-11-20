@@ -4,7 +4,7 @@ namespace Herculan.Es1.Sound;
 
 /// <summary>
 /// What <c>DigiSound_Play</c> (<c>000509c4</c>) hands <c>HmiDigi_StartSample</c> (<c>0006dad9</c>): the start block
-/// (docs/es1/formats/sound-samples.md#playing), its fields by their offsets there.
+/// (docs/es1/sound/sound-manager.md#playing), its fields by their offsets there.
 /// </summary>
 /// <param name="Data"><c>+0x00</c>, the loaded file.</param>
 /// <param name="Name">The file's name, which the block does not carry: this engine's key for the sample it registers with

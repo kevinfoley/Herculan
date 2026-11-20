@@ -8,7 +8,7 @@ using Xunit;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// The simulator's <c>.TTM</c> run on a constructed script (docs/es1/formats/ttm-scripts.md#the-simulators-run): the wait
+/// The simulator's <c>.TTM</c> run on a constructed script (docs/es1/simulation/cockpit-ttm-scripts.md#the-simulators-run): the wait
 /// a page sets, and the once flag a jump keeps.
 /// </summary>
 public class Es1TtmPlayerTests {

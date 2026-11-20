@@ -12,7 +12,7 @@ using Xunit;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// ES1's view keys, the chain of views and the camera (docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c,
+/// ES1's view keys, the chain of views and the camera (docs/es1/simulation/external-views.md#the-views--viewchain_apply-0005894c,
 /// docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device, docs/es1/simulation/external-views.md#cam_update), on
 /// constructed machines, views and input blocks.
 /// </summary>
