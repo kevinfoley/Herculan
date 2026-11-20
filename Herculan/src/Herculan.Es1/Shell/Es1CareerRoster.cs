@@ -400,6 +400,7 @@ public sealed class Es1CareerRoster {
 	/// </summary>
 	public void ActivateRecord() {
 		var record = CurrentRecord;
+		_mission.CareerMissionCurrent = false;
 		Salvage = record.Dword129;
 		_mission.RestoredMissionKind = record.LastMissionKind;
 		Word9 = record.Word2;
@@ -551,6 +552,7 @@ public sealed class Es1CareerRoster {
 		var record = CurrentRecord;
 		if (BuildMissionPath(record) is { } name) {
 			_mission.LoadCareerMission(name, record);
+			_mission.CareerMissionCurrent = true;
 		}
 
 		record.MarkTopPilots(_mission.SquadMemberCount);

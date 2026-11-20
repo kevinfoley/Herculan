@@ -95,6 +95,10 @@ tweak.es1_fix_energy_meter_shake.display_name  Fix reactor gauge glitch when hit
 tweak.es1_fix_energy_meter_shake.description  The reactor gauge stays inside its outline while the cockpit shakes from a hit. In the original game, the shake moves the gauge's bars but not the outline that cuts them, so energy used or regained during a shake is drawn a few rows off: stray stripes appear around the gauge and it can stop showing the true level until it is drawn over again.
 tweak.es1_fix_rhino_top_mount.display_name  Fix RHINO top mount art
 tweak.es1_fix_rhino_top_mount.description  On the arming and HERC Bay screens, the RHINO's ECM is drawn on its top centre mount where its other weapons sit, and a damaged EMP there is drawn where an undamaged one would be. The original game draws the ECM on the HERC's chest and a damaged EMP off to the left.
+tweak.es1_refresh_weapon_art.display_name  Fix weapon art after repair
+tweak.es1_refresh_weapon_art.description  On the HERC Bay and arming screens, each weapon is drawn damaged or whole by its condition as it stands now. In the original game a weapon keeps its damaged picture after it is repaired, until the career is loaded again.
+tweak.es1_fix_scramble_lights.display_name  Fix false scramble alarm
+tweak.es1_fix_scramble_lights.description  The HERC Bay's scramble alarm lights only show when your career's next mission is a scramble. In the original game they can stay on after you resume or restore a career whose next mission isn't a scramble, because the game remembers the last mission it loaded rather than the career's.
 tweak.es1_no_free_repair_level.display_name  No free repair level
 tweak.es1_no_free_repair_level.description  On the SYSTEM REPAIR screen, PROCEED keeps only the repairs you paid for with + and −. Retail repairs the item to the level the STATUS list shows, which after a + is one level more than you paid for.
 tweak.es1_real_time_round_life.display_name  Full cannon range

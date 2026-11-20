@@ -81,6 +81,20 @@ public static class Es1TweakSettingDefinitions {
 	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Shell.Hangar.Es1HercArt.FixRhinoTopMount"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixRhinoTopMount = new("tweak.es1_fix_rhino_top_mount", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);
+
+	/// <summary>
+	/// A HERC drawn into its bay shows each weapon damaged or whole by its condition as it now stands, so a repaired weapon
+	/// no longer keeps its damaged picture (plan decision 42, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// <see cref="Shell.Hangar.Es1HercDiagrams.RefreshWeaponArt"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> RefreshWeaponArt = new("tweak.es1_refresh_weapon_art", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// A career's service bay lights its scramble lights only for a scramble the career's own next mission is (plan
+	/// decision 43, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// <see cref="Shell.Hangar.Es1HangarBay.ScrambleLightsFollowCareer"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FixScrambleLights = new("tweak.es1_fix_scramble_lights", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -124,7 +138,7 @@ public static class Es1TweakSettingDefinitions {
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixEnergyMeterShake, FixRhinoTopMount, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead,
+		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead,
 	};
 
 	/// <summary>
@@ -140,6 +154,6 @@ public static class Es1TweakSettingDefinitions {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming, TweakSettingDefinitions.MouseOutsideView,
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixEnergyMeterShake, FixRhinoTopMount, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead,
+		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead,
 	};
 }

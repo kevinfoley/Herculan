@@ -95,6 +95,8 @@ Last, when the `+0x98` sprite exists and `Herc_ColossusTopShown` is clear, it se
 
 `es2_xref.py` finds `HercLayout_FindFrame`, `HercLayout_FindSecondPoint` and `MountPicture_Set` called from `Herc_BuildDiagram` and `Herc_SetCurrentMountWeapon` (`00024788`), `HercLayout_Find` from `MountPicture_Set`, and no branch to and no stored pointer of `HercLayout_FindFirstPoint`.
 
+**A repair leaves a mount's picture as the last build set it.** `Repair_Auto` (`00029bf3`), which the after-mission repairs and REPAIR ALL run, changes the status words with `Herc_SetAllStatus` (`00024c3c`) and builds nothing ([repairs](../shell/between-missions.md#repairs)), and REPAIR's and SYSTEM REPAIR's handlers then show the bay again with `Hangar_ShowSlot`, whose `Herc_DrawInBay` builds only while `Shell_LowMemory` is set ([showing a bay](../shell/hangar.md#showing-a-bay)). So a weapon repaired to 51 or more is drawn damaged, on the bay and the arming screens, until a build: the HERC list read when a career is loaded, or the arming screen giving that mount a weapon.
+
 ### The body
 
 `Herc_SetBodyPicture` (`00023605`)(HERC, remaining) sets the body sprite `+0x72` by the chassis and *remaining*: the finished body, `WEP1` frame 0 at the chassis' point of `Herc_BodyPositions` (`000a0398`), for *remaining* 0; a building frame of the chassis' `RES32\<chassis>BILD.DBA`, loaded into the table at `0008001c` the first time, at the matching point of `Herc_BuildPositions` (`000a03d8`); or no bitmap at the body's point. `Herc_StaticInit` fills both tables; a building point is the `int32` pair at `000a03d8` + 16 × chassis + 8 × (*remaining* − 1).

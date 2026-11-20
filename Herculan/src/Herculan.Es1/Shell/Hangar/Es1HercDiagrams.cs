@@ -277,6 +277,33 @@ public sealed class Es1HercDiagrams {
 		}
 	}
 
+	/// <summary>
+	/// Each mount picture of <paramref name="herc"/>'s diagram set again (<see cref="SetMountPicture"/>) from its weapon and
+	/// its status word as they now stand, so a weapon a repair brought to <c>0x33</c> or more is drawn whole and one a
+	/// mission left below it damaged. Retail sets a mount's picture only in <see cref="Build"/> and
+	/// <c>Herc_SetCurrentMountWeapon</c>, so a repair leaves the picture the last build gave
+	/// (docs/es1/formats/herc-diagrams.md#the-mount-pictures). Nothing for a HERC with no diagram built. <b>This engine's
+	/// own</b>, run while <see cref="RefreshWeaponArt"/> is on.
+	/// </summary>
+	/// <param name="herc">The HERC.</param>
+	public void RefreshMountPictures(Es1HercRecord herc) {
+		if (!_diagrams.TryGetValue(herc, out var diagram) || diagram.Mounts is not { } mounts) {
+			return;
+		}
+
+		for (short mount = 0; mount < mounts.Length && mount < herc.Weapons.Length; mount++) {
+			SetMountPicture(mounts[mount], herc.MountStatus(mount), herc.Weapons[mount], mount, herc.Chassis);
+		}
+	}
+
+	/// <summary>
+	/// Whether drawing a HERC into its bay sets its mount pictures again first (<see cref="RefreshMountPictures"/>). Off,
+	/// retail's: a repaired weapon keeps its damaged picture until the HERC's diagram is built again. <b>This engine's
+	/// own</b>, from <see cref="Settings.Es1TweakSettingDefinitions.RefreshWeaponArt"/>.
+	/// </summary>
+	public static bool RefreshWeaponArt =>
+		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.RefreshWeaponArt);
+
 	/// <summary>Element <paramref name="index"/> of <paramref name="array"/>, which retail reads with no bounds test; null for no array or an index outside it, an engine guard.</summary>
 	private static T? Element<T>(T[]? array, int index) where T : class =>
 		array != null && index >= 0 && index < array.Length ? array[index] : null;

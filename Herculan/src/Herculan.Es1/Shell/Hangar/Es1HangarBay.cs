@@ -191,6 +191,8 @@ public sealed class Es1HangarBay {
 	/// (<see cref="Es1CareerRecord.SelectPilot"/>), which puts the selection back on its slot; and the scripts run
 	/// (<see cref="RunScripts"/>). Retail reads the player's entry with no bounds test, and the hangar and the record as
 	/// they lie; an entry past the four reads slot −1, and with no record or hangar only the scripts run, engine guards.
+	/// With <see cref="ScrambleLightsFollowCareer"/> a career's entry 4 also needs its own mission loaded
+	/// (<see cref="Es1ShellMission.CareerMissionCurrent"/>).
 	/// </summary>
 	public IEnumerable<Es1ShellWait> AssignScripts() {
 		FreeAll();
@@ -200,7 +202,8 @@ public sealed class Es1HangarBay {
 				AssignSlot(Es1TtmEntry.Always, entry);
 			}
 
-			if (_mission.MissionKind == 4 && (_mission.Mode == 0 || _mission.Roster.CurrentRecord.Byte1 != 0)) {
+			if (_mission.MissionKind == 4 && (_mission.Mode == 0 || (_mission.Roster.CurrentRecord.Byte1 != 0
+					&& (!ScrambleLightsFollowCareer || _mission.CareerMissionCurrent)))) {
 				AssignSlot(Es1TtmEntry.Always, 4);
 			}
 
@@ -216,6 +219,16 @@ public sealed class Es1HangarBay {
 			yield return wait;
 		}
 	}
+
+	/// <summary>
+	/// Whether a career's scramble lights, entry 4 in <see cref="AssignScripts"/>, light only for a mission
+	/// <c>Career_StartMission</c> loaded for the career now current. Off, retail's: <c>Mission_Kind</c> is the last mission
+	/// the shell loaded, which loading a career standing at screen 1710 does not replace, so the lights can show for a
+	/// scramble that is no longer the career's next mission (docs/es1/shell/hangar.md#giving-the-scripts-their-bays).
+	/// <b>This engine's own</b>, from <see cref="Settings.Es1TweakSettingDefinitions.FixScrambleLights"/>.
+	/// </summary>
+	public static bool ScrambleLightsFollowCareer =>
+		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixScrambleLights);
 
 	/// <summary>The slot <c>+8</c> of <paramref name="record"/>'s player entry <c>+0xe</c>; −1 for an entry past the four, an engine guard.</summary>
 	private static short PlayerSlot(Es1CareerRecord record) =>
@@ -312,7 +325,9 @@ public sealed class Es1HangarBay {
 	/// (<see cref="Es1HercDiagrams.DrawDamageMarks"/>), one run of group script 1, the mounts
 	/// (<see cref="Es1HercDiagrams.DrawMounts"/>), and one run each of scripts 0 and 2. With <c>Shell_LowMemory</c>
 	/// (<c>0007fd09</c>) set it first builds the diagram with <paramref name="remaining"/>; this engine never sets that
-	/// byte, so the diagram drawn is the one the hangar keeps (<see cref="Es1HercDiagrams.Of"/>).
+	/// byte, so the diagram drawn is the one the hangar keeps (<see cref="Es1HercDiagrams.Of"/>). With
+	/// <see cref="Es1HercDiagrams.RefreshWeaponArt"/> the mount pictures are set again from the HERC's status first
+	/// (<see cref="Es1HercDiagrams.RefreshMountPictures"/>).
 	/// </summary>
 	/// <param name="herc">The HERC.</param>
 	/// <param name="slot">The HERC's slot.</param>
@@ -320,6 +335,10 @@ public sealed class Es1HangarBay {
 	public IEnumerable<Es1ShellWait> DrawInBay(Es1HercRecord herc, short slot, short remaining) {
 		_ = remaining;
 		var diagram = Hangar is { } hangar ? Diagrams.Of(hangar, slot, herc) : null;
+		if (Es1HercDiagrams.RefreshWeaponArt) {
+			Diagrams.RefreshMountPictures(herc);
+		}
+
 		diagram?.Body.Draw(_surface);
 		Diagrams.DrawDamageMarks(herc, _surface);
 		foreach (var wait in Run(Handle(1))) {

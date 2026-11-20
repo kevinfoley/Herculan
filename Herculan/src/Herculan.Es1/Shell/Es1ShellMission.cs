@@ -65,6 +65,14 @@ public sealed class Es1ShellMission {
 	public short MissionKind { get; set; }
 
 	/// <summary>
+	/// Whether <see cref="MissionKind"/> is the kind of the mission <c>Career_StartMission</c> loaded for the career now
+	/// current: set by <see cref="Es1CareerRoster.StartMission"/>'s load, cleared when <c>Roster_ActivateRecord</c> makes a
+	/// record current. Retail keeps no such flag; only <see cref="Hangar.Es1HangarBay.ScrambleLightsFollowCareer"/> reads it.
+	/// <b>This engine's own.</b>
+	/// </summary>
+	public bool CareerMissionCurrent { get; set; }
+
+	/// <summary>
 	/// The loaded mission's header word 4, <c>000ab222</c>, as its header patches leave it: the line of <c>C0_text.bin</c> a
 	/// single mission's opening message shows (docs/es1/shell/message-box.md#the-kinds); 0 in the image.
 	/// </summary>
