@@ -1,3 +1,4 @@
+using Herculan.Engine.Settings;
 using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.View;
@@ -9,6 +10,11 @@ namespace Herculan.Es1.View;
 /// (<see cref="Es1ViewManager.StepShake"/>) and flash the palette (<see cref="Es1SimGlobals.ImpactPalette"/>). Its clock
 /// is <c>000981c4</c>, 60 counts a second, and its random numbers the low word of
 /// <see cref="Es1SimGlobals.PresentationRandom"/>.
+///
+/// <para>Two accessibility settings, this engine's own, hide its halves while the random numbers are drawn as retail
+/// draws them: <see cref="A11ySettingDefinitions.DisableDamageFlash"/> leaves the palette alone, read when a shake
+/// starts so that the restore always follows its activate, and <see cref="A11ySettingDefinitions.DisableDamageShake"/>
+/// skips the view shake's steps, read each frame.</para>
 /// </summary>
 public sealed class Es1HitShake {
 	/// <summary>How long a hit shakes, in clock counts.</summary>
@@ -27,6 +33,9 @@ public sealed class Es1HitShake {
 		_views = views;
 		_globals = globals;
 	}
+
+	// Whether the running shake flashes the palette: DisableDamageFlash off when it started.
+	private bool _flashShown;
 
 	/// <summary><c>HitShakeEndTick</c>, the clock count the shake ends at, 0 for none.</summary>
 	public uint EndTick { get; private set; }
@@ -49,7 +58,11 @@ public sealed class Es1HitShake {
 		EndTick = now + Length;
 		if (NextToggleTick == 0) {
 			NextToggleTick = (uint)((ushort)_globals.PresentationRandom.Next() % ToggleSpread) + now;
-			_globals.ImpactPalette.Activate(_globals.PitchGradient);
+			_flashShown = !A11ySettings.Current.GetSettingValue(A11ySettingDefinitions.DisableDamageFlash);
+			if (_flashShown) {
+				_globals.ImpactPalette.Activate(_globals.PitchGradient);
+			}
+
 			_views.SetShakeBand(Band);
 		}
 	}
@@ -72,11 +85,17 @@ public sealed class Es1HitShake {
 		if (EndTick != 0) {
 			if (now < EndTick) {
 				if (NextToggleTick < now) {
-					_globals.ImpactPalette.Toggle(_globals.PitchGradient);
+					if (_flashShown) {
+						_globals.ImpactPalette.Toggle(_globals.PitchGradient);
+					}
+
 					NextToggleTick = (uint)((ushort)_globals.PresentationRandom.Next() % ToggleSpread) + now;
 				}
 
-				_views.StepShake((ushort)_globals.PresentationRandom.Next() % StepSpread);
+				int step = (ushort)_globals.PresentationRandom.Next() % StepSpread;
+				if (!ShakeHidden) {
+					_views.StepShake(step);
+				}
 			} else {
 				EndTick = 0;
 			}
@@ -85,7 +104,10 @@ public sealed class Es1HitShake {
 		}
 
 		if (NextToggleTick != 0) {
-			_globals.ImpactPalette.Restore(_globals.PitchGradient);
+			if (_flashShown) {
+				_globals.ImpactPalette.Restore(_globals.PitchGradient);
+			}
+
 			NextToggleTick = 0;
 			_views.ClearShake();
 			return 1;
@@ -93,4 +115,10 @@ public sealed class Es1HitShake {
 
 		return 0;
 	}
+
+	/// <summary>
+	/// The <see cref="A11ySettingDefinitions.DisableDamageShake"/> setting, under which a step of the view shake is drawn
+	/// but not taken; the death flash's shake reads it too.
+	/// </summary>
+	internal static bool ShakeHidden => A11ySettings.Current.GetSettingValue(A11ySettingDefinitions.DisableDamageShake);
 }

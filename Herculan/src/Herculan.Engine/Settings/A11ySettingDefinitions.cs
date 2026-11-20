@@ -16,10 +16,22 @@ public static class A11ySettingDefinitions {
 	/// <see cref="ScaledImGui.FontSize"/>. See <see cref="ScaledImGui"/>.
 	/// </summary>
 	public static readonly A11ySettingDefinition<bool> LargerFont = new("a11y.larger_font", A11yCategory.Vision, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
+	/// Keep the theater's palette up through a hit on the cockpit, where the game's hit shake would flash its impact
+	/// palette; the shake itself still runs. Each game's hit shake reads it.
+	/// </summary>
+	public static readonly A11ySettingDefinition<bool> DisableDamageFlash = new("a11y.disable_damage_flash", A11yCategory.Vision, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
+	/// Hold the cockpit still through a hit on it, where the game's hit shake would move the picture; the palette flash
+	/// still runs. Each game's hit shake reads it.
+	/// </summary>
+	public static readonly A11ySettingDefinition<bool> DisableDamageShake = new("a11y.disable_damage_shake", A11yCategory.Vision, defaultValue: false, recommendedValue: false);
 	#endregion
 
 	/// <summary>Every core accessibility setting, listed before a game's own in the Accessibility menu.</summary>
 	public static readonly IReadOnlyList<A11ySettingDefinition<bool>> All = new[] {
-		LargerFont,
+		LargerFont, DisableDamageFlash, DisableDamageShake,
 	};
 }

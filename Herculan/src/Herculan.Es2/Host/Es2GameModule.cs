@@ -27,8 +27,8 @@ public sealed class Es2GameModule(EditorTurn editor) : IGameModule {
 	GameIdentity IGameModule.Identity => Identity;
 
 	/// <inheritdoc/>
-	/// <remarks>Earthsiege 2's are <see cref="Es2A11ySettingDefinitions.All"/>.</remarks>
-	public IReadOnlyList<A11ySettingDefinition<bool>> AccessibilitySettings => Es2A11ySettingDefinitions.All;
+	/// <remarks>Earthsiege 2 has none beyond the core's.</remarks>
+	public IReadOnlyList<A11ySettingDefinition<bool>> AccessibilitySettings => [];
 
 	/// <inheritdoc/>
 	public string? FirstOwnOption => _options.FirstOwnOption;

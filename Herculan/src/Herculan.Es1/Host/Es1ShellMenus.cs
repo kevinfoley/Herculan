@@ -23,9 +23,10 @@ namespace Herculan.Es1.Host;
 /// each would end the mission unfinished.
 /// </summary>
 public sealed class Es1ShellMenus : IFrontEndMenus {
-	// The accessibility settings ES1 honors: the larger font, which ScaledImGui reads for the bar's own windows. The damage
-	// flash and shake settings are read by Earthsiege 2's cockpit alone.
-	private static readonly A11ySettingDefinition<bool>[] Accessibility = [A11ySettingDefinitions.LargerFont];
+	// The accessibility settings ES1 honors: the larger font, which ScaledImGui reads for the bar's own windows, and the
+	// damage flash and shake, which the hit shake reads (Es1HitShake).
+	private static readonly A11ySettingDefinition<bool>[] Accessibility =
+		[A11ySettingDefinitions.LargerFont, A11ySettingDefinitions.DisableDamageFlash, A11ySettingDefinitions.DisableDamageShake];
 
 	private readonly HostMenuBar _menuBar;
 	private readonly TweaksMenu _tweaks;

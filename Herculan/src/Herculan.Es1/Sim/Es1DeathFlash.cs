@@ -56,7 +56,9 @@ internal static class Es1DeathFlash {
 	/// the tick still ends the mission. A palette whose file is missing, which retail's load asserts on, is none here: it
 	/// is not installed, and a fade from or to it fades from or to black.
 	/// <para>The cockpit and the whole 3D pass flash and fade with the live palette (<see cref="Render.Es1WorldPalette"/>),
-	/// as retail's whole screen does.</para>
+	/// as retail's whole screen does. Under <see cref="Engine.Settings.A11ySettingDefinitions.DisableDamageShake"/>, this
+	/// engine's own, the shake's steps are drawn but not taken (<see cref="Es1HitShake.ShakeHidden"/>); the fades are not
+	/// the damage flash, and run as retail's whatever that setting says.</para>
 	/// </summary>
 	public static IEnumerable<Es1Wait> Run(Es1Simulation simulation) {
 		if (simulation.Frame is not { } frame || simulation.ViewChain.Manager is not { } views || simulation.Panels is not { } panels) {
@@ -87,7 +89,10 @@ internal static class Es1DeathFlash {
 			}
 
 			if (clock.Clock < shakeEnd) {
-				views.StepShake(globals.PresentationRandom.NextBelow(ShakeSpread));
+				int step = globals.PresentationRandom.NextBelow(ShakeSpread);
+				if (!Es1HitShake.ShakeHidden) {
+					views.StepShake(step);
+				}
 			}
 
 			frame.RenderFrame();

@@ -115,13 +115,13 @@ public sealed class CockpitHitShake {
 	public bool FlashShown => FlashActive && !FlashHidden;
 
 	/// <summary>
-	/// The <see cref="Settings.Es2A11ySettingDefinitions.DisableDamageFlash"/> setting, which the host sets: the flash
+	/// The <see cref="Engine.Settings.A11ySettingDefinitions.DisableDamageFlash"/> setting, which the host sets: the flash
 	/// still runs, and draws on the generator as before, but <see cref="FlashShown"/> stays false.
 	/// </summary>
 	public bool FlashHidden { get; set; }
 
 	/// <summary>
-	/// The <see cref="Settings.Es2A11ySettingDefinitions.DisableDamageShake"/> setting, which the host sets: the walk
+	/// The <see cref="Engine.Settings.A11ySettingDefinitions.DisableDamageShake"/> setting, which the host sets: the walk
 	/// still runs, and draws on the generator as before, but <see cref="OffsetPixels"/> stays 0.
 	/// </summary>
 	public bool ShakeHidden { get; set; }

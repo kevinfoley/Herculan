@@ -336,8 +336,8 @@ public sealed class CockpitView {
 		var pilotMech = PilotMech!;
 		Shake.FlashSurvivesRestart =
 			TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.FlashThroughSecondHit);
-		Shake.FlashHidden = A11ySettings.Current.GetSettingValue(Es2A11ySettingDefinitions.DisableDamageFlash);
-		Shake.ShakeHidden = A11ySettings.Current.GetSettingValue(Es2A11ySettingDefinitions.DisableDamageShake);
+		Shake.FlashHidden = A11ySettings.Current.GetSettingValue(A11ySettingDefinitions.DisableDamageFlash);
+		Shake.ShakeHidden = A11ySettings.Current.GetSettingValue(A11ySettingDefinitions.DisableDamageShake);
 		Shake.HeadsDownView = Pan.HeadsDownViewIndex;
 		if (ExternalViewActive) {
 			Kick.Reset();
