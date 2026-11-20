@@ -16,13 +16,15 @@ static class InstallWindow {
 
 	/// <summary>
 	/// Shows the panel until the player installs and chooses to use the install, or gives up. Returns the install
-	/// root, or null when the window was dismissed or closed. <paramref name="fontPath"/> is the ImGui font.
+	/// root, or null when the window was dismissed or closed. <paramref name="fontPath"/> is the ImGui font. The window
+	/// opens at <see cref="WindowWidth"/> by <see cref="WindowHeight"/> grown with the font
+	/// (<see cref="ScaledImGui.ScaledWindowSize"/>).
 	/// </summary>
 	public static string? Run(LocalizationTable localization, string fontPath) {
 		using var panel = new InstallPanel(localization, new Es2DiscInstaller(localization));
 		string? installed = null;
-		using var window = new EngineWindow(localization.GetStringOrKey("install.window_title"),
-			WindowWidth, WindowHeight);
+		var (width, height) = ScaledImGui.ScaledWindowSize(WindowWidth, WindowHeight);
+		using var window = new EngineWindow(localization.GetStringOrKey("install.window_title"), width, height);
 
 		ScaledImGui? imgui = null;
 		window.Load += (gl, input) => {

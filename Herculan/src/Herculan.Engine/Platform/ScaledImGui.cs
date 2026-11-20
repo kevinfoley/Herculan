@@ -199,6 +199,20 @@ public sealed class ScaledImGui : IDisposable {
 	private static float ChosenFontSize =>
 		A11ySettings.Current.GetSettingValue(A11ySettingDefinitions.LargerFont) ? LargerFontSize : FontSize;
 
+	/// <summary>
+	/// How many times <see cref="FontSize"/> the font is baked at under the current settings: 2 under
+	/// <see cref="A11ySettingDefinitions.LargerFont"/>, else 1. Unlike <see cref="Scaled(float)"/> it needs no ImGui frame,
+	/// so a window sized for its ImGui content can be opened at it.
+	/// </summary>
+	public static float FontScale => ChosenFontSize / FontSize;
+
+	/// <summary>
+	/// A window size in pixels on a 100% display at <see cref="FontSize"/>, grown by <see cref="FontScale"/>, for a window
+	/// whose whole content is ImGui text and widgets that grow with the font.
+	/// </summary>
+	public static (int Width, int Height) ScaledWindowSize(int width, int height) =>
+		((int)MathF.Round(width * FontScale), (int)MathF.Round(height * FontScale));
+
 	// Silk's controller writes io.MouseDown from the mouse alone just before NewFrame, and NewFrame then applies the queued
 	// events over it, so the button's state with the other control's goes in as an event. ImGui drops an event that
 	// repeats the button's last state, which it reads from io.MouseDown, so that is set to the opposite first; the

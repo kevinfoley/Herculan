@@ -16,12 +16,15 @@ public static class StartupWindow {
 	/// Shows the window until <paramref name="body"/> returns true or the player closes it. <paramref name="titleKey"/> is
 	/// the title's string, read again when the combo changes the language. <paramref name="body"/> draws the content under
 	/// the combo each frame, given the native window a picker belongs to. <paramref name="fontPath"/> is the ImGui font.
+	/// <paramref name="width"/> and <paramref name="height"/> are a 100% display's at the ordinary font, grown with the
+	/// font (<see cref="ScaledImGui.ScaledWindowSize"/>) so the content still fits under the larger one.
 	/// </summary>
 	public static void Run(LocalizationTable localization, string titleKey, int width, int height, string fontPath,
 			Func<nint, bool> body) {
 		var language = new InterfaceLanguageCombo(localization);
 		string Title() => localization.GetStringOrKey(titleKey);
-		using var window = new EngineWindow(Title(), width, height);
+		var (scaledWidth, scaledHeight) = ScaledImGui.ScaledWindowSize(width, height);
+		using var window = new EngineWindow(Title(), scaledWidth, scaledHeight);
 
 		ScaledImGui? imgui = null;
 		window.Load += (gl, input) => {
