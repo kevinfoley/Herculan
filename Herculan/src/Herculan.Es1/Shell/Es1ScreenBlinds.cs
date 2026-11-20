@@ -16,19 +16,24 @@ public sealed class Es1ScreenBlinds {
 	private const int RowCount = Es1VideoMemory.PageHeight - 1;
 
 	private readonly Es1ShellDevices _devices;
+	private readonly Func<Es1PanelCanvas> _fullScreenContext;
 
-	public Es1ScreenBlinds(Es1ShellDevices devices) {
+	/// <param name="fullScreenContext">The render context <c>0007fcd8</c> as it stands (<see cref="Es1ShellScreens.FullScreenContext"/>).</param>
+	public Es1ScreenBlinds(Es1ShellDevices devices, Func<Es1PanelCanvas> fullScreenContext) {
 		_devices = devices;
+		_fullScreenContext = fullScreenContext;
 	}
 
 	/// <summary>
-	/// <c>Screen_BlindsCopy</c> (<c>0004bc0d</c>): the display's source page set to <paramref name="from"/> and its draw page to <paramref name="to"/>; for each
-	/// pass <i>i</i> below <paramref name="passes"/>, the region of rows <i>r</i> to <i>r</i> + 1, columns 0 to <c>0x13f</c>,
-	/// copied for <i>r</i> = <i>i</i>, <i>i</i> + <paramref name="passes"/>, … below <see cref="RowCount"/>
-	/// (<c>Region_CopyBetweenPages</c>), then a tick waited (<c>Shell_WaitTicks</c>(1)); then both pages put back. The flag
-	/// is not read. PLACEHOLDER: retail installs the render context <c>0007fcd8</c> for the copies, which
-	/// <c>Shell_DrawScreen</c> leaves in clip mode 2 around the open window; how <c>Region_CopyBetweenPages</c> treats that
-	/// mode's regions is unread, so the copies here take the full screen in clip mode 1.
+	/// <c>Screen_BlindsCopy</c> (<c>0004bc0d</c>): the render context <c>0007fcd8</c> installed as it stands, the display's
+	/// source page set to <paramref name="from"/> and its draw page to <paramref name="to"/>; for each pass <i>i</i> below
+	/// <paramref name="passes"/>, the region of rows <i>r</i> to <i>r</i> + 1, columns 0 to <c>0x13f</c>, copied for
+	/// <i>r</i> = <i>i</i>, <i>i</i> + <paramref name="passes"/>, … below <see cref="RowCount"/>
+	/// (<c>Region_CopyBetweenPages</c>), then a tick waited (<c>Shell_WaitTicks</c>(1)); then both pages and the context
+	/// put back. The flag is not read. With a menu open, <c>Shell_DrawScreen</c> leaves the context in clip mode 2 around
+	/// the window (docs/es1/shell/menus.md#drawing-a-screen), so each band is copied in the parts that lie above, left of,
+	/// right of and below it, and the window's rect is left as the page had it: the hangar's button strip, (3, 183) to
+	/// (318, 195), takes no part in its wipes.
 	/// </summary>
 	/// <param name="passes">The number of passes the rows are interleaved over.</param>
 	/// <param name="to">The page copied to.</param>
@@ -38,7 +43,7 @@ public sealed class Es1ScreenBlinds {
 		int keptSource = display.SourcePage, keptDraw = display.DrawPage;
 		display.SourcePage = from;
 		display.DrawPage = to;
-		var canvas = new Es1PanelCanvas(display, Es1ShellScreens.FullScreen);
+		var canvas = _fullScreenContext();
 		for (int pass = 0; pass < passes; pass++) {
 			for (int row = pass; row < RowCount; row += passes) {
 				canvas.CopyRegion(new Es1Rect(0, row, Es1ShellScreens.FullScreen.X1, row + 1), 0, 0);

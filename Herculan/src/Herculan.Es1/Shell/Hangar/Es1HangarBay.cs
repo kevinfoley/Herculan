@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Io.Transform.Shell;
+using Herculan.Es1.Panels;
 using Herculan.Es1.Ttm;
 
 namespace Herculan.Es1.Shell.Hangar;
@@ -32,14 +33,15 @@ public sealed class Es1HangarBay {
 	private readonly Func<short> _backdropId;
 
 	/// <param name="backdropId"><c>Shell_BackdropId</c> (<see cref="Es1ShellScreens.BackdropId"/>), which picks how the scripts run.</param>
+	/// <param name="fullScreenContext">The render context <c>0007fcd8</c> as it stands, which the wipes copy through.</param>
 	public Es1HangarBay(Es1ShellBackdrop backdrop, Func<Es1TtmManager?> scripts, Es1ShellMission mission, Es1ShellData data,
-			Es1ShellDevices devices, Es1DirtyList dirty, Func<short> backdropId) {
+			Es1ShellDevices devices, Es1DirtyList dirty, Func<short> backdropId, Func<Es1PanelCanvas> fullScreenContext) {
 		_backdrop = backdrop;
 		_scripts = scripts;
 		_mission = mission;
 		_data = data;
 		_surface = new Es1SpriteSurface(devices.Display, dirty);
-		_blinds = new Es1ScreenBlinds(devices);
+		_blinds = new Es1ScreenBlinds(devices, fullScreenContext);
 		_backdropId = backdropId;
 	}
 

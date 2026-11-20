@@ -53,10 +53,11 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 
 	/// <summary>
 	/// Clip mode 2's region list, the block at <c>+4</c>, or null for clip mode 1: the energy meter's clip context
-	/// (docs/es1/simulation/cockpit-energy-shields.md#building-it--energypoolgauge_ctor-00039818). With it a pixel is drawn
-	/// only when it also lies in a region once translated, as <c>Raster_DrawLine</c> (<c>0006a064</c>) cuts a line to the
-	/// rect <c>+0x20c</c> and then to each span region. Only <see cref="Plot"/>, <see cref="FillRect"/> and
-	/// <see cref="DrawLine"/> read it, the draws the meter's bar makes.
+	/// (docs/es1/simulation/cockpit-energy-shields.md#building-it--energypoolgauge_ctor-00039818) and the shell's
+	/// full-screen context around a window (<see cref="Shell.Es1ShellScreens.FullScreenContext"/>). With it a pixel is
+	/// drawn only when it also lies in a region once translated, as <c>Raster_DrawLine</c> (<c>0006a064</c>) cuts a line to
+	/// the rect <c>+0x20c</c> and then to each span region. <see cref="Plot"/>, <see cref="FillRect"/> and
+	/// <see cref="DrawLine"/> read it, the draws the meter's bar makes, and <see cref="CopyRegion"/>, the shell's copies.
 	/// </summary>
 	public Es1ClipBlock? Regions { get; init; }
 
@@ -608,15 +609,36 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 
 	/// <summary>
 	/// <c>Region_CopyBetweenPages</c> (<c>00066914</c>) of a type-0 region whose rect is <paramref name="region"/> at the
-	/// offset (<paramref name="offsetX"/>, <paramref name="offsetY"/>), in clip mode 1 with the translation flag set:
-	/// <c>Region_CopyRectBetweenPages</c> (<c>00066690</c>) moves the rect by the offset and the translation, cuts it to <see cref="Rect"/>,
-	/// copying nothing when they do not meet, and hands it and the offset to the driver's slot 20, which copies the source
-	/// page's rect moved back by the offset onto the draw page's rect (docs/es1/rendering/screen-pages.md#copying-between-pages).
+	/// offset (<paramref name="offsetX"/>, <paramref name="offsetY"/>): <c>Region_CopyRectBetweenPages</c>
+	/// (<c>00066690</c>) moves the rect by the offset and the translation and hands each part it keeps, with the offset, to
+	/// the driver's slot 20, which copies the source page's rect moved back by the offset onto the draw page's rect
+	/// (docs/es1/rendering/screen-pages.md#copying-between-pages). In clip mode 1 the part is the rect cut to
+	/// <see cref="Rect"/>; in clip mode 2 (<see cref="Regions"/> set) it is the rect cut to each rect region in turn, from
+	/// the list's last to its first, and <see cref="Rect"/> is not read. Either copies nothing for a part that is empty.
+	/// Retail also cuts a span region's spans to the rect and copies them through slot 19; this engine has no slot 19, and
+	/// passes a span region over. The canvases that hold span regions, the energy meter's, copy nothing.
 	/// </summary>
 	public void CopyRegion(Es1Rect region, int offsetX, int offsetY) {
 		var (dx, dy) = Translation;
-		int x0 = Math.Max(region.X0 + offsetX + dx, Rect.X0), y0 = Math.Max(region.Y0 + offsetY + dy, Rect.Y0);
-		int x1 = Math.Min(region.X1 + offsetX + dx, Rect.X1), y1 = Math.Min(region.Y1 + offsetY + dy, Rect.Y1);
+		var moved = (region.X0 + offsetX + dx, region.Y0 + offsetY + dy, region.X1 + offsetX + dx, region.Y1 + offsetY + dy);
+		if (Regions == null) {
+			CopyPart(moved, (Rect.X0, Rect.Y0, Rect.X1, Rect.Y1), offsetX, offsetY);
+			return;
+		}
+
+		for (int i = Regions.Rects.Count - 1; i >= 0; i--) {
+			CopyPart(moved, Regions.Rects[i], offsetX, offsetY);
+		}
+	}
+
+	/// <summary>
+	/// <c>Rect_Intersect</c> (<c>00073dc4</c>) of the moved rect <paramref name="rect"/> and <paramref name="clip"/>, the
+	/// greater of their two left and top edges and the lesser of their right and bottom ones, and the part copied through
+	/// slot 20 unless it is empty.
+	/// </summary>
+	private void CopyPart((int X0, int Y0, int X1, int Y1) rect, (int X0, int Y0, int X1, int Y1) clip, int offsetX, int offsetY) {
+		int x0 = Math.Max(rect.X0, clip.X0), y0 = Math.Max(rect.Y0, clip.Y0);
+		int x1 = Math.Min(rect.X1, clip.X1), y1 = Math.Min(rect.Y1, clip.Y1);
 		if (x1 < x0 || y1 < y0) {
 			return;
 		}

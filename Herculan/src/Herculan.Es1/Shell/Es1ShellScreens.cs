@@ -341,7 +341,7 @@ public sealed class Es1ShellScreens {
 		// The bay and the backdrop's group scripts, statics in retail, wired here once what they read exists.
 		_backdrop.Scripts = () => Scripts;
 		_backdrop.TtmLists = () => TtmLists;
-		var bay = new Es1HangarBay(_backdrop, () => Scripts, mission, data, _devices, _dirty, () => BackdropId);
+		var bay = new Es1HangarBay(_backdrop, () => Scripts, mission, data, _devices, _dirty, () => BackdropId, FullScreenContext);
 		Bay = bay;
 		_backdrop.AssignHangarScripts = bay.AssignScripts;
 		Globals.HangarSelectedType = () => bay.SelectedHercType;
