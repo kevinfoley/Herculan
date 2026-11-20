@@ -315,7 +315,7 @@ public sealed class Es1HddDisplay {
 	/// <summary>
 	/// <c>HddGauge_LoadPilotFrames</c> (<c>0003dab4</c>)(display, <paramref name="pilot"/>, <paramref name="slot"/>),
 	/// from <see cref="Es1Cockpit.LoadSquadmatePilots"/>
-	/// (docs/es1/simulation/heads-down-display.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4): for slot 0 the pilot
+	/// (docs/es1/simulation/hdd-comm-boxes.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4): for slot 0 the pilot
 	/// <see cref="CommBox0PilotOverride"/> when that is not negative; the slot's box loaded
 	/// (<see cref="Es1HddCommBox.Load"/>); and the slot's squadmate and the box's name put in subject slot 1 + slot.
 	/// </summary>
@@ -328,7 +328,7 @@ public sealed class Es1HddDisplay {
 
 	/// <summary>
 	/// <c>HddDisplay_ServiceCommBoxes</c> (<c>0003e574</c>)(display), from <see cref="Update"/> each frame and from
-	/// <see cref="OnMessageBegin"/> (docs/es1/simulation/heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574):
+	/// <see cref="OnMessageBegin"/> (docs/es1/simulation/hdd-comm-boxes.md#the-state-machine--hdddisplay_servicecommboxes-0003e574):
 	/// each comm box with a name stepped (<see cref="Es1HddCommBox.Service"/>) on the clock <c>000981c4</c> as it reads
 	/// at the start.
 	/// </summary>
@@ -896,7 +896,7 @@ public sealed class Es1HddDisplay {
 
 	/// <summary>
 	/// <c>CommBox_OnMessageBegin</c> (<c>0003e488</c>), the pilot channel's begin callback
-	/// (docs/es1/simulation/heads-down-display.md#starting-a-line): for a subject in a squadmate slot, the box of that
+	/// (docs/es1/simulation/hdd-comm-boxes.md#starting-a-line): for a subject in a squadmate slot, the box of that
 	/// slot of <see cref="Es1SimGlobals.HddDisplayInstance"/> begins the line (<see cref="Es1HddCommBox.BeginMessage"/>);
 	/// when that fails, the channel's ready and cancelled latches, so the line goes by unshown; when it succeeds, the
 	/// box's deadline the clock + <see cref="Es1HddCommBox.StaticCounts"/>, its state

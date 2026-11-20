@@ -63,7 +63,7 @@ public abstract class Es1MessagePort {
 
 	/// <summary>
 	/// <c>+0x462</c>, ready: a due message may go up. Besides the port's own writes, the pilot channel's comm boxes set it
-	/// (docs/es1/simulation/heads-down-display.md#starting-a-line).
+	/// (docs/es1/simulation/hdd-comm-boxes.md#starting-a-line).
 	/// </summary>
 	public bool Ready { get; internal set; }
 

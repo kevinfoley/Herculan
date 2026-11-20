@@ -174,7 +174,7 @@ with ES2's tables: gain `BaseTurret_Gain` (`00090490`) {2000, 2500}, rate limit 
 
 ## What a structure is aimed at
 
-- **`Base_GetAimPoint` (`00002d3c`)**, slot `+0x34`, (structure, offset, eye): `SimObject_GetAimPointZero` clears both, then the offset's Z = the type's `+0x32`, 1500 in every type. ES2's (`0040351c`) reads its `+0x2c`. `Ai_AimAndFire` shoots a structure at its position plus that offset ([weapons](mech-ai.md#weapons)), and the gun tower adds its target's offset to the target's position in the same way.
+- **`Base_GetAimPoint` (`00002d3c`)**, slot `+0x34`, (structure, offset, eye): `SimObject_GetAimPointZero` clears both, then the offset's Z = the type's `+0x32`, 1500 in every type. ES2's (`0040351c`) reads its `+0x2c`. `Ai_AimAndFire` shoots a structure at its position plus that offset ([weapons](ai-weapons.md)), and the gun tower adds its target's offset to the target's position in the same way.
 - **`Base_GetAimNodeTransform` (`00002d68`)**, slot `+0x28`, (structure): fills `BaseAimNodeTransform` (`000aeddc`, its first-use byte `000aedda`) with a zero transform, the three diagonal entries `0x4000` and the translation's Z the type's `+0x32`, and returns it. ES2's (`00403548`).
 - **`Base_GetBodyRadius` (`00002dd4`)**, slot `+0x60`, (structure): the type's `+0x30` when it has a collision model (`+0x3a` not 0), otherwise 0: 4000 for type 5, 2000 for 6 and 8. ES2's (`004035a4`) returns its `+0x2a` for every type.
 - **`Base_GetTurretAngle` (`00002dc0`)**, slot `+0x40` of the armed table, (structure): the traverse angle `+0x1a8`. ES2's (`00403594`) returns its `+0x20f`.

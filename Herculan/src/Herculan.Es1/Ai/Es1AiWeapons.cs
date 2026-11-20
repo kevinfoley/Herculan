@@ -4,7 +4,7 @@ using Herculan.Es1.Sim;
 namespace Herculan.Es1.Ai;
 
 /// <summary>
-/// What an AI machine does once it has something to shoot at (docs/es1/simulation/mech-ai.md#weapons, which links ES2's
+/// What an AI machine does once it has something to shoot at (docs/es1/simulation/ai-weapons.md, which links ES2's
 /// derivation, docs/retail/simulation/ai-weapons.md): bring the turret onto it, choose a mount and fire it. The turret
 /// moves through the player's aim primitive (<see cref="Es1Turret.TrackPoint"/>) and centring
 /// (<see cref="Es1Turret.CenterTorsoTick"/>), and a mount fires through the same fire slot the player's trigger calls

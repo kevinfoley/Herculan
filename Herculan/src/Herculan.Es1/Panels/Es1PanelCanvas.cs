@@ -168,7 +168,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// (<c>0006a064</c>)(start, end) under the pen {0, color}: the two points translated, cut to <see cref="Rect"/> by
 	/// <c>Line_ClipToRect</c> (<c>0007d4a4</c>, docs/retail/rendering/polygon-fill.md#clipping-a-line), nothing drawn when
 	/// nothing is left, and the rest walked as the driver's line routine, <c>VGA8_DrawLine</c> (<c>0008cb90</c>, slot 34),
-	/// walks it, both end pixels drawn (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps).
+	/// walks it, both end pixels drawn (docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps).
 	/// </summary>
 	/// <param name="x0">The first end's X.</param>
 	/// <param name="y0">The first end's Y.</param>
@@ -265,7 +265,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// <paramref name="color"/>}: ES2's walk (docs/retail/rendering/polygon-fill.md#ellipses) with the simulator's one
 	/// difference, a span list of the rows on the display alone, from row −min(<i>b</i>, <i>cy</i>) to before
 	/// min(<i>b</i>, 199 − <i>cy</i>) about the centre, <i>cy</i> before the translation
-	/// (docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps); each list filled at the centre,
+	/// (docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps); each list filled at the centre,
 	/// translated and cut to <see cref="Rect"/> as <c>Raster_FillSpanList</c> (<c>0008f68c</c>) does in clip mode 1.
 	/// <paramref name="outline"/> draws the one-pixel ring, mode 4.
 	/// </summary>
@@ -405,7 +405,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// panel's (<paramref name="x"/>, <paramref name="y"/>), cut to <see cref="Rect"/>, a 0 byte leaving the pixel unless
 	/// the bitmap's flags have bit 4 (docs/es1/rendering/screen-pages.md#the-cursor, "Index 0"). Flag 1 runs the rows from
 	/// the bottom and flag 2 the columns from the right, as the blits read them
-	/// (docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps).
+	/// (docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps).
 	/// </summary>
 	public void Blit(DynamixBitmap? bitmap, int x, int y, int flags = 0) {
 		if (bitmap?.ImageData is not { } pixels) {
@@ -460,7 +460,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// The shell's walk (docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps): the steps
+	/// The shell's walk (docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps): the steps
 	/// ((<i>columns</i> − 1) · 65536) / (<i>w</i> − 1) and ((<i>rows</i> − 1) · 65536) / (<i>h</i> − 1), each walk from
 	/// its fraction, the column fraction carried from row to row after a cut at the left.
 	/// </summary>
@@ -564,7 +564,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// <summary>
 	/// <c>Region_Save</c> of a type-0 region whose rect is <paramref name="region"/>, in clip mode 1 with the translation
 	/// flag set: <c>Region_SaveRect</c> (<c>00066470</c>) moves the rect by the translation and
-	/// <c>Bitmap_GrabClipDispatch</c> (<c>0006aa70</c>) moves it again (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps),
+	/// <c>Bitmap_GrabClipDispatch</c> (<c>0006aa70</c>) moves it again (docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps),
 	/// so the grab reads the display's source page under the rect moved twice, cut to <see cref="Rect"/>. The cells come
 	/// back row by row over the rect's size. A cell cut off is 0 in its place in the buffer: the dispatch zeroes the
 	/// buffer first, and <c>VGA8_ReadBitmap</c> (<c>0008be88</c>) reads the cut rect into the buffer at the cut's row and

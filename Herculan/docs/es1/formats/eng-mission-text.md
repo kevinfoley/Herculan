@@ -82,7 +82,7 @@ The debriefing screen shows one `DEB:` block in its text box, `DebriefingMenu_Ct
 | 2 | `int16`, the count of objectives |
 | per objective | `int16` length counting the NUL, the text with its NUL, and a 0 byte |
 
-That is a string table of one group ([ES2's `.STR` layout](../../retail/formats/str-strings.md#layout)), the 0 byte each text's count of attributes. Each literal piece of an `OBJ:` block is one objective, and the retail blocks hold only literals. The simulator's objectives panel (`F11`) reads the file as a string table and shows its first seven lines that are not empty ([the objectives panel](../simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4)).
+That is a string table of one group ([ES2's `.STR` layout](../../retail/formats/str-strings.md#layout)), the 0 byte each text's count of attributes. Each literal piece of an `OBJ:` block is one objective, and the retail blocks hold only literals. The simulator's objectives panel (`F11`) reads the file as a string table and shows its first seven lines that are not empty ([the objectives panel](../simulation/status-and-objectives-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4)).
 
 ## Rejected readings
 

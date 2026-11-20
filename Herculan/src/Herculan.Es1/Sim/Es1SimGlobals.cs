@@ -103,7 +103,7 @@ public sealed class Es1SimGlobals {
 	/// The difficulty the tables of <c>Damage_ScaleByDifficulty</c> and <c>Ai_FireAtPoint</c> are indexed by:
 	/// <see cref="HeaderWord7"/>, or <see cref="ModeDifficulty"/> while <see cref="MissionModeFlag"/> is not 0
 	/// (docs/es1/simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c,
-	/// docs/es1/simulation/mech-ai.md#weapons).
+	/// docs/es1/simulation/ai-weapons.md).
 	/// </summary>
 	public int DifficultyIndex => MissionModeFlag != 0 ? ModeDifficulty : HeaderWord7;
 

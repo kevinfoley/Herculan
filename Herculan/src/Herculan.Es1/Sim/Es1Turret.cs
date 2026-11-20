@@ -74,7 +74,7 @@ public sealed class Es1Turret {
 	/// <c>Mech_CenterTorsoTick</c> (<c>000186f8</c>), (machine, range): ES2's centring
 	/// (docs/retail/simulation/torso-aim.md#centring--backspace) without the snap, each axis driven by
 	/// −clamp(Q10(<see cref="CentringGain"/>, angle), ±<see cref="AxisFull"/>), both read before either tick runs, the
-	/// twist's tick first, <paramref name="range"/> passed to the pitch's (docs/es1/simulation/mech-ai.md#weapons).
+	/// twist's tick first, <paramref name="range"/> passed to the pitch's (docs/es1/simulation/ai-weapons.md).
 	/// </summary>
 	public void CenterTorsoTick(Es1SimClock clock, Es1TurretServos servos, int range) {
 		var mech = _mech;
@@ -86,7 +86,7 @@ public sealed class Es1Turret {
 
 	/// <summary>
 	/// <c>Cockpit_TargetAnglesFromCameraBone</c> (<c>00018b78</c>), (machine, <paramref name="point"/>)
-	/// (docs/es1/simulation/mech-ai.md#weapons): the point taken into the machine's frame and then into the frame of the
+	/// (docs/es1/simulation/ai-weapons.md): the point taken into the machine's frame and then into the frame of the
 	/// eye node the record's <c>+0xc</c> names, each inverted inline, its Z less the record's <c>+0x66</c>;
 	/// <c>Math_EulerToward</c> from the node's origin to it, the residual; the twist axis Q8(<i>a</i>, |<i>a</i>|) with
 	/// <i>a</i> = −clamp(Q10(<see cref="CentringGain"/>, yaw), ±<see cref="AxisFull"/>), the pitch axis likewise from the

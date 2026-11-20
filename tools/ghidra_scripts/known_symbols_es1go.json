@@ -18485,7 +18485,7 @@
       "confidence": "high",
       "name": "SpanRegion_Intersect",
       "description": "(a, b, out), C convention: intersects two span regions ({int16 top row, int16 row count, then an int16 {x0, x1} pair per row}) row by row into out over the rows both cover, a row's run being {max x0, min x1}. The result starts at the first row whose two runs overlap and ends at the last, a row between them whose runs do not overlap being written {1, 0}. Returns out, or 0 when no row overlaps. es2_xref finds five calls, one each from Raster_DrawLine (00001b6c), Raster_DrawPolygonDispatch (00055584), Raster_FillRect (00051c74), Raster_FillSpanList (0006a1ac) and Region_CopySpansBetweenPages (00051aed). The code of ES1DBSIM's SpanRegion_Intersect (00073b7c), relocated operands aside.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps; ES1DBSIM decompile at 00073b7c, against ES2's SpanRegion_Intersect",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps; ES1DBSIM decompile at 00073b7c, against ES2's SpanRegion_Intersect",
       "verified": {
         "bytes": "0004fc50+277",
         "sha1": "482a7f64d48b",
@@ -18515,7 +18515,7 @@
       "confidence": "high",
       "name": "Line_ScanConvertToSpanRegion",
       "description": "(a, b, out), C convention: writes the int16 span region of a one-pixel line between the int32 points a and b: the top row min(y), the row count |dy| + 1, then an {x0, x1} pair per row from the top. A single point is one row {x, x}; a horizontal line one row {min x, max x}; a vertical line {x, x} on each row; any other the run of x a Bresenham walk from the smaller-x end puts on each row, its error starting at 2dy - dx for a shallow line and 2dx - dy for a steep one, the rows written from the last back when y falls along the walk. es2_xref finds three calls, all from Raster_DrawLine (00001b6c). The code of ES1DBSIM's Line_ScanConvertToSpanRegion (0007d358), relocated operands aside.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps; ES1DBSIM decompile at 0007d358, against ES2's Line_ScanConvertToSpanRegion",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps; ES1DBSIM decompile at 0007d358, against ES2's Line_ScanConvertToSpanRegion",
       "verified": {
         "bytes": "0004fe60+331",
         "sha1": "3d3e84785c9a",
@@ -18560,7 +18560,7 @@
       "confidence": "high",
       "name": "Bitmap_BlitScaled",
       "description": "(bitmap, size, flags, point) in stack order, callee-cleaned: Bitmap_Blit (000502c0) with Bitmap_BlitScaledClipDispatch (00065f34)(header +4, point, flags, size) in place of Raster_BlitDispatch: a packed bitmap (+0x12 non-zero) is unpacked by Bitmap_UnpackToScratch (00050544) into Bitmap_UnpackScratch for the call. ES2's Bitmap_BlitScaled (DBSIM 004816bc) reaches the same dispatch through GL_BlitScaled.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps",
       "verified": {
         "bytes": "000503f0+153",
         "sha1": "a72293003bbf",
@@ -20879,7 +20879,7 @@
       "confidence": "high",
       "name": "Raster_DrawEllipse",
       "description": "(rect), C convention: ES2's Raster_DrawEllipse (DBSIM 00488070) with the span list's rows kept on the display: from -min(b, cy) up to before min(b, H - 1 - cy) relative to the centre row cy, H the dword 00084462, drawing nothing when no row is left. It draws in brush modes 0 and 4 and returns in any other; a zero half-extent draws a line through Raster_DrawLine under a temporary pen of the brush's colour whose mode dword is the uninitialised stack word; the list is the one 00084499 points to, filled by Raster_FillSpanList (0006a1ac) at the centre, mode 4 as two passes with the brush's mode set to 0 and then back to 4.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps",
       "verified": {
         "bytes": "00055b9c+1773",
         "sha1": "c8fdeae2ee6a",
@@ -25571,7 +25571,7 @@
       "confidence": "high",
       "name": "Bitmap_BlitScaledClipDispatch",
       "description": "(header, point, flags, size), C convention: moves the point by the clip block 0008441c's translation when +0x208 is 1 and calls raster slot 29 (00086624) with (header, size w, size h, &point, clip, flags): clip 0 in clip mode +0x204 0, the block's rect +0x20c in mode 1, and in mode 2 the rect when the region count +0 is above 0; nothing in any other case. ES2's Bitmap_BlitScaledClipDispatch (DBSIM 0048899c).",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps",
       "verified": {
         "bytes": "00065f34+235",
         "sha1": "d3704e3f0918",
@@ -26051,7 +26051,7 @@
       "confidence": "high",
       "name": "Poly_ScanConvertToSpanRegion",
       "description": "ES2's Poly_ScanConvertToSpanRegion (DBSIM 00484614), the scan conversion of a polygon into the span region the span routine fills, but for the computed jump into the unrolled stores: its JMP EDX at 0006801a enters the run of stores before 000692dc at 12 bytes a store (EDX = 000692dc - 12 x (n + 1)), each store STOSW, ADD EDI,ECX, ADD [EBP - 0x1b8],EBX and ADC EAX,ESI; after the run the JMP at 000692dc goes back into the function, and three zero bytes follow it before Poly_ClipToRect (000692e4). es2_xref finds four calls, from Raster_DrawPolygonDispatch (00055584). es2_naming.py diff finds it the same as ES1DBSIM's Poly_ScanConvertToSpanRegion (00076f54) but for the jump's base address.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#clipped-polygons; es2_naming.py diff ES1DBSIM 00076f54 ES1GO 00067954; ES1GO disassembly at 00068011-0006801a and bytes at 0006801c and 000692d8",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#clipped-polygons; es2_naming.py diff ES1DBSIM 00076f54 ES1GO 00067954; ES1GO disassembly at 00068011-0006801a and bytes at 0006801c and 000692d8",
       "verified": {
         "bytes": "00067954+1736",
         "sha1": "b3a8a3216445",
@@ -26066,7 +26066,7 @@
       "confidence": "high",
       "name": "Poly_ClipToRect",
       "description": "ES2's Poly_ClipToRect (DBSIM 0048422c), the clip of a polygon to a rect. es2_xref finds three calls, from Raster_DrawPolygonDispatch (00055584), which clips a span fill with it against the clip block's rect in clip mode 1 and against each rect region in clip mode 2. It opens an object file: the unrolled stores of Poly_ScanConvertToSpanRegion (00067954) before it end with a JMP at 000692dc and three zero bytes. The code of ES1DBSIM's Poly_ClipToRect (000788e4), relocated operands aside.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#clipped-polygons; es2_naming.py match ES1DBSIM ES1GO (exact)",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#clipped-polygons; es2_naming.py match ES1DBSIM ES1GO (exact)",
       "verified": {
         "bytes": "000692e4+1000",
         "sha1": "5839c68c1c3f",
@@ -28103,7 +28103,7 @@
       "confidence": "high",
       "name": "VGA8_BlitBitmapScaled",
       "description": "(header, w, h, point, clip, flags), C convention: the VGA_8 driver's slot 29 (table +0x74): draws the bitmap (rows +0, columns +2, size +6, pixels +0xa) stretched over w x h from point, index 0 unwritten. With clip non-null returns when the box misses the rect and trims L, R, T, B from its sides; returns when nothing is left. VGA8_ScaleStepSetup (00074f77) gives the column step ((columns-1)<<16)/(w-1), negated by flags bit 1 (2), and the row step ((rows-1)<<16)/(h-1), each with its start fraction. The source offset starts at the whole part of T row steps times the columns; flags bit 0 (1) makes it size - columns - that with stride -columns, bit 1 adds columns - 1. Each destination row from point.y + T is drawn by VGA8_BlitScaledRow (00074cbd), then the row fraction adds the step and the offset its whole part times the stride.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps",
       "verified": {
         "bytes": "00074b18+421",
         "sha1": "3baae147578c",
@@ -28118,7 +28118,7 @@
       "confidence": "high",
       "name": "VGA8_BlitScaledRow",
       "description": "A block of VGA8_BlitBitmapScaled (00074b18), near-called with its frame per destination row ([EBP-0x34]). In clip mode +0x204 2 draws the row once per region of the clip block 0008441c's list, first to last, that holds it, trimmed to a rect region's x0..x1 or a span region's span on that row, passing over other types; otherwise once. A = (L + left trim) * column step + the column fraction; the fraction becomes A's low 16 bits; pixel j of the run takes the source byte at floor((A + offset * 65536 + j * step) / 65536), written plane by plane (sequencer map mask) on the draw page (row table VGA8_RowOffsets (00088852), 00088ec8) unless it is 0.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps",
       "verified": {
         "bytes": "00074cbd+698",
         "sha1": "a72aa810ea74",
@@ -28133,7 +28133,7 @@
       "confidence": "high",
       "name": "VGA8_ScaleStepSetup",
       "description": "(EDI = {int32 from, int32 to} in 16.16, ECX = steps), register-passed, for VGA8_BlitBitmapScaled (00074b18): zeroes the two low words; for ECX of 0 or less stores a step of 0 at +4; otherwise stores (to - from) / (ECX & 0xffff) at +4 and as the start fraction (the low word of +0) the step's absolute value's low 16 bits when that value is at least 0x8000, else 0x8000.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps",
       "verified": {
         "bytes": "00074f77+82",
         "sha1": "5dc6d29dc241",
@@ -28268,7 +28268,7 @@
       "confidence": "high",
       "name": "VGA8_ClearPage",
       "description": "(page, color), C convention: VGA_8's slot 35, the dword at 0008b37c in its table 0008b2f0 (the shell's slot 0008663c). Fills the page with the color. When the dword 0008445e equals 0008447a, it writes (0008445e * 00084462) >> 4 dwords of the color byte repeated four times with REP STOSD from the page offsets 00088e92[page], through the selector 00088848, with the sequencer's map mask (port 3C4 index 2) set to 0xf and put back after. Otherwise it keeps Raster_GetDrawPage (0007b9ba), makes the page the draw page through slot 17 (000865f4), passes the rect {0, 0, 0008445e - 1, 00084462 - 1} and the color to slot 2 (000865b8), and passes the kept page to slot 17 again. es2_xref finds one stored pointer to it, in VGA_8's table. The code of ES1DBSIM's VGA8_ClearPage (0008cd3c), relocated operands aside.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps",
       "verified": {
         "bytes": "00075afc+170",
         "sha1": "1f98cbe6eaa9",
@@ -28358,7 +28358,7 @@
       "confidence": "high",
       "name": "Raster_GetDrawPage",
       "description": "No arguments, frameless: returns the dword 0008448e. es2_xref finds calls from VGA8_ClearPage (00075afc) and 00072b08. The code of ES1DBSIM's Raster_GetDrawPage (0008fcde), relocated operands aside.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps",
       "verified": {
         "bytes": "0007b9ba+6",
         "sha1": "b102ae0f6ca8",

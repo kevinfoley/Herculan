@@ -588,7 +588,7 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_PlayTtm</c> (<c>0003b8df</c>) (docs/es1/shell/menus.md#the-first-screen--shell_openfirstscreen-0003ba47):
 	/// the draw page and page 2 cleared to colour 0 with <c>VGA8_ClearPage</c>, the raster's slot 35 (<c>0008663c</c>,
-	/// docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps), a frame shown and the new draw page cleared; the
+	/// docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps), a frame shown and the new draw page cleared; the
 	/// full-screen render context made the scripts' default; the script opened playing, not looping, on that default
 	/// (<c>Ttm_Open</c>(0, 0, 0, name)); then, a frame each, the script run (<c>Ttm_RunScript</c>), the input read
 	/// (<c>Input_PollDeviceBlock</c>) and a frame shown, until the script's mode is not playing, the input's keyboard word

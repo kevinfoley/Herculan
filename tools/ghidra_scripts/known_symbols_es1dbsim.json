@@ -10787,7 +10787,7 @@
       "confidence": "high",
       "name": "Mech_CenterTorsoTick",
       "description": "(machine, range), callee-cleaned: Mech_TorsoTwistTick (000149ac)(machine, -clamp(Q10(250, twist +0x22e), +/-0x100)) and Mech_TorsoPitchTick (00014ba0)(machine, range, -clamp(Q10(250, pitch +0x230), +/-0x100)). ES2's Mech_CenterTorsoTick (DBSIM 0041e8d4), which also enables the snap.",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#weapons; ES1DBSIM decompile at 000186f8",
+      "source": "Herculan/docs/es1/simulation/ai-weapons.md; ES1DBSIM decompile at 000186f8",
       "verified": {
         "bytes": "000186f8+164",
         "sha1": "409bf688f40e",
@@ -10802,7 +10802,7 @@
       "confidence": "high",
       "name": "Ai_AimAndFireAtMech",
       "description": "(machine, target, aspect), callee-cleaned: when the bearing error to the target plus the type record's twist limit +0x22 is below twice the limit, both compared as unsigned int16 values, the point is the target's component +0x238 through its slot +0x5c when that is not negative and the 3D range is 5000 to 19999, otherwise the translation of its slot +0x28 transform applied with its frame (Context_GetTransform); then Ai_FireAtPoint (000190ec)(machine, target, aspect, point). Beyond the limit, Mech_CenterTorsoTick (000186f8)(machine, 0). ES2's Ai_AimAndFireAtMech (DBSIM 0041e984).",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#weapons; ES1DBSIM decompile at 0001879c",
+      "source": "Herculan/docs/es1/simulation/ai-weapons.md; ES1DBSIM decompile at 0001879c",
       "verified": {
         "bytes": "0001879c+246",
         "sha1": "a16aecc1bc98",
@@ -10817,7 +10817,7 @@
       "confidence": "high",
       "name": "Ai_AimAndFire",
       "description": "(machine, target, aspect), callee-cleaned, the target 0 meaning +0x15e: a target of class (+0x162) 0 goes to Ai_AimAndFireAtMech (0001879c); any other is shot through Ai_FireAtPoint (000190ec) at its position plus the offset triple its slot +0x34 fills. ES2's Ai_AimAndFire (DBSIM 0041ea7c), which aims at a structure's first surviving component.",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#weapons; ES1DBSIM decompile at 00018894",
+      "source": "Herculan/docs/es1/simulation/ai-weapons.md; ES1DBSIM decompile at 00018894",
       "verified": {
         "bytes": "00018894+151",
         "sha1": "ffcae061e12c",
@@ -10862,7 +10862,7 @@
       "confidence": "high",
       "name": "Cockpit_TargetAnglesFromCameraBone",
       "description": "(machine, point), callee-cleaned: sets TargetAngles_CalledOnce (000af710) on the first call. Slot +0x24 of the shape (the shape instance +0x2e's +4) with the type record's int16 +0xc gives the eye part, and the node's transform is the 32-byte entry at the instance's +0x16 + 0x20 x the part's int16 +4, copied from address 0 when the slot answers 0. The point goes through the machine's transform (Context_GetTransform (000016e8) of +6) and then the node's, each inverted with Transform_TransposeRotation (00063e05) and the negated translation through Transform_RotatePoint (0005ef74) and applied with Transform_ApplyToPoint (0005f58c); the record's +0x66 is subtracted from its Z, and Math_EulerToward (00063d2c)((0, 0, 0), point) goes into TargetAngles_Residual (000af714). The twist axis is Q8(-c, |-c|) with c = clamp(Q10(250, the yaw at +4), +/-0x100): the value is negated before the Math_Q8Multiply (0005e7f8), |-0x8000| taken as 0x7fff; the pitch axis is Q8(c, |c|) from the pitch at +0 the same way, unnegated, the Q10 through Math_Q10Multiply (0005e818). Then Mech_TorsoTwistTick (000149ac)(machine, twist axis) and Mech_TorsoPitchTick (00014ba0)(machine, Math_FastMagnitude3D (0006325a) of the point after the Z subtraction, pitch axis); returns the residual's address. ES2's Cockpit_TargetAnglesFromCameraBone (DBSIM 0041ef14), which damps small errors beyond 50000 and passes snap targets.",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#weapons; ES1DBSIM decompile at 00018b78",
+      "source": "Herculan/docs/es1/simulation/ai-weapons.md; ES1DBSIM decompile at 00018b78",
       "verified": {
         "bytes": "00018b78+725",
         "sha1": "03d42858d3cd",
@@ -10877,7 +10877,7 @@
       "confidence": "high",
       "name": "Ai_ChooseWeapon",
       "description": "(machine, target, range, aspect), callee-cleaned: the floor Math_MapRange (00065480)(fear +0x240, 0, 0x400, 150, -100); the shield from the target's slot +0x38 with the boolean -0x4000 <= aspect < 0x4000; jitter 35 for a class-0 target, 30 otherwise. Each mount of +0x198 whose slot +0x60 says it is unspent: a subtype (slot +0x64) 0 in range (WeaponMount_RangeAllows) puts the radar +0x90 on unless the silence +0x201 runs; one in range, of subtype 5 or 3 or with its lock flag at the manager's +6 up, and ready (slot +0x30), scores Q10(armor or shield damage of the projectile record +0x20, + 10000 when the shot breaks the shield, 100) - Q10(1000, template +0x34) + the product of two Math_RandomBelow (00063b3c)(jitter) draws, each Q10 the rounding Math_Q10Multiply (0005e818); a 32-bit score above the sign-extended best becomes the best, cut to an int16, and the best mount above the floor is returned. With every mount absent or spent and +0x9f clear: +0x9f set, Action_Activate (0001cc5c) of +0x170, MissionPollTimer_Count (000af79d) raised to 1000 when below it, a signed int16 compare. ES2's Ai_ChooseWeapon (DBSIM 0041f358).",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#weapons; ES1DBSIM decompile at 00018e50",
+      "source": "Herculan/docs/es1/simulation/ai-weapons.md; ES1DBSIM decompile at 00018e50",
       "verified": {
         "bytes": "00018e50+666",
         "sha1": "b8c3aaba13c5",
@@ -10892,7 +10892,7 @@
       "confidence": "high",
       "name": "Ai_FireAtPoint",
       "description": "(machine, target, aspect, point), callee-cleaned: range = Math_DistanceBetweenPoints2D to the point; the latched mount +0x242 while ready (slot +0x30) and in range, else with +0xaf set none (clearing it), else Ai_ChooseWeapon (00018e50) and the latch cleared. None: Cockpit_TargetAnglesFromCameraBone (00018b78) at the point. One: with the projectile speed (record +0x20, +0xa) above 0 and the target's speed (slot +0x3c) not 0, the point led along the target's heading (Math_OffsetPointByBearing (00063d8c)) by (int16)((int16)(range >> 2) x (speed x 4) / the projectile speed), the multiply and the signed divide in 32 bits; for a group side byte +0x14 not 0, scattered by three Math_RandomBelow (00063b3c) draws, added to x, y and z in that order, of AiAimScatterByDifficulty (00091ce0) at header word 7 (000bc4aa), or 3 while MissionModeFlag (000bc4a0) is set; aimed; fired through slot +0x2c (mount, 0, machine) when its subtype (slot +0x64) is not 5, that is a missile launcher, or when both residual angles lie in [-1000, 1000); latched when template +0x56 is 3. ES2's Ai_FireAtPoint (DBSIM 0041f5a0), which latches weapons 6 and 22.",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#weapons; ES1DBSIM decompile at 000190ec",
+      "source": "Herculan/docs/es1/simulation/ai-weapons.md; ES1DBSIM decompile at 000190ec",
       "verified": {
         "bytes": "000190ec+529",
         "sha1": "2ff48ad567a6",
@@ -23471,7 +23471,7 @@
       "confidence": "high",
       "name": "CommBox_ElementCtor",
       "description": "(gauge) callee-cleaned: one comm-box gauge's element constructor for __vec_ctor: allocates 0x14a bytes when given none, returning 0 when that fails, runs the inlined rect constructors of +0x1d and +0x2d and __vec_ctor over the 30 eight-byte offset pairs at +0x3d with Point_DefaultCtorHddCopy (0003cb74) by its padding. ES2's CommBox_ElementCtor (DBSIM 0044c0e7).",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-comm-boxes; ES1DBSIM decompile at 0003cab8",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-gauge; ES1DBSIM decompile at 0003cab8",
       "verified": {
         "bytes": "0003cab8+185",
         "sha1": "3d91ad54e9eb",
@@ -23486,7 +23486,7 @@
       "confidence": "high",
       "name": "Point_DefaultCtorHddCopy",
       "description": "(p) callee-cleaned: allocates 8 bytes when p is null and returns p; the element constructor of a comm-box gauge's offset pairs, which CommBox_ElementCtor (0003cab8) passes by its padding 0003cb71. The code of Point_DefaultCtorGunsightCopy (000345a0).",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-comm-boxes; ES1DBSIM decompile at 0003cb74",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-gauge; ES1DBSIM decompile at 0003cb74",
       "verified": {
         "bytes": "0003cb74+27",
         "sha1": "f7f4df04374d",
@@ -23651,7 +23651,7 @@
       "confidence": "high",
       "name": "HddGauge_LoadPilotFrames",
       "description": "(display, pilot, slot) in stack order, callee-cleaned: for slot 0 the pilot is CommBox0PilotOverride (000944d8) when that is not negative; the portrait p = Pilot_PortraitOf(pilot) at gauge +0x135 and the name at +0x137, entry p of HddPilotNameTable (str\\pilots, by StrTable_FirstString and p StrTable_NextString); SystemMessages_Index(pilot channel, Pilot_VoiceBankOf(p), slot); ofs\\pilot<p> through a VolRStream (assert severity 5, phdd.cpp line 0x3c1) read as 27 entries {int32 k, 8 bytes into pair k at +0x3d}; the bank dba\\pilot<p> at +0x18 with +0x133 = 1, or dba\\pilot<p>s and +0x133 = 0 while g_LowMemory is set (assert at line 0x3d9 when null); six labels on button 10+slot's rect (name in cpred on HudColorTable_Get(slot), then cpblue/cpred/cpblue/cpred at y0+16/24/32/40, a sixth 10x10 at the bottom-left in cpred on 0x3b); clears +0x13f, +0x13b, +0x12e, +0x147, +0x149, +0x148; subject slot 1+slot = the squadmate's machine and its name. ES2's HddGauge_LoadPilotFrames (DBSIM 0044a7c0), which walks the names to the pilot's own number.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4; ES1DBSIM decompile at 0003dab4",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4; ES1DBSIM decompile at 0003dab4",
       "verified": {
         "bytes": "0003dab4+1057",
         "sha1": "4994ad0782ba",
@@ -23666,7 +23666,7 @@
       "confidence": "high",
       "name": "HddGauge_ConditionIndex",
       "description": "(display, machine) in stack order, callee-cleaned: Mech_ReadDamageReadouts (0001583c) into a stack buffer of 42 int16 (84 bytes), which it fills whole; then the mean of entries 1-19 as (0x100 - mean) * 100 >> 8, bucketed at 90, 74, 51 and 1 into 0-4. ES2's HddGauge_ConditionIndex (DBSIM 0044adf4), identical after normalization but for the buffer's address argument.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003ded8",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints; ES1DBSIM decompile at 0003ded8",
       "verified": {
         "bytes": "0003ded8+133",
         "sha1": "7649b538baf0",
@@ -23681,7 +23681,7 @@
       "confidence": "high",
       "name": "HddGauge_PaintIdle",
       "description": "(display, slot) in stack order, callee-cleaned: while CockpitView_RectCornerVisible passes the screen rect +0x8a: with g_SquadmateMachines[slot]'s +0x93 clear (the machine read with no null test), inside Cockpit_PushCanvasContext/PopRenderContext, fills the gauge's video rect +0x1d with 0x3f and sets the five labels: the name, STATUS: (000bd4a0), 000bd46c[HddGauge_ConditionIndex], OBJECTIVE: (000bd4a4) and 000bd4d4[Mech_SquadOrderLineIndex]; with it set, HddGauge_PaintStatic. ES2's HddGauge_PaintIdle (DBSIM 0044ae78).",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003df60",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints; ES1DBSIM decompile at 0003df60",
       "verified": {
         "bytes": "0003df60+256",
         "sha1": "5ad41d790e8c",
@@ -23696,7 +23696,7 @@
       "confidence": "high",
       "name": "CommBox_BeginMessage",
       "description": "(display, gauge, record) in stack order, callee-cleaned: the record's id +0 into the gauge's byte +0x12d; the suffix '_' (000946b9) + ltoa of the id, a word read unsigned, after a '0' below 10, + ltoa of the record's byte +0x16, zero-extended (MOVZX at 0003e163), after '00' below 10 and '0' below 100; SpeechLine_Load(script name, voice name) with the script 'P' (000946b7) + the byte 'A' + the portrait +0x135 + suffix and the voice 'P' (000946b5) + ltoa(Pilot_VoiceBankOf(portrait)) + suffix; the slot into +0x12f; returns whether it is set. ES2's CommBox_BeginMessage (DBSIM 0044afc8).",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#starting-a-line; ES1DBSIM decompile at 0003e060",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#starting-a-line; ES1DBSIM decompile at 0003e060",
       "verified": {
         "bytes": "0003e060+364",
         "sha1": "582e64d1c26b",
@@ -23711,7 +23711,7 @@
       "confidence": "high",
       "name": "HddGauge_PaintPilotFrame",
       "description": "(display, frame, gauge) in stack order, callee-cleaned: while the screen rect +0x8a is visible: fills the video rect +0x1d with 0x3f inside a canvas push and pop; CommBox_PushVideoClip; with +0x133 set, Bitmap_Blit of the bank's (+0x18) frame 24 + r mod 3 at its own offset pair, r the int16 Math_RandomNext (00063af4) draws on 000b5c48, sign-extended and divided unsigned (CWDE and DIV at 0003e23f-0003e247), then of the frame at its pair; with it clear, the bank's frame 6 at pair 24, then frame HddLowMemFrameMap (00094494)[frame] at the frame's pair; CommBox_PopVideoClip; the name label again inside a push and pop. ES2's HddGauge_PaintPilotFrame (DBSIM 0044b120), which blits the frame alone and publishes it for the MFD.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003e1cc",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints; ES1DBSIM decompile at 0003e1cc",
       "verified": {
         "bytes": "0003e1cc+378",
         "sha1": "892ea6f19842",
@@ -23726,7 +23726,7 @@
       "confidence": "high",
       "name": "HddGauge_PaintScream",
       "description": "(display, gauge) in stack order, callee-cleaned: while the screen rect +0x8a is visible: at phase +0x148 0 HddGauge_PaintPilotFrame(display, 0x1b, gauge), and once the clock 000981c4 is past the deadline +0x143 the phase 1; at phase 1 HddGauge_PaintStatic, back to 0 past the deadline; on a phase change the deadline = the clock + max(5, Math_RandomBelow(000b5c48, 0x14)), compared unsigned; the clock is read once, after the visibility test, and both deadline tests are strict; +0x149 = the phase. ES2's HddGauge_PaintScream (DBSIM 0044b31c).",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003e348",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints; ES1DBSIM decompile at 0003e348",
       "verified": {
         "bytes": "0003e348+181",
         "sha1": "e3f7639f769e",
@@ -23741,7 +23741,7 @@
       "confidence": "high",
       "name": "HddGauge_PaintStatic",
       "description": "(display, gauge) in stack order, callee-cleaned: while the screen rect +0x8a is visible: CommBox_PushVideoClip; Bitmap_Blit with flags 0 of frame +0x12e of HddStaticBank (000944d0), the dword at that index of the bank's +8 array, unchecked against the bank's count, at HddStaticFramePos (000b15fc); the frame stepped on, 5 wrapping to 0; CommBox_PopVideoClip; the name label again inside a canvas push and pop. ES2's HddGauge_PaintStatic (DBSIM 0044b3b4), which blits through VideoMode_BlitRotated and publishes the frame for the MFD.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003e400",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints; ES1DBSIM decompile at 0003e400",
       "verified": {
         "bytes": "0003e400+133",
         "sha1": "9cffd35ca52f",
@@ -23756,7 +23756,7 @@
       "confidence": "high",
       "name": "CommBox_OnMessageBegin",
       "description": "(record) callee-cleaned: the pilot channel's begin callback. For a subject (+2) in a squadmate slot (Squad_IndexOf), CommBox_BeginMessage(HddDisplayInstance, that gauge, record); when it fails, the channel's ready +0x462 and cancelled +0x463 latches; when it succeeds, the deadline +0x143 = the clock + 0x14, state +0x13b = 1, Sound_Play(0x1c) unless Sound_IsPlaying(0x1c), and HddDisplay_ServiceCommBoxes while the display's screen rect is visible. ES2's CommBox_OnMessageBegin (DBSIM 0044b4ec).",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#starting-a-line; ES1DBSIM decompile at 0003e488",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#starting-a-line; ES1DBSIM decompile at 0003e488",
       "verified": {
         "bytes": "0003e488+178",
         "sha1": "b234fe299954",
@@ -23771,7 +23771,7 @@
       "confidence": "high",
       "name": "CommBox_OnMessageEnd",
       "description": "(record) callee-cleaned: the pilot channel's end callback: for a subject (+2) in a squadmate slot (Squad_IndexOf), clears the byte +0x1c of that slot's gauge. ES2's CommBox_OnMessageEnd (DBSIM 0044b5c0).",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#starting-a-line; ES1DBSIM decompile at 0003e53c",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#starting-a-line; ES1DBSIM decompile at 0003e53c",
       "verified": {
         "bytes": "0003e53c+55",
         "sha1": "d0c2997b3171",
@@ -23786,7 +23786,7 @@
       "confidence": "high",
       "name": "HddDisplay_ServiceCommBoxes",
       "description": "(display) callee-cleaned: each named gauge's state +0x13b on the clock 000981c4 as read on entry, the +0x14 deadline from a second read right after it, a deadline reached at or past it. 0: while the previous state +0x13f is not 0 or CommBox_IdleRepaintPending (000946bb) is set, HddGauge_PaintIdle and Widget_DrawToCockpit(0, video rect, 1), the flag set when that copied nothing. 1: HddGauge_PaintStatic until the deadline with the latch +0x147 clear, then 2 at once. 2: on entry the channel's ready latch +0x462 and Snc_Start (0004e518), the frame -1 when that returns 0 and otherwise the speech slot's int16 +8, with the scream's (id 0x25) first deadline the clock + 5; after entry the slot's +8. At -1 the channel's cancelled latch +0x463, then for the scream the latch and state 1, otherwise state 3, deadline the clock + 0x14, Sound_Play(0x1c) unless playing and the latch when the machine's +0x93 is set; and static. Otherwise HddGauge_PaintScream or HddGauge_PaintPilotFrame. 3: static until the deadline, then 0 at once. Then +0x13f = the state. ES2's HddDisplay_ServiceCommBoxes (DBSIM 0044b5f8), which drains the .SNC queue first and drops the MFD's published block.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574; ES1DBSIM decompile at 0003e574",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-state-machine--hdddisplay_servicecommboxes-0003e574; ES1DBSIM decompile at 0003e574",
       "verified": {
         "bytes": "0003e574+540",
         "sha1": "62e3a158a6b4",
@@ -23801,7 +23801,7 @@
       "confidence": "high",
       "name": "CommBox_PushVideoClip",
       "description": "(gauge) callee-cleaned: Cockpit_PushCanvasContext; keeps the installed render context in CommBox_SavedContext (000bd500); sets the rect +0x210-+0x21c of CommBox_ClipContext (000b15f8) to the gauge's video rect +0x1d less that context's origin +0x220/+0x224; Raster_InstallRenderContext(CommBox_ClipContext). ES2's CommBox_PushVideoClip (DBSIM 0044b83c), which also takes off the coordinate offsets.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003e790",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints; ES1DBSIM decompile at 0003e790",
       "verified": {
         "bytes": "0003e790+152",
         "sha1": "b7f132242be3",
@@ -23816,7 +23816,7 @@
       "confidence": "high",
       "name": "CommBox_PopVideoClip",
       "description": "No arguments: Cockpit_PopRenderContext. Identical after normalization to ES2's CommBox_PopVideoClip (DBSIM 0044b8f8).",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints; ES1DBSIM decompile at 0003e828",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints; ES1DBSIM decompile at 0003e828",
       "verified": {
         "bytes": "0003e828+6",
         "sha1": "4517a451d2fb",
@@ -23906,7 +23906,7 @@
       "confidence": "high",
       "name": "Sim_SetCommBox0PilotOverride",
       "description": "Frameless, (n) callee-cleaned: stores n in CommBox0PilotOverride (000944d8) and RET 4. es2_xref finds one call, from Sim_ParseCommandLine, for -t<n>. ES2's Sim_SetCommBox0PilotOverride (DBSIM 0044ba9c).",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4; ES1DBSIM disassembly at 0003ea50",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4; ES1DBSIM disassembly at 0003ea50",
       "verified": {
         "bytes": "0003ea50+12",
         "sha1": "d95f8276acbc",
@@ -27266,7 +27266,7 @@
       "confidence": "high",
       "name": "StatusAlertPanel_Ctor",
       "description": "(panel, rect, keepsScreen, status) in stack order, its arguments removed by this function: the status panel. Allocates 0x548 bytes with Mem_New when panel is null (returning 0 when that fails); a 222 x 109 rect, centred by AlertPanel_CenterRect (0004679c) or placed at the rect's point by AlertPanel_SetRect (0004675c); AlertPanel_CtorBase (00045988)(panel, that rect, keepsScreen); GeneralAlertVtable (0009507e) at +0x314; str\\gnl_alrt into the string table +0x30 with StringTable_LoadFromFile (00044f78), then three groups with StringTable_LoadGroup (000450b0), each passing 0 as the attribute destination and the capacities 19, 38 and 76, which that function leaves unread: 19 titles at +0x334, 38 button captions at +0x380 and 76 body lines at +0x418, the counts str\\GNL_ALRT.STR's groups hold; two button rects through __vec_ctor (000610cb) with GauRect_ElementCtorStatusAlertPanelCopy (0004726c), by its padding 00047269; one button at x 71 for statuses 0, 2, 3, 7, 8, 0x11 and 0x12, two at x 22 and 120 for 1, 4 to 6, 9, 10 and 0xb to 0x10, none for any other (the jump table 000950c0 behind an unsigned bound against 0x12), each (x, 70)-(x + 80, 90); the plate, frame 0 of dba\\gnl2alrt for statuses 0 and 1 and of dba\\gnl_alrt otherwise, loaded with ClassItem_LoadFromFile (0005760c), at +0x2c; per button PanelButton_Ctor (000467c8)(0, index, panel, rect), a caption label in WidgetFont_Cpylw at the button's +0x2c placed by Label_SetRect (00031080) with flags 2 and margin (0, -3), Widget_RegisterClickable (000443d4) with the panel's root +0x281, and the widget list +0x28d; the status's title at +0x318 and pointers to its caption pair at +0x31c and its four body lines at +0x320; the title label at +0x40 in WidgetFont_Title, on the title bar +0x2ba = ((222 - w - 20) >> 1, 4)-(that + w + 20, 21), w the title's width by HudFont_MeasureString (00069d0c), margin (0, -11); four body labels at +0x324 in WidgetFont_Green6x8, centred on (50, 30 + 10i)-(172, 40 + 10i); the cancel widget +0x2e3 = 0, and +0x313 = 0 for status 2. Returns the panel. es2_xref finds six calls, five passing (0, 0, 1, status) and Sim_DeathFlash (00058414) (0, 0, 0, 2), so its panel keeps no buffer of the screen under it. ES2's StatusAlertPanel_Ctor (DBSIM 00455934) with ES2's pause panel folded in as statuses 0 and 1, and without its status-5 body.",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
       "verified": {
         "bytes": "00046efc+877",
         "sha1": "37a8da3dd01f",
@@ -27281,7 +27281,7 @@
       "confidence": "high",
       "name": "GauRect_ElementCtorStatusAlertPanelCopy",
       "description": "(rect), callee-cleaned: byte for byte the code of GauRect_ElementCtor (0002c994), relocated operands aside: the element constructor StatusAlertPanel_Ctor (00046efc) hands __vec_ctor (000610cb), by its padding entry 00047269, for its two button rects. es2_xref finds the padding address stored once, inside StatusAlertPanel_Ctor.",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc; ES1DBSIM disassembly at 0004726c",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-status-panel--statusalertpanel_ctor-00046efc; ES1DBSIM disassembly at 0004726c",
       "verified": {
         "bytes": "0004726c+66",
         "sha1": "82d7302b0ac7",
@@ -27296,7 +27296,7 @@
       "confidence": "high",
       "name": "GeneralAlert_Dtor",
       "description": "(panel, flags) in stack order, its arguments removed by this function: the status panel's destructor. Returns at once for a null panel; stores GeneralAlertVtable (0009507e) at +0x314, frees the four body labels at +0x324 with Mem_Delete (000015f8), runs Alert_Dtor (00045d0c)(panel, 0) and frees the panel when bit 0 of flags is set. GeneralAlertVtable's +0x1c is 0. es2_xref finds two calls, from Sim_DeathFlash (00058414) and Prefs_LimitDetailInLowMemory (0004adb0), each passing 3. ES2's GeneralAlert_Dtor (DBSIM 00455f90).",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
       "verified": {
         "bytes": "000472b0+89",
         "sha1": "57fbd2b3c189",
@@ -27326,7 +27326,7 @@
       "confidence": "high",
       "name": "StatusAlertPanel_Paint",
       "description": "(panel), its argument removed by this function: the status panel's slot +4. Bitmap_Blit (00067048) of the plate +0x2c with flags 0 at the region's rect +0x18; the title through the panel's slot +8 with +0x318; counts the body lines +0x320 points at up to the first empty one, at most four, and sets body label i + 1 for a one-line body, i otherwise, to line i with Label_SetText (0003114c); then slot +4 of each widget's +0x1c table. ES2's StatusAlertPanel_Paint (DBSIM 00456068), which also stops at a null line.",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
       "verified": {
         "bytes": "000473c4+286",
         "sha1": "45b96d7f83a3",
@@ -27341,7 +27341,7 @@
       "confidence": "high",
       "name": "StatusAlertPanel_OnChildClick",
       "description": "(panel, flags, child) in stack order, its arguments removed by this function: the status panel's slot +0x10, entered at its padding 000474e2. Sets the close byte +0x2b9 to 2 when child is widget 0 and to 3 when it is widget 1 of the +0x2b5 widgets at +0x28d, so StatusAlertPanel_RunModal (0004730c) answers 0 for the left button and 1 for the right. ES2's StatusAlertPanel_OnChildClick (DBSIM 00456160) without its AlertPanel_ResetPresentTimer call.",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
       "verified": {
         "bytes": "000474e4+119",
         "sha1": "229d7edf913a",
@@ -27356,7 +27356,7 @@
       "confidence": "high",
       "name": "StatusAlertPanel_GetButtonCaption",
       "description": "(panel, index) in stack order, its arguments removed by this function: the status panel's slot +0x18, entered at its padding 0004755b. Returns entry index of the caption pair +0x31c points at, the status's two strings of GNL_ALRT.STR group 1. ES2's StatusAlertPanel_GetButtonCaption (DBSIM 004561ac).",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-status-panel--statusalertpanel_ctor-00046efc",
       "verified": {
         "bytes": "0004755c+28",
         "sha1": "11cab453431b",
@@ -27716,7 +27716,7 @@
       "confidence": "high",
       "name": "ObjectivesPanel_Ctor",
       "description": "(panel, rect, keepsScreen) in stack order, its arguments removed by this function: the F11 objectives panel. Allocates 0x39e bytes with Mem_New when panel is null (returning 0 when that fails); a 315 x 109 rect, centred by AlertPanel_CenterRect (0004679c) or placed at the rect's point by AlertPanel_SetRect (0004675c); AlertPanel_CtorBase (00045988)(panel, that rect, keepsScreen); StringTable_Ctor (00044f14) on a second string table at +0x318; ObjectiveAlertVtable (000955d6) at +0x314; the plate, frame 0 of dba\\hst_alrt loaded with ClassItem_LoadFromFile (0005760c), at +0x2c; str\\obj_alrt into +0x30 with StringTable_LoadFromFile (00044f78) and its two one-string groups with StringTable_LoadGroup (000450b0), the title at +0x328 and the button caption at +0x32c; data\\object.str, prefixed by Path_ApplyAltDrive (000592a4), into the table +0x318, its group 0 into the pointers from +0x330 and the group's count, StringTable_LoadGroup's answer, as an int16 at +0x380; the title label at +0x40 in WidgetFont_Green6x8 on ((315 - w) >> 1, 3)-(that + w, 13), w the title's width by HudFont_MeasureString (00069d0c), margin (0, -1), with all four words of the title bar +0x2ba set to -20; PanelButton_Ctor (000467c8)(0, 0, panel, (127, 93)-(187, 103)), its caption label in WidgetFont_Cpylw placed by Label_SetRect (00031080) with flags 2 and margin (0, -1), Widget_RegisterClickable (000443d4) with the panel's root +0x281, and widget 0; seven line labels at +0x382 in WidgetFont_Cpylw, placed with flags 1 and margin 0 on (20, 17 + 10i)-(200, 27 + 10i); the cancel widget +0x2e3 = 0. Returns the panel. es2_xref finds one call, from CockpitWidgets_HandleCommand, passing (0, 0, 1). ES2's ObjectivesPanel_Ctor (DBSIM 0045751c), which lists block 13's mission.str lines.",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
       "verified": {
         "bytes": "0004a1b4+715",
         "sha1": "7f349a96fc3d",
@@ -27731,7 +27731,7 @@
       "confidence": "high",
       "name": "ObjectivesPanel_Dtor",
       "description": "(panel, flags) in stack order, its arguments removed by this function: the objectives panel's destructor. Returns at once for a null panel; stores ObjectiveAlertVtable (000955d6) at +0x314, frees the seven line labels at +0x382 with Mem_Delete (000015f8), runs OwnedArray_Dtor (00044f48)(+0x318, 2) and Alert_Dtor (00045d0c)(panel, 0), and frees the panel when bit 0 of flags is set. ObjectiveAlertVtable's +0x1c is 0, and es2_xref finds no branch, stored pointer or slot holding this function or its padding 0004a47d. ES2's ObjectivesPanel_Dtor (DBSIM 00457a80).",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
       "verified": {
         "bytes": "0004a480+105",
         "sha1": "a23da6ae289d",
@@ -27761,7 +27761,7 @@
       "confidence": "high",
       "name": "ObjectivesPanel_Paint",
       "description": "(panel), its argument removed by this function: the objectives panel's slot +4. Bitmap_Blit (00067048) of the plate +0x2c with flags 0 at the region's rect +0x18; the title through the panel's slot +8 with +0x328; then each of the +0x380 (int16) string pointers from +0x330 that is not empty goes to the next of the seven line labels at +0x382 with Label_SetText (0003114c), stopping once seven are set; then slot +4 of each widget's +0x1c table. ES2's ObjectivesPanel_Paint (DBSIM 00457b58).",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
       "verified": {
         "bytes": "0004a5a4+249",
         "sha1": "4746c8a1a2a8",
@@ -27776,7 +27776,7 @@
       "confidence": "high",
       "name": "ObjectivesPanel_OnChildClick",
       "description": "(panel, flags, child) in stack order, its arguments removed by this function: the objectives panel's slot +0x10, entered at its padding 0004a69d. Sets the close byte +0x2b9 to 1 when child is widget 0 of the +0x2b5 widgets at +0x28d, so ObjectivesPanel_RunModal (0004a4ec) answers 1. ES2's ObjectivesPanel_OnChildClick (DBSIM 00457c30) without its AlertPanel_ResetPresentTimer call.",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
       "verified": {
         "bytes": "0004a6a0+109",
         "sha1": "349b021108cb",
@@ -27791,7 +27791,7 @@
       "confidence": "high",
       "name": "ObjectivesPanel_GetButtonCaption",
       "description": "(panel, index) in stack order, its arguments removed by this function: the objectives panel's slot +0x18, entered at its padding 0004a70d. Returns +0x32c, the RETURN caption, whatever the index. ES2's ObjectivesPanel_GetButtonCaption (DBSIM 00457c6c).",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4",
       "verified": {
         "bytes": "0004a710+18",
         "sha1": "c313f9f0c01e",
@@ -29681,7 +29681,7 @@
       "confidence": "high",
       "name": "Snc_Start",
       "description": "(slot) callee-cleaned: copies the script pointer +0x27 to the cursor +0xa, stores Snc_ReadFrame (0004e59c)'s answer as the int16 frame +8 and Snc_ReadDueTime (0004e5c4)'s at +4, and calls Snc_Enqueue (0004e624)(slot, that); then, when the slot's object +0 is set, Sound_SpeechEnabled (000959e4) is set and the frame is not 0, returns in AL slot +0x10 of the table at the object's +0x3b, else 1. es2_xref finds one call, from HddDisplay_ServiceCommBoxes (0003e574). ES2's Snc_Start (DBSIM 004632fc).",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574; ES1DBSIM disassembly at 0004e518",
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-state-machine--hdddisplay_servicecommboxes-0003e574; ES1DBSIM disassembly at 0004e518",
       "verified": {
         "bytes": "0004e518+94",
         "sha1": "deb4c2d8c6ed",
@@ -38651,7 +38651,7 @@
       "confidence": "high",
       "name": "Math_MapRange",
       "description": "(value, inLo, inHi, outLo, outHi), C convention: (value - inLo) x (outHi - outLo) plus a rounding bias of |inHi - inLo| - 1, signed by the output's direction, divided by (inHi - inLo), plus outLo. Identical to ES2's Math_MapRange (DBSIM 0047de3c) after normalisation.",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#functions; ES1DBSIM decompile at 00065480",
+      "source": "Herculan/docs/es1/simulation/ai-weapons.md#functions; ES1DBSIM decompile at 00065480",
       "verified": {
         "bytes": "00065480+59",
         "sha1": "a524e67910e0",
@@ -42773,7 +42773,7 @@
       "confidence": "high",
       "name": "SpanRegion_Intersect",
       "description": "(a, b, out), C convention: intersects two span regions ({int16 top row, int16 row count, then an int16 {x0, x1} pair per row}) row by row into out over the rows both cover, a row's run being {max x0, min x1}. The result starts at the first row whose two runs overlap and ends at the last, a row between them whose runs do not overlap being written {1, 0}. Returns out, or 0 when no row overlaps. es2_xref finds five calls, one each from Raster_DrawLine (0006a064), Raster_DrawPolygonDispatch (00068be0), Raster_FillRect (00053d9c), Raster_FillSpanList (0008f68c) and Region_CopySpansBetweenPages (000667c1). ES2's SpanRegion_Intersect (DBSIM 00486af4), the same statements.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps; ES1DBSIM decompile at 00073b7c, against ES2's SpanRegion_Intersect",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps; ES1DBSIM decompile at 00073b7c, against ES2's SpanRegion_Intersect",
       "verified": {
         "bytes": "00073b7c+277",
         "sha1": "482a7f64d48b",
@@ -43784,7 +43784,7 @@
       "confidence": "high",
       "name": "Poly_ScanConvertToSpanRegion",
       "description": "ES2's Poly_ScanConvertToSpanRegion (DBSIM 00484614), the scan conversion of a polygon into the span region the span routine fills: es2_naming.py diff finds the two the same after normalisation but for the computed jump into the unrolled stores. ES1's JMP EDX at 0007761a enters the run of stores before 000788dc at 12 bytes a store (EDX = 000788dc - 12 x (n + 1)), each store STOSW, ADD EDI,ECX, ADD [EBP - 0x1b8],EBX and ADC EAX,ESI, so the accumulator steps in the frame; after the run the JMP at 000788dc goes back to 0007709f, and three zero bytes follow it before Poly_ClipToRect (000788e4). ES2's saves EBP at 004a33ec, takes its accumulator into EBP and enters its run before 004865e4 at 8 bytes a store, ADD EBP,EBX in place of the frame add. es2_xref finds four calls, from Raster_DrawPolygonDispatch (00068be0).",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#clipped-polygons; es2_naming.py diff ES1DBSIM 00076f54 DBSIM 00484614; ES1DBSIM disassembly at 00077605-0007761a and bytes at 0007761c and 000788c4",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#clipped-polygons; es2_naming.py diff ES1DBSIM 00076f54 DBSIM 00484614; ES1DBSIM disassembly at 00077605-0007761a and bytes at 0007761c and 000788c4",
       "verified": {
         "bytes": "00076f54+1736",
         "sha1": "ba1ceacdd83c",
@@ -43799,7 +43799,7 @@
       "confidence": "high",
       "name": "Poly_ClipToRect",
       "description": "ES2's Poly_ClipToRect (DBSIM 0048422c), the clip of a polygon to a rect: es2_naming.py diff finds the two identical after normalisation (260 lines). es2_xref finds three calls, from Raster_DrawPolygonDispatch (00068be0), which clips a span fill with it against the clip block's rect in clip mode 1 and against each rect region in clip mode 2. It opens an object file: the unrolled stores of Poly_ScanConvertToSpanRegion (00076f54) before it end with a JMP at 000788dc and three zero bytes.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#clipped-polygons; es2_naming.py diff ES1DBSIM 000788e4 DBSIM 0048422c",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#clipped-polygons; es2_naming.py diff ES1DBSIM 000788e4 DBSIM 0048422c",
       "verified": {
         "bytes": "000788e4+1000",
         "sha1": "5839c68c1c3f",
@@ -44303,7 +44303,7 @@
       "confidence": "high",
       "name": "Line_ScanConvertToSpanRegion",
       "description": "(a, b, out), C convention: writes the int16 span region of a one-pixel line between the int32 points a and b: the top row min(y), the row count |dy| + 1, then an {x0, x1} pair per row from the top. A single point is one row {x, x}; a horizontal line one row {min x, max x}; a vertical line {x, x} on each row; any other the run of x a Bresenham walk from the smaller-x end puts on each row, its error starting at 2dy - dx for a shallow line and 2dx - dy for a steep one, the rows written from the last back when y falls along the walk. es2_xref finds three calls, all from Raster_DrawLine (0006a064). ES2's Line_ScanConvertToSpanRegion (DBSIM 00483c60), the same statements.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps; ES1DBSIM decompile at 0007d358, against ES2's Line_ScanConvertToSpanRegion",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps; ES1DBSIM decompile at 0007d358, against ES2's Line_ScanConvertToSpanRegion",
       "verified": {
         "bytes": "0007d358+331",
         "sha1": "3d3e84785c9a",
@@ -46067,7 +46067,7 @@
       "confidence": "high",
       "name": "VGA8_ClearPage",
       "description": "(page, color), C convention: VGA_8's slot 35, the dword at 000a7bfc in its table 000a7b70, which the simulator calls through 0009df60. Fills the page with the color. When the dword 00098da6 equals 00098dc6, it writes (00098da6 * 00098daa) >> 4 dwords of the color byte repeated four times with REP STOSD from VGA8_PageOffsets (0009e5ce)[page], through the selector 0009df84, with the sequencer's map mask (port 3C4 index 2) set to 0xf and put back after. Otherwise it keeps Raster_GetDrawPage (0008fcde), makes the page the draw page through slot 17 (0009df18), passes the rect {0, 0, 00098da6 - 1, 00098daa - 1} and the color to slot 2 (0009dedc), and passes the kept page to slot 17 again. es2_xref finds one stored pointer to it, in VGA_8's table, and es2_xref --decode two calls through 0009df60, both from Sim_DeathFlash (00058414). ES2's Sim_DeathFlash calls g_RasterRoutines_ClearSurface at the same point.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps",
       "verified": {
         "bytes": "0008cd3c+170",
         "sha1": "a6cb0541cddb",
@@ -46115,7 +46115,7 @@
       "confidence": "high",
       "name": "Raster_GetDrawPage",
       "description": "No arguments, frameless: returns the dword 00098dda, the draw page a store to the current display's draw page copies there and VGA8_SetDrawPage (0005266a) stores. es2_xref finds calls from VGA8_ClearPage (0008cd3c) and 0008aeb0.",
-      "source": "Herculan/docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps",
+      "source": "Herculan/docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps",
       "verified": {
         "bytes": "0008fcde+6",
         "sha1": "1e19bdf79bee",
@@ -46859,7 +46859,7 @@
       "confidence": "high",
       "name": "AiAimScatterByDifficulty",
       "description": "int16[4] {1000, 666, 333, 0}: Ai_FireAtPoint (000190ec)'s aim scatter for a machine whose group's side byte is not 0, indexed by header word 7 or 3. ES2's AiAimScatterByDifficulty (DBSIM 0049a30c) holds {1000, 800, 400, 200}.",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#globals; ES1DBSIM image at 00091ce0"
+      "source": "Herculan/docs/es1/simulation/ai-weapons.md#globals; ES1DBSIM image at 00091ce0"
     },
     {
       "address": "00091ce8",
@@ -48020,7 +48020,7 @@
       "confidence": "high",
       "name": "HddLowMemFrameMap",
       "description": "28 int16: the low-memory pilot bank's frame for each of the 28 portrait frames, 0-23 to 0-5, 24-26 to 6, 27 to 7, which HddGauge_PaintPilotFrame (0003e1cc) reads while the gauge's +0x133 is clear. The same values as ES2's DAT_0049d1f6.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints"
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints"
     },
     {
       "address": "000944cc",
@@ -48038,7 +48038,7 @@
       "confidence": "high",
       "name": "HddStaticBank",
       "description": "Dword: the dba\\static bank, five frames HddGauge_PaintStatic (0003e400) cycles; HddDisplay_Ctor (0003c258) loads it the first time. ES2's HddStaticBank.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#globals"
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#globals"
     },
     {
       "address": "000944d4",
@@ -48047,7 +48047,7 @@
       "confidence": "high",
       "name": "HddPilotNameTable",
       "description": "Dword: the str\\pilots string table, which HddDisplay_Ctor (0003c258) loads the first time and HddGauge_LoadPilotFrames (0003dab4) walks to a pilot's portrait number for the comm box's name.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#globals"
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#globals"
     },
     {
       "address": "000944d8",
@@ -48056,7 +48056,7 @@
       "confidence": "high",
       "name": "CommBox0PilotOverride",
       "description": "Int, -1 in the image: the -t<n> value Sim_SetCommBox0PilotOverride (0003ea50) stores; HddGauge_LoadPilotFrames (0003dab4) takes it as comm box 0's pilot when it is not negative. ES2's CommBox0PilotOverride.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#globals"
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#globals"
     },
     {
       "address": "000944dc",
@@ -48119,7 +48119,7 @@
       "confidence": "high",
       "name": "CommBox_IdleRepaintPending",
       "description": "Byte: set by HddDisplay_ServiceCommBoxes (0003e574) when an idle box's copy to the other page did nothing (Widget_DrawToCockpit returned 0), so the next frame repaints idle boxes again.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574"
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-state-machine--hdddisplay_servicecommboxes-0003e574"
     },
     {
       "address": "0009475e",
@@ -48497,7 +48497,7 @@
       "confidence": "high",
       "name": "GeneralAlertVtable",
       "description": "The status panel's table, which StatusAlertPanel_Ctor (00046efc) and GeneralAlert_Dtor (000472b0) store at +0x314: StatusAlertPanel_Paint (000473c4) at +4, AlertPanel_SetTitleText (000461ec) at +8, StatusAlertPanel_RunModal (0004730c) at +0xc, StatusAlertPanel_OnChildClick (000474e4) at +0x10, AlertPanel_HandleEvent (00046670) at +0x14, StatusAlertPanel_GetButtonCaption (0004755c) at +0x18, the three by their padding, and 0 at +0 and +0x1c. ES2's GeneralAlertVtable (DBSIM 0049e148) one slot further on.",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc"
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-status-panel--statusalertpanel_ctor-00046efc"
     },
     {
       "address": "0009519c",
@@ -48542,7 +48542,7 @@
       "confidence": "high",
       "name": "ObjectiveAlertVtable",
       "description": "The objectives panel's table, which ObjectivesPanel_Ctor (0004a1b4) and ObjectivesPanel_Dtor (0004a480) store at +0x314: ObjectivesPanel_Paint (0004a5a4) at +4, AlertPanel_SetTitleText (000461ec) at +8, ObjectivesPanel_RunModal (0004a4ec) at +0xc, ObjectivesPanel_OnChildClick (0004a6a0) at +0x10, AlertPanel_HandleEvent (00046670) at +0x14, ObjectivesPanel_GetButtonCaption (0004a710) at +0x18, the three by their padding, and 0 at +0 and +0x1c. ES2's ObjectiveAlertVtable (DBSIM 0049e4f8) one slot further on.",
-      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4"
+      "source": "Herculan/docs/es1/simulation/status-and-objectives-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4"
     },
     {
       "address": "000956bf",
@@ -50189,7 +50189,7 @@
       "confidence": "high",
       "name": "TargetAngles_CalledOnce",
       "description": "Byte Cockpit_TargetAnglesFromCameraBone (00018b78) sets to 1 on its first call.",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#globals; ES1DBSIM decompile at 00018b78"
+      "source": "Herculan/docs/es1/simulation/ai-weapons.md#globals; ES1DBSIM decompile at 00018b78"
     },
     {
       "address": "000af714",
@@ -50198,7 +50198,7 @@
       "confidence": "high",
       "name": "TargetAngles_Residual",
       "description": "int16[3], the residual Euler angles Cockpit_TargetAnglesFromCameraBone (00018b78) writes and returns, pitch at +0 and yaw at +4; Ai_FireAtPoint (000190ec) tests both against 1000.",
-      "source": "Herculan/docs/es1/simulation/mech-ai.md#globals; ES1DBSIM decompile at 00018b78"
+      "source": "Herculan/docs/es1/simulation/ai-weapons.md#globals; ES1DBSIM decompile at 00018b78"
     },
     {
       "address": "000af72c",
@@ -50684,7 +50684,7 @@
       "confidence": "high",
       "name": "CommBox_ClipContext",
       "description": "Dword: the GLViewport HddDisplay_Ctor (0003c258) makes, origin 0, translation and clip mode 1, which CommBox_PushVideoClip (0003e790) clips to a comm box's video rect and installs.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints"
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints"
     },
     {
       "address": "000b15fc",
@@ -50693,7 +50693,7 @@
       "confidence": "high",
       "name": "HddStaticFramePos",
       "description": "Two ints: the point HddGauge_PaintStatic (0003e400) blits a static frame at; HddDisplay_StaticInit (0003edac) zeroes both. ES2's HddStaticFramePos.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints"
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints"
     },
     {
       "address": "000b1604",
@@ -52430,7 +52430,7 @@
       "confidence": "high",
       "name": "CommBox_SavedContext",
       "description": "Dword: the render context installed when CommBox_PushVideoClip (0003e790) ran, whose origin it subtracts from the clip rect.",
-      "source": "Herculan/docs/es1/simulation/heads-down-display.md#the-three-paints"
+      "source": "Herculan/docs/es1/simulation/hdd-comm-boxes.md#the-three-paints"
     },
     {
       "address": "000bd50e",

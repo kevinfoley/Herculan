@@ -8,7 +8,7 @@ namespace Herculan.Es1.Panels;
 
 /// <summary>
 /// The objectives panel <c>F11</c> puts up, <c>ObjectivesPanel_Ctor</c> (<c>ES1DBSIM 0004a1b4</c>) and
-/// <c>ObjectiveAlertVtable</c> (<c>000955d6</c>) (docs/es1/simulation/alert-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4):
+/// <c>ObjectiveAlertVtable</c> (<c>000955d6</c>) (docs/es1/simulation/status-and-objectives-panels.md#the-objectives-panel--objectivespanel_ctor-0004a1b4):
 /// the title <c>OBJECTIVES</c> and the caption <c>RETURN</c> from <c>str\OBJ_ALRT.STR</c>, as many as seven lines from
 /// the one group of <c>data\object.str</c>, which the shell writes from the mission's <c>.ENG</c> file
 /// (docs/es1/formats/eng-mission-text.md#the-objectives), left-aligned, on the plate <c>dba\hst_alrt</c>, with one
@@ -150,7 +150,7 @@ public sealed class Es1ObjectivesPanel : Es1AlertPanel {
 	/// <summary>
 	/// <c>data\object.str</c> read with <c>StringTable_LoadFromFile</c> as a string table, and its group 0 taken with
 	/// <c>StringTable_LoadGroup</c>. With no install, or with the file missing or not a string table, no
-	/// lines: what retail shows with the file missing is docs/es1/simulation/alert-panels.md#open's item on a missing
+	/// lines: what retail shows with the file missing is docs/es1/simulation/status-and-objectives-panels.md#open's item on a missing
 	/// <c>data\object.str</c>, and a file that does not parse is not read there.
 	/// </summary>
 	private static IReadOnlyList<string> ReadObjectives(string? installRoot) {

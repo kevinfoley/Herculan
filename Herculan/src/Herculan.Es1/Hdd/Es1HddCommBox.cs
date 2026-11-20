@@ -13,7 +13,7 @@ namespace Herculan.Es1.Hdd;
 
 /// <summary>
 /// One of the Heads-Down Display's three comm-box gauges, its <c>0x14a</c> bytes from the display's <c>+0xf6</c>
-/// (docs/es1/simulation/heads-down-display.md#the-comm-boxes): the squadmate's pilot, its six labels, bank and frame
+/// (docs/es1/simulation/hdd-comm-boxes.md#the-gauge): the squadmate's pilot, its six labels, bank and frame
 /// offsets, which <see cref="Load"/> sets; the line it speaks (<see cref="BeginMessage"/>) and its step of the state
 /// machine (<see cref="Service"/>); and its four paints, idle (<see cref="PaintIdle"/>), static
 /// (<see cref="PaintStatic"/>), the face (<see cref="PaintPilotFrame"/>) and the death scream
@@ -95,7 +95,7 @@ public sealed class Es1HddCommBox {
 	/// <summary><c>+0x00</c>–<c>+0x14</c>, the six labels by <see cref="NameLabel"/> and the rest; none until <see cref="Load"/>.</summary>
 	public IReadOnlyList<Es1Label?> Labels => _labels;
 
-	/// <summary><c>+0x1c</c>, a byte <see cref="Es1HddDisplay"/>'s end callback clears; what reads it is Open (docs/es1/simulation/heads-down-display.md#open).</summary>
+	/// <summary><c>+0x1c</c>, a byte <see cref="Es1HddDisplay"/>'s end callback clears; what reads it is Open (docs/es1/simulation/hdd-comm-boxes.md#open).</summary>
 	public byte Byte1C { get; internal set; }
 
 	/// <summary><c>+0x18</c>, the pilot's bank, <c>dba\pilot&lt;p&gt;</c> or the low-memory <c>pilot&lt;p&gt;s</c>; none when it is missing.</summary>
@@ -145,7 +145,7 @@ public sealed class Es1HddCommBox {
 
 	/// <summary>
 	/// <c>HddGauge_LoadPilotFrames</c> (<c>0003dab4</c>)'s gauge, on <paramref name="pilot"/>, the pilot after the first
-	/// box's override (docs/es1/simulation/heads-down-display.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4): the
+	/// box's override (docs/es1/simulation/hdd-comm-boxes.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4): the
 	/// portrait <i>p</i> (<see cref="Es1Cockpit.PilotPortraitOf"/>) and the name, entry <i>p</i> of
 	/// <see cref="Es1HddDisplay.PilotNames"/>; the pilot channel's table for the slot,
 	/// <see cref="Messages.Es1MessagePort.SystemMessagesIndex"/> with the voice bank of <i>p</i>
@@ -213,7 +213,7 @@ public sealed class Es1HddCommBox {
 	}
 
 	/// <summary>
-	/// <c>HddGauge_PaintIdle</c> (<c>0003df60</c>)(display, slot) (docs/es1/simulation/heads-down-display.md#the-three-paints):
+	/// <c>HddGauge_PaintIdle</c> (<c>0003df60</c>)(display, slot) (docs/es1/simulation/hdd-comm-boxes.md#the-three-paints):
 	/// while the display's screen rect is visible, for a squadmate not destroyed, the video rect filled
 	/// <see cref="IdleFill"/> and the five labels written: the name, <c>STATUS:</c>, the condition of
 	/// <see cref="ConditionIndex"/>, <c>OBJECTIVE:</c> and the order line of <see cref="Es1Mech.SquadOrderLineIndex"/>;
@@ -265,7 +265,7 @@ public sealed class Es1HddCommBox {
 
 	/// <summary>
 	/// <c>CommBox_BeginMessage</c> (<c>0003e060</c>)(display, gauge, <paramref name="record"/>)
-	/// (docs/es1/simulation/heads-down-display.md#starting-a-line): the id's low byte into <see cref="MessageId"/>; the
+	/// (docs/es1/simulation/hdd-comm-boxes.md#starting-a-line): the id's low byte into <see cref="MessageId"/>; the
 	/// suffix <c>_</c>, the id in decimal with a 0 before it below 10, and the attribute byte 1 in decimal, unsigned,
 	/// with a 0 before it below 100 and another below 10; and <see cref="Es1VoiceLines.LoadLine"/> with the script
 	/// <c>P</c> + (<c>'A'</c> + the portrait) + suffix and the voice <c>P</c> + <see cref="Es1Cockpit.PilotVoiceBankOf"/>
@@ -288,7 +288,7 @@ public sealed class Es1HddCommBox {
 
 	/// <summary>
 	/// The box's step of <c>HddDisplay_ServiceCommBoxes</c> (<c>0003e574</c>) on the clock count <paramref name="now"/>
-	/// (docs/es1/simulation/heads-down-display.md#the-state-machine--hdddisplay_servicecommboxes-0003e574), then
+	/// (docs/es1/simulation/hdd-comm-boxes.md#the-state-machine--hdddisplay_servicecommboxes-0003e574), then
 	/// <see cref="PreviousState"/> = the state:
 	///
 	/// <list type="bullet">
@@ -345,7 +345,7 @@ public sealed class Es1HddCommBox {
 
 	/// <summary>
 	/// <c>HddGauge_PaintPilotFrame</c> (<c>0003e1cc</c>)(display, <paramref name="frame"/>, gauge)
-	/// (docs/es1/simulation/heads-down-display.md#the-three-paints): while the display's screen rect is visible, the
+	/// (docs/es1/simulation/hdd-comm-boxes.md#the-three-paints): while the display's screen rect is visible, the
 	/// video rect filled <see cref="IdleFill"/>; in the box's clip (<see cref="PushVideoClip"/>), with
 	/// <see cref="FullBank"/> the bank's frame <see cref="FirstHeadFrame"/> + the presentation generator's draw
 	/// (<c>Math_RandomNext</c> on <c>000b5c48</c>), sign-extended and taken modulo <see cref="HeadFrames"/> unsigned, at
@@ -376,7 +376,7 @@ public sealed class Es1HddCommBox {
 
 	/// <summary>
 	/// <c>HddGauge_PaintScream</c> (<c>0003e348</c>)(display, gauge), on the clock count <paramref name="now"/>
-	/// (docs/es1/simulation/heads-down-display.md#the-three-paints): while the display's screen rect is visible, at phase
+	/// (docs/es1/simulation/hdd-comm-boxes.md#the-three-paints): while the display's screen rect is visible, at phase
 	/// 0 <see cref="PaintPilotFrame"/> of <see cref="ScreamFrame"/>, the phase 1 once <paramref name="now"/> is past
 	/// <see cref="Deadline"/>; at phase 1 <see cref="PaintStatic"/>, the phase back to 0 once past it; on a phase change
 	/// the deadline <paramref name="now"/> + the greater of <see cref="ScreamLeastCounts"/> and the presentation

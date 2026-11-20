@@ -137,7 +137,7 @@ Both tables hold three slots from `+4`, ES2's in order: paint, repaint and reset
   3. the display's draw page `+0x3c` becomes its source page `+0x38`;
   4. `Region_Save`(region `+0x2c`, buffer `+0x5c`); `Bitmap_Blit`(bitmap, 0, (*ox*, *oy*)); `Region_CopyBetweenPages`(region `+0x44`, the offset); `Region_Restore`(region `+0x2c`, (*ox*, *oy*), buffer `+0x5c`).
 
-  `Region_Save` moves its rect by the translation twice and the blit and the restore once each ([saving and restoring a rect region](../rendering/screen-pages.md#lines-and-clipped-bitmaps)).
+  `Region_Save` moves its rect by the translation twice and the blit and the restore once each ([saving and restoring a rect region](../rendering/2d-drawing.md#lines-and-clipped-bitmaps)).
 - The region destructors, (object, flags), are this file's copies ([the gadget file's](#the-gadget-bases)): **`GLRectangleRegion_DtorBarGraphsCopy` (`00032734`)**, slot `+0x1c` of `00093536`, whose `+4` returns the class tag `0x28000c`; **`GLRegion_DtorBarGraphsCopy` (`0003270c`)**, of `0009350e`; and **`GLBase_DtorBarGraphsCopy` (`000326e8`)**, of `000934e6`. Each stores its table and its bases' at `+0` in turn and frees the object when bit 0 of flags is set.
 
 ## In GO.EXE

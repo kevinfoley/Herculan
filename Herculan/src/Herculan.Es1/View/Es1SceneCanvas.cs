@@ -61,7 +61,7 @@ public sealed class Es1SceneCanvas : IEs1LabelSurface {
 	/// <c>HudFont_DrawString</c> (<c>00069e38</c>) from the pen (<paramref name="x"/>, <paramref name="y"/>) in clip mode
 	/// 2: each glyph blitted with its top row at <paramref name="y"/> less the font's ink height, its 0 bytes left unless
 	/// the glyph's flags have bit 4, each row cut to each region of the list
-	/// (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps), the pen moving right by its width.
+	/// (docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps), the pen moving right by its width.
 	/// </summary>
 	public void DrawString(HudFont? font, string? text, int x, int y) {
 		if (font == null || text == null) {
@@ -95,7 +95,7 @@ public sealed class Es1SceneCanvas : IEs1LabelSurface {
 	/// <summary>
 	/// <c>Bitmap_Blit</c> of <paramref name="art"/> with flags 0 at (<paramref name="x"/>, <paramref name="y"/>) in clip
 	/// mode 2: its 0 bytes left unless its flags have bit 4 (docs/es1/rendering/screen-pages.md#the-cursor), each row cut
-	/// to each region of the list (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps).
+	/// to each region of the list (docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps).
 	/// </summary>
 	public void Blit(DynamixBitmap art, int x, int y) {
 		var pixels = art.ImageData ?? [];

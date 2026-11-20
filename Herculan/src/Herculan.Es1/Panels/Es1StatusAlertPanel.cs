@@ -7,7 +7,7 @@ namespace Herculan.Es1.Panels;
 
 /// <summary>
 /// The status panel, <c>StatusAlertPanel_Ctor</c> (<c>ES1DBSIM 00046efc</c>) and <c>GeneralAlertVtable</c>
-/// (<c>0009507e</c>) (docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc): the pause
+/// (<c>0009507e</c>) (docs/es1/simulation/status-and-objectives-panels.md#the-status-panel--statusalertpanel_ctor-00046efc): the pause
 /// prompt (status 0), the quit prompt (status 1) and every mission alert, a title, up to four lines of text and one or
 /// two buttons, all picked by the status from <c>str\GNL_ALRT.STR</c>, on a plate from <c>dba\gnl2alrt</c> for
 /// statuses 0 and 1 and <c>dba\gnl_alrt</c> for the rest. Its loop answers 0 for the left button and 1 for the right.

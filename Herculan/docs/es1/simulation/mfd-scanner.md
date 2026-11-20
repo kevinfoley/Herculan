@@ -76,7 +76,7 @@ y = Math_Q14Multiply(d, Math_CosBam(a - 0x4000)) / +0x24 + center.y  -- each div
 
 With *h* 0 this puts the contact at (*dx*, −*dy*) / scale from the center, north up; *h* turns the plot. ES2's rotates by the machine's own heading with `Math_BuildRotation2D` ([plot](../../retail/simulation/mfd-scanner.md#plot)). A contact at the range lands 21 pixels from the center.
 
-The contact is one pixel, `Gfx_PlotPixel` ([pixels](../rendering/screen-pages.md#pixels)) with the pen {0, *color*}, *color* a palette index:
+The contact is one pixel, `Gfx_PlotPixel` ([pixels](../rendering/2d-drawing.md#pixels)) with the pen {0, *color*}, *color* a palette index:
 
 | Side 0 | Otherwise: class 0 | class 1 | class 2 | any other class |
 |---|---|---|---|---|

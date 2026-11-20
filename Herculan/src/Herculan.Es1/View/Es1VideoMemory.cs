@@ -212,7 +212,7 @@ public sealed class Es1VideoMemory {
 	/// <summary>
 	/// <c>VGA8_ClearPage</c> (<c>ES1DBSIM 0008cd3c</c>), the driver's slot 35, (<paramref name="page"/>,
 	/// <paramref name="color"/>): the whole page filled with the color, the draw page left as it was
-	/// (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps).
+	/// (docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps).
 	/// </summary>
 	public void ClearPage(int page, byte color) {
 		int kept = DrawPage;
