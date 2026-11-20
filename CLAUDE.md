@@ -85,6 +85,11 @@ whole set. `--code` adds the doc paths named in C# doc comments.
 Handoff docs (`docs/herculan/handoff-*.md`) are exempt: ephemeral scratchpads, never authoritative for
 status. Drain them into topic docs and delete what you moved.
 
+## Doc comments
+
+XMLDoc comments should be formatted according to standard conventions. This means, for example, having
+a <param> tag for each param, rather than describing params inline in the summary.
+
 ## Reverse-engineering conventions
 
 - Addresses are virtual addresses in the named binary, bare hex (`0046e87c`). Name the binary when it

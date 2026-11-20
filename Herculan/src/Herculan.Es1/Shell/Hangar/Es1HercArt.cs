@@ -209,15 +209,69 @@ public sealed class Es1HercArt {
 	/// <c>HercLayout_Find</c> (<c>00022024</c>)(<paramref name="weapon"/>, <paramref name="mount"/>,
 	/// <paramref name="chassis"/>): the first of the chassis' mount's records whose weapon is the weapon, or null. Retail
 	/// tests neither the mount nor the chassis; a mount or chassis the tables do not hold has no records here, an engine
-	/// guard.
+	/// guard. With <see cref="FixRhinoTopMount"/>, a record of <see cref="RhinoTopMountPoints"/> comes back with its points
+	/// moved.
 	/// </summary>
 	public Es1HercLayoutItem? Find(short weapon, short mount, short chassis) {
 		if (chassis is < 0 or >= ChassisCount || Layouts[chassis] is not { } layout || mount < 0 || mount >= layout.Mounts.Length) {
 			return null;
 		}
 
-		return Array.Find(layout.Mounts[mount].Items, item => item.Weapon == weapon);
+		var item = Array.Find(layout.Mounts[mount].Items, item => item.Weapon == weapon);
+		if (item == null || chassis != RhinoChassis || mount != RhinoTopMount || !FixRhinoTopMount
+				|| Array.FindIndex(RhinoTopMountPoints, fix => fix.Weapon == weapon) is not (>= 0 and var index)) {
+			return item;
+		}
+
+		var (_, x, y) = RhinoTopMountPoints[index];
+		return new Es1HercLayoutItem {
+			Frame = item.Frame,
+			Weapon = item.Weapon,
+			FirstX = x,
+			FirstY = y,
+			SecondX = (short)(item.SecondX + x - item.FirstX),
+			SecondY = (short)(item.SecondY + y - item.FirstY),
+		};
 	}
+
+	/// <summary>The RHINO's chassis and its top centre mount, whose <c>cfg\PANT.DAT</c> records <see cref="RhinoTopMountPoints"/> corrects.</summary>
+	public const short RhinoChassis = 5, RhinoTopMount = 3;
+
+	/// <summary>
+	/// <b>This engine's own</b> point for one of <c>cfg\PANT.DAT</c>'s mount 3 records, the picture's top-left: the jammer
+	/// pod (weapon 13), which the file puts at (84, 63), on the chest, moved to the top of the torso where the missile racks
+	/// sit. Its outline moves with it. Chosen by eye against the body.
+	/// </summary>
+	public static readonly (short Weapon, short X, short Y)[] RhinoTopMountPoints = [(13, 102, 24)];
+
+	/// <summary>
+	/// <b>This engine's own</b> point for the damaged picture of one of <c>cfg\PANT.DAT</c>'s mount 3 records: the EMP
+	/// (weapon 4), whose <c>WEPD</c> frame 17 is a 48×29 drawing of the cannon angled up where its <c>WEP1</c> frame 18 is a
+	/// 56×20 one, both drawn at the record's (88, 27). The outline, which doesn't match, stays the record's.
+	/// </summary>
+	public static readonly (short Weapon, short X, short Y)[] RhinoTopMountDamagedPoints = [(4, 93, 22)];
+
+	/// <summary>
+	/// The point the damaged picture of <paramref name="record"/>, the record <see cref="Find"/> gave for
+	/// <paramref name="mount"/> of <paramref name="chassis"/>, is drawn at: its first point, retail's, or with
+	/// <see cref="FixRhinoTopMount"/> a point of <see cref="RhinoTopMountDamagedPoints"/>.
+	/// </summary>
+	public static (int X, int Y) DamagedPicturePoint(Es1HercLayoutItem record, short mount, short chassis) {
+		if (chassis == RhinoChassis && mount == RhinoTopMount && FixRhinoTopMount
+				&& Array.FindIndex(RhinoTopMountDamagedPoints, fix => fix.Weapon == record.Weapon) is >= 0 and var index) {
+			return (RhinoTopMountDamagedPoints[index].X, RhinoTopMountDamagedPoints[index].Y);
+		}
+
+		return (record.FirstX, record.FirstY);
+	}
+
+	/// <summary>
+	/// Whether <see cref="Find"/> answers <see cref="RhinoTopMountPoints"/>' points for the RHINO's top centre mount. Off,
+	/// the file's (docs/es1/formats/herc-diagrams.md#the-mount-pictures). <b>This engine's own</b>, from
+	/// <see cref="Settings.Es1TweakSettingDefinitions.FixRhinoTopMount"/>.
+	/// </summary>
+	public static bool FixRhinoTopMount =>
+		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixRhinoTopMount);
 
 	/// <summary><c>HercLayout_FindFrame</c> (<c>00022086</c>): the frame of <see cref="Find"/>'s record, or −1.</summary>
 	public short FindFrame(short weapon, short mount, short chassis) => Find(weapon, mount, chassis)?.Frame ?? -1;

@@ -45,6 +45,8 @@ mount count x {
 
 Each retail file's mount count is its chassis's count from the table at `000803c8`, and every mount's first record is the empty mount, weapon 17 with frame 0.
 
+`PANT.DAT`'s mount 3, the RHINO's top centre mount, places its jammer pod (weapon 13, frame 19) at (84, 63) with its outline at (83, 63), on the chest, where the mount's other pictures lie at rows 23 to 30. Its EMP record (weapon 4, frame 18) places the 56×20 cannon at (88, 27); the damaged picture the same point takes, `PNTHWEPD.DBA` frame 17, is a 48×29 drawing of the cannon angled up, whose muzzle lands 5 columns left of and 1 row below the undamaged one's.
+
 Six of the retail files hold records for weapon 5, the grenade launcher no HERC can be fitted with ([cut content](../cut-content.md#weapons)), always with the highest frames its mounts' records name:
 
 | Chassis | Mounts | Frames | `WEP1` | `OUTL` |

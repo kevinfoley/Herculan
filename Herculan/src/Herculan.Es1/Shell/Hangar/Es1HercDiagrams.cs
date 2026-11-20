@@ -242,7 +242,8 @@ public sealed class Es1HercDiagrams {
 	/// <c>MountPicture_Set</c> (<c>00022d78</c>)(<paramref name="picture"/>, <paramref name="value"/>,
 	/// <paramref name="weapon"/>, <paramref name="mount"/>, <paramref name="chassis"/>): the record <see cref="Es1HercArt.Find"/>
 	/// gives stored, and the sprite set at the record's first point: for weapon 17 to no bitmap at (0, 0); for a value
-	/// below <c>0x33</c> to frame (the record's frame − 1) of the chassis' <c>WEPD</c> bank, loaded the first time; at
+	/// below <c>0x33</c> to frame (the record's frame − 1) of the chassis' <c>WEPD</c> bank, loaded the first time, at
+	/// <see cref="Es1HercArt.DamagedPicturePoint"/>, which is the first point but for a tweak's correction; at
 	/// <c>0x33</c> or more to the record's frame of the <c>WEP1</c> bank, only when that bank is loaded. Retail reads
 	/// through a null record for a weapon the mount's records do not hold; the sprite is left as it was here then, an
 	/// engine guard.
@@ -260,7 +261,8 @@ public sealed class Es1HercDiagrams {
 
 		if (value < DamagedBelow) {
 			var damaged = Art.Need(Es1HercArt.Bank.DamagedWeapons, chassis);
-			picture.Sprite.Set(0, record.FirstX, record.FirstY, Es1HercArt.Frame(damaged, record.Frame - 1));
+			var (x, y) = Es1HercArt.DamagedPicturePoint(record, mount, chassis);
+			picture.Sprite.Set(0, x, y, Es1HercArt.Frame(damaged, record.Frame - 1));
 		} else if (Art.Loaded(Es1HercArt.Bank.Weapons, chassis) is { } weapons) {
 			picture.Sprite.Set(0, record.FirstX, record.FirstY, Es1HercArt.Frame(weapons, record.Frame));
 		}

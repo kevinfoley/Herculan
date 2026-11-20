@@ -91,12 +91,20 @@ tweak.es1_fix_crew_cancel_bay.display_name  Fix HERC Bay art overlap
 tweak.es1_fix_crew_cancel_bay.description  Fixes a retail bug where HERCs could overlap in the HERC Bay after rearranging your squad's HERC assignments on the CREW screen and then clicking Cancel.
 tweak.es1_skip_screen_pause.display_name  Skip pause between screens
 tweak.es1_skip_screen_pause.description  The original game pauses for around 1 second before moving to a new screen, to give the music time to fade out. With this tweak enabled, the pause is skipped; the fade will overlap the appearance of the next screen.
+tweak.es1_fix_energy_meter_shake.display_name  Fix reactor gauge glitch when hit
+tweak.es1_fix_energy_meter_shake.description  The reactor gauge stays inside its outline while the cockpit shakes from a hit. In the original game, the shake moves the gauge's bars but not the outline that cuts them, so energy used or regained during a shake is drawn a few rows off: stray stripes appear around the gauge and it can stop showing the true level until it is drawn over again.
+tweak.es1_fix_rhino_top_mount.display_name  Fix RHINO top mount art
+tweak.es1_fix_rhino_top_mount.description  On the arming and HERC Bay screens, the RHINO's ECM is drawn on its top centre mount where its other weapons sit, and a damaged EMP there is drawn where an undamaged one would be. The original game draws the ECM on the HERC's chest and a damaged EMP off to the left.
 tweak.es1_no_free_repair_level.display_name  No free repair level
 tweak.es1_no_free_repair_level.description  On the SYSTEM REPAIR screen, PROCEED keeps only the repairs you paid for with + and −. Retail repairs the item to the level the STATUS list shows, which after a + is one level more than you paid for.
 tweak.es1_real_time_round_life.display_name  Full cannon range
 tweak.es1_real_time_round_life.description  Rounds from the ATC20, ATC35, ATC50 and EMP fly the same distance at any frame rate: about 510 m for an autocannon and 360 m for an EMP. Retail counts a round's flight in frames, so on a fast computer its rounds stop short. An autocannon round there stops after about 130 m, and an EMP round after 90 m.
 tweak.es1_es2_flyer_speed.display_name  Flyer speed matches Earthsiege 2
 tweak.es1_es2_flyer_speed.description  Flyers speed is limited to approximately 150 m a second, matching Earthsiege 2, and turning speed is limited as well. In retail, flyer speed/turning depends on framerate. Without this tweak they fly at around 240 m a second in HERCULAN.
+tweak.es1_drop_disabled_order_target.display_name  Squadmates stop shooting disabled HERCs
+tweak.es1_drop_disabled_order_target.description  Your squadmates and other allied HERCs move on once a HERC from the enemy group they were ordered against is disabled, as in Earthsiege 2. In the original game they keep firing at a disabled HERC from that group until it is destroyed.
+tweak.es1_wingman_takes_lead.display_name  Wingman takes over a flight
+tweak.es1_wingman_takes_lead.description  When the lead aircraft of a flight is shot down, the next aircraft takes the lead and carries on its attack runs. In the original game the wingman keeps trying to hold station on the wreck and circles tightly in place until its target is destroyed.
 tweaks.title                   Tweaks
 tweaks.description             Tweaks alter game behavior, generally either to fix bugs or provide quality-of-life enhancements. For the closest-to-vanilla experience (bugs included), click "None" to disable all tweaks.
 tweaks.note                    Some minor cosmetic bugs and potential crashes are not reproduced in HERCULAN. Support for modern input devices and alternate control schemes is always available via the Controller menu.

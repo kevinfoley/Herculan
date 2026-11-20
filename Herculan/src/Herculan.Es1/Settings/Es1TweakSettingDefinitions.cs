@@ -66,6 +66,21 @@ public static class Es1TweakSettingDefinitions {
 	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Shell.Es1ShellSound.SkipPause"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> SkipScreenPause = new("tweak.es1_skip_screen_pause", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// The energy meter's clip shape moves with the view shake, so a change drawn while the cockpit shakes stays inside it
+	/// (plan decision 40, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// <see cref="EnergyShields.Es1EnergyMeter.ClipFollowsShake"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FixEnergyMeterShake = new("tweak.es1_fix_energy_meter_shake", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// The RHINO's jammer pod is drawn on its top centre mount where the other weapons of that mount sit, and its damaged EMP
+	/// picture where its undamaged one sits.
+	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice (plan decision 41,
+	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Shell.Hangar.Es1HercArt.FixRhinoTopMount"/>.</para>
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FixRhinoTopMount = new("tweak.es1_fix_rhino_top_mount", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -91,12 +106,25 @@ public static class Es1TweakSettingDefinitions {
 	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Sim.Es1FlyerFlight.Es2Speed"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> Es2FlyerSpeed = new("tweak.es1_es2_flyer_speed", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
+
+	/// <summary>
+	/// A HERC of the player's side lets go of its group's order target once that target is disabled, as Earthsiege 2's
+	/// human side does (plan decision 38, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// <see cref="Ai.Es1Targets.DropDisabledOrderTarget"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> DropDisabledOrderTarget = new("tweak.es1_drop_disabled_order_target", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// A flight whose leader is destroyed is led by its first member still flying (plan decision 39,
+	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Ai.Es1FlyerAi.LiveLeader"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> WingmanTakesLead = new("tweak.es1_wingman_takes_lead", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause, ProceedKeepsLevels,
-		RealTimeRoundLife, Es2FlyerSpeed,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
+		FixEnergyMeterShake, FixRhinoTopMount, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead,
 	};
 
 	/// <summary>
@@ -111,7 +139,7 @@ public static class Es1TweakSettingDefinitions {
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> Offered = new[] {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming, TweakSettingDefinitions.MouseOutsideView,
-		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause, ProceedKeepsLevels,
-		RealTimeRoundLife, Es2FlyerSpeed,
+		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
+		FixEnergyMeterShake, FixRhinoTopMount, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead,
 	};
 }

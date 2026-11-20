@@ -246,10 +246,38 @@ public static class Es1FlyerAi {
 	}
 
 	/// <summary>
-	/// The group's first member when it is a flyer; null for a flyer with no group or a group whose first ref built none,
-	/// which retail would read through.
+	/// The group's first member when it is a flyer, or with <see cref="LiveLeader"/> and that member destroyed the first
+	/// member not destroyed; null for a flyer with no group or a group whose first ref built none, which retail would read
+	/// through.
 	/// </summary>
-	public static Es1Flyer? Leader(Es1Flyer flyer) => flyer.Group is { Members: [Es1Flyer first, ..] } ? first : null;
+	public static Es1Flyer? Leader(Es1Flyer flyer) {
+		if (flyer.Group is not { Members: [Es1Flyer first, ..] } group) {
+			return null;
+		}
+
+		if (!first.Destroyed || !LiveLeader) {
+			return first;
+		}
+
+		// A group's members are of one kind, so every entry of a flyer's group is a flyer.
+		foreach (var entry in group.Members) {
+			if (entry is Es1Flyer { Destroyed: false } member) {
+				return member;
+			}
+		}
+
+		return first;
+	}
+
+	/// <summary>
+	/// Whether a flight whose first member is destroyed is led by its first member still flying, which then flies the
+	/// route, sweeps and makes the attack run. Off, retail's: the first member leads dead or alive, so a wingman keeps
+	/// station on the wreck's spot, out of the world, and circles it at its turn radius until its target is out of action
+	/// (docs/es1/simulation/flyers.md#the-thinks). <b>This engine's own</b>, from
+	/// <see cref="Settings.Es1TweakSettingDefinitions.WingmanTakesLead"/>.
+	/// </summary>
+	public static bool LiveLeader =>
+		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.WingmanTakesLead);
 
 	/// <summary>Whether the flyer is the first of its group's member array.</summary>
 	public static bool IsLeader(Es1Flyer flyer) => ReferenceEquals(Leader(flyer), flyer);

@@ -169,8 +169,8 @@ public static class Es1Targets {
 	/// <summary>
 	/// <c>Ai_ShouldAbandonTarget</c> (<c>000162b4</c>): under squad verb 4 with an order target,
 	/// whether <see cref="TargetStateTier"/> of the machine's target exceeds the order's threshold <c>+0x1e4</c>, compared
-	/// signed; for the group's order target, whether it is destroyed; for any other, whether it is disarmed, immobilized or
-	/// destroyed.
+	/// signed; for the group's order target, whether it is destroyed (or, with <see cref="DropDisabledOrderTarget"/>, for a
+	/// machine of side 0, immobilized or destroyed); for any other, whether it is disarmed, immobilized or destroyed.
 	/// </summary>
 	/// <param name="mech">The machine.</param>
 	public static bool ShouldAbandonTarget(Es1Mech mech) {
@@ -184,12 +184,23 @@ public static class Es1Targets {
 		}
 
 		// Retail reads the group unchecked; with none the target is not the group's here.
-		if (mech.Group?.IsOrderTarget(target) == true) {
-			return target.Destroyed;
+		if (mech.Group is { } group && group.IsOrderTarget(target)) {
+			return target.Destroyed || (DropDisabledOrderTarget && group.Side == 0 && target.Immobilized);
 		}
 
 		return target.Disarmed || target.Immobilized || target.Destroyed;
 	}
+
+	/// <summary>
+	/// Whether a machine of side 0, the player's, lets go of its group's order target once that target is immobilized, as
+	/// Earthsiege 2's human side does (docs/retail/simulation/ai-targeting.md#abandoning-a-target--ai_shouldabandontarget-0041c4a8).
+	/// Off, retail's: it keeps firing at a disabled HERC of the order's group until it is destroyed
+	/// (docs/es1/simulation/mech-ai.md#targets-and-orders). Its next choice, <see cref="SelectTarget"/>, passes over an
+	/// immobilized machine for side 0 already. <b>This engine's own</b>, from
+	/// <see cref="Settings.Es1TweakSettingDefinitions.DropDisabledOrderTarget"/>.
+	/// </summary>
+	public static bool DropDisabledOrderTarget =>
+		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.DropDisabledOrderTarget);
 
 	/// <summary>
 	/// <c>Ai_ClearSquadEngageOrder</c> (<c>00016294</c>): the squad verb cleared when it is 4,

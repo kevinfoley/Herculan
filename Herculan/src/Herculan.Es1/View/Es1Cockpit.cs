@@ -170,6 +170,9 @@ public sealed class Es1Cockpit {
 	/// <summary><c>SimDisplay</c>, the display the cockpit draws on.</summary>
 	internal Es1VideoMemory Display => _views.Display;
 
+	/// <summary>The view manager's <see cref="Es1ViewManager.ShakeTotal"/>, how far the view shake has moved the pages and the widgets.</summary>
+	internal short ShakeTotal => _views.ShakeTotal;
+
 	/// <summary>The view manager's <c>+0x18</c>, set while a view change is staged.</summary>
 	internal bool ViewChangeStaged => _views.Staged;
 
