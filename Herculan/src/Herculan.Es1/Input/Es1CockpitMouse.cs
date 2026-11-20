@@ -18,14 +18,11 @@ public sealed class Es1CockpitMouse {
 	/// <summary>The driver events <c>CockpitMouse_Init</c> registers for: the move and the left and right buttons' presses and releases.</summary>
 	public const byte EventMask = 0x1f;
 
-	/// <summary>The records a queue takes; <c>CockpitMouseQueue_Push</c> refuses one at 99.</summary>
-	public const int QueueLimit = 99;
+	/// <summary>The simulator's queue size, the literal 100 <c>CockpitMouse_Init</c> sizes both buffers with.</summary>
+	public const int SimQueueSize = 100;
 
-	/// <summary>The two queues' buffers, 100 records each.</summary>
-	private const int QueueCapacity = 100;
-
-	private List<Es1MouseEvent> _back = new(QueueCapacity);
-	private List<Es1MouseEvent> _front = new(QueueCapacity);
+	private List<Es1MouseEvent> _back = new(SimQueueSize);
+	private List<Es1MouseEvent> _front = new(SimQueueSize);
 	/// <param name="cursor">The display library's cursor the pointer moves.</param>
 	/// <param name="widgets">The UI library's globals the queue presses widgets through; new ones when none are given.</param>
 	public Es1CockpitMouse(Es1Cursor cursor, Es1WidgetGlobals? widgets = null) {
@@ -103,12 +100,18 @@ public sealed class Es1CockpitMouse {
 	/// <summary>The records queued since the last <see cref="ProcessQueue"/>.</summary>
 	public int Queued => _back.Count;
 
+	/// <summary>The records a queue takes, the queue size less 1; <c>CockpitMouseQueue_Push</c> refuses one at this.</summary>
+	public int QueueLimit { get; private set; } = SimQueueSize - 1;
+
 	/// <summary>
 	/// <c>CockpitMouse_Init</c> (<c>000441cc</c>): <see cref="OnEvent"/> registered with <paramref name="driver"/> for
 	/// <see cref="EventMask"/>; the last point, the held bytes and the last buttons cleared; both queues empty; the
 	/// double-click window from the timer's divisor; no active root and nothing pressed.
 	/// </summary>
-	public void Init(Es1HostMouse? driver) {
+	/// <param name="driver">The mouse driver, or none.</param>
+	/// <param name="queueSize">The queues' size, <see cref="SimQueueSize"/> in the simulator.</param>
+	public void Init(Es1HostMouse? driver, int queueSize = SimQueueSize) {
+		QueueLimit = queueSize - 1;
 		Driver = driver;
 		if (driver != null) {
 			CallbackSlot = driver.AddCallback(OnEvent, EventMask);

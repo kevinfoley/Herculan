@@ -78,10 +78,12 @@ public static class Es1ShellHost {
 
 		// Shell_StartupNoOp.
 
-		// 5. The archives, mask 0x100 and the .vol extension (VolumeGroup_SetBufferSize, VolRStream_SetGroup).
-		// PLACEHOLDER: subsystem phase 1, the bnd\ files its loaders read (docs/es1/formats/bnd-notes.md#the-shells-files) but
-		// MAP, SHELLMAP and CTL_ALRT, which Session.Main loads (Es1ShellData.LoadTuning): their readers are later parts'.
+		// 5. The archives, mask 0x100 and the .vol extension (VolumeGroup_SetBufferSize, VolRStream_SetGroup); then
+		// subsystem phase 1, the eight bnd\ files, whose fatal assert comes before any hook, so exit.cfg keeps step 4's 0.
 		var content = Es1SingleMission.MountShell(installRoot);
+		if (Es1ShellTuning.Load(content, installRoot) is not { } tuning) {
+			return AssertExitStatus;
+		}
 
 		// 6. The heap against BND\MAIN.BND's +0xc and +8: this engine's memory is never that short, so Shell_LowMemory stays clear.
 
@@ -95,7 +97,7 @@ public static class Es1ShellHost {
 				: $"Audio unavailable ({audioFailure}) — the front end runs silent.");
 		}
 
-		return new Session(installRoot, content, switches, exitCode, audio).Run(imguiFontPath, imguiItalicFontPath, menus,
+		return new Session(installRoot, content, tuning, switches, exitCode, audio).Run(imguiFontPath, imguiItalicFontPath, menus,
 			screenshotPath, window);
 	}
 
@@ -103,6 +105,7 @@ public static class Es1ShellHost {
 	private sealed class Session {
 		private readonly string _installRoot;
 		private readonly GameContent _content;
+		private readonly Es1ShellTuning _tuning;
 		private readonly Es1ShellSwitches _switches;
 		private readonly Es1ShellDevices _devices = new();
 		private readonly Es1ShellTime _time = new();
@@ -127,9 +130,11 @@ public static class Es1ShellHost {
 		// The game port over _controller, once the joystick devices are built on it.
 		private Es1ControllerPort? _port;
 
-		public Session(string installRoot, GameContent content, Es1ShellSwitches switches, short exitCode, IAudioBackend audio) {
+		public Session(string installRoot, GameContent content, Es1ShellTuning tuning, Es1ShellSwitches switches, short exitCode,
+				IAudioBackend audio) {
 			_installRoot = installRoot;
 			_content = content;
+			_tuning = tuning;
 			_switches = switches;
 			_audio = audio;
 			_dirty = new Es1DirtyList(_devices.Display);
@@ -295,14 +300,10 @@ public static class Es1ShellHost {
 		/// <summary><c>Shell_Main</c> from its step 7 on (docs/es1/shell/startup.md#the-start-up), then the frame loop.</summary>
 		private IEnumerable<Es1ShellWait> Main(byte biosShiftFlags) {
 			// 7. FileNames_Load.
-			var data = Es1ShellData.LoadFileNames(_content);
+			var data = Es1ShellData.LoadFileNames(_content, _tuning);
 			data.Sound = _devices.Sound;
 			_devices.Sound.MusicOption = () => data.MusicOption;
 			_data = data;
-
-			// Step 5's Map_LoadBnd, ShellMap_LoadBnd and CtlAlert_LoadBnd, here once the shared data exists; nothing between
-			// reads them.
-			data.LoadTuning(_content);
 
 			// 8. The devices; 9. the frame-time scale; 10. a frame shown.
 			_devices.Init(_content, _installRoot, _switches.DebugMode, biosShiftFlags, _globals, _audio);

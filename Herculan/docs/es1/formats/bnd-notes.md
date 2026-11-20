@@ -12,18 +12,20 @@ Every one of the 71 files opens with a dword that, read as seconds since 1970, f
 
 ## The shell's files
 
-Eight functions each read one whole file into a global with `Ovl_ReadFile` (`ES1GO 00051918`: `ES1DBSIM`'s, its asserts at severity 4), and each is registered at phase 1 with `RegisterSubsystemLoader` (`ES1GO 0000fca0`) by its own static initialiser; `es2_xref` finds these eight calls of it. `Shell_Main` (`ES1GO 00012ec7`) runs phase 1 with `Subsystem_RunPhase` (`ES1GO 0000fcda`) once, just after it mounts the volumes.
+Eight functions each read one whole file into a global with `Ovl_ReadFile` (`ES1GO 00051918`), and each is registered at phase 1 with `RegisterSubsystemLoader` (`ES1GO 0000fca0`) by its own static initialiser; `es2_xref` finds these eight calls of it. `Ovl_ReadFile` asserts at severity 4, which is fatal ([severities](../simulation/asserts.md#severities)), when the file does not open (`util\ovl.cpp` line `0x15`) and when the read fails (line `0x17`), as it does for a file shorter than the bytes asked for ([`VolRStream`](streams.md#volrstream)). `Shell_Main` (`ES1GO 00012ec7`) runs phase 1 with `Subsystem_RunPhase` (`ES1GO 0000fcda`) once, at the start-up's step 5, just after it mounts the volumes ([the start-up](../shell/startup.md#the-start-up)); no assert hook is added before step 8, so a file that fails ends the program with status 1 and leaves `data\exit.cfg` holding step 4's 0.
 
-| File | Bytes | Into | Loader |
-|---|---|---|---|
-| `ALERT.BND` | 6 | `0009a318` | `Alert_LoadBnd` (`00002204`) |
-| `CTL_ALRT.BND` | 134 | `0009a34c` | `CtlAlert_LoadBnd` (`00006024`) |
-| `CAL_ALRT.BND` | 70 | `0009a3d4` | `CalAlert_LoadBnd` (`00006eec`) |
-| `MAP.BND` | 32 | `0009a420` | `Map_LoadBnd` (`00008cd4`) |
-| `SHELLMAP.BND` | 142 | `0009a44c` | `ShellMap_LoadBnd` (`00009210`) |
-| `CTL_MGR.BND` | 6 | `0009adec` | `CtlMgr_LoadBnd` (`00010530`); offset 4, the word `CtlMgr_QueueSize` (`0009adf0`), 100 (the bytes `6f e6 8e 2e 64 00`), is the size of the shell's mouse queues ([the mouse queue](../shell/startup.md#the-mouse-queue)) |
-| `MAIN.BND` | 20 | `0009ae18` | `Main_LoadBnd` (`00012704`) |
-| `IMDEVICE.BND` | 10 | `000a0458` | `ImDevice_LoadBnd` (`0002562c`) |
+`Subsystem_RunPhase` calls the loaders in the order they registered, and `Runtime_RunStaticCtors` (`ES1GO 0004df02`) runs the static constructor table last entry first ([static construction](compiler.md#static-construction-and-exit)), so the phase reads the files from the bottom of this table up: `IMDEVICE` first, `ALERT` last.
+
+| File | Bytes | Into | Loader | Static initialiser, table entry |
+|---|---|---|---|---|
+| `ALERT.BND` | 6 | `0009a318` | `Alert_LoadBnd` (`00002204`) | `Alert_StaticInit` (`00003c22`), `0009a21c` |
+| `CTL_ALRT.BND` | 134 | `0009a34c` | `CtlAlert_LoadBnd` (`00006024`) | `CtlAlert_StaticInit` (`00006ebe`), `0009a220` |
+| `CAL_ALRT.BND` | 70 | `0009a3d4` | `CalAlert_LoadBnd` (`00006eec`) | `CalAlert_StaticInit` (`0000816a`), `0009a224`, which also copies the word `0009a3d8`, the file's offset 4, into `0009a41c` before the phase has read it |
+| `MAP.BND` | 32 | `0009a420` | `Map_LoadBnd` (`00008cd4`) | `Map_StaticInit` (`00009174`), `0009a228` |
+| `SHELLMAP.BND` | 142 | `0009a44c` | `ShellMap_LoadBnd` (`00009210`) | `ShellMap_StaticInit` (`0000dcbd`), `0009a22c` |
+| `CTL_MGR.BND` | 6 | `0009adec` | `CtlMgr_LoadBnd` (`00010530`); offset 4, the word `CtlMgr_QueueSize` (`0009adf0`), 100 (the bytes `6f e6 8e 2e 64 00`), is the size of the shell's mouse queues ([the mouse queue](../shell/startup.md#the-mouse-queue)) | `CtlMgr_StaticInit` (`00010dce`), `0009a23c` |
+| `MAIN.BND` | 20 | `0009ae18` | `Main_LoadBnd` (`00012704`) | `Main_RegisterSubsystem` (`000131cb`), `0009a240` |
+| `IMDEVICE.BND` | 10 | `000a0458` | `ImDevice_LoadBnd` (`0002562c`) | `ImDevice_StaticInit` (`000269cb`), `0009a258` |
 
 ### `BND\MAIN.BND`
 

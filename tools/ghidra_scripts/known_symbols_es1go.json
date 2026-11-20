@@ -1957,13 +1957,28 @@
       "type": "function",
       "confidence": "high",
       "name": "CalAlert_LoadBnd",
-      "description": "No arguments: Ovl_ReadFile(bnd\\cal_alrt, 1, 0x46, 0009a3d4) in stack order, the whole of BND\\CAL_ALRT.BND. The static initialiser 0000816a registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "description": "No arguments: Ovl_ReadFile(bnd\\cal_alrt, 1, 0x46, 0009a3d4) in stack order, the whole of BND\\CAL_ALRT.BND. The static initialiser CalAlert_StaticInit (0000816a) registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
       "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
       "verified": {
         "bytes": "00006eec+41",
         "sha1": "14a961540e56",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0000816a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CalAlert_StaticInit",
+      "description": "No arguments: the calibration panel's file's static initialiser, the static constructor table's entry 0009a224. The inlined constructor of the 1-byte object 0009a41a, whose null test is never taken, calls RegisterSubsystemLoader (0000fca0)(1, CalAlert_LoadBnd (00006eec)); then the word 0009a3d8, CAL_ALRT.BND's offset 4, is copied into the word 0009a41c, before phase 1 has read the file.",
+      "source": "ES1GO disassembly at 0000816a; Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "0000816a+55",
+        "sha1": "9d592d7e7998",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -3751,7 +3766,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CtlMgr_LoadBnd",
-      "description": "No arguments: Ovl_ReadFile(bnd\\ctl_mgr, 1, 6, 0009adec) in stack order, the whole of BND\\CTL_MGR.BND. The static initialiser 00010dce registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "description": "No arguments: Ovl_ReadFile(bnd\\ctl_mgr, 1, 6, 0009adec) in stack order, the whole of BND\\CTL_MGR.BND. The static initialiser CtlMgr_StaticInit (00010dce) registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
       "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
       "verified": {
         "bytes": "00010530+41",
@@ -3908,6 +3923,21 @@
         "sha1": "a8fc5073aaf1",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00010dce",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CtlMgr_StaticInit",
+      "description": "No arguments: CTL_MGR's file's static initialiser, the static constructor table's entry 0009a23c. The inlined constructor of the 1-byte object 0009adf2, whose null test is never taken, calls RegisterSubsystemLoader (0000fca0)(1, CtlMgr_LoadBnd (00010530)); the inlined constructors of 0009adf4 (8 bytes), 0009adfc (10 bytes, with an 8-byte member at +0) and 0009ae08 (8 bytes), their null tests never taken, store nothing.",
+      "source": "ES1GO disassembly at 00010dce; Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "00010dce+133",
+        "sha1": "98e13810baed",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -10123,7 +10153,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ImDevice_LoadBnd",
-      "description": "No arguments: Ovl_ReadFile(bnd\\imdevice, 1, 10, 000a0458) in stack order, the whole of BND\\IMDEVICE.BND. The static initialiser 000269cb registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "description": "No arguments: Ovl_ReadFile(bnd\\imdevice, 1, 10, 000a0458) in stack order, the whole of BND\\IMDEVICE.BND. The static initialiser ImDevice_StaticInit (000269cb) registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
       "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
       "verified": {
         "bytes": "0002562c+41",
@@ -10670,6 +10700,21 @@
         "sha1": "8b7379d03862",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000269cb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ImDevice_StaticInit",
+      "description": "No arguments: IMDEVICE's file's static initialiser, the static constructor table's entry 0009a258. The inlined constructor of the 1-byte object 000a0462, whose null test is never taken, calls RegisterSubsystemLoader (0000fca0)(1, ImDevice_LoadBnd (0002562c)).",
+      "source": "ES1GO disassembly at 000269cb; Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "000269cb+43",
+        "sha1": "fe6a15ab938a",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {

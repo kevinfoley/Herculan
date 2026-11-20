@@ -44,17 +44,20 @@ public sealed class Es1ShellData {
 	/// <summary><c>cfg\filename.bin</c>, the table <c>FileNames_Load</c> (<c>0002094d</c>) loads into <c>0009afb8</c>; none when it does not read.</summary>
 	public string[]? FileNames { get; private init; }
 
-	/// <summary>
-	/// <c>BND\MAP.BND</c> at <c>0009a420</c>, the war map's base class's constants (<see cref="LoadTuning"/>); 0, the
-	/// global's value in the image, before.
-	/// </summary>
-	public Es1MapBnd MapBnd { get; private set; } = new(null);
+	/// <summary>The shell's <c>bnd\</c> files, read at the start-up's step 5, before this data.</summary>
+	public required Es1ShellTuning Tuning { get; init; }
 
-	/// <summary><c>BND\SHELLMAP.BND</c> at <c>0009a44c</c>, the war map's map's constants (<see cref="LoadTuning"/>); 0 before.</summary>
-	public Es1ShellMapBnd ShellMapBnd { get; private set; } = new(null);
+	/// <inheritdoc cref="Es1ShellTuning.MapBnd"/>
+	public Es1MapBnd MapBnd => Tuning.MapBnd;
 
-	/// <summary><c>BND\CTL_ALRT.BND</c> at <c>0009a34c</c>, <c>CtlAlert_Bnd</c>, the controls panel's numbers (<see cref="LoadTuning"/>); 0 before.</summary>
-	public Es1CtlAlertBnd CtlAlertBnd { get; private set; } = new(null);
+	/// <inheritdoc cref="Es1ShellTuning.ShellMapBnd"/>
+	public Es1ShellMapBnd ShellMapBnd => Tuning.ShellMapBnd;
+
+	/// <inheritdoc cref="Es1ShellTuning.CtlAlertBnd"/>
+	public Es1CtlAlertBnd CtlAlertBnd => Tuning.CtlAlertBnd;
+
+	/// <inheritdoc cref="Es1ShellTuning.CtlMgrBnd"/>
+	public Es1CtlMgrBnd CtlMgrBnd => Tuning.CtlMgrBnd;
 
 	/// <summary>The war map's clock, bitmaps and font, which the start-up's step 13 loads (<see cref="LoadMapResources"/>); none before.</summary>
 	public Es1ShellMapResources? MapResources { get; private set; }
@@ -145,39 +148,19 @@ public sealed class Es1ShellData {
 	/// <summary>
 	/// <c>FileNames_Load</c> (<c>0002094d</c>), the start-up's step 7: <c>cfg\filename.bin</c> from <paramref name="content"/>.
 	/// </summary>
-	public static Es1ShellData LoadFileNames(GameContent content) {
+	/// <param name="content">The shell's volumes.</param>
+	/// <param name="tuning">The <c>bnd\</c> files step 5 read.</param>
+	public static Es1ShellData LoadFileNames(GameContent content, Es1ShellTuning tuning) {
 		var names = content.Read("cfg", "FILENAME.BIN") is { } bytes ? new BinStringFileTransformer().Parse(bytes)?.Values : null;
 		if (names == null) {
 			Console.Error.WriteLine("cfg\\filename.bin is missing or unreadable: the careers log is not loaded.");
 		}
 
-		return new Es1ShellData { FileNames = names };
-	}
-
-	/// <summary>
-	/// <c>Map_LoadBnd</c> (<c>00008cd4</c>), <c>ShellMap_LoadBnd</c> (<c>00009210</c>) and <c>CtlAlert_LoadBnd</c>
-	/// (<c>00006024</c>), three of the phase-1 loaders (docs/es1/formats/bnd-notes.md#the-shells-files):
-	/// <see cref="MapBnd"/>, <see cref="ShellMapBnd"/> and <see cref="CtlAlertBnd"/> read whole from
-	/// <paramref name="content"/>'s <c>bnd\</c>. Retail's <c>Ovl_ReadFile</c> asserts when a file does not open; here that
-	/// is reported and the global stays 0, an engine guard.
-	/// </summary>
-	public void LoadTuning(GameContent content) {
-		MapBnd = new Es1MapBnd(ReadTuning(content, "MAP.BND"));
-		ShellMapBnd = new Es1ShellMapBnd(ReadTuning(content, "SHELLMAP.BND"));
-		CtlAlertBnd = new Es1CtlAlertBnd(ReadTuning(content, "CTL_ALRT.BND"));
+		return new Es1ShellData { FileNames = names, Tuning = tuning };
 	}
 
 	/// <summary><c>ShellMap_LoadResources</c> (<c>000093b3</c>) into <see cref="MapResources"/> (<see cref="Es1ShellMapResources.Load"/>).</summary>
 	public void LoadMapResources(GameContent content, Es1SimClock timer) => MapResources = Es1ShellMapResources.Load(content, timer);
-
-	private static byte[]? ReadTuning(GameContent content, string name) {
-		byte[]? bytes = content.Read("bnd", name);
-		if (bytes == null) {
-			Console.Error.WriteLine($"bnd\\{name} does not open: its constants stay 0.");
-		}
-
-		return bytes;
-	}
 
 	/// <summary>
 	/// <c>Shell_LoadData</c> (<c>00020630</c>), the start-up's step 11, on <paramref name="preferences"/>, the options as the

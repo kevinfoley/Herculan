@@ -50,7 +50,7 @@ public sealed class Es1ShellControls {
 	/// back. So <c>Shell_ScanKeySubscriber</c> stays registered afterwards with no edit box up (options.md's Open). The
 	/// panel's loop stands at a next host frame between passes (<see cref="Es1ShellWait.NextHostFrame"/>).
 	/// </summary>
-	/// <param name="data">The shared data: the font slots, the styles, the corners and <c>CTL_ALRT.BND</c>.</param>
+	/// <param name="data">The shared data: the font slots, the styles, the corners, <c>CTL_ALRT.BND</c> and <c>CTL_MGR.BND</c>.</param>
 	/// <param name="preferences">The shell's options, <c>Prefs_Options</c>.</param>
 	public IEnumerable<Es1ShellWait> Run(Es1ShellData data, Es1Preferences preferences, GameContent content) {
 		var devices = _devices;
@@ -64,7 +64,7 @@ public sealed class Es1ShellControls {
 		(devices.PairA, devices.PairB) = (devices.PairB, devices.PairA);
 
 		var queue = _screens.MapMouse;
-		queue.Start();
+		queue.Start(data.CtlMgrBnd.QueueSize);
 		queue.Live = true;
 		var globals = _alertGlobals ??= MakeAlertGlobals(data, preferences, content);
 		var panel = new Es1ControlsPanel(globals, new Es1Rect(PanelX, PanelY, PanelX, PanelY), true,

@@ -394,7 +394,7 @@ public sealed class Es1ShellMission {
 	public void Prepare(Es1ShellScreens screens) {
 		screens.DeleteMissionMap();
 		WriteObjectives();
-		screens.MapMouse.Start();
+		screens.MapMouse.Start(_data.CtlMgrBnd.QueueSize);
 		screens.MapMouse.FollowsMouse = false;
 		screens.MissionMap = Es1ShellMap.Build(_installRoot, _content, _data, (short)SquadMemberCount, screens.Globals.Widgets);
 	}
