@@ -895,13 +895,14 @@ public sealed class Es1HddDisplay {
 	}
 
 	/// <summary>
-	/// <c>CommBox_OnMessageBegin</c> (<c>0003e488</c>)(<paramref name="record"/>), the pilot channel's begin callback
+	/// <c>CommBox_OnMessageBegin</c> (<c>0003e488</c>), the pilot channel's begin callback
 	/// (docs/es1/simulation/heads-down-display.md#starting-a-line): for a subject in a squadmate slot, the box of that
 	/// slot of <see cref="Es1SimGlobals.HddDisplayInstance"/> begins the line (<see cref="Es1HddCommBox.BeginMessage"/>);
 	/// when that fails, the channel's ready and cancelled latches, so the line goes by unshown; when it succeeds, the
 	/// box's deadline the clock + <see cref="Es1HddCommBox.StaticCounts"/>, its state
 	/// <see cref="Es1HddCommBox.StaticBefore"/>, and <see cref="ServiceCommBoxes"/> while the screen rect is visible.
 	/// </summary>
+	/// <param name="record">The queued message.</param>
 	private void OnMessageBegin(Es1QueuedMessage record) {
 		int slot = Cockpit.SquadIndexOf(record.Subject);
 		if (slot == -1 || Cockpit.Globals.HddDisplayInstance is not { } display) {
@@ -927,10 +928,11 @@ public sealed class Es1HddDisplay {
 	}
 
 	/// <summary>
-	/// <c>CommBox_OnMessageEnd</c> (<c>0003e53c</c>)(<paramref name="record"/>), the pilot channel's end callback, which
+	/// <c>CommBox_OnMessageEnd</c> (<c>0003e53c</c>), the pilot channel's end callback, which
 	/// runs before the line leaves the screen: for a subject in a squadmate slot, that slot's box's
 	/// <see cref="Es1HddCommBox.Byte1C"/> cleared.
 	/// </summary>
+	/// <param name="record">The queued message.</param>
 	private void OnMessageEnd(Es1QueuedMessage record) {
 		int slot = Cockpit.SquadIndexOf(record.Subject);
 		if (slot != -1 && Cockpit.Globals.HddDisplayInstance is { } display) {

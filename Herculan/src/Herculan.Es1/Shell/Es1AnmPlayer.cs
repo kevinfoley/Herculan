@@ -32,8 +32,7 @@ public sealed class Es1AnmPlayer {
 	public Es1SoundObject? Sound { get; private set; }
 
 	/// <summary>
-	/// <c>Anm_Play</c> (<c>000132d8</c>)(<paramref name="mode"/>, <paramref name="soundIndex"/>, <paramref name="path"/>)
-	/// (docs/es1/formats/anm-animation.md#playing): the source page set to the draw page and the draw page to the visible
+	/// <c>Anm_Play</c> (<c>000132d8</c>) (docs/es1/formats/anm-animation.md#playing): the source page set to the draw page and the draw page to the visible
 	/// one; in a mode other than 0 the source page's screen grabbed as the background; with a sound index other than −1
 	/// and a sound manager, <see cref="Sound"/> destroyed and made anew on the index, and, while
 	/// <paramref name="soundOption"/> (<c>Shell_SoundOption</c>) is set and it was made, the song faded
@@ -45,6 +44,10 @@ public sealed class Es1AnmPlayer {
 	/// long as the PC took to write it through the VGA's ports. Here a frame's drawing takes no time, so each frame is
 	/// held for the time the file's frames a second give it, mode 0's time: this engine's pacing, not retail's.</para>
 	/// </summary>
+	/// <param name="mode">The play mode; a mode other than 0 grabs the screen as the background.</param>
+	/// <param name="soundIndex">The sound index, −1 for none.</param>
+	/// <param name="path">The animation file's path.</param>
+	/// <param name="soundOption">The shell's sound option (<c>Shell_SoundOption</c>).</param>
 	public IEnumerable<Es1ShellWait> Play(byte mode, short soundIndex, string path, byte soundOption) {
 		var display = _display;
 		int keptSource = display.SourcePage, keptDraw = display.DrawPage;

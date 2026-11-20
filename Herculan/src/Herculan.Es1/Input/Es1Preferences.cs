@@ -230,14 +230,18 @@ public sealed class Es1Preferences {
 	/// </summary>
 	public void ClearThirdAxis() => SetOption(true, 0, ThirdAxisOption);
 
-	/// <summary><c>Prefs_SetHandler</c> (<c>0004ac4c</c>)(<paramref name="handler"/>, <paramref name="index"/>): the option's handler, none for null.</summary>
+	/// <summary><c>Prefs_SetHandler</c> (<c>0004ac4c</c>): the option's handler, none for null.</summary>
+	/// <param name="index">The option's index.</param>
+	/// <param name="handler">The handler called with the option's value, or null for none.</param>
 	public void SetHandler(int index, Action<byte>? handler) => _handlers[index] = handler;
 
 	/// <summary>
-	/// <c>Prefs_SetOption</c> (<c>0004a914</c>)(<paramref name="apply"/>, <paramref name="value"/>,
-	/// <paramref name="index"/>): the old value kept in <c>Prefs_PreviousOptions</c>, the new one stored, and with
+	/// <c>Prefs_SetOption</c> (<c>0004a914</c>): the old value kept in <c>Prefs_PreviousOptions</c>, the new one stored, and with
 	/// <paramref name="apply"/> the option's handler, when it has one, called with it.
 	/// </summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
+	/// <param name="value">The new value.</param>
+	/// <param name="index">The option's index.</param>
 	public void SetOption(bool apply, byte value, int index) {
 		_previous[index] = _options[index];
 		_options[index] = value;
@@ -246,7 +250,9 @@ public sealed class Es1Preferences {
 		}
 	}
 
-	/// <summary><c>Prefs_ToggleOption</c> (<c>0004a94c</c>)(<paramref name="apply"/>, <paramref name="index"/>): the value xor 1, through <see cref="SetOption"/>; returns it.</summary>
+	/// <summary><c>Prefs_ToggleOption</c> (<c>0004a94c</c>): the value xor 1, through <see cref="SetOption"/>; returns it.</summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
+	/// <param name="index">The option's index.</param>
 	public byte ToggleOption(bool apply, int index) {
 		_previous[index] = _options[index];
 		byte value = (byte)(_options[index] ^ 1);
@@ -255,10 +261,12 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// <c>Prefs_StepOption</c> (<c>0004a988</c>)(<paramref name="apply"/>, <paramref name="modulus"/>,
-	/// <paramref name="index"/>): one more, in a byte, and 0 when that equals the modulus; through
+	/// <c>Prefs_StepOption</c> (<c>0004a988</c>): one more, in a byte, and 0 when that equals the modulus; through
 	/// <see cref="SetOption"/>. Returns it.
 	/// </summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
+	/// <param name="modulus">The modulus the value wraps at.</param>
+	/// <param name="index">The option's index.</param>
 	public byte StepOption(bool apply, int modulus, int index) {
 		_previous[index] = _options[index];
 		byte value = (byte)(_options[index] + 1);
@@ -271,10 +279,12 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// <c>Prefs_StepOptionBack</c> (<c>0004a9d0</c>)(<paramref name="apply"/>, <paramref name="modulus"/>,
-	/// <paramref name="index"/>): one less, in a byte, and the modulus less 1 when that gives <c>0xff</c>; through
+	/// <c>Prefs_StepOptionBack</c> (<c>0004a9d0</c>): one less, in a byte, and the modulus less 1 when that gives <c>0xff</c>; through
 	/// <see cref="SetOption"/>. Returns it.
 	/// </summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
+	/// <param name="modulus">The modulus the value wraps at.</param>
+	/// <param name="index">The option's index.</param>
 	public byte StepOptionBack(bool apply, int modulus, int index) {
 		_previous[index] = _options[index];
 		byte value = (byte)(_options[index] - 1);
@@ -287,10 +297,11 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// <c>Prefs_CommitOptions</c> (<c>0004a83c</c>)(<paramref name="apply"/>): for each option that differs from its
+	/// <c>Prefs_CommitOptions</c> (<c>0004a83c</c>): for each option that differs from its
 	/// load-time copy, its handler called with it when <paramref name="apply"/> is set and it has one, then the copy made
 	/// current; every option copied to <c>Prefs_PreviousOptions</c> (docs/es1/simulation/preferences.md#the-option-array).
 	/// </summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
 	public void CommitOptions(bool apply) {
 		for (int index = 0; index < OptionCount; index++) {
 			if (_loaded[index] != _options[index]) {
@@ -306,10 +317,12 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// <c>Prefs_IncreaseOption</c> (<c>0004aa18</c>)(<paramref name="apply"/>, <paramref name="amount"/>,
-	/// <paramref name="index"/>): 0 from 255, 255 when the amount would pass it, the value plus the amount otherwise;
+	/// <c>Prefs_IncreaseOption</c> (<c>0004aa18</c>): 0 from 255, 255 when the amount would pass it, the value plus the amount otherwise;
 	/// through <see cref="SetOption"/>. Returns it.
 	/// </summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
+	/// <param name="amount">The amount added.</param>
+	/// <param name="index">The option's index.</param>
 	public byte IncreaseOption(bool apply, byte amount, int index) {
 		_previous[index] = _options[index];
 		byte old = _options[index];
@@ -319,10 +332,12 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// <c>Prefs_DecreaseOption</c> (<c>0004aa78</c>)(<paramref name="apply"/>, <paramref name="amount"/>,
-	/// <paramref name="index"/>): 255 from 0, 0 when the value is below the amount, the value less the amount otherwise;
+	/// <c>Prefs_DecreaseOption</c> (<c>0004aa78</c>): 255 from 0, 0 when the value is below the amount, the value less the amount otherwise;
 	/// through <see cref="SetOption"/>. Returns it.
 	/// </summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
+	/// <param name="amount">The amount subtracted.</param>
+	/// <param name="index">The option's index.</param>
 	public byte DecreaseOption(bool apply, byte amount, int index) {
 		_previous[index] = _options[index];
 		byte old = _options[index];
@@ -331,15 +346,17 @@ public sealed class Es1Preferences {
 		return value;
 	}
 
-	/// <summary><c>Prefs_OptionChanged</c> (<c>0004ac2c</c>)(<paramref name="index"/>): whether the option differs from its load-time copy.</summary>
+	/// <summary><c>Prefs_OptionChanged</c> (<c>0004ac2c</c>): whether the option differs from its load-time copy.</summary>
+	/// <param name="index">The option's index.</param>
 	public bool OptionChanged(int index) => _options[index] != _loaded[index];
 
 	/// <summary>
-	/// <c>Prefs_SaveSelectedOptions</c> (<c>0004ab6c</c>)(<paramref name="indices"/>, count): the 17 bytes of
+	/// <c>Prefs_SaveSelectedOptions</c> (<c>0004ab6c</c>): the 17 bytes of
 	/// <see cref="FilePath"/> read, the options <paramref name="indices"/> names copied over them, or all 17 options
 	/// taken when the file does not open; then the 17 written back when the file opens for writing. Bytes past a short
 	/// file's end read 0, as in <see cref="FromFile"/>. With no <see cref="FilePath"/> nothing is saved.
 	/// </summary>
+	/// <param name="indices">The indices of the options saved.</param>
 	public void SaveSelectedOptions(IReadOnlyList<int> indices) {
 		if (FilePath == null) {
 			return;
@@ -371,11 +388,13 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// The shell's <c>Prefs_SetOption</c> (<c>ES1GO 00008378</c>)(<paramref name="apply"/>, <paramref name="value"/>,
-	/// <paramref name="index"/>) (docs/es1/shell/single-mission.md#the-mission-params-menu): <see cref="SetOption"/>
+	/// The shell's <c>Prefs_SetOption</c> (<c>ES1GO 00008378</c>) (docs/es1/shell/single-mission.md#the-mission-params-menu): <see cref="SetOption"/>
 	/// without the old value kept in <c>Prefs_PreviousOptions</c>, a copy the shell does not have; the value stored and,
 	/// with <paramref name="apply"/>, the option's handler, when it has one, called with it.
 	/// </summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
+	/// <param name="value">The new value.</param>
+	/// <param name="index">The option's index.</param>
 	public void ShellSetOption(bool apply, byte value, int index) {
 		_options[index] = value;
 		if (apply) {
@@ -384,10 +403,11 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// The shell's <c>Prefs_ToggleOption</c> (<c>ES1GO 000083ac</c>)(<paramref name="apply"/>, <paramref name="index"/>)
-	/// (docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050): <see cref="ToggleOption"/> through
+	/// The shell's <c>Prefs_ToggleOption</c> (<c>ES1GO 000083ac</c>) (docs/es1/shell/options.md#the-panel--controlspanel_ctor-00006050): <see cref="ToggleOption"/> through
 	/// <see cref="ShellSetOption"/>, with no copy into <c>Prefs_PreviousOptions</c>. Returns the value.
 	/// </summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
+	/// <param name="index">The option's index.</param>
 	public byte ShellToggleOption(bool apply, int index) {
 		byte value = (byte)(_options[index] ^ 1);
 		ShellSetOption(apply, value, index);
@@ -417,12 +437,12 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// The shell's <c>Prefs_CommitAll</c> (<c>ES1GO 000082b0</c>)(<paramref name="apply"/>)
-	/// (docs/es1/shell/single-mission.md#the-mission-params-menu): <see cref="CommitOptions"/> without the copy of every
+	/// The shell's <c>Prefs_CommitAll</c> (<c>ES1GO 000082b0</c>) (docs/es1/shell/single-mission.md#the-mission-params-menu): <see cref="CommitOptions"/> without the copy of every
 	/// option into <c>Prefs_PreviousOptions</c>. For each option that differs from its committed copy
 	/// <c>Prefs_Committed</c> (<c>000aa260</c>), held as <see cref="Loaded"/>, its handler called with it when
 	/// <paramref name="apply"/> is set and it has one, then the copy made current.
 	/// </summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
 	public void ShellCommitAll(bool apply) {
 		for (int index = 0; index < OptionCount; index++) {
 			if (_loaded[index] != _options[index]) {
@@ -436,11 +456,11 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// The shell's <c>Prefs_RevertAll</c> (<c>ES1GO 00008316</c>)(<paramref name="apply"/>)
-	/// (docs/es1/shell/single-mission.md#the-mission-params-menu), the same statements as the simulator's <c>0004a8a8</c>,
+	/// The shell's <c>Prefs_RevertAll</c> (<c>ES1GO 00008316</c>) (docs/es1/shell/single-mission.md#the-mission-params-menu), the same statements as the simulator's <c>0004a8a8</c>,
 	/// which this type has no other use for: each option that differs from its committed copy (<see cref="Loaded"/>) set
 	/// back to it, and its handler called with it when <paramref name="apply"/> is set and it has one.
 	/// </summary>
+	/// <param name="apply">Whether the option's handler is called.</param>
 	public void ShellRevertAll(bool apply) {
 		for (int index = 0; index < OptionCount; index++) {
 			if (_options[index] != _loaded[index]) {

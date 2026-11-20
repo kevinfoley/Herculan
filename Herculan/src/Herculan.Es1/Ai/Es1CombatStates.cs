@@ -57,12 +57,14 @@ public static class Es1CombatStates {
 	public const int AttackBeamOffset = 18000;
 
 	/// <summary>
-	/// <c>Math_OffsetPointByBearing</c> (<c>00063d8c</c>)(<paramref name="distance"/>, <paramref name="bearing"/>,
-	/// <paramref name="point"/>): <c>Math_Q14Multiply</c>(distance, <c>Math_CosBam</c>(bearing + <c>0x4000</c>)) added to X
+	/// <c>Math_OffsetPointByBearing</c> (<c>00063d8c</c>): <c>Math_Q14Multiply</c>(distance, <c>Math_CosBam</c>(bearing + <c>0x4000</c>)) added to X
 	/// and <c>Math_Q14Multiply</c>(distance, <c>Math_CosBam</c>(bearing)) to Y, each the full 32-bit product of ES1's
 	/// rounding multiply; Z kept (docs/es1/simulation/mech-ai.md#functions). ES2's cuts the distance and the products to 16
 	/// bits.
 	/// </summary>
+	/// <param name="point">The point moved.</param>
+	/// <param name="bearing">The bearing to move along.</param>
+	/// <param name="distance">The distance to move.</param>
 	public static Vec3i OffsetPointByBearing(Vec3i point, short bearing, int distance) => new(
 		point.X + SimMath.Q14MultiplyRounded(distance, SimTrig.Cos(unchecked((short)(bearing + 0x4000)))),
 		point.Y + SimMath.Q14MultiplyRounded(distance, SimTrig.Cos(bearing)),
@@ -72,12 +74,14 @@ public static class Es1CombatStates {
 	public static short Magnitude(short angle) => angle == short.MinValue ? short.MaxValue : Math.Abs(angle);
 
 	/// <summary>
-	/// <c>Ai_BuildCombatGeometry</c> (<c>0001851c</c>)(<paramref name="mech"/>, <paramref name="target"/>): the bearing to
+	/// <c>Ai_BuildCombatGeometry</c> (<c>0001851c</c>): the bearing to
 	/// the target (<c>Math_HeadingToward</c>), the error from the heading and its magnitude, the aspect (the target's
 	/// twist, slot <c>+0x40</c>, plus the bearing less <c>0x8000</c> less the target's heading) and its magnitude, the 3D
 	/// range (<c>Math_DistanceBetweenPoints</c>), approach 0 and the standoffs <see cref="NearStandoff"/> and
 	/// <see cref="FarStandoff"/>.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="target">The target.</param>
 	public static Es1CombatGeometry BuildGeometry(Es1Mech mech, IEs1SimObject target) {
 		short bearing = Es1MissionGroup.HeadingToward(mech.Position, target.Position);
 		short error = (short)(bearing - mech.Heading);
@@ -95,12 +99,15 @@ public static class Es1CombatStates {
 	}
 
 	/// <summary>
-	/// <c>Ai_CombatMoveStep</c> (<c>00018618</c>)(<paramref name="mech"/>, <paramref name="geometry"/>): inside the near
+	/// <c>Ai_CombatMoveStep</c> (<c>00018618</c>): inside the near
 	/// standoff the approach is 1 when the error's magnitude is <c>0x4000</c> or more and −1 otherwise; past the far
 	/// standoff 1 at <c>0x4000</c> or less and −1 otherwise; between, the state's own. The magnitude is then recomputed
 	/// from the error; a non-zero approach is written to <see cref="ApproachOffset"/> and asks ±<see cref="Es1Navigation.Full"/>;
 	/// the control law takes it with the error's steer.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="geometry">The engagement's geometry.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void MoveStep(Es1Mech mech, Es1CombatGeometry geometry, Es1SimGlobals globals) {
 		if (geometry.Range < geometry.NearStandoff) {
 			geometry.Approach = geometry.ErrorMagnitude < 0x4000 ? (short)-1 : (short)1;
@@ -148,7 +155,7 @@ public static class Es1CombatStates {
 	public const int SquareUpTwist = 2000;
 
 	/// <summary>
-	/// <c>Ai_CircleStep</c> (<c>00016574</c>)(<paramref name="mech"/>, <paramref name="geometry"/>). While the break-off
+	/// <c>Ai_CircleStep</c> (<c>00016574</c>). While the break-off
 	/// countdown runs: near standoff 0, approach −1, bearing error 0, the hysteresis cleared and the interval
 	/// <see cref="BreakOffInterval"/>. Otherwise the break-off is armed at <see cref="BreakOffLength"/> when the interval has
 	/// run out and the damage taken (<c>+0x21e</c>) is over <see cref="BreakOffDamage"/>; then, with the aspect's magnitude
@@ -158,6 +165,10 @@ public static class Es1CombatStates {
 	/// the machine's own twist (slot <c>+0x40</c>) within ±<see cref="SquareUpTwist"/>, <see cref="SquareUpWordOffset"/>
 	/// zeroed, or −1. It ends with <see cref="MoveStep"/>.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="target">The target circled.</param>
+	/// <param name="geometry">The engagement's geometry.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void CircleStep(Es1Mech mech, IEs1SimObject target, Es1CombatGeometry geometry, Es1SimGlobals globals) {
 		var block = mech.Behaviour;
 		var clock = globals.Clock;

@@ -126,17 +126,22 @@ public abstract class Es1AlertPanel {
 	public bool RestoreCursorOnLeave { get; protected set; } = true;
 
 	/// <summary>
-	/// <c>AlertPanel_SetRect</c> (<c>0004675c</c>)(<paramref name="height"/>, <paramref name="width"/>,
-	/// <paramref name="y"/>, <paramref name="x"/>): the rect (<i>x</i>, <i>y</i>, <i>x</i> + <i>width</i>, <i>y</i> +
+	/// <c>AlertPanel_SetRect</c> (<c>0004675c</c>): the rect (<i>x</i>, <i>y</i>, <i>x</i> + <i>width</i>, <i>y</i> +
 	/// <i>height</i>), which retail returns in <c>AlertPanel_RectScratch</c> (<c>000b1724</c>).
 	/// </summary>
+	/// <param name="height">The rect's height.</param>
+	/// <param name="width">The rect's width.</param>
+	/// <param name="y">The rect's top.</param>
+	/// <param name="x">The rect's left.</param>
 	public static Es1Rect SetRect(int height, int width, int y, int x) => new(x, y, x + width, y + height);
 
 	/// <summary>
-	/// <c>AlertPanel_CenterRect</c> (<c>0004679c</c>)(<paramref name="height"/>, <paramref name="width"/>):
+	/// <c>AlertPanel_CenterRect</c> (<c>0004679c</c>):
 	/// <see cref="SetRect"/> at ((319 − width) &gt;&gt; 1, (199 − height) &gt;&gt; 1), the corner of
 	/// <see cref="ScreenRect"/>'s <i>x1</i> and <i>y1</i> less the size, halved.
 	/// </summary>
+	/// <param name="height">The rect's height.</param>
+	/// <param name="width">The rect's width.</param>
 	public static Es1Rect CenterRect(int height, int width) =>
 		SetRect(height, width, (ScreenRect.Y1 - height) >> 1, (ScreenRect.X1 - width) >> 1);
 

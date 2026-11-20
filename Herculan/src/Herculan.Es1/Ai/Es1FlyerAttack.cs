@@ -78,8 +78,8 @@ public static class Es1FlyerAttack {
 	}
 
 	/// <summary>
-	/// <c>Flyer_AttackRun</c> (<c>0001bba4</c>)(<paramref name="flyer"/>), the target <paramref name="target"/>
-	/// (docs/es1/simulation/flyers.md#the-attack-run--flyer_attackrun-0001bba4). The point is the target's position; the
+	/// <c>Flyer_AttackRun</c> (<c>0001bba4</c>)
+	/// (docs/es1/simulation/flyers.md#the-attack-run--flyer_attackrun-0001bba4): the run at <paramref name="target"/>. The point is the target's position; the
 	/// bearing error to it (<c>Math_HeadingToward</c> less the heading); the ground range <i>r</i>
 	/// (<c>Math_DistanceBetweenPoints2D</c>), taken once; the flyer's and the target's speeds through slot <c>+0x3c</c>.
 	/// <list type="number">
@@ -109,6 +109,9 @@ public static class Es1FlyerAttack {
 	/// <c>+0x18a</c> is read as it stands; it has no writer found (docs/es1/simulation/flyers.md#open), and nothing ported
 	/// writes it, so it stays 0 here and the gate's test on it passes.
 	/// </summary>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="target">The flyer's target.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void AttackRun(Es1Flyer flyer, IEs1SimObject target, Es1SimGlobals globals) {
 		var point = target.Position;
 		short error = (short)(Es1MissionGroup.HeadingToward(flyer.Position, point) - flyer.Heading);

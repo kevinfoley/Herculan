@@ -158,12 +158,16 @@ public static class Es1FlyerAi {
 	}
 
 	/// <summary>
-	/// <c>Flyer_FormationThrottle</c> (<c>0001b824</c>)(<paramref name="flyer"/>, <paramref name="baseline"/>,
-	/// <paramref name="steering"/>, <paramref name="distance"/>, <paramref name="leader"/>): the throttle <c>+0x1b2</c> plus
+	/// <c>Flyer_FormationThrottle</c> (<c>0001b824</c>): the throttle <c>+0x1b2</c> plus
 	/// 8 × (the leader's forward speed less the flyer's) plus half of (Q14(distance, cos(steering + heading − the leader's
 	/// heading)) − baseline), all in 16 bits, held to [<see cref="MinThrottle"/>, <see cref="MaxThrottle"/>]. The move
 	/// reloads both speeds from the type record, so the speed term is 0 within a type.
 	/// </summary>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="baseline">The baseline the leader-relative term is measured against.</param>
+	/// <param name="steering">The steering, added to the heading in the cosine.</param>
+	/// <param name="distance">The distance to the leader.</param>
+	/// <param name="leader">The formation's leader.</param>
 	/// <remarks>
 	/// The throttle has no reader found in the flyer code (docs/es1/simulation/flyers.md#open), so it changes nothing a
 	/// player sees. <c>Flyer_ClearFormationThrottle</c> (<c>0001c0fc</c>), which zeroes it, has no caller found and is not

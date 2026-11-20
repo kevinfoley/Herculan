@@ -31,9 +31,10 @@ public static class Es1PaperDoll {
 	}
 
 	/// <summary>
-	/// <c>Damage_ToConditionState</c> (<c>ES1DBSIM 00030eb8</c>)(<paramref name="damage"/>): with intact = (256 −
+	/// <c>Damage_ToConditionState</c> (<c>ES1DBSIM 00030eb8</c>): with intact = (256 −
 	/// damage) × 100 &gt;&gt; 8, 0 at 90 or more, 1 at 74 or more, 2 at 51 or more, 3 at 1 or more, else 4.
 	/// </summary>
+	/// <param name="damage">The damage reading, out of <c>0x100</c>.</param>
 	public static short ToConditionState(int damage) => Band((0x100 - damage) * 100 >> 8);
 
 	/// <summary>
@@ -62,12 +63,16 @@ public static class Es1PaperDoll {
 	}
 
 	/// <summary>
-	/// <c>PaperDoll_RecolorRect</c> (<c>00030818</c>)(<paramref name="mode"/>, <paramref name="tint"/>,
-	/// <paramref name="key"/>, <paramref name="rect"/>): the display's draw page made its source page, and the rect moved
+	/// <c>PaperDoll_RecolorRect</c> (<c>00030818</c>): the display's draw page made its source page, and the rect moved
 	/// by <paramref name="canvas"/>'s translation walked a row at a time, left to right, each pixel of the draw page read
 	/// and rewritten as <see cref="RecolorMode"/> says, with no clip. A pixel the world was drawn into, which retail
 	/// reads as the world's own index, is left, an engine guard.
 	/// </summary>
+	/// <param name="canvas">The canvas whose draw page is recolored.</param>
+	/// <param name="mode">The recolor mode (<see cref="RecolorMode"/>).</param>
+	/// <param name="tint">The palette index the key range is moved to.</param>
+	/// <param name="key">The first palette index recolored.</param>
+	/// <param name="rect">The rectangle recolored, in the canvas's coordinates.</param>
 	public static void RecolorRect(Es1PanelCanvas canvas, int mode, int tint, int key, Es1Rect rect) {
 		var display = canvas.Display;
 		display.SourcePage = display.DrawPage;
@@ -98,15 +103,20 @@ public static class Es1PaperDoll {
 	}
 
 	/// <summary>
-	/// <c>PaperDoll_RecolorRectFromArt</c> (<c>00030ab4</c>)(<paramref name="mode"/>, <paramref name="tint"/>,
-	/// <paramref name="key"/>, <paramref name="artOrigin"/>, <paramref name="art"/>, <paramref name="rect"/>)
-	/// (docs/es1/simulation/paper-doll.md#tinting): <see cref="RecolorRect"/>, except that mode 0 tests the art's pixel
+	/// <c>PaperDoll_RecolorRectFromArt</c> (<c>00030ab4</c>) (docs/es1/simulation/paper-doll.md#tinting): <see cref="RecolorRect"/>, except that mode 0 tests the art's pixel
 	/// rather than the screen's and walks even when tint = key. The art's pixel for a screen pixel (<i>x</i>,
 	/// <i>y</i>) of the rect is the byte at (<i>y</i> − the origin's <i>y</i>) × the art's width + (<i>x</i> − the
 	/// origin's <i>x</i>), with no bounds, so an offset past the width reads on into the next row; a pixel of
 	/// <paramref name="key"/> to <paramref name="key"/> + 2 writes itself + (tint − key) to the draw page. An offset
 	/// outside the art's bytes, which retail reads unchecked, writes nothing, an engine guard.
 	/// </summary>
+	/// <param name="canvas">The canvas whose draw page is recolored.</param>
+	/// <param name="mode">The recolor mode (<see cref="RecolorMode"/>).</param>
+	/// <param name="tint">The palette index the key range is moved to.</param>
+	/// <param name="key">The first palette index recolored.</param>
+	/// <param name="artOrigin">The art's origin on the screen.</param>
+	/// <param name="art">The art whose pixels are tested, or null.</param>
+	/// <param name="rect">The rectangle recolored, in the canvas's coordinates.</param>
 	public static void RecolorRectFromArt(Es1PanelCanvas canvas, int mode, int tint, int key, (int X, int Y) artOrigin,
 			DynamixBitmap? art, Es1Rect rect) {
 		if (mode != (int)RecolorMode.Shift) {
@@ -137,8 +147,7 @@ public static class Es1PaperDoll {
 	}
 
 	/// <summary>
-	/// <c>PaperDoll_BuildWeaponIcons</c> (<c>0003058c</c>)(<paramref name="machine"/>)
-	/// (docs/es1/simulation/paper-doll.md#the-weapon-icons): an icon for each hardpoint <i>n</i> of the chassis' paper
+	/// <c>PaperDoll_BuildWeaponIcons</c> (<c>0003058c</c>) (docs/es1/simulation/paper-doll.md#the-weapon-icons): an icon for each hardpoint <i>n</i> of the chassis' paper
 	/// doll. Its <see cref="Es1WeaponIcon.MountIndex"/> is the first position in the gun layout whose slot byte is
 	/// <i>n</i>, or the layout's count when none is, and its mount the mount array's entry there. With no mount, or a
 	/// template whose damage icon (<c>+0x50</c>) is −1, the icon has no bitmap, and its point, rect and flags, which retail
@@ -150,6 +159,9 @@ public static class Es1PaperDoll {
 	/// the bitmap's width less the size's. A frame past the bank or the sizes, and a position past the mount array, which
 	/// retail reads unchecked, give no bitmap, a size of 0 or no mount, engine guards.
 	/// </summary>
+	/// <param name="machine">The machine whose paper doll is built.</param>
+	/// <param name="bank">The icon bitmaps, or null.</param>
+	/// <param name="sizes">The icon sizes, or null.</param>
 	public static IReadOnlyList<Es1WeaponIcon> BuildWeaponIcons(Es1Mech machine, IReadOnlyList<DynamixBitmap>? bank,
 			WeaponPaperDiagram? sizes) {
 		var hardpoints = machine.Type.PaperDoll?.Hardpoints ?? [];

@@ -404,11 +404,14 @@ public static class Es1SquadOrders {
 	}
 
 	/// <summary>
-	/// <c>Mech_AiEngageOrderedTarget</c> (<c>00015edc</c>)(<paramref name="mech"/>, <paramref name="target"/>): the target
+	/// <c>Mech_AiEngageOrderedTarget</c> (<c>00015edc</c>): the target
 	/// installed (<see cref="Es1Mech.InstallTarget"/>); then by its class, 1 <c>attacking base</c>, 0
 	/// <see cref="Es1Mech.TargetHandedOver"/> set and <see cref="Es1CombatReassess.EnterCombat"/>, 2 <c>attacking
 	/// flyer</c>, any other nothing.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="target">The ordered target.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void EngageOrderedTarget(Es1Mech mech, IEs1SimObject target, Es1SimGlobals globals) {
 		mech.InstallTarget(target);
 		switch (target.TargetClass) {

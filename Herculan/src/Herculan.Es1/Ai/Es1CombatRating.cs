@@ -24,7 +24,7 @@ public static class Es1CombatRating {
 	private const int FirstComponentReading = 1, FirstSystemReading = 20, FirstMountReading = 32, MountReadings = 10;
 
 	/// <summary>
-	/// <c>Mech_ComputeCombatRating</c> (<c>ES1DBSIM 000189f0</c>)(<paramref name="mech"/>): from
+	/// <c>Mech_ComputeCombatRating</c> (<c>ES1DBSIM 000189f0</c>): from
 	/// <see cref="Es1Mech.ReadDamageReadouts"/>, the type record's <c>+0x44</c>; plus, for each mount of the manager whose
 	/// reading is not negative and whose slot <c>+0x58</c> counts it (<see cref="Es1WeaponMount.CountsInCombatRating"/>),
 	/// Q8(<c>0x100</c> − its reading, its template's <c>+0x4e</c>); plus Q8(<c>0x100</c> − the reading, the piece's armor)
@@ -33,6 +33,7 @@ public static class Es1CombatRating {
 	/// <see cref="SystemPenaltyReading"/>. Shifted right 4 into <see cref="Es1Mech.CombatRating"/>, with
 	/// <see cref="Es1Mech.SkipCombatRating"/> set; the Q8s are ES1's rounding multiply.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
 	public static short Compute(Es1Mech mech) {
 		var readings = mech.ReadDamageReadouts();
 		var chassis = mech.Type.Chassis;
@@ -95,9 +96,11 @@ public static class Es1CombatRating {
 	}
 
 	/// <summary>
-	/// <c>Ai_SumAttackerRatings</c> (<c>00016a14</c>)(<paramref name="mech"/>): the sum of the ratings of every machine of
+	/// <c>Ai_SumAttackerRatings</c> (<c>00016a14</c>): the sum of the ratings of every machine of
 	/// <c>g_MechPool</c>, walked oldest first with <c>Pool_Prev</c>, whose target is <paramref name="mech"/>.
 	/// </summary>
+	/// <param name="mech">The machine whose attackers are summed.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static int SumAttackerRatings(Es1Mech mech, Es1SimGlobals globals) {
 		int sum = 0;
 		foreach (var other in globals.MechPool) {

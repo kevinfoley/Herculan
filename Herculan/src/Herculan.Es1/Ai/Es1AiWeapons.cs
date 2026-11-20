@@ -43,12 +43,15 @@ public static class Es1AiWeapons {
 	public const int AiCostTailOffset = 0x34 - 0x22;
 
 	/// <summary>
-	/// <c>Ai_AimAndFire</c> (<c>ES1DBSIM 00018894</c>)(<paramref name="mech"/>, <paramref name="target"/>,
-	/// <paramref name="aspect"/>), a null target meaning the machine's own (<c>+0x15e</c>): a target of class 0
+	/// <c>Ai_AimAndFire</c> (<c>ES1DBSIM 00018894</c>): a null target means the machine's own (<c>+0x15e</c>); a target of class 0
 	/// (<c>+0x162</c>) to <see cref="AimAndFireAtMech"/>; any other to <see cref="FireAtPoint"/> at its position plus its
 	/// slot <c>+0x34</c>'s first triple (<see cref="IEs1SimObject.AimOffset"/>), which a flyer, class 2, answers zero, so
 	/// its position. Retail reads the target with no null test; with none, nothing here, an engine guard.
 	/// </summary>
+	/// <param name="mech">The machine firing.</param>
+	/// <param name="target">The target, or null for the machine's own (<c>+0x15e</c>).</param>
+	/// <param name="aspect">The aspect angle of the engagement.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void AimAndFire(Es1Mech mech, IEs1SimObject? target, short aspect, Es1SimGlobals globals) {
 		target ??= mech.Target;
 		if (target == null) {
@@ -63,8 +66,7 @@ public static class Es1AiWeapons {
 	}
 
 	/// <summary>
-	/// <c>Ai_AimAndFireAtMech</c> (<c>0001879c</c>)(<paramref name="mech"/>, <paramref name="target"/>,
-	/// <paramref name="aspect"/>): with the bearing error to the target (<c>Math_HeadingToward</c> less the heading) plus
+	/// <c>Ai_AimAndFireAtMech</c> (<c>0001879c</c>): with the bearing error to the target (<c>Math_HeadingToward</c> less the heading) plus
 	/// the type record's twist limit <c>+0x22</c> below twice the limit, both as unsigned 16-bit values, the point is the
 	/// aim slot's (<see cref="Es1Mech.AimSlot"/>) component (slot <c>+0x5c</c>) when the slot is not negative and the 3D
 	/// range (<c>Math_DistanceBetweenPoints</c>) is from <see cref="AimSlotNear"/> to under <see cref="AimSlotFar"/>, and
@@ -72,6 +74,10 @@ public static class Es1AiWeapons {
 	/// (<c>Transform_ApplyToPoint</c>); then <see cref="FireAtPoint"/>. Beyond the limit, <c>Mech_CenterTorsoTick</c>(machine, 0).
 	/// Retail reads the node through the null a shape without the part gives; the target's frame origin here, an engine guard.
 	/// </summary>
+	/// <param name="mech">The machine firing.</param>
+	/// <param name="target">The target, of class 0.</param>
+	/// <param name="aspect">The aspect angle of the engagement.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void AimAndFireAtMech(Es1Mech mech, IEs1SimObject target, short aspect, Es1SimGlobals globals) {
 		short limit = mech.Type.Chassis.TorsoTwistLimit;
 		short error = (short)(Es1MissionGroup.HeadingToward(mech.Position, target.Position) - mech.Heading);
@@ -93,8 +99,7 @@ public static class Es1AiWeapons {
 	}
 
 	/// <summary>
-	/// <c>Ai_FireAtPoint</c> (<c>000190ec</c>)(<paramref name="mech"/>, <paramref name="target"/>, <paramref name="aspect"/>,
-	/// <paramref name="point"/>). With the ground range (<c>Math_DistanceBetweenPoints2D</c>) to the point, the mount is the
+	/// <c>Ai_FireAtPoint</c> (<c>000190ec</c>). With the ground range (<c>Math_DistanceBetweenPoints2D</c>) to the point, the mount is the
 	/// latched one (<see cref="Es1Mech.LatchedMount"/>, <c>+0x242</c>) while it is ready (slot <c>+0x30</c>) and the range
 	/// allows it; otherwise none when <see cref="Es1Mech.SkipWeaponChoice"/> (<c>+0xaf</c>) is set, which is cleared, or
 	/// <see cref="ChooseWeapon"/>'s with the latch cleared. With none, the turret is aimed at the point
@@ -114,6 +119,11 @@ public static class Es1AiWeapons {
 	/// Retail reads the group and the projectile record with no null test; no group is side 0 and no record speed 0 here,
 	/// engine guards, as is no scatter for a difficulty outside the table, which retail reads past.
 	/// </summary>
+	/// <param name="mech">The machine firing.</param>
+	/// <param name="target">The target.</param>
+	/// <param name="aspect">The aspect angle of the engagement.</param>
+	/// <param name="point">The point aimed at, before the lead and the scatter move it.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void FireAtPoint(Es1Mech mech, IEs1SimObject target, short aspect, Vec3i point, Es1SimGlobals globals) {
 		int range = Es1PlayerThink.DistanceBetweenPoints2D(point, mech.Position);
 		var mount = mech.LatchedMount;
@@ -164,8 +174,7 @@ public static class Es1AiWeapons {
 	}
 
 	/// <summary>
-	/// <c>Ai_ChooseWeapon</c> (<c>00018e50</c>)(<paramref name="mech"/>, <paramref name="target"/>, <paramref name="range"/>,
-	/// <paramref name="aspect"/>). The floor is <c>Math_MapRange</c>(<see cref="Es1Mech.Fear"/>, 0, <see cref="FearTop"/>,
+	/// <c>Ai_ChooseWeapon</c> (<c>00018e50</c>). The floor is <c>Math_MapRange</c>(<see cref="Es1Mech.Fear"/>, 0, <see cref="FearTop"/>,
 	/// <see cref="CalmFloor"/>, <see cref="FrightenedFloor"/>); the shield is the target's slot <c>+0x38</c> asked with 1 for
 	/// an aspect within ±<c>0x4000</c> and 0 otherwise, so a HERC's front shield either way; the jitter bound
 	/// <see cref="MechJitter"/> for a class-0 target and <see cref="OtherJitter"/> otherwise. Each mount neither absent nor
@@ -187,6 +196,11 @@ public static class Es1AiWeapons {
 	/// machine with no manager chooses nothing and does not run dry, and a mount with no record scores 0 damage here,
 	/// engine guards, as is a subtype past the five lock flags counting as unlocked.
 	/// </summary>
+	/// <param name="mech">The machine choosing.</param>
+	/// <param name="target">The target.</param>
+	/// <param name="range">The range to the target.</param>
+	/// <param name="aspect">The aspect angle of the engagement.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static Es1WeaponMount? ChooseWeapon(Es1Mech mech, IEs1SimObject target, int range, short aspect,
 			Es1SimGlobals globals) {
 		short best = (short)SimMath.MapRange(mech.Fear, 0, FearTop, CalmFloor, FrightenedFloor);

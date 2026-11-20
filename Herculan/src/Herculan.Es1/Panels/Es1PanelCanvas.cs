@@ -164,12 +164,17 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Raster_DrawLineColour</c> (<c>00044ec0</c>)(<paramref name="color"/>, end, start): <c>Raster_DrawLine</c>
+	/// <c>Raster_DrawLineColour</c> (<c>00044ec0</c>): <c>Raster_DrawLine</c>
 	/// (<c>0006a064</c>)(start, end) under the pen {0, color}: the two points translated, cut to <see cref="Rect"/> by
 	/// <c>Line_ClipToRect</c> (<c>0007d4a4</c>, docs/retail/rendering/polygon-fill.md#clipping-a-line), nothing drawn when
 	/// nothing is left, and the rest walked as the driver's line routine, <c>VGA8_DrawLine</c> (<c>0008cb90</c>, slot 34),
 	/// walks it, both end pixels drawn (docs/es1/rendering/screen-pages.md#lines-and-clipped-bitmaps).
 	/// </summary>
+	/// <param name="x0">The first end's X.</param>
+	/// <param name="y0">The first end's Y.</param>
+	/// <param name="x1">The second end's X.</param>
+	/// <param name="y1">The second end's Y.</param>
+	/// <param name="color">The palette index.</param>
 	public void DrawLine(int x0, int y0, int x1, int y1, byte color) {
 		var (dx, dy) = Translation;
 		DrawLineTranslated((x0 + dx, y0 + dy), (x1 + dx, y1 + dy), color);

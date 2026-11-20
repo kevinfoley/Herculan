@@ -58,12 +58,15 @@ public sealed class Es1PilotChannel : Es1MessagePort {
 	public string LineBuffer { get; private set; } = string.Empty;
 
 	/// <summary>
-	/// <c>Ai_PostSquadMessage</c> (<c>0001a188</c>)(<paramref name="machine"/>, <paramref name="force"/>,
-	/// <paramref name="id"/>) (docs/es1/simulation/cockpit-messages.md#posting): unless the machine is destroyed
+	/// <c>Ai_PostSquadMessage</c> (<c>0001a188</c>) (docs/es1/simulation/cockpit-messages.md#posting): unless the machine is destroyed
 	/// (<see cref="Es1Mech.Destroyed"/>, <c>+0x93</c>) and <paramref name="force"/> is clear, {id, machine} posted to the
 	/// pilot channel of <c>CockpitViewInstance</c> (<c>CockpitView_GetSquadMessagePort</c>, <c>0002d614</c>), the post
 	/// reading the id's low byte. With no cockpit built, which retail always has, nothing.
 	/// </summary>
+	/// <param name="globals">The simulation's globals.</param>
+	/// <param name="machine">The machine the message is about.</param>
+	/// <param name="force">Whether to post though the machine is destroyed.</param>
+	/// <param name="id">The message id, whose low byte is posted.</param>
 	public static void PostSquadMessage(Es1SimGlobals globals, Es1Mech machine, bool force, short id) {
 		if (machine.Destroyed && !force) {
 			return;

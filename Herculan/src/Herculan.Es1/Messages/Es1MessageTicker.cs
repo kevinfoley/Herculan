@@ -38,10 +38,12 @@ public sealed class Es1MessageTicker : Es1MessagePort {
 	public string TextBuffer { get; private set; } = string.Empty;
 
 	/// <summary>
-	/// <c>Computer_PostMessage</c> (<c>0001a154</c>)(<paramref name="id"/>): {id, 0} posted to the ticker of
+	/// <c>Computer_PostMessage</c> (<c>0001a154</c>): {id, 0} posted to the ticker of
 	/// <c>CockpitViewInstance</c> (docs/es1/simulation/cockpit-messages.md#posting), the post reading the id's low byte.
 	/// With no cockpit built, which retail always has, nothing.
 	/// </summary>
+	/// <param name="globals">The simulation's globals.</param>
+	/// <param name="id">The message id, whose low byte is posted.</param>
 	public static void ComputerPostMessage(Es1SimGlobals globals, short id) =>
 		globals.CockpitViewInstance?.Ticker.Post((byte)id, null);
 

@@ -37,11 +37,13 @@ public static class Es1CombatReassess {
 	/// <summary>The first slot of the systems' band, and of the mounts'.</summary>
 	public const short FirstSystemSlot = 7, FirstMountSlot = 19;
 
-	/// <summary><c>Mech_AiEnterCombat</c> (<c>ES1DBSIM 000174cc</c>)(<paramref name="mech"/>): <see cref="Reassess"/>.</summary>
+	/// <summary><c>Mech_AiEnterCombat</c> (<c>ES1DBSIM 000174cc</c>): <see cref="Reassess"/>.</summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void EnterCombat(Es1Mech mech, Es1SimGlobals globals) => Reassess(mech, globals);
 
 	/// <summary>
-	/// <c>Mech_AiCombatReassess</c> (<c>00016e04</c>)(<paramref name="mech"/>), in order:
+	/// <c>Mech_AiCombatReassess</c> (<c>00016e04</c>), in order:
 	/// <list type="number">
 	/// <item>the radar <c>+0x90</c> on unless the radar silence <c>+0x201</c> runs, or off for a machine of a group the
 	/// player's machine leads without <see cref="Es1Mech.RadarKeptOn"/>;</item>
@@ -59,6 +61,8 @@ public static class Es1CombatReassess {
 	/// </list>
 	/// It answers 0.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static short Reassess(Es1Mech mech, Es1SimGlobals globals) {
 		var group = mech.Group;
 		// Retail reads the first member unchecked; with none, the machine is taken as led by another here.
@@ -156,7 +160,7 @@ public static class Es1CombatReassess {
 	}
 
 	/// <summary>
-	/// <c>Mech_AiFleeCheck</c> (<c>00016a74</c>)(<paramref name="mech"/>), which answers whether it installed a state. A
+	/// <c>Mech_AiFleeCheck</c> (<c>00016a74</c>), which answers whether it installed a state. A
 	/// machine out of action takes <see cref="Es1StateChoice.SelectBehaviour"/> when its target is of class 1 with its type
 	/// record's <c>+0x34</c> at 0, otherwise <c>fleeing</c>, and answers 1. Any other builds its fear: the overall damage
 	/// (slot <c>+0x44</c>) plus, for each band of <see cref="BandThresholds"/> in turn, that band's penalty for each internal
@@ -167,6 +171,8 @@ public static class Es1CombatReassess {
 	/// <see cref="WaryFear"/> and up <see cref="WaryFloor"/>, fleeing for more than two whose average beats its own. Fleeing
 	/// installs <c>fleeing</c>.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static bool FleeCheck(Es1Mech mech, Es1SimGlobals globals) {
 		if (mech.OutOfAction) {
 			if (mech.Target is { TargetClass: StructureClass } target && StructureTypeWord34IsZero(target)) {
@@ -225,13 +231,15 @@ public static class Es1CombatReassess {
 	}
 
 	/// <summary>
-	/// <c>Mech_AiSelectAimComponent</c> (<c>00016cf4</c>)(<paramref name="mech"/>): one roll of <c>Math_RandomNext</c>
+	/// <c>Mech_AiSelectAimComponent</c> (<c>00016cf4</c>): one roll of <c>Math_RandomNext</c>
 	/// &amp; <c>0x7f</c>, drawn first, picks the band: slot 0 alone for a collapsed target (<c>+0xae</c>); otherwise under
 	/// <see cref="SystemsRoll"/> slots 7–18, under <see cref="MountsRoll"/> slots 19 to 18 + this machine's own mount count,
 	/// and the rest slots 0–6. Of the band's slots the target's occupancy array (<c>+0x1a4</c>) still holds, it keeps the
 	/// first with the highest <c>Component_ReadDamagePercent</c> of this machine's <i>own</i> damage plus
 	/// <c>Math_RandomNext</c> &amp; <c>0x3f</c>, above 0, in <see cref="Es1Mech.AimSlot"/>, or −1.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void SelectAimComponent(Es1Mech mech, Es1SimGlobals globals) {
 		short chosen = -1;
 		// Retail reads the target as a HERC with no test; a target that is not one is aimed at no component here.

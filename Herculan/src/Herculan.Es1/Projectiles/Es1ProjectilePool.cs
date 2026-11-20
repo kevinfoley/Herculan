@@ -83,10 +83,13 @@ public sealed class Es1ProjectilePool {
 			: [];
 
 	/// <summary>
-	/// <c>Proj_LookupRecord</c> (<c>0000c2d0</c>)(<paramref name="subtype"/>, <paramref name="type"/>): the first of the
+	/// <c>Proj_LookupRecord</c> (<c>0000c2d0</c>): the first of the
 	/// records whose type is <paramref name="type"/> and subtype id <paramref name="subtype"/>, or null
 	/// (docs/es1/formats/weapons-dat-sim.md#the-projectile-lookups).
 	/// </summary>
+	/// <param name="records">The projectile records searched.</param>
+	/// <param name="subtype">The subtype id.</param>
+	/// <param name="type">The projectile type.</param>
 	public static ProjectileData.Projectile? LookupRecord(IReadOnlyList<ProjectileData.Projectile> records, short subtype,
 			short type) =>
 		records.FirstOrDefault(record => record.Type?.Val == type && record.SubtypeId == subtype);

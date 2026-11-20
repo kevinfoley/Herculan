@@ -38,8 +38,7 @@ public static class Es1Targets {
 	private static readonly short[] ClassWeights = [2000, 500, 200, 0];
 
 	/// <summary>
-	/// <c>Ai_IsTargetable</c> (<c>ES1DBSIM 0000dce8</c>)(<paramref name="machine"/>, <paramref name="mask"/>,
-	/// <paramref name="candidate"/>): the candidate's group's side differs from the machine's, it is neither destroyed
+	/// <c>Ai_IsTargetable</c> (<c>ES1DBSIM 0000dce8</c>): the candidate's group's side differs from the machine's, it is neither destroyed
 	/// (<c>+0x93</c>) nor collapsed (<c>+0xae</c>), <see cref="Es1SensorModel.KnowsObject"/> holds, and with
 	/// <see cref="OtherClassOnly"/> its class differs from the machine's; then it is refused when the machine's group's first
 	/// member is the player's machine, header word 3 is <see cref="DataLinkSelector"/>, the candidate is the group's order
@@ -47,6 +46,10 @@ public static class Es1Targets {
 	/// cockpit's selection (<c>CockpitViewInstance</c> <c>+0x20c</c>). The machine is a HERC, a flyer
 	/// (docs/es1/simulation/flyers.md#the-thinks) or a gun tower (docs/es1/simulation/structures.md#the-gun-tower--base_armedthinktick-00003364).
 	/// </summary>
+	/// <param name="machine">The machine choosing.</param>
+	/// <param name="mask">The selection mask, whose bits include <see cref="OtherClassOnly"/>.</param>
+	/// <param name="candidate">The object tested.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static bool IsTargetable(IEs1SimObject machine, short mask, IEs1SimObject candidate, Es1SimGlobals globals) {
 		// Retail reads both groups unchecked; an object with no group is not targetable here, an engine guard.
 		if (candidate.Group is not { } candidateGroup || machine.Group is not { } group) {
@@ -70,9 +73,10 @@ public static class Es1Targets {
 	}
 
 	/// <summary>
-	/// <c>Ai_TargetStateTier</c> (<c>0000d880</c>)(<paramref name="simObject"/>): 2 when its behaviour descriptor's flag 5
+	/// <c>Ai_TargetStateTier</c> (<c>0000d880</c>): 2 when its behaviour descriptor's flag 5
 	/// (<c>+0xd</c>) is set, 1 when its flag 4 (<c>+0xc</c>) is, otherwise 0, and 0 with no descriptor.
 	/// </summary>
+	/// <param name="simObject">The object.</param>
 	public static short TargetStateTier(IEs1SimObject simObject) => simObject.BehaviourDescriptor switch {
 		{ Flags: var flags } when flags[5] => 2,
 		{ Flags: var flags } when flags[4] => 1,
@@ -80,7 +84,7 @@ public static class Es1Targets {
 	};
 
 	/// <summary>
-	/// <c>Ai_SelectTarget</c> (<c>0000ddf4</c>)(<paramref name="machine"/>, <paramref name="mask"/>): over
+	/// <c>Ai_SelectTarget</c> (<c>0000ddf4</c>): over
 	/// <c>LiveObjectList</c>, the candidates <see cref="IsTargetable"/> passes, each given a tier, 2 when designated (the
 	/// group's order target under <see cref="DesignatingOrder"/>, or any candidate without <see cref="DesignatedOnly"/>) plus
 	/// 1 when it is neither disarmed, immobilized nor destroyed. An immobilized candidate is passed over unless it is the
@@ -93,6 +97,9 @@ public static class Es1Targets {
 	/// 16 bits. The machine is a HERC, or a flyer or gun tower, whose slot <c>+0x50</c> is the base's and draws nothing from the
 	/// generator.
 	/// </summary>
+	/// <param name="machine">The machine choosing.</param>
+	/// <param name="mask">The selection mask, as for <see cref="IsTargetable"/>.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static IEs1SimObject? SelectTarget(IEs1SimObject machine, short mask, Es1SimGlobals globals) {
 		// Retail reads the group unchecked; a machine with none finds nothing here, an engine guard.
 		if (machine.Group is not { } group) {
@@ -160,11 +167,12 @@ public static class Es1Targets {
 	}
 
 	/// <summary>
-	/// <c>Ai_ShouldAbandonTarget</c> (<c>000162b4</c>)(<paramref name="mech"/>): under squad verb 4 with an order target,
+	/// <c>Ai_ShouldAbandonTarget</c> (<c>000162b4</c>): under squad verb 4 with an order target,
 	/// whether <see cref="TargetStateTier"/> of the machine's target exceeds the order's threshold <c>+0x1e4</c>, compared
 	/// signed; for the group's order target, whether it is destroyed; for any other, whether it is disarmed, immobilized or
 	/// destroyed.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
 	public static bool ShouldAbandonTarget(Es1Mech mech) {
 		// Retail reads the target unchecked; with none it is let go here, an engine guard.
 		if (mech.Target is not { } target) {
@@ -184,9 +192,10 @@ public static class Es1Targets {
 	}
 
 	/// <summary>
-	/// <c>Ai_ClearSquadEngageOrder</c> (<c>00016294</c>)(<paramref name="mech"/>): the squad verb cleared when it is 4,
+	/// <c>Ai_ClearSquadEngageOrder</c> (<c>00016294</c>): the squad verb cleared when it is 4,
 	/// whatever the order's target.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
 	public static void ClearSquadEngageOrder(Es1Mech mech) {
 		if (mech.SquadVerb == Es1NavigationStates.EngageSquadVerb) {
 			mech.SquadVerb = 0;

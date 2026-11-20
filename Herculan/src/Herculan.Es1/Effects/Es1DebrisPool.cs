@@ -109,11 +109,13 @@ public sealed class Es1DebrisPool {
 	}
 
 	/// <summary>
-	/// <c>Debris_ThrowRandomBearing</c> (<c>00006480</c>)(<paramref name="piece"/>): the pitch drawn first,
+	/// <c>Debris_ThrowRandomBearing</c> (<c>00006480</c>): the pitch drawn first,
 	/// <c>Math_RandomBelow</c>(<see cref="PitchSpan"/>) − <see cref="PitchFloor"/>, then the heading,
 	/// <c>Math_RandomNext</c>, and <see cref="Es1Debris.Launch"/>. Retail launches a null piece, which the full pool gives,
 	/// through the null; here the draws are made and nothing is launched, an engine guard.
 	/// </summary>
+	/// <param name="piece">The piece thrown, null when the pool is full.</param>
+	/// <param name="random">The generator the pitch and heading are drawn from.</param>
 	private static void ThrowRandomBearing(Es1Debris? piece, SimRandom random) {
 		short pitch = unchecked((short)(random.NextBelow(PitchSpan) - PitchFloor));
 		short heading = random.Next();
