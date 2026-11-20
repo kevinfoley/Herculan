@@ -127,6 +127,8 @@ a11y.disable_damage_flash.display_name  Disable fullscreen flash
 a11y.disable_damage_flash.description   When your cockpit takes a hit, the screen no longer flashes red.
 a11y.disable_damage_shake.display_name  Disable camera shake
 a11y.disable_damage_shake.description   When your cockpit takes a hit, the screen no longer shakes.
+a11y.disable_lift_jolt.display_name     Disable lift jolt
+a11y.disable_lift_jolt.description      When the lift brings your HERC to the surface at the start of a mission, the screen no longer shakes as it stops.
 install_prompt.window_title    HERCULAN Engine — Find Earthsiege 2
 install_prompt.message         HERCULAN could not find Earthsiege 2. Choose the Earthsiege 2 folder: the one that holds the {0} folder.
 install_prompt.path_hint       Earthsiege 2 folder

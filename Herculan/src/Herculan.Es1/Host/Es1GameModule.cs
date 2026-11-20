@@ -26,8 +26,9 @@ public sealed class Es1GameModule : IGameModule {
 
 	GameIdentity IGameModule.Identity => Identity;
 
-	/// <summary>None of its own: it honors the core's larger font alone (<see cref="Es1ShellMenus"/>).</summary>
-	public IReadOnlyList<A11ySettingDefinition<bool>> AccessibilitySettings => [];
+	/// <inheritdoc/>
+	/// <remarks>Its own are <see cref="Es1A11ySettingDefinitions.All"/>; which of the core's it honors, <see cref="Es1ShellMenus"/> lists.</remarks>
+	public IReadOnlyList<A11ySettingDefinition<bool>> AccessibilitySettings => Es1A11ySettingDefinitions.All;
 
 	public string? FirstOwnOption => _options.FirstOwnOption;
 

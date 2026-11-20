@@ -125,6 +125,8 @@ a11y.disable_damage_flash.display_name Désactiver le flash rouge
 a11y.disable_damage_flash.description Quand votre cockpit est touché, l'écran ne clignote plus en rouge. L'écran tremble toujours.
 a11y.disable_damage_shake.display_name Désactiver le tremblement
 a11y.disable_damage_shake.description Quand votre cockpit est touché, l'écran ne tremble plus. Le flash rouge de dégâts apparaît toujours.
+a11y.disable_lift_jolt.display_name Désactiver la secousse de l'ascenseur
+a11y.disable_lift_jolt.description Quand l'ascenseur amène votre HERC à la surface au début d'une mission, l'écran ne tremble plus à l'arrêt.
 install_prompt.window_title    HERCULAN Engine — Trouver Earthsiege 2
 install_prompt.message         HERCULAN n'a pas trouvé Earthsiege 2. Choisissez le dossier d'Earthsiege 2 : celui qui contient le dossier {0}.
 install_prompt.path_hint       Dossier d'Earthsiege 2

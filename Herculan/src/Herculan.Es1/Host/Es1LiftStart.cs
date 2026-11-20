@@ -1,5 +1,7 @@
 using HercWorks.Core.Data.File.Dyn;
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
+using Herculan.Es1.Settings;
 using Herculan.Es1.Sim;
 using Herculan.Es1.View;
 
@@ -129,6 +131,9 @@ internal static class Es1LiftStart {
 	/// (<see cref="Es1ViewManager.CanvasHeld"/>), while the screen still shows the previous pass, and drawn just before
 	/// <c>Sim_EndFrame</c> shows the new one (<see cref="Es1FrameLoop.DrawCanvas"/>); it holds the ride's last frame through
 	/// the jolt.</para>
+	/// <para><b>This engine's own:</b> under <see cref="Es1A11ySettingDefinitions.DisableLiftJolt"/>, read as the jolt
+	/// starts, its steps are drawn from the generator but not taken, so the screen holds still while the frames, the sound
+	/// and the waits run as retail's.</para>
 	/// <para>With no machine or camera, which retail always has, nothing; with no art, which retail reads unchecked, no
 	/// art and no fill under it, the fill over the whole rect still drawn: engine guards.</para>
 	/// </summary>
@@ -182,8 +187,13 @@ internal static class Es1LiftStart {
 		uint end = clock.Clock + JoltLength;
 		views.SetShakeBand(JoltBand);
 		globals.Sound.Play(JoltSound);
+		bool joltHidden = A11ySettings.Current.GetSettingValue(Es1A11ySettingDefinitions.DisableLiftJolt);
 		do {
-			views.StepShake((ushort)globals.PresentationRandom.Next() % JoltSpread);
+			int step = (ushort)globals.PresentationRandom.Next() % JoltSpread;
+			if (!joltHidden) {
+				views.StepShake(step);
+			}
+
 			frame.RenderFrame();
 			bool waited = false;
 			foreach (var retrace in views.TakeOwedRetraces()) {

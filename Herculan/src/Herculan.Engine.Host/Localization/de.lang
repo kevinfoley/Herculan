@@ -125,6 +125,8 @@ a11y.disable_damage_flash.display_name Vollbild-Blitz deaktivieren
 a11y.disable_damage_flash.description Wenn Ihr Cockpit getroffen wird, blinkt der Bildschirm nicht mehr rot. Der Bildschirm wackelt weiterhin.
 a11y.disable_damage_shake.display_name Kamerawackeln deaktivieren
 a11y.disable_damage_shake.description Wenn Ihr Cockpit getroffen wird, wackelt der Bildschirm nicht mehr. Das rote Schadensaufblitzen erscheint weiterhin.
+a11y.disable_lift_jolt.display_name Ruck des Aufzugs deaktivieren
+a11y.disable_lift_jolt.description Wenn der Aufzug Ihren HERC zu Beginn einer Mission an die Oberfläche bringt, wackelt der Bildschirm beim Anhalten nicht mehr.
 install_prompt.window_title    HERCULAN Engine — Earthsiege 2 suchen
 install_prompt.message         HERCULAN konnte Earthsiege 2 nicht finden. Wählen Sie den Earthsiege-2-Ordner: den Ordner, der den Ordner {0} enthält.
 install_prompt.path_hint       Earthsiege-2-Ordner

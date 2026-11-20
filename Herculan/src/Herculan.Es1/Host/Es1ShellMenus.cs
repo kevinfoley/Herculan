@@ -24,9 +24,10 @@ namespace Herculan.Es1.Host;
 /// </summary>
 public sealed class Es1ShellMenus : IFrontEndMenus {
 	// The accessibility settings ES1 honors: the larger font, which ScaledImGui reads for the bar's own windows, and the
-	// damage flash and shake, which the hit shake reads (Es1HitShake).
+	// damage flash and shake, which the hit shake reads (Es1HitShake), and ES1's own (Es1A11ySettingDefinitions).
 	private static readonly A11ySettingDefinition<bool>[] Accessibility =
-		[A11ySettingDefinitions.LargerFont, A11ySettingDefinitions.DisableDamageFlash, A11ySettingDefinitions.DisableDamageShake];
+		[A11ySettingDefinitions.LargerFont, A11ySettingDefinitions.DisableDamageFlash, A11ySettingDefinitions.DisableDamageShake,
+			.. Es1A11ySettingDefinitions.All];
 
 	private readonly HostMenuBar _menuBar;
 	private readonly TweaksMenu _tweaks;
