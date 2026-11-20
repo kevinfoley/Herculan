@@ -124,6 +124,9 @@ public static class Es1ShellHost {
 		private MappedController? _controller;
 		private int _controllerFrames;
 
+		// The game port over _controller, once the joystick devices are built on it.
+		private Es1ControllerPort? _port;
+
 		public Session(string installRoot, GameContent content, Es1ShellSwitches switches, short exitCode, IAudioBackend audio) {
 			_installRoot = installRoot;
 			_content = content;
@@ -148,6 +151,14 @@ public static class Es1ShellHost {
 				using var window = new FrontEndWindow(host, Title, screenshotPath, imguiFontPath, imguiItalicFontPath, dataDirectory,
 					menus);
 				window.Load += (gl, input) => Guard(() => OnLoad(window, gl, input, keepWindow: screenshotPath != null));
+				// The Controller window's save is read from then on, as over a mission.
+				menus.ControllerSaved += file => {
+					if (_port != null) {
+						_port.Configure(file);
+					} else {
+						_controller?.Reset(file);
+					}
+				};
 				window.Update += delta => {
 					if (!_asserted) {
 						_devices.Sound.UpdateDriver();
@@ -261,6 +272,7 @@ public static class Es1ShellHost {
 			var port = Es1ControllerPort.Over(controller);
 			port.Muted = () => window.MenuBarUp;
 			_devices.CreateJoysticks(port);
+			_port = port;
 		}
 
 		/// <summary>

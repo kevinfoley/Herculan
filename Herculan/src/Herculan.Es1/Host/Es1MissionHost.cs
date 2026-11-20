@@ -530,6 +530,8 @@ public static class Es1MissionHost {
 					HostMenusMute = () => pauseMenu.Showing || radials.MutesStick,
 				};
 				disposables.Add(simulation);
+				var started = simulation;
+				menuLayer.Menus.ControllerSaved += started.Configure;
 			} else if (keyboard is { } device) {
 				// With no simulator, the full-screen toggle and the menu bar read the keyboard themselves. [Esc] quits unless the menu bar
 				// handles it (Es1HostKeyboard.MenuBarTakes).

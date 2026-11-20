@@ -36,7 +36,7 @@ sealed class ShellMenus : IFrontEndMenus {
 			CustomMissionsWindow? customMissions = null) {
 		_localization = session.Localization;
 		_controller = new ControllerWindow(session.Localization, () => dataDirectory, Es2ControllerRows.Create());
-		_controller.Saved += file => PadPointerSettingsChanged?.Invoke(file.Mouse);
+		_controller.Saved += file => ControllerSaved?.Invoke(file);
 		_tweaks = new TweaksMenu(TweakSettings.Current, session.Localization);
 		_settings = new SettingsWindow(session, () => RequestClose(restartRequested));
 		var game = new GameMenu(session.Localization, session.Games, Es2GameModule.Identity.Game,
@@ -48,7 +48,8 @@ sealed class ShellMenus : IFrontEndMenus {
 
 	public event Action? CloseRequested;
 
-	public event Action<GamepadMouseSettings>? PadPointerSettingsChanged;
+	/// <inheritdoc/>
+	public event Action<JoystickMapFile>? ControllerSaved;
 
 	/// <inheritdoc/>
 	public LocalizationTable Localization => _localization;

@@ -106,6 +106,16 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	}
 
 	/// <summary>
+	/// Reads through <paramref name="file"/>'s maps from now on, as the Controller window saves them: the device and its map
+	/// are picked again (<see cref="MappedController.Reset"/>), and its Custom profile read again. The joystick devices keep
+	/// the axes they detected as they were built (<see cref="AxisAnswers"/>), as retail's do until they are built again.
+	/// </summary>
+	public void Configure(JoystickMapFile file) {
+		_controller?.Reset(file);
+		_custom = null;
+	}
+
+	/// <summary>
 	/// Whether <paramref name="controller"/> has a device with a known map that is in Custom mode: what <see cref="Custom"/>
 	/// answers a profile for, and what the shell's CONTROLS panel asks of the device the next mission would read.
 	/// </summary>

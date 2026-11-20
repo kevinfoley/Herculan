@@ -115,6 +115,18 @@ public sealed class Es1SimulationStart : IDisposable {
 	}
 
 	/// <summary>
+	/// Reads the controller through <paramref name="file"/>'s maps from now on, as the menu bar's Controller window saves
+	/// them (<see cref="Es1ControllerPort.Configure"/>), before the runner is built as after.
+	/// </summary>
+	public void Configure(JoystickMapFile file) {
+		if (Port is { } port) {
+			port.Configure(file);
+		} else {
+			_controller.Reset(file);
+		}
+	}
+
+	/// <summary>
 	/// Whether <paramref name="controller"/> can be detected on host frame <paramref name="frame"/>, counted from 1: from
 	/// the second frame, once no controller is attached or the picked one's map is known, or past
 	/// <see cref="MaxWaitFrames"/> (the class summary says why).

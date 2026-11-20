@@ -57,7 +57,7 @@ public sealed class FrontEndWindow : IDisposable {
 		_window = new EngineWindow(window, title);
 		_padPointer.Settings = JoystickMapFile.LoadForPlayer(dataDirectory).Mouse;
 		_menus = menus;
-		_menus.PadPointerSettingsChanged += settings => _padPointer.Settings = settings;
+		_menus.ControllerSaved += file => _padPointer.Settings = file.Mouse;
 		_menus.CloseRequested += CloseAfterFrame;
 		_window.FocusChanged += focused => {
 			HasFocus = focused;

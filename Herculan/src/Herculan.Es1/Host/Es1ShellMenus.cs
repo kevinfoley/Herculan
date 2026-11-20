@@ -16,8 +16,8 @@ namespace Herculan.Es1.Host;
 /// Metaltech: Earthsiege's menus over its <see cref="FrontEndWindow"/>, over the shell and over a mission:
 /// HERCULAN's own <see cref="HostMenuBar"/> with its "Game" menu, the windows that work the same in either game,
 /// Accessibility and About, its own Tweaks, the <see cref="ErrorDialog"/>, its own Settings (<see cref="Es1SettingsWindow"/>),
-/// the Controller window over what the game port reads (<see cref="Es1ControllerRows"/>), whose save the next mission
-/// reads, a mission in progress keeping the map it started with, and the Keys window over ES1's own keys
+/// the Controller window over what the game port reads (<see cref="Es1ControllerRows"/>), whose save the shell or the
+/// mission under the bar reads from then on (<see cref="ControllerSaved"/>), and the Keys window over ES1's own keys
 /// (<see cref="Es1KeyList"/>). Editor is greyed, since it is built on Earthsiege 2's missions; Custom Missions is left out. There is no welcome and no automatic update check.
 /// Over a mission, as over Earthsiege 2's, the bar has no "Game" menu and Settings greys the install and the disc, since
 /// each would end the mission unfinished.
@@ -54,7 +54,7 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 		// The install's copy of the controller map seeds the player's while it is missing, as at a mission start.
 		_controller = new ControllerWindow(localization,
 			() => CaseInsensitivePath.Combine(installRoot, Es1MissionFiles.DataFolder), Es1ControllerRows.Create());
-		_controller.Saved += file => PadPointerSettingsChanged?.Invoke(file.Mouse);
+		_controller.Saved += file => ControllerSaved?.Invoke(file);
 		_menuBar = new HostMenuBar(localization, keys: Es1KeyList.All, tweaks: _tweaks, settings: settings, controller: _controller,
 			accessibilitySettings: Accessibility, game: game);
 	}
@@ -62,7 +62,8 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 	/// <summary>Raised by "Switch to" and by a change in Settings, the items that end the shell's turn.</summary>
 	public event Action? CloseRequested;
 
-	public event Action<GamepadMouseSettings>? PadPointerSettingsChanged;
+	/// <inheritdoc/>
+	public event Action<JoystickMapFile>? ControllerSaved;
 
 	/// <inheritdoc/>
 	public LocalizationTable Localization => _localization;

@@ -16,8 +16,12 @@ public interface IFrontEndMenus : IDisposable {
 	/// </summary>
 	event Action? CloseRequested;
 
-	/// <summary>Raised when the menus save new settings for the gamepad's pointer (<see cref="GamepadPointer.Settings"/>).</summary>
-	event Action<GamepadMouseSettings>? PadPointerSettingsChanged;
+	/// <summary>
+	/// Raised when the menus' Controller window saves the player's maps (<see cref="Menus.ControllerWindow.Saved"/>): the
+	/// gamepad's pointer (<see cref="GamepadPointer.Settings"/>) and whatever the host reads a controller through follow
+	/// them from then on.
+	/// </summary>
+	event Action<JoystickMapFile>? ControllerSaved;
 
 	/// <summary>The language the menus speak, which the host's own layers over the front end, such as the <see cref="Menus.PauseMenu"/>, speak too.</summary>
 	LocalizationTable Localization { get; }
