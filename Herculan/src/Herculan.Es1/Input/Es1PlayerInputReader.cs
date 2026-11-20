@@ -90,8 +90,18 @@ public sealed class Es1PlayerInputReader {
 	/// it is in Original mode, when option 7's configuration reads the stick as retail does. While it answers a frame, a
 	/// live read takes the stick's axes, its trigger and buttons 4–7 from it in place of the live block's and the
 	/// configuration's (steps 3, 6 and 7). A throttle the profile reads as a lever (<see cref="Es1CustomFrame.LeverTarget"/>)
-	/// goes in as the rate that takes <see cref="PlayerThrottle"/> to the lever's position
+	/// goes in as the rate that takes <see cref="PlayerThrottle"/> to the lever's position in one tick
 	/// (<see cref="Sim.Es1Locomotion.LeverAxis"/>), so the simulation and a recording take a rate, as retail's do.
+	///
+	/// <para>Two sign rules that read the throttle axis are made to read the lever instead, by negating the steering in
+	/// step 7 on the frames where they would differ, so the simulation, step 10 and a tape's playback of the frame, which
+	/// test the recorded rate, give the lever's result. The throttle's steer rule takes the steering's sign from the axis
+	/// past a deflection of <c>0x3c</c> (<see cref="Sim.Es1Locomotion.SteerSignFromAxis"/>), which for a lever's rate
+	/// would be the direction the lever last moved; a lever's steering keeps the direction of travel's sign. And
+	/// <c>keyjoy.cfg</c>'s <c>Backturn</c> goes by the lever's direction, as Earthsiege 2's does with its lever
+	/// (docs/retail/simulation/joystick-input.md#the-keyjoy-switches): it negates the steering while the lever puts the
+	/// throttle in reverse, where step 10 negates it while the throttle axis is positive, which for a lever's rate is
+	/// only while the lever is being pulled back.</para>
 	/// </summary>
 	public Func<Es1CustomFrame?>? Custom { get; set; }
 
@@ -231,13 +241,23 @@ public sealed class Es1PlayerInputReader {
 			// An end-to-end lever runs the way ThrottleLeverMode says, reverse under Ctrl+1's −1; a bipolar lever's own sign
 			// is its direction, which the mode's range then cuts.
 			short leverMode = Controls.ThrottleLeverMode;
-			short? leverAxis = lever is { } target
-				? Sim.Es1Locomotion.LeverAxis(PlayerThrottle!(), leverMode < 0 && !custom!.BipolarLever ? -target : target, leverMode)
+			int? leverThrottle = lever is { } target ? leverMode < 0 && !custom!.BipolarLever ? -target : target : null;
+			short? leverAxis = leverThrottle is { } wanted
+				? Sim.Es1Locomotion.LeverAxis(PlayerThrottle!(), wanted, leverMode)
 				: null;
 			var (axes, buttons) = custom != null
 				? ChooseCustom(kb, stick, keyButtons, sourceButtons[0], throttleKeys, leverAxis)
 				: Es1StickConfigurations.Choose(_preferences.StickConfiguration, mode, _preferences.ThirdAxis, throttleKeys,
 					new Es1InputSources(kb, stick, keyButtons, live.StickButtons[..4]));
+			if (!throttleKeys && leverThrottle is { } leverAt) {
+				// The steering's sign by the direction of travel, and Backturn by the lever's direction, rather than by the
+				// lever's rate (Custom).
+				short rate = axes[Es1PlayerInputBlock.Throttle];
+				bool backturn = _keyjoy.BackturnReversed && rate > 0 != leverAt < 0;
+				if (backturn != Sim.Es1Locomotion.SteerSignFromAxis(PlayerThrottle!(), rate, leverMode)) {
+					axes[Es1PlayerInputBlock.Steering] = (short)-axes[Es1PlayerInputBlock.Steering];
+				}
+			}
 			latches.Apply(buttons);
 			Array.Copy(axes, block.Axes, 4);
 			Array.Copy(buttons, block.Buttons, 4);

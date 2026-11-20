@@ -107,21 +107,20 @@ public sealed class Es1Locomotion {
 	}
 
 	/// <summary>
-	/// <b>This engine's own:</b> the throttle axis that moves <paramref name="throttle"/> toward a lever's
-	/// <paramref name="target"/> through <see cref="ApplyThrottleInput"/>'s rate, for a Custom profile's lever
+	/// <b>This engine's own:</b> the throttle axis that moves <paramref name="throttle"/> onto a lever's
+	/// <paramref name="target"/> in one call of <see cref="ApplyThrottleInput"/>, for a Custom profile's lever
 	/// (<see cref="Input.Es1PlayerInputReader.Custom"/>); retail reads every throttle axis as a rate. The target is cut to the
-	/// lever mode's range, the step to what an axis of <see cref="SteerByThrottleDeflection"/> gives, so the steer's sign
-	/// stays the throttle's while the lever moves, and the axis is the one whose step is that, negated for a negative
-	/// mode as <see cref="ApplyThrottleInput"/> negates it back.
+	/// lever mode's range, and the axis is the one whose step is the whole way there, negated for a negative mode as
+	/// <see cref="ApplyThrottleInput"/> negates it back. A step across zero stops there for a tick, as every throttle
+	/// change of sign does, and the speed the throttle asks for is reached at the chassis' own step.
 	/// </summary>
 	/// <param name="target">Where the lever puts the throttle, −<see cref="ThrottleFull"/> to <see cref="ThrottleFull"/>.</param>
 	public static short LeverAxis(short throttle, int target, short throttleLeverMode) {
 		int upper = throttleLeverMode < 0 ? 0 : ThrottleFull;
 		int lower = throttleLeverMode < 1 ? -ThrottleFull : 0;
-		int most = SimMath.Q8MultiplyRounded(SteerByThrottleDeflection, ThrottleRate);
-		int step = Math.Clamp(Math.Clamp(target, lower, upper) - throttle, -most, most);
+		int step = Math.Clamp(target, lower, upper) - throttle;
 
-		// The rate is under 1, so every step up to the largest has an axis; the nearest by division, then walked onto it.
+		// The rate is under 1, so every step has an axis; the nearest by division, then walked onto it.
 		int opening = step * 0x100 / ThrottleRate;
 		while (SimMath.Q8MultiplyRounded(opening, ThrottleRate) < step) {
 			opening++;
@@ -132,6 +131,17 @@ public sealed class Es1Locomotion {
 		}
 
 		return (short)(throttleLeverMode < 0 ? opening : -opening);
+	}
+
+	/// <summary>
+	/// <b>This engine's own:</b> whether <see cref="ApplyThrottleInput"/>'s steer rule gives <paramref name="throttleAxis"/>
+	/// the other sign from the one it gives a centred axis: past <see cref="SteerByThrottleDeflection"/> the axis' direction
+	/// decides it, and within it the throttle's. A lever's axis (<see cref="LeverAxis"/>) has its steering negated in advance
+	/// where this answers true, so a lever's steering always takes its sign from the direction of travel.
+	/// </summary>
+	public static bool SteerSignFromAxis(short throttle, short throttleAxis, short throttleLeverMode) {
+		short axis = throttleLeverMode < 0 ? (short)-throttleAxis : throttleAxis;
+		return Magnitude(axis) > SteerByThrottleDeflection && axis < 1 != throttle >= 0;
 	}
 
 	/// <summary>
