@@ -14,7 +14,7 @@ Reimplementation of Earthsiege 2 (1996) in C#, reverse-engineered from the retai
 Build: `dotnet build Herculan/HerculanEngine.sln` (engine) and `Herculan/HercWorksMDK.sln` (toolkit).
 Tests: `dotnet test Herculan/HerculanEngine.sln`. Keep both at 0 warnings.
 
-Questions about the retail missions and chassis — which place a structure, mech or flyer type, what tests or writes a campaign flag, what orders a group carries, per-row record counts, a chassis record field's value per chassis, an ES1 cockpit layout (`.GAU`) block's `int32` per chassis — go to `Herculan/src/HercWorks.Query` (`--help`), not a throwaway scanner. It reads through HercWorks.Core, so a wrong answer is a Core bug to fix there.
+Questions about what the retail mission, chassis and cockpit-layout files contain go to `Herculan/src/HercWorks.Query` (`--help` lists what it answers), not a throwaway scanner. It reads through HercWorks.Core, so a wrong answer is a Core bug to fix there.
 
 ## Reading files
 
@@ -25,8 +25,7 @@ Read whole files with the Read tool, never `cat`/`head -n <big>`/`sed -n 'A,Bp'`
 The docs state what is true now. How the project got there belongs in `git log`.
 
 1. **Never narrate a correction.** No "previously stated", "an earlier pass of this doc", "corrected
-   2026-08-21", "this supersedes", "now disproved", "SOLVED". When a finding invalidates existing
-   text, edit that text; put what changed in the commit message.
+   2026-08-21". When a finding invalidates existing text, edit that text; put what changed in the commit message.
 
 2. **Re-read the whole doc before adding to it.** If what you are about to write contradicts a
    passage already there, fix that passage. Never let both stand.
@@ -51,12 +50,11 @@ The docs state what is true now. How the project got there belongs in `git log`.
 8. **Open work lives in one final `## Open` section**, the last section of the doc, as top-level
    bullets labelled `**Unported:**` (a retail feature this engine lacks) or `**Open:**` (anything
    else unfinished: incomplete RE, an unconfirmed reading, an unexplained field). The user also
-   marks items `**Deferred:**` (put off until later) or `**Accepted:**` (accepted as is); only the
-   user applies those two, and work on a doc's open tasks skips them. Those are the only status
-   terms — never "not ported", "untraced", "unresolved", "undecoded". The body
-   states what is known and may link to [Open](#open); it carries no tasks and no hedges
-   ("plausibly", "unconfirmed") — a hypothesis is an Open item. `KNOWN_ISSUES_ES2.md` and `ROADMAP.md`
-   keep their own structure.
+   marks items `**Deferred:**` or `**Accepted:**`; only the user applies those two, and work on 
+   a doc's open tasks skips them. Those are the only status terms — never "not ported", "untraced",
+   "unresolved", "undecoded". The body states what is known and may link to [Open](#open); it 
+   carries no tasks and no hedges ("plausibly", "unconfirmed") — a hypothesis is an Open item. 
+   `KNOWN_ISSUES_ES2.md` and `ROADMAP.md` keep their own structure.
 
 9. **Retail docs describe retail.** `docs/retail/` says what the original does, not what HERCULAN
    does. The engine's types, file layout, tweaks and
@@ -99,7 +97,7 @@ a <param> tag for each param, rather than describing params inline in the summar
   (`tools/scripts/es2_unnamed_callees.py --caller <Name>` lists them). Don't read further down to do
   it: a callee you can describe from its own body gets a name for what it does; one you can't gets no
   entry and stays in the backlog.
-- **Stamp what you settle, and trust stamps.** When a task reads a function's whole body, check its `known_symbols` description against it, correct it, and stamp it with `tools/scripts/es2_stamp.py` (what a stamp covers: `tools/ghidra_scripts/README.md`, "Verification stamps"). A stamped description is the answer, and `Check-Symbol.ps1` shows it; it is not re-derived. An unstamped description, and doc prose, is a lead, re-read only when the current task depends on it, so the stamped set grows with the work rather than through an audit. A stamp never carries a search result: whatever its positive control, a sweep that found nothing is written as what was searched and found nothing ("no caller found by `es2_xref`"), an Open item, in the description and the doc alike. Run `es2_stamp.py check` after regenerating `tools/analysis_out/`. Before reporting a task, every function the task's doc lines, descriptions and code comments describe is one you read this session or one that is stamped; the doc-lint hook names the unstamped ones in each doc edit, which it sees only when the edit goes through Edit or Write, so a scripted doc edit is followed by a `doc_lint.py` run. When a body you read contradicts something you wrote earlier in the task, correct it then.
+- **Stamp what you settle, and trust stamps.** When a task reads a function's whole body, check its `known_symbols` description against it, correct it, and stamp it with `tools/scripts/es2_stamp.py` (what a stamp covers: `tools/ghidra_scripts/README.md`, "Verification stamps"). Only Opus and Fable agents create stamps; an agent on any other model corrects the description and leaves it unstamped. Every agent reads and trusts stamps. A stamped description is the answer, and `Check-Symbol.ps1` shows it; it is not re-derived. An unstamped description, and doc prose, is a lead, re-read only when the current task depends on it, so the stamped set grows with the work rather than through an audit. A stamp never carries a search result: whatever its positive control, a sweep that found nothing is written as what was searched and found nothing ("no caller found by `es2_xref`"), an Open item, in the description and the doc alike. Run `es2_stamp.py check` after regenerating `tools/analysis_out/`. Before reporting a task, every function the task's doc lines, descriptions and code comments describe is one you read this session or one that is stamped; the doc-lint hook names the unstamped ones in each doc edit, which it sees only when the edit goes through Edit or Write, so a scripted doc edit is followed by a `doc_lint.py` run. When a body you read contradicts something you wrote earlier in the task, correct it then.
 - How hard to chase a negative claim is a judgement on what overturning it would change. One a port rests on gets the sweep and positive control below; one the data already settles (a field that is -1 in every retail file) needs nothing more; one that turns up while reading for another reason is recorded when it does.
 - Say plainly when something is this engine's invention rather than read from the binary, so it is
   not later mistaken for vanilla behaviour.
@@ -120,3 +118,4 @@ a <param> tag for each param, rather than describing params inline in the summar
   empty in the image, so it has no `E8` caller, no `E9` tail jump and no raw dword occurrence
   anywhere in the file. `Subsystem_RunPhase` (`00401d94`) calls its table by phase id once a frame.
   Check for a nearby `RegisterSubsystemLoader` before concluding.
+- When a retail bug is undefined behaviour (reading uninitialised memory, past the end of an array, etc.), record what it reads and why that is undefined, and stop there. Don’t open a task asking the user to test it in retail. The port picks a defined behaviour and lists the divergence in a comment and in KNOWN_ISSUES_ES2.md. The exception is a bug that is both frequent and visible in play: that one gets an Open: item to test in retail.
