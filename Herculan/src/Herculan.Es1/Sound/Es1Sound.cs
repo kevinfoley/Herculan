@@ -123,11 +123,15 @@ public sealed class Es1Sound {
 	/// same statements, as <c>Profile_GetString</c> and <c>Profile_GetInt</c> read it (<see cref="Es1Profile"/>):
 	/// <c>[SoundFX]</c>'s <c>Driver#</c>, an empty one 0 and any other through <c>sscanf</c>'s <c>%X</c>, <c>IRQ</c> and
 	/// <c>DMA</c> through <c>atol</c> with a default of 0, and its <c>PortAddress</c> and <c>[Music]</c>'s <c>Driver#</c> and
-	/// <c>PortAddress</c> through <c>%X</c>. A file that does not open reads as empty.
+	/// <c>PortAddress</c> through <c>%X</c>.
 	///
-	/// <para>PLACEHOLDER: a key the file lacks, where <c>Profile_GetString</c> copies its default argument 0 as a string,
-	/// reads as empty, and a value <c>%X</c> assigns nothing from, where retail passes on what the stack held, reads 0
-	/// (main-loop.md's Open). The setup writes every key.</para>
+	/// <para>This engine's choice, the user's: a value from which <c>%X</c> scans no digit, as the setup's one-space
+	/// <c>PortAddress</c> for no MIDI device is, reads as the image's value (<see cref="Es1SoundDevices.ImageDefaults"/>),
+	/// except an empty <c>[SoundFX]</c> <c>Driver#</c>, which reads 0 as retail's does. Retail passes on what its stack slot
+	/// held (docs/es1/simulation/main-loop.md#open). A key or section the file lacks, as each is when the file does not
+	/// open, reads the image's value too, so a missing file gives the image's Sound Blaster; there retail's
+	/// <c>Profile_GetString</c> reads its null default at address 0 and faults
+	/// (docs/es1/formats/profile-files.md#reading-a-value).</para>
 	/// </summary>
 	public static Es1SoundDevices ReadDevices(string installRoot) {
 		string path = CaseInsensitivePath.Combine(installRoot, Es1ResourceCfg.FileName);
@@ -139,17 +143,18 @@ public sealed class Es1Sound {
 		}
 
 		var profile = Es1Profile.Parse(bytes);
-		string digital = profile.GetString(Es1ResourceCfg.SoundFx, Es1ResourceCfg.Driver) ?? "";
+		var defaults = Es1SoundDevices.ImageDefaults;
+		string? digital = profile.GetString(Es1ResourceCfg.SoundFx, Es1ResourceCfg.Driver);
 		return new Es1SoundDevices(
-			MidiPort: Hex(Es1ResourceCfg.Music, Es1ResourceCfg.Port),
-			Port: Hex(Es1ResourceCfg.SoundFx, Es1ResourceCfg.Port),
+			MidiPort: Hex(Es1ResourceCfg.Music, Es1ResourceCfg.Port, defaults.MidiPort),
+			Port: Hex(Es1ResourceCfg.SoundFx, Es1ResourceCfg.Port, defaults.Port),
 			Dma: (byte)profile.GetInt(Es1ResourceCfg.SoundFx, Es1ResourceCfg.Dma, 0),
 			Irq: (byte)profile.GetInt(Es1ResourceCfg.SoundFx, Es1ResourceCfg.Irq, 0),
-			MidiDevice: Hex(Es1ResourceCfg.Music, Es1ResourceCfg.Driver),
-			DigitalDevice: digital.Length == 0 ? (ushort)0 : Hex(Es1ResourceCfg.SoundFx, Es1ResourceCfg.Driver));
+			MidiDevice: Hex(Es1ResourceCfg.Music, Es1ResourceCfg.Driver, defaults.MidiDevice),
+			DigitalDevice: digital?.Length == 0 ? (ushort)0 : Hex(Es1ResourceCfg.SoundFx, Es1ResourceCfg.Driver, defaults.DigitalDevice));
 
-		ushort Hex(string section, string key) =>
-			Es1Profile.TryScanHex(profile.GetString(section, key) ?? "", out uint value) ? (ushort)value : (ushort)0;
+		ushort Hex(string section, string key, ushort fallback) =>
+			Es1Profile.TryScanHex(profile.GetString(section, key) ?? "", out uint value) ? (ushort)value : fallback;
 	}
 
 	/// <summary>

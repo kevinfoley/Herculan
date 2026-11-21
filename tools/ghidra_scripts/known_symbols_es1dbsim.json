@@ -31060,13 +31060,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Profile_GetString",
-      "description": "(file, size, buffer, default, key, section) in stack order, callee-cleaned: Windows' GetPrivateProfileString with its arguments in that order reversed. Loads the file as Profile_GetInt (00050ffc) does. With the key found in the section, copies what follows the line's first '=' into buffer and returns its length; with key null, copies each line of the section, each ended by a 0, into buffer and returns the length less 1, or, when they reach size - 1 bytes, ends the buffer with two 0 bytes and returns size - 1. Otherwise, and when section or file is null, copies default into buffer and returns its length. Only the section listing is held to size.",
+      "description": "(file, size, buffer, default, key, section) in stack order, callee-cleaned: Windows' GetPrivateProfileString with its arguments in that order reversed. Loads the file as Profile_GetInt (00050ffc) does. With the key found in the section, copies what follows the line's first '=' into buffer and returns its length; with key null, copies each line of the section, each ended by a 0, into buffer and returns the length less 1, or, when they reach size - 1 bytes, ends the buffer with two 0 bytes and returns size - 1. Otherwise, and when section or file is null, copies default into buffer and returns its length, with no test of default for null, so a null default is read at address 0, which the image's data selector faults on. Only the section listing is held to size.",
       "source": "Herculan/docs/es1/formats/profile-files.md#reading-a-value; ES1DBSIM decompile at 000511a4",
       "verified": {
         "bytes": "000511a4+722",
         "sha1": "43657638983f",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {
