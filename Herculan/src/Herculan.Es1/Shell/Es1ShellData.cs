@@ -374,8 +374,14 @@ public sealed class Es1ShellData {
 	/// the word copied over the last entry, its paths kept. The entry returned is made the log's current one and
 	/// <see cref="SelectedEntry"/>. The name is copied with its NUL over the entry's buffer, whose bytes past it stay. With
 	/// no log, as after a file that did not read, a new one is started here, an engine guard.
+	/// <para>With <see cref="FixCareerSaves"/>, a name with no match always gets a new last entry, numbered by
+	/// <see cref="FreeCareerNumber"/>, and the log is written at once (<see cref="WriteCareersLog()"/>).</para>
 	/// </summary>
+	/// <param name="word">The word <c>+0x40</c> matched with the name; <c>Career_New</c> passes 0.</param>
+	/// <param name="name">The career's name as typed.</param>
+	/// <returns>The entry the career's files are named by.</returns>
 	public Es1CareerLogEntry FindOrAdd(short word, string name) {
+		bool fix = FixCareerSaves;
 		if (name.Length == 0) {
 			name = Text is { Length: > UntitledLine } text ? text[UntitledLine] : "UNTITLED";
 		}
@@ -390,9 +396,9 @@ public sealed class Es1ShellData {
 		} else {
 			index = (short)Array.FindIndex(entries, entry =>
 				string.Equals(Es1CareerLogEntry.Text(entry.Name), name, StringComparison.OrdinalIgnoreCase) && entry.Word == word);
-			if (index < 0 && !_careerAdded) {
+			if (index < 0 && (fix || !_careerAdded)) {
 				index = (short)entries.Length;
-				log.Entries = [.. entries, NewEntry(index)];
+				log.Entries = [.. entries, NewEntry(fix ? FreeCareerNumber(entries) : index)];
 				_careerAdded = true;
 			} else if (index < 0) {
 				index = (short)(entries.Length - 1);
@@ -402,6 +408,10 @@ public sealed class Es1ShellData {
 
 		SelectedEntry = index;
 		log.Current = index;
+		if (fix) {
+			WriteCareersLog();
+		}
+
 		return log.Entries[index];
 
 		Es1CareerLogEntry NewEntry(int number) {
@@ -416,6 +426,38 @@ public sealed class Es1ShellData {
 			CopyText(entry.Name, name);
 			entry.Word = word;
 		}
+	}
+
+	/// <summary>
+	/// Whether a new career gets files of its own and is in <c>car\names.log</c> from the moment it is made. Off, retail's
+	/// <c>CareerLog_FindOrAdd</c> and <c>CareerLog_Write</c> (docs/es1/formats/career-log-and-player-mec.md#adding-a-career):
+	/// a new career's files are numbered by the count of careers, so after a delete they are the last career's; a second
+	/// new career before the shell next loads the log takes the first one's entry and files; and the log is written only
+	/// at the shell's shutdown and by a delete. <b>This engine's own</b>, from
+	/// <see cref="Settings.Es1TweakSettingDefinitions.FixCareerSaves"/>.
+	/// </summary>
+	public static bool FixCareerSaves =>
+		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixCareerSaves);
+
+	/// <summary>
+	/// <b>This engine's own:</b> the least <c>n</c> from 0 whose <c>CAR\CAR_</c><c>n</c><c>.CAR</c> and
+	/// <c>CAR\CAR_</c><c>n</c><c>.MEC</c> no entry of <paramref name="entries"/> names, ignoring case.
+	/// </summary>
+	/// <param name="entries">The log's entries.</param>
+	/// <returns>The number for a new career's files.</returns>
+	private static int FreeCareerNumber(Es1CareerLogEntry[] entries) {
+		var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		foreach (var entry in entries) {
+			used.Add(Es1CareerLogEntry.Text(entry.CareerFile));
+			used.Add(Es1CareerLogEntry.Text(entry.HangarFile));
+		}
+
+		int number = 0;
+		while (used.Contains($"CAR\\CAR_{number}.CAR") || used.Contains($"CAR\\CAR_{number}.MEC")) {
+			number++;
+		}
+
+		return number;
 	}
 
 	/// <summary>

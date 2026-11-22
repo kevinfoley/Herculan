@@ -109,6 +109,8 @@ tweak.es1_drop_disabled_order_target.display_name  Squadmates stop shooting disa
 tweak.es1_drop_disabled_order_target.description  Your squadmates and other allied HERCs move on once a HERC from the enemy group they were ordered against is disabled, as in Earthsiege 2. In the original game they keep firing at a disabled HERC from that group until it is destroyed.
 tweak.es1_wingman_takes_lead.display_name  Wingman takes over a flight
 tweak.es1_wingman_takes_lead.description  When the lead aircraft of a flight is shot down, the next aircraft takes the lead and carries on its attack runs. In the original game the wingman keeps trying to hold station on the wreck and circles tightly in place until its target is destroyed.
+tweak.es1_fix_career_saves.display_name  Fix career save bugs
+tweak.es1_fix_career_saves.description  Each new career gets save files of its own and is added to the career list as soon as you create it. In the original game a career created after deleting one saves over the last career's files, a second career created before you start a mission replaces the first, and the career list is only saved when the game leaves the menus.
 tweaks.title                   Tweaks
 tweaks.description             Tweaks alter game behavior, generally either to fix bugs or provide quality-of-life enhancements. For the closest-to-vanilla experience (bugs included), click "None" to disable all tweaks.
 tweaks.note                    Some minor cosmetic bugs and potential crashes are not reproduced in HERCULAN. Support for modern input devices and alternate control schemes is always available via the Controller menu.

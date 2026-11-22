@@ -37,7 +37,7 @@ An entry is written from memory whole, so the bytes after each name's NUL are wh
 3. With no match and the byte `+8` clear, it fills entry *n*, the count, as in step 1 with the paths `CAR\CAR_`*n*`.CAR` and `CAR\CAR_`*n*`.MEC`, adds 1 to the count, sets the byte, and makes *n* current.
 4. With no match and the byte set, it copies the name and the word over the last entry, keeping its paths, and makes it current.
 
-So the shell adds at most one career between a load and the next, and a later new career overwrites that one's name. `es2_xref.py` finds one call, from `Career_New`, which keeps the entry at the roster's `+1` and opens its two paths.
+So the shell adds at most one career between a load and the next, and a later new career overwrites that one's name and is written to that one's files. The number in a new entry's paths is the count, not a number the entries leave free, so after a delete ([writing](#writing)) the next new career is given the paths of the last entry: with the careers of `CAR_0`, `CAR_1` and `CAR_2` and the first deleted, it is `CAR_2`, and two entries then name the same files. The log in the file changes only at the writes below, so a career made since the shell started is missing from `names.log` until the shell's shutdown, which a mission's start also runs ([the ways out](../shell/startup.md#the-ways-out)). `es2_xref.py` finds one call, from `Career_New`, which keeps the entry at the roster's `+1` and opens its two paths.
 
 ### Writing
 
