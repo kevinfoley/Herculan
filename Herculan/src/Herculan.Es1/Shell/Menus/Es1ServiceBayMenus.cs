@@ -127,9 +127,18 @@ public sealed class Es1ServiceBayMenu : Es1Menu {
 	/// (<see cref="Es1CareerRoster.AdvanceCareer"/>); <c>Career_StartMission</c>(roster, 0); <c>Career_Save</c>(roster, the
 	/// roster's dword <c>+7</c>); <c>Shell_PrepareMission</c>; and when the record its word <c>+7</c> then names stands at
 	/// position <c>+8</c> 0, the first of a new campaign, the message box's kind 5 and the target 1710.
+	/// <para>With <see cref="CareerOverStops"/>, a career at its end goes to CAREER OVER instead and stays as it is.</para>
 	/// </summary>
+	/// <param name="context">The menus' shared state.</param>
+	/// <param name="message">The message, whose target is changed to the screen to open.</param>
 	public static void MoveToNextMission(Es1MenuContext context, ref Es1MenuMessage message) {
 		var roster = context.Mission.Roster;
+		if (CareerOverStops && (roster.PeekNextCampaign(roster.CurrentRecord) & 0xff) is 0xff or 0x63) {
+			context.Screens.ReturnScreen = AfterScreen;
+			message = message with { Target = Es1KIAWarningAlert.CareerOverScreen };
+			return;
+		}
+
 		context.Screens.ReturnScreen = Career;
 		roster.CurrentRecord.Word4 = Screen;
 		roster.AdvanceCareer();
@@ -141,6 +150,17 @@ public sealed class Es1ServiceBayMenu : Es1Menu {
 			message = message with { Target = AfterScreen };
 		}
 	}
+
+	/// <summary>
+	/// Whether NEXT MISSION > on a career at its end, where <see cref="Es1CareerRoster.PeekNextCampaign"/>'s low byte is
+	/// <c>0xff</c> or <c>0x63</c>, opens CAREER OVER (1260), whose DONE returns to the bay, in place of moving the career on.
+	/// Off, retail's: the career is moved to campaign 99 or −1, which the battle set does not hold
+	/// (docs/es1/shell/between-missions.md#moving-on), and this engine then loads the last mission again
+	/// (<see cref="Es1CareerRoster"/>'s mission-name guard). <b>This engine's own</b>, from
+	/// <see cref="Settings.Es1TweakSettingDefinitions.CareerOverStops"/>.
+	/// </summary>
+	public static bool CareerOverStops =>
+		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.CareerOverStops);
 
 	/// <summary>
 	/// BRIEFING, <c>0002d4a6</c> (docs/es1/shell/between-missions.md#briefing): the word <c>+4</c> of the roster's record its

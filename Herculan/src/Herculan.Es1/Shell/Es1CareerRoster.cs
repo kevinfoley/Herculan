@@ -585,7 +585,8 @@ public sealed class Es1CareerRoster {
 	/// one name list (<c>StrList_Read</c>), and the name <c>StrList_PickRandom</c> (<see cref="Es1ShellRandom.PickRandom"/>)
 	/// draws from it is copied over the position's name and returned. Retail reads past its arrays for a campaign, position
 	/// or name that is not there and reads what a missing list's stream gives; here each is reported and gives null, engine
-	/// guards.
+	/// guards. A career moved past its end, campaign 99 or −1, takes that path (docs/es1/shell/between-missions.md#moving-on),
+	/// so its mission path stays the last mission's and that mission loads again.
 	/// </summary>
 	private string? GetMissionName(int outcome, short position, short campaign) {
 		if (_data.BattleSet is not { } set || campaign < 0 || campaign >= set.Campaigns.Length

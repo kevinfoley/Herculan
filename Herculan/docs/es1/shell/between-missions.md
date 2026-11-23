@@ -145,6 +145,8 @@ On every path it then calls `CareerRecord_AutoRepairSquad` (`0001601b`)(the reco
 
 So the career at its end keeps its last position and the screen 1710, and RESTORE of a backup is the way on ([RESTORE](career.md#restore)).
 
+**The service bay of a career at its end can still be reached, and its NEXT MISSION > moves the career past its last campaign.** RESUME and PROCEED test the end only while `Career_Loaded` (`000809aa`) is clear, and leave it clear when they find it ([RESUME](main-menu.md#resume)). The career menu's SAVE/RESTORE and STATS load the career with no such test and set `Career_Loaded` ([PROCEED](career.md#proceed)), so a RESUME or PROCEED after either goes to the career's screen, 1710, unless its pilot is lost. RESTORE of a backup made at 1710 after the last mission opens it too ([RESTORE](career.md#restore)). There NEXT MISSION > runs `Roster_AdvanceCareer`, which stores 99 or −1 as the campaign and 0 as the position, and `Career_StartMission`, whose `BattleSet_GetMissionName` takes campaign 99 or −1 of the battle set's eight with no test of the index ([a career's missions](../formats/bst-battle-sets.md#a-careers-missions)), so the name it reads is undefined. With the position 0, NEXT MISSION > then puts up kind 5 and its new campaign's talking heads, for that campaign ([NEXT MISSION >](#next-mission)).
+
 ## Functions
 
 | ES1 | Address |
@@ -181,6 +183,5 @@ ES1 and ES2 (`VSHELL`) share these, with ES1's differences [above](#repairs):
 
 - **Open:** whether a pilot entry on strength can name a hangar slot that holds no HERC when the results are read: `CareerRecord_ReadPilotResults` then reads only that entry's 6 bytes of gains, so every later entry reads 66 bytes early.
 - **Open:** what reads a pilot's share `+0x21` besides `Repair_Auto`, which leaves in it the share less the repair.
-- **Open:** whether a career can reach NEXT MISSION > at its end: the career menu's SAVE/RESTORE load and RESTORE test no campaign with `Career_PeekNextCampaign` ([PROCEED](career.md#proceed), [RESTORE](career.md#restore)), so a backup made after a career's last mission, at screen 1710, would let `Career_AdvanceCampaign` store −1 or 99 as the campaign and `Career_StartMission` build a path from it.
 - **Open:** whether a career's save can hold a `Career_AutoRepairMode` other than 0 to 2, which `Roster_ActivateRecord` loads, for which `CareerRecord_AutoRepairSquad` passes on `EDI` as its caller left it; screen 1910's handler stores only 0 to 2.
 - **Open:** a retail check under DOSBox-X: in a new career, after the opening talking heads, the bay's strip reads MAIN MENU, ARMING, CREW, BRIEFING > and a greyed BEGIN MISSION; BRIEFING >, then SERVICE BAY on the war map, gives BRIEFING and BEGIN MISSION >. Finish the first mission; a face speaks, then the DEBRIEFING window shows MAIN MENU and PROCEED >; PROCEED > shows the bay's strip with MAIN MENU, CAREER, REPAIR, BUILD and NEXT MISSION >; NEXT MISSION > plays the campaign's talking head and opens the war map of the second mission; SERVICE BAY there, then BRIEFING, returns to the war map with no talking head.
