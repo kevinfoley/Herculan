@@ -9,9 +9,8 @@ namespace Herculan.Es1.Install;
 ///
 /// <para>The expansion is told by <see cref="ExpansionArchiveName"/> in the install's <c>VOL</c> folder, which holds
 /// battle set 1. Of the expansion disc's installer (<c>INSTALL\ENGLISH\INSTALL.SCR</c>), only the <c>maxInst</c> branch
-/// leaves a <c>GO.EXE</c> in the install, so only its installs are ES1 installs to this engine
-/// (<see cref="HercWorks.Core.Io.Transform.RetailGameDetector.Es1Marker"/>), and that branch copies the archive. Its
-/// <c>SIMPATCH.VOL</c> and <c>PSHELL1.VOL</c> are not used to tell it, since the same script takes them for the v1.1
+/// copies the archive; its minimum and medium layouts leave it on the disc, so their installs are taken for base ones.
+/// Its <c>SIMPATCH.VOL</c> and <c>PSHELL1.VOL</c> are not used to tell it, since the same script takes them for the v1.1
 /// patch's on an install without the expansion.</para>
 ///
 /// <para>This engine does not run the expansion yet, so an install that holds it is refused as an ES1 install

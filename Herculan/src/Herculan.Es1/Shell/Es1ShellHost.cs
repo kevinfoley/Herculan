@@ -56,14 +56,16 @@ public static class Es1ShellHost {
 	/// window of the shell's own, closed with it.
 	/// </param>
 	/// <param name="silent">The host's <c>--no-sound</c>: no audio device, so the sound manager plays into nothing.</param>
+	/// <param name="disc">The disc standing in for the CD drive (<see cref="Install.Es1Disc"/>), or null for none.</param>
 	public static int Run(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath, string imguiItalicFontPath,
-			IFrontEndMenus menus, string? screenshotPath, HostWindow? window = null, bool silent = false) {
+			IFrontEndMenus menus, string? screenshotPath, HostWindow? window = null, bool silent = false, GameDisc? disc = null) {
 		// 1. Mem_InitHeap(3,700,000) and its assert: this engine has no fixed heap.
 		// 2. Shell_ParseCommandLine; without -eggplant this engine goes on (Es1ShellSwitches).
 		var switches = Es1ShellSwitches.Parse(arguments);
 
 		// 3. The drive prefix, ALT_DRIVE under -C and PREFER_ALT, before every path: this engine's install paths stand in
-		// for it, so -C is read and changes no path. Assert_SetLogDir: this engine keeps no assert log.
+		// for it, so -C changes no path; it decides only whether step 5 mounts the disc. Assert_SetLogDir: this engine keeps
+		// no assert log.
 
 		// 4. data\exit.cfg: the code read, 0 written and the code put back, so a run that ends before the shutdown leaves 0.
 		if (Es1ExitCfg.Read(installRoot) is not { } exitCode) {
@@ -78,9 +80,11 @@ public static class Es1ShellHost {
 
 		// Shell_StartupNoOp.
 
-		// 5. The archives, mask 0x100 and the .vol extension (VolumeGroup_SetBufferSize, VolRStream_SetGroup); then
+		// 5. The archives, mask 0x100 and the .vol extension (VolumeGroup_SetBufferSize, VolRStream_SetGroup): the install's
+		// vol\ and, under -C, the disc's, which stands for ALT_DRIVE's in a full install and for the CD's current folder in a
+		// minimum or medium one; both layouts scan the install's first (docs/es1/formats/streams.md#the-volume-group). Then
 		// subsystem phase 1, the eight bnd\ files, whose fatal assert comes before any hook, so exit.cfg keeps step 4's 0.
-		var content = Es1SingleMission.MountShell(installRoot);
+		var content = Es1SingleMission.MountShell(installRoot, switches.AltDriveAllowed ? disc : null);
 		if (Es1ShellTuning.Load(content, installRoot) is not { } tuning) {
 			return AssertExitStatus;
 		}

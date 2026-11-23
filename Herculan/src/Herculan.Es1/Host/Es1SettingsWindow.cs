@@ -2,6 +2,7 @@ using Herculan.Engine.Install;
 using Herculan.Engine.Localization;
 using Herculan.Engine.Menus;
 using Herculan.Engine.Platform;
+using Herculan.Es1.Host.Install;
 using Herculan.Es1.Install;
 using ImGuiNET;
 
@@ -119,11 +120,5 @@ sealed class Es1SettingsWindow : SettingsWindowBase {
 		_restart?.Invoke(installRoot);
 	}
 
-	private string? DiscRefusal(string path) => Es1Disc.Check(path, out string? detail) switch {
-		null => null,
-		Es1Disc.Problem.Missing => string.Format(Localization.GetStringOrKey("es1_disc.missing"), path),
-		Es1Disc.Problem.Unreadable => string.Format(Localization.GetStringOrKey("es1_disc.unreadable"), path, detail),
-		_ => string.Format(Localization.GetStringOrKey("es1_disc.not_es1"), path, Es1Disc.FlicPlayer.ToUpperInvariant(),
-			Es1Disc.IntroFlic.ToUpperInvariant()),
-	};
+	private string? DiscRefusal(string path) => Es1DiscPrompt.Refusal(Localization, path);
 }

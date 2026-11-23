@@ -14,7 +14,8 @@ namespace Herculan.Engine.Host;
 /// (<see cref="GameChooser"/>); a <c>--screenshot</c> run, which has nobody to ask, takes the first game in its place.
 /// That game's install is then found (<see cref="RetailInstalls.Locate"/>), or asked for in its install prompt
 /// (<see cref="IGameModule.AskForInstall"/>) when the search comes up empty, finds one the prompt refuses, or is skipped by
-/// <c>--ask-install</c>. A prompt opened from the chooser goes back to it when the player gives up. A switch from the
+/// <c>--ask-install</c>; once found, the game asks for what the install needs beyond itself
+/// (<see cref="IGameModule.PrepareInstall"/>). A prompt opened from the chooser goes back to it when the player gives up. A switch from the
 /// "Game" menu finds the other game's install the same way (<see cref="ForSwitch"/>). This engine's own; retail has no
 /// counterpart.
 /// </summary>
@@ -75,10 +76,19 @@ sealed class StartupInstall(IReadOnlyList<IGameModule> games, HostOptions option
 	// chosen in its install prompt, whose dismissal is labelled dismissKey; null when the player dismissed the prompt, or
 	// with the reason reported when canAsk is clear and the search found none it takes.
 	private string? InstallOf(IGameModule game, bool canAsk, string dismissKey, Action? beforePrompt = null) {
+		// beforePrompt runs once, before whichever of the install prompt and the game's own prompt opens first.
+		bool prompted = false;
+		void BeforePrompt() {
+			if (!prompted) {
+				prompted = true;
+				beforePrompt?.Invoke();
+			}
+		}
+
 		string? root = options.Common.AskForInstall ? null : RetailInstalls.Locate(game.Identity);
 		string? refusal = root != null ? Refusal(game.Identity, root) : null;
 		if (root != null && refusal == null) {
-			return root;
+			return Prepared(game, root, canAsk, dismissKey, BeforePrompt);
 		}
 
 		if (!canAsk) {
@@ -90,9 +100,19 @@ sealed class StartupInstall(IReadOnlyList<IGameModule> games, HostOptions option
 			return null;
 		}
 
-		beforePrompt?.Invoke();
-		return game.AskForInstall(localization, fontPath, refusal != null ? root : null, dismissKey);
+		BeforePrompt();
+		return game.AskForInstall(localization, fontPath, refusal != null ? root : null, dismissKey) is { } chosen
+			? Prepared(game, chosen, canAsk, dismissKey, BeforePrompt)
+			: null;
 	}
+
+	/// <summary>
+	/// <paramref name="root"/> once <paramref name="game"/> has what it needs beyond the install
+	/// (<see cref="IGameModule.PrepareInstall"/>), or null when the player gave up its prompt. With nobody to ask, the
+	/// install is taken as it is, and the game reports what it lacks.
+	/// </summary>
+	public string? Prepared(IGameModule game, string root, bool canAsk, string dismissKey, Action? beforePrompt = null) =>
+		!canAsk || game.PrepareInstall(localization, fontPath, root, dismissKey, beforePrompt) ? root : null;
 
 	// An install named on the command line, of any game, or null with the reason reported.
 	private string? Named(string path) {
@@ -103,13 +123,13 @@ sealed class StartupInstall(IReadOnlyList<IGameModule> games, HostOptions option
 			return null;
 		}
 
-		var held = RetailGameDetector.Detect(path);
-		if (Refusal(games.First(game => game.Identity.Game == held).Identity, path) is { } refusal) {
+		var held = games.First(game => game.Identity.Game == RetailGameDetector.Detect(path));
+		if (Refusal(held.Identity, path) is { } refusal) {
 			HostLog.Fail(Reported(path, refusal));
 			return null;
 		}
 
-		return Path.GetFullPath(path);
+		return Prepared(held, Path.GetFullPath(path), options.Common.ScreenshotPath == null, "install_prompt.quit");
 	}
 
 	// An install found, or null for one the install prompt refuses, which the chooser shows as not found.

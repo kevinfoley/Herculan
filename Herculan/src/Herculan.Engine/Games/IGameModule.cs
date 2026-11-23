@@ -49,6 +49,18 @@ public interface IGameModule {
 	string? AskForInstall(LocalizationTable localization, string fontPath, string? refused, string dismissKey);
 
 	/// <summary>
+	/// Asks the player for what <paramref name="installRoot"/> needs beyond itself before the game can run on it, such as a
+	/// disc. True when it needs nothing or the player gave it; false when the player gave up. The default needs nothing.
+	/// </summary>
+	/// <param name="localization">The table the prompt's strings are read from.</param>
+	/// <param name="fontPath">The ImGui font of the window that asks.</param>
+	/// <param name="installRoot">The install the game is about to run on.</param>
+	/// <param name="dismissKey">The string of the button that gives up.</param>
+	/// <param name="beforePrompt">Runs before a prompt opens, a window of its own; null for nothing to run.</param>
+	bool PrepareInstall(LocalizationTable localization, string fontPath, string installRoot, string dismissKey,
+			Action? beforePrompt) => true;
+
+	/// <summary>
 	/// Runs the game on <see cref="GameRunContext.InstallRoot"/>, loading its tweak settings first, until its run ends or
 	/// a <see cref="Install.GameSwitch"/> request ends it. Returns the exit code.
 	/// </summary>

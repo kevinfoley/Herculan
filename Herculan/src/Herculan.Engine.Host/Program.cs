@@ -107,11 +107,11 @@ try {
 			return exit;
 		}
 
-		installRoot = next.Install ?? startup.ForSwitch(games.First(each => each.Identity.Game == next.Game), () => {
-			placement = window?.Placement;
-			window?.Dispose();
-			window = null;
-		}) ?? installRoot;
+		// A switch onto a named install, which a Settings window chose, still asks for what that install needs; giving up
+		// keeps the install the run was on, as giving up the switch's install prompt does.
+		installRoot = (next.Install is { } named
+			? startup.Prepared(GameOf(named), named, options.Common.ScreenshotPath == null, "install_prompt.back", CloseWindow)
+			: startup.ForSwitch(games.First(each => each.Identity.Game == next.Game), CloseWindow)) ?? installRoot;
 		switched = true;
 	}
 } finally {
@@ -123,6 +123,13 @@ try {
 IGameModule GameOf(string root) {
 	var held = RetailGameDetector.Detect(root);
 	return games.First(game => game.Identity.Game == held);
+}
+
+// Closes the shared window before a prompt opens a window of its own, keeping its placement for the next.
+void CloseWindow() {
+	placement = window?.Placement;
+	window?.Dispose();
+	window = null;
 }
 
 HostWindow SharedWindow() {

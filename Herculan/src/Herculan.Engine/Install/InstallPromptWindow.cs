@@ -29,8 +29,7 @@ public static class InstallPromptWindow {
 
 	/// <summary>
 	/// Why <paramref name="path"/> cannot be <paramref name="game"/>'s install, in the player's language, or null when it can:
-	/// it has no archive folder, it holds another game (Metaltech: Earthsiege's is told by
-	/// <see cref="RetailGameDetector.Es1Marker"/>), the game refuses it (<see cref="GameIdentity.InstallRefusal"/>), or it is
+	/// it has no archive folder, it holds another game (<see cref="RetailGameDetector.Detect"/>), the game refuses it (<see cref="GameIdentity.InstallRefusal"/>), or it is
 	/// on a disc (<see cref="RetailInstalls.IsOnDisc"/>), which can hold every folder of an install but none of its saves.
 	/// </summary>
 	public static string? Refusal(LocalizationTable localization, GameIdentity game, string path) {
@@ -40,7 +39,8 @@ public static class InstallPromptWindow {
 		}
 
 		if (RetailGameDetector.Detect(path) != game.Game) {
-			return string.Format(localization.GetStringOrKey(prefix + ".other_game"), path, RetailGameDetector.Es1Marker);
+			return string.Format(localization.GetStringOrKey(prefix + ".other_game"), path, RetailGameDetector.Es1Marker,
+				RetailGameDetector.Es1ResourceMarker);
 		}
 
 		if (game.InstallRefusal?.Invoke(localization, path) is { } refused) {
@@ -50,8 +50,11 @@ public static class InstallPromptWindow {
 		return RetailInstalls.IsOnDisc(path) ? localization.GetStringOrKey("install_prompt.on_disc") : null;
 	}
 
-	/// <summary>What the prompt's message is given: the archive folder's name and <see cref="RetailGameDetector.Es1Marker"/>, in that order.</summary>
-	public static object[] MessageArguments => [GameContent.ArchiveFolderName, RetailGameDetector.Es1Marker];
+	/// <summary>
+	/// What the prompt's message is given: the archive folder's name, <see cref="RetailGameDetector.Es1Marker"/> and
+	/// <see cref="RetailGameDetector.Es1ResourceMarker"/>, in that order.
+	/// </summary>
+	public static object[] MessageArguments => [GameContent.ArchiveFolderName, RetailGameDetector.Es1Marker, RetailGameDetector.Es1ResourceMarker];
 
 	/// <summary>Draws <paramref name="prompt"/> into the current window, its message given <see cref="MessageArguments"/>.</summary>
 	public static PathPrompt.Outcome DrawPrompt(PathPrompt prompt, nint owner) => prompt.Draw(owner, MessageArguments);

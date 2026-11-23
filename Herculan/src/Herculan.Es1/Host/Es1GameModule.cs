@@ -51,6 +51,25 @@ public sealed class Es1GameModule : IGameModule {
 	public string? AskForInstall(LocalizationTable localization, string fontPath, string? refused, string dismissKey) =>
 		Es1InstallPrompt.Run(localization, fontPath, refused, dismissKey);
 
+	/// <inheritdoc/>
+	/// <remarks>
+	/// A minimum or medium install (<see cref="Es1EsBat"/>) leaves the programs and some of the archives on the disc, so
+	/// with neither the host's <c>ALT_DRIVE</c> nor a disc kept (<see cref="Es1Disc"/>) it asks for the disc
+	/// (<see cref="Es1DiscPrompt"/>) and keeps the one chosen. Retail's <c>ES.BAT</c> changes to the CD drive and fails
+	/// there; the prompt is this engine's own.
+	/// </remarks>
+	public bool PrepareInstall(LocalizationTable localization, string fontPath, string installRoot, string dismissKey,
+			Action? beforePrompt) {
+		if (Environment.GetEnvironmentVariable(Es1Launcher.AltDriveVariable) != null
+				|| Es1EsBat.LayoutOf(installRoot) != Es1Layout.MinimumOrMedium
+				|| (Es1Disc.Remembered() is { } kept && Es1Disc.Check(kept, out _) == null)) {
+			return true;
+		}
+
+		beforePrompt?.Invoke();
+		return Es1DiscPrompt.Run(localization, fontPath, installRoot, dismissKey) is { } chosen && Es1Disc.Remember(chosen);
+	}
+
 	public int Run(GameRunContext context) {
 		// Loaded for both turns: the shell's SYSTEM REPAIR and the menu bar's Tweaks window read them, and so does the
 		// simulator, for its textures and sounds.
@@ -67,9 +86,12 @@ public sealed class Es1GameModule : IGameModule {
 					context.Window(), common.SilentAudio);
 			}
 
+			// The simulator alone has no launcher to pass it -c. On a minimum or medium install, whose archives are partly on
+			// the disc, it mounts the disc as the launcher's -c has it do; this engine's choice, as running DBSIM.EXE alone is.
+			using var disc = Es1EsBat.LayoutOf(root) == Es1Layout.MinimumOrMedium ? Es1Disc.OpenRemembered() : null;
 			return Es1MissionHost.Run(root, common.MissionPath, _options.ToOverrides(), context.FontPath, context.ItalicFontPath,
 				new Es1ShellMenus(context.Localization, root, context.Games, inMission: true), common.PlayTape, common.DemoTape,
-				common.RecordTape, silent: common.SilentAudio);
+				common.RecordTape, silent: common.SilentAudio, disc: disc);
 		} finally {
 			_running = null;
 		}

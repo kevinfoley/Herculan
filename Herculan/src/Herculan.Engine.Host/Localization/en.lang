@@ -153,13 +153,13 @@ install_prompt.on_disc         The CD cannot be used as the install location bec
 install_prompt.back            Back
 install_prompt.other_game      {0} is a Metaltech: Earthsiege folder, not an Earthsiege 2 folder.
 es1_install_prompt.window_title HERCULAN Engine — Find Metaltech: Earthsiege
-es1_install_prompt.message     HERCULAN could not find Metaltech: Earthsiege. Choose the Metaltech: Earthsiege folder: the one that holds the {0} folder and {1}.
+es1_install_prompt.message     HERCULAN could not find Metaltech: Earthsiege. Choose the Metaltech: Earthsiege folder: the one that holds the {0} folder and {1} or {2}.
 es1_install_prompt.path_hint   Metaltech: Earthsiege folder
 es1_install_prompt.picker_title Choose the Metaltech: Earthsiege folder
 es1_install_prompt.accept      Use This Folder
 es1_install_prompt.no_path     Type or paste the path to the Metaltech: Earthsiege folder.
 es1_install_prompt.not_an_install {0} is not a Metaltech: Earthsiege folder: it has no {1} folder in it.
-es1_install_prompt.other_game  {0} is not a Metaltech: Earthsiege folder: it has no {1} in it.
+es1_install_prompt.other_game  {0} is not a Metaltech: Earthsiege folder: it has neither {1} nor {2} in it.
 es1_install_prompt.expansion   {0} has the Earthsiege Battleset 1 expansion installed: its VOL folder holds {1}. HERCULAN does not run the expansion yet. Choose a Metaltech: Earthsiege folder without it.
 chooser.window_title           HERCULAN Engine — Choose a Game
 chooser.message                Which game do you want to play?
@@ -261,7 +261,7 @@ settings.checking_updates      Checking...
 settings.up_to_date            You have the latest release, {0}.
 settings.update_check_failed   Could not check for updates: {0}
 es1_settings.folders           Metaltech: Earthsiege folders
-es1_settings.install_message   Choose the Metaltech: Earthsiege folder: the one that holds the {0} folder and {1}. The game restarts on the new install.
+es1_settings.install_message   Choose the Metaltech: Earthsiege folder: the one that holds the {0} folder and {1} or {2}. The game restarts on the new install.
 es1_settings.disc              Disc (HERCULAN only)
 es1_settings.disc_note         The game plays its movies from the disc.
 es1_settings.alt_drive_overrides Not used while the {0} environment variable is set.
@@ -279,6 +279,18 @@ es1_image_prompt.path_hint     Disc image
 es1_image_prompt.picker_title  Choose a Metaltech: Earthsiege disc image
 es1_image_prompt.accept        Use This Image
 es1_image_prompt.no_path       Type or paste the path to the disc image.
+es1_disc_needed.window_title   HERCULAN Engine — Metaltech: Earthsiege Disc
+es1_disc_needed.message        The Metaltech: Earthsiege install in {0} is a minimum or medium one, which leaves the game's programs and some of its archives on the disc. Choose the disc: the CD drive, a copy of the disc, or a disc image (.iso, .bin or .cue). HERCULAN keeps it for the next start.
+es1_disc_needed.path_hint      Disc folder or image
+es1_disc_needed.picker_title   Choose the Metaltech: Earthsiege disc folder
+es1_disc_needed.accept         Use This Disc
+es1_disc_needed.no_path        Type or paste the path to the disc folder or image.
+es1_disc_needed.use_image      Choose an Image Instead
+es1_image_needed.path_hint     Disc image or folder
+es1_image_needed.picker_title  Choose a Metaltech: Earthsiege disc image
+es1_image_needed.accept        Use This Disc
+es1_image_needed.no_path       Type or paste the path to the disc image or folder.
+es1_image_needed.use_folder    Choose a Folder Instead
 es1_disc.missing               {0} does not exist.
 es1_disc.unreadable            {0} cannot be read as a disc image: {1}
 es1_disc.not_es1               {0} is not a Metaltech: Earthsiege disc: it has no {1} or no {2}.
@@ -713,10 +725,12 @@ install.failed                 The install failed, and what it had copied was re
 install.done                   Earthsiege 2 is installed in {0}.
 install.use                    Use This Install
 es1_install.window_title       HERCULAN Engine — Install Metaltech: Earthsiege
-es1_install.message            Install Metaltech: Earthsiege from its CD into a new folder, copying what the original installer's full install copies. The disc can be a CD drive, a copy of the disc, or a disc image (.iso, .bin or .cue). Nothing on the disc is run.
+es1_install.message            Install Metaltech: Earthsiege from its CD into a new folder, in one of the three sizes the original installer offers. The disc can be a CD drive, a copy of the disc, or a disc image (.iso, .bin or .cue). Nothing on the disc is run.
 es1_install.picker_folder_title Choose the Metaltech: Earthsiege disc folder
 es1_install.picker_image_title Choose a Metaltech: Earthsiege disc image
 es1_install.not_es1            {0} is not a Metaltech: Earthsiege disc: it has no {1} or no {2}.
-es1_install.found              Metaltech: Earthsiege, full install ({0:N0} MB)
-es1_install.note               HERCULAN sets the sound up as a Sound Blaster 16 with FM music, the choice the original SOUNDSET program offers. It plays the movies from this disc, so keep the disc or image where it is, or choose another in Settings. The original game's programs are copied too; to run them in DOS, mount the CD as drive D:.
+es1_install.found              Metaltech: Earthsiege
+es1_install.size_full          Full ({0:N0} MB)
+es1_install.size_note          The minimum and medium sizes leave the game's programs and some of its archives on the disc, so the game reads them from the disc or image whenever it runs: keep it where it is.
+es1_install.note               HERCULAN sets the sound up as a Sound Blaster 16 with FM music, the choice the original SOUNDSET program offers. It plays the movies from this disc, so keep the disc or image where it is, or choose another in Settings. The full size copies the original game's programs too. To run an install in DOS, mount it as drive C: and the CD as drive D:.
 es1_install.done               Metaltech: Earthsiege is installed in {0}.

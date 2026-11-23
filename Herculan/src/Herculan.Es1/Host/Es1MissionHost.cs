@@ -137,9 +137,13 @@ public static class Es1MissionHost {
 	/// no sound manager (<see cref="Es1Sound.MissionStartDevices"/>).
 	/// </param>
 	/// <param name="silent">The host's <c>--no-sound</c>. It opens no audio device, so the sound manager plays into nothing.</param>
+	/// <param name="disc">
+	/// The disc standing in for the CD drive whose <c>vol\</c> the simulator mounts after the install's, as it does under
+	/// <c>-c</c>, and a named mission's load with it; null for the install alone.
+	/// </param>
 	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides, string imguiFontPath,
 			string imguiItalicFontPath, IFrontEndMenus menus, string? playTape = null, bool demo = false,
-			string? recordTape = null, HostWindow? window = null, bool soundOn = true, bool silent = false) {
+			string? recordTape = null, HostWindow? window = null, bool soundOn = true, bool silent = false, GameDisc? disc = null) {
 		// Sim_Main's step 4, which runs before the command line is parsed (docs/es1/simulation/main-loop.md#starting--sim_main-00059350):
 		// the heap's size to data\mem.got, then an int16 0 to data\exit.cfg. A run that ends before Sim_Shutdown therefore leaves
 		// 0, which ends the launcher's loop. Neither failure runs Sim_AssertCleanupHook, which Sim_StartMission adds later.
@@ -173,7 +177,7 @@ public static class Es1MissionHost {
 
 		if (missionName != null) {
 			var random = Es1ShellRandom.AtStartup(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-			if (Es1SingleMission.Start(installRoot, Es1SingleMission.MountShell(installRoot), missionName, random,
+			if (Es1SingleMission.Start(installRoot, Es1SingleMission.MountShell(installRoot, disc), missionName, random,
 					out string? loadError) == null) {
 				Console.Error.WriteLine(loadError);
 				return 1;
@@ -213,9 +217,10 @@ public static class Es1MissionHost {
 
 		// The simulator mounts SIMVOL0 (program mask 1) and ZONES (0x101) by ES2's precedence rule, which ES1's volume group shares;
 		// MountInstall's name order loads SIMVOL0 first, as every install layout does, so its ZONE6 and ZONE8 answer
-		// (docs/es1/formats/streams.md#the-volume-group). ES1 takes its CD drive from ALT_DRIVE, not drive.cfg, so no disc is
-		// mounted. ES1 reads no file that varies by language, so the language is English.
-		var content = GameContent.MountInstall(installRoot, disc: null, Voln.DbsimProgram, GameLanguage.English);
+		// (docs/es1/formats/streams.md#the-volume-group): the install's vol\ and then the disc's, whose SIMVOL0 and ZONES a
+		// minimum install leaves on the CD and whose ZONES a medium one does. ES1 reads no file that varies by language, so
+		// the language is English.
+		var content = GameContent.MountInstall(installRoot, disc, Voln.DbsimProgram, GameLanguage.English);
 		// Unlike retail, the HERCs and the cockpit are loaded before the zone. The scene is therefore built in the live palette, with
 		// the scheme of the player's chassis already installed (Es1ZoneScene.Palette). With no player's machine, nothing is installed.
 		Es1World world;

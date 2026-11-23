@@ -7,9 +7,10 @@ namespace Herculan.Es1.Install;
 /// <summary>
 /// Metaltech: Earthsiege's CD as the Settings window names it: a folder, such as the CD drive or a copy of the disc, or a
 /// disc image (<c>.iso</c>, <c>.bin</c> or <c>.cue</c>) read in place. When the host's environment sets no
-/// <c>ALT_DRIVE</c>, it stands in for the CD drive a full install's <c>ES.BAT</c> names in <c>ALT_DRIVE</c>, with
-/// <c>PREFER_ALT</c> cleared (docs/es1/shell/launcher.md#the-installers-esbat), so the launcher finds the flic player and
-/// the flics on it.
+/// <c>ALT_DRIVE</c>, it stands in for the CD drive the install's <c>ES.BAT</c> names (<see cref="Es1EsBat"/>,
+/// docs/es1/shell/launcher.md#the-installers-esbat): a full install's <c>ALT_DRIVE</c>, or the drive a minimum or medium
+/// install's runs <c>ESCD.EXE</c> from. The launcher finds the flic player and the flics on it, and the shell and the
+/// simulator mount its <c>vol\</c> after the install's.
 ///
 /// <para>This engine's own, kept in <see cref="PathFile"/> rather than in the install: <c>ES.BAT</c> holds a DOS drive
 /// letter, and a host path written there would break the install for DOS, which cannot see it, and overrun the 25-byte

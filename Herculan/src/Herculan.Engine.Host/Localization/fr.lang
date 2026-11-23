@@ -151,13 +151,13 @@ install_prompt.on_disc         Le CD ne peut pas servir d'emplacement d'installa
 install_prompt.back            Retour
 install_prompt.other_game      {0} est un dossier de Metaltech: Earthsiege, pas un dossier d'Earthsiege 2.
 es1_install_prompt.window_title HERCULAN Engine — Trouver Metaltech: Earthsiege
-es1_install_prompt.message     HERCULAN n'a pas trouvé Metaltech: Earthsiege. Choisissez le dossier de Metaltech: Earthsiege : celui qui contient le dossier {0} et le fichier {1}.
+es1_install_prompt.message     HERCULAN n'a pas trouvé Metaltech: Earthsiege. Choisissez le dossier de Metaltech: Earthsiege : celui qui contient le dossier {0} et le fichier {1} ou {2}.
 es1_install_prompt.path_hint   Dossier de Metaltech: Earthsiege
 es1_install_prompt.picker_title Choisissez le dossier de Metaltech: Earthsiege
 es1_install_prompt.accept      Utiliser ce dossier
 es1_install_prompt.no_path     Tapez ou collez le chemin du dossier de Metaltech: Earthsiege.
 es1_install_prompt.not_an_install {0} n'est pas un dossier de Metaltech: Earthsiege : il ne contient aucun dossier {1}.
-es1_install_prompt.other_game  {0} n'est pas un dossier de Metaltech: Earthsiege : il ne contient aucun fichier {1}.
+es1_install_prompt.other_game  {0} n'est pas un dossier de Metaltech: Earthsiege : il ne contient ni {1} ni {2}.
 es1_install_prompt.expansion   L'extension Earthsiege Battleset 1 est installée dans {0} : son dossier VOL contient {1}. HERCULAN ne prend pas encore en charge l'extension. Choisissez un dossier de Metaltech: Earthsiege sans l'extension.
 chooser.window_title           HERCULAN Engine — Choisir un jeu
 chooser.message                À quel jeu voulez-vous jouer ?
@@ -259,7 +259,7 @@ settings.checking_updates      Recherche en cours...
 settings.up_to_date            Vous avez la dernière version, {0}.
 settings.update_check_failed   Impossible de rechercher des mises à jour : {0}
 es1_settings.folders           Dossiers de Metaltech: Earthsiege
-es1_settings.install_message   Choisissez le dossier de Metaltech: Earthsiege : celui qui contient le dossier {0} et le fichier {1}. Le jeu redémarre sur la nouvelle installation.
+es1_settings.install_message   Choisissez le dossier de Metaltech: Earthsiege : celui qui contient le dossier {0} et le fichier {1} ou {2}. Le jeu redémarre sur la nouvelle installation.
 es1_settings.disc              Disque (HERCULAN uniquement)
 es1_settings.disc_note         Le jeu lit ses vidéos depuis le disque.
 es1_settings.alt_drive_overrides Non utilisé tant que la variable d'environnement {0} est définie.
@@ -277,6 +277,18 @@ es1_image_prompt.path_hint     Image disque
 es1_image_prompt.picker_title  Choisissez une image disque de Metaltech: Earthsiege
 es1_image_prompt.accept        Utiliser cette image
 es1_image_prompt.no_path       Tapez ou collez le chemin de l'image disque.
+es1_disc_needed.window_title   HERCULAN Engine — Disque de Metaltech: Earthsiege
+es1_disc_needed.message        L'installation de Metaltech: Earthsiege dans {0} est minimale ou moyenne : elle laisse les programmes du jeu et une partie de ses archives sur le disque. Choisissez le disque : le lecteur de CD, une copie du disque ou une image disque (.iso, .bin ou .cue). HERCULAN l'enregistre pour le prochain démarrage.
+es1_disc_needed.path_hint      Dossier ou image du disque
+es1_disc_needed.picker_title   Choisissez le dossier du disque de Metaltech: Earthsiege
+es1_disc_needed.accept         Utiliser ce disque
+es1_disc_needed.no_path        Tapez ou collez le chemin du dossier ou de l'image du disque.
+es1_disc_needed.use_image      Choisir plutôt une image
+es1_image_needed.path_hint     Image ou dossier du disque
+es1_image_needed.picker_title  Choisissez une image disque de Metaltech: Earthsiege
+es1_image_needed.accept        Utiliser ce disque
+es1_image_needed.no_path       Tapez ou collez le chemin de l'image ou du dossier du disque.
+es1_image_needed.use_folder    Choisir plutôt un dossier
 es1_disc.missing               {0} n'existe pas.
 es1_disc.unreadable            {0} ne peut pas être lu comme une image disque : {1}
 es1_disc.not_es1               {0} n'est pas un disque de Metaltech: Earthsiege : il ne contient pas {1} ou pas {2}.
@@ -711,10 +723,12 @@ install.failed                 L'installation a échoué, et ce qu'elle avait co
 install.done                   Earthsiege 2 est installé dans {0}.
 install.use                    Utiliser cette installation
 es1_install.window_title       HERCULAN Engine — Installer Metaltech: Earthsiege
-es1_install.message            Installez Metaltech: Earthsiege depuis son CD dans un nouveau dossier, en copiant ce que copie l'installation complète de l'installateur d'origine. Le disque peut être un lecteur de CD, une copie du disque ou une image disque (.iso, .bin ou .cue). Rien sur le disque n'est exécuté.
+es1_install.message            Installez Metaltech: Earthsiege depuis son CD dans un nouveau dossier, dans l'une des trois tailles que propose l'installateur d'origine. Le disque peut être un lecteur de CD, une copie du disque ou une image disque (.iso, .bin ou .cue). Rien sur le disque n'est exécuté.
 es1_install.picker_folder_title Choisissez le dossier du disque de Metaltech: Earthsiege
 es1_install.picker_image_title Choisissez une image disque de Metaltech: Earthsiege
 es1_install.not_es1            {0} n'est pas un disque de Metaltech: Earthsiege : il ne contient pas {1} ou pas {2}.
-es1_install.found              Metaltech: Earthsiege, installation complète ({0:N0} Mo)
-es1_install.note               HERCULAN configure le son pour une Sound Blaster 16 avec musique FM, un choix que propose le programme SOUNDSET d'origine. Il joue les films depuis ce disque : laissez le disque ou l'image où il est, ou choisissez-en un autre dans les Paramètres. Les programmes du jeu original sont aussi copiés ; pour les lancer sous DOS, montez le CD en lecteur D:.
+es1_install.found              Metaltech: Earthsiege
+es1_install.size_full          Complète ({0:N0} Mo)
+es1_install.size_note          Les tailles minimale et moyenne laissent les programmes du jeu et une partie de ses archives sur le disque : le jeu les lit sur le disque ou l'image chaque fois qu'il tourne, qui doit donc rester à sa place.
+es1_install.note               HERCULAN configure le son pour une Sound Blaster 16 avec musique FM, un choix que propose le programme SOUNDSET d'origine. Il joue les films depuis ce disque : laissez le disque ou l'image où il est, ou choisissez-en un autre dans les Paramètres. La taille complète copie aussi les programmes du jeu original. Pour lancer une installation sous DOS, montez-la en lecteur C: et le CD en lecteur D:.
 es1_install.done               Metaltech: Earthsiege est installé dans {0}.

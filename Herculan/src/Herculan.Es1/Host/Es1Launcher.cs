@@ -31,6 +31,12 @@ public static class Es1Launcher {
 	/// <summary>The status <c>Assert_Report</c>'s fatal path ends the program with, <c>__exit(1)</c> (docs/es1/simulation/asserts.md#severities).</summary>
 	public const int AssertExitStatus = 1;
 
+	/// <summary>
+	/// The status a minimum or medium install ends with when no disc is kept, where retail's <c>ES.BAT</c> stops at the
+	/// CD drive it changes to.
+	/// </summary>
+	public const int NoDiscExitStatus = 1;
+
 	/// <summary><c>Launcher_State</c> (<c>00005854</c>) as the image holds it, so the first pass is state 1.</summary>
 	private const int InitialState = 1;
 
@@ -51,8 +57,9 @@ public static class Es1Launcher {
 	/// <summary>
 	/// Runs the launcher on <paramref name="installRoot"/> with <paramref name="arguments"/>, its own command line after
 	/// the program's path, which it hands on whole to each program (<see cref="BuildArgs"/>). Returns 0 when the loop
-	/// ends, as it does when a start-up check refuses (<c>exit</c>(0)), and <see cref="AssertExitStatus"/> after a fatal
-	/// assert or the fault of a <c>PREFER_ALT</c> without <c>ALT_DRIVE</c>. Retail's <c>Launcher_Main</c> returns no value.
+	/// ends, as it does when a start-up check refuses (<c>exit</c>(0)), <see cref="AssertExitStatus"/> after a fatal
+	/// assert or the fault of a <c>PREFER_ALT</c> without <c>ALT_DRIVE</c>, and <see cref="NoDiscExitStatus"/> for a
+	/// minimum or medium install with no disc kept. Retail's <c>Launcher_Main</c> returns no value.
 	/// </summary>
 	/// <param name="imguiFontPath">The faces the shell's ImGui draws in (<see cref="Es1ShellHost.Run"/>).</param>
 	/// <param name="menus">
@@ -81,10 +88,28 @@ public static class Es1Launcher {
 		var prefixes = new Prefixes(installRoot, preferAlt ? altDrive! : "",
 			preferAlt && altDrive != null ? "" : altDrive ?? "");
 
-		// With no ALT_DRIVE, the disc the Settings window names stands in for the CD drive a full install's ES.BAT names,
-		// PREFER_ALT cleared (Es1Disc): both prefixes stay empty, so the data files are the install's, and the flic player
-		// and the flics are taken on the disc.
+		// With neither variable in the host's environment, the install's own ES.BAT says which layout it has, and the disc
+		// the Settings window names (Es1Disc) stands in for the CD drive, whose letters ES.BAT holds
+		// (docs/es1/shell/launcher.md#the-installers-esbat). A full install's names the CD in ALT_DRIVE, PREFER_ALT cleared;
+		// a minimum or medium install's names the install in ALT_DRIVE, PREFER_ALT set, and runs ESCD.EXE from the CD, so
+		// the empty prefix is the CD's current folder. Either way the data files are the install's and the flic player and
+		// the flics the disc's, so both prefixes stay empty, the empty one standing for the install's folder.
+		var layout = Es1Layout.Full;
+		if (altDrive == null && !preferAlt && Es1EsBat.Read(installRoot) is { } esBat) {
+			if (esBat is { PreferAlt: true, AltDrive: null }) {
+				Console.Error.WriteLine($"{Es1EsBat.FileName} sets {PreferAltVariable} and not {AltDriveVariable}: ESCD.EXE reads its drive prefix from address 0 here, which faults.");
+				return AssertExitStatus;
+			}
+
+			layout = esBat.Layout;
+		}
+
 		using var disc = altDrive == null ? Es1Disc.OpenRemembered() : null;
+		if (layout == Es1Layout.MinimumOrMedium && disc == null) {
+			// Retail's ES.BAT changes to the CD drive before it runs escd there, which fails with no disc in the drive.
+			Console.Error.WriteLine($"This install leaves the programs on the Metaltech: Earthsiege disc, and no disc is kept: its {Es1EsBat.FileName} changes to the CD drive to run ESCD.EXE there. Choose the disc in Settings.");
+			return NoDiscExitStatus;
+		}
 
 		// 4. The disk check.
 		switch (HasDiskSpace(DiskSpaceNeeded, prefixes)) {
@@ -134,7 +159,7 @@ public static class Es1Launcher {
 				case 3:
 				case 6:
 					flicPlayerFound = flics?.PlayerFound() == true;
-					RunShell(installRoot, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
+					RunShell(installRoot, disc, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
 						menus, firstShell ? screenshotPath : null, window, silent);
 					firstShell = false;
 					break;
@@ -144,14 +169,14 @@ public static class Es1Launcher {
 						flics!.Play(flics.End, window, silent);
 					}
 
-					RunShell(installRoot, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
+					RunShell(installRoot, disc, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
 						menus, firstShell ? screenshotPath : null, window, silent);
 					firstShell = false;
 					break;
 				case 2:
 				case 5:
 					flicPlayerFound = flics?.PlayerFound() == true;
-					RunSimulator(installRoot, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
+					RunSimulator(installRoot, disc, BuildArgs(arguments, state, flicPlayerFound), imguiFontPath, imguiItalicFontPath,
 						menus, window, silent);
 					break;
 				default:
@@ -178,10 +203,13 @@ public static class Es1Launcher {
 		return 0;
 	}
 
-	/// <summary>A turn of the shell, <c>spawnv</c>(0, <c>go.exe</c>, ...), its status not kept, under menus <paramref name="menus"/> builds for it.</summary>
-	private static void RunShell(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath,
+	/// <summary>
+	/// A turn of the shell, <c>spawnv</c>(0, <c>go.exe</c>, ...), its status not kept, under menus <paramref name="menus"/>
+	/// builds for it, with <paramref name="disc"/> for the CD drive whose <c>vol\</c> it mounts under <c>-C</c>.
+	/// </summary>
+	private static void RunShell(string installRoot, GameDisc? disc, IReadOnlyList<string> arguments, string imguiFontPath,
 			string imguiItalicFontPath, Func<bool, IFrontEndMenus> menus, string? screenshotPath, HostWindow window, bool silent) {
-		Es1ShellHost.Run(installRoot, arguments, imguiFontPath, imguiItalicFontPath, menus(false), screenshotPath, window, silent);
+		Es1ShellHost.Run(installRoot, arguments, imguiFontPath, imguiItalicFontPath, menus(false), screenshotPath, window, silent, disc);
 		window.Hold(null);
 	}
 
@@ -191,14 +219,17 @@ public static class Es1Launcher {
 	/// (docs/es1/simulation/main-loop.md#the-command-line), each switch looked up by the character after its <c>-</c>,
 	/// case-sensitive, a character not in its table passed over, and handed to <see cref="Es1MissionHost.Run"/> as far as
 	/// it takes them. <c>-D</c> is its demo; <c>-p</c> and <c>-r</c> its tape to play and to record, each name taken only
-	/// when none was given before, and <c>-D</c>'s pick replacing any; <c>-c</c> (<c>Sim_PreParseCommandLine</c>) lets it
-	/// honor <c>ALT_DRIVE</c>, which the install's paths stand in for here; <c>-eggplant</c> is what step 6's refusal
-	/// tests, which <see cref="Es1MissionHost"/> does not make; and each <c>-s</c> toggles <c>000b5b68</c> from 1, which
-	/// clear makes no sound manager. The mission's menu bar is one <paramref name="menus"/> builds, as a shell turn's is.
+	/// when none was given before, and <c>-D</c>'s pick replacing any; an argument opening with <c>-c</c>
+	/// (<c>Sim_PreParseCommandLine</c>, <c>00058e30</c>) lets it honor <c>ALT_DRIVE</c>, which the install's paths stand in
+	/// for here, and has it mount <paramref name="disc"/>'s <c>vol\</c> after the install's; <c>-eggplant</c> is what step
+	/// 6's refusal tests, which <see cref="Es1MissionHost"/> does not make; and each <c>-s</c> toggles <c>000b5b68</c>
+	/// from 1, which clear makes no sound manager. The mission's menu bar is one <paramref name="menus"/> builds, as a
+	/// shell turn's is.
 	/// </summary>
-	private static void RunSimulator(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath,
+	private static void RunSimulator(string installRoot, GameDisc? disc, IReadOnlyList<string> arguments, string imguiFontPath,
 			string imguiItalicFontPath, Func<bool, IFrontEndMenus> menus, HostWindow window, bool silent) {
 		bool demo = false, nameGiven = false, soundOn = true;
+		bool altDriveAllowed = arguments.Any(argument => argument.StartsWith(AltDriveSwitch, StringComparison.Ordinal));
 		string? playTape = null, recordTape = null;
 		var notHanded = new List<string>();
 		foreach (string argument in arguments) {
@@ -241,7 +272,7 @@ public static class Es1Launcher {
 		}
 
 		Es1MissionHost.Run(installRoot, null, new Es1HeaderOverrides(null, null, null), imguiFontPath, imguiItalicFontPath,
-			menus(true), playTape, demo, recordTape, window, soundOn, silent);
+			menus(true), playTape, demo, recordTape, window, soundOn, silent, altDriveAllowed ? disc : null);
 		window.Hold(null);
 	}
 
@@ -394,8 +425,8 @@ public static class Es1Launcher {
 		}
 
 		/// <summary>
-		/// The flics on <paramref name="disc"/>, which stands for the CD drive as a full install's <c>ALT_DRIVE</c> does:
-		/// the paths are the same names on the disc's root, with no drive.
+		/// The flics on <paramref name="disc"/>, which stands for the CD drive, a full install's <c>ALT_DRIVE</c> or a
+		/// minimum or medium install's current folder: the paths are the same names on the disc's root, with no drive.
 		/// </summary>
 		public Flics(Prefixes prefixes, GameDisc disc) {
 			_prefixes = prefixes;

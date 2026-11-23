@@ -9,23 +9,29 @@ public enum RetailGame {
 	/// <summary>Earthsiege 2, whose install root holds <c>VSHELL.EXE</c>.</summary>
 	Earthsiege2,
 
-	/// <summary>Metaltech: Earthsiege, whose install root holds <c>GO.EXE</c>.</summary>
+	/// <summary>Metaltech: Earthsiege, whose install root holds <c>GO.EXE</c> or <c>RESOURCE.CFG</c>.</summary>
 	Earthsiege1,
 }
 
-/// <summary>Tells the games' installs apart by the executable each keeps in its root.</summary>
+/// <summary>Tells the games' installs apart by the files each keeps in its root.</summary>
 public static class RetailGameDetector {
-	/// <summary>ES1's launcher, in its install root.</summary>
+	/// <summary>ES1's shell, in the root of a full install and of its disc.</summary>
 	public const string Es1Marker = "GO.EXE";
 
 	/// <summary>
-	/// <see cref="RetailGame.Earthsiege1"/> when <paramref name="installRoot"/> holds <see cref="Es1Marker"/>, in any
-	/// case; otherwise <see cref="RetailGame.Earthsiege2"/>, whether it holds <c>VSHELL.EXE</c> or neither, so a
-	/// folder that is not an install keeps ES2's readers.
+	/// The Sierra resource file every size of ES1's install copies into its root from the disc's <c>STUFF</c>, the
+	/// minimum and medium sizes included, which leave <see cref="Es1Marker"/> on the disc
+	/// (docs/es1/shell/launcher.md#the-installers-esbat). No Earthsiege 2 install holds one.
+	/// </summary>
+	public const string Es1ResourceMarker = "RESOURCE.CFG";
+
+	/// <summary>
+	/// <see cref="RetailGame.Earthsiege1"/> when <paramref name="installRoot"/> holds <see cref="Es1Marker"/> or
+	/// <see cref="Es1ResourceMarker"/>, in any case; otherwise <see cref="RetailGame.Earthsiege2"/>, whether it holds
+	/// <c>VSHELL.EXE</c> or neither, so a folder that is not an install keeps ES2's readers.
 	/// </summary>
 	public static RetailGame Detect(string? installRoot) =>
-		installRoot != null && Directory.Exists(installRoot)
-			&& Directory.EnumerateFiles(installRoot, Es1Marker, new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive }).Any()
+		installRoot != null && Directory.Exists(installRoot) && (Holds(installRoot, Es1Marker) || Holds(installRoot, Es1ResourceMarker))
 			? RetailGame.Earthsiege1
 			: RetailGame.Earthsiege2;
 
@@ -35,4 +41,7 @@ public static class RetailGameDetector {
 	/// </summary>
 	public static RetailGame DetectFromArchive(string? archivePath) =>
 		Detect(string.IsNullOrEmpty(archivePath) ? null : Path.GetDirectoryName(Path.GetDirectoryName(Path.GetFullPath(archivePath))));
+
+	private static bool Holds(string folder, string name) =>
+		Directory.EnumerateFiles(folder, name, new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive }).Any();
 }

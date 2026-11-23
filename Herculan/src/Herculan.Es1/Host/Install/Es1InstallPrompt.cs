@@ -10,7 +10,7 @@ namespace Herculan.Es1.Host.Install;
 /// </summary>
 public static class Es1InstallPrompt {
 	private const int InstallWindowWidth = 720;
-	private const int InstallWindowHeight = 460;
+	private const int InstallWindowHeight = 560;
 
 	/// <summary>
 	/// Shows the prompt until the player picks an install, makes one from a disc, or gives up. Returns the install root,

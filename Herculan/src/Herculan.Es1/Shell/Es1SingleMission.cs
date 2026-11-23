@@ -37,11 +37,17 @@ public static class Es1SingleMission {
 	public static string CarPath(string installRoot, string name) => CaseInsensitivePath.Combine(installRoot, CarFolder, name);
 
 	/// <summary>
-	/// The shell's resources, from the archives its program mask mounts. Nothing ES1 reads takes the content's language,
-	/// so it is English.
+	/// The shell's resources, from the archives its program mask mounts: the install's, then those of
+	/// <paramref name="disc"/> the install's have not named. Nothing ES1 reads takes the content's language, so it is
+	/// English.
 	/// </summary>
-	public static GameContent MountShell(string installRoot) =>
-		GameContent.MountInstall(installRoot, disc: null, Voln.VshellProgram, GameLanguage.English);
+	/// <param name="installRoot">The install's root folder.</param>
+	/// <param name="disc">
+	/// The CD drive the shell honors <c>ALT_DRIVE</c> for (docs/es1/formats/streams.md#the-volume-group), or null for the
+	/// install alone.
+	/// </param>
+	public static GameContent MountShell(string installRoot, GameDisc? disc = null) =>
+		GameContent.MountInstall(installRoot, disc, Voln.VshellProgram, GameLanguage.English);
 
 	/// <summary>
 	/// Loads <paramref name="missionName"/> (with or without <c>.MSN</c>) from <c>msn\</c> and writes the five files.
