@@ -48,6 +48,10 @@ internal static class Program {
 		                                   (frame:delta) pairs: how many open on frame 0, hold a delta of
 		                                   0 or a 0xff byte, and the frame and delta ranges; the entries
 		                                   the reader refuses, as ES1's shell scripts, listed apart
+		  shades                           every dat\SHADES.DAT in the archives, each type tag's {ramp, column}
+		                                   pairs and how many ramps they name; and every .DPL palette's shade
+		                                   ramps: how many, the empty ones, and each that is not a consecutive
+		                                   ascending run of indices, with its entries
 		  bin <file> [<line>...]           the lines of a .BIN string table, or of ES1's *_TEXT.BIN
 		                                   talking-head text, in any of those archives,
 		                                   named as name or folder\name (.BIN optional): every line, or
@@ -295,6 +299,17 @@ internal static class Program {
 				WriteJson(output, report);
 			} else {
 				SncQuery.Write(output, report);
+			}
+
+			return 0;
+		}
+
+		if (command == "shades") {
+			var report = ShadesQuery.Run(Census.Archives(install));
+			if (json) {
+				WriteJson(output, report);
+			} else {
+				ShadesQuery.Write(output, report);
 			}
 
 			return 0;
