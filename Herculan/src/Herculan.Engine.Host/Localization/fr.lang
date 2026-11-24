@@ -97,6 +97,8 @@ tweak.es1_refresh_weapon_art.display_name  Corriger l'image des armes après ré
 tweak.es1_refresh_weapon_art.description  Dans la baie des HERC et sur l'écran d'armement, chaque arme est dessinée endommagée ou intacte selon son état actuel. Dans le jeu original, une arme garde son image endommagée après sa réparation, jusqu'à ce que la carrière soit rechargée.
 tweak.es1_fix_scramble_lights.display_name  Corriger la fausse alerte de décollage d'urgence
 tweak.es1_fix_scramble_lights.description  Les voyants d'alerte de la baie des HERC ne s'allument que si la prochaine mission de votre carrière est un décollage d'urgence. Dans le jeu original, ils peuvent rester allumés après la reprise ou la restauration d'une carrière dont la prochaine mission n'en est pas un, car le jeu retient la dernière mission chargée plutôt que celle de la carrière.
+tweak.es1_fix_glance_cursor.display_name  Corriger le curseur après une vue latérale
+tweak.es1_fix_glance_cursor.description  Dans le simulateur, corrige le curseur qui reste bloqué en réticule après un coup d'œil à gauche ou à droite.
 tweak.es1_no_free_repair_level.display_name  Pas de réparation gratuite
 tweak.es1_no_free_repair_level.description  Sur l'écran SYSTEM REPAIR, PROCEED ne garde que les réparations payées avec + et −. Le jeu original répare l'élément jusqu'au niveau qu'affiche la liste STATUS, qui après un + est un niveau de plus que ce que vous avez payé.
 tweak.es1_real_time_round_life.display_name  Portée complète des canons

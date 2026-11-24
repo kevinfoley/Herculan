@@ -306,6 +306,15 @@ public sealed class Es1ViewManager {
 	/// </summary>
 	public static bool KeepCockpitEdge => TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixCockpitEdgeFlicker);
 
+	/// <summary>
+	/// <b>This engine's own</b>, the "Fix cursor after side view" tweak (<see cref="Settings.Es1TweakSettingDefinitions.FixGlanceCursor"/>,
+	/// plan decision 48): command 6, the return from a glance, ends in <see cref="Es1CockpitCursors.UseForwardCursor"/>
+	/// as the pan up does. Retail's ends in <c>Cockpit_UseOffForwardCursor</c>, as the slides away from the forward view
+	/// do, so the forward view keeps the glances' cursor until the next pan up
+	/// (docs/es1/simulation/cockpit-views.md#the-cursor-after-a-glance). Off, retail's call.
+	/// </summary>
+	public static bool ForwardCursorAfterGlance => TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixGlanceCursor);
+
 	/// <summary>The render context's clip block as the last view state copied it in, clip mode 2.</summary>
 	public Es1ClipBlock Clip { get; private set; } = Es1ClipBlock.Empty;
 
@@ -848,7 +857,12 @@ public sealed class Es1ViewManager {
 		EndLift(lifted, drawn);
 		var cursor = Display.Cursor;
 		cursor.EndPageChange();
-		Cockpit.Cursors.UseOffForwardCursor();
+		if (command == 6 && ForwardCursorAfterGlance) {
+			Cockpit.Cursors.UseForwardCursor();
+		} else {
+			Cockpit.Cursors.UseOffForwardCursor();
+		}
+
 		cursor.BeginPageChange();
 		if (display.ShowPage(drawn)) {
 			yield return default;

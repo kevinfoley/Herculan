@@ -95,6 +95,12 @@ public static class Es1TweakSettingDefinitions {
 	/// <see cref="Shell.Hangar.Es1HangarBay.ScrambleLightsFollowCareer"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixScrambleLights = new("tweak.es1_fix_scramble_lights", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// The return from a glance makes the forward view's cursor slot the active one, as the pan up does (plan decision 48,
+	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="View.Es1ViewManager.ForwardCursorAfterGlance"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FixGlanceCursor = new("tweak.es1_fix_glance_cursor", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -159,7 +165,7 @@ public static class Es1TweakSettingDefinitions {
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
+		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 
 	/// <summary>
@@ -175,6 +181,6 @@ public static class Es1TweakSettingDefinitions {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming, TweakSettingDefinitions.MouseOutsideView,
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
+		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 }

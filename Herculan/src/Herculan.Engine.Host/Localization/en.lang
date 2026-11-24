@@ -99,6 +99,8 @@ tweak.es1_refresh_weapon_art.display_name  Fix weapon art after repair
 tweak.es1_refresh_weapon_art.description  On the HERC Bay and arming screens, each weapon is drawn damaged or whole by its condition as it stands now. In the original game a weapon keeps its damaged picture after it is repaired, until the career is loaded again.
 tweak.es1_fix_scramble_lights.display_name  Fix false scramble alarm
 tweak.es1_fix_scramble_lights.description  The HERC Bay's scramble alarm lights only show when your career's next mission is a scramble. In the original game they can stay on after you resume or restore a career whose next mission isn't a scramble, because the game remembers the last mission it loaded rather than the career's.
+tweak.es1_fix_glance_cursor.display_name  Fix cursor after side view
+tweak.es1_fix_glance_cursor.description  In the simulator, fixes the cursor getting stuck as a crosshair after glancing left or right.
 tweak.es1_no_free_repair_level.display_name  No free repair level
 tweak.es1_no_free_repair_level.description  On the SYSTEM REPAIR screen, PROCEED keeps only the repairs you paid for with + and −. Retail repairs the item to the level the STATUS list shows, which after a + is one level more than you paid for.
 tweak.es1_real_time_round_life.display_name  Full cannon range
