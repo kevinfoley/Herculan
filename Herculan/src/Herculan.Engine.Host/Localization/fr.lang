@@ -111,6 +111,8 @@ tweak.es1_fix_career_saves.display_name  Corriger les bugs de sauvegarde des car
 tweak.es1_fix_career_saves.description  Chaque nouvelle carrière reçoit ses propres fichiers de sauvegarde et figure dans la liste des carrières dès sa création. Dans le jeu original, une carrière créée après en avoir supprimé une écrase les fichiers de la dernière carrière, une deuxième carrière créée avant de lancer une mission remplace la première, et la liste des carrières n'est enregistrée que lorsque le jeu quitte les menus.
 tweak.es1_career_over_stops.display_name  Ne pas rejouer une carrière terminée
 tweak.es1_career_over_stops.description  NEXT MISSION > sur une carrière terminée affiche le message CAREER OVER. Dans le jeu original, la baie des HERC d'une carrière achevée reste accessible après STATS ou SAVE/RESTORE, et NEXT MISSION > y fait passer la carrière à une campagne qui n'existe pas.
+tweak.es1_fix_build_exploit.display_name  Corriger l'exploit de construction
+tweak.es1_fix_build_exploit.description  Corrige un bug qui permettait de construire un HERC auquel vous ne devriez pas avoir accès en passant d'une carrière à l'autre.
 tweaks.title                   Ajustements
 tweaks.description             Les ajustements modifient le comportement du jeu, en général pour corriger des bugs ou apporter des améliorations de confort. Pour l'expérience la plus proche de l'original (bugs compris), cliquez sur « Aucun » pour désactiver tous les ajustements.
 tweaks.note                    Certains bugs graphiques mineurs et plantages potentiels ne sont pas reproduits dans HERCULAN. La prise en charge des périphériques d'entrée modernes et des autres schémas de commande reste toujours disponible dans le menu Manette.

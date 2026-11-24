@@ -147,12 +147,19 @@ public static class Es1TweakSettingDefinitions {
 	/// <see cref="Shell.Menus.Es1ServiceBayMenu.CareerOverStops"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> CareerOverStops = new("tweak.es1_career_over_stops", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// BUILD opens on a chassis the current career has made available rather than on the one it last showed, which may be
+	/// another career's (plan decision 47, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// <see cref="Es1FabricationMenu.ShownChassisFollowsCareer"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> ShownChassisFollowsCareer = new("tweak.es1_fix_build_exploit", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops,
+		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 
 	/// <summary>
@@ -168,6 +175,6 @@ public static class Es1TweakSettingDefinitions {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming, TweakSettingDefinitions.MouseOutsideView,
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops,
+		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 }

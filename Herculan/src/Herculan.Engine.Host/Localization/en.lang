@@ -113,6 +113,8 @@ tweak.es1_fix_career_saves.display_name  Fix career save bugs
 tweak.es1_fix_career_saves.description  Each new career gets save files of its own and is added to the career list as soon as you create it. In the original game a career created after deleting one saves over the last career's files, a second career created before you start a mission replaces the first, and the career list is only saved when the game leaves the menus.
 tweak.es1_career_over_stops.display_name  Fix replaying a finished career
 tweak.es1_career_over_stops.description  NEXT MISSION > on a career that has ended shows the CAREER OVER message. In the original game the HERC Bay of a finished career can still be reached after STATS or SAVE/RESTORE, and NEXT MISSION > there moves the career on to a campaign that does not exist.
+tweak.es1_fix_build_exploit.display_name  Fix build exploit
+tweak.es1_fix_build_exploit.description  Fix a bug which could be exploited to build a HERC you shouldn't have access to by switching back and forth between careers.
 tweaks.title                   Tweaks
 tweaks.description             Tweaks alter game behavior, generally either to fix bugs or provide quality-of-life enhancements. For the closest-to-vanilla experience (bugs included), click "None" to disable all tweaks.
 tweaks.note                    Some minor cosmetic bugs and potential crashes are not reproduced in HERCULAN. Support for modern input devices and alternate control schemes is always available via the Controller menu.

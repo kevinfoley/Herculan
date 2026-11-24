@@ -36,10 +36,27 @@ public sealed class Es1FabricationMenu : Es1Menu {
 	/// <summary>
 	/// <c>FabricationMenu_Ctor</c> (<c>000307c9</c>)(0): the screen object, and <c>res32\blueherx.dba</c> loaded with
 	/// <c>Resource_LoadBitmapArray</c> into <c>Fabrication_ChassisArt</c> (<see cref="Es1MenuBanks.ChassisArt"/>).
+	/// <para>With <see cref="ShownChassisFollowsCareer"/> and no HERC being built (<see cref="Es1Hangar.HasMarkedHerc"/>),
+	/// a shown chassis the current career has not made available is then stepped forward as 2004 steps it
+	/// (<see cref="StepChassis"/>), before <see cref="SetOpeningControls"/> prices it.</para>
 	/// </summary>
+	/// <param name="context">The menu context.</param>
 	public Es1FabricationMenu(Es1MenuContext context) : base(context) {
 		context.Banks.ChassisArt = context.Banks.Load("BLUEHERX.DBA");
+		if (ShownChassisFollowsCareer && context.Mission.Hangar?.HasMarkedHerc() != true
+				&& context.Mission.CurrentRecord?.Equipment is { } equipment
+				&& (byte)equipment.IsAvailable(context.Globals.FabricationChassis, 0) == 0) {
+			StepChassis(forward: true);
+		}
 	}
+
+	/// <summary>
+	/// Whether BUILD opens on a chassis the current career has made available, where retail's opens on whatever chassis
+	/// it last showed, another career's included (plan decision 47, docs/herculan/plan-es1-first-mission.md#decisions);
+	/// <see cref="Settings.Es1TweakSettingDefinitions.ShownChassisFollowsCareer"/>.
+	/// </summary>
+	public static bool ShownChassisFollowsCareer =>
+		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.ShownChassisFollowsCareer);
 
 	private Es1HangarBay? Bay => Context.Screens.Bay;
 
