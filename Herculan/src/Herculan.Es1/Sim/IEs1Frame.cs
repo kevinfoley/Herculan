@@ -10,8 +10,11 @@ namespace Herculan.Es1.Sim;
 /// the frame the loop draws after it. <c>Cam_Update</c> is the camera's own (<see cref="Es1Camera.Update"/>).
 /// </summary>
 public interface IEs1Frame {
-	/// <summary><c>Sim_RenderFrame</c> (<c>00059c08</c>): the cockpit's frame, then the 3D pass into the draw page.</summary>
-	void RenderFrame();
+	/// <summary>
+	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>): the cockpit's frame, then the 3D pass into the draw page, yielding each
+	/// wait for the monitor the view shake's page moves make before the pass. It draws only as it is enumerated.
+	/// </summary>
+	IEnumerable<Es1Retrace> RenderFrame();
 
 	/// <summary>
 	/// <c>Sim_EndFrame</c> (<c>00059b40</c>) with <c>Sim_Frozen</c> <paramref name="frozen"/>: the view change, the page

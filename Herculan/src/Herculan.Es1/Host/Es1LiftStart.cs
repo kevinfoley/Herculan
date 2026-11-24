@@ -124,7 +124,8 @@ internal static class Es1LiftStart {
 	/// machine back at its height and the jolt: <c>CockpitView_SetShakeBand</c>(<see cref="JoltBand"/>), then until the
 	/// clock reaches its value then plus <see cref="JoltLength"/>, <c>CockpitView_StepShake</c> by the presentation
 	/// generator's next word mod <see cref="JoltSpread"/> and <c>Sim_RenderFrame</c>, each pass standing at the waits its
-	/// page moves owe or, with none, until the next host frame (plan decision 11); <c>CockpitView_ClearShake</c> and
+	/// page moves owe, which <c>Sim_RenderFrame</c> pays before it draws, or, with none, until the next host frame (plan
+	/// decision 11); <c>CockpitView_ClearShake</c> and
 	/// <c>PitchGradient_Enabled</c> set.
 	/// <para><b>This engine's own</b> (plan decision 30): the canvas's side panels draw each pass's cut, art and fills too
 	/// (<see cref="Es1ViewManager.CanvasOverlay"/>). The canvas is held through each pass's drawing time
@@ -158,7 +159,9 @@ internal static class Es1LiftStart {
 			int row = Row(views.Projection!, camera);
 			views.Window = Cut(views.Window, row);
 			views.CanvasHeld = true;
-			frame.RenderFrame();
+			foreach (var retrace in frame.RenderFrame()) {
+				yield return Es1Wait.For(retrace);
+			}
 
 			// The context's pair at 0 and its bottom back for the art and the gunsight; the pair back after.
 			var window = views.Window with { Y1 = entry.Y1 };
@@ -194,9 +197,8 @@ internal static class Es1LiftStart {
 				views.StepShake(step);
 			}
 
-			frame.RenderFrame();
 			bool waited = false;
-			foreach (var retrace in views.TakeOwedRetraces()) {
+			foreach (var retrace in frame.RenderFrame()) {
 				waited = true;
 				yield return Es1Wait.For(retrace);
 			}

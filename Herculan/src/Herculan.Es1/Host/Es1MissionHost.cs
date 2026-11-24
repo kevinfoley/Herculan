@@ -459,9 +459,16 @@ public static class Es1MissionHost {
 				manager.GlanceReach = () => shownPresenter.GlanceReach(window.FramebufferSize);
 				manager.CanvasShown = () => shownPresenter.ShowsCanvas(window.FramebufferSize);
 				presenter.SetPalette(scene.Palette);
-				// The cockpit script's palette commands upload to the same live palette, and the shield display's rings are
-				// installed into it.
-				manager.Cockpit.Scripts.UploadPalette = presenter.SetPalette;
+				// From here a change to the live palette reaches the screen at the frame's end, Palette_FlushDirtyRange's
+				// (Es1FrameLoop.FlushPalette), as the simulator's installs and switches do.
+				presenter.DefersSends = true;
+				// The cockpit script's palette commands upload to the same live palette at once, through the driver's palette
+				// routine as the TTM player's uploads go; the shield display's rings are installed into it.
+				var scriptPresenter = presenter;
+				manager.Cockpit.Scripts.UploadPalette = palette => {
+					scriptPresenter.SetPalette(palette);
+					scriptPresenter.FlushPalette();
+				};
 				manager.Cockpit.Shields.InstallPaletteRange = presenter.InstallRange;
 				// The hit shake's palette switches make whole palettes live on it.
 				var impactPresenter = presenter;
@@ -513,6 +520,7 @@ public static class Es1MissionHost {
 				}, detail, () => chain.Camera);
 				// The death flash's palettes and fades are installed into the same live palette.
 				frameLoop.InstallPaletteRange = presenter.InstallRange;
+				frameLoop.FlushPalette = presenter.FlushPalette;
 				frameLoop.LivePalette = () => livePresenter.Palette;
 				frameLoop.World = scene.World;
 				frameLoop.StartMission(Es1CursorImage.Load(content, "CURSOR"),

@@ -56,11 +56,18 @@ public sealed class Es1Canvas {
 
 	/// <summary>
 	/// <paramref name="display"/>'s draw page, drawn in view <paramref name="view"/>'s window, copied into that view's page
-	/// (<see cref="Es1VideoMemory.CopyPageFrom"/>); nothing for a view with no page.
+	/// (<see cref="Es1VideoMemory.CopyPageFrom"/>) from the page's own origin, its base, not from where the view shake has
+	/// moved it: the shake's draws are moved against the page so that the picture stays put in the store, and the window
+	/// showing the canvas follows the screen's shaken row (<see cref="Es1ViewManager.ScreenCanvasPoint"/>). Nothing for a
+	/// view with no page.
 	/// </summary>
 	public void TakeDrawnPage(Es1VideoMemory display, int view) {
 		if (PageColumn(view) is { } column) {
-			Memory.CopyPageFrom(display, display.DrawPage, Es1VideoMemory.PageWidth, PageRows(view), column, 0);
+			int page = display.DrawPage;
+			var (originX, originY) = display.PageOrigin(page);
+			var (baseX, baseY) = display.PageBase(page);
+			Memory.CopyPageFrom(display, page, Es1VideoMemory.PageWidth, PageRows(view), column, 0, baseX - originX,
+				baseY - originY);
 		}
 	}
 
@@ -87,7 +94,13 @@ public sealed class Es1Canvas {
 	/// clip block. The art is drawn every frame: it would otherwise need
 	/// redrawing after any page copy, any switch into or out of view 4, and any change to the external rect.
 	/// </summary>
-	internal void DrawSidePanels(Es1ViewManager views, Action? beginWorldPass) {
+	/// <param name="views">The view manager whose frame the panels are drawn for.</param>
+	/// <param name="beginWorldPass">Readies the host's camera from <see cref="Es1ViewManager.Window"/> for a pass.</param>
+	/// <param name="worldLag">
+	/// The rows the frame's own world lies below where the screen's shaken row puts the cockpit: each pass's window
+	/// centre is moved down by it, so the panels' world shakes as the screen's does.
+	/// </param>
+	internal void DrawSidePanels(Es1ViewManager views, Action? beginWorldPass, int worldLag) {
 		int installed = views.InstalledView;
 		if (installed is not (0 or 2 or 3 or Es1CockpitViews.ExternalView)) {
 			return;
@@ -124,6 +137,7 @@ public sealed class Es1Canvas {
 				clip = files.Clip(view);
 			}
 
+			window = window with { CentreY = window.CentreY + worldLag };
 			var overlay = views.CanvasOverlay;
 			var drawn = overlay?.Cut(window) ?? window;
 			views.Window = drawn;

@@ -146,8 +146,11 @@ public sealed class Es1PreferencesPanel : Es1AlertPanel {
 	/// <summary><c>+0x2e7</c>: the click was the right button's, which lowers a bar.</summary>
 	public bool RightButton { get; private set; }
 
-	/// <summary><c>+0x384</c>, the draw hook <c>PreferencesPanel_SetDrawHook</c> (<c>00048180</c>) installs; none draws nothing.</summary>
-	public Action? DrawHook { get; set; }
+	/// <summary>
+	/// <c>+0x384</c>, the draw hook <c>PreferencesPanel_SetDrawHook</c> (<c>00048180</c>) installs, yielding each wait for
+	/// the monitor it makes; none draws nothing.
+	/// </summary>
+	public Func<IEnumerable<Es1Wait>>? DrawHook { get; set; }
 
 	/// <summary><c>+0x388</c>–<c>+0x38e</c>: each row's repaint counter, the passes still to refresh it on.</summary>
 	public IReadOnlyList<byte> RepaintCounters => _repaint;
@@ -361,7 +364,7 @@ public sealed class Es1PreferencesPanel : Es1AlertPanel {
 
 	/// <summary>
 	/// <c>PreferencesPanel_CallDrawHook</c> (<c>00048198</c>), nothing without a <see cref="DrawHook"/>: the page not on
-	/// the screen, <c>+0x8c</c>, made the draw page and the hook called on it under the render context
+	/// the screen, <c>+0x8c</c>, made the draw page and the hook called on it, its waits yielded, under the render context
 	/// <see cref="Es1AlertPanel.Enter"/> found; the page on the screen made the source page; <see cref="Tick"/> on the
 	/// draw page; <c>+0x8c</c> shown, which waits for the next vertical retrace while <c>Display_FlipWithoutPan</c> is
 	/// clear, yielded as a retrace wait; <c>+0x88</c> drawn on, the two swapped, and the new <c>+0x88</c>, the page now
@@ -375,7 +378,10 @@ public sealed class Es1PreferencesPanel : Es1AlertPanel {
 
 		var display = Globals.Display;
 		display.DrawPage = display.PairDrawn;
-		DrawHook();
+		foreach (var wait in DrawHook()) {
+			yield return wait;
+		}
+
 		display.SourcePage = display.PairVisible;
 		Tick();
 		if (display.ShowPage(display.PairDrawn)) {

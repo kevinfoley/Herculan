@@ -8,7 +8,8 @@ namespace Herculan.Es1.View;
 /// <c>Palette_ToggleImpact</c> (<c>00025ef8</c>) and <c>Palette_RestoreFromImpact</c> (<c>00025f1c</c>), on
 /// <c>ImpactPaletteObject</c> (<c>000928f0</c>), the palette the toggles swap with (<c>000afdcc</c>) and the one the
 /// restore makes active (<c>000afdd0</c>). Each makes a palette active through <c>Palette_SetActive</c>
-/// (<c>00027e7c</c>), which here sends it as the live palette (<see cref="SetLivePalette"/>), and sets, flips or clears
+/// (<c>00027e7c</c>), which here makes it the live palette (<see cref="SetLivePalette"/>), sent to the screen at the
+/// frame's end as <c>Palette_FlushDirtyRange</c> sends it (<see cref="Es1ScreenPresenter.FlushPalette"/>), and sets, flips or clears
 /// the pitch gradient's <c>000928eb</c> (<see cref="Es1PitchGradient.ImpactShowing"/>); each does nothing while no
 /// impact palette is loaded.
 ///
@@ -27,7 +28,7 @@ public sealed class Es1ImpactPalette {
 	/// <summary>The live palette as it stands, which the palette a switch replaces takes; with none, it takes none.</summary>
 	public Func<DynamixPalette?>? LivePalette { get; set; }
 
-	/// <summary>Sends a palette as the live palette, the one every index on the screen shows through.</summary>
+	/// <summary>Makes a palette the live palette, the one every index on the screen shows through once it is sent.</summary>
 	public Action<DynamixPalette?>? SetLivePalette { get; set; }
 
 	/// <summary>
@@ -80,7 +81,7 @@ public sealed class Es1ImpactPalette {
 	}
 
 	/// <summary>
-	/// <c>Palette_SetActive</c>(<paramref name="palette"/>): it made active and sent as the live palette, answering the
+	/// <c>Palette_SetActive</c>(<paramref name="palette"/>): it made active and the live palette, answering the
 	/// one it replaced, which first takes the live palette's colors. Retail's slots are never null when a switch reads
 	/// them, since <see cref="Toggle"/> and <see cref="Restore"/> follow an <see cref="Activate"/>; a null one, which
 	/// retail would make active as a null palette, sends nothing here, an engine guard.

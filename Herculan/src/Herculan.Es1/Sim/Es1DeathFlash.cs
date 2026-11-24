@@ -95,7 +95,10 @@ internal static class Es1DeathFlash {
 				}
 			}
 
-			frame.RenderFrame();
+			foreach (var wait in RenderFrame(frame)) {
+				yield return wait;
+			}
+
 			yield return Es1Wait.NextHostFrame;
 		}
 
@@ -106,7 +109,10 @@ internal static class Es1DeathFlash {
 				yield return wait;
 			}
 
-			frame.RenderFrame();
+			foreach (var wait in RenderFrame(frame)) {
+				yield return wait;
+			}
+
 			yield return Es1Wait.NextHostFrame;
 		}
 
@@ -142,6 +148,13 @@ internal static class Es1DeathFlash {
 	private static void Install(IEs1Frame frame, uint[]? palette) {
 		if (palette != null) {
 			frame.InstallPalette(0, palette.Take(InstalledColors).ToArray());
+		}
+	}
+
+	/// <summary><c>Sim_RenderFrame</c>, each of its waits for the monitor yielded.</summary>
+	private static IEnumerable<Es1Wait> RenderFrame(IEs1Frame frame) {
+		foreach (var retrace in frame.RenderFrame()) {
+			yield return Es1Wait.For(retrace);
 		}
 	}
 

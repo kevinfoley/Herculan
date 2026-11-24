@@ -72,11 +72,15 @@ public class Es1LiveSceneOptionsTests {
 
 		preferences.SetOption(true, 255, Es1Preferences.DetailOption);
 		Assert.Equal(Es1DetailSetting.FromOption(0), detail.Setting);
-		((IEs1Frame)frames).RenderFrame();
+		foreach (var _ in ((IEs1Frame)frames).RenderFrame()) {
+		}
+
 		Assert.Equal(Es1DetailSetting.FromOption(255), detail.Setting);
 
 		preferences.SetOption(true, 0, Es1Preferences.DetailOption);
-		((IEs1Frame)frames).RenderFrame();
+		foreach (var _ in ((IEs1Frame)frames).RenderFrame()) {
+		}
+
 		Assert.Equal(Es1DetailSetting.FromOption(0), detail.Setting);
 	}
 

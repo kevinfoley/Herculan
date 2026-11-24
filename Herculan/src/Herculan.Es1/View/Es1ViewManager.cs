@@ -260,12 +260,17 @@ public sealed class Es1ViewManager {
 	/// 0's. The cockpit's canvas origin is view 0's: the glance's move and the shake's total are taken back out. Everything
 	/// is put back after.</para>
 	/// </summary>
-	internal void DrawCanvasPanels(Action? beginWorldPass) {
+	/// <param name="beginWorldPass">Readies the host's camera from <see cref="Window"/> for a pass.</param>
+	/// <param name="worldLag">
+	/// The rows the frame's own world lies below where the shaken row puts the cockpit
+	/// (<see cref="Es1Canvas.DrawSidePanels"/>): the shake's step taken since the frame read <see cref="ShakeOffset"/>.
+	/// </param>
+	internal void DrawCanvasPanels(Action? beginWorldPass, int worldLag = 0) {
 		if (Canvas is not { } canvas || !WideCanvas || CanvasHeld || CanvasShown?.Invoke() == false) {
 			return;
 		}
 
-		canvas.DrawSidePanels(this, beginWorldPass);
+		canvas.DrawSidePanels(this, beginWorldPass, worldLag);
 		if (InstalledView is not (2 or 3) || Files.Count == 0) {
 			return;
 		}

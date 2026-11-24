@@ -79,21 +79,56 @@ public sealed class Es1ScreenPresenter : IDisposable {
 	/// </summary>
 	public int PassScale { get; private set; } = 1;
 
-	/// <summary>The live palette the cells' indices show through, as <see cref="SetPalette"/> last sent it.</summary>
+	/// <summary>
+	/// The live palette, the active one retail's installs write into, as <see cref="SetPalette"/> and
+	/// <see cref="InstallRange"/> last made it. The cells' indices show through it once it is sent: at once, or while
+	/// <see cref="DefersSends"/> is set at the next <see cref="FlushPalette"/>.
+	/// </summary>
 	public DynamixPalette? Palette => _palette;
 
 	/// <summary>
-	/// How many times the live palette has been sent (<see cref="SetPalette"/>, <see cref="InstallRange"/>): what changes
-	/// when it does, so a reader that resolves indices to colors itself, as the 3D pass does, can tell when to again.
+	/// How many times the live palette has changed (<see cref="SetPalette"/>, <see cref="InstallRange"/>): what changes
+	/// when it does, so a reader that resolves indices to colors itself, as the 3D pass does, can tell when to again. The
+	/// 3D pass so draws in the palette the frame will be shown in, sent or not.
 	/// </summary>
 	public int PaletteVersion { get; private set; }
 
-	/// <summary>The live palette the cells' indices show through; a palette other than the last is sent again.</summary>
+	/// <summary>
+	/// Set, a change to the live palette reaches the screen only at the next <see cref="FlushPalette"/>, as the
+	/// simulator's reaches the display at the frame's end (docs/es1/rendering/palette.md#installing-colors); clear, the
+	/// default, at once, as the shell's and the films' palettes are shown.
+	/// </summary>
+	public bool DefersSends { get; set; }
+
+	// The palette last sent to the surfaces, and whether one has been.
+	private DynamixPalette? _sent;
+	private bool _sentSet;
+
+	/// <summary>The live palette the cells' indices show through; a palette other than the last is made live.</summary>
 	public void SetPalette(DynamixPalette? palette) {
 		if (_paletteSet && ReferenceEquals(palette, _palette)) {
 			return;
 		}
 
+		_palette = palette;
+		_paletteSet = true;
+		PaletteVersion++;
+		if (!DefersSends) {
+			FlushPalette();
+		}
+	}
+
+	/// <summary>
+	/// <c>Palette_FlushDirtyRange</c> (<c>ES1DBSIM 00027f74</c>, docs/es1/rendering/palette.md#differences-from-es2):
+	/// the live palette sent to the screen when it is not the one last sent. Retail sends the dirty range of a palette it
+	/// sent before; this engine sends a copy for each change (<see cref="InstallRange"/>), so it sends the whole of it.
+	/// </summary>
+	public void FlushPalette() {
+		if (!_paletteSet || (_sentSet && ReferenceEquals(_sent, _palette))) {
+			return;
+		}
+
+		var palette = _palette;
 		var rgba = new byte[256 * 4];
 		for (int index = 0; index < 256; index++) {
 			if (palette != null && palette.Colors.TryGetValue(index, out var entry)) {
@@ -108,18 +143,17 @@ public sealed class Es1ScreenPresenter : IDisposable {
 
 		_surface.SetPalette(rgba);
 		_canvasSurface?.SetPalette(rgba);
-		_palette = palette;
-		_paletteSet = true;
-		PaletteVersion++;
+		_sent = palette;
+		_sentSet = true;
 	}
 
 	/// <summary>
 	/// <c>Palette_InstallRange</c> (<c>ES1DBSIM 00027e98</c>)
-	/// on the live palette: a copy of it with the entries from <paramref name="first"/> replaced and sent as
-	/// <see cref="SetPalette"/> sends one. Each entry is retail's palette dword, six-bit red, green and blue from the low
+	/// on the live palette: a copy of it with the entries from <paramref name="first"/> replaced and made live as
+	/// <see cref="SetPalette"/> makes one. Each entry is retail's palette dword, six-bit red, green and blue from the low
 	/// byte up, scaled by the live palette's <see cref="DynamixPalette.Scalar"/> as the palette reader scales a
-	/// <c>.DPL</c>'s. With no live palette nothing is installed; when every entry already holds its color nothing is
-	/// sent, which leaves the screen as it is.
+	/// <c>.DPL</c>'s. With no live palette nothing is installed; when every entry already holds its color the live
+	/// palette stays as it is.
 	/// </summary>
 	/// <param name="first">The first palette entry replaced.</param>
 	/// <param name="entries">The entries, each a retail palette dword.</param>

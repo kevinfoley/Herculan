@@ -52,6 +52,9 @@ internal static class Program {
 		                                   pairs and how many ramps they name; and every .DPL palette's shade
 		                                   ramps: how many, the empty ones, and each that is not a consecutive
 		                                   ascending run of indices, with its entries
+		  dpl <palette> [<palette>...]     .DPL palettes in the archives, named as name or folder\name
+		                                   (.DPL optional): the first set against each of the others, the
+		                                   entries in which they differ with both colors
 		  bin <file> [<line>...]           the lines of a .BIN string table, or of ES1's *_TEXT.BIN
 		                                   talking-head text, in any of those archives,
 		                                   named as name or folder\name (.BIN optional): every line, or
@@ -313,6 +316,21 @@ internal static class Program {
 			}
 
 			return 0;
+		}
+
+		if (command == "dpl") {
+			if (positional.Count < 2) {
+				return Fail("dpl takes one or more .DPL palette names (dpl impact1 world1, dpl dpl\\world0).");
+			}
+
+			var report = DplQuery.Run(Census.Archives(install), positional.Skip(1).ToList());
+			if (json) {
+				WriteJson(output, report);
+			} else {
+				DplQuery.Write(output, report);
+			}
+
+			return report.Base == null ? 1 : 0;
 		}
 
 		if (command == "bin") {

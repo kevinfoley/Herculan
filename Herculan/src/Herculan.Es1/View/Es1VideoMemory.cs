@@ -457,15 +457,24 @@ public sealed class Es1VideoMemory {
 
 	/// <summary>
 	/// The cells of <paramref name="source"/>'s page <paramref name="page"/>, <paramref name="width"/> columns and
-	/// <paramref name="rows"/> rows from its origin as it lies now, written at (<paramref name="targetX"/>,
-	/// <paramref name="targetY"/>) of this store's rows, and the world layer's pixels under them copied from the source's
-	/// layer (<see cref="IEs1WorldLayer.CopyFrom"/>), in one rect when the page lies in one piece of the source's store
-	/// and a run at a time otherwise. This store's page origins are not read: the canvas (<see cref="Es1Canvas"/>) places
-	/// its pages by column.
+	/// <paramref name="rows"/> rows from (<paramref name="sourceX"/>, <paramref name="sourceY"/>) of the page as it lies
+	/// now, written at (<paramref name="targetX"/>, <paramref name="targetY"/>) of this store's rows, and the world layer's
+	/// pixels under them copied from the source's layer (<see cref="IEs1WorldLayer.CopyFrom"/>), in one rect when the
+	/// rect lies in one piece of the source's store and a run at a time otherwise. This store's page origins are not read:
+	/// the canvas (<see cref="Es1Canvas"/>) places its pages by column.
 	/// </summary>
-	public void CopyPageFrom(Es1VideoMemory source, int page, int width, int rows, int targetX, int targetY) {
+	/// <param name="source">The store copied from.</param>
+	/// <param name="page">The source's page.</param>
+	/// <param name="width">The columns copied.</param>
+	/// <param name="rows">The rows copied.</param>
+	/// <param name="targetX">The column of this store the copy starts at.</param>
+	/// <param name="targetY">The row of this store the copy starts at.</param>
+	/// <param name="sourceX">The page's column the copy starts at, from its origin.</param>
+	/// <param name="sourceY">The page's row the copy starts at, from its origin.</param>
+	public void CopyPageFrom(Es1VideoMemory source, int page, int width, int rows, int targetX, int targetY, int sourceX = 0,
+			int sourceY = 0) {
 		for (int y = 0; y < rows; y++) {
-			int from = source.Address(page, 0, y), to = (targetY + y) * ScreenWidth + targetX;
+			int from = source.Address(page, sourceX, sourceY + y), to = (targetY + y) * ScreenWidth + targetX;
 			for (int x = 0; x < width; x++) {
 				Write(Wrap(to + x), source.Cells[source.Wrap(from + x)]);
 			}
@@ -475,14 +484,14 @@ public sealed class Es1VideoMemory {
 			return;
 		}
 
-		int corner = source.Address(page, 0, 0);
+		int corner = source.Address(page, sourceX, sourceY);
 		if (corner % source.ScreenWidth + width <= source.ScreenWidth && corner + (rows - 1) * source.ScreenWidth + width <= source.AddressCount) {
 			Layer.CopyFrom(source.Layer, corner % source.ScreenWidth, corner / source.ScreenWidth, targetX, targetY, width, rows);
 			return;
 		}
 
 		for (int y = 0; y < rows; y++) {
-			int from = source.Address(page, 0, y), x = 0;
+			int from = source.Address(page, sourceX, sourceY + y), x = 0;
 			while (x < width) {
 				int run = Math.Min(width - x, source.RunLeft(from));
 				Layer.CopyFrom(source.Layer, from % source.ScreenWidth, from / source.ScreenWidth, targetX + x, targetY + y, run, 1);

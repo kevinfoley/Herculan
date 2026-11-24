@@ -116,6 +116,13 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// <summary>The live palette (<see cref="Es1ScreenPresenter.Palette"/>), which the host sets; none with no presenter.</summary>
 	public Func<DynamixPalette?>? LivePalette { get; set; }
 
+	/// <summary>
+	/// <c>Palette_FlushDirtyRange</c> (<c>00027f74</c>) on the presenter (<see cref="Es1ScreenPresenter.FlushPalette"/>):
+	/// the live palette sent to the screen when it changed since it was last sent, which the host sets; none sends
+	/// nothing, as with no presenter.
+	/// </summary>
+	public Action? FlushPalette { get; set; }
+
 	/// <summary>The theater's world file, whose shorts 10 and 11 the pitch gradient reads, which the host sets; none runs no gradient.</summary>
 	public Es1WorldData? World { get; set; }
 
@@ -175,8 +182,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		Views.SetView(0);
 
 		// Step 14: with a friendly structure near, the lift's darkening in place of the first frame; otherwise
-		// PitchGradient_ForcedStep 8, the pitch gradient and Palette_FlushDirtyRange, whose upload InstallPaletteRange
-		// makes; then Sim_RenderFrame.
+		// PitchGradient_ForcedStep 8, the pitch gradient, Palette_FlushDirtyRange and Sim_RenderFrame. No shake is armed
+		// before the first frame, so its draw owes no wait for the monitor.
 		var globals = Views.Cockpit.Globals;
 		globals.LiftStartPending = Es1LiftStart.Gate(globals);
 		if (globals.LiftStartPending) {
@@ -184,12 +191,15 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		} else {
 			globals.PitchGradientForcedStep = 8;
 			BlendPitchGradient();
-			RenderFrame();
+			FlushPalette?.Invoke();
+			foreach (var _ in RenderFrame()) {
+			}
 		}
 
-		// Step 15: 000b5bca cleared; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1), page +0x8c copied onto +0x88 through
-		// the canvas context and the draw page put back.
+		// Step 15: 000b5bca cleared; Palette_FlushDirtyRange, which sends the lift's dark spans; Widget_DrawToCockpit(0,
+		// {0, 0, 320, 400}, 1), page +0x8c copied onto +0x88 through the canvas context and the draw page put back.
 		Views.Cockpit.BringUp = false;
+		FlushPalette?.Invoke();
 		Views.Cockpit.DrawToCockpit(new Es1Rect(0, 0, 320, 400));
 		// The driver's slot 30 (0009df4c) shows the cursor; Sound_SetMusicEnabled(1); with the lift, its ride, which the
 		// loop runs as the frame's work from the first host frame with a pacer; with no tape playing, CockpitMouseLive is
@@ -409,35 +419,42 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	}
 
 	/// <summary>
-	/// The frame after a tick, from <c>Cam_Update</c> on: the 3D pass, skipped while a tape plays with the simulation
-	/// frozen, and <see cref="EndFrame"/>, yielding a retrace for each wait the frame's end makes. The host runs it through
-	/// <see cref="AdvanceHostFrame"/>; a test drives it directly.
+	/// The frame after a tick, from <c>Cam_Update</c> on: <see cref="RenderFrame"/>, skipped while a tape plays with the
+	/// simulation frozen, and <see cref="EndFrame"/>, yielding a retrace for each wait either makes. The host runs it
+	/// through <see cref="AdvanceHostFrame"/>; a test drives it directly.
 	/// </summary>
 	internal IEnumerable<Es1Retrace> RunFrame(bool frozen) {
 		_camUpdate();
 		if (!(Views.Mouse.TapePlayback && frozen)) {
-			RenderFrame();
+			foreach (var wait in RenderFrame()) {
+				yield return wait;
+			}
 		}
 
-		return EndFrame(Views, frozen);
+		foreach (var wait in EndFrame(frozen)) {
+			yield return wait;
+		}
 	}
 
 	/// <inheritdoc/>
-	void IEs1Frame.RenderFrame() => RenderFrame();
+	IEnumerable<Es1Retrace> IEs1Frame.RenderFrame() => RenderFrame();
 
 	/// <inheritdoc/>
-	IEnumerable<Es1Retrace> IEs1Frame.EndFrame(bool frozen) => EndFrame(Views, frozen);
+	IEnumerable<Es1Retrace> IEs1Frame.EndFrame(bool frozen) => EndFrame(frozen);
 
 	/// <inheritdoc/>
 	void IEs1Frame.InstallPalette(int first, IReadOnlyList<uint> colors) => InstallPaletteRange?.Invoke(first, colors);
 
 	/// <summary>
 	/// <c>Sim_EndFrame</c> (<c>00059b40</c>): <c>Display_FlipWithoutPan</c> set unless frozen; the staged view change;
-	/// <c>+0x8c</c> shown and <c>+0x88</c> drawn on, and the pair swapped; the view command. Yields each wait for the
-	/// monitor its routines make, after those the frame's draw owes (<see cref="Es1ViewManager.TakeOwedRetraces"/>).
+	/// <c>Palette_FlushDirtyRange</c> (<see cref="FlushPalette"/>); <c>+0x8c</c> shown and <c>+0x88</c> drawn on, and the
+	/// pair swapped; the view command. Yields each wait for the monitor its routines make, after those still owed
+	/// (<see cref="Es1ViewManager.TakeOwedRetraces"/>).
 	/// </summary>
-	internal static IEnumerable<Es1Retrace> EndFrame(Es1ViewManager views, bool frozen) {
-		// The hit shake's steps in the frame's draw moved the page on show, each move waiting for a retrace.
+	private IEnumerable<Es1Retrace> EndFrame(bool frozen) {
+		var views = Views;
+		// A shake's page moves made since the last Sim_RenderFrame, as the lift's last ClearShake makes, each waiting for
+		// a retrace.
 		foreach (var wait in views.TakeOwedRetraces()) {
 			yield return wait;
 		}
@@ -448,9 +465,9 @@ public sealed class Es1FrameLoop : IEs1Frame {
 			yield return wait;
 		}
 
-		// Palette_CycleAnimatedRanges (00028260) and Palette_FlushDirtyRange (00027f74) have nothing to do: ES1's volumes
-		// hold no cyc\ file, so no range is registered to cycle, and the cockpit's scheme is installed into the live
-		// palette once, before the first frame (docs/es1/rendering/palette.md#differences-from-es2).
+		// Palette_CycleAnimatedRanges (00028260) has nothing to do: ES1's volumes hold no cyc\ file, so no range is
+		// registered to cycle (docs/es1/rendering/palette.md#differences-from-es2).
+		FlushPalette?.Invoke();
 		if (display.ShowPage(display.PairDrawn)) {
 			yield return default;
 		}
@@ -483,10 +500,22 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// and last the pilot channel's slot <c>+0x10</c> (<see cref="Messages.Es1PilotChannel.Update"/>), after which the
 	/// shake's offset is taken back out; then this engine's record of the page drawn and its copy into the canvas
 	/// (<see cref="Es1ViewManager.EndRenderFrame"/>). After a 3D pass, this engine also draws the canvas's side panels
-	/// (<see cref="Es1ViewManager.DrawCanvasPanels"/>). They are drawn without the shake's offset, because the canvas
-	/// already moves with the screen's shaken row.
+	/// (<see cref="Es1ViewManager.DrawCanvasPanels"/>). The canvas already moves with the screen's shaken row, which
+	/// carries the cockpit; the frame's world, drawn with the shake's total as it stood before <c>Cockpit_DrawFrame</c>
+	/// stepped it, lies that step below it, and the panels' world is drawn the same step down, so it shakes as the
+	/// screen's does.
+	///
+	/// <para>Yields each wait for the monitor a shake's page move owes (<see cref="Es1ViewManager.TakeOwedRetraces"/>):
+	/// those made before the frame, as the death flash's and the lift's steps are, first, and those the cockpit's frame
+	/// makes (<c>Cockpit_HitShakeTick</c>) after it, before the 3D pass. Retail waits inside <c>CockpitView_StepShake</c>,
+	/// so the screen shows the last frame until the wait ends; so does this engine's canvas, which takes the frame only
+	/// at the end of its draw.</para>
 	/// </summary>
-	private void RenderFrame() {
+	private IEnumerable<Es1Retrace> RenderFrame() {
+		foreach (var wait in Views.TakeOwedRetraces()) {
+			yield return wait;
+		}
+
 		var globals = Views.Cockpit.Globals;
 		globals.Structures.FlushDeletes();
 		globals.EffectLights.FlushDeletes();
@@ -501,6 +530,10 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		var (shakeX, shakeY) = Views.ShakeOffset;
 		Views.MoveProjectionPair(shakeX, shakeY);
 		Views.Cockpit.DrawFrame();
+		foreach (var wait in Views.TakeOwedRetraces()) {
+			yield return wait;
+		}
+
 		bool drewWorld = Views.CurrentView != 1 || Views.Staged;
 		if (drewWorld) {
 			if (_viewCamera?.Invoke() is { } camera) {
@@ -524,7 +557,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		Views.MoveProjectionPair(-shakeX, -shakeY);
 		Views.EndRenderFrame();
 		if (drewWorld) {
-			Views.DrawCanvasPanels(_beginWorldPass);
+			Views.DrawCanvasPanels(_beginWorldPass, Views.ShakeOffset.Y - shakeY);
 		}
 	}
 

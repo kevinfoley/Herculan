@@ -79,7 +79,10 @@ internal static class Es1PreferencesRaise {
 		if (views.CurrentView == Es1CockpitViews.ExternalView) {
 			AttachToPlayer(simulation);
 			chain.Camera.Update();
-			frame.RenderFrame();
+			foreach (var wait in RenderFrame(frame)) {
+				yield return wait;
+			}
+
 			keptView = Es1CockpitViews.ExternalView;
 		} else {
 			while (views.Staged || views.PendingCommand != -1) {
@@ -102,7 +105,9 @@ internal static class Es1PreferencesRaise {
 				}
 
 				chain.Camera.Update();
-				frame.RenderFrame();
+				foreach (var wait in RenderFrame(frame)) {
+					yield return wait;
+				}
 			} while (!staged || views.Staged);
 		}
 
@@ -111,7 +116,7 @@ internal static class Es1PreferencesRaise {
 		panel.DrawHook = () => {
 			chain.Camera.Steer(0, 0, OrbitSteer);
 			chain.Camera.Update();
-			frame.RenderFrame();
+			return RenderFrame(frame);
 		};
 		foreach (var wait in panel.Run(new StrongBox<int>())) {
 			yield return wait;
@@ -131,7 +136,10 @@ internal static class Es1PreferencesRaise {
 			views.FillOutsideExternalRect();
 			chain.DrawCaption(simulation.Controls);
 			chain.Camera.Update();
-			frame.RenderFrame();
+			foreach (var wait in RenderFrame(frame)) {
+				yield return wait;
+			}
+
 			foreach (var wait in EndFrame(simulation, frame)) {
 				yield return wait;
 			}
@@ -142,14 +150,19 @@ internal static class Es1PreferencesRaise {
 			chain.Camera.Update();
 			views.SetView(keptView);
 			views.Cockpit.SkipFrameDraw = true;
-			frame.RenderFrame();
+			foreach (var wait in RenderFrame(frame)) {
+				yield return wait;
+			}
+
 			foreach (var wait in EndFrame(simulation, frame)) {
 				yield return wait;
 			}
 
 			views.SetView(keptView);
 			views.Cockpit.SkipFrameDraw = false;
-			frame.RenderFrame();
+			foreach (var wait in RenderFrame(frame)) {
+				yield return wait;
+			}
 		}
 
 		// 10. The kept camera is destroyed in place (TSContext_Dtor); nothing here keeps it. The cursor, hidden since the
@@ -177,7 +190,16 @@ internal static class Es1PreferencesRaise {
 		}
 
 		simulation.ViewChain.Camera.Update();
-		frame.RenderFrame();
+		foreach (var wait in RenderFrame(frame)) {
+			yield return wait;
+		}
+	}
+
+	/// <summary><c>Sim_RenderFrame</c>, each of its waits for the monitor yielded.</summary>
+	private static IEnumerable<Es1Wait> RenderFrame(IEs1Frame frame) {
+		foreach (var retrace in frame.RenderFrame()) {
+			yield return Es1Wait.For(retrace);
+		}
 	}
 
 	/// <summary><c>Sim_EndFrame</c> under the simulation's <c>Sim_Frozen</c>, each of its waits for the monitor yielded.</summary>
