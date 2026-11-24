@@ -57,7 +57,7 @@ public sealed class Es1BaseDraw : IDisposable {
 	/// <summary>
 	/// Every structure placed and culled for <paramref name="camera"/>, each detail level picked under a focal length of
 	/// 2^<paramref name="focalShift"/>; with <paramref name="flatRamps"/> each takes <c>WorldShades_ResetRamps</c>' ramps
-	/// (<see cref="Es1Shading.FlatBlock"/>) rather than its distance band's.
+	/// (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		foreach (var structure in _structures) {
@@ -137,7 +137,7 @@ public sealed class Es1BaseDraw : IDisposable {
 			int radius = Structure.ShapeRadius;
 			bool drawn = Structure.Position.Z >= 0 && !shading.IsBeyondLastBand((byte)Es1Base.TypeTag, distance, radius)
 				&& Structure.Group?.Action == null;
-			int? block = flat ? shading.FlatBlock : shading.Block((byte)Es1Base.TypeTag, distance, radius);
+			var repointed = flat ? shading.FlatRamps : shading.RampsFor((byte)Es1Base.TypeTag, distance, radius);
 			// The effect lights are picked by its position and slot +0x14's radius.
 			var anchor = (Structure.Position, (int)Structure.ShapeRadius);
 			var held = Structure.Shape;
@@ -145,7 +145,7 @@ public sealed class Es1BaseDraw : IDisposable {
 			foreach (var (item, piece, shape) in _pieces) {
 				item.Transform = FrameToWorld(shape, piece.TransformId);
 				item.TextureWalk = Es1MechModels.WalkOf(piece, perspective);
-				item.RampBlock = block;
+				item.RepointedRamps = repointed;
 				item.LightAnchor = anchor;
 				item.Visible = drawn && ReferenceEquals(shape, held) && OnScreen(shape, piece.Gate, camera, focalShift, bias);
 			}

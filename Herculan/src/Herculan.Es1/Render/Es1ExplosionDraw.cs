@@ -102,7 +102,7 @@ public sealed class Es1ExplosionDraw : IDisposable {
 	/// <summary>
 	/// The pool's effects placed for <paramref name="camera"/>, walked as <c>ObjList_RebuildFrame</c> adds them, under a
 	/// projection whose <c>Raster_FocalShift</c> is <paramref name="focalShift"/>. With <paramref name="flatRamps"/> each
-	/// takes <c>WorldShades_ResetRamps</c>' ramps (<see cref="Es1Shading.FlatBlock"/>) rather than its distance band's.
+	/// takes <c>WorldShades_ResetRamps</c>' ramps (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		_items.Clear();
@@ -139,7 +139,7 @@ public sealed class Es1ExplosionDraw : IDisposable {
 			var bank = Bank(root);
 			if (cell >= 0 && cell < _cells[root].Length && _cells[root][cell] is { } mesh) {
 				_items.Add(new SceneItem(mesh, transform, bank?.Texture) {
-					RampBlock = flatRamps ? shading.FlatBlock : shading.Block(effect.Tag, distance),
+					RepointedRamps = flatRamps ? shading.FlatRamps : shading.RampsFor(effect.Tag, distance),
 					LightAnchor = (effect.Position, (effect.Shape as TSBasePart)?.Radius ?? 0),
 				});
 			}

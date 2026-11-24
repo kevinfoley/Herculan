@@ -81,7 +81,7 @@ public sealed class Es1SmokeDraw : IDisposable {
 	/// <summary>
 	/// The pool's balls placed for <paramref name="camera"/>, walked as <c>ObjList_RebuildFrame</c> adds them, under a
 	/// projection whose <c>Raster_FocalShift</c> is <paramref name="focalShift"/>. With <paramref name="flatRamps"/> each
-	/// takes <c>WorldShades_ResetRamps</c>' ramps (<see cref="Es1Shading.FlatBlock"/>) rather than its distance band's.
+	/// takes <c>WorldShades_ResetRamps</c>' ramps (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		_items.Clear();
@@ -105,7 +105,7 @@ public sealed class Es1SmokeDraw : IDisposable {
 			int cell = ball.CellFrame;
 			if (cell >= 0 && cell < root.Cells.Length && root.Cells[cell] is { } mesh) {
 				_items.Add(new SceneItem(mesh, transform, _bank?.Texture) {
-					RampBlock = flatRamps ? shading.FlatBlock : shading.Block(Es1SmokeBall.TypeTag, distance),
+					RepointedRamps = flatRamps ? shading.FlatRamps : shading.RampsFor(Es1SmokeBall.TypeTag, distance),
 					LightAnchor = (ball.Position, (shape as TSBasePart)?.Radius ?? 0),
 				});
 			}

@@ -76,8 +76,8 @@ public sealed class Es1WorldDraw {
 			_zoneItems.Add((new SceneItem(mesh, WorldScale.ToRenderMatrix(frame)) {
 				LightAnchor = (new Vec3i(frame.X, frame.Y, frame.Z), radius),
 			}, shape, zoneObject));
-			_flatZoneItems.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)) { RampBlock = scene.Shading.FlatBlock });
-			_hddMapZoneItems.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)) { RampBlock = scene.Shading.HddMapBlock });
+			_flatZoneItems.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)) { RepointedRamps = scene.Shading.FlatRamps });
+			_hddMapZoneItems.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)) { RepointedRamps = scene.Shading.HddMapRamps });
 		}
 
 		foreach (var mech in world.MechPool) {
@@ -96,13 +96,13 @@ public sealed class Es1WorldDraw {
 	/// <summary>
 	/// The zone shapes as <see cref="View.Es1RectScene.FlatZoneShapes"/> draws them, apart from the frame's own items:
 	/// each of them, in <c>Zone_ShapeObjects</c>' order, always visible, with the ramps <c>WorldShades_ResetRamps</c>
-	/// leaves (<see cref="Es1Shading.FlatBlock"/>).
+	/// leaves (<see cref="Es1Shading.FlatRamps"/>).
 	/// </summary>
 	public IReadOnlyList<SceneItem> FlatZoneShapes => _flatZoneItems;
 
 	/// <summary>
 	/// The zone shapes as <see cref="View.Es1RectScene.HddMapZoneShapes"/> draws them: <see cref="FlatZoneShapes"/>'
-	/// items on the command screen's map's ramps (<see cref="Es1Shading.HddMapBlock"/>).
+	/// items on the command screen's map's ramps (<see cref="Es1Shading.HddMapRamps"/>).
 	/// </summary>
 	public IReadOnlyList<SceneItem> HddMapZoneShapes => _hddMapZoneItems;
 
@@ -153,7 +153,7 @@ public sealed class Es1WorldDraw {
 	/// <c>000928ea</c> is set (docs/es1/rendering/polygon-shading.md#the-distance-bands): every item placed and culled
 	/// for <paramref name="camera"/> as <see cref="Update"/> places them, with no machine ridden, each detail level
 	/// picked under a focal length of 2^<paramref name="focalShift"/>, and every object on <c>WorldShades_ResetRamps</c>'
-	/// ramps (<see cref="Es1Shading.FlatBlock"/>) in place of its band's; then <paramref name="draw"/>; then every item
+	/// ramps (<see cref="Es1Shading.FlatRamps"/>) in place of its band's; then <paramref name="draw"/>; then every item
 	/// placed again for the camera and machine of the last <see cref="Update"/>, so the items stand as the frame's own
 	/// pass placed them, which the pick reads (<see cref="Es1WorldPick"/>).
 	/// </summary>
@@ -171,7 +171,7 @@ public sealed class Es1WorldDraw {
 			var frame = shape.Frame;
 			int distance = camera.Position.ApproxDistanceTo(new Vec3i(frame.X, frame.Y, frame.Z));
 			item.Visible = frame.Z >= 0 && !shading.IsBeyondLastBand(Es1Shading.ZoneShapeTag, distance);
-			item.RampBlock = flat ? shading.FlatBlock : shading.Block(Es1Shading.ZoneShapeTag, distance);
+			item.RepointedRamps = flat ? shading.FlatRamps : shading.RampsFor(Es1Shading.ZoneShapeTag, distance);
 		}
 
 		foreach (var mech in _mechs) {
@@ -261,7 +261,7 @@ public sealed class Es1WorldDraw {
 			bool drawn = _mech != ridden && _mech.Position.Z >= 0
 				&& !shading.IsBeyondLastBand((byte)Es1Mech.TypeTag, distance)
 				&& _mech.Group?.Action == null;
-			int? block = flat ? shading.FlatBlock : shading.Block((byte)Es1Mech.TypeTag, distance);
+			var repointed = flat ? shading.FlatRamps : shading.RampsFor((byte)Es1Mech.TypeTag, distance);
 
 			var type = _mech.Type;
 			int root = Es1ShapeDetail.SelectRoot(type.Roots.Count, type.ShapeRadius,
@@ -276,7 +276,7 @@ public sealed class Es1WorldDraw {
 			foreach (var (item, piece, pieceRoot) in _pieces) {
 				item.Transform = FrameToWorld(piece.TransformId);
 				item.TextureWalk = Es1MechModels.WalkOf(piece, perspective);
-				item.RampBlock = block;
+				item.RepointedRamps = repointed;
 				item.LightAnchor = anchor;
 				item.Visible = drawn && pieceRoot == root
 					&& OnScreen(piece.Gate, camera, focalShift, 0, null, _mech.CellFrame(piece.Gate.Sequence));
@@ -288,7 +288,7 @@ public sealed class Es1WorldDraw {
 			foreach (var (item, piece, hardpoint, transformId) in _mountPieces) {
 				item.Transform = FrameToWorld(transformId);
 				item.TextureWalk = Es1MechModels.WalkOf(piece, perspective);
-				item.RampBlock = block;
+				item.RepointedRamps = repointed;
 				item.LightAnchor = anchor;
 				// A destroyed mount's model is cleared, and the hardpoint draws nothing (WeaponMount_Destroy).
 				int cell = mounts[hardpoint]?.CellFrame(piece.Gate.Sequence) ?? 0;

@@ -102,7 +102,7 @@ public sealed class Es1ProjectileDraw : IDisposable {
 	/// adds them, under a projection whose <c>Raster_FocalShift</c> is <paramref name="focalShift"/>: each missile and gun
 	/// round an item on its shape's cell and a gun round its billboards, each beam tracer one of its quads
 	/// (<see cref="BeamItem"/>). With <paramref name="flatRamps"/> each takes <c>WorldShades_ResetRamps</c>' ramps
-	/// (<see cref="Es1Shading.FlatBlock"/>) rather than its distance band's.
+	/// (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		_items.Clear();
@@ -138,7 +138,7 @@ public sealed class Es1ProjectileDraw : IDisposable {
 			bool bullet = projectile is Es1Bullet;
 			if (cell >= 0 && cell < cells.Length && cells[cell] is { } mesh) {
 				_items.Add(new SceneItem(mesh, transform, bullet ? _bulletBank?.Texture : null) {
-					RampBlock = flatRamps ? shading.FlatBlock : shading.Block(Es1Projectile.TypeTag, distance),
+					RepointedRamps = flatRamps ? shading.FlatRamps : shading.RampsFor(Es1Projectile.TypeTag, distance),
 					// The effect lights are picked by its position and its shape's radius, slot +0x14's.
 					LightAnchor = (projectile.Position, (shape as TSBasePart)?.Radius ?? 0),
 				});

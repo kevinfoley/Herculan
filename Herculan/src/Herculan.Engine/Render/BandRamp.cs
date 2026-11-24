@@ -4,7 +4,8 @@ namespace Herculan.Engine.Render;
 
 /// <summary>
 /// One re-pointed shade ramp: <paramref name="Count"/> palette indices from <paramref name="Start"/>, which a Gouraud corner
-/// at shade <c>s</c> takes entry <c>(s * Count) &gt;&gt; 8</c> of (<c>Raster_FillContourPolygon</c>, <c>004879c0</c>).
+/// at shade <c>s</c> takes entry <c>(s * Count) &gt;&gt; 8</c> of (<c>Raster_FillContourPolygon</c>, <c>004879c0</c>), as
+/// does a shaded face of an item that re-points it (<see cref="SceneItem.RepointedRamps"/>).
 /// </summary>
 public readonly record struct BandRamp(int Ramp, int Start, int Count) {
 	/// <summary>The most ramps one item re-points that the scene program takes.</summary>

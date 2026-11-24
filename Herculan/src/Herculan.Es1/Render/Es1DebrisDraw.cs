@@ -73,7 +73,7 @@ public sealed class Es1DebrisDraw : IDisposable {
 	/// <summary>
 	/// The pool's pieces placed for <paramref name="camera"/>, walked as <c>ObjList_RebuildFrame</c> adds them, each
 	/// detail level picked under a focal length of 2^<paramref name="focalShift"/>. With <paramref name="flatRamps"/> each
-	/// takes <c>WorldShades_ResetRamps</c>' ramps (<see cref="Es1Shading.FlatBlock"/>) rather than its distance band's.
+	/// takes <c>WorldShades_ResetRamps</c>' ramps (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		_items.Clear();
@@ -97,7 +97,7 @@ public sealed class Es1DebrisDraw : IDisposable {
 				}
 
 				_items.Add(new SceneItem(mesh, transform, root.Texture) {
-					RampBlock = flatRamps ? shading.FlatBlock : shading.Block(Es1Debris.TypeTag, distance),
+					RepointedRamps = flatRamps ? shading.FlatRamps : shading.RampsFor(Es1Debris.TypeTag, distance),
 					// The effect lights are picked by its position and its shape's radius, slot +0x14's.
 					LightAnchor = (piece.Position, (shape as TSBasePart)?.Radius ?? 0),
 				});

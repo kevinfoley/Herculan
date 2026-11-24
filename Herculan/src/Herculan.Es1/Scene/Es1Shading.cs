@@ -9,16 +9,20 @@ namespace Herculan.Es1.Scene;
 /// How ES1's simulator colours a shape's faces (docs/es1/rendering/polygon-shading.md#the-distance-bands): a solid face
 /// draws its palette index unchanged, and a shaded face takes entry (light · length) &gt;&gt; 8 of its ramp, which
 /// <c>WorldShades_ApplyForObject</c> (<c>ES1DBSIM 00025d44</c>) re-points before each object by its type tag's
-/// <c>SHADES.DAT</c> list and its distance band. Each (tag, band) is one block of <see cref="Table"/>, and a drawn object
-/// reads its own (<see cref="SceneItem.RampBlock"/>, <see cref="Block"/>). The light is <see cref="Es1Sun"/>'s and the
-/// effect lights' within reach (<see cref="Effects.Es1EffectLights"/>).
+/// <c>SHADES.DAT</c> list and its distance band. <see cref="Table"/> holds the palette's own ramps, and a drawn object
+/// carries the few its tag and band re-point (<see cref="SceneItem.RepointedRamps"/>, <see cref="RampsFor"/>), one list
+/// instance per (tag, band). The light is <see cref="Es1Sun"/>'s and the effect lights' within reach
+/// (<see cref="Effects.Es1EffectLights"/>).
 ///
-/// <para>A ramp the tag's list does not name keeps whatever the last object drawn left it at, and a block holds the
-/// palette's own range for it. That is the original's state for every face this step draws: a zone shape's shaded faces
-/// are all on ramp 14, which only tag 0's list names (docs/es1/rendering/polygon-shading.md#the-theater-shapes-faces),
-/// and a HERC's root 0 shades only on ramps 0, 2, 4, 6, 8 and 12, which tag 7's list names, and ramp 200, which no list
-/// names. A flyer's shape (tag 6) shades on the ramps its tag's list names; the bases' tag, whose list also names ramps 0
-/// to 12, has no object in this step, and the impact effects' retail shapes hold bitmap parts and solid faces alone, which no ramp colours.</para>
+/// <para>The table cannot hold runs alone: a palette's ramps are not all runs
+/// (docs/es1/rendering/palette.md#the-palettes-shade-ramps).</para>
+///
+/// <para>A ramp the tag's list does not name keeps whatever the last object drawn left it at, and an object here reads
+/// the palette's own range for it. That is the original's state for a zone shape's shaded faces, all on ramp 14, which
+/// only tag 0's list names (docs/es1/rendering/polygon-shading.md#the-theater-shapes-faces), for a HERC's root 0, which
+/// shades only on ramps 0, 2, 4, 6, 8 and 12, which tag 7's list names, and ramp 200, which no list names, for a flyer's
+/// shape (tag 6), which shades on the ramps its tag's list names, and for the impact effects' retail shapes, which hold
+/// bitmap parts and solid faces alone, which no ramp colours.</para>
 /// </summary>
 public sealed class Es1Shading {
 	/// <summary>
@@ -31,41 +35,40 @@ public sealed class Es1Shading {
 	/// <summary>The type tag every zone shape object carries (docs/es1/formats/zone-terrain.md#the-zone-shape-object).</summary>
 	public const byte ZoneShapeTag = 0;
 
-	/// <summary>
-	/// The tags whose bands the table holds, in block order: the zone shapes', the HERCs', the projectiles', the impact
-	/// effects' two, the flyers' and the structures'. <c>SHADES.DAT</c> has no list for the effects' tags, so their blocks
-	/// hold the palette's own ramps.
-	/// </summary>
-	public static IReadOnlyList<byte> Tags { get; } = [ZoneShapeTag, 7, Projectiles.Es1Projectile.TypeTag,
-		Effects.Es1Explosion.TypeTag, Effects.Es1Explosion.ClassTypeTag, (byte)Sim.Es1Flyer.TypeTag, (byte)Sim.Es1Base.TypeTag];
-
 	/// <summary>The tag whose cull <c>WorldShades_IsBeyondLastBand</c> moves by the world file's first distance offset.</summary>
 	private const byte OffsetCullTag = Effects.Es1Explosion.ClassTypeTag;
 
 	/// <summary>
-	/// The ramps <c>WorldShades_ResetRamps</c> (<c>00025e88</c>) points at <see cref="FlatRange"/>: 0, 2, 4, 6, 8, 10,
+	/// The ramps <c>WorldShades_ResetRamps</c> (<c>00025e88</c>) points at <see cref="ResetRange"/>: 0, 2, 4, 6, 8, 10,
 	/// 12 and 14 (docs/es1/rendering/polygon-shading.md#the-distance-bands).
 	/// </summary>
-	private static readonly int[] FlatRamps = [0, 2, 4, 6, 8, 10, 12, 14];
+	private static readonly int[] ResetRampNumbers = [0, 2, 4, 6, 8, 10, 12, 14];
 
 	/// <summary><c>WorldShades_ResetRamps</c>' range {16, 16}: palette indices 16 to 31.</summary>
-	private static readonly (short Start, short Length) FlatRange = (16, 16);
+	private static readonly (short Start, short Length) ResetRange = (16, 16);
+
+	private static readonly IReadOnlyList<BandRamp> None = Array.Empty<BandRamp>();
 
 	private readonly int[] _tag0Thresholds;
 	private readonly int[] _taggedThresholds;
-	private readonly int _bands;
 	private readonly int _cullOffset;
 	private readonly int _largeOffset;
 
+	/// <summary>Each listed tag's re-pointed ramps, one list per band, the same instance for every object that reads it.</summary>
+	private readonly IReadOnlyDictionary<byte, IReadOnlyList<BandRamp>[]> _bandRamps;
+
 	private Es1Shading(SurfaceShading surfaces, SurfaceRampTable? table, int[] tag0Thresholds, int[] taggedThresholds,
-			int bands, int cullOffset, int largeOffset) {
+			int cullOffset, int largeOffset, IReadOnlyDictionary<byte, IReadOnlyList<BandRamp>[]> bandRamps,
+			IReadOnlyList<BandRamp> flatRamps, IReadOnlyList<BandRamp> hddMapRamps) {
 		Surfaces = surfaces;
 		Table = table;
 		_tag0Thresholds = tag0Thresholds;
 		_taggedThresholds = taggedThresholds;
-		_bands = bands;
 		_cullOffset = cullOffset;
 		_largeOffset = largeOffset;
+		_bandRamps = bandRamps;
+		FlatRamps = flatRamps;
+		HddMapRamps = hddMapRamps;
 	}
 
 	/// <summary>
@@ -75,7 +78,7 @@ public sealed class Es1Shading {
 	public SurfaceShading Surfaces { get; }
 
 	/// <summary>
-	/// The shaded faces' palette indices, one block per (tag, band) in <see cref="Tags"/> order, shown through the
+	/// The palette's own ramps, which a shaded face reads on any ramp its object does not re-point, shown through the
 	/// renderer's live palette (<see cref="SurfaceRampTable.NamesIndices"/>), or null without a palette, a world file or
 	/// <c>dat\shades</c>; the shaded faces then draw through the palette's own ramps, unbanded.
 	/// </summary>
@@ -95,70 +98,84 @@ public sealed class Es1Shading {
 		int[] tag0 = world?.DistanceBandsB ?? [];
 		int[] tagged = world?.DistanceBandsA ?? [];
 		if (palette is not { ShadeRamps.Count: > 0 } || world == null || shades == null || world.RampRows < 1) {
-			return new Es1Shading(surfaces, null, tag0, tagged, 0, world?.DistanceOffsetSmall ?? 0, world?.DistanceOffsetLarge ?? 0);
+			return new Es1Shading(surfaces, null, tag0, tagged, world?.DistanceOffsetSmall ?? 0, world?.DistanceOffsetLarge ?? 0,
+				new Dictionary<byte, IReadOnlyList<BandRamp>[]>(), None, None);
 		}
 
 		var ranges = LevelRanges(world);
 		int bands = world.RampRows;
+		int rampCount = palette.ShadeRamps.Count;
 
-		// Block (t, b) is the raster's ramp table once WorldShades_ApplyForObject has re-pointed tag t's ramps at band b
-		// (Palette_SetRampsToRange: a range's consecutive indices); then FlatBlock, once WorldShades_ResetRamps has; the
-		// last, HddMapBlock, once the command screen's map has pointed ramp 14 at its one entry.
-		var blocks = new IReadOnlyList<short[]>[Tags.Count * bands + 2];
-		for (int t = 0; t < Tags.Count; t++) {
-			var pairs = shades.Lists.FirstOrDefault(list => list.Tag == Tags[t])?.Pairs ?? [];
+		// Tag t's list at band b is the ramps WorldShades_ApplyForObject re-points (Palette_SetRampsToRange: a range's
+		// consecutive indices), a later pair on a ramp replacing an earlier one's; each list goes to its tag's record
+		// (docs/es1/rendering/polygon-shading.md#the-shades-file). A run whose length comes out at 0 or below has no
+		// entry, which draws mid grey.
+		var bandRamps = new Dictionary<byte, IReadOnlyList<BandRamp>[]>();
+		foreach (var list in shades.Lists) {
+			var perBand = new IReadOnlyList<BandRamp>[bands];
 			for (int band = 0; band < bands; band++) {
-				var ramps = palette.ShadeRamps.ToArray();
-				foreach (var (ramp, column) in pairs) {
-					if (ramp < ramps.Length && column * bands + band < ranges.Length) {
+				var ramps = new List<BandRamp>();
+				foreach (var (ramp, column) in list.Pairs) {
+					if (ramp < rampCount && column * bands + band < ranges.Length) {
 						var (start, length) = ranges[column * bands + band];
-						ramps[ramp] = Enumerable.Range(start, Math.Max((int)length, 0)).Select(i => (short)i).ToArray();
+						Repoint(ramps, new BandRamp(ramp, start, Math.Max((int)length, 0)));
 					}
 				}
 
-				blocks[t * bands + band] = ramps;
+				perBand[band] = Capped(ramps);
 			}
+
+			bandRamps[list.Tag] = perBand;
 		}
 
-		var flat = palette.ShadeRamps.ToArray();
-		foreach (int ramp in FlatRamps.Where(ramp => ramp < flat.Length)) {
-			flat[ramp] = Enumerable.Range(FlatRange.Start, FlatRange.Length).Select(i => (short)i).ToArray();
+		var flat = new List<BandRamp>();
+		foreach (int ramp in ResetRampNumbers.Where(ramp => ramp < rampCount)) {
+			Repoint(flat, new BandRamp(ramp, ResetRange.Start, ResetRange.Length));
 		}
 
-		blocks[^2] = flat;
-		var hddMap = palette.ShadeRamps.ToArray();
-		if (HddMapRamp < hddMap.Length) {
-			hddMap[HddMapRamp] = [HddMapEntry];
+		var hddMap = new List<BandRamp>();
+		if (HddMapRamp < rampCount) {
+			hddMap.Add(new BandRamp(HddMapRamp, HddMapEntry, 1));
 		}
 
-		blocks[^1] = hddMap;
-
-		byte? Entry(int ramp, int shade, int block) =>
-			ramp < blocks[block].Count && blocks[block][ramp] is { Length: > 0 } entries
-				? (byte)entries[shade * entries.Length >> 8]
-				: null;
-
-		var table = SurfaceRampTable.FromIndices(blocks.Length, Entry,
-			(ramp, shade) => ramp < palette.ShadeRamps.Count && palette.ShadeRamps[ramp] is { Length: > 0 } entries
+		var table = SurfaceRampTable.FromIndices((ramp, shade) =>
+			ramp < rampCount && palette.ShadeRamps[ramp] is { Length: > 0 } entries
 				? (byte)entries[shade * entries.Length >> 8]
 				: null);
-		return new Es1Shading(surfaces, table, tag0, tagged, bands, world.DistanceOffsetSmall, world.DistanceOffsetLarge);
+		return new Es1Shading(surfaces, table, tag0, tagged, world.DistanceOffsetSmall, world.DistanceOffsetLarge, bandRamps,
+			Capped(flat), Capped(hddMap));
+	}
+
+	/// <summary>Puts <paramref name="run"/> in <paramref name="ramps"/>, in place of an earlier run on its ramp.</summary>
+	private static void Repoint(List<BandRamp> ramps, BandRamp run) {
+		int at = ramps.FindIndex(r => r.Ramp == run.Ramp);
+		if (at >= 0) {
+			ramps[at] = run;
+		} else {
+			ramps.Add(run);
+		}
 	}
 
 	/// <summary>
-	/// The block of the ramps as <c>WorldShades_ResetRamps</c> leaves them, <see cref="FlatRamps"/> on palette indices 16
-	/// to 31 and every other ramp the palette's own, which a draw outside the object list reads, by no band; null
-	/// without a table.
+	/// <paramref name="ramps"/> as an item carries them: the first <see cref="BandRamp.MaxPerItem"/>, which every retail
+	/// list is within (at most six, and <see cref="ResetRampNumbers"/>' eight); a ramp past them keeps the palette's own.
 	/// </summary>
-	public int? FlatBlock => Table != null ? Tags.Count * _bands : null;
+	private static IReadOnlyList<BandRamp> Capped(List<BandRamp> ramps) =>
+		ramps.Count == 0 ? None : ramps.Take(BandRamp.MaxPerItem).ToArray();
 
 	/// <summary>
-	/// The block of the ramps as <c>HddCommandScreen_DrawMap</c> (<c>00040d4c</c>) leaves them with
-	/// <c>Palette_SetRampsToRange</c>({<see cref="HddMapEntry"/>, 1}, 1, <see cref="HddMapRamp"/>) before it draws the
-	/// zone's shapes (docs/es1/simulation/hdd-command-screen.md#drawing-the-map): ramp 14 the one entry, every other ramp
-	/// the palette's own, which no zone shape's face reads; null without a table.
+	/// The ramps as <c>WorldShades_ResetRamps</c> leaves them, <see cref="ResetRampNumbers"/> on palette indices 16 to 31,
+	/// which a draw outside the object list reads, by no band; empty without a table.
 	/// </summary>
-	public int? HddMapBlock => Table != null ? Tags.Count * _bands + 1 : null;
+	public IReadOnlyList<BandRamp> FlatRamps { get; }
+
+	/// <summary>
+	/// The ramps as <c>HddCommandScreen_DrawMap</c> (<c>00040d4c</c>) leaves them with
+	/// <c>Palette_SetRampsToRange</c>({<see cref="HddMapEntry"/>, 1}, 1, <see cref="HddMapRamp"/>) before it draws the
+	/// zone's shapes (docs/es1/simulation/hdd-command-screen.md#drawing-the-map): ramp 14 the one entry; empty without a
+	/// table.
+	/// </summary>
+	public IReadOnlyList<BandRamp> HddMapRamps { get; }
 
 	/// <summary>The ramp the command screen's map points, and the one palette entry it points it at.</summary>
 	private const int HddMapRamp = 14;
@@ -167,13 +184,14 @@ public sealed class Es1Shading {
 	private const short HddMapEntry = 0x38;
 
 	/// <summary>
-	/// The block an object of <paramref name="tag"/> at <paramref name="distance"/> reads, a tag-5 object's by its slot
-	/// <c>+0x14</c> <paramref name="radius"/> as well, or null without a table.
+	/// The ramps an object of <paramref name="tag"/> at <paramref name="distance"/> draws with re-pointed, a tag-5 object's
+	/// by its slot <c>+0x14</c> <paramref name="radius"/> as well: its tag's list at its band, or none for a tag with no
+	/// list (docs/es1/rendering/polygon-shading.md#the-shades-file) and without a table.
 	/// </summary>
-	public int? Block(byte tag, int distance, int radius = 0) {
-		int t = Tags.ToList().IndexOf(tag);
-		return Table != null && t >= 0 ? t * _bands + Math.Min(Band(tag, distance, radius), _bands - 1) : null;
-	}
+	public IReadOnlyList<BandRamp> RampsFor(byte tag, int distance, int radius = 0) =>
+		_bandRamps.TryGetValue(tag, out var perBand)
+			? perBand[Math.Min(Band(tag, distance, radius), perBand.Length - 1)]
+			: None;
 
 	/// <summary>
 	/// The distance a tag-5 object, a structure, is banded and culled at: <paramref name="distance"/> plus

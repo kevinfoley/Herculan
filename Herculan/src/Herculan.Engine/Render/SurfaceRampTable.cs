@@ -104,21 +104,20 @@ public sealed class SurfaceRampTable {
 	}
 
 	/// <summary>
-	/// Builds a table whose shaded chain has <paramref name="blocks"/> blocks, each cell the palette index
-	/// <paramref name="shadedIndex"/> gives for (ramp, shade, block), and whose Gouraud block holds
-	/// <paramref name="gouraudIndex"/>'s for (ramp, shade). For a game whose ramps the original re-points per drawn
-	/// object rather than fogs through a <c>.RMP</c>: each block is one state of the ramps, and a drawn item names its
-	/// block (<see cref="SceneItem.RampBlock"/>). Null where an index has no entry. The cells carry no colours
-	/// (<see cref="NamesIndices"/>), so the renderer that draws through the table needs a live palette.
+	/// Builds a table of one block in each chain, each cell the palette index <paramref name="rampIndex"/> gives for
+	/// (ramp, shade), or none where it gives null. For a game whose ramps the original re-points per drawn object rather
+	/// than fogs through a <c>.RMP</c>: the table holds the palette's own ramps, and a drawn item carries the few it
+	/// re-points (<see cref="SceneItem.RepointedRamps"/>). The cells carry no colours (<see cref="NamesIndices"/>), so the
+	/// renderer that draws through the table needs a live palette.
 	/// </summary>
-	public static SurfaceRampTable FromIndices(int blocks, Func<int, int, int, byte?> shadedIndex,
-			Func<int, int, byte?> gouraudIndex) {
+	/// <param name="rampIndex">The palette index of a ramp's entry at a shade, or null where the ramp has none.</param>
+	public static SurfaceRampTable FromIndices(Func<int, int, byte?> rampIndex) {
 		// The red channel is NamesIndices' marker; Fill writes the index into the alpha.
 		(Vector3?, byte?) Cell(byte? index) => (index.HasValue ? Vector3.UnitX : Vector3.Zero, index);
 
-		return Fill(blocks,
-			(ramp, shade, block) => Cell(shadedIndex(ramp, shade, block)),
-			(ramp, shade) => Cell(gouraudIndex(ramp, shade)),
+		return Fill(1,
+			(ramp, shade, _) => Cell(rampIndex(ramp, shade)),
+			(ramp, shade) => Cell(rampIndex(ramp, shade)),
 			_ => Vector3.UnitX, namesIndices: true);
 	}
 

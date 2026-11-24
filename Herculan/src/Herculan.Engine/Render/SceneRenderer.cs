@@ -79,12 +79,14 @@ public sealed class SceneItem {
 	public bool Fullbright { get; set; }
 
 	/// <summary>
-	/// Which block of the installed <see cref="SurfaceRampTable"/>'s shaded chain this item's <c>TSShadedPoly</c> faces
-	/// read, in place of the fog's depth slice: the state of the ramps the original re-points for this one object
-	/// before drawing it (<see cref="SurfaceRampTable.FromIndices"/>). Null reads the depth slice, as Earthsiege 2's
-	/// items do.
+	/// The ramps the original re-points for this one object before drawing it, which its <c>TSShadedPoly</c> faces and
+	/// <c>TSGouraudPoly</c> corners read in place of the installed <see cref="SurfaceRampTable"/>'s, each ramp named once
+	/// and at most <see cref="BandRamp.MaxPerItem"/>; a face on any other ramp reads the table. A Gouraud corner on a ramp
+	/// <see cref="SceneRenderer.DistanceBands"/> also re-points takes this list's run. Null re-points none, as Earthsiege
+	/// 2's items do. The same ramps are best the same list instance, which the renderer uploads once for every item that
+	/// shares it.
 	/// </summary>
-	public int? RampBlock { get; set; }
+	public IReadOnlyList<BandRamp>? RepointedRamps { get; set; }
 
 	/// <summary>
 	/// The object this item's geometry belongs to, which is what the effect-light pass measures from
@@ -274,6 +276,9 @@ public sealed class SceneRenderer : IDisposable {
 	private static readonly string[] BandRampNames = Enumerable
 		.Range(0, BandRamp.MaxPerItem)
 		.Select(i => $"uBandRamps[{i}]").ToArray();
+	private static readonly string[] RepointedRampNames = Enumerable
+		.Range(0, BandRamp.MaxPerItem)
+		.Select(i => $"uRepointedRamps[{i}]").ToArray();
 
 	/// <param name="editorGrid">
 	/// Compiles the measuring grid, the ground tint and the ground discs into the scene program, so
@@ -661,6 +666,9 @@ public sealed class SceneRenderer : IDisposable {
 	/// <summary>The distance colour bands' ramps last uploaded this pass, for the same reason.</summary>
 	private IReadOnlyList<BandRamp>? _uploadedBandRamps;
 
+	/// <summary>The <see cref="SceneItem.RepointedRamps"/> last uploaded this pass, for the same reason.</summary>
+	private IReadOnlyList<BandRamp>? _uploadedRepointedRamps;
+
 	/// <summary>This pass's view position, which the distance colour bands measure from.</summary>
 	private Numerics.Vec3i _viewer;
 
@@ -795,6 +803,7 @@ public sealed class SceneRenderer : IDisposable {
 		// The distance colour bands' ramps last uploaded, for the same reason: every item of one object, and most
 		// neighbouring objects, share them.
 		_uploadedBandRamps = null;
+		_uploadedRepointedRamps = null;
 		_viewer = camera.Position;
 		_eyeWorld = WorldScale.ToRender(camera.Position);
 		_stencilCleared = false;
@@ -1050,7 +1059,16 @@ public sealed class SceneRenderer : IDisposable {
 		_shader.SetInt("uFullbright", item.Fullbright ? 1 : 0);
 		_shader.SetInt("uGroundFill", item.GroundFill ? 1 : 0);
 		_shader.SetFloat("uFogDepthBias", item.CellQuantisedFog ? _cellFogBias : 0f);
-		_shader.SetFloat("uRampBlock", item.RampBlock ?? -1f);
+		var repointed = item.RepointedRamps ?? Array.Empty<BandRamp>();
+		if (!ReferenceEquals(repointed, _uploadedRepointedRamps)) {
+			int count = System.Math.Min(repointed.Count, BandRamp.MaxPerItem);
+			for (int i = 0; i < count; i++) {
+				_shader.SetVector3(RepointedRampNames[i], new Vector3(repointed[i].Ramp, repointed[i].Start, repointed[i].Count));
+			}
+
+			_shader.SetInt("uRepointedRampCount", count);
+			_uploadedRepointedRamps = repointed;
+		}
 
 		// Bind texture if available, otherwise use flat shading.
 		if (item.TextureHandle.HasValue) {

@@ -52,7 +52,7 @@ public sealed class Es1FlyerDraw : IDisposable {
 	/// <summary>
 	/// Every flyer placed and culled for <paramref name="camera"/>, each detail level picked under a focal length of
 	/// 2^<paramref name="focalShift"/>; with <paramref name="flatRamps"/> each takes <c>WorldShades_ResetRamps</c>' ramps
-	/// (<see cref="Es1Shading.FlatBlock"/>) rather than its distance band's.
+	/// (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		foreach (var flyer in _flyers) {
@@ -120,14 +120,14 @@ public sealed class Es1FlyerDraw : IDisposable {
 			int distance = camera.Position.ApproxDistanceTo(Flyer.Position);
 			bool drawn = Flyer.Position.Z >= 0 && !shading.IsBeyondLastBand((byte)Es1Flyer.TypeTag, distance)
 				&& Flyer.Group?.Action == null;
-			int? block = flat ? shading.FlatBlock : shading.Block((byte)Es1Flyer.TypeTag, distance);
+			var repointed = flat ? shading.FlatRamps : shading.RampsFor((byte)Es1Flyer.TypeTag, distance);
 			// The effect lights are picked by its position and slot +0x14's radius.
 			var anchor = (Flyer.Position, (int)Flyer.ShapeRadius);
 			bool perspective = Es1MechModels.PerspectiveTextureMapping;
 			foreach (var (item, piece) in _pieces) {
 				item.Transform = FrameToWorld(piece.TransformId);
 				item.TextureWalk = Es1MechModels.WalkOf(piece, perspective);
-				item.RampBlock = block;
+				item.RepointedRamps = repointed;
 				item.LightAnchor = anchor;
 				item.Visible = drawn && OnScreen(piece.Gate, camera, focalShift, bias);
 			}

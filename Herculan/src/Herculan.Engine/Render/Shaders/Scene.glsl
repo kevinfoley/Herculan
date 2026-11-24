@@ -56,6 +56,14 @@ uniform sampler2D uShadeRampTable;
 uniform bool uShadeRampEnabled;
 uniform float uShadeRampGouraudRow;
 
+// The shade ramps the original has re-pointed for the object being drawn, SceneItem.RepointedRamps, each ramp named once:
+// .x the ramp, .y the first palette index of its run and .z the run's length. A TSShadedPoly face on one of these ramps
+// reads the run in the fragment stage, a TSGouraudPoly corner in the vertex stage, and a face on any other ramp the
+// table. MAX_REPOINTED_RAMPS is BandRamp.MaxPerItem.
+#define MAX_REPOINTED_RAMPS 8
+uniform int uRepointedRampCount;
+uniform vec3 uRepointedRamps[MAX_REPOINTED_RAMPS];
+
 #ifdef EDITOR_GRID
 // Only the measuring grid and the ground tint need a surface point's horizontal world position, so the varying does not
 // exist at all in the program the simulator draws with.
@@ -228,8 +236,8 @@ void main() {
 	// A TSGouraudPoly corner's palette index, Raster_FillContourPolygon's per-vertex lookup: entry
 	// (shade * length) >> 8 of the ramp the surface names, which is the Gouraud block's alpha at
 	// this shade (SurfaceRampTable), or the run the distance colour bands have re-pointed that ramp at,
-	// the last one naming it. The shade is the byte the light function returns, so it is
-	// truncated, not rounded. The fragment stage bands what this interpolates to.
+	// the last one naming it, or the run the item re-points it at (uRepointedRamps). The shade is the byte the light
+	// function returns, so it is truncated, not rounded. The fragment stage bands what this interpolates to.
 	vGouraudIndex = 0.0;
 	if (uShadeRampEnabled && aShadeRamp >= 256.0) {
 		float shadeByte = floor(min(shade, 255.0));
@@ -238,6 +246,18 @@ void main() {
 		for (int i = 0; i < uBandRampCount; i++) {
 			if (uBandRamps[i].x == ramp) {
 				banded = uBandRamps[i].y + floor(shadeByte * uBandRamps[i].z / 256.0);
+			}
+		}
+
+		// The entry as shadedCell takes it: wrapped to a byte, and a run of no entries the byte 255 the table carries
+		// where a ramp has no entry.
+		for (int i = 0; i < uRepointedRampCount; i++) {
+			vec3 run = uRepointedRamps[i];
+			if (run.x == ramp) {
+				int runLength = int(floor(run.z + 0.5));
+				banded = runLength <= 0
+					? 255.0
+					: float((int(floor(run.y + 0.5)) + ((int(shadeByte) * runLength) >> 8)) & 255);
 			}
 		}
 
@@ -328,8 +348,6 @@ uniform float uPaletteRampGroundRow;
 uniform bool uGroundFill;
 uniform float uDepthSlices;
 uniform float uFogDepthBias;
-// The shaded chain's block this item reads in place of its depth slice, or -1. See SceneItem.RampBlock.
-uniform float uRampBlock;
 uniform bool uFullbright;
 
 // The live palette, SceneRenderer.SetLivePalette: entry n at column n, its alpha 1 where the palette has the entry. With
@@ -352,6 +370,33 @@ int paletteByte(float alpha) {
 vec3 liveColor(int index, vec3 missing) {
 	vec4 entry = texelFetch(uLivePalette, ivec2(clamp(index, 0, 255), 0), 0);
 	return entry.a > 0.5 ? entry.rgb : missing;
+}
+
+// A shaded-chain cell for `ramp` at shade `shade` in `block`, in the table's own encoding (SurfaceRampTable): the table's
+// cell, or on a ramp uRepointedRamps names, the run's entry (shade * length) >> 8, its palette byte in the alpha and in
+// the rgb the table's own encoding of it: the "names an index" marker in a table of indices, the palette row's colour in
+// one of colours. A run of no entries names no index.
+vec4 shadedCell(float ramp, float shade, float block) {
+	float rampNumber = floor(ramp + 0.5);
+	for (int i = 0; i < uRepointedRampCount; i++) {
+		vec3 run = uRepointedRamps[i];
+		if (run.x == rampNumber) {
+			int runLength = int(floor(run.z + 0.5));
+			if (runLength <= 0) {
+				return uLiveShadeRamps ? vec4(0.0, 0.0, 0.0, 1.0) : vec4(SHADE_RAMP_MISSING, 1.0);
+			}
+
+			// Wrapped to a byte, as the table's own cells are.
+			int index = (int(floor(run.y + 0.5)) + ((int(shade) * runLength) >> 8)) & 255;
+			vec3 rgb = uLiveShadeRamps
+				? vec3(1.0, 0.0, 0.0)
+				: texelFetch(uShadeRampTable, ivec2(index, int(uShadeRampPaletteRow + 0.5)), 0).rgb;
+			return vec4(rgb, float(index) / 255.0);
+		}
+	}
+
+	return texture(uShadeRampTable,
+		vec2((floor(shade) + 0.5) / 256.0, (rampNumber + block * 256.0 + 0.5) / uShadeRampRows));
 }
 
 // A uPaletteRamp cell's colour: its own, or with uLivePaletteRamp its byte's in the live palette.
@@ -736,7 +781,7 @@ void main() {
 		// takes the ceiling of its interpolated index and the lowest corner's index shows only where
 		// every corner has it. The band is a plain palette index: no .RMP row and no depth slice is
 		// applied. What fades the face with distance is the run its corners were looked up in, which the
-		// distance colour bands pick in the vertex stage. docs/retail/rendering/dts-texture-binding.md,
+		// vertex stage picks from the item's re-pointed ramps. docs/retail/rendering/dts-texture-binding.md,
 		// "TSGouraudPoly — same ramp number, per-vertex light, no .RMP row".
 		//
 		// The cuts are straight lines through points spaced evenly along the triangle's edges, which
@@ -756,19 +801,14 @@ void main() {
 		// shading. uShadeRampTable is the whole ramp-by-shade grid, so this is one sample rather than
 		// the original's two table reads. The chain has one block of ramps per depth slice, because
 		// TSShadedPoly_Render ends in Raster_ShadeRampRow and is fogged by the same bias everything
-		// else is. An item that names a block of its own reads that block instead (SceneItem.RampBlock).
-		float block = uRampBlock >= 0.0 ? uRampBlock : slice;
-		float row = vShadeRamp + block * 256.0;
-		vec4 cell = texture(uShadeRampTable,
-			vec2((floor(shade) + 0.5) / 256.0, (row + 0.5) / uShadeRampRows));
+		// else is. A ramp the item re-points reads its run instead (shadedCell).
+		vec4 cell = shadedCell(vShadeRamp, shade, slice);
 
 		// A TSShadedPoly's outline: TSShadedPoly_Render resolves its line entry through the same
 		// lookups as the fill, at the same shade and slice, and PolyFill_FillThenOutline draws the
-		// edge loop only when the two palette bytes differ. The table's alpha is that byte.
+		// edge loop only when the two palette bytes differ. The cell's alpha is that byte.
 		if (vOutlineFillRamp >= 0.0) {
-			float fillRow = vOutlineFillRamp + block * 256.0;
-			float fillByte = texture(uShadeRampTable,
-				vec2((floor(shade) + 0.5) / 256.0, (fillRow + 0.5) / uShadeRampRows)).a;
+			float fillByte = shadedCell(vOutlineFillRamp, shade, slice).a;
 			if (floor(fillByte * 255.0 + 0.5) == floor(cell.a * 255.0 + 0.5)) {
 				discard;
 			}
