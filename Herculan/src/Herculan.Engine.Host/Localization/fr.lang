@@ -89,8 +89,8 @@ tweak.es1_fix_cockpit_edge_flicker.display_name  Corriger le scintillement du bo
 tweak.es1_fix_cockpit_edge_flicker.description  Le bord gauche du cockpit reste stable quand vous revenez de la vue extérieure. Le jeu original copie une colonne de trop en remettant le cockpit en place, ce qui décale d'une ligne la colonne la plus à gauche du cockpit une image sur deux, et la fait scintiller.
 tweak.es1_fix_crew_cancel_bay.display_name  Corriger la superposition des HERC dans la baie
 tweak.es1_fix_crew_cancel_bay.description  Corrige un bug du jeu original où des HERC pouvaient se superposer dans la baie des HERC après avoir réorganisé les affectations de HERC de votre escouade sur l'écran CREW puis cliqué sur Cancel.
-tweak.es1_fix_energy_meter_shake.display_name  Corriger la jauge du réacteur sous les tirs
-tweak.es1_fix_energy_meter_shake.description  La jauge du réacteur reste dans son contour quand le cockpit tremble sous un tir. Dans le jeu original, la secousse déplace les barres de la jauge mais pas le contour qui les découpe, si bien que l'énergie dépensée ou regagnée pendant une secousse est dessinée quelques lignes plus loin : des rayures parasites apparaissent autour de la jauge, qui peut cesser d'afficher le vrai niveau jusqu'à ce qu'elle soit redessinée.
+tweak.es1_fix_energy_meter_shake.display_name  Corriger les défauts graphiques sous les tirs
+tweak.es1_fix_energy_meter_shake.description  Corrige certains éléments graphiques du HUD temporairement corrompus après la secousse de tout l'écran lors de dégâts internes.
 tweak.es1_fix_rhino_top_mount.display_name  Corriger le support supérieur du RHINO
 tweak.es1_fix_rhino_top_mount.description  Sur les écrans d'armement et de la baie des HERC, l'ECM du RHINO est dessiné sur son support central supérieur, là où se placent ses autres armes, et un EMP endommagé y est dessiné à la place d'un EMP intact. Le jeu original dessine l'ECM sur la poitrine du HERC et un EMP endommagé décalé vers la gauche.
 tweak.es1_refresh_weapon_art.display_name  Corriger l'image des armes après réparation

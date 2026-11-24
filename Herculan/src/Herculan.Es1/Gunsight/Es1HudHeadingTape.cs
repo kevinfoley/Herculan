@@ -89,7 +89,9 @@ public sealed class Es1HudHeadingTape : Es1HudRotationIndicator {
 		int originX = canvas.Origin.X;
 		var narrowed = new Es1PanelCanvas(canvas.Display,
 			new Es1Rect(Rect.X0 - originX, canvas.Rect.Y0, Rect.X1 - originX, canvas.Rect.Y1),
-			(Rect.X0 - originX, canvas.Origin.Y));
+			(Rect.X0 - originX, canvas.Origin.Y)) {
+			ClipRect = new Es1Rect(Rect.X0 - originX, canvas.ClipRect.Y0, Rect.X1 - originX, canvas.ClipRect.Y1),
+		};
 		narrowed.Blit(LeftFrame, StripX, Rect.Y0);
 		narrowed.Blit(RightFrame, StripX + Travel, Rect.Y0);
 	}

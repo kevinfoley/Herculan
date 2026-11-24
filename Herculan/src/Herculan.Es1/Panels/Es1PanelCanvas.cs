@@ -37,13 +37,21 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	public Es1PanelCanvas(Es1VideoMemory display, Es1Rect rect, (int X, int Y) origin = default) {
 		Display = display;
 		Rect = rect;
+		ClipRect = rect;
 		Origin = origin;
 	}
 
 	public Es1VideoMemory Display { get; }
 
-	/// <summary><c>+0x210</c>–<c>+0x21c</c>, the context's rect: a panel's on the screen, both its translation and its clip.</summary>
+	/// <summary><c>+0x210</c>–<c>+0x21c</c>, the context's rect: a panel's on the screen, its translation and, as <see cref="ClipRect"/> starts, its clip.</summary>
 	public Es1Rect Rect { get; }
+
+	/// <summary>
+	/// The rect a draw is cut to once translated, in clip mode 1, and the bound a clip mode 2 line or pixel is cut to
+	/// before its regions: <see cref="Rect"/>, unless the cockpit moves it with the view shake
+	/// (<see cref="Es1Cockpit.DrawsFollowShake"/>). Retail cuts to the context's rect <c>+0x20c</c> itself.
+	/// </summary>
+	public Es1Rect ClipRect { get; init; }
 
 	/// <summary><c>+0x220</c>/<c>+0x224</c>, the origin, taken off the translation.</summary>
 	public (int X, int Y) Origin { get; }
@@ -61,15 +69,15 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// </summary>
 	public Es1ClipBlock? Regions { get; init; }
 
-	/// <summary>One pixel at the context's (<paramref name="x"/>, <paramref name="y"/>), unless it lies outside <see cref="Rect"/> or <see cref="Regions"/> once translated.</summary>
+	/// <summary>One pixel at the context's (<paramref name="x"/>, <paramref name="y"/>), unless it lies outside <see cref="ClipRect"/> or <see cref="Regions"/> once translated.</summary>
 	public void Plot(int x, int y, byte color) {
 		int screenX = x + Translation.X, screenY = y + Translation.Y;
-		if (Rect.Contains(screenX, screenY)) {
+		if (ClipRect.Contains(screenX, screenY)) {
 			PlotInRegions(screenX, screenY, color);
 		}
 	}
 
-	/// <summary>A screen pixel already cut to <see cref="Rect"/>, drawn unless <see cref="Regions"/> is set and holds it in no region.</summary>
+	/// <summary>A screen pixel already cut to <see cref="ClipRect"/>, drawn unless <see cref="Regions"/> is set and holds it in no region.</summary>
 	private void PlotInRegions(int x, int y, byte color) {
 		if (Regions == null || Regions.Contains(x, y)) {
 			Display.Plot(x, y, color);
@@ -79,7 +87,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// <summary>
 	/// <c>Raster_DrawPolygonDispatch</c> (<c>00068be0</c>) of three points or more under the brush {0,
 	/// <paramref name="color"/>} in clip mode 1, the points wound clockwise on screen as its callers list them: the
-	/// points translated, cut to <see cref="Rect"/> by <c>Poly_ClipToRect</c> (<c>000788e4</c>), scan-converted by
+	/// points translated, cut to <see cref="ClipRect"/> by <c>Poly_ClipToRect</c> (<c>000788e4</c>), scan-converted by
 	/// <c>00076f54</c> and each span filled, both ends included, a span whose ends come out reversed skipped. Both
 	/// routines are ES2's (docs/retail/rendering/polygon-fill.md#clipping-to-a-rectangle,
 	/// docs/retail/rendering/polygon-fill.md#scan-conversion): <c>es2_naming.py diff</c> finds the clipper identical
@@ -91,7 +99,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 		}
 
 		var (dx, dy) = Translation;
-		var clipped = ClipToRect(points.Select(p => (p.X + dx, p.Y + dy)).ToList(), Rect);
+		var clipped = ClipToRect(points.Select(p => (p.X + dx, p.Y + dy)).ToList(), ClipRect);
 		if (clipped.Count == 0) {
 			return;
 		}
@@ -166,7 +174,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 
 	/// <summary>
 	/// <c>Raster_DrawLineColour</c> (<c>00044ec0</c>): <c>Raster_DrawLine</c>
-	/// (<c>0006a064</c>)(start, end) under the pen {0, color}: the two points translated, cut to <see cref="Rect"/> by
+	/// (<c>0006a064</c>)(start, end) under the pen {0, color}: the two points translated, cut to <see cref="ClipRect"/> by
 	/// <c>Line_ClipToRect</c> (<c>0007d4a4</c>, docs/retail/rendering/polygon-fill.md#clipping-a-line), nothing drawn when
 	/// nothing is left, and the rest walked as the driver's line routine, <c>VGA8_DrawLine</c> (<c>0008cb90</c>, slot 34),
 	/// walks it, both end pixels drawn (docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps).
@@ -183,7 +191,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 
 	/// <summary><see cref="DrawLine"/> of two points already translated, as <c>Raster_DrawPolygonDispatch</c>'s line loop hands them on with the translation flag cleared.</summary>
 	private void DrawLineTranslated((int X, int Y) a, (int X, int Y) b, byte color) {
-		if (!ClipLine(ref a, ref b, Rect)) {
+		if (!ClipLine(ref a, ref b, ClipRect)) {
 			return;
 		}
 
@@ -267,7 +275,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// difference, a span list of the rows on the display alone, from row −min(<i>b</i>, <i>cy</i>) to before
 	/// min(<i>b</i>, 199 − <i>cy</i>) about the centre, <i>cy</i> before the translation
 	/// (docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps); each list filled at the centre,
-	/// translated and cut to <see cref="Rect"/> as <c>Raster_FillSpanList</c> (<c>0008f68c</c>) does in clip mode 1.
+	/// translated and cut to <see cref="ClipRect"/> as <c>Raster_FillSpanList</c> (<c>0008f68c</c>) does in clip mode 1.
 	/// <paramref name="outline"/> draws the one-pixel ring, mode 4.
 	/// </summary>
 	public void DrawEllipse(Es1Rect rect, byte color, bool outline) {
@@ -295,7 +303,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 			foreach (var (row, (x0, x1)) in rows) {
 				for (int x = x0; x <= x1; x++) {
 					int screenX = cx + x + dx, screenY = cy + row + dy;
-					if (Rect.Contains(screenX, screenY)) {
+					if (ClipRect.Contains(screenX, screenY)) {
 						Display.Plot(screenX, screenY, color);
 					}
 				}
@@ -385,7 +393,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 		var (dx, dy) = Translation;
 		var moved = ring.Select(p => (p.X + dx, p.Y + dy)).ToList();
 		if (moved.Count == 1) {
-			if (Rect.Contains(moved[0].Item1, moved[0].Item2)) {
+			if (ClipRect.Contains(moved[0].Item1, moved[0].Item2)) {
 				Display.Plot(moved[0].Item1, moved[0].Item2, color);
 			}
 
@@ -406,7 +414,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 
 	/// <summary>
 	/// <c>Bitmap_Blit</c>(<paramref name="bitmap"/>, <paramref name="flags"/>, point): the bitmap with its top-left at the
-	/// panel's (<paramref name="x"/>, <paramref name="y"/>), cut to <see cref="Rect"/>, a 0 byte leaving the pixel unless
+	/// panel's (<paramref name="x"/>, <paramref name="y"/>), cut to <see cref="ClipRect"/>, a 0 byte leaving the pixel unless
 	/// the bitmap's flags have bit 4 (docs/es1/rendering/screen-pages.md#the-cursor, "Index 0"). Flag 1 runs the rows from
 	/// the bottom and flag 2 the columns from the right, as the blits read them
 	/// (docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps).
@@ -432,7 +440,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// <summary>
 	/// <c>Bitmap_BlitScaled</c>(<paramref name="bitmap"/>, size, <paramref name="flags"/>, point) in clip mode 1: the point
 	/// translated and the bitmap stretched over <paramref name="width"/> × <paramref name="height"/> pixels from it, cut to
-	/// <see cref="Rect"/>, a 0 byte not written. Retail's two programs share the dispatch but not <c>VGA_8</c>'s slot 29:
+	/// <see cref="ClipRect"/>, a 0 byte not written. Retail's two programs share the dispatch but not <c>VGA_8</c>'s slot 29:
 	/// with <paramref name="shell"/> the bitmap is walked as the shell's <c>VGA8_BlitBitmapScaled</c> (<c>00074b18</c>)
 	/// walks it (<see cref="WalkShell"/>), otherwise as <c>ES1DBSIM</c>'s (<c>0008c744</c>) does
 	/// (<see cref="WalkSimulator"/>).
@@ -445,12 +453,13 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 		var (dx, dy) = Translation;
 		x += dx;
 		y += dy;
-		if (x > Rect.X1 || x + width - 1 < Rect.X0 || y > Rect.Y1 || y + height - 1 < Rect.Y0) {
+		var clip = ClipRect;
+		if (x > clip.X1 || x + width - 1 < clip.X0 || y > clip.Y1 || y + height - 1 < clip.Y0) {
 			return;
 		}
 
-		int left = Math.Max(0, Rect.X0 - x), right = Math.Max(0, x + width - 1 - Rect.X1);
-		int top = Math.Max(0, Rect.Y0 - y), bottom = Math.Max(0, y + height - 1 - Rect.Y1);
+		int left = Math.Max(0, clip.X0 - x), right = Math.Max(0, x + width - 1 - clip.X1);
+		int top = Math.Max(0, clip.Y0 - y), bottom = Math.Max(0, y + height - 1 - clip.Y1);
 		if (width - left - right <= 0 || height - top - bottom <= 0) {
 			return;
 		}
@@ -569,7 +578,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// <c>Region_Save</c> of a type-0 region whose rect is <paramref name="region"/>, in clip mode 1 with the translation
 	/// flag set: <c>Region_SaveRect</c> (<c>00066470</c>) moves the rect by the translation and
 	/// <c>Bitmap_GrabClipDispatch</c> (<c>0006aa70</c>) moves it again (docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps),
-	/// so the grab reads the display's source page under the rect moved twice, cut to <see cref="Rect"/>. The cells come
+	/// so the grab reads the display's source page under the rect moved twice, cut to <see cref="ClipRect"/>. The cells come
 	/// back row by row over the rect's size. A cell cut off is 0 in its place in the buffer: the dispatch zeroes the
 	/// buffer first, and <c>VGA8_ReadBitmap</c> (<c>0008be88</c>) reads the cut rect into the buffer at the cut's row and
 	/// column.
@@ -582,7 +591,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 		for (int row = 0; row < rows; row++) {
 			for (int column = 0; column < width; column++) {
 				int x = left + column, y = top + row;
-				if (Rect.Contains(x, y)) {
+				if (ClipRect.Contains(x, y)) {
 					cells[row * width + column] = Display.Cell(Display.SourcePage, x, y);
 				}
 			}
@@ -595,7 +604,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// <c>Region_Restore</c> of a type-0 region whose rect is <paramref name="region"/> at the point (<paramref name="x"/>,
 	/// <paramref name="y"/>): <c>Region_RestoreRect</c> (<c>00066354</c>) blits <paramref name="cells"/> as a bitmap of
 	/// the rect's size with the opaque flag <c>0x10</c> through <c>Raster_BlitDispatch</c>, which moves the point by the
-	/// translation once and cuts the blit to <see cref="Rect"/>; every cell is written, on the draw page.
+	/// translation once and cuts the blit to <see cref="ClipRect"/>; every cell is written, on the draw page.
 	/// </summary>
 	public void RestoreRegion(Es1Rect region, int x, int y, ushort[] cells) {
 		var (dx, dy) = Translation;
@@ -603,7 +612,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 		for (int row = 0; row < rows; row++) {
 			for (int column = 0; column < width; column++) {
 				int screenX = x + dx + column, screenY = y + dy + row, source = row * width + column;
-				if (source < cells.Length && Rect.Contains(screenX, screenY)) {
+				if (source < cells.Length && ClipRect.Contains(screenX, screenY)) {
 					Display.Plot(screenX, screenY, cells[source]);
 				}
 			}
@@ -616,8 +625,8 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// (<c>00066690</c>) moves the rect by the offset and the translation and hands each part it keeps, with the offset, to
 	/// the driver's slot 20, which copies the source page's rect moved back by the offset onto the draw page's rect
 	/// (docs/es1/rendering/screen-pages.md#copying-between-pages). In clip mode 1 the part is the rect cut to
-	/// <see cref="Rect"/>; in clip mode 2 (<see cref="Regions"/> set) it is the rect cut to each rect region in turn, from
-	/// the list's last to its first, and <see cref="Rect"/> is not read. Either copies nothing for a part that is empty.
+	/// <see cref="ClipRect"/>; in clip mode 2 (<see cref="Regions"/> set) it is the rect cut to each rect region in turn,
+	/// from the list's last to its first, and <see cref="ClipRect"/> is not read. Either copies nothing for a part that is empty.
 	/// Retail also cuts a span region's spans to the rect and copies them through slot 19; this engine has no slot 19, and
 	/// passes a span region over. The canvases that hold span regions, the energy meter's, copy nothing.
 	/// </summary>
@@ -625,7 +634,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 		var (dx, dy) = Translation;
 		var moved = (region.X0 + offsetX + dx, region.Y0 + offsetY + dy, region.X1 + offsetX + dx, region.Y1 + offsetY + dy);
 		if (Regions == null) {
-			CopyPart(moved, (Rect.X0, Rect.Y0, Rect.X1, Rect.Y1), offsetX, offsetY);
+			CopyPart(moved, (ClipRect.X0, ClipRect.Y0, ClipRect.X1, ClipRect.Y1), offsetX, offsetY);
 			return;
 		}
 

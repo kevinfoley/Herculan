@@ -460,9 +460,29 @@ public sealed class Es1Cockpit {
 	/// <summary>
 	/// <c>Cockpit_PushCanvasContext</c> (<c>0002b00c</c>): the canvas context, its rect and origin as they stand, over the
 	/// display's draw page. The pop, <c>Cockpit_PopRenderContext</c>, has nothing to put back: the context is handed to
-	/// what draws rather than installed.
+	/// what draws rather than installed. With <see cref="DrawsFollowShake"/> the rect the context cuts to is moved up by
+	/// the view shake's total.
 	/// </summary>
-	internal Es1PanelCanvas PushCanvasContext() => new(_views.Display, CanvasRect, CanvasOrigin);
+	internal Es1PanelCanvas PushCanvasContext() {
+		short shake = ShakeTotal;
+		return new(_views.Display, CanvasRect, CanvasOrigin) {
+			ClipRect = shake != 0 && DrawsFollowShake ? CanvasRect.Offset(0, -shake) : CanvasRect,
+		};
+	}
+
+	/// <summary>
+	/// Whether what the cockpit draws while the view shakes is cut where the shake has moved the cockpit's picture to:
+	/// the canvas context's rect, and the energy meter's clip shape (<see cref="Es1EnergyMeter"/>), are moved up by the
+	/// shake's total for each draw, as the view's own clip block is. Off, retail's: the shake moves the widgets' points
+	/// and neither of these, so the top rows of the picture take no draw while it shakes, which leaves the weapon rows
+	/// at the top of the <c>TOMAHAWK</c>'s and the <c>PANTHER</c>'s screens partly drawn
+	/// (docs/es1/simulation/cockpit-views.md#the-view-shake,
+	/// docs/es1/simulation/cockpit-weapon-gauges.md#while-the-cockpit-shakes), and lands the meter's strips rows off its
+	/// shape (docs/es1/simulation/cockpit-energy-shields.md#drawing-the-meter). <b>This engine's own</b>, from
+	/// <see cref="Settings.Es1TweakSettingDefinitions.FixHitShakeGlitches"/>.
+	/// </summary>
+	public static bool DrawsFollowShake =>
+		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixHitShakeGlitches);
 
 	/// <summary>
 	/// <c>CockpitView_RectCornerVisible</c> (<c>0002b214</c>): false while the widgets are off;

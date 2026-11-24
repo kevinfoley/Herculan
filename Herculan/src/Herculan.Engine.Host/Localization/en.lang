@@ -91,8 +91,8 @@ tweak.es1_fix_crew_cancel_bay.display_name  Fix HERC Bay art overlap
 tweak.es1_fix_crew_cancel_bay.description  Fixes a retail bug where HERCs could overlap in the HERC Bay after rearranging your squad's HERC assignments on the CREW screen and then clicking Cancel.
 tweak.es1_skip_screen_pause.display_name  Skip pause between screens
 tweak.es1_skip_screen_pause.description  The original game pauses for around 1 second before moving to a new screen, to give the music time to fade out. With this tweak enabled, the pause is skipped; the fade will overlap the appearance of the next screen.
-tweak.es1_fix_energy_meter_shake.display_name  Fix reactor gauge glitch when hit
-tweak.es1_fix_energy_meter_shake.description  The reactor gauge stays inside its outline while the cockpit shakes from a hit. In the original game, the shake moves the gauge's bars but not the outline that cuts them, so energy used or regained during a shake is drawn a few rows off: stray stripes appear around the gauge and it can stop showing the true level until it is drawn over again.
+tweak.es1_fix_energy_meter_shake.display_name  Fix graphical glitches when hit
+tweak.es1_fix_energy_meter_shake.description  Fixes some HUD graphics getting temporarily corrupted after the full-screen shake when taking internal damage.
 tweak.es1_fix_rhino_top_mount.display_name  Fix RHINO top mount art
 tweak.es1_fix_rhino_top_mount.description  On the arming and HERC Bay screens, the RHINO's ECM is drawn on its top centre mount where its other weapons sit, and a damaged EMP there is drawn where an undamaged one would be. The original game draws the ECM on the HERC's chest and a damaged EMP off to the left.
 tweak.es1_refresh_weapon_art.display_name  Fix weapon art after repair

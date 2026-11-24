@@ -68,11 +68,12 @@ public static class Es1TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> SkipScreenPause = new("tweak.es1_skip_screen_pause", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
-	/// The energy meter's clip shape moves with the view shake, so a change drawn while the cockpit shakes stays inside it
-	/// (plan decision 40, docs/herculan/plan-es1-first-mission.md#decisions). See
-	/// <see cref="EnergyShields.Es1EnergyMeter.ClipFollowsShake"/>.
+	/// What the cockpit draws while the view shakes is cut where the shake has moved its picture to: the weapon rows at the
+	/// top of the screen are drawn whole, and the energy meter's strips stay inside its clip shape (plan decision 40,
+	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="View.Es1Cockpit.DrawsFollowShake"/>.
+	/// <para>The key keeps the name it had when the tweak covered the energy meter alone, so a saved choice carries over.</para>
 	/// </summary>
-	public static readonly TweakSettingDefinition<bool> FixEnergyMeterShake = new("tweak.es1_fix_energy_meter_shake", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+	public static readonly TweakSettingDefinition<bool> FixHitShakeGlitches = new("tweak.es1_fix_energy_meter_shake", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
 	/// The RHINO's jammer pod is drawn on its top centre mount where the other weapons of that mount sit, and its damaged EMP
@@ -165,7 +166,7 @@ public static class Es1TweakSettingDefinitions {
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
+		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 
 	/// <summary>
@@ -181,6 +182,6 @@ public static class Es1TweakSettingDefinitions {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming, TweakSettingDefinitions.MouseOutsideView,
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixEnergyMeterShake, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
+		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 }

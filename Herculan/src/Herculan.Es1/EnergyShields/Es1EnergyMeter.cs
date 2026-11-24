@@ -129,7 +129,8 @@ public sealed class Es1EnergyMeter {
 	/// <summary>
 	/// The context the bar draws through: the canvas context as pushed, or with a clip shape <c>EnergyMeter_ClipContext</c>
 	/// given the canvas context's rect and origin, clip mode 2 on <see cref="Clip"/> and the translation set. With
-	/// <see cref="ClipFollowsShake"/> the shape is moved up by the shake's total first.
+	/// <see cref="Es1Cockpit.DrawsFollowShake"/> the shape is moved up by the shake's total first, as the canvas
+	/// context's cut is.
 	/// </summary>
 	private Es1PanelCanvas Canvas() {
 		var canvas = Cockpit.PushCanvasContext();
@@ -138,18 +139,7 @@ public sealed class Es1EnergyMeter {
 		}
 
 		short shake = Cockpit.ShakeTotal;
-		var clip = shake != 0 && ClipFollowsShake ? Clip.Shifted(0, -shake) : Clip;
-		return new Es1PanelCanvas(canvas.Display, canvas.Rect, canvas.Origin) { Regions = clip };
+		var clip = shake != 0 && Es1Cockpit.DrawsFollowShake ? Clip.Shifted(0, -shake) : Clip;
+		return new Es1PanelCanvas(canvas.Display, canvas.Rect, canvas.Origin) { ClipRect = canvas.ClipRect, Regions = clip };
 	}
-
-	/// <summary>
-	/// Whether the clip shape moves with the view shake, as the view's own clip block does, so that a change of the value
-	/// drawn while the cockpit shakes stays inside the meter's shape. Off, retail's: the shake moves the bar's strips with
-	/// the widgets and leaves the shape where it was, so such a strip lands rows off against it, leaving stripes in the
-	/// gaps of the shape and stale columns in the bar (docs/es1/simulation/cockpit-energy-shields.md#drawing-the-meter,
-	/// docs/es1/simulation/cockpit-views.md#the-view-shake). <b>This engine's own</b>, from
-	/// <see cref="Settings.Es1TweakSettingDefinitions.FixEnergyMeterShake"/>.
-	/// </summary>
-	public static bool ClipFollowsShake =>
-		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixEnergyMeterShake);
 }
