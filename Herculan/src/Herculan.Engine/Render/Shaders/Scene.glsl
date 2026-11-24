@@ -332,6 +332,33 @@ uniform float uFogDepthBias;
 uniform float uRampBlock;
 uniform bool uFullbright;
 
+// The live palette, SceneRenderer.SetLivePalette: entry n at column n, its alpha 1 where the palette has the entry. With
+// uLiveShadeRamps, uShadeRampTable holds indices and no colours (SurfaceRampTable.NamesIndices), and every colour read
+// from it is resolved here; with uLivePaletteRamp, so is every colour read from uPaletteRamp, through its alpha.
+uniform sampler2D uLivePalette;
+uniform bool uLiveShadeRamps;
+uniform bool uLivePaletteRamp;
+
+// What each table's build draws an entry the palette lacks in: SurfaceRampTable's mid grey, PaletteRampTable's black.
+const vec3 SHADE_RAMP_MISSING = vec3(128.0 / 255.0);
+const vec3 PALETTE_RAMP_MISSING = vec3(0.0);
+
+// A table's alpha, which carries a palette byte, as that byte.
+int paletteByte(float alpha) {
+	return int(floor(alpha * 255.0 + 0.5));
+}
+
+// The live palette's colour for entry `index`, or `missing` where the palette lacks it.
+vec3 liveColor(int index, vec3 missing) {
+	vec4 entry = texelFetch(uLivePalette, ivec2(clamp(index, 0, 255), 0), 0);
+	return entry.a > 0.5 ? entry.rgb : missing;
+}
+
+// A uPaletteRamp cell's colour: its own, or with uLivePaletteRamp its byte's in the live palette.
+vec3 paletteRampColor(vec4 cell) {
+	return uLivePaletteRamp ? liveColor(paletteByte(cell.a), PALETTE_RAMP_MISSING) : cell.rgb;
+}
+
 // Whatever is filed under a terrain cell is painted in the original straight after that cell's ground, so the ground
 // of every cell painted later covers it. uPaintRank holds, per pixel, the paint rank of the ground showing there
 // (TerrainPaintRankBuffer); uEntryRank is the rank of the cell what is being drawn is filed under. See
@@ -690,8 +717,8 @@ void main() {
 				row = uPaletteRampRows - 1.0;
 			}
 
-			baseColor = texture(uPaletteRamp,
-				vec2((floor(texel.r * 255.0 + 0.5) + 0.5) / 256.0, (row + 0.5) / uPaletteRampRows)).rgb;
+			baseColor = paletteRampColor(texture(uPaletteRamp,
+				vec2((floor(texel.r * 255.0 + 0.5) + 0.5) / 256.0, (row + 0.5) / uPaletteRampRows)));
 			texturedExact = true;
 			fogSettled = true;
 		} else {
@@ -719,7 +746,9 @@ void main() {
 		// lands a hair above it.
 		const float bandSlack = 1.0 / 1024.0;
 		float index = clamp(ceil(vGouraudIndex - bandSlack), 0.0, 255.0);
-		lit = texelFetch(uShadeRampTable, ivec2(int(index), int(uShadeRampPaletteRow + 0.5)), 0).rgb;
+		lit = uLiveShadeRamps
+			? liveColor(int(index), SHADE_RAMP_MISSING)
+			: texelFetch(uShadeRampTable, ivec2(int(index), int(uShadeRampPaletteRow + 0.5)), 0).rgb;
 		fogSettled = true;
 	} else if (uShadeRampEnabled && !textured && vShadeRamp >= 0.0) {
 		// A TSShadedPoly has no colour for a light term to multiply — its surface names a material
@@ -745,7 +774,15 @@ void main() {
 			}
 		}
 
-		lit = cell.rgb;
+		// A table of indices marks a cell that names one in red, since a cell naming none carries 255 in its alpha too.
+		if (!uLiveShadeRamps) {
+			lit = cell.rgb;
+		} else if (cell.r > 0.5) {
+			lit = liveColor(paletteByte(cell.a), SHADE_RAMP_MISSING);
+		} else {
+			lit = SHADE_RAMP_MISSING;
+		}
+
 		fogSettled = true;
 	} else if (uGroundFill && uPaletteRampEnabled && vSolidPaletteIndex >= 0.0) {
 		// A terrain cell drawn without its texture, Terrain_FillCellUntextured's flat fill: the
@@ -753,8 +790,8 @@ void main() {
 		// row for a fixed shade of 0x4b plus the depth slice the cell's fade installed. The mesh
 		// carries the index; see TerrainMeshBuilder.
 		float row = uPaletteRampGroundRow + slice * uShadeLevels;
-		lit = texture(uPaletteRamp,
-			vec2((floor(vSolidPaletteIndex + 0.5) + 0.5) / 256.0, (row + 0.5) / uPaletteRampRows)).rgb;
+		lit = paletteRampColor(texture(uPaletteRamp,
+			vec2((floor(vSolidPaletteIndex + 0.5) + 0.5) / 256.0, (row + 0.5) / uPaletteRampRows)));
 		fogSettled = true;
 	} else if (uPaletteRampEnabled && vSolidPaletteIndex >= 0.0) {
 		// A plain TSSolidPoly. Its surface value is a palette INDEX, and the original resolves it
@@ -778,7 +815,7 @@ void main() {
 			}
 		}
 
-		lit = cell.rgb;
+		lit = paletteRampColor(cell);
 		fogSettled = true;
 	} else {
 		// What is left names no palette index either: a fallback colour for a surface nothing

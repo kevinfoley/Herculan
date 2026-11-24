@@ -1,5 +1,4 @@
 using System.Numerics;
-using HercWorks.Core.Data.File.Dyn;
 
 namespace Herculan.Engine.Render;
 
@@ -40,45 +39,20 @@ public sealed class SurfaceRampTable {
 	/// </summary>
 	public const int GouraudRowOffset = RampCount;
 
-	private SurfaceRampTable(byte[] pixels, int depthSlices, bool[]? indexed = null) {
+	private SurfaceRampTable(byte[] pixels, int depthSlices, bool namesIndices) {
 		Pixels = pixels;
 		DepthSlices = depthSlices;
-		_indexed = indexed;
-		_shadedNames = indexed != null ? ShadedNames(pixels, indexed, depthSlices) : null;
+		NamesIndices = namesIndices;
 	}
 
 	/// <summary>
-	/// For a table built by <see cref="FromIndices"/>, which cells of the two chains name a palette index (the cell's
-	/// alpha); null for one built by <see cref="Build"/>, whose colours are not all a palette entry's.
+	/// Whether the table was built by <see cref="FromIndices"/>: its cells hold palette indices and no colours, and the
+	/// renderer shows them through its live palette (<see cref="SceneRenderer.SetLivePalette"/>), so a palette change
+	/// sends 256 colours rather than the table. A cell's red channel is 255 where it names an index, in its alpha, and 0
+	/// where it names none, which is drawn mid grey; the alpha alone cannot say, since a cell with no index carries 255
+	/// there as every table's does.
 	/// </summary>
-	private readonly bool[]? _indexed;
-
-	/// <summary>For a table built by <see cref="FromIndices"/>, <see cref="ShadedCellsName"/> for each palette index.</summary>
-	private readonly bool[]? _shadedNames;
-
-	/// <summary>Whether <see cref="Recolor"/> can show the table in another palette: it was built by <see cref="FromIndices"/>.</summary>
-	public bool CanRecolor => _indexed != null;
-
-	/// <summary>
-	/// For a table built by <see cref="FromIndices"/>, whether a cell of the shaded chain names palette entry
-	/// <paramref name="index"/>; true for one built by <see cref="Build"/>. The shaded chain's cells are drawn in their
-	/// own colours, where a Gouraud face takes only its cells' indices and is drawn in <see cref="PaletteRow"/>'s, so a
-	/// change to an entry no shaded cell names reaches the faces through <see cref="PaletteRow"/> alone
-	/// (<see cref="RecolorPaletteRow"/>).
-	/// </summary>
-	public bool ShadedCellsName(int index) => _shadedNames == null || (uint)index < Width && _shadedNames[index];
-
-	private static bool[] ShadedNames(byte[] pixels, bool[] indexed, int slices) {
-		var names = new bool[Width];
-		int shadedCells = RampCount * slices * Width;
-		for (int cell = 0; cell < shadedCells; cell++) {
-			if (indexed[cell]) {
-				names[pixels[cell * 4 + 3]] = true;
-			}
-		}
-
-		return names;
-	}
+	public bool NamesIndices { get; }
 
 	/// <summary>RGBA8, row-major, <see cref="Width"/> by <see cref="Height"/>.</summary>
 	public byte[] Pixels { get; }
@@ -132,91 +106,27 @@ public sealed class SurfaceRampTable {
 	/// <summary>
 	/// Builds a table whose shaded chain has <paramref name="blocks"/> blocks, each cell the palette index
 	/// <paramref name="shadedIndex"/> gives for (ramp, shade, block), and whose Gouraud block holds
-	/// <paramref name="gouraudIndex"/>'s for (ramp, shade), all drawn in <paramref name="palette"/>'s colours. For a
-	/// game whose ramps the original re-points per drawn object rather than fogs through a <c>.RMP</c>: each block is
-	/// one state of the ramps, and a drawn item names its block (<see cref="SceneItem.RampBlock"/>). Null where an
-	/// index has no entry.
+	/// <paramref name="gouraudIndex"/>'s for (ramp, shade). For a game whose ramps the original re-points per drawn
+	/// object rather than fogs through a <c>.RMP</c>: each block is one state of the ramps, and a drawn item names its
+	/// block (<see cref="SceneItem.RampBlock"/>). Null where an index has no entry. The cells carry no colours
+	/// (<see cref="NamesIndices"/>), so the renderer that draws through the table needs a live palette.
 	/// </summary>
 	public static SurfaceRampTable FromIndices(int blocks, Func<int, int, int, byte?> shadedIndex,
-			Func<int, int, byte?> gouraudIndex, DynamixPalette palette) {
-		Vector3? ColorOf(byte? index) =>
-			index is { } i && palette.Colors.TryGetValue(i, out var entry)
-				? new Vector3(entry.GetColor().R / 255f, entry.GetColor().G / 255f, entry.GetColor().B / 255f)
-				: null;
+			Func<int, int, byte?> gouraudIndex) {
+		// The red channel is NamesIndices' marker; Fill writes the index into the alpha.
+		(Vector3?, byte?) Cell(byte? index) => (index.HasValue ? Vector3.UnitX : Vector3.Zero, index);
 
 		return Fill(blocks,
-			(ramp, shade, block) => shadedIndex(ramp, shade, block) is { } index ? (ColorOf(index), index) : (null, null),
-			(ramp, shade) => gouraudIndex(ramp, shade) is { } index ? (ColorOf(index), index) : (null, null),
-			index => ColorOf((byte)index), trackIndexed: true);
-	}
-
-	/// <summary>
-	/// Shows a table built by <see cref="FromIndices"/> in <paramref name="palette"/>, in place: every cell that names a
-	/// palette index, and every cell of <see cref="PaletteRow"/>, takes that entry's colour, mid grey where
-	/// <paramref name="palette"/> lacks it, as <see cref="FromIndices"/> resolves them. The indices are unchanged; a cell
-	/// with none keeps its grey. For a game whose screen shows the palette indices it draws through a palette that changes
-	/// while they are on it.
-	/// </summary>
-	/// <exception cref="InvalidOperationException">The table was built by <see cref="Build"/> (<see cref="CanRecolor"/>).</exception>
-	public void Recolor(DynamixPalette palette) {
-		if (_indexed is not { } indexed) {
-			throw new InvalidOperationException("Only a table built from palette indices can be shown in another palette.");
-		}
-
-		var rgb = PaletteBytes(palette);
-		for (int cell = 0; cell < indexed.Length; cell++) {
-			if (indexed[cell]) {
-				SetRgb(cell, rgb, Pixels[cell * 4 + 3]);
-			}
-		}
-
-		SetPaletteRow(rgb);
-	}
-
-	/// <summary>
-	/// <see cref="Recolor"/> of <see cref="PaletteRow"/> alone, which is all of the table a change to an entry no shaded
-	/// cell names (<see cref="ShadedCellsName"/>) reaches.
-	/// </summary>
-	public void RecolorPaletteRow(DynamixPalette palette) => SetPaletteRow(PaletteBytes(palette));
-
-	private void SetPaletteRow(int[] rgb) {
-		int paletteRow = PaletteRow * Width;
-		for (int index = 0; index < Width; index++) {
-			SetRgb(paletteRow + index, rgb, index);
-		}
-	}
-
-	/// <summary>Each of the 256 entries' red, green and blue, or −1 in red where <paramref name="palette"/> lacks the entry.</summary>
-	private static int[] PaletteBytes(DynamixPalette palette) {
-		var rgb = new int[Width * 3];
-		for (int index = 0; index < Width; index++) {
-			if (palette.Colors.TryGetValue(index, out var entry)) {
-				var color = entry.GetColor();
-				rgb[index * 3] = color.R;
-				rgb[index * 3 + 1] = color.G;
-				rgb[index * 3 + 2] = color.B;
-			} else {
-				rgb[index * 3] = -1;
-			}
-		}
-
-		return rgb;
-	}
-
-	private void SetRgb(int cell, int[] rgb, int index) {
-		int at = cell * 4;
-		bool known = rgb[index * 3] >= 0;
-		Pixels[at] = known ? (byte)rgb[index * 3] : (byte)128;
-		Pixels[at + 1] = known ? (byte)rgb[index * 3 + 1] : (byte)128;
-		Pixels[at + 2] = known ? (byte)rgb[index * 3 + 2] : (byte)128;
+			(ramp, shade, block) => Cell(shadedIndex(ramp, shade, block)),
+			(ramp, shade) => Cell(gouraudIndex(ramp, shade)),
+			_ => Vector3.UnitX, namesIndices: true);
 	}
 
 	private static SurfaceRampTable Fill(int slices, Func<int, int, int, (Vector3? Color, byte? Byte)> shaded,
-			Func<int, int, (Vector3? Color, byte? Byte)> gouraud, Func<int, Vector3?> paletteColor, bool trackIndexed = false) {
+			Func<int, int, (Vector3? Color, byte? Byte)> gouraud, Func<int, Vector3?> paletteColor, bool namesIndices = false) {
 		int paletteRow = RampCount * (slices + 1);
 		int height = paletteRow + 1;
 		var pixels = new byte[Width * height * 4];
-		var indexed = trackIndexed ? new bool[Width * paletteRow] : null;
 		for (int row = 0; row < paletteRow; row++) {
 			// Blocks of RampCount rows: one per depth slice of the shaded chain, then the Gouraud
 			// chain's single block past them all.
@@ -235,9 +145,6 @@ public sealed class SurfaceRampTable {
 				pixels[at + 1] = color is { } c1 ? Quantise(c1.Y) : (byte)128;
 				pixels[at + 2] = color is { } c2 ? Quantise(c2.Z) : (byte)128;
 				pixels[at + 3] = value ?? 255;
-				if (indexed != null) {
-					indexed[row * Width + shade] = value.HasValue;
-				}
 			}
 		}
 
@@ -250,7 +157,7 @@ public sealed class SurfaceRampTable {
 			pixels[at + 3] = 255;
 		}
 
-		return new SurfaceRampTable(pixels, slices, indexed);
+		return new SurfaceRampTable(pixels, slices, namesIndices);
 	}
 
 	private static byte Quantise(float channel) =>

@@ -75,14 +75,15 @@ public sealed class Es1Shading {
 	public SurfaceShading Surfaces { get; }
 
 	/// <summary>
-	/// The shaded faces' colours, one block per (tag, band) in <see cref="Tags"/> order, or null without a palette, a
-	/// world file or <c>dat\shades</c>; the shaded faces then draw through the palette's own ramps, unbanded.
+	/// The shaded faces' palette indices, one block per (tag, band) in <see cref="Tags"/> order, shown through the
+	/// renderer's live palette (<see cref="SurfaceRampTable.NamesIndices"/>), or null without a palette, a world file or
+	/// <c>dat\shades</c>; the shaded faces then draw through the palette's own ramps, unbanded.
 	/// </summary>
 	public SurfaceRampTable? Table { get; }
 
 	/// <summary>
 	/// Builds the shading from the live palette, world file and <c>dat\shades</c>: the indices from the palette's ramps,
-	/// which the cockpit's scheme does not change, and their colours from the palette's entries.
+	/// which the cockpit's scheme does not change.
 	/// </summary>
 	public static Es1Shading For(DynamixPalette? palette, Es1WorldData? world, WorldShades? shades) {
 		var rows = new byte[IdentityShadeLevels * ShadeRamp.RowLength];
@@ -140,8 +141,7 @@ public sealed class Es1Shading {
 		var table = SurfaceRampTable.FromIndices(blocks.Length, Entry,
 			(ramp, shade) => ramp < palette.ShadeRamps.Count && palette.ShadeRamps[ramp] is { Length: > 0 } entries
 				? (byte)entries[shade * entries.Length >> 8]
-				: null,
-			palette);
+				: null);
 		return new Es1Shading(surfaces, table, tag0, tagged, bands, world.DistanceOffsetSmall, world.DistanceOffsetLarge);
 	}
 

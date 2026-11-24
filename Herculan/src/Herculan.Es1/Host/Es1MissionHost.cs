@@ -425,6 +425,8 @@ public static class Es1MissionHost {
 				: PaletteRampTable.Build(scene.Shading.Surfaces);
 			renderer.SetShadeRamps(shadeRamps);
 			renderer.SetPaletteRamp(paletteRamp);
+			// Both tables' indices are shown through the live palette, which Es1WorldPalette keeps to the screen's.
+			renderer.SetLivePalette(scene.Palette);
 
 			models = Es1MechModels.Upload(gl, content, world.Types.Values.OfType<Es1MechType>(), scene);
 			disposables.Add(models);
@@ -481,10 +483,9 @@ public static class Es1MissionHost {
 					disposables.Add(missileHorizon);
 				}
 
-				// The world's colors follow the live palette, as the cockpit's do. They are rebuilt before a pass when the palette has
-				// changed.
+				// The world's colors follow the live palette, as the cockpit's do, from the first pass after it changes.
 				var livePresenter = presenter;
-				var worldPalette = new Es1WorldPalette(sceneRenderer, shadeRamps, paletteRamp,
+				var worldPalette = new Es1WorldPalette(sceneRenderer,
 					new[] { backdrop, missileHorizon }.OfType<Es1Backdrop>().ToArray(), billboardPalette, livePresenter);
 				presenter.WorldPass = (x, y, width, height) => {
 					worldPalette.Follow(livePresenter);

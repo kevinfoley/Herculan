@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using HercWorks.Core.Data.File.Dyn;
 using Herculan.Engine.Gl;
 using Silk.NET.OpenGL;
 
@@ -249,6 +250,8 @@ public sealed class SceneRenderer : IDisposable {
 	private GpuTexture? _paletteRampTexture;
 	private GpuTexture? _impactShadeRampTexture;
 	private GpuTexture? _impactPaletteRampTexture;
+	private GpuTexture? _livePaletteTexture;
+	private bool _shadeRampsNameIndices;
 	private int _paletteRampRows;
 	private int _paletteRampShadeRows;
 	private int _paletteRampUnlitRow;
@@ -372,7 +375,8 @@ public sealed class SceneRenderer : IDisposable {
 	/// carries no ramp table) leaves those surfaces on the mesh builder's fallback colour instead.
 	///
 	/// <para>Call once per loaded mission, before the first <see cref="Render"/>. Uploading again
-	/// replaces the previous table.</para>
+	/// replaces the previous table. A table that <see cref="SurfaceRampTable.NamesIndices"/> is drawn through
+	/// <see cref="SetLivePalette"/>'s palette.</para>
 	/// </summary>
 	public void SetShadeRamps(SurfaceRampTable? table) {
 		_shadeRampTexture?.Dispose();
@@ -382,6 +386,7 @@ public sealed class SceneRenderer : IDisposable {
 		_shadeRampRows = table?.Height ?? 0;
 		_shadeRampGouraudRow = table?.GouraudBlockRow ?? 0;
 		_shadeRampPaletteRow = table?.PaletteRow ?? 0;
+		_shadeRampsNameIndices = table?.NamesIndices == true;
 		_depthSlices = table?.DepthSlices ?? _depthSlices;
 	}
 
@@ -408,43 +413,43 @@ public sealed class SceneRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Sends <paramref name="table"/>'s pixels again after they changed in place (<see cref="SurfaceRampTable.Recolor"/>):
-	/// into the installed texture when the table is the size of the one installed, and otherwise as
-	/// <see cref="SetShadeRamps"/> installs one.
+	/// Shows the two tables' palette indices through <paramref name="palette"/> from the next pass, for a game whose
+	/// screen shows the indices it draws through a palette that changes while they are on it: the
+	/// <see cref="PaletteRampTable"/>'s cells, each the byte its alpha holds, black where <paramref name="palette"/>
+	/// lacks the entry, and a <see cref="SurfaceRampTable"/> built by <see cref="SurfaceRampTable.FromIndices"/>, mid grey
+	/// where it lacks it, as those tables' builds resolve them. A palette change then sends 256 colours, not the tables.
+	/// Null, the default, draws both tables in the colours they were built with, and draws a table that
+	/// <see cref="SurfaceRampTable.NamesIndices"/> wrongly; Earthsiege 2 never sets one.
 	/// </summary>
-	public void ReuploadShadeRamps(SurfaceRampTable table) {
-		if (_shadeRampTexture != null && table.Height == _shadeRampRows) {
-			_shadeRampTexture.Update(table.Pixels, SurfaceRampTable.Width, table.Height);
+	/// <param name="palette">The palette now on the screen, or null to draw the tables' own colours.</param>
+	public void SetLivePalette(DynamixPalette? palette) {
+		if (palette == null) {
+			_livePaletteTexture?.Dispose();
+			_livePaletteTexture = null;
+			return;
+		}
+
+		// Alpha says whether the palette has the entry, since the two tables fall back to different colours without one.
+		var rgba = new byte[LivePaletteEntries * 4];
+		for (int index = 0; index < LivePaletteEntries; index++) {
+			if (palette.Colors.TryGetValue(index, out var entry)) {
+				var color = entry.GetColor();
+				rgba[index * 4] = color.R;
+				rgba[index * 4 + 1] = color.G;
+				rgba[index * 4 + 2] = color.B;
+				rgba[index * 4 + 3] = 255;
+			}
+		}
+
+		if (_livePaletteTexture == null) {
+			_livePaletteTexture = new GpuTexture(_gl, rgba, LivePaletteEntries, 1);
 		} else {
-			SetShadeRamps(table);
+			_livePaletteTexture.Update(rgba, LivePaletteEntries, 1);
 		}
 	}
 
-	/// <summary>
-	/// Sends <paramref name="table"/>'s <see cref="SurfaceRampTable.PaletteRow"/> again after it changed in place
-	/// (<see cref="SurfaceRampTable.RecolorPaletteRow"/>), or the whole table as <see cref="ReuploadShadeRamps"/> does
-	/// when it is not the size of the one installed.
-	/// </summary>
-	public void ReuploadShadeRampPaletteRow(SurfaceRampTable table) {
-		if (_shadeRampTexture != null && table.Height == _shadeRampRows) {
-			_shadeRampTexture.UpdateRows(table.Pixels, SurfaceRampTable.Width, table.PaletteRow, 1);
-		} else {
-			SetShadeRamps(table);
-		}
-	}
-
-	/// <summary>
-	/// Sends <paramref name="table"/>'s pixels again after they changed in place (<see cref="PaletteRampTable.Recolor"/>):
-	/// into the installed texture when the table is the size of the one installed, and otherwise as
-	/// <see cref="SetPaletteRamp"/> installs one.
-	/// </summary>
-	public void ReuploadPaletteRamp(PaletteRampTable table) {
-		if (_paletteRampTexture != null && table.Height == _paletteRampRows) {
-			_paletteRampTexture.Update(table.Pixels, PaletteRampTable.Width, table.Height);
-		} else {
-			SetPaletteRamp(table);
-		}
-	}
+	/// <summary>The live palette's entries, one texel each in one row.</summary>
+	private const int LivePaletteEntries = 256;
 
 	/// <summary>
 	/// Installs the counterparts of the two tables above built against the theater's damage-flash
@@ -754,6 +759,16 @@ public sealed class SceneRenderer : IDisposable {
 		} else {
 			_shader.SetInt("uPaletteRampEnabled", 0);
 		}
+
+		// The live palette both tables' indices are shown through, when the game has set one (SetLivePalette). Its unit
+		// is set either way, so the sampler never shares one with a sampler of another type.
+		_shader.SetInt("uLivePalette", (int)LivePaletteUnit);
+		if (_livePaletteTexture != null) {
+			_shader.SetSamplerTexture("uLivePalette", _livePaletteTexture.Handle, LivePaletteUnit);
+		}
+
+		_shader.SetInt("uLiveShadeRamps", _livePaletteTexture != null && shadeRampTexture != null && _shadeRampsNameIndices ? 1 : 0);
+		_shader.SetInt("uLivePaletteRamp", _livePaletteTexture != null && paletteRampTexture != null ? 1 : 0);
 
 		// The depth slice both ramps are read at, as the original derives it — see
 		// Content.ShadeRamp.DepthSliceFor. Zero slices disables the whole mechanism and leaves the
@@ -1071,6 +1086,9 @@ public sealed class SceneRenderer : IDisposable {
 	// The ground discs' texture unit (GroundDiscs), on its own for the reason PaintRankUnit is.
 	private const uint DiscUnit = 5;
 
+	/// <summary>The texture unit the live palette (<see cref="SetLivePalette"/>) is sampled from.</summary>
+	private const uint LivePaletteUnit = 6;
+
 	/// <summary>
 	/// Whether <see cref="EffectLights"/> holds a slot bright enough to light anything — the test
 	/// <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) makes per slot, hoisted out of the draw loop.
@@ -1095,6 +1113,7 @@ public sealed class SceneRenderer : IDisposable {
 		_paletteRampTexture?.Dispose();
 		_impactShadeRampTexture?.Dispose();
 		_impactPaletteRampTexture?.Dispose();
+		_livePaletteTexture?.Dispose();
 		Discs.Free(_gl);
 	}
 }
