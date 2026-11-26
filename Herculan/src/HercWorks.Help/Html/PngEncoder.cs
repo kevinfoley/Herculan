@@ -12,10 +12,16 @@ public static class PngEncoder {
 	private static readonly byte[] Signature = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A];
 	private static readonly uint[] CrcTable = BuildCrcTable();
 
-	/// <summary>The PNG of <paramref name="rgb"/>: rows top-down, three bytes a pixel in R, G, B order, no padding.</summary>
+	/// <summary>The PNG of an RGB image: rows top-down, three bytes a pixel in R, G, B order, no padding.</summary>
+	/// <param name="width">The width in pixels.</param>
+	/// <param name="height">The height in pixels.</param>
+	/// <param name="rgb">The pixel bytes.</param>
 	public static byte[] Encode(int width, int height, byte[] rgb) => Encode(width, height, rgb, 3, 2); // truecolour
 
-	/// <summary>The 8-bit grayscale PNG of <paramref name="gray"/>: rows top-down, one byte a pixel, no padding.</summary>
+	/// <summary>The 8-bit grayscale PNG of an image: rows top-down, one byte a pixel, no padding.</summary>
+	/// <param name="width">The width in pixels.</param>
+	/// <param name="height">The height in pixels.</param>
+	/// <param name="gray">The pixel bytes.</param>
 	public static byte[] EncodeGray(int width, int height, byte[] gray) => Encode(width, height, gray, 1, 0); // greyscale
 
 	private static byte[] Encode(int width, int height, byte[] pixels, int bytesPerPixel, byte colourType) {

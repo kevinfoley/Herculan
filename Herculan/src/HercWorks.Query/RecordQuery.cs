@@ -193,7 +193,10 @@ internal static class RecordQuery {
 		return $"[{string.Join(",", parts)}]";
 	}
 
-	/// <summary>Writes <paramref name="fields"/> after <paramref name="lead"/>, wrapping before <see cref="WrapColumn"/>.</summary>
+	/// <summary>Writes fields after a lead, wrapping before <see cref="WrapColumn"/>.</summary>
+	/// <param name="o">The writer.</param>
+	/// <param name="lead">The text each line starts with.</param>
+	/// <param name="fields">The fields to write.</param>
 	private static void WriteWrapped(TextWriter o, string lead, IEnumerable<string> fields) {
 		var line = new System.Text.StringBuilder(lead);
 		foreach (string field in fields) {

@@ -303,12 +303,17 @@ public sealed class ScaledImGui : IDisposable {
 	}
 
 	/// <summary>
-	/// Adds the fonts every ImGui window is drawn in to <paramref name="fonts"/>, before the atlas is built:
-	/// <paramref name="fontPath"/> at <paramref name="fontSize"/> on a display of <paramref name="contentScale"/>, first
-	/// so that it is the default, then the <see cref="RadialFont"/>, <see cref="ItalicFont"/> and <see cref="BoldFont"/>
-	/// faces, which it returns. The hosts' windows add them through Silk's controller, and a test that lays the panels
-	/// out without a window adds them to its own context.
+	/// Adds the fonts every ImGui window is drawn in to an atlas, before the atlas is built:
+	/// the main font first so that it is the default, then the <see cref="RadialFont"/>, <see cref="ItalicFont"/>
+	/// and <see cref="BoldFont"/> faces, which it returns. The hosts' windows add them through Silk's controller, and a
+	/// test that lays the panels out without a window adds them to its own context.
 	/// </summary>
+	/// <param name="fonts">The font atlas.</param>
+	/// <param name="fontPath">The main font's file.</param>
+	/// <param name="italicFontPath">The italic font's file, if any.</param>
+	/// <param name="fontSize">The font size at a 100% display.</param>
+	/// <param name="contentScale">The display's content scale.</param>
+	/// <param name="boldFontPath">The bold font's file, if any.</param>
 	public static (ImFontPtr Radial, ImFontPtr? Italic, ImFontPtr? Bold) AddFonts(ImFontAtlasPtr fonts, string fontPath,
 			string? italicFontPath, float fontSize, float contentScale, string? boldFontPath = null) {
 		float pixels = MathF.Round(fontSize * contentScale);
@@ -321,11 +326,14 @@ public sealed class ScaledImGui : IDisposable {
 
 	/// <summary>
 	/// Scales the current context's style, which is a 100% display's until then, to the display, once the fonts are
-	/// added (<see cref="AddFonts"/>) at <paramref name="fontSize"/>. The font is baked at the display's pixel size, and
+	/// added (<see cref="AddFonts"/>) at the font size. The font is baked at the display's pixel size, and
 	/// drawn at the window-coordinate size: on Windows the two are the same; where window coordinates are already scaled
 	/// (macOS), FontGlobalScale takes the pixel-sized atlas back down so the text stays sharp. The scroll bars grow with
 	/// the font, so <see cref="LargerFontSize"/> doubles their width.
 	/// </summary>
+	/// <param name="contentScale">The display's content scale.</param>
+	/// <param name="clientScale">The window-coordinate scale.</param>
+	/// <param name="fontSize">The font size the fonts were added at.</param>
 	public static void ApplyScale(float contentScale, float clientScale, float fontSize) {
 		var style = ImGui.GetStyle();
 		ImGui.GetIO().FontGlobalScale = clientScale / contentScale;

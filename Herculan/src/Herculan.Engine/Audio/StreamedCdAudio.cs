@@ -32,7 +32,9 @@ public sealed class StreamedCdAudio : ICdAudio {
 	private long _lastHeard;
 	private bool _disposed;
 
-	/// <summary>Plays <paramref name="source"/>'s tracks on <paramref name="stream"/>. Owns both.</summary>
+	/// <summary>Plays a source's tracks on a stream. Owns both.</summary>
+	/// <param name="source">The source of the tracks.</param>
+	/// <param name="stream">The stream the tracks play on.</param>
 	public StreamedCdAudio(IMusicSource source, IAudioStream stream) {
 		_source = source;
 		_stream = stream;

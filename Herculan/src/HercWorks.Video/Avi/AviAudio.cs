@@ -11,14 +11,17 @@ namespace HercWorks.Video.Avi;
 public static class AviAudio {
 	private const ushort PcmFormatTag = 1;
 
-	/// <summary>Whether <paramref name="format"/> is uncompressed 8- or 16-bit PCM, which <see cref="Widen"/> reads.</summary>
+	/// <summary>Whether a format is uncompressed 8- or 16-bit PCM, which <see cref="Widen"/> reads.</summary>
+	/// <param name="format">The audio format, or null when the file has no soundtrack.</param>
 	public static bool IsPlayable(AviAudioFormat? format) =>
 		format is { FormatTag: PcmFormatTag, BitsPerSample: 8 or 16 };
 
 	/// <summary>
-	/// The samples <paramref name="packet"/> holds in <paramref name="format"/>, channels interleaved as the
-	/// file has them. A 16-bit packet of odd length drops its last byte.
+	/// The samples a packet holds, channels interleaved as the file has them. A 16-bit packet of odd length drops its
+	/// last byte.
 	/// </summary>
+	/// <param name="packet">The packet's bytes.</param>
+	/// <param name="format">The soundtrack's format.</param>
 	public static short[] Widen(ReadOnlySpan<byte> packet, AviAudioFormat format) {
 		if (format.BitsPerSample == 8) {
 			var samples = new short[packet.Length];

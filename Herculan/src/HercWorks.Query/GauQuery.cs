@@ -56,12 +56,17 @@ internal static class GauQuery {
 	}
 
 	/// <summary>
-	/// The window <paramref name="spec"/> and <paramref name="ints"/> name. <paramref name="spec"/> is a member name, matched
+	/// The window a spec and a count or range name. The spec is a member name, matched
 	/// whole and then as a prefix, ignoring case, or a decimal or <c>0x</c> hex file offset that is a multiple of 4.
-	/// <paramref name="ints"/> is a count of <c>int32</c> from there, or a range <c>LO-HI</c> of <c>int32</c> indices from
-	/// there; null runs to the end of the member the window starts in. Sets <paramref name="error"/> when either names
+	/// The count is a number of <c>int32</c> from there, or a range <c>LO-HI</c> of <c>int32</c> indices from
+	/// there; null runs to the end of the member the window starts in. Sets the error when either names
 	/// nothing, or the window runs past the file.
 	/// </summary>
+	/// <param name="blocks">The file's members.</param>
+	/// <param name="spec">The member name or file offset.</param>
+	/// <param name="ints">The count or range of <c>int32</c>.</param>
+	/// <param name="block">The member the window starts in, if any.</param>
+	/// <param name="error">Says why the window resolved to nothing; null on success.</param>
 	public static IReadOnlyList<int>? ResolveWindow(IReadOnlyList<GauBlock> blocks, string spec, string? ints, out GauBlock? block, out string? error) {
 		block = null;
 		error = null;
@@ -109,7 +114,12 @@ internal static class GauQuery {
 		return Enumerable.Range(0, count).Select(i => start + i * 4).ToList();
 	}
 
-	/// <summary>Every chassis' <c>int32</c> at <paramref name="offsets"/>, after the load's origin add when <paramref name="loaded"/>.</summary>
+	/// <summary>Every chassis' <c>int32</c> at the offsets, after the load's origin add when loaded.</summary>
+	/// <param name="layouts">The chassis' cockpit layouts.</param>
+	/// <param name="blocks">The file's members.</param>
+	/// <param name="offsets">The file offsets to read.</param>
+	/// <param name="block">The member the offsets are in, if any.</param>
+	/// <param name="loaded">Whether the load's origin add applies.</param>
 	public static GauQueryResult Run(IReadOnlyList<CockpitLayout> layouts, IReadOnlyList<GauBlock> blocks, IReadOnlyList<int> offsets, GauBlock? block, bool loaded) {
 		string? located = null;
 		if (block == null) {

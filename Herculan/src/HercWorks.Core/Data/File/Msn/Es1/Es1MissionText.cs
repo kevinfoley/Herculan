@@ -24,10 +24,12 @@ public class Es1MissionText {
 	public List<Es1TextBlock> Blocks { get; set; } = [];
 
 	/// <summary>
-	/// The block of <paramref name="tag"/> the shell reads for <paramref name="ordinal"/>: the ordinal's block of that tag,
+	/// The block of a tag the shell reads for an ordinal: the ordinal's block of that tag,
 	/// or the tag's last block when the ordinal is past it (docs/es1/formats/eng-mission-text.md#reading-a-block). Null when the
 	/// file has no block of the tag.
 	/// </summary>
+	/// <param name="tag">The tag.</param>
+	/// <param name="ordinal">The ordinal.</param>
 	public Es1TextBlock? Find(string tag, int ordinal) {
 		var blocks = Blocks.Where(b => b.Tag == tag).ToList();
 		return blocks.Count == 0 ? null : blocks[Math.Clamp(ordinal, 0, blocks.Count - 1)];
@@ -84,7 +86,8 @@ public class Es1TextChoice : Es1TextPiece {
 	/// <inheritdoc cref="UntestedLow"/>
 	public short UntestedHigh { get; set; }
 
-	/// <summary>The last option whose range holds <paramref name="value"/>, both ends inclusive, or null.</summary>
+	/// <summary>The last option whose range holds a value, both ends inclusive, or null.</summary>
+	/// <param name="value">The value.</param>
 	public Es1TextOption? Pick(short value) => Options.LastOrDefault(o => o.Low <= value && value <= o.High);
 }
 

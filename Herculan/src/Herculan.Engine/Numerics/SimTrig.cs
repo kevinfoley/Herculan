@@ -138,8 +138,8 @@ public static class SimTrig {
 	}
 
 	/// <summary>
-	/// <c>Math_EulerToward</c> (<c>00492884</c>) — the euler triple that points <paramref name="from"/>
-	/// at <paramref name="to"/>. Roll is always zero; the yaw is the ground-plane bearing shifted back
+	/// <c>Math_EulerToward</c> (<c>00492884</c>) — the euler triple that points one position
+	/// at another. Roll is always zero; the yaw is the ground-plane bearing shifted back
 	/// a quarter turn, because the sim's forward axis is model Y and not model X; the pitch is taken
 	/// against the ground-plane distance with the simulation's own sqrt-free magnitude, so it carries
 	/// the same few-percent bias every other range in the simulation does. Retail reading:
@@ -149,6 +149,8 @@ public static class SimTrig {
 	/// launcher's (<c>Rocket_HomingSteer</c>) — and both pass the target first and the shot second,
 	/// which is the argument order the original's call sites use.</para>
 	/// </summary>
+	/// <param name="from">The position pointed from.</param>
+	/// <param name="to">The position pointed at.</param>
 	public static (short X, short Y, short Z) EulerToward(Vec3i from, Vec3i to) {
 		int dx = from.X - to.X;
 		int dy = from.Y - to.Y;
@@ -168,14 +170,16 @@ public static class SimTrig {
 	/// <c>Math_Atan2Guarded</c> (<c>00492800</c>): <see cref="Atan2"/> with the degenerate pair nudged onto the axis rather
 	/// than left at the origin, so a shot sitting exactly on its target still has a bearing.
 	///
-	/// <para>The nudge lands on <paramref name="x"/>, which is the original's own choice — it takes
+	/// <para>The nudge lands on x, which is the original's own choice — it takes
 	/// its arguments as <c>(x, y)</c> and sets the <i>first</i> to 1 when both are zero, so a
 	/// coincident pair reads as a bearing along +x rather than +y.</para>
 	/// </summary>
+	/// <param name="y">The Y component.</param>
+	/// <param name="x">The X component.</param>
 	public static int Atan2Guarded(int y, int x) => Atan2(y, y == 0 && x == 0 ? 1 : x);
 
 	/// <summary>
-	/// <c>Math_OffsetPointByBearing</c> (<c>004928f0</c>) — moves a point <paramref name="distance"/>
+	/// <c>Math_OffsetPointByBearing</c> (<c>004928f0</c>) — moves a point a distance
 	/// along a bearing on the ground plane, the bearing quarter-turned back because the simulation's
 	/// forward axis is model Y. Z is untouched.
 	///
@@ -184,6 +188,9 @@ public static class SimTrig {
 	/// docs/retail/simulation/ground-vehicles.md#the-control-law--0046a798-and-0046a854 for the
 	/// caller that depends on it.</para>
 	/// </summary>
+	/// <param name="point">The point moved.</param>
+	/// <param name="bearing">The bearing.</param>
+	/// <param name="distance">The distance moved.</param>
 	public static Vec3i OffsetPointByBearing(Vec3i point, short bearing, int distance) {
 		short turned = (short)(bearing + BinaryAngle.QuarterTurn);
 		short length = unchecked((short)distance);

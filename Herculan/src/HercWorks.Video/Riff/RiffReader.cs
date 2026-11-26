@@ -41,12 +41,14 @@ public static class RiffReader {
 	}
 
 	/// <summary>
-	/// Reads the outermost <c>RIFF</c> chunk, or returns false when <paramref name="bytes"/> does
+	/// Reads the outermost <c>RIFF</c> chunk, or returns false when the bytes do
 	/// not begin with one.
 	///
 	/// <para>The declared length is clamped to what is actually present rather than trusted: a file
 	/// truncated mid-download still yields every complete chunk before the cut.</para>
 	/// </summary>
+	/// <param name="bytes">The file's bytes.</param>
+	/// <param name="riff">The outermost chunk.</param>
 	public static bool TryReadHeader(ReadOnlySpan<byte> bytes, out RiffChunk riff) {
 		riff = default;
 		if (bytes.Length < 12 || ReadU32(bytes, 0) != FourCc('R', 'I', 'F', 'F')) {
@@ -64,10 +66,13 @@ public static class RiffReader {
 	/// <summary>
 	/// Enumerates the chunks directly inside a container body, without descending into them.
 	///
-	/// <para><paramref name="at"/> and <paramref name="end"/> bound the region to walk; for a
+	/// <para>The region walked is the bytes from the start offset to the end offset; for a
 	/// <c>RIFF</c> or <c>LIST</c> that is the four bytes after its list type through the end of its
 	/// body. Every chunk yielded has already had its body verified to lie within that region.</para>
 	/// </summary>
+	/// <param name="bytes">The file's bytes.</param>
+	/// <param name="at">The offset the region starts at.</param>
+	/// <param name="end">The offset the region ends at.</param>
 	public static IEnumerable<RiffChunk> Children(byte[] bytes, int at, int end) {
 		// Clamp once here so callers may pass a declared end without checking it first.
 		if (at < 0 || end > bytes.Length) {
@@ -111,11 +116,15 @@ public static class RiffReader {
 
 	/// <summary>
 	/// Walks a container recursively, yielding every leaf chunk in file order and descending into
-	/// <c>LIST</c> chunks up to <paramref name="maxDepth"/> levels.
+	/// <c>LIST</c> chunks up to a depth limit.
 	///
 	/// <para>The depth cap is what keeps a file that nests <c>LIST</c> chunks thousands deep from
 	/// exhausting the stack. An over-deep list is skipped whole rather than partly read.</para>
 	/// </summary>
+	/// <param name="bytes">The file's bytes.</param>
+	/// <param name="at">The offset the region starts at.</param>
+	/// <param name="end">The offset the region ends at.</param>
+	/// <param name="maxDepth">How many levels of <c>LIST</c> to descend into.</param>
 	public static IEnumerable<RiffChunk> Leaves(byte[] bytes, int at, int end, int maxDepth) {
 		if (maxDepth <= 0) {
 			yield break;

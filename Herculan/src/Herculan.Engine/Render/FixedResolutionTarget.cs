@@ -40,9 +40,10 @@ public sealed class FixedResolutionTarget : IDisposable {
 	}
 
 	/// <summary>
-	/// Scales the frame into the window (framebuffer 0) at <paramref name="fit"/>'s placement over black, and leaves the
+	/// Scales the frame into the window (framebuffer 0) at a fit's placement over black, and leaves the
 	/// window bound with its whole viewport set and the scissor test off, for whatever draws over it at full resolution.
 	/// </summary>
+	/// <param name="fit">The placement.</param>
 	public void Present(FrameFit fit) {
 		var window = fit.Window;
 		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);

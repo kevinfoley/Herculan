@@ -32,7 +32,8 @@ public sealed class UpdateDialog {
 	/// <summary>Whether the dialog is up.</summary>
 	public bool IsOpen => _open;
 
-	/// <summary>Raises the dialog for <paramref name="release"/>, a newer release the check found.</summary>
+	/// <summary>Raises the dialog for a newer release the check found.</summary>
+	/// <param name="release">The release.</param>
 	public void Offer(ReleaseCheckResult release) {
 		_release = release;
 		_open = true;

@@ -130,17 +130,24 @@ public sealed record ControllerProfile {
 	/// <summary>The action each input sends in a RAZOR.</summary>
 	public ImmutableDictionary<ControllerInput, KeyAction> RazorBindings { get; init; } = ImmutableDictionary<ControllerInput, KeyAction>.Empty;
 
-	/// <summary>The axis driving <paramref name="function"/>, or <see cref="ControllerAxis.Unbound"/>.</summary>
+	/// <summary>The axis driving a function, or <see cref="ControllerAxis.Unbound"/>.</summary>
+	/// <param name="function">The function.</param>
 	public ControllerAxis Axis(AxisFunction function) => Axes.GetValueOrDefault(function, ControllerAxis.Unbound);
 
-	/// <summary>The action each input sends in a RAZOR when <paramref name="razor"/> is set, else in a HERC.</summary>
+	/// <summary>The action each input sends in a RAZOR when the flag is set, else in a HERC.</summary>
+	/// <param name="razor">Whether the machine is a RAZOR.</param>
 	public ImmutableDictionary<ControllerInput, KeyAction> Bindings(bool razor) => razor ? RazorBindings : HercBindings;
 
-	/// <summary>The actions an input held on <paramref name="device"/> is bound to, in the machine <paramref name="razor"/> picks.</summary>
+	/// <summary>The actions an input held on a device is bound to, in the machine the flag picks.</summary>
+	/// <param name="device">The device.</param>
+	/// <param name="razor">Whether the machine is a RAZOR.</param>
 	public HashSet<KeyAction> Held(ControllerState device, bool razor) =>
 		[.. Bindings(razor).Where(binding => Pressed(device, binding.Key)).Select(binding => binding.Value)];
 
-	/// <summary>The first input bound to <paramref name="action"/> that is held on <paramref name="device"/>, or null for none.</summary>
+	/// <summary>The first input bound to an action that is held on a device, or null for none.</summary>
+	/// <param name="device">The device.</param>
+	/// <param name="action">The action.</param>
+	/// <param name="razor">Whether the machine is a RAZOR.</param>
 	public ControllerInput? HeldInput(ControllerState device, KeyAction action, bool razor) =>
 		Bindings(razor).Where(binding => binding.Value == action && Pressed(device, binding.Key))
 			.Select(binding => (ControllerInput?)binding.Key).OrderBy(input => input).FirstOrDefault();
@@ -236,9 +243,10 @@ public sealed record ControllerProfile {
 	}
 
 	/// <summary>
-	/// Returns a copy of this profile in which <paramref name="input"/> opens the menu bar. The copy binds it in both the
+	/// Returns a copy of this profile in which an input opens the menu bar. The copy binds it in both the
 	/// HERC's bindings and the RAZOR's, and takes the menu bar off any other input that was bound to it.
 	/// </summary>
+	/// <param name="input">The input that opens the menu bar.</param>
 	public ControllerProfile WithMenuBarPinnedTo(ControllerInput input) => this with {
 		HercBindings = PinMenuBar(HercBindings, input),
 		RazorBindings = PinMenuBar(RazorBindings, input),

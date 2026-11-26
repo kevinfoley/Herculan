@@ -31,7 +31,8 @@ internal interface IMoviePacketSource : IDisposable {
 	/// <summary>Back to the first packet of each stream.</summary>
 	void Rewind();
 
-	/// <summary>Blocks until <paramref name="videoPackets"/> video packets are waiting, or the read can give no more.</summary>
+	/// <summary>Blocks until a number of video packets are waiting, or the read can give no more.</summary>
+	/// <param name="videoPackets">The number of video packets to wait for.</param>
 	void WaitFor(int videoPackets);
 }
 

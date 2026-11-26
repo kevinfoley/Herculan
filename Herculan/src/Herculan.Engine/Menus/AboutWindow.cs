@@ -42,9 +42,9 @@ public sealed class AboutWindow {
 	}
 
 	/// <summary>
-	/// Draws the window, if it is open. Call once per frame, inside the ImGui frame. <paramref name="centre"/> is when it
-	/// is centred on the window (<see cref="PanelCentring.Condition"/>).
+	/// Draws the window, if it is open. Call once per frame, inside the ImGui frame.
 	/// </summary>
+	/// <param name="centre">When the window is centred on the window (<see cref="PanelCentring.Condition"/>).</param>
 	public void Draw(ImGuiCond centre) {
 		if (!IsOpen) {
 			return;

@@ -14,21 +14,25 @@ namespace Herculan.Engine.Install;
 /// </summary>
 public static class RetailInstalls {
 	/// <summary>
-	/// Where <paramref name="game"/>'s last install is remembered: its <see cref="GameIdentity.RememberedPathFileName"/> in
+	/// Where a game's last install is remembered: its <see cref="GameIdentity.RememberedPathFileName"/> in
 	/// <see cref="UserConfig.Folder"/>.
 	/// </summary>
+	/// <param name="game">The game.</param>
 	public static string RememberedPathFile(GameIdentity game) => UserConfig.PathOf(game.RememberedPathFileName);
 
-	/// <summary>Whether <paramref name="path"/> is an install root of either game: a directory holding the archive directory.</summary>
+	/// <summary>Whether a path is an install root of either game: a directory holding the archive directory.</summary>
+	/// <param name="path">The path.</param>
 	public static bool IsInstallRoot(string path) =>
 		Directory.Exists(path) && Directory.Exists(GameContent.ArchiveDirectory(path));
 
-	/// <summary>Whether <paramref name="path"/> is an install root (<see cref="IsInstallRoot"/>) that holds <paramref name="game"/>.</summary>
+	/// <summary>Whether a path is an install root (<see cref="IsInstallRoot"/>) that holds a game.</summary>
+	/// <param name="path">The path.</param>
+	/// <param name="game">The game.</param>
 	public static bool IsInstallOf(string path, GameIdentity game) =>
 		IsInstallRoot(path) && RetailGameDetector.Detect(path) == game.Game;
 
 	/// <summary>
-	/// Resolves <paramref name="game"/>'s install root, in order: an explicit <paramref name="explicitPath"/> (a command
+	/// Resolves a game's install root, in order: an explicit path (a command
 	/// line argument), the game's environment variable (<see cref="GameIdentity.PathVariable"/>), the install last used
 	/// (<see cref="Remember"/>), then a <see cref="GameIdentity.FolderName"/> folder beside the running binary or any folder above it,
 	/// which covers a sibling install checked out beside this repo, reached from <c>src/Herculan.Engine.Host/bin/...</c>.
@@ -36,6 +40,8 @@ public static class RetailInstalls {
 	/// player or print something more useful than a stack trace. An explicit path that is not an install is null too,
 	/// without trying the rest: a path the player typed is never silently swapped for another.
 	/// </summary>
+	/// <param name="game">The game.</param>
+	/// <param name="explicitPath">A path given explicitly, if any.</param>
 	public static string? Locate(GameIdentity game, string? explicitPath = null) {
 		if (!string.IsNullOrWhiteSpace(explicitPath)) {
 			return IsInstallOf(explicitPath, game) ? Path.GetFullPath(explicitPath) : null;
@@ -64,13 +70,16 @@ public static class RetailInstalls {
 	}
 
 	/// <summary>
-	/// Records <paramref name="installRoot"/> as the last install used of <paramref name="game"/>, which <see cref="Locate"/>
+	/// Records an install root as the last install used of a game, which <see cref="Locate"/>
 	/// tries before searching. A failed write is logged and otherwise ignored: the next launch searches again.
 	/// </summary>
+	/// <param name="game">The game.</param>
+	/// <param name="installRoot">The install's root folder.</param>
 	public static void Remember(GameIdentity game, string installRoot) =>
 		UserConfig.Write(RememberedPathFile(game), Path.GetFullPath(installRoot));
 
-	/// <summary>The install last remembered for <paramref name="game"/>, whether or not it is still there; null for none.</summary>
+	/// <summary>The install last remembered for a game, whether or not it is still there; null for none.</summary>
+	/// <param name="game">The game.</param>
 	public static string? Remembered(GameIdentity game) {
 		string path = RememberedPathFile(game);
 		try {
@@ -82,11 +91,12 @@ public static class RetailInstalls {
 	}
 
 	/// <summary>
-	/// Whether <paramref name="path"/> is on a CD or DVD, or a disc image mounted as one: the drive holding it, the
+	/// Whether a path is on a CD or DVD, or a disc image mounted as one: the drive holding it, the
 	/// one with the longest root that contains it, reports <see cref="DriveType.CDRom"/>. A disc holds an install's
 	/// folders but takes no writes, and both games write their saves into the install, so a disc is never the install.
 	/// False when the drives cannot be read.
 	/// </summary>
+	/// <param name="path">The path.</param>
 	public static bool IsOnDisc(string path) {
 		try {
 			string full = Path.GetFullPath(path);

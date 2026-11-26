@@ -65,10 +65,12 @@ sealed class StartupInstall(IReadOnlyList<IGameModule> games, HostOptions option
 	}
 
 	/// <summary>
-	/// The install of <paramref name="game"/>, which the "Game" menu's "Switch to" asked for (<see cref="GameSwitch"/>),
-	/// found as <see cref="Find"/> finds a game's, its prompt's Back giving up; null when the player gave up. The saved
-	/// start-up game is not touched. <paramref name="beforePrompt"/> runs before the prompt opens, a window of its own.
+	/// The install of a game which the "Game" menu's "Switch to" asked for (<see cref="GameSwitch"/>), found as
+	/// <see cref="Find"/> finds a game's, its prompt's Back giving up; null when the player gave up. The saved start-up
+	/// game is not touched.
 	/// </summary>
+	/// <param name="game">The game switched to.</param>
+	/// <param name="beforePrompt">Runs before the prompt opens, a window of its own.</param>
 	public string? ForSwitch(IGameModule game, Action beforePrompt) =>
 		InstallOf(game, canAsk: true, "install_prompt.back", beforePrompt);
 
@@ -107,10 +109,15 @@ sealed class StartupInstall(IReadOnlyList<IGameModule> games, HostOptions option
 	}
 
 	/// <summary>
-	/// <paramref name="root"/> once <paramref name="game"/> has what it needs beyond the install
-	/// (<see cref="IGameModule.PrepareInstall"/>), or null when the player gave up its prompt. With nobody to ask, the
-	/// install is taken as it is, and the game reports what it lacks.
+	/// The install root once the game has what it needs beyond the install (<see cref="IGameModule.PrepareInstall"/>), or
+	/// null when the player gave up its prompt. With nobody to ask, the install is taken as it is, and the game reports
+	/// what it lacks.
 	/// </summary>
+	/// <param name="game">The game being prepared.</param>
+	/// <param name="root">The install root.</param>
+	/// <param name="canAsk">Whether the player can be asked.</param>
+	/// <param name="dismissKey">Identifies the prompt for dismissal.</param>
+	/// <param name="beforePrompt">Runs before the prompt opens, if there is one.</param>
 	public string? Prepared(IGameModule game, string root, bool canAsk, string dismissKey, Action? beforePrompt = null) =>
 		!canAsk || game.PrepareInstall(localization, fontPath, root, dismissKey, beforePrompt) ? root : null;
 

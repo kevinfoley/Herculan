@@ -140,10 +140,13 @@ public sealed class AnimationThread {
 	}
 
 	/// <summary>
-	/// <c>AnimThread_SetTarget</c> (<c>00479570</c>) — asks playback to reach <paramref name="sequence"/>, via whatever
-	/// transition leads there. <paramref name="frame"/> of -1 means any frame of it will do; bit 0
-	/// of <paramref name="flags"/> makes playback stop dead on arrival instead of continuing.
+	/// <c>AnimThread_SetTarget</c> (<c>00479570</c>) — asks playback to reach a sequence, via whatever
+	/// transition leads there. A frame of -1 means any frame of it will do; bit 0
+	/// of the flags makes playback stop dead on arrival instead of continuing.
 	/// </summary>
+	/// <param name="sequence">The sequence to reach.</param>
+	/// <param name="frame">The frame to reach; -1 for any.</param>
+	/// <param name="flags">Bit 0 makes playback stop dead on arrival.</param>
 	public void SetTarget(int sequence, int frame, short flags) {
 		_targetSequence = (short)sequence;
 		_targetFrame = (short)frame;
@@ -227,10 +230,11 @@ public sealed class AnimationThread {
 	}
 
 	/// <summary>
-	/// <c>AnimThread_Advance</c> (<c>00479614</c>) — advances playback by <paramref name="delta"/> (Q8 animation ticks,
+	/// <c>AnimThread_Advance</c> (<c>00479614</c>) — advances playback by a time step (Q8 animation ticks,
 	/// scaled by <see cref="Rate"/>), crossing as many frames as that covers and committing each
 	/// crossed frame's root motion as it goes.
 	/// </summary>
+	/// <param name="delta">The time step in Q8 animation ticks.</param>
 	public void Advance(short delta) {
 		if ((_flags & FlagAtTarget) != 0 && (_targetFlags & 1) != 0) {
 			return;
@@ -291,10 +295,11 @@ public sealed class AnimationThread {
 
 	/// <summary>
 	/// <c>AnimThread_WriteRootTransform</c> (<c>00479088</c>) — the inverse of <see cref="ReadRoot"/>: stores whatever transform would
-	/// make <see cref="ReadRoot"/> return <paramref name="value"/> right now. Seeding identity here
+	/// make <see cref="ReadRoot"/> return the given transform right now. Seeding identity here
 	/// and reading back after <see cref="Advance"/> gives the step's own displacement and nothing
 	/// else.
 	/// </summary>
+	/// <param name="value">The transform <see cref="ReadRoot"/> should return.</param>
 	public void WriteRoot(in Transform3 value) {
 		if (!_hasGroundMotion) {
 			_root = value;
@@ -313,7 +318,7 @@ public sealed class AnimationThread {
 
 	/// <summary>
 	/// <c>AnimThread_SeekToPosition</c> (<c>00479238</c>) — parks playback at a <i>fraction</i> of a
-	/// sequence rather than playing through it: <paramref name="position"/> is Q14 across the
+	/// sequence rather than playing through it: the position is Q14 across the
 	/// sequence's whole duration, and this finds the frame and intra-frame offset that lands on.
 	///
 	/// <para>This is how the torso is aimed. Its threads never advance — the mech constructor gives
@@ -322,8 +327,10 @@ public sealed class AnimationThread {
 	/// <c>MechObject.TorsoTwistTick</c>.</para>
 	///
 	/// <para>The position is scaled across the sequence's ticks by the arithmetic
-	/// <paramref name="rounding"/> names, the one place the two games' threads differ.</para>
+	/// the rounding names, the one place the two games' threads differ.</para>
 	/// </summary>
+	/// <param name="sequence">The sequence to park in.</param>
+	/// <param name="position">The position, Q14 across the sequence's whole duration.</param>
 	/// <param name="rounding">How the position's product with the sequence's length is rounded.</param>
 	public void SeekToPosition(int sequence, short position, SeekRounding rounding) {
 		var target = _animation.Sequences[sequence];
@@ -444,10 +451,13 @@ public sealed class AnimationThread {
 	}
 
 	/// <summary>
-	/// Which entry of the transform pool <paramref name="sequence"/> gives a node on one frame, or
+	/// Which entry of the transform pool a sequence gives a node on one frame, or
 	/// -1 when the sequence does not animate that node at all — no fall back to its default, which
 	/// is what lets a caller tell "this thread poses this node" from "it does not".
 	/// </summary>
+	/// <param name="sequence">The sequence.</param>
+	/// <param name="frame">The frame.</param>
+	/// <param name="transformId">The node's transform id.</param>
 	private static int AnimatedIndexOf(AnimSequence sequence, int frame, int transformId) {
 		// Part id 0 is skipped, as AnimThread_EvalNodeLocals (004799a4) skips it: column 0 of every sequence carries the
 		// sequence's *root motion*, not a pose, and the original never writes it into the node array

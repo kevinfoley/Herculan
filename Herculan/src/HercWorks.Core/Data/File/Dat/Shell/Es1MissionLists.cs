@@ -36,20 +36,26 @@ public class Es1BattleSet {
 	};
 
 	/// <summary>
-	/// <c>BattleSet_PeekNextCampaign</c> (<c>0001418e</c>)(set, <paramref name="outcome"/>, <paramref name="position"/>,
-	/// <paramref name="campaign"/>): 0 when the position after <paramref name="position"/> is in the campaign
+	/// <c>BattleSet_PeekNextCampaign</c> (<c>0001418e</c>)(set, <i>outcome</i>, <i>position</i>,
+	/// <i>campaign</i>): 0 when the position after <i>position</i> is in the campaign
 	/// (<see cref="NextPosition"/>), otherwise <see cref="NextCampaignTable"/>'s campaign; nothing written. Retail indexes the
 	/// campaigns and the table with no bounds test; a campaign outside either reads as having no positions here and an
 	/// outcome or campaign outside the table gives −1, engine guards.
 	/// </summary>
+	/// <param name="outcome">The outcome.</param>
+	/// <param name="position">The position.</param>
+	/// <param name="campaign">The campaign.</param>
 	public short PeekNextCampaign(int outcome, short position, short campaign) =>
 		NextPosition(campaign, ref position) ? (short)0 : NextCampaign(campaign, outcome);
 
 	/// <summary>
-	/// <c>BattleSet_Advance</c> (<c>000141d0</c>)(set, <paramref name="outcome"/>, position*, campaign*): the position moved
+	/// <c>BattleSet_Advance</c> (<c>000141d0</c>)(set, <i>outcome</i>, position*, campaign*): the position moved
 	/// on (<see cref="NextPosition"/>); past the campaign's last, the campaign set to <see cref="NextCampaignTable"/>'s and
 	/// the position to 0, answering true; otherwise false. Bounds as <see cref="PeekNextCampaign"/>'s.
 	/// </summary>
+	/// <param name="outcome">The outcome.</param>
+	/// <param name="position">The position; moved on.</param>
+	/// <param name="campaign">The campaign; set when the position passes its last.</param>
 	public bool Advance(int outcome, ref short position, ref short campaign) {
 		if (NextPosition(campaign, ref position)) {
 			return false;

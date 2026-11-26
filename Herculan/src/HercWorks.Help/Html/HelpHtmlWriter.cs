@@ -25,10 +25,11 @@ public static class HelpHtmlWriter {
 	private const double UnitsPerPoint = 2;
 
 	/// <summary>
-	/// Writes the page. <paramref name="language"/> is the page's <c>lang</c>, a two- or three-letter
-	/// code; anything else is left out. <paramref name="readme"/> is the text the help file's <c>SH</c>
-	/// action shows, from <see cref="WriteDocument.ReadText"/>; without it that action shows a note.
+	/// Writes the page. The help file's <c>SH</c> action shows the readme text; without it that action shows a note.
 	/// </summary>
+	/// <param name="help">The help file to write.</param>
+	/// <param name="language">The page's <c>lang</c>, a two- or three-letter code; anything else is left out.</param>
+	/// <param name="readme">The text the help file's <c>SH</c> action shows, from <see cref="WriteDocument.ReadText"/>.</param>
 	public static string Write(HelpFile help, string? language = null, string? readme = null) {
 		ArgumentNullException.ThrowIfNull(help);
 		bool valid = language is { Length: 2 or 3 } && language.All(char.IsAsciiLetterLower);
@@ -478,15 +479,18 @@ public static class HelpHtmlWriter {
 		}
 
 		/// <summary>
-		/// One paragraph run's inlines as paragraphs, starting in <paramref name="font"/>, the font the
-		/// record before it ended in. Fonts are spans and hotspots are anchors; both are closed and
+		/// One paragraph run's inlines as paragraphs. Fonts are spans and hotspots are anchors; both are closed and
 		/// reopened round every boundary they cross, so the markup stays nested whatever order the
 		/// commands come in.
-		///
+		/// ///
 		/// <para>Every tab in the corpus is a hanging indent — one tab stop at the left indent and a
 		/// negative first-line indent — so the first tab of a paragraph's first line becomes an
 		/// inline-block as wide as the gap to that stop. Any other tab is a space.</para>
 		/// </summary>
+		/// <param name="writer">The writer the run writes to.</param>
+		/// <param name="format">The paragraph's format.</param>
+		/// <param name="inlines">The run's inlines.</param>
+		/// <param name="font">The font the record before it ended in, which the run starts in.</param>
 		private sealed class Run(Writer writer, HelpParagraphFormat format, IReadOnlyList<HelpInline> inlines, int? font) {
 			private readonly StringBuilder _head = new();
 			private readonly StringBuilder _rest = new();

@@ -109,15 +109,16 @@ public sealed class TextureAtlas {
 	public int FrameCount => _frames.Length;
 
 	/// <summary>
-	/// Where DBA frame <paramref name="frameIndex"/> sits in the atlas, or null when that frame is
+	/// Where a DBA frame sits in the atlas, or null when that frame is
 	/// out of range or was empty. Callers fall back to flat shading on null rather than sampling
 	/// arbitrary atlas pixels.
 	/// </summary>
+	/// <param name="frameIndex">The frame's index.</param>
 	public AtlasRect? Frame(int frameIndex) =>
 		frameIndex >= 0 && frameIndex < _frames.Length ? _frames[frameIndex] : null;
 
 	/// <summary>
-	/// DBA frame <paramref name="frameIndex"/>'s size in its own pixels, or (0, 0) when that frame is
+	/// A DBA frame's size in its own pixels, or (0, 0) when that frame is
 	/// out of range or was empty. Packing relocates a frame but does not resize it, so this is the
 	/// source bitmap's own row and column count.
 	///
@@ -125,23 +126,27 @@ public sealed class TextureAtlas {
 	/// its bitmap's pixel dimensions scaled by the part's radius, so the numbers are geometry rather
 	/// than just texture bookkeeping — see <see cref="SpriteRenderer"/>.</para>
 	/// </summary>
+	/// <param name="frameIndex">The frame's index.</param>
 	public (int Width, int Height) FrameSize(int frameIndex) =>
 		frameIndex >= 0 && frameIndex < _frameSizes.Length ? _frameSizes[frameIndex] : (0, 0);
 
 	/// <summary>
-	/// Decodes and packs <paramref name="bank"/>. Returns null when the bank holds no usable frames.
+	/// Decodes and packs a bank. Returns null when the bank holds no usable frames.
 	///
-	/// <para>A null <paramref name="palette"/> falls back to reading each index byte as a grey level,
+	/// <para>A null palette falls back to reading each index byte as a grey level,
 	/// matching <c>HercWorks.UI</c>'s renderer — a rough preview, never an accurate render, since a
 	/// <c>.DBM</c> does not bind its own palette (see <see cref="DynamixBitmap"/>).</para>
 	///
-	/// <para><paramref name="transparentIndex0"/> decodes palette index 0 to alpha 0 instead of an
+	/// <para>Setting <c>transparentIndex0</c> decodes palette index 0 to alpha 0 instead of an
 	/// opaque colour. Off by default because most banks want index 0 opaque; sprite banks and the
 	/// structure banks, whose cutout frames are documented in docs/retail/rendering/dts-texture-binding.md,
 	/// both ask for it. The 2D HUD sprite banks
 	/// treat 0 as "leave the console art showing through", the same
 	/// sentinel role index 0 plays in the cockpit art.</para>
 	/// </summary>
+	/// <param name="bank">The bank.</param>
+	/// <param name="palette">The palette, if any.</param>
+	/// <param name="transparentIndex0">Whether palette index 0 decodes to alpha 0.</param>
 	public static TextureAtlas? Build(DynamixBitmapArray bank, DynamixPalette? palette, bool transparentIndex0 = false) {
 		if (bank.Images is not { Length: > 0 } images) {
 			return null;

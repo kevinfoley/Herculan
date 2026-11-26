@@ -83,10 +83,12 @@ internal sealed class Indeo3Decoder : IVideoCodec {
 	private int _vectorCount;
 
 	/// <summary>
-	/// Creates a decoder for <paramref name="format"/>, or returns null when its dimensions are not
+	/// Creates a decoder for a format, or returns null when its dimensions are not
 	/// ones the codec can code: at least 16 and a multiple of 4 on each axis, since cells are
 	/// measured in 4x4 blocks.
 	/// </summary>
+	/// <param name="format">The video format.</param>
+	/// <param name="limits">The limits the decoder stays within.</param>
 	internal static Indeo3Decoder? Create(AviVideoFormat format, VideoLimits limits) {
 		int width = format.Width;
 		int height = format.Height;
@@ -266,11 +268,16 @@ internal sealed class Indeo3Decoder : IVideoCodec {
 	}
 
 	/// <summary>
-	/// One node of the cell tree. A split code carves the first half off <paramref name="parent"/>
-	/// and recurses into it, leaving the second half in <paramref name="parent"/> for the caller's
+	/// One node of the cell tree. A split code carves the first half off the parent cell
+	/// and recurses into it, leaving the second half in the parent for the caller's
 	/// next code. Recursion depth comes from the stream, so it is bounded by
 	/// <see cref="VideoLimits.MaxCellDepth"/>.
 	/// </summary>
+	/// <param name="plane">The plane being coded.</param>
+	/// <param name="code">The cell code.</param>
+	/// <param name="parent">The cell being split.</param>
+	/// <param name="depth">The recursion depth.</param>
+	/// <param name="stripCells">The number of cells in a strip.</param>
 	private bool ParseTree(Plane plane, int code, ref Cell parent, int depth, int stripCells) {
 		if (depth <= 0) {
 			return false;
@@ -415,9 +422,13 @@ internal sealed class Indeo3Decoder : IVideoCodec {
 	}
 
 	/// <summary>
-	/// Whether a cell displaced by (<paramref name="dy"/>, <paramref name="dx"/>) stays inside the
+	/// Whether a cell displaced by a motion vector stays inside the
 	/// plane. One row above the top is allowed, because the buffer carries the prediction row there.
 	/// </summary>
+	/// <param name="plane">The plane the cell is in.</param>
+	/// <param name="cell">The cell.</param>
+	/// <param name="dy">The vertical displacement.</param>
+	/// <param name="dx">The horizontal displacement.</param>
 	private static bool VectorInBounds(Plane plane, Cell cell, int dy, int dx) =>
 		(cell.Y << 2) + dy >= -1
 		&& (cell.X << 2) + dx >= 0
@@ -446,7 +457,7 @@ internal sealed class Indeo3Decoder : IVideoCodec {
 	}
 
 	/// <summary>
-	/// Decodes one coded cell starting at <paramref name="at"/>, and returns how many bytes it used,
+	/// Decodes one coded cell, and returns how many bytes it used,
 	/// or -1 when the data is malformed.
 	///
 	/// <para>The first byte is the cell's descriptor: the mode in the high nibble and the codebook
@@ -454,6 +465,9 @@ internal sealed class Indeo3Decoder : IVideoCodec {
 	/// interpolated; 10 codes 8x8 blocks; 11 codes 4x8 inter blocks. Modes 1 and 4 alternate between
 	/// two codebooks row by row, picked through the frame's <c>alt_quant</c> pairs.</para>
 	/// </summary>
+	/// <param name="plane">The plane the cell is in.</param>
+	/// <param name="cell">The cell.</param>
+	/// <param name="at">The offset of the cell's data.</param>
 	private int DecodeCell(Plane plane, Cell cell, int at) {
 		int start = at;
 		if (at >= _planeEnd) {
@@ -572,10 +586,20 @@ internal sealed class Indeo3Decoder : IVideoCodec {
 	private const int FirstEscape = 0xF8;
 
 	/// <summary>
-	/// The block loop shared by every mode. <paramref name="hZoom"/> and <paramref name="vZoom"/>
-	/// double a block's width and height: a block is always four coded lines of two dyads, and the
+	/// The block loop shared by every mode. The zooms double a block's width and height: a block is always
+	/// four coded lines of two dyads, and the
 	/// zoom decides how many pixels each one lands on.
 	/// </summary>
+	/// <param name="plane">The plane being decoded.</param>
+	/// <param name="cell">The cell.</param>
+	/// <param name="block">The codebook block.</param>
+	/// <param name="refBuf">The reference buffer.</param>
+	/// <param name="refBlock">The reference block.</param>
+	/// <param name="hZoom">Doubles a block's width when set.</param>
+	/// <param name="vZoom">Doubles a block's height when set.</param>
+	/// <param name="mode">The cell's mode.</param>
+	/// <param name="books">The cell's codebooks.</param>
+	/// <param name="at">The offset into the data, advanced as it is read.</param>
 	private CellResult DecodeCellData(
 		Plane plane, Cell cell, int block, byte[] refBuf, int refBlock,
 		int hZoom, int vZoom, int mode, CellBooks books, ref int at) {
@@ -730,7 +754,17 @@ internal sealed class Indeo3Decoder : IVideoCodec {
 		return CellResult.Ok;
 	}
 
-	/// <summary>A null delta over <paramref name="lines"/> coded lines: the prediction, unchanged.</summary>
+	/// <summary>A null delta over a run of coded lines: the prediction, unchanged.</summary>
+	/// <param name="dstBuf">The destination buffer.</param>
+	/// <param name="dst">The destination offset.</param>
+	/// <param name="refBuf">The reference buffer.</param>
+	/// <param name="rf">The reference offset.</param>
+	/// <param name="pitch">The row pitch.</param>
+	/// <param name="mode">The cell's mode.</param>
+	/// <param name="vZoom">Doubles a block's height when set.</param>
+	/// <param name="intra">Whether the cell is intra coded.</param>
+	/// <param name="lines">The number of coded lines.</param>
+	/// <param name="topOfCell">Whether the lines start at the top of the cell.</param>
 	private static void NullLines(
 		byte[] dstBuf, int dst, byte[] refBuf, int rf, int pitch,
 		int mode, int vZoom, bool intra, int lines, bool topOfCell) {
@@ -742,10 +776,17 @@ internal sealed class Indeo3Decoder : IVideoCodec {
 	}
 
 	/// <summary>
-	/// Copies <paramref name="rows"/> rows of <paramref name="bytes"/> each, top to bottom. For an
+	/// Copies rows of bytes, top to bottom. For an
 	/// intra cell the source is one row above the destination, so the copy is a smear of the
 	/// prediction row downwards, and has to run in order.
 	/// </summary>
+	/// <param name="dstBuf">The destination buffer.</param>
+	/// <param name="dst">The destination offset.</param>
+	/// <param name="srcBuf">The source buffer.</param>
+	/// <param name="src">The source offset.</param>
+	/// <param name="pitch">The row pitch.</param>
+	/// <param name="rows">The number of rows.</param>
+	/// <param name="bytes">The bytes in each row.</param>
 	private static void CopyRows(byte[] dstBuf, int dst, byte[] srcBuf, int src, int pitch, int rows, int bytes) {
 		for (int r = 0; r < rows; r++) {
 			for (int i = 0; i < bytes; i++) {
@@ -755,10 +796,17 @@ internal sealed class Indeo3Decoder : IVideoCodec {
 	}
 
 	/// <summary>
-	/// Mode 10 intra's null delta: eight pixels of the row above repeated down <paramref name="rows"/>
+	/// Mode 10 intra's null delta: eight pixels of the row above repeated down a number of
 	/// rows. At the top of a cell the row above is first sampled at every other pixel, and the first
 	/// row is then interpolated between it and the second, as a coded line would be.
 	/// </summary>
+	/// <param name="dstBuf">The destination buffer.</param>
+	/// <param name="dst">The destination offset.</param>
+	/// <param name="refBuf">The reference buffer.</param>
+	/// <param name="rf">The reference offset.</param>
+	/// <param name="pitch">The row pitch.</param>
+	/// <param name="rows">The number of rows to fill.</param>
+	/// <param name="topOfCell">Whether the rows start at the top of the cell.</param>
 	private static void FillFromAbove(byte[] dstBuf, int dst, byte[] refBuf, int rf, int pitch, int rows, bool topOfCell) {
 		ulong pixels = BinaryPrimitives.ReadUInt64LittleEndian(refBuf.AsSpan(rf));
 		if (topOfCell) {
@@ -915,7 +963,9 @@ internal sealed class Indeo3Decoder : IVideoCodec {
 		internal int Pitch { get; }
 		internal byte[][] Buffers { get; }
 
-		/// <summary>Index of pixel (<paramref name="x"/>, <paramref name="y"/>); row -1 is the prediction row.</summary>
+		/// <summary>Index of a pixel; row -1 is the prediction row.</summary>
+		/// <param name="x">The column.</param>
+		/// <param name="y">The row.</param>
 		internal int Offset(int x, int y) => ((y + 1) * Pitch) + x;
 	}
 }

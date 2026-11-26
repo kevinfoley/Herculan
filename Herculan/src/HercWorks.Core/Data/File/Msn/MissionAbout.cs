@@ -32,7 +32,8 @@ public sealed record MissionAbout(string? Author, string? Description, string? D
 	public bool IsBlank => string.IsNullOrEmpty(Author) && string.IsNullOrEmpty(Description) && string.IsNullOrEmpty(Date)
 		&& Version == null;
 
-	/// <summary>Reads the file <paramref name="bytes"/>.</summary>
+	/// <summary>Reads the file.</summary>
+	/// <param name="bytes">The file's bytes.</param>
 	public static MissionAbout Parse(byte[] bytes) {
 		// UTF-8 with or without its byte order mark; a byte that is not UTF-8 reads as the replacement character.
 		string text = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false).GetString(bytes);

@@ -12,8 +12,12 @@ public interface IEffectLightSlots {
 	int SlotCount { get; }
 
 	/// <summary>
-	/// Whether slot <paramref name="slot"/> lights anything: claimed, with an intensity that is not 0. When it does, its
+	/// Whether a slot lights anything: claimed, with an intensity that is not 0. When it does, its
 	/// position in world units, its intensity, 0 to 255, and the distance past which it lights nothing.
 	/// </summary>
+	/// <param name="slot">The slot's index.</param>
+	/// <param name="position">The slot's position in world units.</param>
+	/// <param name="intensity">The slot's intensity, 0 to 255.</param>
+	/// <param name="cullRadius">The distance past which it lights nothing.</param>
 	bool TryGetLive(int slot, out Vec3i position, out int intensity, out int cullRadius);
 }

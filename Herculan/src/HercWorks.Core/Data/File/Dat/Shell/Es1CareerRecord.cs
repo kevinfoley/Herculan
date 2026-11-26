@@ -78,11 +78,12 @@ public class Es1CareerRecord {
 	/// <c>CareerRecord_Init</c> (<c>000158ff</c>) in <c>Shell_Mode</c> 0, on the record as it stands: bytes <c>+0</c> and
 	/// <c>+1</c> and the words <c>+2</c>, <c>+6</c>, <c>+8</c>, <c>+0xa</c>, <c>+0xe</c> and <c>+0x12</c> zeroed, <c>+4</c>
 	/// <c>0x6a4</c>, the flags zeroed (<c>CareerRecord_ClearWords</c>, <c>000161ae</c>), the equipment state loaded from
-	/// <paramref name="tech"/>, <c>bst\tech_sng.dat</c> (<see cref="Es1EquipmentState.LoadSingleMission"/>) and its words
+	/// the tech file, <c>bst\tech_sng.dat</c> (<see cref="Es1EquipmentState.LoadSingleMission"/>) and its words
 	/// <c>+0</c> and <c>+2</c> set to −1, the pilot count 4 and every pilot entry set up with
 	/// <see cref="Es1PilotEntry.Init"/>. The init also zeroes the shell's word <c>000aad58</c>, the outcome, which the shell
 	/// holds, not the record. Mode 1's is <see cref="InitCareer"/>.
 	/// </summary>
+	/// <param name="tech">The tech file.</param>
 	public void InitSingleMission(Es1TechFile tech) {
 		InitFields(tech);
 		foreach (var pilot in Pilots) {
@@ -93,10 +94,12 @@ public class Es1CareerRecord {
 	/// <summary>
 	/// <c>CareerRecord_Init</c> (<c>000158ff</c>) in <c>Shell_Mode</c> 1, as <c>Career_New</c> runs it on each roster record
 	/// (docs/es1/shell/career.md#career_new): as <see cref="InitSingleMission"/>, the equipment state loaded from
-	/// <paramref name="tech"/>, <c>bst\tech_0.dat</c>, and every pilot entry but the one <see cref="PlayerEntry"/> names (0,
-	/// as the init leaves it) set up with <see cref="Es1PilotEntry.InitRandom"/>'s draws on <paramref name="randomBelow"/>,
+	/// the tech file, <c>bst\tech_0.dat</c>, and every pilot entry but the one <see cref="PlayerEntry"/> names (0,
+	/// as the init leaves it) set up with <see cref="Es1PilotEntry.InitRandom"/>'s draws on the random function,
 	/// <c>Math_RandomBelow</c> on <c>Shell_RandomState</c>, in entry order.
 	/// </summary>
+	/// <param name="tech">The tech file.</param>
+	/// <param name="randomBelow">Draws a number below its argument.</param>
 	public void InitCareer(Es1TechFile tech, Func<short, int> randomBelow) {
 		InitFields(tech);
 		for (int i = 0; i < PilotCountWord; i++) {
@@ -129,16 +132,18 @@ public class Es1CareerRecord {
 	/// <summary><c>CareerRecord_ClearWords</c> (<c>000161ae</c>): the 100 words <see cref="Flags"/> zeroed.</summary>
 	public void ClearWords() => Array.Clear(Flags);
 
-	/// <summary>Whether entry <paramref name="index"/> is on strength with a hangar slot, the test the pilot functions share.</summary>
+	/// <summary>Whether an entry is on strength with a hangar slot, the test the pilot functions share.</summary>
+	/// <param name="index">The entry's index.</param>
 	public bool OnStrengthWithSlot(int index) => Pilots[index].OnStrength != 0 && Pilots[index].Slot != -1;
 
 	/// <summary><c>CareerRecord_CountPilots</c> (<c>00015bfb</c>): the entries on strength with a slot.</summary>
 	public short CountPilots() => (short)Enumerable.Range(0, PilotCount).Count(OnStrengthWithSlot);
 
 	/// <summary>
-	/// <c>CareerRecord_FindPilotBySlot</c> (<c>00015c39</c>)(record, <paramref name="slot"/>): −1 for a slot of −1, otherwise
-	/// the first entry, 0 to 3, whose slot is <paramref name="slot"/>, or −1.
+	/// <c>CareerRecord_FindPilotBySlot</c> (<c>00015c39</c>)(record, <i>slot</i>): −1 for a slot of −1, otherwise
+	/// the first entry, 0 to 3, whose slot is that slot, or −1.
 	/// </summary>
+	/// <param name="slot">The slot.</param>
 	public short FindPilotBySlot(short slot) {
 		if (slot == -1) {
 			return -1;
@@ -154,10 +159,12 @@ public class Es1CareerRecord {
 	}
 
 	/// <summary>
-	/// <c>CareerRecord_SelectPilot</c> (<c>00015ad4</c>)(record, <paramref name="entry"/>): <see cref="CurrentPilot"/> set to
-	/// it and, when it is not −1, <paramref name="hangar"/>'s selected slot to its slot. Retail reads the entry with no bounds
+	/// <c>CareerRecord_SelectPilot</c> (<c>00015ad4</c>)(record, <i>entry</i>): <see cref="CurrentPilot"/> set to
+	/// it and, when it is not −1, the hangar's selected slot to its slot. Retail reads the entry with no bounds
 	/// test; an entry past the four leaves the slot here, an engine guard.
 	/// </summary>
+	/// <param name="entry">The entry.</param>
+	/// <param name="hangar">The hangar.</param>
 	public void SelectPilot(short entry, Es1Hangar hangar) {
 		CurrentPilot = entry;
 		if (entry >= 0 && entry < PilotCount) {
@@ -167,10 +174,11 @@ public class Es1CareerRecord {
 
 	/// <summary>
 	/// <c>CareerRecord_NextPilot</c> (<c>00015b0a</c>): <see cref="CurrentPilot"/> stepped by 1, modulo 4, until it names an
-	/// entry on strength with a slot, which can be the one it started from, and <paramref name="hangar"/>'s selected slot
+	/// entry on strength with a slot, which can be the one it started from, and the hangar's selected slot
 	/// set to that entry's when it changed. Retail loops for ever when no entry qualifies; here the current pilot then stays,
 	/// an engine guard.
 	/// </summary>
+	/// <param name="hangar">The hangar.</param>
 	public void NextPilot(Es1Hangar hangar) {
 		short start = CurrentPilot;
 		for (int step = 1; step <= PilotCount; step++) {
@@ -189,10 +197,11 @@ public class Es1CareerRecord {
 	/// <summary>
 	/// <c>CareerRecord_PrevPilot</c> (<c>00015b85</c>) (docs/es1/shell/repair-and-build.md#the-hangars-selection):
 	/// <see cref="CurrentPilot"/> stepped back by 1, from 0 to 3, until it names an entry on strength with a slot, which can
-	/// be the one it started from, and <paramref name="hangar"/>'s selected slot set to that entry's when it changed. Retail
+	/// be the one it started from, and the hangar's selected slot set to that entry's when it changed. Retail
 	/// loops for ever when no entry qualifies, and reads past the entries from a current pilot past 4; here the current
 	/// pilot then stays, and the step is taken modulo 4, engine guards.
 	/// </summary>
+	/// <param name="hangar">The hangar.</param>
 	public void PrevPilot(Es1Hangar hangar) {
 		short start = CurrentPilot;
 		for (int step = 1; step <= PilotCount; step++) {
@@ -268,8 +277,9 @@ public class Es1CareerRecord {
 	/// <c>CareerRecord_MarkTopPilots</c> (<c>00015cbb</c>) (docs/es1/shell/career.md#a-careers-next-mission): the entries
 	/// 1, 2 and 3 (the table at <c>0007ec9c</c>) bubble-sorted by their rank, greatest first, a pair swapped only when the
 	/// first's rank is the smaller; then the entry in place <i>p</i> put on strength when <i>p</i> + 1 is below
-	/// <paramref name="squadMemberCount"/>, <c>Squad_MemberCount</c> (<c>0007ebc8</c>), and off strength otherwise.
+	/// the squad member count, <c>Squad_MemberCount</c> (<c>0007ebc8</c>), and off strength otherwise.
 	/// </summary>
+	/// <param name="squadMemberCount">The number of squad members.</param>
 	public void MarkTopPilots(int squadMemberCount) {
 		short[] order = [1, 2, 3];
 		int end = order.Length;
@@ -377,11 +387,12 @@ public class Es1PilotEntry {
 	/// <summary>
 	/// <c>PilotEntry_InitRandom</c> (<c>00015228</c>) (docs/es1/formats/bst-battle-sets.md#pilot-entries): the name words −1,
 	/// <c>+4</c> and <c>+6</c> 0, no slot, the condition 100, on strength, the gains and the pay share 0; then, by draws on
-	/// <paramref name="randomBelow"/> in this order, <i>d</i> below 2 into <see cref="Word1D"/> and <see cref="WordB"/>,
+	/// the random function in this order, <i>d</i> below 2 into <see cref="Word1D"/> and <see cref="WordB"/>,
 	/// <see cref="Word1F"/> a draw below 5 plus 5<i>d</i>, the HERC kills (a draw below 3 + 1) × <see cref="Word1F"/>, the
 	/// flyer kills (a draw below 2 + 1) × <see cref="Word1F"/> and the structure kills a draw below 2 × <see cref="Word1F"/>;
 	/// then <see cref="ApplyGains"/>, which with the gains 0 sets the rank from the HERC kills.
 	/// </summary>
+	/// <param name="randomBelow">Draws a number below its argument.</param>
 	public void InitRandom(Func<short, int> randomBelow) {
 		NameGroup = -1;
 		Name = -1;
@@ -404,9 +415,10 @@ public class Es1PilotEntry {
 
 	/// <summary>
 	/// <c>PilotEntry_ApplyGains</c> (<c>00015317</c>): when on strength, each gain added to its sum and to
-	/// <paramref name="totals"/>' word, the words <c>0009ae5c</c>, <c>0009ae5e</c> and <c>0009ae60</c> (none when the
+	/// the totals' word, the words <c>0009ae5c</c>, <c>0009ae5e</c> and <c>0009ae60</c> (none when the
 	/// caller's gains are all 0); then the rank set from <see cref="RankThresholds"/>.
 	/// </summary>
+	/// <param name="totals">The totals the gains are added to, if any.</param>
 	public void ApplyGains(short[]? totals) {
 		if (OnStrength != 0) {
 			for (int i = 0; i < GainCount; i++) {
@@ -425,7 +437,8 @@ public class Es1PilotEntry {
 		Rank = RankThresholds[rank] == -1 ? (short)(rank - 1) : rank;
 	}
 
-	/// <summary><c>PilotEntry_NameIndex</c> (<c>00015f50</c>) for entry <paramref name="index"/>: 3 × the name group plus the name, −1 for entry 0.</summary>
+	/// <summary><c>PilotEntry_NameIndex</c> (<c>00015f50</c>) for an entry: 3 × the name group plus the name, −1 for entry 0.</summary>
+	/// <param name="index">The entry's index.</param>
 	public short NameIndex(int index) => index == 0 ? (short)-1 : (short)(3 * NameGroup + Name);
 }
 
@@ -460,10 +473,11 @@ public class Es1EquipmentState {
 	/// <summary>
 	/// <c>Tech_Clear</c> (<c>00001ee3</c>), <c>Tech_Read</c> (<c>00001e16</c>) and <c>Tech_Unlock</c> (<c>00001f78</c>)(state,
 	/// 0), as <c>CareerRecord_Init</c> runs them on <c>bst\tech_sng.dat</c> or, in a career, <c>bst\tech_0.dat</c>: the
-	/// available bytes cleared, the counts left; each of <paramref name="tech"/>'s records' counts copied into the entry its
+	/// available bytes cleared, the counts left; each of the tech file's records' counts copied into the entry its
 	/// kind and index name; then <see cref="Unlock"/>(0) with the grade test passing, as it passes for a mission count of 0
 	/// in either mode. Retail writes an index past the entries unchecked; such a record is dropped here, an engine guard.
 	/// </summary>
+	/// <param name="tech">The tech file.</param>
 	public void LoadTech(Es1TechFile tech) {
 		foreach (var entry in Chassis.Concat(Weapons)) {
 			entry.Available = 0;
@@ -481,15 +495,17 @@ public class Es1EquipmentState {
 	}
 
 	/// <summary>
-	/// <c>Tech_Unlock</c> (<c>00001f78</c>)(state, <paramref name="missions"/>)
+	/// <c>Tech_Unlock</c> (<c>00001f78</c>)(state, <i>missions</i>)
 	/// (docs/es1/formats/bst-battle-sets.md#equipment-availability): each chassis entry not yet available and holding no −1
-	/// made available when its good-grade count is at or below the missions and <paramref name="gradePasses"/>, or its
+	/// made available when its good-grade count is at or below the missions and the grade test passes, or its
 	/// any-grade count is; then each weapon entry the same with "equal to" for "at or below". Each item made available stores
 	/// its kind (0 a chassis, 1 a weapon) and index at <c>+0</c> and <c>+2</c>, so the last one's stay. The grade test is the
 	/// shell's: it passes but in <c>Shell_Mode</c> 1 with missions not 0, where it is <c>Mission_OutcomeGrade</c> below 2.
 	/// <c>Tech_Unlock</c>'s copies of <c>NONE</c> and of each item's name into <c>0007d7e0</c> are the shell's text, not the
 	/// state's.
 	/// </summary>
+	/// <param name="missions">The number of missions.</param>
+	/// <param name="gradePasses">Whether the grade test passes.</param>
 	public void Unlock(short missions, bool gradePasses) {
 		for (short kind = 0; kind <= 1; kind++) {
 			var entries = kind == 0 ? Chassis : Weapons;
@@ -509,11 +525,13 @@ public class Es1EquipmentState {
 	}
 
 	/// <summary>
-	/// <c>Tech_IsAvailable</c> (<c>00028409</c>)(state, <paramref name="index"/>, <paramref name="kind"/>)
-	/// (docs/es1/shell/between-missions.md#resupply): the available byte of chassis entry <paramref name="index"/> for kind
+	/// <c>Tech_IsAvailable</c> (<c>00028409</c>)(state, <i>index</i>, <i>kind</i>)
+	/// (docs/es1/shell/between-missions.md#resupply): the available byte of chassis entry <i>index</i> for kind
 	/// 0, of the weapon entry for kind 1, and the kind itself for any other. Retail reads with no bounds test; an index
 	/// outside the entries answers 0 here, an engine guard.
 	/// </summary>
+	/// <param name="index">The entry's index.</param>
+	/// <param name="kind">The kind: 0 a chassis, 1 a weapon.</param>
 	public short IsAvailable(short index, short kind) {
 		var entries = kind switch { 0 => Chassis, 1 => Weapons, _ => null };
 		if (entries == null) {
@@ -571,12 +589,13 @@ public class Es1Hangar {
 	public Es1HercRecord?[] Slots { get; set; } = [];
 
 	/// <summary>
-	/// <c>Hangar_Read</c> (<c>00028c50</c>) over <paramref name="list"/>: the header and the count as the file holds them,
+	/// <c>Hangar_Read</c> (<c>00028c50</c>) over a hangar list: the header and the count as the file holds them,
 	/// each HERC copied into its slot, and <c>Herc_Read</c>'s diagram build's changes to its mounts
 	/// (<see cref="Es1HercRecord.BuildDiagramMounts"/>). Retail stores a slot with no bounds test; a slot outside the array
 	/// is dropped here, an engine guard. The build runs unless the byte <c>Shell_LowMemory</c> (<c>0007fd09</c>) is set,
 	/// which this engine does not set.
 	/// </summary>
+	/// <param name="list">The hangar list.</param>
 	public static Es1Hangar Read(Es1HercList list) {
 		var hangar = new Es1Hangar {
 			SlotCount = list.SlotCount, SelectedSlot = list.Word1, MarkedSlot = list.MarkedSlot, MarkedSlotWord = list.MarkedSlotWord,
@@ -594,15 +613,17 @@ public class Es1Hangar {
 		return hangar;
 	}
 
-	/// <summary>The HERC in <paramref name="slot"/>, or null for −1, an empty slot or one outside the array.</summary>
+	/// <summary>The HERC in a slot, or null for −1, an empty slot or one outside the array.</summary>
+	/// <param name="slot">The slot.</param>
 	public Es1HercRecord? HercIn(short slot) => slot >= 0 && slot < Slots.Length ? Slots[slot] : null;
 
 	/// <summary>
-	/// <c>Hangar_AddHerc</c> (<c>00029d0f</c>): <paramref name="herc"/> stored in the first empty slot
+	/// <c>Hangar_AddHerc</c> (<c>00029d0f</c>): a HERC stored in the first empty slot
 	/// (<c>Hangar_FindFreeSlot</c>, <c>0002983a</c>), its diagram's changes to its mounts made
 	/// (<see cref="Es1HercRecord.BuildDiagramMounts"/>, as <see cref="Read"/>'s), the HERC count raised by 1 and the slot
 	/// returned; −1 with nothing stored when no slot is empty.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
 	public short AddHerc(Es1HercRecord herc) {
 		int slot = Array.IndexOf(Slots, null);
 		if (slot < 0) {
@@ -666,10 +687,11 @@ public class Es1Hangar {
 
 	/// <summary>
 	/// <c>Hangar_NextUnpilotedHercSlot</c> (<c>0002978c</c>): <see cref="NextHercSlot"/> until
-	/// <see cref="Es1CareerRecord.FindPilotBySlot"/> of <paramref name="record"/>, <c>CareerRecord_Current</c>'s, answers −1
+	/// <see cref="Es1CareerRecord.FindPilotBySlot"/> of the career record, <c>CareerRecord_Current</c>'s, answers −1
 	/// for the slot, or the selection is back where it started. The walk stops after <see cref="SlotCount"/> + 1 steps, an
 	/// engine guard where retail loops for ever from a slot the steps never reach.
 	/// </summary>
+	/// <param name="record">The career record.</param>
 	public void NextUnpilotedHercSlot(Es1CareerRecord record) {
 		short start = SelectedSlot;
 		for (int step = 0; step <= SlotCount; step++) {

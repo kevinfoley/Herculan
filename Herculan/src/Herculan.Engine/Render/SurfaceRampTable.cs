@@ -88,10 +88,11 @@ public sealed class SurfaceRampTable {
 	public int PaletteRow => RampCount * (DepthSlices + 1);
 
 	/// <summary>
-	/// Builds the table for a theater, or returns null when <paramref name="shading"/> is absent or
+	/// Builds the table for a theater, or returns null when the shading is absent or
 	/// its palette carries no ramp table — in which case shaded surfaces keep whatever colour the
 	/// mesh builder gave them.
 	/// </summary>
+	/// <param name="shading">The surface shading, if any.</param>
 	public static SurfaceRampTable? Build(SurfaceShading? shading) {
 		if (shading is not { HasShadeRamps: true }) {
 			return null;
@@ -104,7 +105,7 @@ public sealed class SurfaceRampTable {
 	}
 
 	/// <summary>
-	/// Builds a table of one block in each chain, each cell the palette index <paramref name="rampIndex"/> gives for
+	/// Builds a table of one block in each chain, each cell the palette index the lookup gives for
 	/// (ramp, shade), or none where it gives null. For a game whose ramps the original re-points per drawn object rather
 	/// than fogs through a <c>.RMP</c>: the table holds the palette's own ramps, and a drawn item carries the few it
 	/// re-points (<see cref="SceneItem.RepointedRamps"/>). The cells carry no colours (<see cref="NamesIndices"/>), so the

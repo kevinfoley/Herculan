@@ -24,9 +24,11 @@ public sealed class TweakSettings : SettingsFile<TweakSettingDefinition<bool>> {
 	}
 
 	/// <summary>
-	/// The core's settings and then <paramref name="gameSettings"/>, each at its default, kept in
-	/// <paramref name="fileName"/> in <see cref="Platform.UserConfig.Folder"/>.
+	/// The core's settings and then a game's, each at its default, kept in
+	/// a file in <see cref="Platform.UserConfig.Folder"/>.
 	/// </summary>
+	/// <param name="gameSettings">The game's settings.</param>
+	/// <param name="fileName">The settings file's name.</param>
 	public TweakSettings(IReadOnlyList<TweakSettingDefinition<bool>> gameSettings, string fileName)
 		: base([.. TweakSettingDefinitions.All, .. gameSettings], fileName) {
 	}

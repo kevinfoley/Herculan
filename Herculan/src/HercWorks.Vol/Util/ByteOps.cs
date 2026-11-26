@@ -7,7 +7,10 @@ namespace HercWorks.Vol.Util;
 /// host endianness (unlike System.BitConverter).
 /// </summary>
 public static class ByteOps {
-	/// <summary>Copies <paramref name="length"/> bytes out of <paramref name="data"/> starting at <paramref name="offset"/>.</summary>
+	/// <summary>Copies a run of bytes out of an array.</summary>
+	/// <param name="data">The array to copy from.</param>
+	/// <param name="offset">The index of the first byte to copy.</param>
+	/// <param name="length">The number of bytes to copy.</param>
 	public static byte[] Slice(byte[] data, int offset, int length) {
 		var result = new byte[length];
 		Array.Copy(data, offset, result, 0, length);

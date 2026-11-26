@@ -140,10 +140,15 @@ public sealed class SpriteRenderer : IDisposable {
 
 	/// <summary>
 	/// Draws one batch as its entry's turn in a painter's-order draw: placed through
-	/// <paramref name="entryProjection"/>, clipped by <paramref name="projection"/> (the camera's own), and kept only where
-	/// the bound paint ranks hold no more than <paramref name="rank"/> (<see cref="SceneRenderer.BindPaintRanks"/>). The
+	/// the entry projection, clipped by the camera's own projection, and kept only where
+	/// the bound paint ranks hold no more than the rank (<see cref="SceneRenderer.BindPaintRanks"/>). The
 	/// caller has bound them and set the entry's depth range.
 	/// </summary>
+	/// <param name="batch">The batch.</param>
+	/// <param name="camera">The camera.</param>
+	/// <param name="projection">The camera's own projection.</param>
+	/// <param name="entryProjection">The projection that places the entry.</param>
+	/// <param name="rank">The highest paint rank kept.</param>
 	public void DrawRanked(in SpriteBatch batch, Camera camera, in Matrix4x4 projection, in Matrix4x4 entryProjection,
 			uint rank) {
 		_shader.Use();
@@ -161,10 +166,15 @@ public sealed class SpriteRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Widens [<paramref name="nearest"/>, <paramref name="farthest"/>] to the view depths <see cref="DrawRanked"/> would
-	/// draw <paramref name="batch"/>'s quads at. Each quad lies in the plane square to the view axis at its anchor's depth,
+	/// Widens the nearest and farthest depths to the view depths <see cref="DrawRanked"/> would
+	/// draw a batch's quads at. Each quad lies in the plane square to the view axis at its anchor's depth,
 	/// so the anchors are the whole of it.
 	/// </summary>
+	/// <param name="batch">The batch.</param>
+	/// <param name="view">The view matrix.</param>
+	/// <param name="nearPlane">The near plane's distance.</param>
+	/// <param name="nearest">The nearest depth, widened.</param>
+	/// <param name="farthest">The farthest depth, widened.</param>
 	public static void ExtendDepth(in SpriteBatch batch, in Matrix4x4 view, float nearPlane,
 			ref float nearest, ref float farthest) {
 		foreach (var quad in Quads(batch)) {

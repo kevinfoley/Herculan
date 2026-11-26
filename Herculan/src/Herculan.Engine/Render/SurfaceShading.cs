@@ -95,7 +95,7 @@ public sealed record SurfaceShading(ShadeRamp Ramp, DynamixPalette? Palette) {
 
 	/// <summary>
 	/// <c>Palette_ShadeRampLookup</c> (<c>00430e34</c>) on its own: which palette index the named
-	/// material ramp reaches at <paramref name="shade"/>.
+	/// material ramp reaches at a shade.
 	///
 	/// <code>
 	/// idx = value &amp; 0xff;  if (idx &gt;= rampCount) idx = 0;
@@ -107,6 +107,8 @@ public sealed record SurfaceShading(ShadeRamp Ramp, DynamixPalette? Palette) {
 	/// ramp the palette does not have should look like whatever the game showed, not like an error.
 	/// The step-back guard is what stops a shade of 255 running off the end.</para>
 	/// </summary>
+	/// <param name="rampNumber">The material ramp's number.</param>
+	/// <param name="shade">The shade.</param>
 	public int? RampedPaletteIndex(int rampNumber, int shade) {
 		if (Palette is not { ShadeRamps.Count: > 0 } palette) {
 			return null;

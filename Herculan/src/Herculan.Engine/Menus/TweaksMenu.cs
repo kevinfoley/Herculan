@@ -64,9 +64,9 @@ public sealed class TweaksMenu {
 
 	/// <summary>
 	/// Where to split the categories between the two columns: the number that go in the left column, chosen so the
-	/// taller column is as short as it can be without splitting a category. <paramref name="rows"/> is each category's
-	/// height in rows, its heading included. A single category is the whole list, in one column.
+	/// taller column is as short as it can be without splitting a category. A single category is the whole list, in one column.
 	/// </summary>
+	/// <param name="rows">Each category's height in rows, its heading included.</param>
 	internal static int BalancedSplit(IReadOnlyList<int> rows) {
 		int total = rows.Sum();
 		int best = rows.Count;
@@ -86,9 +86,9 @@ public sealed class TweaksMenu {
 	}
 
 	/// <summary>
-	/// Draws the panel, if it is open. Call once per frame, inside the ImGui frame. <paramref name="centre"/> is when
-	/// it is centred on the window (<see cref="PanelCentring.Condition"/>).
+	/// Draws the panel, if it is open. Call once per frame, inside the ImGui frame.
 	/// </summary>
+	/// <param name="centre">When the panel is centred on the window (<see cref="PanelCentring.Condition"/>).</param>
 	public void Draw(ImGuiCond centre) {
 		if (!IsOpen) {
 			return;

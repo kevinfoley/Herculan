@@ -49,7 +49,8 @@ public sealed record CampaignVariableUse(short Variable, IReadOnlyDictionary<Var
 /// (docs/retail/formats/msn-mission-file.md#the-header-patch--row-2). A record counts once per way it touches a variable.
 /// </summary>
 public static class CampaignVariableUses {
-	/// <summary>Every campaign variable <paramref name="mission"/> touches, in number order.</summary>
+	/// <summary>Every campaign variable a mission touches, in number order.</summary>
+	/// <param name="mission">The mission.</param>
 	public static IReadOnlyList<CampaignVariableUse> Of(MissionFile mission) {
 		var counts = new SortedDictionary<short, Dictionary<VariableUse, int>>();
 

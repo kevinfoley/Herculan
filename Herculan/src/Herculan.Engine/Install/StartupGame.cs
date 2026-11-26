@@ -27,9 +27,10 @@ public static class StartupGame {
 	}
 
 	/// <summary>
-	/// Saves <paramref name="game"/> as the game to start without asking, or with null has the chooser ask again. A failed
+	/// Saves a game as the game to start without asking, or with null has the chooser ask again. A failed
 	/// write or delete is logged and otherwise ignored.
 	/// </summary>
+	/// <param name="game">The game to start; null to have the chooser ask.</param>
 	public static void Save(RetailGame? game) {
 		if (game is { } saved) {
 			UserConfig.Write(FilePath, saved.ToString());

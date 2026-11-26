@@ -28,8 +28,9 @@ public interface ICdAudio : IDisposable {
 
 	/// <summary>
 	/// <c>Music_PlayTrack</c> (<c>00473b3c</c>) — opens <c>cdaudio</c>, sets the TMSF time format and
-	/// plays <paramref name="track"/> from its start to its own length.
+	/// plays a track from its start to its own length.
 	/// </summary>
+	/// <param name="track">The track number.</param>
 	/// <returns>Whether the track started.</returns>
 	bool PlayTrack(int track);
 

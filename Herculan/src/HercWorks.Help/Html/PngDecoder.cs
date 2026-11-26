@@ -18,10 +18,13 @@ public static class PngDecoder {
 	private const int Gray = 0, Rgb = 2, Palette = 3, GrayAlpha = 4, Rgba = 6;
 
 	/// <summary>
-	/// The picture in <paramref name="png"/>, or null with the reason it is not one this reads: not a PNG, cut short, wider
-	/// or taller than <paramref name="maxSide"/> pixels, interlaced, or a color type and bit depth the specification does not
+	/// Decodes a PNG, or returns null with the reason it is not one this reads: not a PNG, cut short, wider
+	/// or taller than the limit, interlaced, or a color type and bit depth the specification does not
 	/// pair. Never throws on bad bytes.
 	/// </summary>
+	/// <param name="png">The PNG's bytes.</param>
+	/// <param name="maxSide">The largest width or height accepted, in pixels.</param>
+	/// <param name="failure">Says why the decode failed; null on success.</param>
 	public static PngImage? Decode(byte[] png, int maxSide, out string? failure) {
 		if (png.Length < Signature.Length || !png.AsSpan(0, Signature.Length).SequenceEqual(Signature)) {
 			failure = "The file is not a PNG.";
@@ -179,9 +182,13 @@ public static class PngDecoder {
 	}
 
 	/// <summary>
-	/// Undoes one row's filter (PNG specification, section 9) into <paramref name="current"/>; false for a filter type the
-	/// format does not define.
+	/// Undoes one row's filter (PNG specification, section 9); false for a filter type the format does not define.
 	/// </summary>
+	/// <param name="filter">The filter type.</param>
+	/// <param name="row">The filtered row.</param>
+	/// <param name="previous">The previous row, unfiltered.</param>
+	/// <param name="current">Receives the unfiltered row.</param>
+	/// <param name="step">The bytes per pixel.</param>
 	private static bool Unfilter(byte filter, ReadOnlySpan<byte> row, byte[] previous, byte[] current, int step) {
 		if (filter > 4) {
 			return false;

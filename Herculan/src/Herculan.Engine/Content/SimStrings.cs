@@ -19,10 +19,11 @@ public static class SimStrings {
 	public const string SimulatorStrings = "STRINGS0.STR";
 
 	/// <summary>
-	/// The folder of <paramref name="language"/>'s tables: <c>Language_StringFilePath</c> (<c>0045ef00</c>) patches the
+	/// The folder of a language's tables: <c>Language_StringFilePath</c> (<c>0045ef00</c>) patches the
 	/// language letter over the last letter of <c>str</c>, giving <c>stf</c> and <c>stg</c>
 	/// (docs/retail/simulation/alert-panels.md, "What the family shares").
 	/// </summary>
+	/// <param name="language">The language.</param>
 	public static string LanguageFolder(GameLanguage language) => language switch {
 		GameLanguage.French => "stf",
 		GameLanguage.German => "stg",

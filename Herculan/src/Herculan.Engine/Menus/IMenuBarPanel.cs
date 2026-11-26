@@ -23,8 +23,9 @@ public interface IMenuBarPanel {
 /// <summary>An <see cref="IMenuBarPanel"/> that <see cref="HostMenuBar.Draw"/> draws.</summary>
 public interface IDrawnMenuBarPanel : IMenuBarPanel {
 	/// <summary>
-	/// Draws the panel, when it is up. <paramref name="owner"/> is the native window a picker belongs to, and
-	/// <paramref name="centre"/> when the panel is centred on the window (<see cref="PanelCentring.Condition"/>).
+	/// Draws the panel, when it is up.
 	/// </summary>
+	/// <param name="owner">The native window a picker belongs to.</param>
+	/// <param name="centre">When the panel is centred on the window (<see cref="PanelCentring.Condition"/>).</param>
 	void Draw(nint owner, ImGuiCond centre);
 }

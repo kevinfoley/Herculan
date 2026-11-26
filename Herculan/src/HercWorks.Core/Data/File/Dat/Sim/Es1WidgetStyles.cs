@@ -30,16 +30,18 @@ public class Es1WidgetStyle {
 	public int InsideColor => Dword(0);
 
 	/// <summary>
-	/// Dword <paramref name="index"/> of the record, as <c>CornerFrame_DrawEdgeRing</c> indexes it: 0 the inside's
+	/// A dword of the record, as <c>CornerFrame_DrawEdgeRing</c> indexes it: 0 the inside's
 	/// color, 1–4 the outer ring's left, top, right and bottom edge colors, 5–8 the middle ring's and 9–12 the inner
 	/// ring's, 0 for no edge.
 	/// </summary>
+	/// <param name="index">The dword's index.</param>
 	public int Dword(int index) => BinaryPrimitives.ReadInt32LittleEndian(Bytes.AsSpan(index * 4, 4));
 
 	/// <summary>
-	/// <c>+0x34</c>–<c>+0x3a</c>: the <c>dba\corners</c> frame of corner <paramref name="corner"/>, 0 the top left, 1 the
+	/// <c>+0x34</c>–<c>+0x3a</c>: the <c>dba\corners</c> frame of a corner, 0 the top left, 1 the
 	/// top right, 2 the bottom left and 3 the bottom right.
 	/// </summary>
+	/// <param name="corner">The corner's index.</param>
 	public short CornerFrame(int corner) => BinaryPrimitives.ReadInt16LittleEndian(Bytes.AsSpan(0x34 + corner * 2, 2));
 
 	/// <summary><c>+0x3c</c>: a corner frame's width.</summary>

@@ -219,14 +219,18 @@ public sealed class GroundHighlight {
 
 	public void Clear() => Shape = GroundHighlightShape.None;
 
-	/// <summary>Tints the box with render-space corners <paramref name="cornerA"/> and <paramref name="cornerB"/>, given as X and Z.</summary>
+	/// <summary>Tints the box with two render-space corners, given as X and Z.</summary>
+	/// <param name="cornerA">One corner.</param>
+	/// <param name="cornerB">The opposite corner.</param>
 	public void SetBox(Vector2 cornerA, Vector2 cornerB) {
 		Shape = GroundHighlightShape.Box;
 		A = Vector2.Min(cornerA, cornerB);
 		B = Vector2.Max(cornerA, cornerB);
 	}
 
-	/// <summary>Tints the ground within <paramref name="radius"/> render units of <paramref name="centre"/>, given as X and Z.</summary>
+	/// <summary>Tints the ground within a radius in render units of a centre, given as X and Z.</summary>
+	/// <param name="centre">The centre.</param>
+	/// <param name="radius">The radius in render units.</param>
 	public void SetRange(Vector2 centre, float radius) {
 		Shape = GroundHighlightShape.Range;
 		A = centre;
@@ -323,12 +327,13 @@ public sealed class SceneRenderer : IDisposable {
 	private readonly HashSet<int> _composedNodes = new();
 
 	/// <summary>
-	/// The matrix that takes a light's render-world position (or direction) into the space of frame
-	/// <paramref name="lightFrame"/> and reads it back out as though it were in
-	/// <paramref name="drawnFrame"/>: where the original's shading of a face in
-	/// <paramref name="drawnFrame"/> finds a light whose model-space copy was made for
-	/// <paramref name="lightFrame"/>. Null if the frame cannot be inverted.
+	/// The matrix that takes a light's render-world position (or direction) into the space of the light frame
+	/// and reads it back out as though it were in the drawn frame: where the original's shading of a face in
+	/// the drawn frame finds a light whose model-space copy was made for the light frame. Null if the frame cannot be inverted.
 	/// </summary>
+	/// <param name="frames">The draw group.</param>
+	/// <param name="lightFrame">The frame the light's copy was made for.</param>
+	/// <param name="drawnFrame">The frame the face is drawn in.</param>
 	private static Matrix4x4? LightRetarget(BspDrawGroup frames, int lightFrame, int drawnFrame) =>
 		Matrix4x4.Invert(frames.FrameToWorld(lightFrame), out var worldToLight)
 			? worldToLight * frames.FrameToWorld(drawnFrame)
@@ -418,9 +423,9 @@ public sealed class SceneRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Shows the two tables' palette indices through <paramref name="palette"/> from the next pass, for a game whose
+	/// Shows the two tables' palette indices through a palette from the next pass, for a game whose
 	/// screen shows the indices it draws through a palette that changes while they are on it: the
-	/// <see cref="PaletteRampTable"/>'s cells, each the byte its alpha holds, black where <paramref name="palette"/>
+	/// <see cref="PaletteRampTable"/>'s cells, each the byte its alpha holds, black where the palette
 	/// lacks the entry, and a <see cref="SurfaceRampTable"/> built by <see cref="SurfaceRampTable.FromIndices"/>, mid grey
 	/// where it lacks it, as those tables' builds resolve them. A palette change then sends 256 colours, not the tables.
 	/// Null, the default, draws both tables in the colours they were built with, and draws a table that
@@ -590,12 +595,17 @@ public sealed class SceneRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws one pass into the viewport sub-rect (<paramref name="viewportX"/>, <paramref
-	/// name="viewportY"/>, <paramref name="viewportWidth"/>, <paramref name="viewportHeight"/>) —
+	/// Draws one pass into a viewport sub-rect —
 	/// origin bottom-left in GL viewport convention, matching <c>GL.Viewport</c>'s own. Does not clear
 	/// — call <see cref="Clear"/> once per frame before the first pass. Honours whatever scissor the
 	/// caller has set, which is how passes sharing one viewport stay out of each other's pixels.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="items">The items drawn.</param>
+	/// <param name="viewportX">The sub-rect's left edge.</param>
+	/// <param name="viewportY">The sub-rect's bottom edge.</param>
+	/// <param name="viewportWidth">The sub-rect's width.</param>
+	/// <param name="viewportHeight">The sub-rect's height.</param>
 	public void Render(Camera camera, IEnumerable<SceneItem> items,
 			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
 		float aspect = (float)viewportWidth / System.Math.Max(viewportHeight, 1);
@@ -607,20 +617,23 @@ public sealed class SceneRenderer : IDisposable {
 	public Matrix4x4 PassProjection => _passProjection;
 
 	/// <summary>
-	/// Binds <paramref name="rankTexture"/> to <see cref="PaintRankUnit"/>, where every program's paint-rank test
+	/// Binds a rank texture to <see cref="PaintRankUnit"/>, where every program's paint-rank test
 	/// (<see cref="BeginRankTest"/>) samples it: an unsigned integer texture the size of the viewport, holding at each pixel
 	/// the rank of what the game painted there.
 	/// </summary>
+	/// <param name="rankTexture">The rank texture.</param>
 	public void BindPaintRanks(uint rankTexture) {
 		_gl.ActiveTexture(TextureUnit.Texture0 + PaintRankUnit);
 		_gl.BindTexture(TextureTarget.Texture2D, rankTexture);
 	}
 
 	/// <summary>
-	/// Readies the scene program for what is drawn next under the paint-rank test: <paramref name="entryProjection"/>
+	/// Readies the scene program for what is drawn next under the paint-rank test: the entry projection
 	/// places its vertices, the pass's own projection still clips them, and a fragment is kept only where the bound paint
-	/// ranks (<see cref="BindPaintRanks"/>) hold no more than <paramref name="rank"/>.
+	/// ranks (<see cref="BindPaintRanks"/>) hold no more than the rank.
 	/// </summary>
+	/// <param name="entryProjection">The projection that places the vertices.</param>
+	/// <param name="rank">The highest paint rank kept.</param>
 	public void BeginRankTest(in Matrix4x4 entryProjection, uint rank) {
 		_shader.Use();
 		_shader.SetMatrix("uEntryProjection", entryProjection);
@@ -636,8 +649,9 @@ public sealed class SceneRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws <paramref name="item"/> with depth testing, and so depth writing, off: painted over whatever is there.
+	/// Draws an item with depth testing, and so depth writing, off: painted over whatever is there.
 	/// </summary>
+	/// <param name="item">The item.</param>
 	public void DrawUndepthed(SceneItem item) {
 		_gl.Disable(EnableCap.DepthTest);
 		DrawItem(item);
@@ -645,9 +659,10 @@ public sealed class SceneRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Whether a pass draws <paramref name="item"/>: it is <see cref="SceneItem.Visible"/>, <see cref="SceneItem.DetailSelected"/>,
+	/// Whether a pass draws an item: it is <see cref="SceneItem.Visible"/>, <see cref="SceneItem.DetailSelected"/>,
 	/// and its <see cref="SceneItem.Filing"/> does not leave it out.
 	/// </summary>
+	/// <param name="item">The item.</param>
 	public static bool IsDrawn(SceneItem item) =>
 		item.Visible && item.DetailSelected && item.Filing is not { Drawn: false };
 
@@ -684,8 +699,14 @@ public sealed class SceneRenderer : IDisposable {
 	/// <summary>
 	/// Starts a pass into the viewport sub-rect, as <see cref="Render"/> does before it draws: sets the viewport, paints the
 	/// backdrop, and sets every scene-program uniform that does not change from item to item, with
-	/// <paramref name="projection"/> as the pass's own (<see cref="PassProjection"/>).
+	/// the given projection as the pass's own (<see cref="PassProjection"/>).
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="projection">The pass's own projection.</param>
+	/// <param name="viewportX">The sub-rect's left edge.</param>
+	/// <param name="viewportY">The sub-rect's bottom edge.</param>
+	/// <param name="viewportWidth">The sub-rect's width.</param>
+	/// <param name="viewportHeight">The sub-rect's height.</param>
 	public void BeginPass(Camera camera, Matrix4x4 projection,
 			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
 		_passProjection = projection;
@@ -810,9 +831,11 @@ public sealed class SceneRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws <paramref name="items"/>, all but <paramref name="skip"/> (one the caller has drawn already), depth-tested. A
+	/// Draws the items, all but the one to skip (one the caller has drawn already), depth-tested. A
 	/// child of a BSP part is held back and painted with the rest of its part, in its walk's order.
 	/// </summary>
+	/// <param name="items">The items.</param>
+	/// <param name="skip">An item to leave out; null for none.</param>
 	public void DrawItems(IEnumerable<SceneItem> items, SceneItem? skip = null) {
 		_itemsPass = ++_pass;
 		_bspRoots.Clear();
@@ -996,7 +1019,8 @@ public sealed class SceneRenderer : IDisposable {
 		}
 	}
 
-	/// <summary>Draws <paramref name="item"/> on its own, depth-tested, if <see cref="IsDrawn"/>.</summary>
+	/// <summary>Draws an item on its own, depth-tested, if <see cref="IsDrawn"/>.</summary>
+	/// <param name="item">The item.</param>
 	public void DrawItem(SceneItem item) => DrawItem(item, null);
 
 	// `lightRetarget` moves the effect lights into the frame the original shades this item's faces

@@ -1,9 +1,14 @@
 namespace HercWorks.Core.Data.File.Msn;
 
-/// <summary>A run of <paramref name="Count"/> words from <paramref name="First"/> that an overlay copies, skipping each word that reads <paramref name="Unset"/>.</summary>
+/// <summary>A run of words that an overlay copies, skipping each word that reads the unset value.</summary>
+/// <param name="First">The first word.</param>
+/// <param name="Count">The number of words.</param>
+/// <param name="Unset">The value a word reads when unset.</param>
 public readonly record struct OverlaySpan(int First, int Count, short Unset);
 
-/// <summary>A run of <paramref name="Count"/> words from <paramref name="First"/> that a user copies from the template it picks.</summary>
+/// <summary>A run of words that a user copies from the template it picks.</summary>
+/// <param name="First">The first word.</param>
+/// <param name="Count">The number of words.</param>
 public readonly record struct CopySpan(int First, int Count);
 
 /// <summary>
@@ -93,16 +98,18 @@ public static class MergeRules {
 	];
 
 	/// <summary>
-	/// Whether a later record of a GUID in row <paramref name="row"/> replaces the earlier one whole: rows 3 and 6 to 9. Rows 10
+	/// Whether a later record of a GUID in a row replaces the earlier one whole: rows 3 and 6 to 9. Rows 10
 	/// to 16 overlay it instead (<see cref="Overlay"/>).
 	/// </summary>
+	/// <param name="row">The row.</param>
 	public static bool Replaces(int row) => row is 3 or (>= 6 and <= 9);
 
 	/// <summary>
-	/// The spans a later record of a GUID in row <paramref name="row"/> overlays onto the earlier one, each word that is not
+	/// The spans a later record of a GUID in a row overlays onto the earlier one, each word that is not
 	/// its span's unset value, in the order the load copies them (<c>Msn_MergeRow10</c> (<c>00416521</c>) and its siblings);
 	/// empty for a row that replaces or has no GUID. A word outside them stays the first record's.
 	/// </summary>
+	/// <param name="row">The row.</param>
 	public static IReadOnlyList<OverlaySpan> Overlay(int row) => row switch {
 		10 => Actions,
 		11 => Timers,
@@ -115,9 +122,10 @@ public static class MergeRules {
 	};
 
 	/// <summary>
-	/// The spans a record of row <paramref name="row"/> with a random table key copies from the template it picks, in the order the
+	/// The spans a record of a row with a random table key copies from the template it picks, in the order the
 	/// load copies them; empty for a row with no random table key. Row 8's is <see cref="RouteListWord"/>, its waypoint list.
 	/// </summary>
+	/// <param name="row">The row.</param>
 	public static IReadOnlyList<CopySpan> TemplateCopy(int row) => row switch {
 		6 => [new(MapPoint22.XWord, 6)],
 		7 => [new(Heading10.DegreesWord, 1)],
@@ -130,9 +138,11 @@ public static class MergeRules {
 	};
 
 	/// <summary>
-	/// The unset value of word <paramref name="word"/> of row <paramref name="row"/>'s overlay, the value a later record of
+	/// The unset value of a word of a row's overlay, the value a later record of
 	/// the GUID leaves the word at; throws for a word no overlay span of the row covers.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="word">The word.</param>
 	public static short Unset(int row, int word) {
 		foreach (var span in Overlay(row)) {
 			if (word >= span.First && word < span.First + span.Count) {

@@ -66,7 +66,8 @@ sealed class KeyLabels(LocalizationTable localization, KeyboardLayout layout, Ke
 			: text;
 	}
 
-	/// <summary>Every <c>.lang</c> entry the labels of <paramref name="chords"/> are built from.</summary>
+	/// <summary>Every <c>.lang</c> entry the labels of some chords are built from.</summary>
+	/// <param name="chords">The chords.</param>
 	public static IEnumerable<string> Entries(IEnumerable<KeyChord> chords) {
 		var list = chords.ToList();
 		foreach (var (modifier, entry) in Modifiers) {

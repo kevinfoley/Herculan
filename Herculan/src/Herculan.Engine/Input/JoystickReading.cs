@@ -50,7 +50,8 @@ public readonly record struct JoystickReading(
 	/// <summary>Nothing held, every axis centred.</summary>
 	public static readonly JoystickReading Neutral = new();
 
-	/// <summary>Whether logical button <paramref name="index"/> (0-based) is held.</summary>
+	/// <summary>Whether a logical button (0-based) is held.</summary>
+	/// <param name="index">The button index.</param>
 	public bool Button(int index) =>
 		index >= 0 && index < JoystickCapabilities.MaxButtons && (Buttons & (1 << index)) != 0;
 

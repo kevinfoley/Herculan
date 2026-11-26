@@ -9,11 +9,17 @@ namespace Herculan.Engine.Games;
 /// </summary>
 public static class OptionValues {
 	/// <summary>
-	/// Reads the number after the flag at <c>args[i]</c>, advancing past it. On failure records why in
-	/// <paramref name="errors"/>, and still steps over a value that is present, so it is not reported
-	/// a second time as a stray positional argument. A flag with several values passes its own name as
-	/// <paramref name="flag"/> for the second and later, when <c>args[i]</c> is no longer the flag.
+	/// Reads the number after the flag at <c>args[i]</c>, advancing past it. On failure records why in the errors, and
+	/// still steps over a value that is present, so it is not reported a second time as a stray positional argument.
+	/// A flag with several values passes its own name for the second and later, when <c>args[i]</c> is no longer the flag.
 	/// </summary>
+	/// <param name="args">The command-line arguments.</param>
+	/// <param name="i">The index of the flag; advanced past the number.</param>
+	/// <param name="min">The least value accepted.</param>
+	/// <param name="max">The greatest value accepted.</param>
+	/// <param name="errors">Receives a message on failure.</param>
+	/// <param name="value">The number read.</param>
+	/// <param name="flag">The flag's name, for the second and later values of one flag.</param>
 	public static bool TryReadInt(string[] args, ref int i, int min, int max, List<string> errors, out int value,
 			string? flag = null) {
 		flag ??= args[i];

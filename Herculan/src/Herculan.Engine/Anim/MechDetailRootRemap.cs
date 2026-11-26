@@ -22,7 +22,7 @@ public static class MechDetailRootRemap {
 	private const int MapLength = 50;
 
 	/// <summary>
-	/// Renumbers <paramref name="roots"/> 1 onward through the parts <paramref name="partIds"/> lists,
+	/// Renumbers the roots 1 onward through the parts the part ids list,
 	/// the chassis <c>.DAT</c>'s signed bytes ended by a negative one at file offset 46
 	/// (<c>ModelLoDBoneIds</c> in either game's chassis record). Does nothing to a shape with one root.
 	///
@@ -31,6 +31,8 @@ public static class MechDetailRootRemap {
 	/// id outside the row as unmapped, where the original would read through a null pointer or past
 	/// the row; no retail chassis reaches either case.</para>
 	/// </summary>
+	/// <param name="roots">The shape's roots.</param>
+	/// <param name="partIds">The part ids.</param>
 	public static void Apply(IReadOnlyList<TSObject> roots, IReadOnlyList<byte> partIds) {
 		if (roots.Count <= 1) {
 			return;

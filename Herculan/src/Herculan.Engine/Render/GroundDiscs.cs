@@ -33,7 +33,10 @@ public sealed class GroundDiscs {
 	/// <summary>How many of <see cref="Items"/> are painted.</summary>
 	public int Count => Math.Min(Items.Count, MaxCount);
 
-	/// <summary>Uploads <see cref="Items"/> and binds them to <paramref name="unit"/>, growing the texture when they outgrow it.</summary>
+	/// <summary>Uploads <see cref="Items"/> and binds them to a texture unit, growing the texture when they outgrow it.</summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="shader">The shader the discs are bound for.</param>
+	/// <param name="unit">The texture unit.</param>
 	internal void Bind(GL gl, ShaderProgram shader, uint unit) {
 		int count = Count;
 		if (_texture == 0) {
@@ -81,7 +84,8 @@ public sealed class GroundDiscs {
 		gl.ActiveTexture(TextureUnit.Texture0);
 	}
 
-	/// <summary>Frees the texture; <paramref name="gl"/> is the context it was made in.</summary>
+	/// <summary>Frees the texture.</summary>
+	/// <param name="gl">The context it was made in.</param>
 	internal void Free(GL gl) {
 		if (_texture != 0) {
 			gl.DeleteTexture(_texture);

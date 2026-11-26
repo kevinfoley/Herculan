@@ -53,7 +53,9 @@ internal static class ChassisQuery {
 	/// </summary>
 	public const int TypeRecordBase = 2;
 
-	/// <summary>The reader's members, in record order, as found over a record of <paramref name="recordLength"/> bytes.</summary>
+	/// <summary>The reader's members, in record order, as found over a record of a given length.</summary>
+	/// <param name="model">The chassis reader's model.</param>
+	/// <param name="recordLength">The record's length in bytes.</param>
 	public static IReadOnlyList<ChassisField> Fields(ChassisModel model, int recordLength) {
 		var zero = model.Parse(new byte[recordLength])!;
 		var full = model.Parse(Enumerable.Repeat((byte)0xff, recordLength).ToArray())!;
@@ -76,10 +78,15 @@ internal static class ChassisQuery {
 	}
 
 	/// <summary>
-	/// The field <paramref name="spec"/> names: a member name, matched whole and then as a prefix, ignoring
-	/// case, or a decimal or <c>0x</c> hex record offset. Sets <paramref name="error"/> when it names none,
+	/// The field a spec names: a member name, matched whole and then as a prefix, ignoring
+	/// case, or a decimal or <c>0x</c> hex record offset. Sets the error when it names none,
 	/// or several.
 	/// </summary>
+	/// <param name="fields">The reader's members.</param>
+	/// <param name="spec">The member name or record offset.</param>
+	/// <param name="recordLength">The record's length in bytes.</param>
+	/// <param name="named">The member the spec names, if it names one.</param>
+	/// <param name="error">Says why the spec resolved to nothing; null on success.</param>
 	public static int? ResolveOffset(IReadOnlyList<ChassisField> fields, string spec, int recordLength, out ChassisField? named, out string? error) {
 		named = null;
 		error = null;
@@ -97,10 +104,15 @@ internal static class ChassisQuery {
 	}
 
 	/// <summary>
-	/// Every chassis' value at <paramref name="offset"/>: the member's, through the reader, when a member
-	/// starts there (<paramref name="named"/> picks it when several do); otherwise the little-endian word
+	/// Every chassis' value at an offset: the member's, through the reader, when a member
+	/// starts there (the named member picks it when several do); otherwise the little-endian word
 	/// the record holds there.
 	/// </summary>
+	/// <param name="model">The chassis reader's model.</param>
+	/// <param name="chassis">The chassis to read.</param>
+	/// <param name="fields">The reader's members.</param>
+	/// <param name="offset">The record offset.</param>
+	/// <param name="named">The member that picks the value when several start at the offset.</param>
 	public static ChassisQueryResult Run(ChassisModel model, IReadOnlyList<Chassis> chassis, IReadOnlyList<ChassisField> fields, int offset, ChassisField? named) {
 		var field = named ?? fields.FirstOrDefault(f => f.Offset == offset && f.Length != null) ?? fields.FirstOrDefault(f => f.Offset == offset);
 		var also = fields.Where(f => f.Offset == offset && f != field).Select(f => f.Name).ToList();
@@ -126,7 +138,9 @@ internal static class ChassisQuery {
 		return new ChassisQueryResult(offset, offset + TypeRecordBase, field.Type, field, null, also, values);
 	}
 
-	/// <summary>Where <paramref name="offset"/> falls inside <paramref name="field"/>, which it does not start.</summary>
+	/// <summary>Where an offset falls inside a field, which it does not start.</summary>
+	/// <param name="field">The field.</param>
+	/// <param name="offset">The record offset.</param>
 	private static string Inside(ChassisField field, int offset) {
 		string span = $"{field.Name} (record offsets {field.Offset}-{field.Offset + field.Length - 1})";
 		int into = offset - field.Offset;

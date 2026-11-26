@@ -74,9 +74,13 @@ public struct Transform3 {
 	public static Transform3 FromEuler(short angleX, short angleY, short angleZ) => FromEuler(angleX, angleY, angleZ, SimTrig.Cos);
 
 	/// <summary>
-	/// <see cref="FromEuler(short, short, short)"/> reading its cosines through <paramref name="cos"/>: a binary
+	/// <see cref="FromEuler(short, short, short)"/> reading its cosines through a given function: a binary
 	/// program whose rotation differs only in its cosine lookup passes its own.
 	/// </summary>
+	/// <param name="angleX">The rotation about X.</param>
+	/// <param name="angleY">The rotation about Y.</param>
+	/// <param name="angleZ">The rotation about Z.</param>
+	/// <param name="cos">The cosine lookup.</param>
 	public static Transform3 FromEuler(short angleX, short angleY, short angleZ, Func<short, short> cos) {
 		var result = default(Transform3);
 
@@ -135,9 +139,11 @@ public struct Transform3 {
 	}
 
 	/// <summary>
-	/// <c>Transform_Concat</c> (<c>0047f914</c>) — composes two transforms. <paramref name="first"/> applies before
-	/// <paramref name="second"/> (row-vector convention).
+	/// <c>Transform_Concat</c> (<c>0047f914</c>) — composes two transforms. The first applies before
+	/// the second (row-vector convention).
 	/// </summary>
+	/// <param name="first">The transform applied first.</param>
+	/// <param name="second">The transform applied second.</param>
 	public static Transform3 Concat(in Transform3 first, in Transform3 second) {
 		var result = default(Transform3);
 
@@ -307,7 +313,9 @@ public struct Transform3 {
 	/// <summary>Angle sum, wrapped to 16 bits the way the original's <c>short</c> arithmetic does.</summary>
 	private static short Sum(short a, short b) => unchecked((short)(a + b));
 
-	/// <summary>Adds <paramref name="quarters"/> quarter turns, wrapped to 16 bits.</summary>
+	/// <summary>Adds quarter turns to an angle, wrapped to 16 bits.</summary>
+	/// <param name="angle">The angle.</param>
+	/// <param name="quarters">The number of quarter turns.</param>
 	private static short Quarter(short angle, int quarters) =>
 		unchecked((short)(angle + quarters * BinaryAngle.QuarterTurn));
 

@@ -93,7 +93,10 @@ internal static class Es1TypeQuery {
 		return hits;
 	}
 
-	/// <summary>Every group whose member kind is <paramref name="kind"/> naming <paramref name="guid"/>, once per slot that names it.</summary>
+	/// <summary>Every group whose member kind is a given kind naming a GUID, once per slot that names it.</summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="kind">The member kind.</param>
+	/// <param name="guid">The GUID.</param>
 	private static IEnumerable<Es1GroupPlacement> Placements(Es1MissionFile file, RosterKind kind, short guid) {
 		for (int g = 0; g < file.Groups.Length; g++) {
 			var group = file.Groups[g];

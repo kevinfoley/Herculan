@@ -48,7 +48,9 @@ public static class DebriefText {
 		Test(10, MissionGenerator.OpEqual, 2), Test(10, MissionGenerator.OpEqual, 2),
 	];
 
-	/// <summary>The byte offset of text slot <paramref name="slot"/> of row-5 record <paramref name="record"/>.</summary>
+	/// <summary>The byte offset of a text slot of a row-5 record.</summary>
+	/// <param name="record">The record's index.</param>
+	/// <param name="slot">The slot.</param>
 	public static int SlotOffset(int record, int slot) => record * RecordLength + (1 + slot) * 2;
 
 	/// <summary>The row-5 record the debrief reads, by its index in the row; null for a mission with none.</summary>
@@ -78,9 +80,11 @@ public static class DebriefText {
 		Record(document) is { } record ? BitConverter.ToInt16(document.Mission.DebriefBytes!, record * RecordLength + MovieWord * 2) : (short)-1;
 
 	/// <summary>
-	/// The debrief movie's value under <paramref name="condition"/>, <c>-1</c> for none: the last row-3 record of the movie's
+	/// The debrief movie's value under a condition, <c>-1</c> for none: the last row-3 record of the movie's
 	/// GUID carrying it; null when none does.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="condition">The condition.</param>
 	public static short? MovieUnder(MissionDocument document, short condition) {
 		short guid = MovieRef(document);
 		var values = document.Mission.MovieChoices ?? [];

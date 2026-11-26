@@ -65,11 +65,14 @@ public sealed class PadRadial(int clickButton, int xAxis, int count, float label
 	public int Picked { get; private set; } = -1;
 
 	/// <summary>
-	/// Reads the pads once a frame. The radial opens on a click pressed while <paramref name="allowed"/>, and closes
+	/// Reads the pads once a frame. The radial opens on a click pressed while it is allowed, and closes
 	/// taking nothing when that stops being so. Returns the choice taken, on the frame the click is let go with one
-	/// picked. <paramref name="click"/>, when given, says whether a device holds what opens the radial, in place of its
+	/// picked. A click callback, when given, says whether a device holds what opens the radial, in place of its
 	/// stick's click on any gamepad; it is aimed by that device's stick either way.
 	/// </summary>
+	/// <param name="input">The input context.</param>
+	/// <param name="allowed">Whether the radial may open.</param>
+	/// <param name="click">Says whether a device holds what opens the radial; null for the stick's click.</param>
 	public int? Update(IInputContext input, bool allowed, Func<ControllerDevice, bool>? click = null) {
 		bool Clicked(ControllerDevice device) => click?.Invoke(device) ?? (device.IsGamepad && device.Button(clickButton));
 
@@ -124,10 +127,12 @@ public sealed class PadRadial(int clickButton, int xAxis, int count, float label
 	}
 
 	/// <summary>
-	/// Draws the radial while it is up, over everything else ImGui draws, each choice labelled with
-	/// <paramref name="label"/>'s text for it in <paramref name="font"/> (<see cref="ScaledImGui.RadialFont"/>). Call once per
+	/// Draws the radial while it is up, over everything else ImGui draws, each choice labelled in a font
+	/// (<see cref="ScaledImGui.RadialFont"/>). Call once per
 	/// frame inside the ImGui frame.
 	/// </summary>
+	/// <param name="label">Gives each choice's text.</param>
+	/// <param name="font">The font the labels are drawn in.</param>
 	public void Draw(Func<int, string> label, ImFontPtr font) {
 		if (!IsOpen) {
 			return;

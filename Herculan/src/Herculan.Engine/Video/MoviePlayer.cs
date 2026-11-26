@@ -74,10 +74,11 @@ public sealed class MoviePlayer : IDisposable {
 		MoviePlayback.Open(bytes) is { } playback ? new MoviePlayer(playback) : null;
 
 	/// <summary>
-	/// Opens a movie to be read from <paramref name="stream"/> as it plays; see
+	/// Opens a movie to be read from a stream as it plays; see
 	/// <see cref="MoviePlayback.Open(Stream, HercWorks.Video.VideoLimits?)"/>, which blocks while the header is read.
 	/// Call <see cref="WaitUntilReady"/> off the main thread before playing it.
 	/// </summary>
+	/// <param name="stream">The movie's stream.</param>
 	/// <exception cref="IOException">The stream failed while the header was read.</exception>
 	public static MoviePlayer? Open(Stream stream) =>
 		MoviePlayback.Open(stream) is { } playback ? new MoviePlayer(playback) : null;
@@ -109,13 +110,15 @@ public sealed class MoviePlayer : IDisposable {
 	}
 
 	/// <summary>
-	/// Moves playback on — to the sample being heard, or by <paramref name="delta"/> without one — keeps
+	/// Moves playback on — to the sample being heard, or by a time step without one — keeps
 	/// the soundtrack fed, and re-uploads the texture if the frame changed.
 	///
-	/// <para><paramref name="gl"/> is passed per call rather than held, matching how the rest of the
+	/// <para>The GL context is passed per call rather than held, matching how the rest of the
 	/// engine's renderers take it, and the texture is created on the first update so that opening a
 	/// movie does not require a GL context.</para>
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="delta">The time step, used when no sample is being heard.</param>
 	public void Update(GL gl, TimeSpan delta) {
 		ArgumentNullException.ThrowIfNull(gl);
 		ObjectDisposedException.ThrowIf(_disposed, this);

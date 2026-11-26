@@ -80,11 +80,16 @@ public static class ShapeDetail {
 	/// The root to draw, in <c>[0, rootCount)</c>.
 	///
 	/// <para><b>The two indices are not the same index</b>, and that is the original's own shape:
-	/// the root index starts at <paramref name="bias"/> while the threshold cursor starts at 0, and
+	/// the root index starts at the bias while the threshold cursor starts at 0, and
 	/// both advance together. At the default bias of 0 they coincide and the walk is the plain
 	/// descending-table lookup it reads as; at any other setting the machine starts that many roots
 	/// down and is compared against the finest thresholds regardless.</para>
 	/// </summary>
+	/// <param name="rootCount">The number of roots.</param>
+	/// <param name="shapeRadius">The shape's radius.</param>
+	/// <param name="viewDistance">The view distance.</param>
+	/// <param name="focalLengthPixels">The focal length in pixels.</param>
+	/// <param name="bias">The bias.</param>
 	public static int SelectRoot(int rootCount, int shapeRadius, int viewDistance,
 			int focalLengthPixels, int bias) {
 		if (rootCount <= 1) {

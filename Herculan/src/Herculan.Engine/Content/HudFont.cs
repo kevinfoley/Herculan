@@ -78,16 +78,19 @@ public sealed class HudFont {
 	/// <summary>Glyphs in character order, as bitmaps ready to pack into a texture atlas.</summary>
 	public IReadOnlyList<DynamixBitmap> Glyphs => _glyphs;
 
-	/// <summary>Glyph index for <paramref name="c"/>, or null when the font has no glyph for it.</summary>
+	/// <summary>Glyph index for a character, or null when the font has no glyph for it.</summary>
+	/// <param name="c">The character.</param>
 	public int? GlyphIndex(char c) {
 		int index = c - FirstCharCode;
 		return index >= 0 && index < _glyphs.Length ? index : null;
 	}
 
-	/// <summary>Advance width of <paramref name="c"/> in pixels; 0 when the font has no glyph for it.</summary>
+	/// <summary>Advance width of a character in pixels; 0 when the font has no glyph for it.</summary>
+	/// <param name="c">The character.</param>
 	public int Width(char c) => GlyphIndex(c) is { } index ? _glyphs[index].Cols : 0;
 
-	/// <summary>Total advance width of <paramref name="text"/> in pixels.</summary>
+	/// <summary>Total advance width of a text in pixels.</summary>
+	/// <param name="text">The text.</param>
 	public int Measure(string text) {
 		int total = 0;
 		foreach (char c in text) {
@@ -153,9 +156,11 @@ public sealed class HudFont {
 	}
 
 	/// <summary>
-	/// Parses one font file's content as <paramref name="name"/> through <see cref="DynamixFontTransformer"/>; null when it
+	/// Parses one font file's content as a named font through <see cref="DynamixFontTransformer"/>; null when it
 	/// does not walk the layout, has no glyphs or widths, or a glyph's slice of the pool is not <c>width x cellHeight</c>.
 	/// </summary>
+	/// <param name="name">The font's name.</param>
+	/// <param name="bytes">The font file's content.</param>
 	public static HudFont? Parse(string name, byte[] bytes) {
 		DynamixFont? font;
 		try {

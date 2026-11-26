@@ -317,9 +317,19 @@ public static partial class DtsMeshBuilder {
 	private static bool IsDoNotDraw(short flag) => ((ushort)flag >> 8) == 0x14;
 
 	/// <summary>
-	/// One side of one poly, as triangles, outline edges or a point under that <paramref name="side"/>
+	/// One side of one poly, as triangles, outline edges or a point under that side
 	/// — see <see cref="MeshVertex.Side"/>.
 	/// </summary>
+	/// <param name="polyObject">The object the poly belongs to.</param>
+	/// <param name="poly">The poly.</param>
+	/// <param name="look">How the poly looks.</param>
+	/// <param name="side">The side drawn.</param>
+	/// <param name="face">The poly's face.</param>
+	/// <param name="group">The group the poly is in.</param>
+	/// <param name="points">The shape's points.</param>
+	/// <param name="localPoints">The shape's points in the group's own space.</param>
+	/// <param name="sink">Receives what is emitted.</param>
+	/// <param name="atlas">The texture atlas, if any.</param>
 	/// <param name="borrowed">
 	/// For a three-vertex <see cref="TSTexture4Poly"/> drawn swapped, the point it borrows as its
 	/// second corner and the facing that leaves that point — see <see cref="AppendSideCopies"/>.
@@ -759,10 +769,14 @@ public static partial class DtsMeshBuilder {
 
 	/// <summary>
 	/// A flat solid face's two resolved colours and the palette indices they came from — see
-	/// <see cref="ResolveSolidColors"/>. <paramref name="Line"/> is null when the surface draws no
+	/// <see cref="ResolveSolidColors"/>. The line colour is null when the surface draws no
 	/// outline. The indices travel to the GPU so the lookup can be redone there against whichever
 	/// table the damage flash has bound; the colours remain the fallback for a theater with no
 	/// palette ramp. See <see cref="Gl.MeshVertex.SolidPaletteIndex"/>.
 	/// </summary>
+	/// <param name="Fill">The fill colour.</param>
+	/// <param name="Line">The outline colour.</param>
+	/// <param name="FillIndex">The fill's palette index.</param>
+	/// <param name="LineIndex">The outline's palette index.</param>
 	private readonly record struct SolidColors(Vector3 Fill, Vector3? Line, int FillIndex, int LineIndex);
 }

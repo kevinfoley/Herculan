@@ -188,7 +188,8 @@ internal sealed class Indeo3Codebooks {
 	internal static uint ReplicatedWord(sbyte low, sbyte high) =>
 		unchecked((uint)((high << 24) + (high << 16) + (low << 8) + low));
 
-	/// <summary>The word at <paramref name="byteOffset"/> from the image base.</summary>
+	/// <summary>The word at a byte offset from the image base.</summary>
+	/// <param name="byteOffset">The offset from the image base.</param>
 	internal uint WordAt(int byteOffset) {
 		if (byteOffset < 0 || byteOffset > (ImageWords * 4) - 4 || (byteOffset & 3) != 0) {
 			throw new ArgumentOutOfRangeException(nameof(byteOffset));
@@ -197,19 +198,23 @@ internal sealed class Indeo3Codebooks {
 		return _words[byteOffset / 4];
 	}
 
-	/// <summary>How many dyads block <paramref name="block"/> holds: mode bytes below this are dyad codes.</summary>
+	/// <summary>How many dyads a block holds: mode bytes below this are dyad codes.</summary>
+	/// <param name="block">The block's index.</param>
 	internal int DyadCount(int block) => _dyads[block].Length;
 
 	/// <summary>
-	/// The side of block <paramref name="block"/>'s quad square: a mode byte at or past
+	/// The side of a block's quad square: a mode byte at or past
 	/// <see cref="DyadCount"/> names an ordered pair of the first this-many dyads.
 	/// </summary>
+	/// <param name="block">The block's index.</param>
 	internal int QuadSide(int block) => Math.Abs(Blocks[block].Expand);
 
 	/// <summary>
-	/// Dyad <paramref name="index"/> of block <paramref name="block"/>: the deltas for two adjacent
+	/// A dyad of a block: the deltas for two adjacent
 	/// pixels, as one 16-bit value added to both at once, first pixel in the low byte.
 	/// </summary>
+	/// <param name="block">The block's index.</param>
+	/// <param name="index">The dyad's index.</param>
 	internal short Dyad(int block, int index) => _dyads[block][index];
 
 	/// <summary>
@@ -218,7 +223,9 @@ internal sealed class Indeo3Codebooks {
 	/// </summary>
 	internal uint WideDyad(int block, int index) => _wideDyads[block][index];
 
-	/// <summary>Entry <paramref name="index"/> of block <paramref name="block"/>'s first sub-table.</summary>
+	/// <summary>An entry of a block's first sub-table.</summary>
+	/// <param name="block">The block's index.</param>
+	/// <param name="index">The entry's index.</param>
 	internal uint Entry(int block, int index) {
 		if ((uint)block >= BlockCount) {
 			throw new ArgumentOutOfRangeException(nameof(block));
@@ -305,17 +312,23 @@ internal enum Indeo3RowDelta {
 /// <param name="Count">How many byte pairs the block body holds.</param>
 /// <param name="Expand">The expansion byte: its magnitude is the expansion dimension, its sign the pair order.</param>
 internal readonly record struct Indeo3SeedBlock(int Offset, int Count, sbyte Expand) {
-	/// <summary>The low byte of pair <paramref name="index"/>, which is the first pixel's delta.</summary>
+	/// <summary>The low byte of a pair, which is the first pixel's delta.</summary>
+	/// <param name="seed">The seed bytes.</param>
+	/// <param name="index">The pair's index.</param>
 	internal sbyte Low(ReadOnlySpan<byte> seed, int index) => (sbyte)seed[Offset + 1 + (2 * index)];
 
-	/// <summary>The high byte of pair <paramref name="index"/>, which is the second pixel's delta.</summary>
+	/// <summary>The high byte of a pair, which is the second pixel's delta.</summary>
+	/// <param name="seed">The seed bytes.</param>
+	/// <param name="index">The pair's index.</param>
 	internal sbyte High(ReadOnlySpan<byte> seed, int index) => (sbyte)seed[Offset + 2 + (2 * index)];
 
 	/// <summary>
-	/// Pair <paramref name="index"/> read as one signed 16-bit value, high byte first. This is the
+	/// A pair read as one signed 16-bit value, high byte first. This is the
 	/// form the expansion arithmetic works in, and the fold to 16 bits is load-bearing: carrying the
 	/// wider value through gives a different image.
 	/// </summary>
+	/// <param name="seed">The seed bytes.</param>
+	/// <param name="index">The pair's index.</param>
 	internal short PairValue(ReadOnlySpan<byte> seed, int index) =>
 		(short)((High(seed, index) << 8) + Low(seed, index));
 

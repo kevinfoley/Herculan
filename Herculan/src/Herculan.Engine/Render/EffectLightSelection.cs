@@ -96,16 +96,18 @@ public static class EffectLightSelection {
 	public const float PointFalloff = FalloffRange * FalloffScale / WorldScale.WorldUnitsPerMeter;
 
 	/// <summary>
-	/// Fills <paramref name="selected"/> with the lights that reach an object of radius
-	/// <paramref name="shapeRadius"/> standing at <paramref name="position"/>, and returns how many.
-	/// Slots are taken in index order and the surplus past <paramref name="selected"/>'s length is
+	/// Fills the output span with the lights that reach an object of a given radius
+	/// standing at a position, and returns how many.
+	/// Slots are taken in index order and the surplus past the span's length is
 	/// dropped (see <see cref="MaxPerObject"/>).
 	/// </summary>
+	/// <param name="field">The effect light slots.</param>
 	/// <param name="position">The object's position in world units — <c>SimObject.Position</c>.</param>
 	/// <param name="shapeRadius">
 	/// Its drawn radius in world units — <c>SimObject_GetShapeRadius</c> (vtable <c>+0x10</c>), which
 	/// is the figure the original's render entry caches at <c>+0x10</c>.
 	/// </param>
+	/// <param name="selected">Receives the lights chosen.</param>
 	public static int Select(IEffectLightSlots field, Vec3i position, int shapeRadius,
 			Span<SelectedEffectLight> selected) {
 		int count = 0;

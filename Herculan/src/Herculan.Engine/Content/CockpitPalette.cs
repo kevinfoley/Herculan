@@ -45,7 +45,8 @@ public static class CockpitPalette {
 	/// </summary>
 	public const int SchemeTableFirstEntry = 32;
 
-	/// <summary>The <c>COCKPIT.DPL</c> entry range scheme <paramref name="schemeIndex"/> reads from.</summary>
+	/// <summary>The <c>COCKPIT.DPL</c> entry range a scheme reads from.</summary>
+	/// <param name="schemeIndex">The scheme's index.</param>
 	public static int SchemeFirstEntry(int schemeIndex) =>
 		SchemeTableFirstEntry + schemeIndex * CockpitSchemeLength;
 
@@ -66,7 +67,7 @@ public static class CockpitPalette {
 
 	/// <summary>
 	/// Assembles the live palette: the theater palette as the base, with
-	/// <paramref name="cockpitSchemeIndex"/>'s 24-entry cockpit scheme installed over slots 42-65.
+	/// a cockpit scheme's 24 entries installed over slots 42-65.
 	///
 	/// <para>Returns null only when neither palette can be read. A missing theater palette falls back
 	/// to <c>COCKPIT.DPL</c> as the base so the cockpit still draws, but that is a degraded path — the
@@ -74,6 +75,9 @@ public static class CockpitPalette {
 	/// theater (i.e. every real mission) should always pass its
 	/// <c>TheaterDescriptor.PaletteName</c>.</para>
 	/// </summary>
+	/// <param name="content">The game's content.</param>
+	/// <param name="worldPaletteName">The theater palette's name, or null when there is none.</param>
+	/// <param name="cockpitSchemeIndex">The cockpit scheme's index.</param>
 	public static DynamixPalette? Load(GameContent content, string? worldPaletteName, int cockpitSchemeIndex) =>
 		Load(content, worldPaletteName, cockpitSchemeIndex, CockpitPaletteName);
 
@@ -145,9 +149,12 @@ public static class CockpitPalette {
 	/// — <c>ShieldsGauge_UpdateRingPalette</c> (<c>004438f0</c>)".</para>
 	///
 	/// <para>Slot order follows the original's stack layout, which the install reads upward from the
-	/// last-computed entry: 66-68 are <paramref name="frontCharge"/>'s rings outermost-first, 69-71
-	/// <paramref name="rearCharge"/>'s.</para>
+	/// last-computed entry: 66-68 are the front charge's rings outermost-first, 69-71
+	/// the rear charge's.</para>
 	/// </summary>
+	/// <param name="palette">The palette written to.</param>
+	/// <param name="frontCharge">The front shield's charge.</param>
+	/// <param name="rearCharge">The rear shield's charge.</param>
 	public static void InstallShieldRamp(DynamixPalette palette, int frontCharge, int rearCharge) {
 		var entries = ShieldRampEntries(frontCharge, rearCharge);
 		for (int i = 0; i < ShieldRampLength; i++) {
@@ -199,9 +206,12 @@ public static class CockpitPalette {
 	}
 
 	/// <summary>
-	/// One ring's fill fraction in Q10: nothing below <paramref name="threshold"/>, then
-	/// <paramref name="rate"/> times as fast as the base ring, clamped at full.
+	/// One ring's fill fraction in Q10: nothing below a threshold, then
+	/// a rate times as fast as the base ring, clamped at full.
 	/// </summary>
+	/// <param name="value">The charge.</param>
+	/// <param name="threshold">The charge below which the ring is empty.</param>
+	/// <param name="rate">How many times as fast as the base ring the ring fills.</param>
 	private static int Ramp(int value, int threshold, int rate) =>
 		value < threshold ? 0 : System.Math.Min((value - threshold) * rate, 0x400);
 

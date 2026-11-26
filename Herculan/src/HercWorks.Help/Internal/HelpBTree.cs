@@ -11,10 +11,14 @@ internal static class HelpBTree {
 	private const int MaxLevels = 16;
 
 	/// <summary>
-	/// Calls <paramref name="readEntry"/> once per entry, with the cursor on the entry and limited to
-	/// its page. Checks the tree's structure string against <paramref name="structure"/>, so a tree
+	/// Calls the entry reader once per entry, with the cursor on the entry and limited to
+	/// its page. Checks the tree's structure string against the expected one, so a tree
 	/// whose entries are laid out differently is rejected rather than misread.
 	/// </summary>
+	/// <param name="tree">The tree's bytes.</param>
+	/// <param name="structure">The structure string the tree must carry.</param>
+	/// <param name="limits">The limits the read stays within.</param>
+	/// <param name="readEntry">Reads one entry.</param>
 	public static void Read(ByteCursor tree, string structure, HelpLimits limits, EntryReader readEntry) {
 		if (tree.U16() != Magic) {
 			throw new MalformedHelpException("B+ tree magic");

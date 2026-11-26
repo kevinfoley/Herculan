@@ -28,9 +28,11 @@ internal sealed record DplReport(DplPalette? Base, IReadOnlyList<DplComparison> 
 /// </summary>
 internal static class DplQuery {
 	/// <summary>
-	/// The palettes <paramref name="names"/> names, each as <c>NAME</c> or <c>folder\NAME</c> with <c>.DPL</c> optional,
+	/// The palettes the names name, each as <c>NAME</c> or <c>folder\NAME</c> with <c>.DPL</c> optional,
 	/// the first archive holding it winning; the first is set against the rest.
 	/// </summary>
+	/// <param name="archivePaths">The archives to search.</param>
+	/// <param name="names">The palette names.</param>
 	public static DplReport Run(IReadOnlyList<string> archivePaths, IReadOnlyList<string> names) {
 		var found = new Dictionary<string, DplPalette>(StringComparer.OrdinalIgnoreCase);
 		foreach (string path in archivePaths) {
@@ -63,7 +65,10 @@ internal static class DplQuery {
 		return new DplReport(first, comparisons, missing);
 	}
 
-	/// <summary>Whether <paramref name="wanted"/> names the entry <paramref name="folder"/>\<paramref name="name"/>.</summary>
+	/// <summary>Whether a wanted name names the entry <c>folder\name</c>.</summary>
+	/// <param name="wanted">The wanted name.</param>
+	/// <param name="folder">The entry's folder.</param>
+	/// <param name="name">The entry's name.</param>
 	private static bool Matches(string wanted, string folder, string name) {
 		string file = wanted.EndsWith(".DPL", StringComparison.OrdinalIgnoreCase) ? wanted : wanted + ".DPL";
 		int slash = file.LastIndexOf('\\');

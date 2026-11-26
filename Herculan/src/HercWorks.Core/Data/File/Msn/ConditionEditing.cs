@@ -88,11 +88,15 @@ public static class ConditionEditing {
 	/// <summary>Row 1's records, empty for a file with none.</summary>
 	public static MissionCondition14[] Records(MissionDocument document) => document.Mission.Conditions ?? [];
 
-	/// <summary>The index in row 1 of GUID <paramref name="guid"/>'s first record, or null when no record carries it.</summary>
+	/// <summary>The index in row 1 of a GUID's first record, or null when no record carries it.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The GUID.</param>
 	public static int? IndexOf(MissionDocument document, short guid) =>
 		guid != -1 && Array.FindIndex(Records(document), record => record.GUID == guid) is >= 0 and var index ? index : null;
 
-	/// <summary>GUID <paramref name="guid"/>'s first row-1 record, throwing for one no record carries.</summary>
+	/// <summary>A GUID's first row-1 record, throwing for one no record carries.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The GUID.</param>
 	public static MissionCondition14 Record(MissionDocument document, short guid) =>
 		IndexOf(document, guid) is { } index
 			? Records(document)[index]
@@ -118,7 +122,9 @@ public static class ConditionEditing {
 		return null;
 	}
 
-	/// <summary>The GUIDs of the records before <paramref name="guid"/>'s, in file order: what it can require.</summary>
+	/// <summary>The GUIDs of the records before a GUID's, in file order: what it can require.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The GUID.</param>
 	public static IReadOnlyList<short> Earlier(MissionDocument document, short guid) =>
 		Records(document).Take(IndexOf(document, guid) ?? 0).Select(record => record.GUID).Where(other => other != -1)
 			.Distinct().ToList();
@@ -130,11 +136,12 @@ public static class ConditionEditing {
 	// ---- Describing --------------------------------------------------------------------------------
 
 	/// <summary>
-	/// The operator <paramref name="op"/> as the test reads, flag on the left: <c>&gt;</c> holds when the flag is greater than
+	/// An operator as the test reads, flag on the left: <c>&gt;</c> holds when the flag is greater than
 	/// the value, as the load's switch on the code compares (its <c>&gt;</c> and <c>&gt;=</c> take the operands the other way round,
 	/// value on the left, docs/retail/formats/msn-mission-file.md#the-conditions--row-1). Null for a code that
 	/// always fails.
 	/// </summary>
+	/// <param name="op">The operator code.</param>
 	public static string? OperatorText(short op) => op switch {
 		MissionGenerator.OpEqual => "=",
 		MissionGenerator.OpNotEqual => "!=",
@@ -146,10 +153,12 @@ public static class ConditionEditing {
 	};
 
 	/// <summary>
-	/// What row-1 GUID <paramref name="guid"/> tests, in the editor's words: <c>flag 100 &gt; 0</c>, <c>draw below 11</c>,
+	/// What a row-1 GUID tests, in the editor's words: <c>flag 100 &gt; 0</c>, <c>draw below 11</c>,
 	/// <c>draw 0 to 9 of condition 7</c>, <c>random table 3 below 4</c>, with <c>if condition 5</c> after one that requires
 	/// another; null for a GUID no record carries.
 	/// </summary>
+	/// <param name="mission">The mission.</param>
+	/// <param name="guid">The GUID.</param>
 	public static string? Describe(MissionFile mission, short guid) =>
 		(mission.Conditions ?? []).FirstOrDefault(record => record.GUID == guid) is { } record ? Describe(mission, record) : null;
 
@@ -183,7 +192,9 @@ public static class ConditionEditing {
 
 	// ---- Why not -----------------------------------------------------------------------------------
 
-	/// <summary>Why condition <paramref name="guid"/> cannot be edited or deleted, or null when it can.</summary>
+	/// <summary>Why a condition cannot be edited or deleted, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The condition's GUID.</param>
 	public static string? WhyFixed(MissionDocument document, short guid) {
 		if (IndexOf(document, guid) == null) {
 			return Gone;
@@ -196,15 +207,20 @@ public static class ConditionEditing {
 			: null;
 	}
 
-	/// <summary>Whether <paramref name="guid"/> is a random table (type 3) or a range over one, which <see cref="RandomTableEditing"/> edits.</summary>
+	/// <summary>Whether a GUID is a random table (type 3) or a range over one, which <see cref="RandomTableEditing"/> edits.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The GUID.</param>
 	public static bool InRandomTable(MissionDocument document, short guid) =>
 		IndexOf(document, guid) != null && Record(document, guid) is var record
 			&& (record.Type == RandomTable || (record.Type == Range && ParentOf(document, guid)?.Type == RandomTable));
 
 	/// <summary>
-	/// Why <paramref name="guid"/> cannot require <paramref name="required"/>, a row-1 GUID or <c>-1</c> for nothing, or null
-	/// when it can. For a range, <paramref name="required"/> is the draw it is over, which it must have.
+	/// Why a GUID cannot require another, a row-1 GUID or <c>-1</c> for nothing, or null
+	/// when it can. For a range, the required GUID is the draw it is over, which it must have.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="required">The GUID required.</param>
 	public static string? WhyNoRequirement(MissionDocument document, short guid, short required) {
 		if (WhyFixed(document, guid) is { } fixedReason) {
 			return fixedReason;
@@ -230,7 +246,9 @@ public static class ConditionEditing {
 		return range && Records(document)[at].Type != Draw ? $"Condition {required} is not a draw." : null;
 	}
 
-	/// <summary>Why condition <paramref name="guid"/> cannot be deleted, or null when it can.</summary>
+	/// <summary>Why a condition cannot be deleted, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The condition's GUID.</param>
 	public static string? WhyNoDelete(MissionDocument document, short guid) =>
 		WhyFixed(document, guid) ?? (Namers(document, guid).Any ? "Records reference it." : null);
 
@@ -246,9 +264,12 @@ public static class ConditionEditing {
 	public static MsnEdit CreateDraw(MissionDocument document, out short guid) => Create(document, AppendDraw, out guid);
 
 	/// <summary>
-	/// Appends a new range, <see cref="NewLow"/> to <see cref="NewHigh"/>, over draw <paramref name="draw"/>, answering its GUID;
+	/// Appends a new range, <see cref="NewLow"/> to <see cref="NewHigh"/>, over a draw, answering its GUID;
 	/// its <c>0x0A</c> 0, as all 847 retail ranges (<c>--field ComparisonOperand --where Type=2</c>).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="draw">The draw's GUID.</param>
+	/// <param name="guid">Receives the new range's GUID.</param>
 	public static MsnEdit CreateRange(MissionDocument document, short draw, out short guid) {
 		if (IndexOf(document, draw) is not { } at || Records(document)[at].Type != Draw) {
 			throw new InvalidOperationException($"Condition {draw} is not a draw.");
@@ -291,7 +312,10 @@ public static class ConditionEditing {
 
 	// ---- Editing -----------------------------------------------------------------------------------
 
-	/// <summary>Sets flag test <paramref name="guid"/>'s flag, 0 to <see cref="Flags"/> - 1.</summary>
+	/// <summary>Sets a flag test's flag, 0 to <see cref="Flags"/> - 1.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The flag test's GUID.</param>
+	/// <param name="flag">The flag.</param>
 	public static MsnEdit SetFlag(MissionDocument document, short guid, short flag) {
 		if (flag is < 0 or >= Flags) {
 			throw new ArgumentOutOfRangeException(nameof(flag), flag, $"A flag is 0 to {Flags - 1}.");
@@ -300,7 +324,10 @@ public static class ConditionEditing {
 		return Write(document, guid, FlagTest, record => record.FlagIndexOrRangeLower = flag);
 	}
 
-	/// <summary>Sets flag test <paramref name="guid"/>'s operator, one of <see cref="Operators"/>.</summary>
+	/// <summary>Sets a flag test's operator, one of <see cref="Operators"/>.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The flag test's GUID.</param>
+	/// <param name="op">The operator.</param>
 	public static MsnEdit SetOperator(MissionDocument document, short guid, short op) {
 		if (!Operators.Contains(op)) {
 			throw new ArgumentOutOfRangeException(nameof(op), op, "An operator is 0x119 to 0x11e.");
@@ -309,11 +336,17 @@ public static class ConditionEditing {
 		return Write(document, guid, FlagTest, record => record.OperatorOrRangeUpperOrResult = op);
 	}
 
-	/// <summary>Sets the value flag test <paramref name="guid"/> compares its flag with.</summary>
+	/// <summary>Sets the value a flag test compares its flag with.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The flag test's GUID.</param>
+	/// <param name="value">The value.</param>
 	public static MsnEdit SetValue(MissionDocument document, short guid, short value) =>
 		Write(document, guid, FlagTest, record => record.ComparisonOperand = value);
 
-	/// <summary>Sets draw <paramref name="guid"/>'s bound, 1 to <see cref="MaxBound"/>: it draws 0 to one less.</summary>
+	/// <summary>Sets a draw's bound, 1 to <see cref="MaxBound"/>: it draws 0 to one less.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The draw's GUID.</param>
+	/// <param name="bound">The bound.</param>
 	public static MsnEdit SetBound(MissionDocument document, short guid, short bound) {
 		if (bound is < 1 or > MaxBound) {
 			throw new ArgumentOutOfRangeException(nameof(bound), bound, $"A bound is 1 to {MaxBound}.");
@@ -322,7 +355,11 @@ public static class ConditionEditing {
 		return Write(document, guid, Draw, record => record.FlagIndexOrRangeLower = bound);
 	}
 
-	/// <summary>Sets range <paramref name="guid"/>'s low and high ends, each 0 to <see cref="MaxBound"/>.</summary>
+	/// <summary>Sets a range's low and high ends, each 0 to <see cref="MaxBound"/>.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The range's GUID.</param>
+	/// <param name="low">The low end.</param>
+	/// <param name="high">The high end.</param>
 	public static MsnEdit SetEnds(MissionDocument document, short guid, short low, short high) {
 		if (low is < 0 or > MaxBound || high is < 0 or > MaxBound) {
 			throw new ArgumentOutOfRangeException(nameof(low), $"A range's ends are 0 to {MaxBound}.");
@@ -335,9 +372,12 @@ public static class ConditionEditing {
 	}
 
 	/// <summary>
-	/// Sets what <paramref name="guid"/> requires, a row-1 GUID before it or <c>-1</c> for nothing; for a range, the draw before
+	/// Sets what a GUID requires, a row-1 GUID before it or <c>-1</c> for nothing; for a range, the draw before
 	/// it that it is over (<see cref="WhyNoRequirement"/>).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="required">The GUID required.</param>
 	public static MsnEdit SetRequirement(MissionDocument document, short guid, short required) {
 		if (WhyNoRequirement(document, guid, required) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -346,7 +386,9 @@ public static class ConditionEditing {
 		return Write(document, guid, null, record => record.ConditionRef = required);
 	}
 
-	/// <summary>Deletes condition <paramref name="guid"/>'s record; refused while <see cref="Namers"/> finds anything.</summary>
+	/// <summary>Deletes a condition's record; refused while <see cref="Namers"/> finds anything.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The condition's GUID.</param>
 	public static MsnEdit Delete(MissionDocument document, short guid) {
 		if (WhyNoDelete(document, guid) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -372,12 +414,14 @@ public static class ConditionEditing {
 	// ---- What references a condition -----------------------------------------------------------------
 
 	/// <summary>
-	/// Every record whose condition field references row-1 GUID <paramref name="guid"/>, whatever its own condition: row 1's
+	/// Every record whose condition field references a row-1 GUID, whatever its own condition: row 1's
 	/// <c>0x02</c> (what a condition requires, and a range's draw), row 2's and row 4's <c>0x00</c>, row 5's 64-byte records'
 	/// word 0, as <see cref="MissionGenerator.LoadDebriefText"/> reads them, the <c>0x02</c> of rows 3 and 6 to 16, row 17's
 	/// <c>0x00</c>, and each <c>.ENG</c> record's condition. These are every condition the load gates a record on
 	/// (<see cref="MissionGenerator"/>'s <c>Gate</c> calls).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The condition's GUID.</param>
 	public static ConditionNamers Namers(MissionDocument document, short guid) {
 		var mission = document.Mission;
 		var records = new List<MsnRecordId>();

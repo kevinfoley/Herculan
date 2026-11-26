@@ -254,8 +254,12 @@ public static class DtsGeometryBuilder {
 
 	/// <summary>
 	/// Rebuilds a single top-level root — at a requested detail level (clamped per
-	/// <c>TSDetailPart</c>), or at the highest when <paramref name="detailLevelIndex"/> is null.
+	/// <c>TSDetailPart</c>), or at the highest when the level is null.
 	/// </summary>
+	/// <param name="root">The root to rebuild.</param>
+	/// <param name="label">The root's label.</param>
+	/// <param name="detailLevelIndex">The detail level, or null for the highest.</param>
+	/// <param name="context">The render context, if any.</param>
 	public static DtsRootMesh BuildRoot(TSObject root, string label, int? detailLevelIndex, ShapeRenderContext? context) =>
 		BuildRootInternal(root, label, detailLevelIndex, StateFor(context));
 

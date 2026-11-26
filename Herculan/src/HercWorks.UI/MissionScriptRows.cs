@@ -24,7 +24,9 @@ internal static class ShortCsv {
 			.ToArray();
 	}
 
-	/// <summary>Parses into an array that must stay exactly <paramref name="target"/>.Length long.</summary>
+	/// <summary>Parses into an array that must stay exactly as long as it is.</summary>
+	/// <param name="text">The text to parse.</param>
+	/// <param name="target">The array filled; its length is fixed.</param>
 	public static void ParseInto(string? text, short[] target) {
 		var parsed = Parse(text);
 		if (parsed.Length != target.Length) {

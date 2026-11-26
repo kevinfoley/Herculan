@@ -174,10 +174,12 @@ public static class MissionCheck {
 	private const int ObjectiveRow = 17;
 
 	/// <summary>
-	/// Runs every check over <paramref name="layout"/>, the layout of <paramref name="file"/>, whose records the options of its
-	/// random tables are read from. <paramref name="isInvulnerable"/> answers which <c>BASES.DAT</c> types are invulnerable,
-	/// for <see cref="MissionCheckKind.NeverWrittenOff"/>, which is not checked without it.
+	/// Runs every check over a layout, the layout of a file, whose records the options of its
+	/// random tables are read from.
 	/// </summary>
+	/// <param name="layout">The mission layout.</param>
+	/// <param name="file">The mission file.</param>
+	/// <param name="isInvulnerable">Answers which <c>BASES.DAT</c> types are invulnerable, for <see cref="MissionCheckKind.NeverWrittenOff"/>, which is not checked without it.</param>
 	public static List<MissionCheckFinding> Run(MissionLayout layout, MissionFile file, Func<int, bool>? isInvulnerable = null) {
 		var check = new Checker(layout, file, isInvulnerable);
 		for (int row = PointRow; row <= GroupRow; row++) {
@@ -205,11 +207,14 @@ public static class MissionCheck {
 	}
 
 	/// <summary>
-	/// Whether <paramref name="objective"/> of <paramref name="layout"/> can never come true for an invulnerable structure
+	/// Whether an objective of a layout can never come true for an invulnerable structure
 	/// (<see cref="MissionCheckKind.NeverWrittenOff"/>): it asks that its subject be destroyed or immobilised (condition 1), and
-	/// the subject is a structure of a type <paramref name="isInvulnerable"/> answers true for, or a Cybrid structure group
+	/// the subject is a structure of a type the invulnerability test answers true for, or a Cybrid structure group
 	/// other than the squad holding one.
 	/// </summary>
+	/// <param name="layout">The mission layout.</param>
+	/// <param name="objective">The objective.</param>
+	/// <param name="isInvulnerable">Answers which <c>BASES.DAT</c> types are invulnerable.</param>
 	public static bool NeverWrittenOff(MissionLayout layout, MissionObjective58 objective, Func<int, bool> isInvulnerable) {
 		bool Invulnerable(short structure) =>
 			layout.Entry<BaseRosterEntry62>(structure)?.Fields is { } record && isInvulnerable(record.TypeIndex);
@@ -225,11 +230,13 @@ public static class MissionCheck {
 	}
 
 	/// <summary>
-	/// The condition row-16 group <paramref name="group"/> of <paramref name="layout"/> stands with no member without
+	/// The condition a row-16 group of a layout stands with no member without
 	/// (<see cref="MissionCheckKind.EmptyInSomeStates"/>): the one condition every member the layout has carries, when the
 	/// group's own conditions, and what they require through row 1's requirement refs, do not include it; null when there is
 	/// none, for the squad, and for a group with no member.
 	/// </summary>
+	/// <param name="layout">The mission layout.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public static short? EmptyUnless(MissionLayout layout, short group) {
 		if (group == SquadRoster.Squad(layout) || layout.Entry(GroupRow, group) is not { Fields: MissionGroup164 fields } entry) {
 			return null;
@@ -259,8 +266,9 @@ public static class MissionCheck {
 
 	/// <summary>
 	/// Whether an order of the player's squad, as the base of its group and of each order has it, names a target
-	/// <paramref name="layout"/> has: a group, a herc, a flyer or a structure.
+	/// the layout has: a group, a herc, a flyer or a structure.
 	/// </summary>
+	/// <param name="layout">The mission layout.</param>
 	public static bool SquadHasOrderTarget(MissionLayout layout) =>
 		layout.Entry<MissionGroup164>(SquadRoster.Squad(layout))?.Fields is { } squad
 		&& squad.OrderRefs.Any(order => layout.Entry<MissionOrder22>(order)?.Fields is { } fields

@@ -14,10 +14,12 @@ internal sealed record VolEntryRow(string Archive, string Folder, string Name, i
 /// </summary>
 internal static class VolQuery {
 	/// <summary>
-	/// The entries of <paramref name="archives"/> (named with or without <c>.VOL</c>; all when empty) whose name or
-	/// <c>folder\name</c> matches <paramref name="pattern"/>: a <c>*</c>/<c>?</c> wildcard against the whole of either, else
+	/// The entries of the archives (named with or without <c>.VOL</c>; all when empty) whose name or
+	/// <c>folder\name</c> matches a pattern: a <c>*</c>/<c>?</c> wildcard against the whole of either, else
 	/// a substring of either, ignoring case; every entry when null. Each archive's entries in folder and name order.
 	/// </summary>
+	/// <param name="archivePaths">The archives to search.</param>
+	/// <param name="pattern">The pattern to match; null for every entry.</param>
 	public static List<VolEntryRow> Run(IReadOnlyList<string> archivePaths, string? pattern) {
 		var matches = Matcher(pattern);
 		var rows = new List<VolEntryRow>();

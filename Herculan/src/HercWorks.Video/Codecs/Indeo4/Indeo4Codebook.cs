@@ -88,7 +88,8 @@ internal sealed class Indeo4Codebook {
 		return _firstSymbol[row] + suffix;
 	}
 
-	/// <summary>The length in bits of <paramref name="symbol"/>'s code, or -1 if it has none.</summary>
+	/// <summary>The length in bits of a symbol's code, or -1 if it has none.</summary>
+	/// <param name="symbol">The symbol.</param>
 	internal int CodeLength(int symbol) {
 		int last = _suffixBits.Length - 1;
 		if (_plainByte) {

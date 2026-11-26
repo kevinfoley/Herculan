@@ -103,7 +103,9 @@ internal static class FlagQuery {
 		}
 	}
 
-	/// <summary>Every record of the mission, its text included, whose condition field is <paramref name="guid"/>.</summary>
+	/// <summary>Every record of the mission, its text included, whose condition field is a given GUID.</summary>
+	/// <param name="mission">The mission.</param>
+	/// <param name="guid">The condition GUID.</param>
 	internal static List<GatedRecord> Gates(Mission mission, short guid) {
 		var file = mission.File;
 		var gates = new List<GatedRecord>();

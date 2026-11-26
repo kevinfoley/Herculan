@@ -28,9 +28,12 @@ sealed class HostOptions {
 	public IGameModule? FlaggedGame { get; private set; }
 
 	/// <summary>
-	/// Parses <paramref name="args"/>, recording every problem in <paramref name="errors"/> rather than stopping
-	/// at the first. <c>--help</c> stops at once and sets <see cref="ShowHelp"/>.
+	/// Parses the command line, recording every problem rather than stopping at the first. <c>--help</c> stops at once
+	/// and sets <see cref="ShowHelp"/>.
 	/// </summary>
+	/// <param name="args">The command-line arguments.</param>
+	/// <param name="games">The games the host runs.</param>
+	/// <param name="errors">Receives a message for each problem found.</param>
 	public static HostOptions Parse(string[] args, IReadOnlyList<IGameModule> games, List<string> errors) {
 		var options = new HostOptions();
 		var common = options.Common;

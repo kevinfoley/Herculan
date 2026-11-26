@@ -105,9 +105,10 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 
 	/// <summary>
 	/// What the menu bar's own control does while Detect is listening (<see cref="HostMenuBar.RaiseOrBackOut"/>): it stops Detect,
-	/// leaves the window up, and says <paramref name="input"/> opens the menu bar and cannot be rebound, until Detect is
+	/// leaves the window up, and says the input opens the menu bar and cannot be rebound, until Detect is
 	/// pressed again or the window is opened again.
 	/// </summary>
+	/// <param name="input">The input that opens the menu bar.</param>
 	public void RefuseMenuBarInput(ControllerInput input) {
 		_detecting = NotDetecting;
 		_custom.StopDetecting();
@@ -151,9 +152,9 @@ public sealed class ControllerWindow : IDrawnMenuBarPanel {
 	void IDrawnMenuBarPanel.Draw(nint owner, ImGuiCond center) => Draw(center);
 
 	/// <summary>
-	/// Draws the window, when it is up. Call once per frame inside the ImGui frame. <paramref name="center"/> is when it
-	/// is centered on the window (<see cref="PanelCentring.Condition"/>).
+	/// Draws the window, when it is up. Call once per frame inside the ImGui frame.
 	/// </summary>
+	/// <param name="center">When the window is centered on the window (<see cref="PanelCentring.Condition"/>).</param>
 	public void Draw(ImGuiCond center) {
 		if (!IsOpen) {
 			return;

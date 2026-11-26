@@ -16,7 +16,9 @@ internal static class GridCellNotes {
 	/// <summary>The tag a noted cell carries.</summary>
 	private static readonly object NoteTag = new();
 
-	/// <summary>Gives <paramref name="cell"/> the tooltip <paramref name="note"/> and marks it; a null note does nothing.</summary>
+	/// <summary>Gives a cell a tooltip and marks it; a null note does nothing.</summary>
+	/// <param name="cell">The cell.</param>
+	/// <param name="note">The tooltip text.</param>
 	public static void Set(DataGridViewCell cell, string? note) {
 		if (string.IsNullOrEmpty(note)) {
 			return;

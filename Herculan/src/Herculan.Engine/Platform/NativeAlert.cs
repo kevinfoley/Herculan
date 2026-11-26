@@ -13,9 +13,11 @@ namespace Herculan.Engine.Platform;
 /// </summary>
 public static class NativeAlert {
 	/// <summary>
-	/// Shows <paramref name="message"/> under <paramref name="title"/> and returns once it is closed;
-	/// <paramref name="writeToError"/> false leaves it off standard error, for a caller that wrote it there already.
+	/// Shows a message under a title and returns once it is closed.
 	/// </summary>
+	/// <param name="title">The title.</param>
+	/// <param name="message">The message.</param>
+	/// <param name="writeToError">False leaves it off standard error, for a caller that wrote it there already.</param>
 	public static void ShowError(string title, string message, bool writeToError = true) {
 		if (writeToError) {
 			Console.Error.WriteLine(message);

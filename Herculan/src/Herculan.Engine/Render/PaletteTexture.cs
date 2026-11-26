@@ -19,7 +19,8 @@ public sealed class PaletteTexture : IDisposable {
 	/// <summary>The GL texture name, for <see cref="SpriteBatch.PaletteHandle"/>.</summary>
 	public uint Handle => _texture.Handle;
 
-	/// <summary>Shows <paramref name="palette"/> from the next draw.</summary>
+	/// <summary>Shows a palette from the next draw.</summary>
+	/// <param name="palette">The palette.</param>
 	public void Show(DynamixPalette palette) => _texture.Update(Bytes(palette), 256, 1);
 
 	private static byte[] Bytes(DynamixPalette palette) {

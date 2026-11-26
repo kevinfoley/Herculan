@@ -33,17 +33,20 @@ public sealed class Es1CtlAlertBnd : Es1TuningView {
 	/// <summary>Offset <c>0x10</c>, the buttons.</summary>
 	public short ButtonCount => Int16(0x10);
 
-	/// <summary>Offsets <c>0x12</c>, <c>0x20</c>, <c>0x2e</c> and <c>0x3c</c>: button <paramref name="index"/>'s <i>x</i>, <i>y</i>, width and height.</summary>
+	/// <summary>Offsets <c>0x12</c>, <c>0x20</c>, <c>0x2e</c> and <c>0x3c</c>: a button's <i>x</i>, <i>y</i>, width and height.</summary>
+	/// <param name="index">The button's index.</param>
 	public (short X, short Y, short Width, short Height) Button(int index) =>
 		(Int16(0x12 + 2 * index), Int16(0x20 + 2 * index), Int16(0x2e + 2 * index), Int16(0x3c + 2 * index));
 
-	/// <summary>Offset <c>0x4a</c>: button <paramref name="index"/>'s caption's <i>y</i> offset.</summary>
+	/// <summary>Offset <c>0x4a</c>: a button's caption's <i>y</i> offset.</summary>
+	/// <param name="index">The button's index.</param>
 	public short CaptionOffsetY(int index) => Int16(0x4a + 2 * index);
 
 	/// <summary>Offset <c>0x58</c>, the readouts.</summary>
 	public short ReadoutCount => Int16(0x58);
 
-	/// <summary>Offsets <c>0x5a</c>, <c>0x64</c>, <c>0x6e</c> and <c>0x78</c>: readout <paramref name="index"/>'s <i>x</i>, <i>y</i>, width and height.</summary>
+	/// <summary>Offsets <c>0x5a</c>, <c>0x64</c>, <c>0x6e</c> and <c>0x78</c>: a readout's <i>x</i>, <i>y</i>, width and height.</summary>
+	/// <param name="index">The readout's index.</param>
 	public (short X, short Y, short Width, short Height) Readout(int index) =>
 		(Int16(0x5a + 2 * index), Int16(0x64 + 2 * index), Int16(0x6e + 2 * index), Int16(0x78 + 2 * index));
 

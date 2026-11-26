@@ -29,9 +29,11 @@ public interface IPauseMenuHost {
 	/// <summary>Lets the mission run on as the menu goes down.</summary>
 	void Resume();
 
-	/// <summary>Whether <paramref name="item"/>'s panel would come up now; the menu greys the item when it would not.</summary>
+	/// <summary>Whether an item's panel would come up now; the menu greys the item when it would not.</summary>
+	/// <param name="item">The menu item.</param>
 	bool CanRaise(PauseMenuItem item);
 
-	/// <summary>Raises <paramref name="item"/>'s panel, after which the menu is back.</summary>
+	/// <summary>Raises an item's panel, after which the menu is back.</summary>
+	/// <param name="item">The menu item.</param>
 	void Raise(PauseMenuItem item);
 }

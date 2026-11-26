@@ -17,9 +17,11 @@ public sealed class MouseOrbitDrag {
 
 	/// <summary>
 	/// The pointer's movement since the last call, in window pixels, while the left button stays held and
-	/// <paramref name="active"/> holds; zero otherwise, and on the frame a drag starts. Any frame that is not
-	/// <paramref name="active"/> ends the drag, so one started before the view came up does not carry into it.
+	/// the drag is active; zero otherwise, and on the frame a drag starts. Any frame that is not
+	/// active ends the drag, so one started before the view came up does not carry into it.
 	/// </summary>
+	/// <param name="mouse">The mouse, if any.</param>
+	/// <param name="active">Whether the drag is active.</param>
 	public Vector2 Read(IMouse? mouse, bool active) {
 		if (!active || mouse == null) {
 			_dragging = false;

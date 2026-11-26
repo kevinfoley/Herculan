@@ -43,10 +43,17 @@ public static class RasterPrimitives {
 	/// <summary>
 	/// A one-device-pixel rect outline — <c>Raster_FillRect</c> (<c>004865f8</c>) with the brush in outline mode (4),
 	/// handed the inclusive rect <c>{x0, y0, x1, y1}</c>: its four edges, both ends included
-	/// (docs/retail/rendering/polygon-fill.md#rectangles). The rect is relative to (<paramref name="left"/>,
-	/// <paramref name="top"/>). Every edge is axis-aligned, so each goes down as one span rather than through
+	/// (docs/retail/rendering/polygon-fill.md#rectangles). The rect is relative to a left-top origin. Every edge is axis-aligned, so each goes down as one span rather than through
 	/// <see cref="AddLine"/>: the top and bottom rows across the full width, the side columns between them.
 	/// </summary>
+	/// <param name="x0">The rect's left edge, inclusive.</param>
+	/// <param name="y0">The rect's top edge, inclusive.</param>
+	/// <param name="x1">The rect's right edge, inclusive.</param>
+	/// <param name="y1">The rect's bottom edge, inclusive.</param>
+	/// <param name="color">The outline's color.</param>
+	/// <param name="left">The origin's X.</param>
+	/// <param name="top">The origin's Y.</param>
+	/// <param name="fillRect">Fills a rect: left, top, width, height, color.</param>
 	public static void AddRectOutline(int x0, int y0, int x1, int y1, Vector3 color, float left, float top,
 			Action<float, float, float, float, Vector3> fillRect) {
 		(x0, x1) = (Math.Min(x0, x1), Math.Max(x0, x1));
@@ -115,13 +122,15 @@ public static class RasterPrimitives {
 	}
 
 	/// <summary>
-	/// <c>Raster_DrawEllipse</c>'s midpoint walk for half-extents <paramref name="a"/> and <paramref name="b"/>, both
+	/// <c>Raster_DrawEllipse</c>'s midpoint walk for two half-extents, both
 	/// nonzero: <c>2b</c> rows from the top, each with its outer half-width and, for the outline, the column its run
 	/// starts at. Each y from <c>b</c> down to 1 writes its row from both ends of the list at once, the top half
 	/// downward and the bottom half upward. In the first region x steps every column and y only when the error says
 	/// so, and a row's run then starts one past the last row's edge; in the second y steps every row, and the run
 	/// starts where x last stepped to.
 	/// </summary>
+	/// <param name="a">The horizontal half-extent.</param>
+	/// <param name="b">The vertical half-extent.</param>
 	private static (int Outer, int Inner)[] EllipseRows(int a, int b) {
 		var rows = new (int Outer, int Inner)[2 * b];
 		int forward = 0;
@@ -195,10 +204,20 @@ public static class RasterPrimitives {
 
 	/// <summary>
 	/// <c>PaperDoll_RecolorRect</c>'s walk over an inclusive rect relative to the doll's origin: every
-	/// point whose palette index <paramref name="indexAt"/> reports as <paramref name="key"/> is filled
-	/// with <paramref name="tint"/>, as merged horizontal runs. An icon can sit left of or above the
-	/// origin, so <paramref name="indexAt"/> answers for any point and -1 for one holding nothing.
+	/// point whose palette index the lookup reports as the key is filled
+	/// with the tint, as merged horizontal runs. An icon can sit left of or above the
+	/// origin, so the lookup answers for any point and -1 for one holding nothing.
 	/// </summary>
+	/// <param name="x0">The rect's left edge, inclusive.</param>
+	/// <param name="y0">The rect's top edge, inclusive.</param>
+	/// <param name="x1">The rect's right edge, inclusive.</param>
+	/// <param name="y1">The rect's bottom edge, inclusive.</param>
+	/// <param name="indexAt">Reports the palette index at a point.</param>
+	/// <param name="key">The palette index that is recolored.</param>
+	/// <param name="tint">The color filled with.</param>
+	/// <param name="left">The origin's X.</param>
+	/// <param name="top">The origin's Y.</param>
+	/// <param name="fillRect">Fills a rect: left, top, width, height, color.</param>
 	public static void AddIndexedRecolor(int x0, int y0, int x1, int y1, Func<int, int, int> indexAt, int key,
 			Vector3 tint, float left, float top, Action<float, float, float, float, Vector3> fillRect) {
 		for (int y = y0; y <= y1; y++) {

@@ -13,10 +13,12 @@ static class PrintScreenFiles {
 	public const string FolderName = "Screenshots";
 
 	/// <summary>
-	/// Has <paramref name="window"/>'s captures written under the install <paramref name="installRoot"/> names at capture
-	/// time: the running game's (<see cref="Games.IGameModule.ActiveInstall"/>), which may change install meanwhile. A capture
-	/// while it names none is not written.
+	/// Has a window's captures written under the install the running game names at capture time
+	/// (<see cref="Games.IGameModule.ActiveInstall"/>), which may change install meanwhile. A capture while it names none
+	/// is not written.
 	/// </summary>
+	/// <param name="window">The window whose captures are written.</param>
+	/// <param name="installRoot">Names the running game's install, or null when it has none.</param>
 	public static void Attach(HostWindow window, Func<string?> installRoot) =>
 		window.PrintScreenCaptured += (width, height, rgb) => {
 			if (installRoot() is not { } root) {

@@ -28,10 +28,14 @@ public static class MemberMoves {
 	private const short BaseRoster = 2;
 
 	/// <summary>
-	/// Why row <paramref name="row"/>'s GUID <paramref name="member"/> (12 a herc, 13 a flyer, 14 a structure or ground
-	/// vehicle) cannot move into row-16 group <paramref name="to"/>, or null when it can. <paramref name="isGroundVehicle"/>
-	/// answers which <c>BASES.DAT</c> types are ground vehicles.
+	/// Why a row's GUID (12 a herc, 13 a flyer, 14 a structure or ground
+	/// vehicle) cannot move into a row-16 group, or null when it can.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The member's row.</param>
+	/// <param name="member">The member's GUID.</param>
+	/// <param name="to">The row-16 group moved into.</param>
+	/// <param name="isGroundVehicle">Answers which <c>BASES.DAT</c> types are ground vehicles.</param>
 	public static string? WhyNoMove(MissionDocument document, int row, short member, short to, Func<int, bool> isGroundVehicle) {
 		if (row is < MechRow or > BaseRow || document.Layout.Entry(row, member) == null) {
 			return "Not found.";
@@ -71,11 +75,17 @@ public static class MemberMoves {
 	}
 
 	/// <summary>
-	/// Moves row <paramref name="row"/>'s GUID <paramref name="member"/> into row-16 group <paramref name="to"/>, as one
+	/// Moves a row's GUID into a row-16 group, as one
 	/// <see cref="MissionDocument.Change"/>: out of its group, which goes with it when it is the last member, into the other's
-	/// first free member slot, and, for a structure that needs one, onto a new point at <paramref name="standAt"/>, where it
+	/// first free member slot, and, for a structure that needs one, onto a new point at the stand-at position, where it
 	/// stands. Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoMove"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The member's row.</param>
+	/// <param name="member">The member's GUID.</param>
+	/// <param name="to">The row-16 group moved into.</param>
+	/// <param name="isGroundVehicle">Answers which <c>BASES.DAT</c> types are ground vehicles.</param>
+	/// <param name="standAt">Where the structure stands.</param>
 	public static MsnEdit Move(MissionDocument document, int row, short member, short to, Func<int, bool> isGroundVehicle,
 			(int X, int Y, int Z) standAt) {
 		if (WhyNoMove(document, row, member, to, isGroundVehicle) is { } reason) {

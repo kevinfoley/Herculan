@@ -25,9 +25,12 @@ public static class WriteDocument {
 	private const int TextEndOffset = 14;
 
 	/// <summary>
-	/// The document's text, or null with <paramref name="error"/> saying why when the bytes are not a
-	/// Write document this reads or are over <see cref="HelpLimits.MaxReadmeBytes"/>.
+	/// The document's text, or null when the bytes are not a Write document this reads or are over
+	/// <see cref="HelpLimits.MaxReadmeBytes"/>.
 	/// </summary>
+	/// <param name="bytes">The document's bytes.</param>
+	/// <param name="error">Says why the read failed; null on success.</param>
+	/// <param name="limits">The limits the read stays within; null for the defaults.</param>
 	public static string? ReadText(byte[] bytes, out string? error, HelpLimits? limits = null) {
 		ArgumentNullException.ThrowIfNull(bytes);
 		limits ??= HelpLimits.Default;

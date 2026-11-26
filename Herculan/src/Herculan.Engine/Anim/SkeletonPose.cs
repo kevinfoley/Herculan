@@ -28,8 +28,8 @@ public readonly record struct SkeletonJoint(int TransformId, int ParentId, Vec3i
 /// </summary>
 public static class SkeletonPose {
 	/// <summary>
-	/// Every transform in <paramref name="shape"/>, in world units, on the frame its threads are
-	/// currently showing, placed by the machine's <paramref name="world"/> transform. Empty when the
+	/// Every transform in a shape, in world units, on the frame its threads are
+	/// currently showing, placed by the machine's world transform. Empty when the
 	/// machine has no animated shape.
 	///
 	/// <para>Nodes no thread places come back at the machine's own origin:
@@ -37,6 +37,8 @@ public static class SkeletonPose {
 	/// which is indistinguishable from a node genuinely posed at the origin. A cluster of joints
 	/// sitting exactly on the origin is that case, not a collapsed skeleton.</para>
 	/// </summary>
+	/// <param name="shape">The shape instance, if the machine has one.</param>
+	/// <param name="world">The machine's world transform.</param>
 	public static SkeletonJoint[] Build(ShapeInstance? shape, in Transform3 world) {
 		if (shape == null) {
 			return Array.Empty<SkeletonJoint>();

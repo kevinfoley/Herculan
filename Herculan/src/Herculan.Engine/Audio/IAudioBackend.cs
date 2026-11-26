@@ -31,12 +31,16 @@ public interface IAudioBackend : IDisposable {
 	int CreateSample(WaveSample sample);
 
 	/// <summary>
-	/// Begins a playback of <paramref name="sample"/> on a free channel.
+	/// Begins a playback of a sample on a free channel.
 	///
 	/// <para>Gain, pan and pitch are passed in rather than set afterwards; they are the caller's own
 	/// per-sound state, which the game's sound code keeps exactly as the original keeps it on 
 	/// the voice record.</para>
 	/// </summary>
+	/// <param name="sample">The sample.</param>
+	/// <param name="gain">The playback's gain.</param>
+	/// <param name="pan">The playback's pan.</param>
+	/// <param name="pitch">The playback's pitch.</param>
 	/// <param name="looping">Endless repetition.</param>
 	/// <returns>
 	/// A handle naming this playback, or -1 when the sample is unknown or every channel is busy.
@@ -48,7 +52,8 @@ public interface IAudioBackend : IDisposable {
 	/// <summary>Stops one playback and frees its channel. A stale handle is ignored.</summary>
 	void Stop(int play);
 
-	/// <summary>Whether <paramref name="play"/> is still sounding. A stale handle answers false.</summary>
+	/// <summary>Whether a playback is still sounding. A stale handle answers false.</summary>
+	/// <param name="play">The playback's handle.</param>
 	bool IsPlaying(int play);
 
 	/// <summary>Sets a running playback's gain, 0 to 1.</summary>
@@ -74,9 +79,12 @@ public interface IAudioBackend : IDisposable {
 	IAudioStream? OpenStream(int sampleRate, int channels);
 
 	/// <summary>
-	/// <see cref="OpenStream(int, int)"/> with a ring of <paramref name="blocks"/> blocks, for a caller that queues blocks too
+	/// <see cref="OpenStream(int, int)"/> with a ring of a given number of blocks, for a caller that queues blocks too
 	/// small for the backend's own count to cover a late frame. A backend that keeps one count opens the stream with it.
 	/// </summary>
+	/// <param name="sampleRate">The stream's sample rate.</param>
+	/// <param name="channels">The stream's channel count.</param>
+	/// <param name="blocks">The number of blocks in the ring.</param>
 	IAudioStream? OpenStream(int sampleRate, int channels, int blocks) => OpenStream(sampleRate, channels);
 
 	/// <summary>

@@ -11,7 +11,9 @@ internal ref struct Indeo4Bits {
 	private readonly ReadOnlySpan<byte> _data;
 	private long _pos;
 
-	/// <summary>Starts reading <paramref name="data"/> at byte <paramref name="byteOffset"/>.</summary>
+	/// <summary>Starts reading at a byte offset.</summary>
+	/// <param name="data">The bytes to read.</param>
+	/// <param name="byteOffset">The offset to start at.</param>
 	internal Indeo4Bits(ReadOnlySpan<byte> data, int byteOffset) {
 		_data = data;
 		_pos = (long)byteOffset * 8;
@@ -24,7 +26,8 @@ internal ref struct Indeo4Bits {
 	/// <summary>Bytes from the start of the data to the first byte not yet wholly read.</summary>
 	internal int BytePosition => (int)((_pos + 7) >> 3);
 
-	/// <summary>Reads <paramref name="count"/> bits, at most 32.</summary>
+	/// <summary>Reads bits, at most 32.</summary>
+	/// <param name="count">The number of bits.</param>
 	internal uint Read(int count) {
 		uint value = 0;
 		for (int i = 0; i < count; i++) {
@@ -48,7 +51,8 @@ internal ref struct Indeo4Bits {
 		return bit;
 	}
 
-	/// <summary>Skips <paramref name="count"/> bits.</summary>
+	/// <summary>Skips bits.</summary>
+	/// <param name="count">The number of bits.</param>
 	internal void Skip(long count) {
 		_pos += count;
 		if ((_pos + 7) >> 3 > _data.Length) {

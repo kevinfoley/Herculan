@@ -6,13 +6,13 @@ namespace HercWorks.UI;
 /// One entry of the weapon dropdown used wherever a mission file stores a weapon fit as raw ids
 /// (script.dat's Herc roster). Names come from <see cref="WeaponLUT"/>, whose ids are the same 0-32
 /// catalog ids the loadout arrays carry.
-///
+/// ///
 /// <para><b>The two files spell an unused slot differently.</b> script.dat's fixed ten-slot fit uses
 /// <c>-1</c> for the hardpoints a Herc does not have, so its dropdown gets an "(empty)" entry of its
 /// own; player.mec's list is only as long as the machine's real slot count and uses <c>NONE</c>
-/// (id 0) instead, so <paramref name="includeEmptySlot"/> keeps <c>-1</c> off a list where it would
+/// (id 0) instead, so <see cref="Build"/> keeps <c>-1</c> off a list where it would
 /// only invite writing a value retail never writes.</para>
-///
+/// ///
 /// <para>Ids a file carries that <see cref="WeaponLUT"/> has no name for are kept as their own
 /// entries, so hand-edited data round-trips instead of being rejected by the combo column.</para>
 /// </summary>
@@ -26,9 +26,11 @@ internal sealed class WeaponFitOption {
 	public override string ToString() => Label;
 
 	/// <summary>
-	/// The named weapons plus an entry for every id in <paramref name="idsInUse"/> that has no name,
+	/// The named weapons plus an entry for every id in use that has no name,
 	/// in id order, with the empty-slot entry first where the format uses one.
 	/// </summary>
+	/// <param name="idsInUse">The weapon ids in use.</param>
+	/// <param name="includeEmptySlot">Whether the <c>-1</c> empty-slot entry is offered.</param>
 	public static List<WeaponFitOption> Build(IEnumerable<short> idsInUse, bool includeEmptySlot) {
 		var options = WeaponLUT.Values()
 			.Select(weapon => new WeaponFitOption { Id = (short)weapon.Id, Label = weapon.Name })

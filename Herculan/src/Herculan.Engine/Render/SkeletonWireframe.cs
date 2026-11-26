@@ -19,9 +19,10 @@ public static class SkeletonWireframe {
 	public const float CameraCrossMeters = 0.6f;
 
 	/// <summary>
-	/// Bones and joint crosses for <paramref name="joints"/>, in render space. A joint whose parent
+	/// Bones and joint crosses for a set of joints, in render space. A joint whose parent
 	/// id is out of range contributes its cross only.
 	/// </summary>
+	/// <param name="joints">The joints.</param>
 	public static Vector3[] Build(IReadOnlyList<SkeletonJoint> joints) {
 		var segments = new List<Vector3>(joints.Count * 8);
 

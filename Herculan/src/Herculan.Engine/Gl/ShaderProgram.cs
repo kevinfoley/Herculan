@@ -46,9 +46,11 @@ public sealed class ShaderProgram : IDisposable {
 	}
 
 	/// <summary>
-	/// Compiles the program in <c>Render/Shaders/<paramref name="fileName"/></c>, whose two stages
+	/// Compiles the program in a file under <c>Render/Shaders/</c>, whose two stages
 	/// share the one file. See <see cref="ShaderSource"/>.
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="fileName">The shader file's name.</param>
 	/// <param name="variantDefines">
 	/// Preprocessor symbols to define, selecting which optional blocks of the file are compiled in.
 	/// Code left out this way is not in the program at all — no uniforms, no varyings, nothing to

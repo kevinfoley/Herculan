@@ -66,7 +66,7 @@ public class Es1HercRecord {
 	public static readonly short[] MountCounts = [3, 3, 4, 5, 6, 7, 8, 9];
 
 	/// <summary>
-	/// <c>Herc_Ctor</c> (<c>ES1GO 00022f5e</c>)(0, <paramref name="chassis"/>)'s record fields
+	/// <c>Herc_Ctor</c> (<c>ES1GO 00022f5e</c>)(0, <i>chassis</i>)'s record fields
 	/// (docs/es1/formats/car-hercs-and-stock.md#the-herc-record): the chassis; for −1 no mounts, otherwise the chassis'
 	/// <see cref="MountCounts"/> mounts, each <see cref="EmptyMount"/> with word 0; the word <c>+0x2c</c> 2; and the status
 	/// block <c>HercStatus_Ctor</c>'s, every word 100 but internal word 9, which keeps what the allocation held: 0, as the
@@ -75,6 +75,7 @@ public class Es1HercRecord {
 	/// past the table for a chassis past 7; such a chassis, like any other outside the table, gets no mounts here, an engine
 	/// guard.
 	/// </summary>
+	/// <param name="chassis">The chassis.</param>
 	public static Es1HercRecord Create(short chassis) {
 		int mounts = chassis >= 0 && chassis < MountCounts.Length ? MountCounts[chassis] : 0;
 		var herc = new Es1HercRecord {
@@ -111,10 +112,11 @@ public class Es1HercRecord {
 	}
 
 	/// <summary>
-	/// <c>Herc_SetAllStatus</c> (<c>00024c3c</c>)(<i>h</i>, <paramref name="value"/>): the external words, internal words 0
+	/// <c>Herc_SetAllStatus</c> (<c>00024c3c</c>)(<i>h</i>, <i>value</i>): the external words, internal words 0
 	/// to 8 and the per-mount words of the mounts below the mount count set to the value, or to 100 for an empty mount;
 	/// internal word 9 left as it is.
 	/// </summary>
+	/// <param name="value">The value the words are set to.</param>
 	public void SetAllStatus(short value) {
 		for (int word = 0; word < MountStatusWords; word++) {
 			if (word != PilotConditionWord) {
@@ -143,11 +145,12 @@ public class Es1HercRecord {
 	public static readonly short[][] ExternalAreas = [[0, 1], [2, 4], [3, 5], [6], [7, 9, 11], [8, 10, 12]];
 
 	/// <summary>
-	/// <c>Herc_GetStatus</c> (<c>00024b86</c>)(<i>h</i>, <paramref name="area"/>, <c>0x785</c>), <c>HercStatus_ExternalAverage</c>
+	/// <c>Herc_GetStatus</c> (<c>00024b86</c>)(<i>h</i>, <i>area</i>, <c>0x785</c>), <c>HercStatus_ExternalAverage</c>
 	/// (<c>0001a3ba</c>): the external words <see cref="ExternalAreas"/> names for the area summed in an <c>int16</c> and
 	/// divided by their count, truncated. Retail reads past the lists for an area outside the six; such an area is 0 here, an
 	/// engine guard.
 	/// </summary>
+	/// <param name="area">The area.</param>
 	public short ExternalAverage(int area) {
 		if (area < 0 || area >= ExternalAreas.Length) {
 			return 0;
@@ -162,10 +165,11 @@ public class Es1HercRecord {
 	}
 
 	/// <summary>
-	/// <c>Herc_GetStatus</c> (<c>00024b86</c>)(<i>h</i>, <paramref name="mount"/>, <c>0x786</c>): the mount's per-mount word.
+	/// <c>Herc_GetStatus</c> (<c>00024b86</c>)(<i>h</i>, <i>mount</i>, <c>0x786</c>): the mount's per-mount word.
 	/// Retail reads the HERC's fields past the block for a mount past its ten words; such a mount reads 0 here, an engine
 	/// guard.
 	/// </summary>
+	/// <param name="mount">The mount's index.</param>
 	public short MountStatus(int mount) => mount >= 0 && mount < MountStatusCount ? Status[MountStatusWords + mount] : (short)0;
 
 	/// <summary>
@@ -275,11 +279,12 @@ public class Es1WeaponStock {
 	public List<short>[] Slots { get; } = Enumerable.Range(0, SlotCount).Select(_ => new List<short>()).ToArray();
 
 	/// <summary>
-	/// <c>Inventory_Read</c> (<c>00027e3c</c>) of <paramref name="file"/>: every stack emptied with <c>WordStack_Clear</c>
+	/// <c>Inventory_Read</c> (<c>00027e3c</c>) of a file: every stack emptied with <c>WordStack_Clear</c>
 	/// (<see cref="ClearStack"/>), then each record's words pushed onto its slot's stack in file order, so the last is the
 	/// head. Retail pushes with no bounds test on the slot; a record outside the 17 is dropped here, an engine guard.
 	/// <c>Inventory_TraceSlots</c>, before and after, calls a function that does nothing.
 	/// </summary>
+	/// <param name="file">The inventory file.</param>
 	public void Read(Es1Inventory file) {
 		foreach (var stack in Slots) {
 			ClearStack(stack);
@@ -303,10 +308,12 @@ public class Es1WeaponStock {
 	};
 
 	/// <summary>
-	/// <c>Inventory_Add</c> (<c>00028311</c>)(stock, &amp;<paramref name="value"/>, <paramref name="slot"/>): the word pushed
+	/// <c>Inventory_Add</c> (<c>00028311</c>)(stock, &amp;<i>value</i>, <i>slot</i>): the word pushed
 	/// onto the slot's stack, its new head (<c>WordStack_Push</c>, <c>00040ba6</c>). Retail pushes with no bounds test on the
 	/// slot; a slot outside the 17 is dropped here, an engine guard.
 	/// </summary>
+	/// <param name="slot">The slot.</param>
+	/// <param name="value">The word pushed.</param>
 	public void Add(short slot, short value) {
 		if (slot is >= 0 and < SlotCount) {
 			Slots[slot].Insert(0, value);
@@ -314,17 +321,19 @@ public class Es1WeaponStock {
 	}
 
 	/// <summary>
-	/// <c>Inventory_SlotCount</c> (<c>000282eb</c>)(stock, <paramref name="slot"/>): the count word of the slot's stack.
+	/// <c>Inventory_SlotCount</c> (<c>000282eb</c>)(stock, <i>slot</i>): the count word of the slot's stack.
 	/// Retail reads with no bounds test; a slot outside the 17 counts 0 here, an engine guard.
 	/// </summary>
+	/// <param name="slot">The slot.</param>
 	public short CountIn(short slot) => slot is >= 0 and < SlotCount ? (short)Slots[slot].Count : (short)0;
 
 	/// <summary>
-	/// <c>Inventory_Take</c> (<c>0002833f</c>)(stock, <paramref name="slot"/>): <c>WordStack_Pop</c> (<c>00040bfd</c>) of
+	/// <c>Inventory_Take</c> (<c>0002833f</c>)(stock, <i>slot</i>): <c>WordStack_Pop</c> (<c>00040bfd</c>) of
 	/// the slot's stack, −1 for an empty stack and otherwise its head, unlinked (docs/es1/shell/arming.md#fitting-a-weapon).
 	/// Retail pops with no bounds test on the slot; a slot outside the 17 answers −1 here, an engine guard.
 	/// <c>Inventory_TraceSlots</c>, after the pop, calls a function that does nothing.
 	/// </summary>
+	/// <param name="slot">The slot.</param>
 	public short Take(short slot) {
 		if (slot is < 0 or >= SlotCount || Slots[slot].Count == 0) {
 			return -1;
@@ -336,13 +345,16 @@ public class Es1WeaponStock {
 	}
 
 	/// <summary>
-	/// <c>Inventory_FormatCounts</c> (<c>00028242</c>)(stock, <paramref name="lines"/>) (docs/es1/shell/arming.md#the-weapon-list):
-	/// nothing in <c>Shell_Mode</c> 0 (<paramref name="shellMode"/>); otherwise, for each line before the first null one
+	/// <c>Inventory_FormatCounts</c> (<c>00028242</c>)(stock, <i>lines</i>) (docs/es1/shell/arming.md#the-weapon-list):
+	/// nothing in <c>Shell_Mode</c> 0; otherwise, for each line before the first null one
 	/// that starts with <c>[</c>, the first two characters of <c>%2d</c> (<c>0008086d</c>) of the count of the slot
-	/// <paramref name="weaponAtListPosition"/> gives for the line's index (<c>Arming_WeaponAtListPosition</c>,
+	/// the weapon-at-list-position lookup gives for the line's index (<c>Arming_WeaponAtListPosition</c>,
 	/// <c>0003714e</c>), written over the line's characters 1 and 2 in place. Retail writes past the end of a line shorter
 	/// than three characters; such a line is lengthened here, an engine guard.
 	/// </summary>
+	/// <param name="shellMode">The shell's mode.</param>
+	/// <param name="lines">The list's lines, edited in place.</param>
+	/// <param name="weaponAtListPosition">Gives the slot of the weapon at a list position.</param>
 	public void FormatCounts(short shellMode, string?[] lines, Func<short, short> weaponAtListPosition) {
 		if (shellMode == 0) {
 			return;

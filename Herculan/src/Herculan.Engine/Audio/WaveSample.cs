@@ -116,7 +116,7 @@ public sealed class WaveSample {
 	public const int RawSampleRate = 11025;
 
 	/// <summary>
-	/// This sample band-limited and resampled to <paramref name="sampleRate"/>, or this sample itself when it is
+	/// This sample band-limited and resampled to a sample rate, or this sample itself when it is
 	/// not faster than that already.
 	///
 	/// <para><b>The filter is this engine's.</b> It stands in for SOS mixing a faster sample into a slower output
@@ -125,6 +125,7 @@ public sealed class WaveSample {
 	/// cutoff just under the new Nyquist rate. It removes the top of the old sample's band and adds no
 	/// aliasing.</para>
 	/// </summary>
+	/// <param name="sampleRate">The target sample rate in Hz.</param>
 	public WaveSample Downsample(int sampleRate) {
 		if (sampleRate <= 0 || SampleRate <= sampleRate || Samples.Length == 0) {
 			return this;
@@ -167,8 +168,10 @@ public sealed class WaveSample {
 
 	/// <summary>
 	/// A Blackman-windowed sinc low-pass, cutoff in cycles per input frame, tabulated from 0 to
-	/// <paramref name="half"/> input frames and zero beyond.
+	/// the half-width in input frames and zero beyond.
 	/// </summary>
+	/// <param name="cutoff">The cutoff in cycles per input frame.</param>
+	/// <param name="half">The half-width in input frames.</param>
 	private static double[] KernelTable(double cutoff, double half) {
 		var table = new double[(int)Math.Ceiling(half * KernelResolution) + 2];
 		for (int i = 0; i < table.Length; i++) {

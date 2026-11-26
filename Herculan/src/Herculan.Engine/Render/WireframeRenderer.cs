@@ -23,9 +23,14 @@ public sealed class WireframeRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws a cube centered at <paramref name="centerRender"/> with the given half-extent, both in
+	/// Draws a cube centered at a point with the given half-extent, both in
 	/// render units.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="centerRender">The cube's center in render units.</param>
+	/// <param name="halfExtentRender">The cube's half-extent in render units.</param>
+	/// <param name="color">The cube's color.</param>
+	/// <param name="aspectRatio">The viewport's width over its height.</param>
 	public void DrawBox(Camera camera, Vector3 centerRender, float halfExtentRender, Vector3 color,
 			float aspectRatio) {
 		_shader.Use();
@@ -39,11 +44,15 @@ public sealed class WireframeRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws a line list already in world (render) space — <paramref name="segments"/> is read two
+	/// Draws a line list already in world (render) space — the segments are read two
 	/// vertices at a time, so an odd trailing vertex is ignored. Rebuilt geometry goes through one
 	/// shared buffer, so a caller drawing several colours issues several calls rather than holding
 	/// several meshes.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="segments">The vertices, two to a line.</param>
+	/// <param name="color">The lines' color.</param>
+	/// <param name="aspectRatio">The viewport's width over its height.</param>
 	/// <param name="throughGeometry">
 	/// Draw with depth testing off, so the lines show through solid geometry. On by default because
 	/// a skeleton sits inside the model it belongs to and would otherwise be invisible from outside

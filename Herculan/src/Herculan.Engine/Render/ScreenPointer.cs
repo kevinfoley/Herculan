@@ -13,9 +13,11 @@ namespace Herculan.Engine.Render;
 /// <param name="Screen">The screen's size in its own pixels, which the frame shows whole.</param>
 public readonly record struct ScreenPointer(FrameFit Fit, Vector2D<int> Client, Vector2D<int> Screen) {
 	/// <summary>
-	/// The screen pixel under the client position (<paramref name="clientX"/>, <paramref name="clientY"/>), each axis held
+	/// The screen pixel under a client position, each axis held
 	/// to 0 – the screen's size less 1, so a pointer over a bar or outside the window gives the nearest edge pixel.
 	/// </summary>
+	/// <param name="clientX">The client X.</param>
+	/// <param name="clientY">The client Y.</param>
 	public (int X, int Y) ToScreen(float clientX, float clientY) {
 		var window = Fit.Window;
 		var (frameX, frameY) = Fit.ToFrame(clientX * window.X / Math.Max(Client.X, 1), clientY * window.Y / Math.Max(Client.Y, 1));
@@ -25,18 +27,24 @@ public readonly record struct ScreenPointer(FrameFit Fit, Vector2D<int> Client, 
 		return (Math.Clamp(x, 0, Math.Max(Screen.X - 1, 0)), Math.Clamp(y, 0, Math.Max(Screen.Y - 1, 0)));
 	}
 
-	/// <summary>Whether the client position (<paramref name="clientX"/>, <paramref name="clientY"/>) is over the screen's frame, not over a bar beside it or outside the window.</summary>
+	/// <summary>Whether a client position is over the screen's frame, not over a bar beside it or outside the window.</summary>
+	/// <param name="clientX">The client X.</param>
+	/// <param name="clientY">The client Y.</param>
 	public bool Over(float clientX, float clientY) {
 		var window = Fit.Window;
 		var (frameX, frameY) = Fit.ToFrame(clientX * window.X / Math.Max(Client.X, 1), clientY * window.Y / Math.Max(Client.Y, 1));
 		return frameX >= 0f && frameY >= 0f && frameX < Fit.Frame.X && frameY < Fit.Frame.Y;
 	}
 
-	/// <summary>Whether the client position (<paramref name="clientX"/>, <paramref name="clientY"/>) is inside the window's client area.</summary>
+	/// <summary>Whether a client position is inside the window's client area.</summary>
+	/// <param name="clientX">The client X.</param>
+	/// <param name="clientY">The client Y.</param>
 	public bool InWindow(float clientX, float clientY) =>
 		clientX >= 0f && clientY >= 0f && clientX < Client.X && clientY < Client.Y;
 
-	/// <summary>The client position of the middle of screen pixel (<paramref name="x"/>, <paramref name="y"/>), which <see cref="ToScreen"/> maps back to it.</summary>
+	/// <summary>The client position of the middle of a screen pixel, which <see cref="ToScreen"/> maps back to it.</summary>
+	/// <param name="x">The pixel's X.</param>
+	/// <param name="y">The pixel's Y.</param>
 	public (float X, float Y) ToClient(int x, int y) {
 		var frame = Fit.Frame;
 		var (windowX, windowY) = Fit.ToWindow((x + 0.5f) * frame.X / Math.Max(Screen.X, 1), (y + 0.5f) * frame.Y / Math.Max(Screen.Y, 1));

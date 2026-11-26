@@ -44,9 +44,11 @@ internal sealed class TextureCornerSlot {
 	/// <summary>
 	/// One earlier texture poly: the plane its facing is decided by, and the point index it leaves in
 	/// slot 3 when drawn as its front and as its back, null where that facing leaves the slot alone.
-	/// <paramref name="Known"/> is false for a vertex count the array cannot hold, whose effect on the
-	/// slot this does not model.
 	/// </summary>
+	/// <param name="Plane">The plane the facing is decided by.</param>
+	/// <param name="Front">The point index left in slot 3 when drawn as its front; null where that facing leaves the slot alone.</param>
+	/// <param name="Back">The point index left in slot 3 when drawn as its back; null where that facing leaves the slot alone.</param>
+	/// <param name="Known">False for a vertex count the array cannot hold, whose effect on the slot this does not model.</param>
 	private readonly record struct Write(FacingGate Plane, int? Front, int? Back, bool Known);
 
 	/// <summary>

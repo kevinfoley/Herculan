@@ -23,7 +23,9 @@ internal sealed record MenuQueryMenu(int Number, IReadOnlyList<MenuRecordRow>? R
 internal static class MenuQuery {
 	public const string ShellArchive = "SHELL0.VOL";
 
-	/// <summary>The menus <paramref name="numbers"/> names (all when empty), in number order; null when the install has no <see cref="ShellArchive"/>.</summary>
+	/// <summary>The menus the numbers name (all when empty), in number order; null when the install has no <see cref="ShellArchive"/>.</summary>
+	/// <param name="installRoot">The install's root folder.</param>
+	/// <param name="numbers">The menu numbers.</param>
 	public static List<MenuQueryMenu>? Run(string installRoot, IReadOnlyCollection<int> numbers) {
 		if (RetailData.FindArchive(installRoot, ShellArchive) is not { } path) {
 			return null;
@@ -87,7 +89,10 @@ internal static class MenuQuery {
 
 	private static string Line(string text) => $"\"{text.Replace("\n", "\\n")}\"";
 
-	/// <summary>The archive's <c>MENU&lt;n&gt;</c> files in <paramref name="folder"/> with <paramref name="extension"/>, by n.</summary>
+	/// <summary>The archive's <c>MENU&lt;n&gt;</c> files in a folder with an extension, by n.</summary>
+	/// <param name="vol">The archive.</param>
+	/// <param name="folder">The folder.</param>
+	/// <param name="extension">The extension.</param>
 	private static Dictionary<int, byte[]> MenuFiles(Voln vol, string folder, string extension) {
 		var files = new Dictionary<int, byte[]>();
 		foreach (var e in RetailData.EntriesIn(vol, folder)) {

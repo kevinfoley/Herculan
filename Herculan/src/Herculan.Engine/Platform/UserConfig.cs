@@ -13,18 +13,24 @@ public static class UserConfig {
 		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify),
 		"Herculan");
 
-	/// <summary>The path of <paramref name="fileName"/> in <see cref="Folder"/>.</summary>
+	/// <summary>The path of a file in <see cref="Folder"/>.</summary>
+	/// <param name="fileName">The file's name.</param>
 	public static string PathOf(string fileName) => Path.Combine(Folder, fileName);
 
 	/// <summary>
-	/// Replaces <paramref name="path"/> with <paramref name="contents"/> in UTF-8 without a byte-order mark, as
+	/// Replaces a file with the contents in UTF-8 without a byte-order mark, as
 	/// <see cref="File.WriteAllText(string, string)"/> writes, creating its folder on the first save. The text goes to a
 	/// temporary file beside it, flushed to the disk, which then replaces it, so a crash, a power cut or a full disk
 	/// mid-save leaves the old file whole rather than empty or cut short. A failed write is logged, and returns false.
 	/// </summary>
+	/// <param name="path">The file replaced.</param>
+	/// <param name="contents">The text written.</param>
 	public static bool Write(string path, string contents) => TryWrite(path, contents, out _);
 
-	/// <summary><see cref="Write"/>, with the reason a failed write gives in <paramref name="error"/>, for a window that shows it.</summary>
+	/// <summary><see cref="Write"/>, with the reason a failed write gives, for a window that shows it.</summary>
+	/// <param name="path">The file replaced.</param>
+	/// <param name="contents">The text written.</param>
+	/// <param name="error">Says why the write failed; null on success.</param>
 	public static bool TryWrite(string path, string contents, out string? error) {
 		error = null;
 		string temporary = path + ".tmp";

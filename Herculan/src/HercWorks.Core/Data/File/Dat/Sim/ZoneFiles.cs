@@ -76,11 +76,14 @@ public sealed class ZoneFiles {
 	public ReadOnlySpan<byte> Heights => _heights;
 
 	/// <summary>
-	/// The zone of <paramref name="heights"/> (as <see cref="Heights"/> orders them, copied), whose count sets the side:
-	/// the square of one of <see cref="Sides"/>, or this throws, as it does for a <paramref name="cellSizeShift"/> outside
-	/// <see cref="MinCellSizeShift"/> to <see cref="MaxCellSizeShift"/> and a <paramref name="heightScale"/> outside
+	/// The zone of a set of heights (as <see cref="Heights"/> orders them, copied), whose count sets the side:
+	/// the square of one of <see cref="Sides"/>, or this throws, as it does for a cell size shift outside
+	/// <see cref="MinCellSizeShift"/> to <see cref="MaxCellSizeShift"/> and a height scale outside
 	/// <see cref="MinHeightScale"/> to <see cref="MaxHeightScale"/>.
 	/// </summary>
+	/// <param name="heights">The heights.</param>
+	/// <param name="cellSizeShift">The cell size shift.</param>
+	/// <param name="heightScale">The height scale.</param>
 	public static ZoneFiles Create(ReadOnlySpan<byte> heights, int cellSizeShift, int heightScale) {
 		int count = heights.Length;
 		int side = Sides.FirstOrDefault(side => side * side == count);
@@ -100,12 +103,15 @@ public sealed class ZoneFiles {
 	}
 
 	/// <summary>
-	/// The zone in <paramref name="header"/> and <paramref name="heightmap"/>, the two files' bytes, or null with the reason
+	/// The zone in the header and heightmap, the two files' bytes, or null with the reason
 	/// it is not one: the header is not 16 bytes, its cell size shift is outside <see cref="MinCellSizeShift"/> to
 	/// <see cref="MaxCellSizeShift"/> or its height scale outside <see cref="MinHeightScale"/> to <see cref="MaxHeightScale"/>,
 	/// the heightmap is not a bitmap array of one raw 8-bit image, the image is
 	/// not square with one of <see cref="Sides"/> a side, or the header's width and height shifts differ from the image's.
 	/// </summary>
+	/// <param name="header">The header file's bytes.</param>
+	/// <param name="heightmap">The heightmap file's bytes.</param>
+	/// <param name="failure">Says why the bytes are not a zone; null on success.</param>
 	public static ZoneFiles? Read(byte[] header, byte[] heightmap, out string? failure) {
 		if (header.Length != ZoneDatTransformer.Size) {
 			failure = $"The zone header is {header.Length} bytes; it is {ZoneDatTransformer.Size}.";
@@ -176,10 +182,11 @@ public sealed class ZoneFiles {
 			: null;
 
 	/// <summary>
-	/// The largest <see cref="HeightScale"/> a zone of cell size shift <paramref name="cellSizeShift"/> may have: the lower of the
+	/// The largest <see cref="HeightScale"/> a zone of a given cell size shift may have: the lower of the
 	/// height query's 32-bit bound for a full 255-step slope across one cell and the scale that makes face normals as
 	/// coarse as retail's coarsest. See docs/retail/simulation/terrain-heightmap.md#the-height-scales-range.
 	/// </summary>
+	/// <param name="cellSizeShift">The cell size shift.</param>
 	public static int MaxHeightScale(int cellSizeShift) {
 		int cellSize = 1 << cellSizeShift;
 		return Math.Min(int.MaxValue / (byte.MaxValue * cellSize), cellSize / CoarsestNormalVertical);
@@ -225,10 +232,11 @@ public sealed class ZoneFiles {
 	};
 
 	/// <summary>
-	/// The grid shift for <paramref name="cells"/> cells along one side, as <c>TerrainZone_PopulateFromBitmap</c>
+	/// The grid shift for a number of cells along one side, as <c>TerrainZone_PopulateFromBitmap</c>
 	/// (<c>0046c3c0</c>) derives it from the heightmap image: its inline <c>for (i = 1; i &lt; value; i *= 2) shift++;</c>,
 	/// ceil(log2), and 0 for 1 or less.
 	/// </summary>
+	/// <param name="cells">The number of cells along one side.</param>
 	public static int GridShift(int cells) {
 		int shift = 0;
 		for (int i = 1; i < cells; i *= 2) {

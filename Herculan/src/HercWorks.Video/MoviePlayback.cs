@@ -107,10 +107,12 @@ public sealed class MoviePlayback : IDisposable {
 	}
 
 	/// <summary>
-	/// Opens a movie to be read as it plays, taking <paramref name="stream"/> over, or returns null, with the
+	/// Opens a movie to be read as it plays, taking its stream over, or returns null, with the
 	/// stream disposed, when the file will not parse or its codec is not one this assembly implements. Blocks
 	/// while the header is read; the packets are read on a thread of the movie's own from then on.
 	/// </summary>
+	/// <param name="stream">The movie's stream, which this takes over.</param>
+	/// <param name="limits">The limits the decoders stay within; null for the defaults.</param>
 	/// <exception cref="IOException">The stream failed while the header was read; it has been disposed.</exception>
 	public static MoviePlayback? Open(Stream stream, VideoLimits? limits = null) {
 		if (AviStreamReader.Open(stream, limits) is not { } reader) {
@@ -132,11 +134,12 @@ public sealed class MoviePlayback : IDisposable {
 	public void WaitUntilReady() =>
 		_source.WaitFor((int)Math.Ceiling(Preroll.Ticks / (double)FrameInterval.Ticks));
 
-	/// <summary>Advances the clock by <paramref name="delta"/>; see <see cref="AdvanceTo"/>.</summary>
+	/// <summary>Advances the clock by an interval; see <see cref="AdvanceTo"/>.</summary>
+	/// <param name="delta">The interval.</param>
 	public bool Advance(TimeSpan delta) => AdvanceTo(delta > TimeSpan.Zero ? _elapsed + delta : _elapsed);
 
 	/// <summary>
-	/// Moves the clock on to <paramref name="elapsed"/>, never back, and decodes however many frames that
+	/// Moves the clock on to a total elapsed time, never back, and decodes however many frames that
 	/// crossed.
 	///
 	/// <para>Returns true when <see cref="Frame"/> changed, so a caller can skip re-uploading a
@@ -151,6 +154,7 @@ public sealed class MoviePlayback : IDisposable {
 	/// CLR has already stopped it doing harm, and catching it here keeps one damaged movie from taking
 	/// the host down with it. The fuzz tests call the decoders directly, so they still see it.</para>
 	/// </summary>
+	/// <param name="elapsed">The total elapsed time.</param>
 	public bool AdvanceTo(TimeSpan elapsed) {
 		if (HasFailed) {
 			return false;
@@ -190,11 +194,12 @@ public sealed class MoviePlayback : IDisposable {
 	}
 
 	/// <summary>
-	/// Reads the soundtrack's next samples into <paramref name="into"/>, channels interleaved, and answers how
+	/// Reads the soundtrack's next samples, channels interleaved, and answers how
 	/// many: whole frames only, as many as are waiting, up to as many as fit. Zero when the movie has no
 	/// soundtrack to play, nothing more has been read yet, or the soundtrack has ended
 	/// (<see cref="AudioEnded"/>).
 	/// </summary>
+	/// <param name="into">Receives the samples.</param>
 	public int ReadAudio(Span<short> into) {
 		if (AudioFormat is not { } format) {
 			return 0;
@@ -234,7 +239,8 @@ public sealed class MoviePlayback : IDisposable {
 	public bool AudioEnded =>
 		AudioFormat == null || (_source.AudioEnded && (_pending == null || _pendingAt >= _pending.Length));
 
-	/// <summary>Reads past up to <paramref name="frames"/> frames of the soundtrack unheard, and answers how many.</summary>
+	/// <summary>Reads past up to a number of frames of the soundtrack unheard, and answers how many.</summary>
+	/// <param name="frames">The number of frames to skip.</param>
 	public long SkipAudio(long frames) {
 		if (AudioFormat is not { } format) {
 			return 0;

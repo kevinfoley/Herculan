@@ -46,7 +46,8 @@ public sealed class KeysWindow {
 	/// <summary>Whether the window is open. Set by the menu bar; see <see cref="HostMenuBar"/>.</summary>
 	public bool IsOpen { get; set; }
 
-	/// <summary>Every <c>.lang</c> entry the window shows for <paramref name="list"/>, the key labels' among them.</summary>
+	/// <summary>Every <c>.lang</c> entry the window shows for a list, the key labels' among them.</summary>
+	/// <param name="list">The key list.</param>
 	public static IEnumerable<string> Entries(KeyList list) =>
 		WindowEntries
 			.Concat(list.Sections.Select(section => section.Heading))
@@ -55,9 +56,9 @@ public sealed class KeysWindow {
 			.Distinct();
 
 	/// <summary>
-	/// Draws the window, if it is open. Call once per frame, inside the ImGui frame. <paramref name="centre"/> is when it
-	/// is centred on the window (<see cref="PanelCentring.Condition"/>).
+	/// Draws the window, if it is open. Call once per frame, inside the ImGui frame.
 	/// </summary>
+	/// <param name="centre">When the window is centred on the window (<see cref="PanelCentring.Condition"/>).</param>
 	public void Draw(ImGuiCond centre) {
 		if (!IsOpen) {
 			return;

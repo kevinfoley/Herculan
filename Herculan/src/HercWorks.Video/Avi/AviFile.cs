@@ -92,8 +92,10 @@ public sealed class AviFile {
 
 	/// <summary>
 	/// Parses an AVI file held in memory, or returns null when it is not one, is larger than
-	/// <paramref name="limits"/> allows, or declares a frame size outside those limits.
+	/// the limits allow, or declares a frame size outside those limits.
 	/// </summary>
+	/// <param name="bytes">The file's bytes.</param>
+	/// <param name="limits">The limits the parse stays within; null for the defaults.</param>
 	public static AviFile? Open(byte[] bytes, VideoLimits? limits = null) {
 		ArgumentNullException.ThrowIfNull(bytes);
 		limits ??= VideoLimits.Default;

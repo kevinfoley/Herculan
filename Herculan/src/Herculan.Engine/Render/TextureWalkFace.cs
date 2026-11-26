@@ -34,11 +34,12 @@ public static class TextureWalkTable {
 	public const int MaxCorners = 4;
 
 	/// <summary>
-	/// The table for <paramref name="perTriangle"/>, the face each triangle was fanned out of or null for a triangle
+	/// The table for the triangles, the face each was fanned out of or null for a triangle
 	/// filled through its own mapping. A record is: the corner count (0 for null), the frame's first column and row,
 	/// 1 for <see cref="TextureWalkFace.LitAsBack"/>;
 	/// its columns and rows; the four corners; the four texture points, two to a texel.
 	/// </summary>
+	/// <param name="perTriangle">The face each triangle was fanned out of, or null for a triangle filled through its own mapping.</param>
 	public static float[] Pack(IReadOnlyList<TextureWalkFace?> perTriangle) {
 		var table = new float[perTriangle.Count * TexelsPerTriangle * 4];
 		for (int t = 0; t < perTriangle.Count; t++) {

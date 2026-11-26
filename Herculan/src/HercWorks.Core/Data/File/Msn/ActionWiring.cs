@@ -24,13 +24,18 @@ public static class ActionWiring {
 	private const int MechRow = 12;
 	private const int GroupRow = 16;
 
-	/// <summary>Why row-16 group <paramref name="group"/>'s deployment action cannot be set, or null when it can.</summary>
+	/// <summary>Why a row-16 group's deployment action cannot be set, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public static string? WhyNoDeployment(MissionDocument document, short group) =>
 		document.Layout.Entry(GroupRow, group) == null ? $"The mission has no group {group}."
 			: group == SquadRoster.Squad(document) ? "The player's squad is in the mission from the start."
 			: null;
 
-	/// <summary>Sets row-16 group <paramref name="group"/>'s deployment action, a row-10 GUID, or <c>-1</c> for none.</summary>
+	/// <summary>Sets a row-16 group's deployment action, a row-10 GUID, or <c>-1</c> for none.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static MsnEdit SetDeployment(MissionDocument document, short group, short action) {
 		if (WhyNoDeployment(document, group) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -40,7 +45,10 @@ public static class ActionWiring {
 		return document.Change(() => document.SetField(MsnField.GroupDeployment, group, action));
 	}
 
-	/// <summary>Why row <paramref name="row"/>'s (12 to 14) GUID <paramref name="guid"/>'s own actions cannot be set, or null when they can.</summary>
+	/// <summary>Why a row's (12 to 14) GUID's own actions cannot be set, or null when they can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The row, 12 to 14.</param>
+	/// <param name="guid">The GUID.</param>
 	public static string? WhyNoObjectAction(MissionDocument document, int row, short guid) {
 		if (row is < MechRow or > 14) {
 			throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters.");
@@ -57,18 +65,25 @@ public static class ActionWiring {
 	}
 
 	/// <summary>
-	/// Why <paramref name="field"/> of <paramref name="guid"/> cannot be set to none, or null when it can: a template supplies it,
+	/// Why a field of a GUID cannot be set to none, or null when it can: a template supplies it,
 	/// and an overlay record cannot carry an unset value.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="field">The field.</param>
+	/// <param name="guid">The GUID.</param>
 	public static string? WhyNoNone(MissionDocument document, MsnField field, short guid) =>
 		document.Layout.Entry(field.Row, guid) != null && document.SuppliedByTemplate(field, guid)
 			? "A random table supplies it, so it cannot be taken away."
 			: null;
 
 	/// <summary>
-	/// Sets the action row <paramref name="row"/>'s GUID <paramref name="guid"/> fires when engaged, or with
-	/// <paramref name="defeated"/> when defeated, to row-10 GUID <paramref name="action"/>, or none for <c>-1</c>.
+	/// Sets the GUID of an action row fires when engaged, or when defeated, to a row-10 GUID, or none for <c>-1</c>.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The action row.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="defeated">Whether the action is the one fired when defeated rather than when engaged.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static MsnEdit SetObjectAction(MissionDocument document, int row, short guid, bool defeated, short action) {
 		if (WhyNoObjectAction(document, row, guid) is { } reason) {
 			throw new InvalidOperationException(reason);

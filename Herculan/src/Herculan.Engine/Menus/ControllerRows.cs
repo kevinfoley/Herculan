@@ -56,7 +56,8 @@ public sealed record ControllerRows {
 	/// </summary>
 	public bool HasRazor { get; init; }
 
-	/// <summary>Every offered action but <paramref name="lacking"/>, for <see cref="Actions"/>.</summary>
+	/// <summary>Every offered action but those lacking, for <see cref="Actions"/>.</summary>
+	/// <param name="lacking">The actions left out.</param>
 	public static IReadOnlySet<KeyAction> OfferedExcept(IEnumerable<KeyAction> lacking) =>
 		ControllerActions.Offered.Select(entry => entry.Action).Except(lacking).ToHashSet();
 }

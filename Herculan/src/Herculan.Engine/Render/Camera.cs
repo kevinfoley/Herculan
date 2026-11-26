@@ -113,18 +113,22 @@ public sealed class Camera {
 	public Vector2 PrincipalPoint { get; set; } = new(0.5f, 0.5f);
 
 	/// <summary>
-	/// The focal length in window pixels for a viewport <paramref name="viewportHeight"/> pixels tall, from
+	/// The focal length in window pixels for a viewport of a given height, from
 	/// <see cref="FieldOfView"/>: what a backdrop drawn per pixel scales the original's own pixels by.
 	/// </summary>
+	/// <param name="viewportHeight">The viewport's height in pixels.</param>
 	public float FocalPixelsFor(int viewportHeight) =>
 		System.Math.Max(viewportHeight, 1) / (2f * MathF.Tan(FieldOfView / 2f));
 
 	/// <summary>
 	/// Where <see cref="PrincipalPoint"/> lands in window coordinates — x right, y up from the bottom of the whole
-	/// framebuffer, as <c>gl_FragCoord</c> counts — for the viewport (<paramref name="viewportX"/>,
-	/// <paramref name="viewportY"/>, <paramref name="viewportWidth"/>, <paramref name="viewportHeight"/>), origin
+	/// framebuffer, as <c>gl_FragCoord</c> counts — for a viewport, origin
 	/// bottom-left as <c>GL.Viewport</c> takes it.
 	/// </summary>
+	/// <param name="viewportX">The viewport's left edge.</param>
+	/// <param name="viewportY">The viewport's bottom edge.</param>
+	/// <param name="viewportWidth">The viewport's width.</param>
+	/// <param name="viewportHeight">The viewport's height.</param>
 	public Vector2 PrincipalPointInWindow(int viewportX, int viewportY, int viewportWidth, int viewportHeight) => new(
 		viewportX + PrincipalPoint.X * viewportWidth,
 		viewportY + (1f - PrincipalPoint.Y) * System.Math.Max(viewportHeight, 1));
@@ -225,10 +229,10 @@ public sealed class Camera {
 
 	/// <summary>
 	/// Builds a world-space (render units) pick ray through a point on the viewport, for
-	/// click-to-select. <paramref name="ndc"/> is normalized device coordinates: -1..1 on each
-	/// axis, +X right, +Y up, origin at the viewport's center — the caller converts screen pixels
-	/// (usually +Y down) itself.
+	/// click-to-select.
 	/// </summary>
+	/// <param name="ndc">Normalized device coordinates: -1..1 on each axis, +X right, +Y up, origin at the viewport's center — the caller converts screen pixels (usually +Y down) itself.</param>
+	/// <param name="aspectRatio">The viewport's width over its height.</param>
 	public (Vector3 Origin, Vector3 Direction) ViewportPointToRay(Vector2 ndc, float aspectRatio) {
 		Vector3 forward = Forward;
 		Vector3 right = Vector3.Normalize(Vector3.Cross(forward, Up));

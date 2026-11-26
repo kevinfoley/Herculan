@@ -44,10 +44,15 @@ public static class SimMath {
 	/// what <c>MechType_InitOne</c> does to rescale a mech type's speed fields at load.
 	/// </summary>
 	/// <summary>
-	/// <c>Math_MapRange</c> (<c>0047de3c</c>) — a linear remap of <paramref name="value"/> from
+	/// <c>Math_MapRange</c> (<c>0047de3c</c>) — a linear remap of a value from
 	/// <c>[fromLow, fromHigh]</c> onto <c>[toLow, toHigh]</c>, with a rounding bias of one less than
 	/// the input span, signed to match the output's direction.
 	/// </summary>
+	/// <param name="value">The value to remap.</param>
+	/// <param name="fromLow">The input range's low end.</param>
+	/// <param name="fromHigh">The input range's high end.</param>
+	/// <param name="toLow">The output range's low end.</param>
+	/// <param name="toHigh">The output range's high end.</param>
 	public static int MapRange(int value, int fromLow, int fromHigh, int toLow, int toHigh) {
 		int span = fromHigh - fromLow;
 		long bias = System.Math.Abs(span) - 1;
@@ -137,10 +142,13 @@ public static class SimMath {
 
 	/// <summary>
 	/// <c>Math_RateLimitedMoveToward</c> (<c>004679d8</c>) — generic per-tick slew-rate limiter.
-	/// Moves <paramref name="current"/> toward <paramref name="target"/> by at most
-	/// <paramref name="step"/> (never overshooting), and returns the remaining error — 0 once it
+	/// Moves the current value toward the target by at most
+	/// the step (never overshooting), and returns the remaining error — 0 once it
 	/// has arrived. Used by rocket guidance's turn-rate cap and by the shield recharge tick.
 	/// </summary>
+	/// <param name="current">The value moved.</param>
+	/// <param name="target">The value moved toward.</param>
+	/// <param name="step">The most it moves.</param>
 	public static short RateLimitedMoveToward(ref short current, short target, short step) {
 		if (target < current) {
 			current = (short)(current - step);
@@ -222,7 +230,7 @@ public static class SimMath {
 
 	/// <summary>
 	/// <c>Math_NormalizeVec3ToLength</c> (<c>004926e4</c>) — rescales a vector in place to
-	/// <paramref name="length"/>, which the original uses wherever it needs a step of a fixed size
+	/// a given length, which the original uses wherever it needs a step of a fixed size
 	/// along an arbitrary direction (a beam chain's node spacing, a collision volume's face
 	/// offsets).
 	///
@@ -230,6 +238,10 @@ public static class SimMath {
 	/// applied. That truncation is the original's own, not a rounding choice here, and it is why a
 	/// step over a very short delta comes out shorter than asked for.</para>
 	/// </summary>
+	/// <param name="x">The vector's X.</param>
+	/// <param name="y">The vector's Y.</param>
+	/// <param name="z">The vector's Z.</param>
+	/// <param name="length">The length to rescale to.</param>
 	public static void ScaleToLength(ref int x, ref int y, ref int z, short length) {
 		int magnitude = FastMagnitude3D(x, y, z);
 		if (magnitude == 0) {

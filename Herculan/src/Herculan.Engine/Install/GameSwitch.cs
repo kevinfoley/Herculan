@@ -16,7 +16,9 @@ public static class GameSwitch {
 	/// <summary>The install the game is asked for on, or null to find its install as at start-up.</summary>
 	public static string? Install { get; private set; }
 
-	/// <summary>Asks for <paramref name="game"/>, on <paramref name="install"/> when one is given.</summary>
+	/// <summary>Asks for a game, on an install when one is given.</summary>
+	/// <param name="game">The game asked for.</param>
+	/// <param name="install">The install to run it on; null for the game's own.</param>
 	public static void Request(RetailGame game, string? install = null) {
 		Requested = game;
 		Install = install;

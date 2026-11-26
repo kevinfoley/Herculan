@@ -333,10 +333,12 @@ public partial class TextureViewerForm : Form {
 	}
 
 	/// <summary>
-	/// Returns true if a palette was found and auto-selected. Tries <paramref name="preferredPaletteBaseName"/>
+	/// Returns true if a palette was found and auto-selected. Tries the preferred palette
 	/// first (e.g. "COCKPIT" for HB0/HB1/HB2/HBA — see PreferredPaletteFor), then falls back to a
 	/// same-basename-as-texture match (the original DBA/DBM behavior).
 	/// </summary>
+	/// <param name="textureFileName">The texture's file name.</param>
+	/// <param name="preferredPaletteBaseName">The preferred palette's base name, if any.</param>
 	private bool PopulatePaletteSelector(string textureFileName, string? preferredPaletteBaseName) {
 		_paletteSelector.Items.Clear();
 		_paletteSelector.Items.Add("(None)");

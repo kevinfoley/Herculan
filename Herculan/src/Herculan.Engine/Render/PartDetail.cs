@@ -39,10 +39,11 @@ public sealed class PartDetail(short radius, short[] thresholds, int levelCount,
 
 	/// <summary>
 	/// The bias <c>Structure_DrawWithDetailBias</c> (<c>004034f4</c>) and <c>Flyer_Draw</c>
-	/// (<c>004215cc</c>) push for STRUCTURE DETAIL setting <paramref name="setting"/>. A byte past 2
+	/// (<c>004215cc</c>) push for a STRUCTURE DETAIL setting. A byte past 2
 	/// matches no key in the original's walk and leaves the bias as it was, which from startup is its
 	/// image value of 0; that is what it gives here.
 	/// </summary>
+	/// <param name="setting">The setting.</param>
 	public static int StructureBias(int setting) =>
 		setting >= 0 && setting < StructureBiasBySetting.Length ? StructureBiasBySetting[setting] : 0;
 
@@ -56,9 +57,10 @@ public sealed class PartDetail(short radius, short[] thresholds, int levelCount,
 
 	/// <summary>
 	/// The bias a weapon mount's draw (<c>WeaponMount_RenderWithDetailBias</c> (<c>0040ded8</c>)) and a gun shot off its mount
-	/// (<c>Debris_Draw</c>) push for HERC DETAIL setting <paramref name="setting"/>, clamped to the
+	/// (<c>Debris_Draw</c>) push for a HERC DETAIL setting, clamped to the
 	/// table as <see cref="ShapeDetail.BiasFor"/> is.
 	/// </summary>
+	/// <param name="setting">The setting.</param>
 	public static int HercBias(int setting) =>
 		HercBiasBySetting[Math.Clamp(setting, 0, HercBiasBySetting.Length - 1)];
 
@@ -78,14 +80,17 @@ public sealed class PartDetail(short radius, short[] thresholds, int levelCount,
 	public short TransformId { get; } = transformId;
 
 	/// <summary>
-	/// The level drawn at <paramref name="viewDistance"/>, in <c>[0, LevelCount)</c>.
+	/// The level drawn at a view distance, in <c>[0, LevelCount)</c>.
 	///
-	/// <para>The walk starts at <paramref name="bias"/> in the threshold table and advances while the
+	/// <para>The walk starts at the bias in the threshold table and advances while the
 	/// projected size is past the entry; the level drawn is how far it got <i>less</i> the bias. So a
 	/// larger bias both starts the comparison further up the table and subtracts that start back off —
 	/// the whole scale moves toward the coarse end, and at bias 0 a close part reaches its finest
 	/// level.</para>
 	/// </summary>
+	/// <param name="viewDistance">The view distance.</param>
+	/// <param name="focalLengthPixels">The focal length in pixels.</param>
+	/// <param name="bias">The bias.</param>
 	/// <param name="sizeScaleQ10">The Q10 factor on the projected size, <see cref="SizeScaleQ10"/> unless a caller's tweak moves the switches.</param>
 	public int Select(int viewDistance, int focalLengthPixels, int bias, int sizeScaleQ10 = SizeScaleQ10) {
 		if (LevelCount <= 1) {

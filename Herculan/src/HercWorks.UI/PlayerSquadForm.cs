@@ -191,9 +191,11 @@ public partial class PlayerSquadForm : Form {
 	}
 
 	/// <summary>
-	/// Resizes both arrays to <paramref name="length"/>, dropping slots past it and filling new ones
+	/// Resizes both arrays, dropping slots past the new length and filling new ones
 	/// with the empty weapon and the filler ammunition value.
 	/// </summary>
+	/// <param name="entry">The entry whose arrays are resized.</param>
+	/// <param name="length">The new length.</param>
 	private static void ResizeSlots(MecEntry entry, int length) {
 		int wasWeapons = entry.WeaponRefs.Length;
 		int wasAmmo = entry.WeaponAmmoTypes.Length;

@@ -42,10 +42,11 @@ public static class FlyerGroups {
 	private const short Constant100 = 100;
 
 	/// <summary>
-	/// A flyer of <c>nam\FLYERS.NAM</c> type <paramref name="type"/>, as a GUID-only record (<see cref="MissionDocument.Append"/>
+	/// A flyer of a <c>nam\FLYERS.NAM</c> type, as a GUID-only record (<see cref="MissionDocument.Append"/>
 	/// gives it one), unconditioned and picking from no random table: no point or heading of its own (84 of 84 name none), firing no
 	/// action (no engaged action in 84, no defeated action in 60) and writing no counter (84 of 84).
 	/// </summary>
+	/// <param name="type">The flyer's <c>nam\FLYERS.NAM</c> type.</param>
 	public static FlyerRosterEntry102 Machine(short type) {
 		var flags = new short[20];
 		flags[0] = FlagSpanFirst;
@@ -56,16 +57,24 @@ public static class FlyerGroups {
 		};
 	}
 
-	/// <summary>Why no flyer can be added to <paramref name="document"/>, or null when one can.</summary>
+	/// <summary>Why no flyer can be added to a document, or null when one can.</summary>
+	/// <param name="document">The mission document.</param>
 	public static string? WhyNoAdd(MissionDocument document) => RosterLimits.WhyNoRoom(document.Layout, FlyerRow, 1);
 
 	/// <summary>
-	/// Adds <paramref name="flyer"/> in a new group on <paramref name="side"/> (0 human, 1 Cybrid), standing on a route of
-	/// one waypoint at (<paramref name="x"/>, <paramref name="y"/>) and given its first order there
+	/// Adds a flyer in a new group on a side (0 human, 1 Cybrid), standing on a route of
+	/// one waypoint at a position and given its first order there
 	/// (<see cref="NewGroups.FirstOrder"/>), as one <see cref="MissionDocument.Change"/>; answers the flyer's row-13 GUID and the
 	/// group's row-16 GUID. Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it, or a Cybrid
 	/// group's mission has no group 0.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="side">The side: 0 human, 1 Cybrid.</param>
+	/// <param name="x">The waypoint's X.</param>
+	/// <param name="y">The waypoint's Y.</param>
+	/// <param name="guid">Receives the flyer's row-13 GUID.</param>
+	/// <param name="group">Receives the group's row-16 GUID.</param>
 	public static MsnEdit Create(MissionDocument document, FlyerRosterEntry102 flyer, short side, int x, int y,
 			out short guid, out short group) {
 		if (WhyNoAdd(document) is { } reason) {
@@ -76,19 +85,25 @@ public static class FlyerGroups {
 	}
 
 	/// <summary>
-	/// Why a flyer cannot join row-16 group <paramref name="group"/> of <paramref name="document"/>, or null when it can: a
+	/// Why a flyer cannot join a row-16 group of a document, or null when it can: a
 	/// flyer group shown in the editor with a member slot up to <see cref="LastJoinSlot"/> that no record of it
 	/// fills.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public static string? WhyNoJoin(MissionDocument document, short group) =>
 		NewGroups.WhyNoJoin(document, group, FlyerRoster, LastJoinSlot, "It is not a flyer group.",
 			$"Its formation has places for {LastJoinSlot + 1} flyers, and each is taken.");
 
 	/// <summary>
-	/// Adds <paramref name="flyer"/> to flyer group <paramref name="group"/> in its first free member slot, as one
+	/// Adds a flyer to a flyer group in its first free member slot, as one
 	/// <see cref="MissionDocument.Change"/>; answers the flyer's row-13 GUID. Throws <see cref="InvalidOperationException"/>
 	/// when <see cref="WhyNoAdd"/> or <see cref="WhyNoJoin"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The flyer group's row-16 GUID.</param>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="guid">Receives the flyer's row-13 GUID.</param>
 	public static MsnEdit Join(MissionDocument document, short group, FlyerRosterEntry102 flyer, out short guid) {
 		if ((WhyNoAdd(document) ?? WhyNoJoin(document, group)) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -98,18 +113,26 @@ public static class FlyerGroups {
 	}
 
 	/// <summary>
-	/// Why a flyer cannot be put in member slot <paramref name="slot"/> of row-16 group <paramref name="group"/>, or null when
+	/// Why a flyer cannot be put in a member slot of a row-16 group, or null when
 	/// it can: a flyer group, and a slot up to <see cref="LastJoinSlot"/> that no record of it fills.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The member slot.</param>
 	public static string? WhyNoJoinSlot(MissionDocument document, short group, int slot) =>
 		NewGroups.WhyNoJoinSlot(document, group, slot, FlyerRoster, LastJoinSlot, "It is not a flyer group.",
 			$"Its formation has places for {LastJoinSlot + 1} flyers.");
 
 	/// <summary>
-	/// Adds <paramref name="flyer"/> to flyer group <paramref name="group"/> in member slot <paramref name="slot"/>, as one
+	/// Adds a flyer to a flyer group in a member slot, as one
 	/// <see cref="MissionDocument.Change"/>; answers the flyer's row-13 GUID. Throws <see cref="InvalidOperationException"/>
 	/// when <see cref="WhyNoAdd"/> or <see cref="WhyNoJoinSlot"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The flyer group's row-16 GUID.</param>
+	/// <param name="slot">The member slot.</param>
+	/// <param name="flyer">The flyer.</param>
+	/// <param name="guid">Receives the flyer's row-13 GUID.</param>
 	public static MsnEdit JoinSlot(MissionDocument document, short group, int slot, FlyerRosterEntry102 flyer, out short guid) {
 		if ((WhyNoAdd(document) ?? WhyNoJoinSlot(document, group, slot)) is { } reason) {
 			throw new InvalidOperationException(reason);

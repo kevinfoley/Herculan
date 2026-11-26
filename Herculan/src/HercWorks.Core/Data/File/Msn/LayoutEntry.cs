@@ -49,11 +49,12 @@ public class LayoutEntry {
 	public IReadOnlyList<LayoutVariation> Variations { get; }
 
 	/// <summary>
-	/// The record whose value word <paramref name="word"/> of <see cref="Fields"/> shows (the model classes' <c>…Word</c>
+	/// The record whose value word of <see cref="Fields"/> shows (the model classes' <c>…Word</c>
 	/// constants): the last base record that sets it, else the first record, with the option it was copied from when a keyed
 	/// record took it from one. For a route, word <see cref="MergeRules.RouteListWord"/> and every word after it, its waypoint
 	/// count and list, are one.
 	/// </summary>
+	/// <param name="word">The value word.</param>
 	public WordSource Supplier(int word) {
 		if (Row == 8) {
 			word = Math.Min(word, MergeRules.RouteListWord);
@@ -169,9 +170,10 @@ public sealed class LayoutHeader {
 	public IReadOnlyList<LayoutHeaderVariation> Variations { get; }
 
 	/// <summary>
-	/// The record whose value header word <paramref name="word"/> of <see cref="Words"/> shows: the last base record that sets
+	/// The record whose value header word of <see cref="Words"/> shows: the last base record that sets
 	/// it, else the first record.
 	/// </summary>
+	/// <param name="word">The value header word.</param>
 	public MsnRecordId Supplier(int word) {
 		if (word < 0 || word >= _setBy.Length) {
 			throw new ArgumentOutOfRangeException(nameof(word), word, $"The header has {_setBy.Length} words.");

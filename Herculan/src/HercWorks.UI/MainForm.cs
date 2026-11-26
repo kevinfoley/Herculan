@@ -200,10 +200,12 @@ public partial class MainForm : Form {
 	}
 
 	/// <summary>
-	/// Reads <paramref name="source"/>'s archive unless it is already read. <paramref name="userAsked"/> is set when
-	/// the user expanded, selected or opened this archive: then a failure is shown in a message box and a success in
-	/// the status bar. The filter reads quietly and does not retry an archive that has already failed.
+	/// Reads a source's archive unless it is already read. When the user expanded, selected or opened this archive, a
+	/// failure is shown in a message box and a success in the status bar. The filter reads quietly and does not retry an
+	/// archive that has already failed.
 	/// </summary>
+	/// <param name="source">The archive's source.</param>
+	/// <param name="userAsked">Whether the user expanded, selected or opened this archive.</param>
 	private bool EnsureLoaded(VolSource source, bool userAsked) {
 		if (source.Vol is not null) {
 			return true;
@@ -381,9 +383,13 @@ public partial class MainForm : Form {
 	}
 
 	/// <summary>
-	/// The node for <paramref name="source"/> under <paramref name="filter"/>, or null when nothing in it matches.
-	/// Nodes kept only because something inside them matched go in <paramref name="matchedWithin"/> to be expanded.
+	/// The node for a source under a filter, or null when nothing in it matches.
+	/// Nodes kept only because something inside them matched go in the matched-within list to be expanded.
 	/// </summary>
+	/// <param name="source">The archive's source.</param>
+	/// <param name="filter">The filter text.</param>
+	/// <param name="matchedWithin">Receives the nodes kept only because something inside them matched.</param>
+	/// <param name="fileCount">Counts the files in the node.</param>
 	private static TreeNode? BuildVolNode(VolSource source, string filter, List<TreeNode> matchedWithin, ref int fileCount) {
 		var node = new TreeNode(source.FileName) { Name = source.FileName, Tag = source };
 		bool showAll = filter.Length == 0 || NameMatches(source.FileName, filter);
@@ -407,7 +413,11 @@ public partial class MainForm : Form {
 		return node;
 	}
 
-	/// <summary>Adds <paramref name="vol"/>'s folders and files under <paramref name="volNode"/>, filtered; returns the number of files added.</summary>
+	/// <summary>Adds an archive's folders and files under its node, filtered; returns the number of files added.</summary>
+	/// <param name="volNode">The archive's node.</param>
+	/// <param name="vol">The archive.</param>
+	/// <param name="filter">The filter text.</param>
+	/// <param name="matchedWithin">Receives the nodes kept only because something inside them matched.</param>
 	private static int AddFolderNodes(TreeNode volNode, Voln vol, string filter, List<TreeNode>? matchedWithin) {
 		int fileCount = 0;
 		foreach (var folder in vol.Folders.OrderBy(f => f.Key).Select(f => f.Value)) {

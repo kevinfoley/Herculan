@@ -70,10 +70,10 @@ public sealed class GameContent {
 		CaseInsensitivePath.Combine(installRoot, ArchiveFolderName);
 
 	/// <summary>
-	/// Mounts what <paramref name="program"/> — <see cref="Voln.DbsimProgram"/> or
-	/// <see cref="Voln.VshellProgram"/> — would of the install at <paramref name="installRoot"/> and of its open
-	/// <paramref name="disc"/>, which may be an image (<see cref="GameDisc"/>); null mounts the install alone. Every
-	/// archive is read into memory, so the disc can be closed once this returns. <paramref name="language"/> becomes
+	/// Mounts what a program — <see cref="Voln.DbsimProgram"/> or
+	/// <see cref="Voln.VshellProgram"/> — would of the install and of its open
+	/// disc, which may be an image (<see cref="GameDisc"/>); null mounts the install alone. Every
+	/// archive is read into memory, so the disc can be closed once this returns. The language becomes
 	/// <see cref="Language"/>.
 	///
 	/// <para><c>VolumeGroup_SetGroup</c> (<c>00467bd4</c>) scans <c>vol\*.vol</c> under the current
@@ -92,6 +92,10 @@ public sealed class GameContent {
 	/// adding past that during a scan writes beyond its array; this stops adding at the limit and says
 	/// so.</para>
 	/// </summary>
+	/// <param name="installRoot">The install's root folder.</param>
+	/// <param name="disc">The open disc, or null to mount the install alone.</param>
+	/// <param name="program">The program mounted: <see cref="Voln.DbsimProgram"/> or <see cref="Voln.VshellProgram"/>.</param>
+	/// <param name="language">The game's language.</param>
 	public static GameContent MountInstall(string installRoot, GameDisc? disc, uint program, GameLanguage language) {
 		var loaded = new List<Voln>();
 		var options = new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive };
@@ -147,9 +151,11 @@ public sealed class GameContent {
 
 	/// <summary>
 	/// Reads one resource's bytes: the loose file in the install if there is one, else the first mounted archive's
-	/// entry, else null. <paramref name="folder"/> and <paramref name="name"/> are matched case-insensitively,
+	/// entry, else null. The folder and name are matched case-insensitively,
 	/// matching the original's own <c>_stricmp</c>-based resource resolution.
 	/// </summary>
+	/// <param name="folder">The resource's folder.</param>
+	/// <param name="name">The resource's name.</param>
 	public byte[]? Read(string folder, string name) =>
 		LooseFile(folder, name) is { } path ? File.ReadAllBytes(path)
 		: _entries.TryGetValue(Key(folder, name), out var entry) ? entry.RawBytes : null;

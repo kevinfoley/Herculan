@@ -82,11 +82,13 @@ public sealed class HercComparison {
 	/// </summary>
 	public bool IsFlyer { get; init; }
 
-	/// <summary>Component <paramref name="index"/>'s armour, or null when the chassis has no such component.</summary>
+	/// <summary>A component's armour, or null when the chassis has no such component.</summary>
+	/// <param name="index">The component's index.</param>
 	public int? ComponentArmorAt(int index) =>
 		ComponentArmor is { } armor && index < armor.Length ? armor[index] : null;
 
-	/// <summary>Internal <paramref name="index"/>'s maximum, or null when the chassis has no such slot.</summary>
+	/// <summary>An internal's maximum, or null when the chassis has no such slot.</summary>
+	/// <param name="index">The internal's index.</param>
 	public int? InternalMaximumAt(int index) =>
 		InternalMaxima is { } maxima && index < maxima.Length ? maxima[index] : null;
 
@@ -100,7 +102,8 @@ public sealed class HercComparison {
 
 	/// <summary>The shell's two price tables, <c>gam\herc_inf.dat</c> and <c>gam\damage.dat</c>, read once for every chassis.</summary>
 	public sealed record ChassisPrices(HercInf? Chassis, DamageRepairCost? Values) {
-		/// <summary>Reads both, adding any that is not found or does not parse to <paramref name="missing"/>.</summary>
+		/// <summary>Reads both, adding any that is not found or does not parse to the missing list.</summary>
+		/// <param name="missing">Receives the name of each file that could not be read.</param>
 		public static ChassisPrices Load(List<string> missing) => new(
 			GamePaths.ReadOrReport(new HercInfoTransformer(), GamePaths.FindGamFile, "gam", "HERC_INF.DAT", missing),
 			GamePaths.ReadOrReport(new DamageRepairCostTransformer(), GamePaths.FindGamFile, "gam", "DAMAGE.DAT", missing));

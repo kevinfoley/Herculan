@@ -73,9 +73,13 @@ public sealed class GpuTexture : IDisposable {
 	}
 
 	/// <summary>
-	/// Replaces rows <paramref name="firstRow"/> to <paramref name="firstRow"/> + <paramref name="rows"/> − 1 of an image
-	/// <paramref name="width"/> across, in place, from the same rows of <paramref name="rgbaPixels"/>, the whole image.
+	/// Replaces a run of rows of an image of a given width, in place, from the same rows of an RGBA pixel buffer
+	/// holding the whole image.
 	/// </summary>
+	/// <param name="rgbaPixels">The whole image's pixels.</param>
+	/// <param name="width">The image's width in pixels.</param>
+	/// <param name="firstRow">The first row replaced.</param>
+	/// <param name="rows">The number of rows replaced.</param>
 	public void UpdateRows(ReadOnlySpan<byte> rgbaPixels, int width, int firstRow, int rows) {
 		var slice = rgbaPixels.Slice(firstRow * width * 4, rows * width * 4);
 		_gl.BindTexture(TextureTarget.Texture2D, Handle);

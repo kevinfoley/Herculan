@@ -33,9 +33,11 @@ internal static class SncQuery {
 	private const byte Terminator = 0xff;
 
 	/// <summary>
-	/// Every <c>.SNC</c> entry of <paramref name="archivePaths"/> whose name or <c>folder\name</c> matches
-	/// <paramref name="pattern"/> (as <c>vol --name</c> matches), each archive's in folder and name order.
+	/// Every <c>.SNC</c> entry of the archives whose name or <c>folder\name</c> matches
+	/// a pattern (as <c>vol --name</c> matches), each archive's in folder and name order.
 	/// </summary>
+	/// <param name="archivePaths">The archives to search.</param>
+	/// <param name="pattern">The pattern to match; null for every entry.</param>
 	public static SncReport Run(IReadOnlyList<string> archivePaths, string? pattern) {
 		var scripts = new List<SncScript>();
 		var refused = new List<SncRefused>();

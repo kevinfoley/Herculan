@@ -22,10 +22,14 @@ public partial class HercCompareForm : Form {
 	}
 
 	/// <summary>
-	/// One grid row. <paramref name="CellToolTip"/> names the part on a chassis that labels it
-	/// differently; <paramref name="Placeholder"/> says a value carries nothing, and a row that is a
-	/// placeholder on every shown chassis is left out.
+	/// One grid row. A row that is a placeholder on every shown chassis is left out.
 	/// </summary>
+	/// <param name="Label">The row's label.</param>
+	/// <param name="ToolTip">The row label's tooltip.</param>
+	/// <param name="Value">Reads the row's value from a chassis comparison.</param>
+	/// <param name="IsTotal">Whether the row is a total.</param>
+	/// <param name="CellToolTip">Names the part on a chassis that labels it differently.</param>
+	/// <param name="Placeholder">Says a value carries nothing.</param>
 	private sealed record StatRow(string Label, string ToolTip, Func<HercComparison, int?> Value, bool IsTotal = false,
 		Func<HercComparison, string?>? CellToolTip = null, Func<int, bool>? Placeholder = null);
 

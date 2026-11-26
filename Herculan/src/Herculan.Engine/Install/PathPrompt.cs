@@ -65,9 +65,10 @@ public sealed class PathPrompt {
 	public string? Chosen { get; private set; }
 
 	/// <summary>
-	/// Draws the prompt into the current window, filling it to its foot. <paramref name="owner"/> is the
-	/// native window the picker belongs to. <paramref name="messageArguments"/> fill the message's slots.
+	/// Draws the prompt into the current window, filling it to its foot.
 	/// </summary>
+	/// <param name="owner">The native window the picker belongs to.</param>
+	/// <param name="messageArguments">Fill the message's slots.</param>
 	public Outcome Draw(nint owner, params object[] messageArguments) {
 		var outcome = Outcome.Open;
 		if (_picking is { IsCompleted: true } picked) {

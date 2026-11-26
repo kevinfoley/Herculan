@@ -103,22 +103,27 @@ public static class HercGroups {
 		[20] = (Fit(5, 5, 5, 10, 10, 0, 0, 0), Filler()),
 	};
 
-	/// <summary>Whether <c>MECHS.NAM</c> type <paramref name="type"/> is a Cybrid's.</summary>
+	/// <summary>Whether a <c>MECHS.NAM</c> type is a Cybrid's.</summary>
+	/// <param name="type">The type.</param>
 	public static bool IsCybrid(int type) => type >= FirstCybridType;
 
 	/// <summary>
-	/// The weapon fit and ammunition types of Cybrid type <paramref name="type"/> (<see cref="CybridFits"/>), as row 12
+	/// The weapon fit and ammunition types of a Cybrid type (<see cref="CybridFits"/>), as row 12
 	/// carries them; null for any other type, which the caller fits from its stock fit.
 	/// </summary>
+	/// <param name="type">The type.</param>
 	public static (short[] Weapons, short[] Ammo)? CybridFit(int type) =>
 		CybridFits.TryGetValue(type, out var fit) ? ((short[])fit.Weapons.Clone(), (short[])fit.Ammo.Clone()) : null;
 
 	/// <summary>
-	/// A herc of <paramref name="type"/> with <paramref name="weapons"/> and <paramref name="ammo"/> in its ten slots, as
+	/// A herc of a type with weapons and ammunition in its ten slots, as
 	/// a GUID-only record (<see cref="MissionDocument.Append"/> gives it one), unconditioned and picking from no random table: no point
 	/// or heading of its own, firing no action and writing no counter (no action in any of the 662 records, no counter
 	/// write in 425), and the AI settings, the starting condition and the constant <see cref="HercGroups"/> counts.
 	/// </summary>
+	/// <param name="type">The herc's type.</param>
+	/// <param name="weapons">The ten weapon slots.</param>
+	/// <param name="ammo">The ten ammunition slots.</param>
 	public static MechRosterEntry144 Machine(short type, short[] weapons, short[] ammo) => new() {
 		GUID = -1, ConditionRef = -1, RandomTableKey = -1, CompoundConditionPartner = -1, AiRadarActive = AiRadarActive,
 		AiCruiseSpeed = AiCruiseSpeed, DeadZone = new short[18], TypeIndex = type, WeaponRefs = weapons, PositionRef = -1,
@@ -126,16 +131,24 @@ public static class HercGroups {
 		EngagementActionRef = -1, DefeatActionRef = -1, StartingCondition = StartingCondition,
 	};
 
-	/// <summary>Why no herc can be added to <paramref name="document"/>, or null when one can (<see cref="RosterLimits.WhyNoRoom"/>).</summary>
+	/// <summary>Why no herc can be added to a document, or null when one can (<see cref="RosterLimits.WhyNoRoom"/>).</summary>
+	/// <param name="document">The mission document.</param>
 	public static string? WhyNoAdd(MissionDocument document) => RosterLimits.WhyNoRoom(document.Layout, MechRow, 1);
 
 	/// <summary>
-	/// Adds <paramref name="herc"/> in a new group on <paramref name="side"/> (0 human, 1 Cybrid), standing on a route of
-	/// one waypoint at (<paramref name="x"/>, <paramref name="y"/>) and given its first order there
+	/// Adds a herc in a new group on a side (0 human, 1 Cybrid), standing on a route of
+	/// one waypoint at a position and given its first order there
 	/// (<see cref="NewGroups.FirstOrder"/>), as one <see cref="MissionDocument.Change"/>; answers the herc's row-12 GUID and the
 	/// group's row-16 GUID. Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it, or a Cybrid
 	/// group's mission has no group 0.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="herc">The herc.</param>
+	/// <param name="side">The side: 0 human, 1 Cybrid.</param>
+	/// <param name="x">The waypoint's X.</param>
+	/// <param name="y">The waypoint's Y.</param>
+	/// <param name="mech">Receives the herc's row-12 GUID.</param>
+	/// <param name="group">Receives the group's row-16 GUID.</param>
 	public static MsnEdit Create(MissionDocument document, MechRosterEntry144 herc, short side, int x, int y,
 			out short mech, out short group) {
 		if (WhyNoAdd(document) is { } reason) {
@@ -146,10 +159,12 @@ public static class HercGroups {
 	}
 
 	/// <summary>
-	/// Why a herc cannot join row-16 group <paramref name="group"/> of <paramref name="document"/>, or null when it can: a
+	/// Why a herc cannot join a row-16 group of a document, or null when it can: a
 	/// herc group shown in the editor, not the player's squad, with a member slot up to
 	/// <see cref="LastJoinSlot"/> that no record of it fills.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public static string? WhyNoJoin(MissionDocument document, short group) {
 		if (group != -1 && group == SquadRoster.Squad(document)) {
 			return "Squadmates are added with Add a squadmate in the Player's squad view: click Player's squad under Groups in the Mission panel.";
@@ -160,10 +175,14 @@ public static class HercGroups {
 	}
 
 	/// <summary>
-	/// Adds <paramref name="herc"/> to herc group <paramref name="group"/> in its first free member slot, as one
+	/// Adds a herc to a herc group in its first free member slot, as one
 	/// <see cref="MissionDocument.Change"/>; answers the herc's row-12 GUID. Throws <see cref="InvalidOperationException"/>
 	/// when <see cref="WhyNoAdd"/> or <see cref="WhyNoJoin"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The herc group's row-16 GUID.</param>
+	/// <param name="herc">The herc.</param>
+	/// <param name="mech">Receives the herc's row-12 GUID.</param>
 	public static MsnEdit Join(MissionDocument document, short group, MechRosterEntry144 herc, out short mech) {
 		if ((WhyNoAdd(document) ?? WhyNoJoin(document, group)) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -173,9 +192,12 @@ public static class HercGroups {
 	}
 
 	/// <summary>
-	/// Why a herc cannot be put in member slot <paramref name="slot"/> of row-16 group <paramref name="group"/>, or null when it
+	/// Why a herc cannot be put in a member slot of a row-16 group, or null when it
 	/// can: a herc group, not the player's squad, and a slot up to <see cref="LastJoinSlot"/> that no record of it fills.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The member slot.</param>
 	public static string? WhyNoJoinSlot(MissionDocument document, short group, int slot) {
 		if (group != -1 && group == SquadRoster.Squad(document)) {
 			return "Squadmates are added with Add a squadmate in the Player's squad view: click Player's squad under Groups in the Mission panel.";
@@ -186,10 +208,15 @@ public static class HercGroups {
 	}
 
 	/// <summary>
-	/// Adds <paramref name="herc"/> to herc group <paramref name="group"/> in member slot <paramref name="slot"/>, as one
+	/// Adds a herc to a herc group in a member slot, as one
 	/// <see cref="MissionDocument.Change"/>; answers the herc's row-12 GUID. Throws <see cref="InvalidOperationException"/>
 	/// when <see cref="WhyNoAdd"/> or <see cref="WhyNoJoinSlot"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The herc group's row-16 GUID.</param>
+	/// <param name="slot">The member slot.</param>
+	/// <param name="herc">The herc.</param>
+	/// <param name="mech">Receives the herc's row-12 GUID.</param>
 	public static MsnEdit JoinSlot(MissionDocument document, short group, int slot, MechRosterEntry144 herc, out short mech) {
 		if ((WhyNoAdd(document) ?? WhyNoJoinSlot(document, group, slot)) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -199,10 +226,14 @@ public static class HercGroups {
 	}
 
 	/// <summary>
-	/// An order, unconditioned and picking from no random table: <paramref name="verb"/> on <paramref name="route"/>, with subject
-	/// <paramref name="subject"/> of <paramref name="subjectKind"/>, in formation 0, naming no point (422 of the herc groups'
+	/// An order, unconditioned and picking from no random table: a verb on a route, with a subject
+	/// of a kind, in formation 0, naming no point (422 of the herc groups'
 	/// 453 orders, 80 of the flyer groups' 81) and no action that ends it (445 of 453, 80 of 81).
 	/// </summary>
+	/// <param name="verb">The verb.</param>
+	/// <param name="route">The route's row-8 GUID.</param>
+	/// <param name="subjectKind">The subject's kind.</param>
+	/// <param name="subject">The subject's GUID.</param>
 	public static MissionOrder22 Order(short verb, short route, short subjectKind, short subject) => new() {
 		GUID = -1, ConditionRef = -1, RandomTableKey = -1, CompoundConditionPartner = -1, Verb = verb, FormationId = NewGroups.Formation,
 		PointRef = -1, RouteRef = route, SubjectKind = subjectKind, SubjectRef = subjectKind == -1 ? (short)-1 : subject,

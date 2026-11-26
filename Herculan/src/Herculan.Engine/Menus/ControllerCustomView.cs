@@ -94,7 +94,9 @@ internal sealed class ControllerCustomView {
 		_detectingBinding = null;
 	}
 
-	/// <summary>Starts editing <paramref name="device"/>'s mode and profile as <paramref name="file"/> holds them.</summary>
+	/// <summary>Starts editing a device's mode and profile as a file holds them.</summary>
+	/// <param name="file">The map file.</param>
+	/// <param name="device">The device.</param>
 	public void Load(JoystickMapFile file, ControllerDevice? device) {
 		StopDetecting();
 		Mode = _loadedMode = device == null ? ControllerMode.Custom : file.ModeFor(device.IsGamepad, device.Guid);
@@ -106,9 +108,11 @@ internal sealed class ControllerCustomView {
 	}
 
 	/// <summary>
-	/// Puts the mode and profile into <paramref name="file"/>'s section for <paramref name="device"/>: no Custom settings
+	/// Puts the mode and profile into a file's section for a device: no Custom settings
 	/// while the draft is the device's default, else the draft, the rows with an input and an action.
 	/// </summary>
+	/// <param name="file">The map file.</param>
+	/// <param name="device">The device.</param>
 	public void Store(JoystickMapFile file, ControllerDevice device) {
 		var profile = _isDefault ? null : _edited ? Build() : _loadedProfile;
 		file.SetProfile(device.IsGamepad, device.Guid, device.Name, Mode, profile);
@@ -125,7 +129,8 @@ internal sealed class ControllerCustomView {
 		_edited = true;
 	}
 
-	/// <summary>Draws the view for <paramref name="device"/>, inside the window, and binds what Detect is listening for.</summary>
+	/// <summary>Draws the view for a device, inside the window, and binds what Detect is listening for.</summary>
+	/// <param name="device">The device.</param>
 	public void Draw(ControllerDevice device) {
 		if (_isDefault && !device.IsGamepad && Counts(device) != _defaultCounts) {
 			Fill(Default(device));
@@ -404,7 +409,9 @@ internal sealed class ControllerCustomView {
 	private static bool IsDPadButton(ControllerDevice device, int button) =>
 		device.IsGamepad && button is >= FirstDPadButton and <= LastDPadButton;
 
-	/// <summary>An input's name on <paramref name="device"/> as the window shows it, a known gamepad's buttons by the names printed on them.</summary>
+	/// <summary>An input's name on a device as the window shows it, a known gamepad's buttons by the names printed on them.</summary>
+	/// <param name="input">The input.</param>
+	/// <param name="device">The device, if any.</param>
 	internal string InputLabel(ControllerInput input, ControllerDevice? device) => input.Kind switch {
 		ControllerInputKind.Button => GamepadControlNames.Label(device, input.Index, Text),
 		ControllerInputKind.Axis => GamepadControlNames.AxisDirectionLabel(device, input.Index, input.AxisSign, Text),

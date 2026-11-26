@@ -49,10 +49,11 @@ public class SoundCfg {
 	public bool Mono { get; set; }
 
 	/// <summary>
-	/// Reads the file at <paramref name="path"/>, or the shipped settings when it is absent or unreadable — which
+	/// Reads a file, or the shipped settings when it is absent or unreadable — which
 	/// is what both executables get too, <c>GetPrivateProfileStringA</c> handing back its empty default string
 	/// for every key of a missing file.
 	/// </summary>
+	/// <param name="path">The file's path.</param>
 	public static SoundCfg Load(string path) {
 		try {
 			return new Io.Transform.Common.SoundCfgTransformer().Parse(System.IO.File.ReadAllBytes(path)) ?? new SoundCfg();

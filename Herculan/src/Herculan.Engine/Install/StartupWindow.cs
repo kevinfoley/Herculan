@@ -13,12 +13,14 @@ namespace Herculan.Engine.Install;
 /// </summary>
 public static class StartupWindow {
 	/// <summary>
-	/// Shows the window until <paramref name="body"/> returns true or the player closes it. <paramref name="titleKey"/> is
-	/// the title's string, read again when the combo changes the language. <paramref name="body"/> draws the content under
-	/// the combo each frame, given the native window a picker belongs to. <paramref name="fontPath"/> is the ImGui font.
-	/// <paramref name="width"/> and <paramref name="height"/> are a 100% display's at the ordinary font, grown with the
-	/// font (<see cref="ScaledImGui.ScaledWindowSize"/>) so the content still fits under the larger one.
+	/// Shows the window until the body returns true or the player closes it.
 	/// </summary>
+	/// <param name="localization">The table the window's strings are read from.</param>
+	/// <param name="titleKey">The title's string, read again when the combo changes the language.</param>
+	/// <param name="width">The width at a 100% display's ordinary font, grown with the font (<see cref="ScaledImGui.ScaledWindowSize"/>) so the content still fits under the larger one.</param>
+	/// <param name="height">The height, scaled likewise.</param>
+	/// <param name="fontPath">The ImGui font.</param>
+	/// <param name="body">Draws the content under the combo each frame, given the native window a picker belongs to.</param>
 	public static void Run(LocalizationTable localization, string titleKey, int width, int height, string fontPath,
 			Func<nint, bool> body) {
 		var language = new InterfaceLanguageCombo(localization);
@@ -62,9 +64,12 @@ public static class StartupWindow {
 	}
 
 	/// <summary>
-	/// The window's one frame of content, filling the viewport: the language combo over <paramref name="body"/>, whose
-	/// answer it returns. <paramref name="languageChanged"/> is whether the combo changed the locale this frame.
+	/// The window's one frame of content, filling the viewport: the language combo over the body, whose
+	/// answer it returns.
 	/// </summary>
+	/// <param name="language">The language combo.</param>
+	/// <param name="body">Draws the content under the combo.</param>
+	/// <param name="languageChanged">Whether the combo changed the locale this frame.</param>
 	public static bool Draw(InterfaceLanguageCombo language, Func<bool> body, out bool languageChanged) {
 		var viewport = ImGui.GetMainViewport();
 		ImGui.SetNextWindowPos(viewport.WorkPos);

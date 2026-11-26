@@ -29,7 +29,9 @@ public readonly struct ViewSphereTest {
 
 	private const int Q14One = 1 << 14;
 
-	/// <summary>Whether the sphere of <paramref name="radius"/> about <paramref name="centre"/>, world units, reaches into the view.</summary>
+	/// <summary>Whether the sphere of a radius about a centre, world units, reaches into the view.</summary>
+	/// <param name="centre">The sphere's centre.</param>
+	/// <param name="radius">The sphere's radius.</param>
 	public bool Overlaps(Vec3i centre, int radius) {
 		double dx = (double)centre.X - _eye.X;
 		double dy = (double)centre.Y - _eye.Y;

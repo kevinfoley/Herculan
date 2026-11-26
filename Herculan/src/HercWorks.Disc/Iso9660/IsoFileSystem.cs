@@ -71,7 +71,8 @@ public sealed class IsoFileSystem {
 	/// <summary>Records left out of the tree, and why. Empty for a well-formed disc.</summary>
 	public IReadOnlyList<string> Problems => _problems;
 
-	/// <summary>Whether <paramref name="sector"/> starts with a volume descriptor's <c>CD001</c> identifier.</summary>
+	/// <summary>Whether a sector starts with a volume descriptor's <c>CD001</c> identifier.</summary>
+	/// <param name="sector">The sector's bytes.</param>
 	internal static bool IsVolumeDescriptor(ReadOnlySpan<byte> sector) =>
 		sector.Length >= 6 && sector.Slice(1, 5).SequenceEqual(StandardIdentifier);
 
@@ -127,7 +128,8 @@ public sealed class IsoFileSystem {
 		return fileSystem;
 	}
 
-	/// <summary>The entry at <paramref name="path"/>, '/' or '\' separated and matched ignoring case; null when absent.</summary>
+	/// <summary>The entry at a path, '/' or '\' separated and matched ignoring case; null when absent.</summary>
+	/// <param name="path">The path to look up.</param>
 	public IsoEntry? Find(string path) {
 		var entry = Root;
 		foreach (string part in path.Split('/', '\\')) {
@@ -145,10 +147,12 @@ public sealed class IsoFileSystem {
 		return entry;
 	}
 
-	/// <summary>Whether <paramref name="path"/> names a file.</summary>
+	/// <summary>Whether a path names a file.</summary>
+	/// <param name="path">The path to look up.</param>
 	public bool FileExists(string path) => Find(path) is { IsDirectory: false };
 
-	/// <summary>Whether <paramref name="path"/> names a directory.</summary>
+	/// <summary>Whether a path names a directory.</summary>
+	/// <param name="path">The path to look up.</param>
 	public bool DirectoryExists(string path) => Find(path) is { IsDirectory: true };
 
 	/// <summary>Every file in the tree, depth-first in disc order.</summary>
@@ -171,11 +175,13 @@ public sealed class IsoFileSystem {
 		}
 	}
 
-	/// <summary>Opens the file at <paramref name="path"/> as a seekable, read-only stream.</summary>
+	/// <summary>Opens the file at a path as a seekable, read-only stream.</summary>
+	/// <param name="path">The file's path.</param>
 	/// <exception cref="FileNotFoundException">No file has that path.</exception>
 	public Stream OpenRead(string path) => OpenRead(FindFile(path));
 
-	/// <summary>Opens <paramref name="file"/>, an entry of this file system, as a seekable, read-only stream.</summary>
+	/// <summary>Opens a file, an entry of this file system, as a seekable, read-only stream.</summary>
+	/// <param name="file">The file's entry.</param>
 	public Stream OpenRead(IsoEntry file) {
 		if (file.IsDirectory) {
 			throw new ArgumentException($"{file.FullPath} is a directory.", nameof(file));
@@ -184,7 +190,8 @@ public sealed class IsoFileSystem {
 		return new SectorStream(_image, file.Lba, file.Length, audio: false);
 	}
 
-	/// <summary>Reads the whole file at <paramref name="path"/>.</summary>
+	/// <summary>Reads a whole file.</summary>
+	/// <param name="path">The file's path.</param>
 	/// <exception cref="FileNotFoundException">No file has that path.</exception>
 	public byte[] ReadAllBytes(string path) {
 		var file = FindFile(path);
@@ -327,9 +334,11 @@ public sealed class IsoFileSystem {
 	}
 
 	/// <summary>
-	/// <paramref name="raw"/> without its <c>;1</c> version and, for a file, the trailing '.' of a name with
+	/// A name without its <c>;1</c> version and, for a file, the trailing '.' of a name with
 	/// no extension; null when what is left is not a plain file name.
 	/// </summary>
+	/// <param name="raw">The name as the directory record spells it.</param>
+	/// <param name="isDirectory">Whether the record is a directory's.</param>
 	private static string? CleanName(string raw, bool isDirectory) {
 		string name = raw;
 		int version = name.LastIndexOf(';');

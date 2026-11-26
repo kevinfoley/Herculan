@@ -6,6 +6,7 @@ namespace Herculan.Engine.Input;
 /// Heads-Down Display or one of retail's panels. <b>This engine's own.</b>
 /// </summary>
 public readonly record struct ControllerState(Func<int, float> Axis, Func<int, bool> Button, Func<int, JoystickHat> Hat) {
-	/// <summary>Everything <paramref name="device"/> reports, unfiltered.</summary>
+	/// <summary>Everything a device reports, unfiltered.</summary>
+	/// <param name="device">The device.</param>
 	public static ControllerState Of(ControllerDevice device) => new(device.Axis, device.Button, device.Hat);
 }

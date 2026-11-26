@@ -15,9 +15,10 @@ public sealed class ShadesDat {
 	public List<ShadeList> Lists { get; set; } = new();
 
 	/// <summary>
-	/// What an object of type tag <paramref name="tag"/> re-points: the last list naming it, since each list is stored over
+	/// What an object of a type tag re-points: the last list naming it, since each list is stored over
 	/// the record's earlier one, or none.
 	/// </summary>
+	/// <param name="tag">The type tag.</param>
 	public IReadOnlyList<ShadeRepoint> For(int tag) {
 		for (int i = Lists.Count - 1; i >= 0; i--) {
 			if (Lists[i].Tag == tag) {

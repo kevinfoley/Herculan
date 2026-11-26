@@ -19,10 +19,13 @@ public interface IGameModule {
 	IReadOnlyList<A11ySettingDefinition<bool>> AccessibilitySettings { get; }
 
 	/// <summary>
-	/// Takes the flag at <c>args[i]</c> when it is one of this game's own, with its values, leaving <paramref name="i"/>
-	/// on the last argument it took and recording a malformed value in <paramref name="errors"/>; false, with
-	/// <paramref name="i"/> unchanged, for a flag that is not this game's. <see cref="OptionValues"/> reads the values.
+	/// Takes the flag at <c>args[i]</c> when it is one of this game's own, with its values, leaving the index
+	/// on the last argument it took and recording a malformed value in the errors; false, with the
+	/// index unchanged, for a flag that is not this game's. <see cref="OptionValues"/> reads the values.
 	/// </summary>
+	/// <param name="args">The command-line arguments.</param>
+	/// <param name="i">The index of the flag; left on the last argument taken.</param>
+	/// <param name="errors">Receives a message for a malformed value.</param>
 	bool TryParseOption(string[] args, ref int i, List<string> errors);
 
 	/// <summary>
@@ -31,7 +34,9 @@ public interface IGameModule {
 	/// </summary>
 	string? FirstOwnOption { get; }
 
-	/// <summary>Records in <paramref name="errors"/> what the parsed flags cannot do together, once parsing ends.</summary>
+	/// <summary>Records what the parsed flags cannot do together, once parsing ends.</summary>
+	/// <param name="options">The options parsed.</param>
+	/// <param name="errors">Receives a message for each conflict.</param>
 	void CheckOptions(CommonOptions options, List<string> errors);
 
 	/// <summary>
@@ -42,14 +47,16 @@ public interface IGameModule {
 
 	/// <summary>
 	/// The game's install prompt, opened when its install was not found or <c>--ask-install</c> skipped the search: the
-	/// install root chosen, or null when the player gave up. <paramref name="refused"/> is a folder found that cannot be
-	/// the install, which the prompt opens on with the reason showing; <paramref name="dismissKey"/> is the string of the
-	/// button that gives up.
+	/// install root chosen, or null when the player gave up.
 	/// </summary>
+	/// <param name="localization">The table the prompt's strings are read from.</param>
+	/// <param name="fontPath">The ImGui font of the window that asks.</param>
+	/// <param name="refused">A folder found that cannot be the install, which the prompt opens on with the reason showing; null for none.</param>
+	/// <param name="dismissKey">The string of the button that gives up.</param>
 	string? AskForInstall(LocalizationTable localization, string fontPath, string? refused, string dismissKey);
 
 	/// <summary>
-	/// Asks the player for what <paramref name="installRoot"/> needs beyond itself before the game can run on it, such as a
+	/// Asks the player for what an install needs beyond itself before the game can run on it, such as a
 	/// disc. True when it needs nothing or the player gave it; false when the player gave up. The default needs nothing.
 	/// </summary>
 	/// <param name="localization">The table the prompt's strings are read from.</param>

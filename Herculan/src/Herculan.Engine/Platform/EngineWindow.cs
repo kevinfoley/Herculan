@@ -49,7 +49,9 @@ public sealed class EngineWindow : IDisposable {
 		: this(new HostWindow(width, height, placement, maximized), title, ownsHost: true) {
 	}
 
-	/// <summary>A turn in <paramref name="host"/>, which stays open after it.</summary>
+	/// <summary>A turn in a host, which stays open after it.</summary>
+	/// <param name="host">The host window.</param>
+	/// <param name="title">The window's title.</param>
 	public EngineWindow(HostWindow host, string title) : this(host, title, ownsHost: false) {
 	}
 

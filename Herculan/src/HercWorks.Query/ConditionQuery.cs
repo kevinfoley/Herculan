@@ -35,7 +35,9 @@ internal static class ConditionQuery {
 				.ToList()))
 			.ToList();
 
-	/// <summary>Every record of an ES1 mission whose condition field is <paramref name="guid"/>, labelled by ES1's row numbers.</summary>
+	/// <summary>Every record of an ES1 mission whose condition field is a given GUID, labelled by ES1's row numbers.</summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="guid">The condition GUID.</param>
 	private static List<GatedRecord> Es1Gates(Es1MissionFile file, short guid) {
 		var gates = new List<GatedRecord>();
 		void Add<T>(int row, T[] records, Func<T, short> condition, Func<T, int, short> id, string noun) {

@@ -34,7 +34,8 @@ public sealed class MappedController {
 	/// <summary>The maps the device and its map are picked against.</summary>
 	public JoystickMapFile File { get; private set; }
 
-	/// <summary>Picks against <paramref name="file"/> from now on: the device and its map are picked again when next asked for.</summary>
+	/// <summary>Picks against a file from now on: the device and its map are picked again when next asked for.</summary>
+	/// <param name="file">The map file.</param>
 	public void Reset(JoystickMapFile file) {
 		File = file;
 		_saved = null;

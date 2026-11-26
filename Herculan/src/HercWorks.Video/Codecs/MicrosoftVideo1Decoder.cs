@@ -108,10 +108,15 @@ internal sealed class MicrosoftVideo1Decoder : IVideoCodec {
 
 	/// <summary>
 	/// Paints a flagged block. Flag bit <c>n</c> is pixel <c>n</c> in stream order — four to a row,
-	/// bottom row first — and a set bit picks the pair's first colour. With
-	/// <paramref name="quadrants"/>, each 2x2 quadrant has its own pair: bottom-left 0-1,
+	/// bottom row first — and a set bit picks the pair's first colour. With quadrants on, each 2x2
+	/// quadrant has its own pair: bottom-left 0-1,
 	/// bottom-right 2-3, top-left 4-5, top-right 6-7.
 	/// </summary>
+	/// <param name="frame">The frame painted.</param>
+	/// <param name="block">The block's index.</param>
+	/// <param name="flags">The block's flag bits.</param>
+	/// <param name="colours">The block's colours.</param>
+	/// <param name="quadrants">Whether each 2x2 quadrant has its own pair.</param>
 	private void PaintBlock(VideoFrame frame, int block, ushort flags, ReadOnlySpan<ushort> colours, bool quadrants) {
 		for (int row = 0; row < Block; row++) {
 			for (int column = 0; column < Block; column++, flags >>= 1) {

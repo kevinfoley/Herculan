@@ -56,9 +56,11 @@ public static class GroupOrders {
 	private const short BaseRoster = 2;
 
 	/// <summary>
-	/// The row-15 GUID in each of row-16 group <paramref name="group"/>'s ten order slots as its base names them, <c>-1</c> for
+	/// The row-15 GUID in each of a row-16 group's ten order slots as its base names them, <c>-1</c> for
 	/// an empty slot or one naming no order; all <c>-1</c> for a GUID no record carries.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public static short[] Orders(MissionDocument document, short group) {
 		var orders = Enumerable.Repeat((short)-1, Slots).ToArray();
 		if (document.Layout.Entry<MissionGroup164>(group) is not { } entry) {
@@ -77,9 +79,11 @@ public static class GroupOrders {
 	public static int Filled(short[] orders) => Array.FindLastIndex(orders, order => order != -1) + 1;
 
 	/// <summary>
-	/// How many order slots name row-15 GUID <paramref name="order"/>: each group's slot counted once, whichever of its
+	/// How many order slots name a row-15 GUID: each group's slot counted once, whichever of its
 	/// records name it, whatever their condition.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="order">The order's row-15 GUID.</param>
 	public static int SlotsNaming(MissionDocument document, short order) =>
 		order == -1 ? 0 : (document.Mission.Groups ?? [])
 			.SelectMany(record => record.OrderRefs.Select((named, slot) => (record.GUID, named, slot)))
@@ -88,17 +92,22 @@ public static class GroupOrders {
 			.Distinct()
 			.Count();
 
-	/// <summary>Whether another order slot names row-15 GUID <paramref name="order"/> too, so an edit made here copies it first.</summary>
+	/// <summary>Whether another order slot names a row-15 GUID too, so an edit made here copies it first.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="order">The order's row-15 GUID.</param>
 	public static bool Shared(MissionDocument document, short order) => SlotsNaming(document, order) > 1;
 
 	/// <summary>
-	/// The order a new slot of <paramref name="group"/> gets, this editor's choice of a retail shape: for the player's squad,
+	/// The order a new slot of a group gets, this editor's choice of a retail shape: for the player's squad,
 	/// patrol (<see cref="Patrol"/>) naming no subject; for a convoy (<see cref="VehicleGroups.IsConvoy"/>, by
-	/// <paramref name="isGroundVehicle"/>), travel (<see cref="VehicleGroups.Travel"/>) naming no subject, the shape of 11 of
+	/// the ground-vehicle test), travel (<see cref="VehicleGroups.Travel"/>) naming no subject, the shape of 11 of
 	/// the 12 retail convoys' slot-0 orders and of a new convoy's first (<see cref="VehicleGroups"/>); for any other group, a new
 	/// herc group's first order on its side (<see cref="NewGroups.FirstOrder"/>): search/destroy on the player's squad for a
 	/// Cybrid group, patrol for a Human one. Each on slot 0's route, or none when the group has no order yet.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="isGroundVehicle">Answers which <c>BASES.DAT</c> types are ground vehicles.</param>
 	public static MissionOrder22 NewOrder(MissionDocument document, short group, Func<int, bool> isGroundVehicle) {
 		short squad = SquadRoster.Squad(document);
 		short route = RouteOf(document, Orders(document, group)[0]);
@@ -115,37 +124,46 @@ public static class GroupOrders {
 	}
 
 	/// <summary>
-	/// Whether an order of <paramref name="verb"/> needs a subject: search/destroy, ramming and following. Every retail order
+	/// Whether an order of a verb needs a subject: search/destroy, ramming and following. Every retail order
 	/// of the three names one (385, 17 and 9 of the 637 orders, <c>HercWorks.Query records</c>), and
 	/// <c>Group_IsOrderComplete</c> (<c>004239fc</c>) reads search/destroy's subject's condition
 	/// (docs/retail/simulation/ai-goals.md#when-an-order-is-finished--group_isordercomplete-004239fc).
 	/// </summary>
+	/// <param name="verb">The verb.</param>
 	public static bool NeedsSubject(short verb) => verb is HercGroups.SearchDestroy or Ram or Follow;
 
 	/// <summary>
-	/// Why <paramref name="group"/> cannot take an order of <paramref name="verb"/>, or null when it can. A flyer group's AI has
+	/// Why a group cannot take an order of a verb, or null when it can. A flyer group's AI has
 	/// no state for guarding, ramming or following: <c>Flyer_AiSelectBehaviour</c> (<c>00422d00</c>) installs a descriptor read
 	/// from its own code, and the same tick's move dispatch calls a wild address
 	/// (docs/retail/simulation/ai-flyers.md#orders--flyer_aiselectbehaviour-00422d00). No retail flyer group carries one.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="verb">The verb.</param>
 	public static string? WhyNoVerb(MissionDocument document, short group, short verb) =>
 		verb is Guard or Ram or Follow && document.Layout.Entry<MissionGroup164>(group)?.Fields.MemberKind == FlyerRoster
 			? "Not for a flyer group: the game has no flyer behavior for it, and crashes."
 			: null;
 
 	/// <summary>
-	/// Why route <paramref name="route"/>, a row-8 GUID or <c>-1</c>, cannot be <paramref name="group"/>'s first order's
+	/// Why a route, a row-8 GUID or <c>-1</c>, cannot be a group's first order's
 	/// route, or null when it can: a group with no point of its own stands on its first order's route's first waypoint
 	/// (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 3), so it needs one. Each of the 35 retail group
 	/// records whose slot-0 order names no route names a point of its own (8 of them no heading).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public static string? WhyNoFirstRoute(MissionDocument document, short group, short route) =>
 		route == -1 && document.Layout.Entry<MissionGroup164>(group) is { } entry
 			&& document.Layout.Entry(PointRow, entry.Fields.PositionRef) == null
 			? "With no point of its own, the group stands on its first order's route, so that order needs one."
 			: null;
 
-	/// <summary>Why no order can be added to <paramref name="group"/>, or null when one can.</summary>
+	/// <summary>Why no order can be added to a group, or null when one can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public static string? WhyNoAdd(MissionDocument document, short group) {
 		if (document.Layout.Entry(GroupRow, group) == null) {
 			return $"The mission has no group {group}.";
@@ -159,10 +177,14 @@ public static class GroupOrders {
 	}
 
 	/// <summary>
-	/// Appends <paramref name="order"/> under a new GUID, <paramref name="guid"/>, and names it in the slot after
-	/// <paramref name="group"/>'s last order, as one <see cref="MissionDocument.Change"/>. Throws
+	/// Appends an order under a new GUID, and names it in the slot after
+	/// a group's last order, as one <see cref="MissionDocument.Change"/>. Throws
 	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="order">The order.</param>
+	/// <param name="guid">Receives the order's new GUID.</param>
 	public static MsnEdit Add(MissionDocument document, short group, MissionOrder22 order, out short guid) {
 		if (WhyNoAdd(document, group) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -186,7 +208,10 @@ public static class GroupOrders {
 		return change;
 	}
 
-	/// <summary>Why the order in <paramref name="group"/>'s slot <paramref name="slot"/> cannot be removed, or null when it can.</summary>
+	/// <summary>Why the order in a group's slot cannot be removed, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The order slot.</param>
 	public static string? WhyNoRemove(MissionDocument document, short group, int slot) {
 		var orders = Orders(document, group);
 		if (slot < 0 || slot >= Slots || orders[slot] == -1) {
@@ -201,9 +226,11 @@ public static class GroupOrders {
 	}
 
 	/// <summary>
-	/// Why <paramref name="group"/> cannot be left with no order in slot 0, or null when it can: the mission check's two group
+	/// Why a group cannot be left with no order in slot 0, or null when it can: the mission check's two group
 	/// findings, and the editor's rule for a flyer group.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public static string? WhyNeedsFirstOrder(MissionDocument document, short group) {
 		if (document.Layout.Entry<MissionGroup164>(group) is not { } entry) {
 			return null;
@@ -221,10 +248,13 @@ public static class GroupOrders {
 	}
 
 	/// <summary>
-	/// Removes the order in <paramref name="group"/>'s slot <paramref name="slot"/>, moving each later order up a slot, and
+	/// Removes the order in a group's slot, moving each later order up a slot, and
 	/// the order's records when no slot names it any more, as one <see cref="MissionDocument.Change"/>. Throws
 	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoRemove"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The order slot.</param>
 	public static MsnEdit Remove(MissionDocument document, short group, int slot) {
 		if (WhyNoRemove(document, group, slot) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -253,9 +283,13 @@ public static class GroupOrders {
 	}
 
 	/// <summary>
-	/// Why the order in <paramref name="group"/>'s slot <paramref name="slot"/> cannot trade places with the one in slot
-	/// <paramref name="to"/>, the slot before or after it, or null when it can.
+	/// Why the order in a group's slot cannot trade places with the one in another slot,
+	/// the slot before or after it, or null when it can.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The order slot.</param>
+	/// <param name="to">The other slot.</param>
 	public static string? WhyNoMove(MissionDocument document, short group, int slot, int to) {
 		var orders = Orders(document, group);
 		if (Math.Abs(to - slot) != 1 || slot < 0 || to < 0 || slot >= Slots || to >= Slots || orders[slot] == -1 || orders[to] == -1) {
@@ -266,17 +300,25 @@ public static class GroupOrders {
 	}
 
 	/// <summary>
-	/// Why the order in <paramref name="group"/>'s slot <paramref name="slot"/> cannot take route <paramref name="route"/>,
+	/// Why the order in a group's slot cannot take a route,
 	/// a row-8 GUID or <c>-1</c>, or null when it can (<see cref="WhyNoFirstRoute"/>).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The order slot.</param>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public static string? WhyNoRoute(MissionDocument document, short group, int slot, short route) =>
 		slot == 0 ? WhyNoFirstRoute(document, group, route) : null;
 
 	/// <summary>
-	/// Swaps the orders in <paramref name="group"/>'s slots <paramref name="slot"/> and <paramref name="to"/>, as one
+	/// Swaps the orders in two of a group's slots, as one
 	/// <see cref="MissionDocument.Change"/>. Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoMove"/>
 	/// refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The first slot.</param>
+	/// <param name="to">The second slot.</param>
 	public static MsnEdit Move(MissionDocument document, short group, int slot, int to) {
 		if (WhyNoMove(document, group, slot, to) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -294,11 +336,15 @@ public static class GroupOrders {
 	}
 
 	/// <summary>
-	/// Sets the verb, 0 to <see cref="LastVerb"/>, of the order in <paramref name="group"/>'s slot <paramref name="slot"/>. A
+	/// Sets the verb, 0 to <see cref="LastVerb"/>, of the order in a group's slot. A
 	/// verb that <see cref="NeedsSubject"/> on an order naming none takes the player's squad, group 0, as its subject in the
 	/// same change, as a new herc group's first order has it (<see cref="HercGroups"/>). Throws
 	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoVerb"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The order slot.</param>
+	/// <param name="verb">The verb.</param>
 	public static MsnEdit SetVerb(MissionDocument document, short group, int slot, short verb) {
 		if (verb is < 0 or > LastVerb) {
 			throw new ArgumentOutOfRangeException(nameof(verb), verb, $"A verb is 0 to {LastVerb}.");
@@ -325,9 +371,13 @@ public static class GroupOrders {
 	}
 
 	/// <summary>
-	/// Sets the route, a row-8 GUID or <c>-1</c> for none, of the order in <paramref name="group"/>'s slot
-	/// <paramref name="slot"/>. Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoRoute"/> refuses it.
+	/// Sets the route, a row-8 GUID or <c>-1</c> for none, of the order in a group's slot.
+	/// Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoRoute"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The order slot.</param>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public static MsnEdit SetRoute(MissionDocument document, short group, int slot, short route) {
 		if (WhyNoRoute(document, group, slot, route) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -344,10 +394,15 @@ public static class GroupOrders {
 	}
 
 	/// <summary>
-	/// Writes route <paramref name="after"/>, a row-8 GUID or <c>-1</c>, into <paramref name="group"/>'s own route field when
-	/// that field, <paramref name="own"/> before the edit, named <paramref name="before"/>, the route slot 0 ran before it; made
+	/// Writes a new route, a row-8 GUID or <c>-1</c>, into a group's own route field when
+	/// that field, as it was before the edit, named the old route, the route slot 0 ran before it; made
 	/// inside the caller's <see cref="MissionDocument.Change"/>. A field naming another route, or none, is left as it is.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="own">The group's own route field before the edit.</param>
+	/// <param name="before">The route slot 0 ran before the edit.</param>
+	/// <param name="after">The new route.</param>
 	private static void FollowFirstRoute(MissionDocument document, short group, short own, short before, short after) {
 		if (before != -1 && own == before && after != before) {
 			document.SetField(MsnField.GroupRoute, group, after);
@@ -362,12 +417,17 @@ public static class GroupOrders {
 	private static short RouteRefOf(MissionDocument document, short order) => Order(document, order)?.RouteRef ?? -1;
 
 	/// <summary>
-	/// Sets the subject of the order in <paramref name="group"/>'s slot <paramref name="slot"/>: <paramref name="kind"/>
-	/// <c>-1</c> for none, 0 for row-16 group <paramref name="subject"/>, 1 for row-12 herc or 3 for row-14 structure. Kind 2,
+	/// Sets the subject of the order in a group's slot: a kind
+	/// <c>-1</c> for none, 0 for a row-16 group, 1 for a row-12 herc or 3 for a row-14 structure. Kind 2,
 	/// a flyer, is refused: no retail order names one
 	/// (docs/retail/formats/msn-mission-file.md#row-15-field-decode--the-order-record-dat_00470658-22-bytesrecord). None is
 	/// refused for a verb that <see cref="NeedsSubject"/>.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The order slot.</param>
+	/// <param name="kind">The subject's kind.</param>
+	/// <param name="subject">The subject's GUID.</param>
 	public static MsnEdit SetSubject(MissionDocument document, short group, int slot, short kind, short subject) {
 		if (kind is not (-1 or 0 or 1 or 3)) {
 			throw new ArgumentOutOfRangeException(nameof(kind), kind, "A subject is none (-1), a group (0), a HERC (1) or a structure (3).");
@@ -386,10 +446,14 @@ public static class GroupOrders {
 	}
 
 	/// <summary>
-	/// Sets the action that ends the order in <paramref name="group"/>'s slot <paramref name="slot"/>, moving the group on to
-	/// its next order when it fires (docs/retail/simulation/ai-goals.md), to row-10 GUID <paramref name="action"/>, or none for
+	/// Sets the action that ends the order in a group's slot, moving the group on to
+	/// its next order when it fires (docs/retail/simulation/ai-goals.md), to a row-10 GUID, or none for
 	/// <c>-1</c>. An order another slot names is copied first, as for its other fields.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The order slot.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static MsnEdit SetAction(MissionDocument document, short group, int slot, short action) {
 		ActionWiring.CheckAction(document, action);
 		return document.Change(() => document.SetField(MsnField.OrderAction, Own(document, group, slot), action));

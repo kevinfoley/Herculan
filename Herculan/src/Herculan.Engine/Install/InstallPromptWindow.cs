@@ -18,20 +18,27 @@ public static class InstallPromptWindow {
 	public const int WindowHeight = 260;
 
 	/// <summary>
-	/// The prompt's body for <paramref name="game"/>, refusing what <see cref="Refusal"/> refuses. <paramref name="dismissKey"/>
-	/// is the string of the button that gives up, <paramref name="messageKey"/> the message's when not the start-up's own,
-	/// and <paramref name="alternativeKey"/> the string of a third button, or null for none.
+	/// The prompt's body for a game, refusing what <see cref="Refusal"/> refuses.
 	/// </summary>
+	/// <param name="localization">The table the prompt's strings are read from.</param>
+	/// <param name="game">The game.</param>
+	/// <param name="dismissKey">The string of the button that gives up.</param>
+	/// <param name="initialPath">The path the prompt starts on.</param>
+	/// <param name="messageKey">The message's string, when not the start-up's own.</param>
+	/// <param name="alternativeKey">The string of a third button, or null for none.</param>
 	public static PathPrompt Create(LocalizationTable localization, GameIdentity game, string dismissKey, string initialPath = "",
 			string? messageKey = null, string? alternativeKey = null) =>
 		new(localization, game.PromptKeyPrefix, dismissKey, path => Refusal(localization, game, path), initialPath, messageKey,
 			alternativeKey: alternativeKey);
 
 	/// <summary>
-	/// Why <paramref name="path"/> cannot be <paramref name="game"/>'s install, in the player's language, or null when it can:
+	/// Why a path cannot be a game's install, in the player's language, or null when it can:
 	/// it has no archive folder, it holds another game (<see cref="RetailGameDetector.Detect"/>), the game refuses it (<see cref="GameIdentity.InstallRefusal"/>), or it is
 	/// on a disc (<see cref="RetailInstalls.IsOnDisc"/>), which can hold every folder of an install but none of its saves.
 	/// </summary>
+	/// <param name="localization">The table the message is read from.</param>
+	/// <param name="game">The game.</param>
+	/// <param name="path">The path.</param>
 	public static string? Refusal(LocalizationTable localization, GameIdentity game, string path) {
 		string prefix = game.PromptKeyPrefix;
 		if (!RetailInstalls.IsInstallRoot(path)) {
@@ -56,7 +63,9 @@ public static class InstallPromptWindow {
 	/// </summary>
 	public static object[] MessageArguments => [GameContent.ArchiveFolderName, RetailGameDetector.Es1Marker, RetailGameDetector.Es1ResourceMarker];
 
-	/// <summary>Draws <paramref name="prompt"/> into the current window, its message given <see cref="MessageArguments"/>.</summary>
+	/// <summary>Draws a prompt into the current window, its message given <see cref="MessageArguments"/>.</summary>
+	/// <param name="prompt">The prompt.</param>
+	/// <param name="owner">The native window the pickers belong to.</param>
 	public static PathPrompt.Outcome DrawPrompt(PathPrompt prompt, nint owner) => prompt.Draw(owner, MessageArguments);
 
 	/// <summary>
@@ -69,12 +78,16 @@ public static class InstallPromptWindow {
 	}
 
 	/// <summary>
-	/// Shows <paramref name="game"/>'s prompt in a window of its own (<see cref="StartupWindow"/>) until the player picks an
+	/// Shows a game's prompt in a window of its own (<see cref="StartupWindow"/>) until the player picks an
 	/// install, takes the third button, or gives up. Returns the install root, or null when the player gave up or closed
-	/// the window, and whether the third button was taken. <paramref name="refused"/> is a folder found at start-up that
-	/// cannot be the install, which the prompt first opens on with the reason showing. <paramref name="dismissKey"/> is
-	/// <c>install_prompt.quit</c>, or <c>install_prompt.back</c> when the game chooser opened the prompt.
+	/// the window, and whether the third button was taken.
 	/// </summary>
+	/// <param name="localization">The table the prompt's strings are read from.</param>
+	/// <param name="fontPath">The ImGui font.</param>
+	/// <param name="game">The game.</param>
+	/// <param name="refused">A folder found at start-up that cannot be the install, which the prompt first opens on with the reason showing.</param>
+	/// <param name="dismissKey"><c>install_prompt.quit</c>, or <c>install_prompt.back</c> when the game chooser opened the prompt.</param>
+	/// <param name="alternativeKey">The string of a third button, or null for none.</param>
 	public static (string? Chosen, bool Alternative) Run(LocalizationTable localization, string fontPath, GameIdentity game,
 			string? refused, string dismissKey, string? alternativeKey = null) {
 		var prompt = Create(localization, game, dismissKey, refused ?? "", alternativeKey: alternativeKey);

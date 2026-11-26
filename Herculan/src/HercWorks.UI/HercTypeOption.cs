@@ -27,9 +27,9 @@ internal sealed class HercTypeOption {
 	public override string ToString() => Label;
 
 	/// <summary>
-	/// The named Hercs plus an entry for every type in <paramref name="typesInUse"/> that has no
-	/// name, in type order.
+	/// The named Hercs plus an entry for every type in use that has no name, in type order.
 	/// </summary>
+	/// <param name="typesInUse">The Herc types in use.</param>
 	public static List<HercTypeOption> Build(IEnumerable<short> typesInUse) {
 		var options = HercLUT.Values()
 			.Where(herc => herc.Id <= MaxNamedHercType)

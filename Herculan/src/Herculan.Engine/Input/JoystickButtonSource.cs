@@ -19,10 +19,13 @@ public readonly record struct JoystickButtonSource(int Index, int AxisSign = 0) 
 	/// <summary>Nothing drives the button, which greys its row on the CONTROLS panel.</summary>
 	public static readonly JoystickButtonSource Unmapped = new(JoystickDeviceMap.Unmapped);
 
-	/// <summary>Device button <paramref name="index"/>.</summary>
+	/// <summary>A device button.</summary>
+	/// <param name="index">The button index.</param>
 	public static JoystickButtonSource Button(int index) => new(index);
 
-	/// <summary>Device axis <paramref name="index"/> pushed toward the end <paramref name="sign"/> names.</summary>
+	/// <summary>A device axis pushed toward one end.</summary>
+	/// <param name="index">The axis index.</param>
+	/// <param name="sign">Negative for the low end, otherwise the high end.</param>
 	public static JoystickButtonSource Axis(int index, int sign) => new(index, sign < 0 ? -1 : 1);
 
 	/// <summary>Whether a device input drives the button.</summary>

@@ -15,7 +15,8 @@ public static class HelpMacro {
 	private const int MaxCalls = 16;
 	private const int MaxArguments = 16;
 
-	/// <summary>The calls in <paramref name="macro"/>, or null when it does not parse.</summary>
+	/// <summary>The calls in a macro, or null when it does not parse.</summary>
+	/// <param name="macro">The macro's text.</param>
 	public static IReadOnlyList<HelpMacroCall>? Parse(string macro) {
 		ArgumentNullException.ThrowIfNull(macro);
 		var calls = new List<HelpMacroCall>();

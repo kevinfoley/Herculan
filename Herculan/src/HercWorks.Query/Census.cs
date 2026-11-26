@@ -53,7 +53,8 @@ internal static class Census {
 		typeof(ThreeSpaceByteTransformer).GetField("Bytes", BindingFlags.Instance | BindingFlags.NonPublic)
 		?? throw new MissingFieldException(nameof(ThreeSpaceByteTransformer), "Bytes");
 
-	/// <summary>Every <c>.VOL</c> in <paramref name="installRoot"/>'s <c>VOL</c> folder, in name order.</summary>
+	/// <summary>Every <c>.VOL</c> in an install's <c>VOL</c> folder, in name order.</summary>
+	/// <param name="installRoot">The install's root folder.</param>
 	/// <exception cref="DirectoryNotFoundException">The install has no <c>VOL</c> folder.</exception>
 	public static IReadOnlyList<string> Archives(string installRoot) {
 		string folder = CaseInsensitivePath.Combine(installRoot, RetailData.ArchiveFolder);
@@ -64,7 +65,9 @@ internal static class Census {
 		return Directory.GetFiles(folder, "*.VOL").OrderBy(p => Path.GetFileName(p), StringComparer.OrdinalIgnoreCase).ToList();
 	}
 
-	/// <summary>Every entry of <paramref name="installRoot"/>'s archives through the readers of the game it holds (<see cref="RetailGameDetector.Detect"/>).</summary>
+	/// <summary>Every entry of an install's archives through the readers of the game it holds (<see cref="RetailGameDetector.Detect"/>).</summary>
+	/// <param name="installRoot">The install's root folder.</param>
+	/// <param name="againstRoot">The install to compare against, if any.</param>
 	public static List<CensusEntry> Run(string installRoot, string? againstRoot) {
 		var against = againstRoot == null ? null : Index(againstRoot);
 		var game = RetailGameDetector.Detect(installRoot);
@@ -81,7 +84,8 @@ internal static class Census {
 		return result;
 	}
 
-	/// <summary>Every entry of <paramref name="installRoot"/>'s archives by folder and name, for <c>--against</c>.</summary>
+	/// <summary>Every entry of an install's archives by folder and name, for <c>--against</c>.</summary>
+	/// <param name="installRoot">The install's root folder.</param>
 	private static Dictionary<(string Folder, string Name), byte[]> Index(string installRoot) {
 		var index = new Dictionary<(string, string), byte[]>();
 		foreach (string path in Archives(installRoot)) {
@@ -103,10 +107,11 @@ internal static class Census {
 		vol.Folders.TryGetValue(entry.DirIdx, out var dir) ? dir.Label : "";
 
 	/// <summary>
-	/// The names <paramref name="vol"/>'s <c>nam\MECHS.NAM</c> lists, empty when it has none. Each names its chassis's
+	/// The names an archive's <c>nam\MECHS.NAM</c> lists, empty when it has none. Each names its chassis's
 	/// <c>dat\</c> stats file (<see cref="HercWorks.Core.Data.File.NameList"/>); the registry finds ES2's by their source
 	/// files' timestamps and ES1's by their retail names, so this reaches a chassis file of any other name or date.
 	/// </summary>
+	/// <param name="vol">The archive.</param>
 	private static HashSet<string> ChassisNames(Voln vol) {
 		var names = vol.FilesSet.FirstOrDefault(e => string.Equals(e.FileName?.Trim(), "MECHS.NAM", StringComparison.OrdinalIgnoreCase)
 			&& string.Equals(FolderOf(vol, e), "nam", StringComparison.OrdinalIgnoreCase)) is { RawBytes: { } bytes }
@@ -158,10 +163,15 @@ internal static class Census {
 	}
 
 	/// <summary>
-	/// The registry's reader for <paramref name="game"/>, else one of three the registry binds more narrowly than the
+	/// The registry's reader for a game, else one of three the registry binds more narrowly than the
 	/// format: a <c>.NAM</c>'s, the game's chassis stats reader for a file <see cref="ChassisNames"/> lists, and the structure shape library's
 	/// for every <c>.DGS</c>, all of which open with the same persistent-object header.
 	/// </summary>
+	/// <param name="vol">The archive the entry is in.</param>
+	/// <param name="entry">The entry.</param>
+	/// <param name="type">The entry's file type.</param>
+	/// <param name="game">The game the install holds.</param>
+	/// <param name="chassis">The chassis stats file names the archive lists.</param>
 	private static (string? Label, ThreeSpaceByteTransformer? Transformer) ReaderFor(Voln vol, VolEntry entry, string type, RetailGame game,
 			HashSet<string> chassis) {
 		if (TransformerRegistry.FindTransformer(entry, game) is { } registered) {
@@ -179,9 +189,10 @@ internal static class Census {
 	}
 
 	/// <summary>
-	/// Runs <paramref name="work"/> on a thread of its own, so a reader that loops on bytes it does not understand is
+	/// Runs the work on a thread of its own, so a reader that loops on bytes it does not understand is
 	/// abandoned after <see cref="ParseTimeout"/> rather than stopping the census.
 	/// </summary>
+	/// <param name="work">The work to run.</param>
 	private static (object? Result, string? Error) Timed(Func<object?> work) {
 		object? result = null;
 		string? error = null;

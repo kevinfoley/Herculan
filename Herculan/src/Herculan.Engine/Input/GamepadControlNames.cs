@@ -68,7 +68,8 @@ public static class GamepadControlNames {
 		(ControllerDevice.GamepadDPadLeft, JoystickHat.West, "controller.left"),
 	];
 
-	/// <summary>The family <paramref name="name"/>, a device's name as GLFW gives it, belongs to.</summary>
+	/// <summary>The family a device, named as GLFW gives it, belongs to.</summary>
+	/// <param name="name">The device's name.</param>
 	public static GamepadFamily FamilyOf(string name) {
 		bool Has(string part) => name.Contains(part, StringComparison.OrdinalIgnoreCase);
 		return true switch {
@@ -84,45 +85,66 @@ public static class GamepadControlNames {
 	}
 
 	/// <summary>
-	/// Button <paramref name="button"/>'s name on <paramref name="device"/>, through <paramref name="text"/> for a localized
+	/// A button's name on a device, through a text lookup for a localized
 	/// one, or <c>controller.button</c>'s "Button" and its number for a joystick, a pad of no known family, or a button the
 	/// family has no name for.
 	/// </summary>
+	/// <param name="device">The device, if any.</param>
+	/// <param name="button">The button index.</param>
+	/// <param name="text">Looks up a localized string.</param>
 	public static string Label(ControllerDevice? device, int button, Func<string, string> text) =>
 		Name(device, button, text) ?? string.Format(text("controller.button"), button);
 
 	/// <summary>
-	/// The name of hat <paramref name="hat"/> pushed toward <paramref name="direction"/>: a known pad's d-pad direction, or
+	/// The name of a hat pushed toward a direction: a known pad's d-pad direction, or
 	/// <c>controller.hat_direction</c>'s.
 	/// </summary>
+	/// <param name="device">The device, if any.</param>
+	/// <param name="hat">The hat index.</param>
+	/// <param name="direction">The direction pushed.</param>
+	/// <param name="text">Looks up a localized string.</param>
 	public static string HatLabel(ControllerDevice? device, int hat, JoystickHat direction, Func<string, string> text) {
 		var entry = DPad.First(entry => entry.Direction == direction);
 		return HatState(device, hat, text(entry.Key), text);
 	}
 
 	/// <summary>
-	/// Button <paramref name="button"/>'s name as printed on a known pad, through <paramref name="text"/> for a localized
+	/// A button's name as printed on a known pad, through a text lookup for a localized
 	/// one, or null for a joystick, a pad of no known family, or a button the family has no name for.
 	/// </summary>
+	/// <param name="device">The device, if any.</param>
+	/// <param name="button">The button index.</param>
+	/// <param name="text">Looks up a localized string.</param>
 	public static string? PrintedName(ControllerDevice? device, int button, Func<string, string> text) => Name(device, button, text);
 
 	/// <summary>
-	/// Hat <paramref name="hat"/> standing at <paramref name="state"/>, the words for its directions: a known pad's d-pad,
+	/// A hat standing at a state, the words for its directions: a known pad's d-pad,
 	/// or <c>controller.hat_direction</c>'s.
 	/// </summary>
+	/// <param name="device">The device, if any.</param>
+	/// <param name="hat">The hat index.</param>
+	/// <param name="state">The hat's state.</param>
+	/// <param name="text">Looks up a localized string.</param>
 	public static string HatState(ControllerDevice? device, int hat, string state, Func<string, string> text) =>
 		hat == 0 && Family(device) != GamepadFamily.Unknown
 			? string.Format(text("controller.dpad"), state)
 			: string.Format(text("controller.hat_direction"), hat, state);
 
 	/// <summary>
-	/// Axis <paramref name="axis"/>'s name on <paramref name="device"/>: a known pad's sticks by side and direction and its
+	/// An axis's name on a device: a known pad's sticks by side and direction and its
 	/// triggers as printed, or <c>controller.axis</c>'s "Axis" and its number for a joystick or a pad of no known family.
 	/// </summary>
+	/// <param name="device">The device, if any.</param>
+	/// <param name="axis">The axis index.</param>
+	/// <param name="text">Looks up a localized string.</param>
 	public static string AxisLabel(ControllerDevice? device, int axis, Func<string, string> text) =>
 		AxisName(device, axis, text) ?? string.Format(text("controller.axis"), axis);
 
-	/// <summary>Axis <paramref name="axis"/> pushed toward its <paramref name="sign"/> end, named as <see cref="AxisLabel"/> names it.</summary>
+	/// <summary>An axis pushed toward one end, named as <see cref="AxisLabel"/> names it.</summary>
+	/// <param name="device">The device, if any.</param>
+	/// <param name="axis">The axis index.</param>
+	/// <param name="sign">Negative for the low end, otherwise the high end.</param>
+	/// <param name="text">Looks up a localized string.</param>
 	public static string AxisDirectionLabel(ControllerDevice? device, int axis, int sign, Func<string, string> text) {
 		string end = sign > 0 ? "+" : "-";
 		return AxisName(device, axis, text) is { } name

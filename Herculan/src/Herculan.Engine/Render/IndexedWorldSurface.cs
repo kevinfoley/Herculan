@@ -42,7 +42,10 @@ public sealed class IndexedWorldSurface : IDisposable {
 	private uint _keptFramebuffer, _keptColor;
 	private (int Width, int Height) _keptSize;
 
-	/// <summary>A store of <paramref name="width"/> × <paramref name="rows"/> cells, all palette index 0, and a world layer at scale 1.</summary>
+	/// <summary>A store of cells, all palette index 0, and a world layer at scale 1.</summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="width">The store's width in cells.</param>
+	/// <param name="rows">The store's height in rows.</param>
 	public IndexedWorldSurface(GL gl, int width, int rows) {
 		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
 		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rows);
@@ -75,10 +78,14 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
-	/// The cursor sprite <see cref="Present"/> draws over the window when given a place for it: <paramref name="rows"/>
-	/// rows of <paramref name="width"/> palette indices, an index 0 leaving the window's pixel unless
-	/// <paramref name="opaque"/>. An empty sprite draws nothing.
+	/// The cursor sprite <see cref="Present"/> draws over the window when given a place for it: rows
+	/// of palette indices, an index 0 leaving the window's pixel unless
+	/// the sprite is opaque. An empty sprite draws nothing.
 	/// </summary>
+	/// <param name="pixels">The sprite's palette indices.</param>
+	/// <param name="width">The sprite's width.</param>
+	/// <param name="rows">The sprite's height in rows.</param>
+	/// <param name="opaque">Whether index 0 is drawn.</param>
 	public void SetCursor(ReadOnlySpan<byte> pixels, int width, int rows, bool opaque) {
 		if (width <= 0 || rows <= 0 || pixels.Length < width * rows) {
 			_cursorWidth = _cursorRows = 0;
@@ -117,9 +124,10 @@ public sealed class IndexedWorldSurface : IDisposable {
 	public int Scale { get; private set; }
 
 	/// <summary>
-	/// Draws the world layer at <paramref name="scale"/> from now on, held to 1–<see cref="MaxScale"/>: the layer is made
+	/// Draws the world layer at a scale from now on, held to 1–<see cref="MaxScale"/>: the layer is made
 	/// again at the new size with what it held scaled into it, so the world pixels already drawn stay shown.
 	/// </summary>
+	/// <param name="scale">The scale.</param>
 	public void SetScale(int scale) {
 		scale = Math.Clamp(scale, 1, MaxScale);
 		if (scale == Scale) {
@@ -143,9 +151,11 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
-	/// Sends rows <paramref name="firstRow"/> to <paramref name="firstRow"/> + <paramref name="rowCount"/> − 1 of
-	/// <paramref name="cells"/>, the whole store row by row, to the GPU.
+	/// Sends a run of rows of the cells, the whole store row by row, to the GPU.
 	/// </summary>
+	/// <param name="cells">The whole store.</param>
+	/// <param name="firstRow">The first row sent.</param>
+	/// <param name="rowCount">The number of rows sent.</param>
 	public void UploadCells(ReadOnlySpan<ushort> cells, int firstRow, int rowCount) {
 		if (cells.Length < Width * Rows) {
 			throw new ArgumentException($"{cells.Length} cells cannot hold a {Width}x{Rows} store.", nameof(cells));
@@ -180,11 +190,14 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
-	/// Binds the world layer for drawing the rect of <paramref name="width"/> × <paramref name="height"/> cells at
-	/// (<paramref name="x"/>, <paramref name="y"/>), rows counted down from the store's top: the viewport and the scissor
+	/// Binds the world layer for drawing a rect of cells, rows counted down from the store's top: the viewport and the scissor
 	/// set to it and its depth and stencil cleared. Returns the GL viewport, in the layer's pixels from its bottom-left,
 	/// that the 3D pass is drawn with. <see cref="EndWorld"/> puts the window back.
 	/// </summary>
+	/// <param name="x">The rect's left column.</param>
+	/// <param name="y">The rect's top row.</param>
+	/// <param name="width">The rect's width in cells.</param>
+	/// <param name="height">The rect's height in cells.</param>
 	public (int X, int Y, int Width, int Height) BeginWorld(int x, int y, int width, int height) {
 		var rect = (X: x * Scale, Y: (Rows - (y + height)) * Scale, Width: width * Scale, Height: height * Scale);
 		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer);
@@ -200,10 +213,12 @@ public sealed class IndexedWorldSurface : IDisposable {
 
 	/// <summary>
 	/// Binds the world layer, its depth and stencil as the last pass left them, with the scissor on the one pixel at the
-	/// middle of the cell (<paramref name="x"/>, <paramref name="y"/>)'s <see cref="Scale"/> × <see cref="Scale"/> block,
+	/// middle of a cell's <see cref="Scale"/> × <see cref="Scale"/> block,
 	/// so the pass's geometry drawn again reaches that pixel alone. Returns the pixel, from the layer's bottom-left.
 	/// <see cref="EndWorld"/> puts the window back.
 	/// </summary>
+	/// <param name="x">The cell's column.</param>
+	/// <param name="y">The cell's row.</param>
 	public (int X, int Y) BeginWorldPixel(int x, int y) {
 		var pixel = (X: x * Scale + Scale / 2, Y: (Rows - 1 - y) * Scale + Scale / 2);
 		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer);
@@ -213,12 +228,15 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws the rect of <paramref name="width"/> × <paramref name="height"/> cells at (<paramref name="x"/>,
-	/// <paramref name="y"/>) into the world layer as <see cref="Present"/> shows a cell holding a palette index, through
+	/// Draws a rect of cells into the world layer as <see cref="Present"/> shows a cell holding a palette index, through
 	/// the live palette, so the layer under the rect starts as the picture the cells make; a cell holding
 	/// <see cref="WorldCell"/> keeps the layer's pixels it has. The cells are read as <see cref="UploadCells"/> last sent
 	/// them. With no palette set nothing is drawn. Leaves the world layer bound.
 	/// </summary>
+	/// <param name="x">The rect's left column.</param>
+	/// <param name="y">The rect's top row.</param>
+	/// <param name="width">The rect's width in cells.</param>
+	/// <param name="height">The rect's height in cells.</param>
 	public void PaintCells(int x, int y, int width, int height) {
 		if (width <= 0 || height <= 0 || _palette == null) {
 			return;
@@ -258,13 +276,16 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
-	/// After a <see cref="BeginWorld"/> pass into the rect of <paramref name="width"/> × <paramref name="height"/> cells
-	/// at (<paramref name="x"/>, <paramref name="y"/>), the cells it drew into, row by row from the rect's top-left: a
+	/// After a <see cref="BeginWorld"/> pass into a rect of cells, the cells it drew into, row by row from the rect's top-left: a
 	/// cell is drawn into when any of its <see cref="Scale"/> × <see cref="Scale"/> pixels holds a depth nearer than
 	/// the far plane's 1, to which <see cref="BeginWorld"/> clears it. So it answers for a pass whose every fragment
 	/// writes its depth, as the depth-tested geometry of a 3D pass does, and not for one that paints without it, such as
 	/// a backdrop. Read back at once, waiting for the pass to finish. Leaves the world layer bound.
 	/// </summary>
+	/// <param name="x">The rect's left column.</param>
+	/// <param name="y">The rect's top row.</param>
+	/// <param name="width">The rect's width in cells.</param>
+	/// <param name="height">The rect's height in cells.</param>
 	public bool[] ReadWorldCoverage(int x, int y, int width, int height) {
 		var covered = new bool[Math.Max(width, 0) * Math.Max(height, 0)];
 		if (covered.Length == 0) {
@@ -296,10 +317,11 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
-	/// Sets the world layer's pixels under <paramref name="runs"/> aside, each a run of <c>Width</c> cells along row
+	/// Sets the world layer's pixels under the runs aside, each a run of <c>Width</c> cells along row
 	/// <c>Y</c> from column <c>X</c>, for <see cref="RestoreWorld"/> to put back once a pass that draws over them has
 	/// run; the runs replace any kept before. The scale must not change between the two.
 	/// </summary>
+	/// <param name="runs">The runs to keep.</param>
 	public void KeepWorld(IReadOnlyList<(int X, int Y, int Width)> runs) {
 		_kept = runs;
 		if (runs.Count == 0) {
@@ -375,11 +397,15 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
-	/// Copies the world layer's pixels of the rect of <paramref name="width"/> × <paramref name="height"/> cells at
-	/// (<paramref name="sourceX"/>, <paramref name="sourceY"/>) to the rect at (<paramref name="targetX"/>,
-	/// <paramref name="targetY"/>). The two rects must not overlap, as one GL blit within a framebuffer requires; a copy
+	/// Copies the world layer's pixels of a rect of cells to another rect. The two rects must not overlap, as one GL blit within a framebuffer requires; a copy
 	/// whose ends overlap is split by its owner.
 	/// </summary>
+	/// <param name="sourceX">The source rect's left column.</param>
+	/// <param name="sourceY">The source rect's top row.</param>
+	/// <param name="targetX">The target rect's left column.</param>
+	/// <param name="targetY">The target rect's top row.</param>
+	/// <param name="width">The rects' width in cells.</param>
+	/// <param name="height">The rects' height in cells.</param>
 	public void CopyWorld(int sourceX, int sourceY, int targetX, int targetY, int width, int height) {
 		if (width <= 0 || height <= 0) {
 			return;
@@ -398,10 +424,15 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
-	/// Copies the world pixels of <paramref name="source"/>'s rect of <paramref name="width"/> × <paramref name="height"/>
-	/// cells at (<paramref name="sourceX"/>, <paramref name="sourceY"/>) into this surface's rect at
-	/// (<paramref name="targetX"/>, <paramref name="targetY"/>), each at its own surface's scale.
+	/// Copies the world pixels of a rect of cells of another surface into this surface's rect, each at its own surface's scale.
 	/// </summary>
+	/// <param name="source">The surface copied from.</param>
+	/// <param name="sourceX">The source rect's left column.</param>
+	/// <param name="sourceY">The source rect's top row.</param>
+	/// <param name="targetX">The target rect's left column.</param>
+	/// <param name="targetY">The target rect's top row.</param>
+	/// <param name="width">The rects' width in cells.</param>
+	/// <param name="height">The rects' height in cells.</param>
 	public void CopyWorldFrom(IndexedWorldSurface source, int sourceX, int sourceY, int targetX, int targetY, int width, int height) {
 		if (width <= 0 || height <= 0) {
 			return;
@@ -419,18 +450,24 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
-	/// Shows the window of <paramref name="windowWidth"/> × <paramref name="windowRows"/> cells read from the linear
-	/// address <paramref name="start"/>, each row <see cref="Width"/> cells on from the last and every address taken
-	/// modulo <paramref name="cellCount"/>, at <paramref name="fit"/>'s placement in the window over black. Leaves the
-	/// window's framebuffer bound with its whole viewport and depth testing on. With <paramref name="cursorAt"/>, the
+	/// Shows a window of cells read from a linear address, each row <see cref="Width"/> cells on from the last and every address taken
+	/// modulo a cell count, at a fit's placement in the window over black. Leaves the
+	/// window's framebuffer bound with its whole viewport and depth testing on. With a cursor position, the
 	/// <see cref="SetCursor"/> sprite's top-left lies at that cell of the window, over the cells.
 	/// </summary>
+	/// <param name="fit">The placement in the window.</param>
+	/// <param name="start">The linear address of the window's first cell.</param>
+	/// <param name="windowWidth">The window's width in cells.</param>
+	/// <param name="windowRows">The window's height in rows.</param>
+	/// <param name="cellCount">The number of cells addresses are taken modulo.</param>
+	/// <param name="cursorAt">The window cell the cursor sprite's top-left lies at; null for no cursor.</param>
 	public void Present(FrameFit fit, int start, int windowWidth, int windowRows, int cellCount, (int X, int Y)? cursorAt = null) {
 		Clear(fit.Window);
 		Draw(fit.Window, fit.Placement, start, windowWidth, windowRows, cellCount, cursorAt);
 	}
 
-	/// <summary>The window's framebuffer of <paramref name="window"/> pixels cleared to black, as <see cref="Present"/> clears it before it draws.</summary>
+	/// <summary>The window's framebuffer of a given size in pixels cleared to black, as <see cref="Present"/> clears it before it draws.</summary>
+	/// <param name="window">The window's size in pixels.</param>
 	public void Clear(Vector2D<int> window) {
 		_gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 		_gl.Disable(EnableCap.ScissorTest);
@@ -441,20 +478,31 @@ public sealed class IndexedWorldSurface : IDisposable {
 	}
 
 	/// <summary>
-	/// <see cref="Present"/>'s draw without its clear, at <paramref name="placement"/> (left, top, width, height from
-	/// the top-left of a window of <paramref name="window"/> pixels), which may reach past the window's edges, over
+	/// <see cref="Present"/>'s draw without its clear, at a placement (left, top, width, height from
+	/// the top-left of the window), which may reach past the window's edges, over
 	/// whatever the window already shows: so several windows onto stores can be laid side by side or stretched, a window
 	/// one cell wide repeating its cells across the placement's width.
 	/// </summary>
+	/// <param name="window">The window's size in pixels.</param>
+	/// <param name="placement">Where the window is drawn: left, top, width and height from the window's top-left.</param>
+	/// <param name="start">The linear address of the window's first cell.</param>
+	/// <param name="windowWidth">The window's width in cells.</param>
+	/// <param name="windowRows">The window's height in rows.</param>
+	/// <param name="cellCount">The number of cells addresses are taken modulo.</param>
+	/// <param name="cursorAt">The window cell the cursor sprite's top-left lies at; null for no cursor.</param>
 	public void Draw(Vector2D<int> window, (int Left, int Top, int Width, int Height) placement, int start,
 			int windowWidth, int windowRows, int cellCount, (int X, int Y)? cursorAt = null) =>
 		DrawWindow(window, placement, start, windowWidth, windowRows, cellCount, cursorAt, false);
 
 	/// <summary>
-	/// The <see cref="SetCursor"/> sprite alone, its top-left at cell <paramref name="cursorAt"/> of a window of
-	/// <paramref name="windowWidth"/> × <paramref name="windowRows"/> cells at <paramref name="placement"/>, as
+	/// The <see cref="SetCursor"/> sprite alone, its top-left at a cell of a window of cells, as
 	/// <see cref="Draw"/> would draw it there, over whatever the window already shows.
 	/// </summary>
+	/// <param name="window">The window's size in pixels.</param>
+	/// <param name="placement">Where the window is drawn.</param>
+	/// <param name="windowWidth">The window's width in cells.</param>
+	/// <param name="windowRows">The window's height in rows.</param>
+	/// <param name="cursorAt">The window cell the cursor sprite's top-left lies at.</param>
 	public void DrawCursor(Vector2D<int> window, (int Left, int Top, int Width, int Height) placement, int windowWidth,
 			int windowRows, (int X, int Y) cursorAt) =>
 		DrawWindow(window, placement, 0, windowWidth, windowRows, 1, cursorAt, true);

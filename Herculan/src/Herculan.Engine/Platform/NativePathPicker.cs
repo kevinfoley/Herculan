@@ -21,10 +21,12 @@ public static class NativePathPicker {
 	/// <summary>
 	/// Shows the picker without blocking the caller's frame loop, so the window behind it keeps drawing.
 	/// Completes with the path chosen, or null when the player cancelled or there is no picker. With
-	/// <paramref name="filter"/> it picks an existing file of those types, and otherwise a folder.
-	/// <paramref name="owner"/> is the native window to parent the dialog to on Windows (0 for none);
-	/// <paramref name="initialPath"/>, when it or its folder exists, is where the dialog opens.
+	/// a filter it picks an existing file of those types, and otherwise a folder.
 	/// </summary>
+	/// <param name="title">The dialog's title.</param>
+	/// <param name="initialPath">Where the dialog opens, when it or its folder exists.</param>
+	/// <param name="owner">The native window to parent the dialog to on Windows (0 for none).</param>
+	/// <param name="filter">The file types to pick; null to pick a folder.</param>
 	public static Task<string?> PickAsync(string title, string? initialPath, nint owner, FileFilter? filter = null) {
 		string? start = StartFolder(initialPath);
 		return OperatingSystem.IsWindows()
@@ -215,7 +217,8 @@ public static class NativePathPicker {
 
 	private static string Patterns(FileFilter filter) => string.Join(" ", filter.Extensions.Select(extension => "*." + extension));
 
-	/// <summary>Quotes <paramref name="text"/> for the inside of an AppleScript string literal.</summary>
+	/// <summary>Quotes a text for the inside of an AppleScript string literal.</summary>
+	/// <param name="text">The text.</param>
 	public static string AppleScriptEscape(string text) => text.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
 	private static string? linuxTool;

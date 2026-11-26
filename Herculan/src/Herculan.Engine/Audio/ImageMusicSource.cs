@@ -72,16 +72,19 @@ public sealed class ImageMusicSource : MusicSourceBase {
 		+ (_layout.Estimated ? " (boundaries estimated from the silence between pieces)" : "");
 
 	/// <summary>
-	/// Starts working out <paramref name="image"/>'s tracks in the background, if that has not already begun, so
+	/// Starts working out an image's tracks in the background, if that has not already begun, so
 	/// that <see cref="TryCreate"/> later has them ready.
 	/// </summary>
+	/// <param name="image">The disc image.</param>
 	public static Task<Layout> BeginLayout(DiscImage image) =>
 		Layouts.GetValue(image, key => Task.Run(() => ReadLayout(key)));
 
 	/// <summary>
-	/// A source for <paramref name="image"/>'s audio, waiting for <see cref="BeginLayout"/>'s work if it is still
+	/// A source for an image's audio, waiting for <see cref="BeginLayout"/>'s work if it is still
 	/// running; null, with the reason, when the image has no audio or it could not be read. Never throws.
 	/// </summary>
+	/// <param name="image">The disc image.</param>
+	/// <param name="failure">Says why no source was made; empty on success.</param>
 	public static ImageMusicSource? TryCreate(DiscImage image, out string failure) {
 		Layout layout;
 		try {
@@ -101,9 +104,10 @@ public sealed class ImageMusicSource : MusicSourceBase {
 	}
 
 	/// <summary>
-	/// <paramref name="image"/>'s audio tracks: a cue sheet's as they are, and a track of unknown boundaries cut
+	/// An image's audio tracks: a cue sheet's as they are, and a track of unknown boundaries cut
 	/// into pieces at its silences, as <see cref="ImageMusicSource"/> describes.
 	/// </summary>
+	/// <param name="image">The disc image.</param>
 	public static Layout ReadLayout(DiscImage image) {
 		var tracks = new List<Extent>();
 		bool estimated = false;

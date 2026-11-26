@@ -196,7 +196,7 @@ public sealed class HostMenuBar : IEscapeMenu {
 	/// of. If the bar is still up afterwards, the bar takes the focus with the highlight on its first item, so the pad can
 	/// go on from there.
 	/// <para>While the Controller window is listening for a control to bind (<see cref="ControllerWindow.Listening"/>), the
-	/// press does none of that. Listening stops, and the window says that <paramref name="input"/> is reserved for the menu bar and cannot be bound
+	/// press does none of that. Listening stops, and the window says that the input is reserved for the menu bar and cannot be bound
 	/// to anything else (<see cref="ControllerWindow.RefuseMenuBarInput"/>).</para>
 	/// </summary>
 	/// <param name="input">The control pressed: a Custom profile's menu bar input, or by default a gamepad's Back.</param>
@@ -255,10 +255,11 @@ public sealed class HostMenuBar : IEscapeMenu {
 
 	/// <summary>
 	/// Draws the bar, when it is up, and its open panels, except the Debug panel and the Mission Scripting window, which
-	/// the host draws itself since they need the host's state. <paramref name="owner"/> is the native window a folder
-	/// picker belongs to. <paramref name="fullScreen"/> is whether that window is full screen, and
-	/// <see cref="PanelCentring"/> watches it. Call once per frame inside the ImGui frame.
+	/// the host draws itself since they need the host's state. <see cref="PanelCentring"/> watches whether the window is
+	/// full screen. Call once per frame inside the ImGui frame.
 	/// </summary>
+	/// <param name="owner">The native window a folder picker belongs to.</param>
+	/// <param name="fullScreen">Whether the window is full screen.</param>
 	public void Draw(nint owner, bool fullScreen) {
 		_centring.Update(fullScreen);
 

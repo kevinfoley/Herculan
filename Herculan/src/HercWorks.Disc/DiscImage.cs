@@ -117,10 +117,11 @@ public sealed class DiscImage : IDisposable {
 		Iso9660.IsoFileSystem.Read(this, preferJoliet);
 
 	/// <summary>
-	/// Opens audio track <paramref name="trackNumber"/> as a seekable stream of raw PCM
+	/// Opens an audio track as a seekable stream of raw PCM
 	/// (<see cref="AudioSampleRate"/>, <see cref="AudioChannels"/>, <see cref="AudioBitsPerSample"/>,
 	/// little-endian), from its <c>INDEX 01</c> for <see cref="DiscTrack.SectorCount"/> sectors.
 	/// </summary>
+	/// <param name="trackNumber">The track's number.</param>
 	/// <exception cref="ArgumentException">There is no such track, or it is a data track.</exception>
 	public Stream OpenAudioTrack(int trackNumber) {
 		var track = Tracks.FirstOrDefault(t => t.Number == trackNumber)
@@ -133,19 +134,23 @@ public sealed class DiscImage : IDisposable {
 	}
 
 	/// <summary>
-	/// Reads the 2,048-byte user data of <paramref name="count"/> sectors from <paramref name="lba"/> into
-	/// <paramref name="destination"/>. A gap the image does not hold (a cue sheet's <c>PREGAP</c> or
+	/// Reads the 2,048-byte user data of a run of sectors. A gap the image does not hold (a cue sheet's <c>PREGAP</c> or
 	/// <c>POSTGAP</c>) reads as zeros.
 	/// </summary>
+	/// <param name="lba">The first sector's logical block address.</param>
+	/// <param name="count">The number of sectors to read.</param>
+	/// <param name="destination">Receives the user data.</param>
 	/// <exception cref="DiscFormatException">A sector is outside the image or on an audio track.</exception>
 	public void ReadSectors(int lba, int count, Span<byte> destination) =>
 		Read(lba, count, destination, audio: false);
 
 	/// <summary>
-	/// Reads <paramref name="count"/> audio sectors from <paramref name="lba"/> into
-	/// <paramref name="destination"/> as little-endian PCM, 2,352 bytes each. A sector that is not audio
+	/// Reads audio sectors as little-endian PCM, 2,352 bytes each. A sector that is not audio
 	/// (a data track, or a gap the image does not hold) reads as silence.
 	/// </summary>
+	/// <param name="lba">The first sector's logical block address.</param>
+	/// <param name="count">The number of sectors to read.</param>
+	/// <param name="destination">Receives the PCM.</param>
 	/// <exception cref="DiscFormatException">A sector is outside the image.</exception>
 	public void ReadAudioSectors(int lba, int count, Span<byte> destination) =>
 		Read(lba, count, destination, audio: true);

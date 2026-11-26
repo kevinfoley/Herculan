@@ -9,7 +9,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// one generated <c>script.dat</c>. Each object counts as <see cref="ObjectLimits.Count"/> counts it.
 /// </summary>
 public static class MapMarkerLimits {
-	/// <summary>The markers <paramref name="layout"/> puts on the map: the squad's route markers, one per object, and the nav marker's.</summary>
+	/// <summary>The markers a layout puts on the map: the squad's route markers, one per object, and the nav marker's.</summary>
+	/// <param name="layout">The mission layout.</param>
 	public static int Count(MissionLayout layout) =>
 		RouteMarkers(layout, SquadRoster.Squad(layout)) + ObjectLimits.Count(layout) + 1;
 

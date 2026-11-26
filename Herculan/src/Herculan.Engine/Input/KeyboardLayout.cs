@@ -91,7 +91,7 @@ public sealed class KeyboardLayout {
 	}
 
 	/// <summary>
-	/// What is printed on the key that makes the game's <paramref name="key"/>, upper-cased, for a key a layout can move;
+	/// What is printed on the key that makes a game key, upper-cased, for a key a layout can move;
 	/// null for every other key, which a key list names rather than reads off the keyboard.
 	///
 	/// <para>A letter or a digit is itself on any layout, since the key that sends its virtual-key code is the one
@@ -100,13 +100,14 @@ public sealed class KeyboardLayout {
 	/// place, where the translation leaves it. When neither gives a character, it is the US symbol. Refreshed with the
 	/// translation (<see cref="Refresh"/>).</para>
 	/// </summary>
+	/// <param name="key">The game's key.</param>
 	public string? Printed(Key key) {
 		int index = Array.IndexOf(Movable, key);
 		return index >= 0 ? _printed[index] : null;
 	}
 
 	/// <summary>
-	/// What is printed on the key in <paramref name="physical"/>'s US place, upper-cased, for a key a layout can move;
+	/// What is printed on the key in a physical key's US place, upper-cased, for a key a layout can move;
 	/// null for every other key. It names a key for a game that reads keys by their place, as a DOS game reading the
 	/// keyboard's scancodes does, where <see cref="Printed"/> names one for a game that reads virtual-key codes.
 	///
@@ -115,12 +116,15 @@ public sealed class KeyboardLayout {
 	/// other key GLFW's name for it. When neither gives a character, it is the US symbol. Refreshed with the translation
 	/// (<see cref="Refresh"/>).</para>
 	/// </summary>
+	/// <param name="physical">The physical key.</param>
 	public string? PrintedAt(Key physical) {
 		int index = Array.IndexOf(Movable, physical);
 		return index >= 0 ? _printedAt[index] : null;
 	}
 
-	/// <summary>Whether any physical key the game reads as <paramref name="key"/> is down.</summary>
+	/// <summary>Whether any physical key the game reads as a given key is down.</summary>
+	/// <param name="device">The keyboard.</param>
+	/// <param name="key">The game's key.</param>
 	public bool IsDown(IKeyboard device, Key key) {
 		if (!_sources.TryGetValue(key, out var sources)) {
 			return device.IsKeyPressed(key);

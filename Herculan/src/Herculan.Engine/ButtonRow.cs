@@ -44,7 +44,8 @@ public ref struct ButtonRow {
 		}
 	}
 
-	/// <summary>The width a button needs to show <paramref name="label"/> in full.</summary>
+	/// <summary>The width a button needs to show a label in full.</summary>
+	/// <param name="label">The label.</param>
 	public static float LabelWidth(string label) => ImGui.CalcTextSize(label).X + ImGui.GetStyle().FramePadding.X * 2;
 
 	/// <summary>The row's height: one frame, or one per button with spacing between when they did not fit one line.</summary>

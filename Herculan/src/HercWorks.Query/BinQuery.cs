@@ -18,10 +18,13 @@ internal sealed record BinLine(int Index, string? Text);
 /// </summary>
 internal static class BinQuery {
 	/// <summary>
-	/// Every entry of <paramref name="archivePaths"/> named <paramref name="file"/> (<c>name</c> or <c>folder\name</c>, ignoring
-	/// case; <c>.BIN</c> added when it has no extension), with the lines <paramref name="indexes"/> names, or all of them when it
+	/// Every entry of the archives named <c>file</c> (<c>name</c> or <c>folder\name</c>, ignoring
+	/// case; <c>.BIN</c> added when it has no extension), with the lines the indexes name, or all of them when it
 	/// names none.
 	/// </summary>
+	/// <param name="archivePaths">The archives to search.</param>
+	/// <param name="file">The file's name.</param>
+	/// <param name="indexes">The line indexes wanted; empty for all lines.</param>
 	public static List<BinTable> Run(IReadOnlyList<string> archivePaths, string file, IReadOnlyList<int> indexes) {
 		if (Path.GetExtension(file).Length == 0) {
 			file += ".BIN";

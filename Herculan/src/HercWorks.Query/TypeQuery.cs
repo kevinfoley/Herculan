@@ -130,7 +130,10 @@ internal static class TypeQuery {
 		return hits;
 	}
 
-	/// <summary>Every group of <paramref name="kind"/> naming <paramref name="guid"/>, once per slot that names it.</summary>
+	/// <summary>Every group of a kind naming a GUID, once per slot that names it.</summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="kind">The roster kind.</param>
+	/// <param name="guid">The GUID.</param>
 	private static IEnumerable<GroupPlacement> Placements(MissionFile file, RosterKind kind, short guid) {
 		var groups = file.Groups ?? [];
 		for (int g = 0; g < groups.Length; g++) {
@@ -150,10 +153,13 @@ internal static class TypeQuery {
 	}
 
 	/// <summary>
-	/// The types <paramref name="spec"/> names: <c>all</c> for every type in the roster's table, a
+	/// The types a spec names: <c>all</c> for every type in the roster's table, a
 	/// decimal or <c>0x</c> hex index, or a type name, matched whole and then as a prefix, ignoring case.
 	/// Null when nothing matches.
 	/// </summary>
+	/// <param name="data">The retail data.</param>
+	/// <param name="kind">The roster kind.</param>
+	/// <param name="spec">The spec to resolve.</param>
 	public static IReadOnlyList<int>? ResolveTypes(RetailData data, RosterKind kind, string spec) {
 		if (string.Equals(spec, AllTypes, StringComparison.OrdinalIgnoreCase)) {
 			int count = data.TypeCount(kind);

@@ -59,20 +59,25 @@ public sealed class MissionBundle {
 	/// <summary>The mission's own zone, or null when the bundle has none.</summary>
 	public ZoneFiles? Zone { get; }
 
-	/// <summary>The mission's text under <paramref name="extension"/> (with its dot, any case), or null when the bundle has none.</summary>
+	/// <summary>The mission's text under an extension (with its dot, any case), or null when the bundle has none.</summary>
+	/// <param name="extension">The extension.</param>
 	public byte[]? Text(string extension) => _texts.GetValueOrDefault(extension.ToUpperInvariant());
 
 	/// <summary>
-	/// The bundle at <paramref name="path"/>, or null with the reason it is not one. <paramref name="textExtensions"/> are the
-	/// extensions, with their dots, the mission's text may take; the bundle has to hold at least one of them.
+	/// The bundle at a path, or null with the reason it is not one. The bundle has to hold at least one of the text extensions.
 	/// </summary>
+	/// <param name="path">The bundle's path.</param>
+	/// <param name="textExtensions">The extensions, with their dots, the mission's text may take.</param>
+	/// <param name="failure">Says why the file is not a bundle; null on success.</param>
 	public static MissionBundle? Read(string path, IReadOnlyCollection<string> textExtensions, out string? failure) =>
 		ReadFile(path, out failure) is { } bytes ? Read(bytes, textExtensions, out failure) : null;
 
 	/// <summary>
-	/// The bundle file at <paramref name="path"/>, read whole, or null with the reason: it is missing, cannot be read, or is
+	/// The bundle file at a path, read whole, or null with the reason: it is missing, cannot be read, or is
 	/// larger than <see cref="MaxFileSize"/>. The size is checked as the bytes are read, not taken from the directory.
 	/// </summary>
+	/// <param name="path">The file's path.</param>
+	/// <param name="failure">Says why the file was not read; null on success.</param>
 	public static byte[]? ReadFile(string path, out string? failure) {
 		try {
 			using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -89,7 +94,10 @@ public sealed class MissionBundle {
 		}
 	}
 
-	/// <summary>The bundle <paramref name="bundle"/>, the file's bytes, or null with the reason; as <see cref="Read(string, IReadOnlyCollection{string}, out string?)"/>.</summary>
+	/// <summary>The bundle in the file's bytes, or null with the reason; as <see cref="Read(string, IReadOnlyCollection{string}, out string?)"/>.</summary>
+	/// <param name="bundle">The file's bytes.</param>
+	/// <param name="textExtensions">The extensions, with their dots, the mission's text may take.</param>
+	/// <param name="failure">Says why the bytes are not a bundle; null on success.</param>
 	public static MissionBundle? Read(byte[] bundle, IReadOnlyCollection<string> textExtensions, out string? failure) {
 		if (bundle.Length > MaxFileSize) {
 			failure = $"The bundle is larger than {MaxFileSize / (1024 * 1024)} MB.";
@@ -229,10 +237,15 @@ public sealed class MissionBundle {
 	}
 
 	/// <summary>
-	/// The bundle file for mission <paramref name="name"/> (no extension): its <c>.MSN</c> <paramref name="msn"/>, its text in
-	/// each language <paramref name="texts"/> holds, by extension with its dot, <paramref name="about"/> unless it is null or
-	/// blank, and <paramref name="zone"/>'s header and heightmap unless it is null, each under <paramref name="name"/>.
+	/// The bundle file for a mission (no extension): its <c>.MSN</c>, its text in
+	/// each language the texts hold, by extension with its dot, the about text unless it is null or
+	/// blank, and the zone's header and heightmap unless it is null, each under the mission's name.
 	/// </summary>
+	/// <param name="name">The mission's name.</param>
+	/// <param name="msn">The <c>.MSN</c> bytes.</param>
+	/// <param name="texts">The mission's text in each language, by extension with its dot.</param>
+	/// <param name="about">The about text; null or blank for none.</param>
+	/// <param name="zone">The zone's files; null for none.</param>
 	public static byte[] Write(string name, byte[] msn, IReadOnlyDictionary<string, byte[]> texts, MissionAbout? about,
 			ZoneFiles? zone) {
 		using var buffer = new MemoryStream();

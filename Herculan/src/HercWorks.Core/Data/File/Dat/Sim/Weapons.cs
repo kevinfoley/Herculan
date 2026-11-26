@@ -136,7 +136,7 @@ public class Weapons {
 		/// Which shape of <c>dts\MECHWPNS.DTS</c> this weapon is drawn as when it is fitted to a
 		/// hardpoint whose mounting code (<c>.GL +6</c>,
 		/// <see cref="Dbsim.GunLayout.HardpointEntry.MountingCode"/>) is
-		/// <paramref name="mountingCode"/> — four shorts at tail-relative <c>0x00</c>-<c>0x06</c>,
+		/// a given code — four shorts at tail-relative <c>0x00</c>-<c>0x06</c>,
 		/// one per code, read by <c>WeaponMount_ShapeForMountingCode</c> (<c>0040fab0</c>) as <c>template[0x22 + code * 2]</c>.
 		///
 		/// <para>The four are the same gun modelled for the four ways it can hang off a chassis, so
@@ -147,6 +147,7 @@ public class Weapons {
 		/// <para>Code 4 is the invisible mounting and has no entry: nothing is drawn for it and the
 		/// base mount constructor loads no shape at all.</para>
 		/// </summary>
+		/// <param name="mountingCode">The mounting code.</param>
 		public short ModelShapeIndex(int mountingCode) =>
 			mountingCode >= 0 && mountingCode < 4 ? BitConverter.ToInt16(Tail, mountingCode * 2) : (short)-1;
 	}

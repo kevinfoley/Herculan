@@ -97,9 +97,10 @@ public sealed class OplStream : IDisposable {
 	public TimeSpan TargetLag => TimeSpan.FromSeconds((double)_targetFrames / Chip.SampleRate);
 
 	/// <summary>
-	/// Advances the chip by <paramref name="frames"/> frames and hands each block completed to the stream, or keeps it
+	/// Advances the chip by a number of frames and hands each block completed to the stream, or keeps it
 	/// until the source starts.
 	/// </summary>
+	/// <param name="frames">The number of frames to advance.</param>
 	public void Render(int frames) {
 		if (!IsAudible) {
 			return;

@@ -45,7 +45,8 @@ public readonly record struct CellGate(short Sequence, short Frame, PartDetail? 
 	/// <summary>Whether this piece is drawn only while its detail part selects its level.</summary>
 	public bool IsDetailGated => Detail != null;
 
-	/// <summary>Whether <paramref name="frames"/> puts this piece on screen.</summary>
+	/// <summary>Whether a set of frames puts this piece on screen.</summary>
+	/// <param name="frames">The frames, if any.</param>
 	public bool VisibleIn(ShapeCellFrames? frames) =>
 		!IsGated || (frames?[Sequence] ?? 0) == Frame;
 }
@@ -513,8 +514,11 @@ public static partial class DtsMeshBuilder {
 
 	/// <summary>
 	/// Builds one top-level root at its highest detail level, with every
-	/// <see cref="TSCellAnimPart"/> under it showing cell <paramref name="cellFrame"/>.
+	/// <see cref="TSCellAnimPart"/> under it showing a given cell.
 	/// </summary>
+	/// <param name="root">The root to build.</param>
+	/// <param name="atlas">The texture atlas, if any.</param>
+	/// <param name="shading">The surface shading, if any.</param>
 	/// <param name="cellFrame">
 	/// Which cell of the shape's flipbook to bake. Zero — the rest pose — for everything the engine
 	/// draws statically; a launcher round builds one mesh per cell and picks between them as its own
@@ -672,15 +676,19 @@ public static partial class DtsMeshBuilder {
 	}
 
 	/// <summary>
-	/// <see cref="BuildRoot"/>'s mesh at <paramref name="cellFrame"/>, split by <see cref="TSDetailPart"/>
+	/// <see cref="BuildRoot"/>'s mesh at a given cell, split by <see cref="TSDetailPart"/>
 	/// level alone — for a shape whose cells are a flipbook built one mesh per cell, but whose detail
 	/// levels are still chosen per object per frame: a weapon, a launcher round, a piece of debris.
 	///
-	/// <para>Every piece comes back ungated by cell, since <paramref name="cellFrame"/> has already
+	/// <para>Every piece comes back ungated by cell, since the cell has already
 	/// picked the one cell each cell-animation part shows; no retail shape nests a detail part inside
 	/// a cell-animation part, so that pick cannot hide a level. Empty when the shape has no detail
 	/// part, which leaves <see cref="BuildRoot"/>'s single mesh as the whole of it.</para>
 	/// </summary>
+	/// <param name="root">The root to build.</param>
+	/// <param name="atlas">The texture atlas, if any.</param>
+	/// <param name="shading">The surface shading, if any.</param>
+	/// <param name="cellFrame">The cell each cell-animation part shows.</param>
 	public static MeshCell[] BuildDetailLevels(TSObject root, TextureAtlas? atlas = null,
 			SurfaceShading? shading = null, int cellFrame = 0) {
 		var sink = new Collector { AllDetailLevels = true };

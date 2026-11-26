@@ -39,7 +39,8 @@ internal struct ByteCursor {
 
 	public readonly bool AtEnd => Position >= _end;
 
-	/// <summary>A cursor over the next <paramref name="length"/> bytes, which this one skips.</summary>
+	/// <summary>A cursor over the next run of bytes, which this one skips.</summary>
+	/// <param name="length">The number of bytes the new cursor covers.</param>
 	public ByteCursor Slice(int length) {
 		Require(length);
 		var slice = new ByteCursor(_bytes, Position, Position + length);

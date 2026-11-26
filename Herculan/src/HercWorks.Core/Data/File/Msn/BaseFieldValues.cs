@@ -17,13 +17,19 @@ public sealed record FieldOverride(short Condition, short Value);
 /// it.</para>
 /// </summary>
 public static class BaseFieldValues {
-	/// <summary><paramref name="field"/> of its row's GUID <paramref name="guid"/> in its base; throws for a GUID no record carries.</summary>
+	/// <summary>A field of its row's GUID in its base; throws for a GUID no record carries.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="field">The field.</param>
+	/// <param name="guid">The GUID.</param>
 	public static short Current(MissionDocument document, MsnField field, short guid) => field.Get(Entry(document, field.Row, guid).Fields);
 
 	/// <summary>
-	/// Each condition other than the base's under which a record of the GUID sets <paramref name="field"/>, in file order, with
+	/// Each condition other than the base's under which a record of the GUID sets the field, in file order, with
 	/// the value the last such record sets.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="field">The field.</param>
+	/// <param name="guid">The GUID.</param>
 	public static IReadOnlyList<FieldOverride> Overrides(MissionDocument document, MsnField field, short guid) {
 		var overrides = new List<FieldOverride>();
 		foreach (var variation in Entry(document, field.Row, guid).Variations.Where(variation => variation.Words.Contains(field.Word))) {
@@ -40,10 +46,15 @@ public static class BaseFieldValues {
 	}
 
 	/// <summary>
-	/// Sets <paramref name="field"/> of its row's GUID <paramref name="guid"/> in its base to <paramref name="value"/>, by the
-	/// rules in the class summary. Throws <see cref="InvalidOperationException"/> with <paramref name="templateRefusal"/> for
+	/// Sets a field of its row's GUID in its base to a value, by the
+	/// rules in the class summary. Throws <see cref="InvalidOperationException"/> with the template refusal for
 	/// the unset value where a template the base picks supplies another value, which an overlay cannot unset.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="field">The field.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="value">The value.</param>
+	/// <param name="templateRefusal">The message thrown when the unset value is refused.</param>
 	public static MsnEdit Set(MissionDocument document, MsnField field, short guid, short value, string templateRefusal) {
 		if (value != field.Unset) {
 			return document.Change(() => document.SetField(field, guid, value));

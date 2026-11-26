@@ -50,7 +50,15 @@ internal static class ValueQuery {
 
 	private static readonly Regex FieldSpec = new(@"^(\w+)(?:\[(\d+)\])?$");
 
-	/// <summary>Null with <paramref name="error"/> set when the row, field, kind or flag does not fit together.</summary>
+	/// <summary>Null, with the error set, when the row, field, kind or flag does not fit together.</summary>
+	/// <param name="data">The retail data.</param>
+	/// <param name="missions">The missions to read.</param>
+	/// <param name="row">The row number.</param>
+	/// <param name="field">The field name.</param>
+	/// <param name="kind">The member kind to keep, if any.</param>
+	/// <param name="nonSquad">Whether to keep non-squad records.</param>
+	/// <param name="where">The conditions a record must meet.</param>
+	/// <param name="error">Says why the query did not fit together; null on success.</param>
 	public static ValueQueryResult? Run(RetailData data, IReadOnlyCollection<string> missions, int row, string field,
 			string? kind, bool nonSquad, IReadOnlyList<string> where, out string? error) {
 		error = null;
@@ -184,9 +192,14 @@ internal static class ValueQuery {
 	private static string Name(PropertyInfo property, int? index) => index is { } at ? $"{property.Name}[{at}]" : property.Name;
 
 	/// <summary>
-	/// The property and element index <paramref name="spec"/> names, <c>Name</c> or <c>Name[i]</c> in any case; null with
-	/// <paramref name="error"/> naming the row's fields when it names none, or an index on a field that is no array.
+	/// The property and element index a spec names, <c>Name</c> or <c>Name[i]</c> in any case; null with
+	/// the error naming the row's fields when it names none, or an index on a field that is no array.
 	/// </summary>
+	/// <param name="properties">The row's properties.</param>
+	/// <param name="row">The row number.</param>
+	/// <param name="rowName">The row's name.</param>
+	/// <param name="spec">The spec to resolve.</param>
+	/// <param name="error">Names the row's fields when the spec names none; null on success.</param>
 	private static (PropertyInfo Property, int? Index)? Resolve(List<PropertyInfo> properties, int row, string rowName, string spec,
 			out string? error) {
 		error = null;
@@ -211,7 +224,11 @@ internal static class ValueQuery {
 		return (property, index);
 	}
 
-	/// <summary>The row's records <paramref name="kind"/> and <paramref name="nonSquad"/> keep, in file order.</summary>
+	/// <summary>The row's records the kind and non-squad flag keep, in file order.</summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="row">The row number.</param>
+	/// <param name="kind">The member kind to keep, if any.</param>
+	/// <param name="nonSquad">Whether to keep non-squad records.</param>
 	private static IEnumerable<object> Population(MissionFile file, int row, string? kind, bool nonSquad) {
 		var squad = nonSquad ? SquadOf(file) : null;
 		var groups = file.Groups ?? [];

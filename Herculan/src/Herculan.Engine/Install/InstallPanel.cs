@@ -22,10 +22,12 @@ public interface IDiscInstaller {
 	string GameName { get; }
 
 	/// <summary>
-	/// Takes <paramref name="disc"/>, whose full path is <paramref name="location"/>, and returns true when it is the
-	/// game's; otherwise holds nothing of it and returns false. <paramref name="message"/> is what was found, or why the
-	/// disc is refused.
+	/// Takes a disc, and returns true when it is the
+	/// game's; otherwise holds nothing of it and returns false.
 	/// </summary>
+	/// <param name="disc">The disc.</param>
+	/// <param name="location">The disc's full path.</param>
+	/// <param name="message">What was found, or why the disc is refused.</param>
 	bool Open(GameDisc disc, string location, out string message);
 
 	/// <summary>Lets go of the disc <see cref="Open"/> took.</summary>
@@ -37,7 +39,8 @@ public interface IDiscInstaller {
 	/// <summary>Draws the choices the game offers between the source and the destination, greyed with no disc taken.</summary>
 	void DrawChoices();
 
-	/// <summary>The copy into <paramref name="destination"/> with the choices made now, to run off the frame loop.</summary>
+	/// <summary>The copy into a destination with the choices made now, to run off the frame loop.</summary>
+	/// <param name="destination">The directory copied into.</param>
 	Action<IProgress<InstallProgress>, CancellationToken> Copy(string destination);
 }
 
@@ -88,7 +91,8 @@ public sealed class InstallPanel : IDisposable {
 	/// <summary>Whether a copy is running, which closing the panel would leave unfinished.</summary>
 	public bool Busy => _installing is { IsCompleted: false };
 
-	/// <summary>Draws the panel into the current window. <paramref name="owner"/> is the native window the pickers belong to.</summary>
+	/// <summary>Draws the panel into the current window.</summary>
+	/// <param name="owner">The native window the pickers belong to.</param>
 	public Outcome Draw(nint owner) {
 		var outcome = Outcome.Open;
 		TakePick();
@@ -208,7 +212,8 @@ public sealed class InstallPanel : IDisposable {
 		return outcome;
 	}
 
-	/// <summary><paramref name="bytes"/> in whole megabytes, rounded up, as the panel's strings show sizes.</summary>
+	/// <summary>A byte count in whole megabytes, rounded up, as the panel's strings show sizes.</summary>
+	/// <param name="bytes">The byte count.</param>
 	public static long Megabytes(long bytes) => (bytes + (1 << 20) - 1) >> 20;
 
 	private static void Error(string text) {

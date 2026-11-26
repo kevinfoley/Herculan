@@ -28,10 +28,14 @@ public partial class WeaponCompareForm : Form {
 	}
 
 	/// <summary>
-	/// One grid row. <paramref name="Value"/> reads the weapon and the fire cycle being shown;
-	/// <paramref name="Format"/> formats it; <paramref name="CellToolTip"/> explains a cell whose figure
-	/// needs it.
+	/// One grid row.
 	/// </summary>
+	/// <param name="Label">The row's label.</param>
+	/// <param name="ToolTip">The row label's tooltip.</param>
+	/// <param name="Value">Reads the weapon and the fire cycle being shown.</param>
+	/// <param name="Format">Formats the value.</param>
+	/// <param name="CellToolTip">Explains a cell whose figure needs it.</param>
+	/// <param name="UsesDamageRecord">Whether the row reads the weapon's damage record.</param>
 	private sealed record StatRow(string Label, string ToolTip, Func<WeaponComparison, FireCycle?, double?> Value,
 		string Format = "N0", Func<WeaponComparison, string?>? CellToolTip = null, bool UsesDamageRecord = false);
 

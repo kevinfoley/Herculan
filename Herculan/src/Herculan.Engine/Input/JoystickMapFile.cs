@@ -82,17 +82,20 @@ public sealed class JoystickMapFile {
 
 	/// <summary>
 	/// Reads the player's file (<see cref="PlayerPath"/>). When it is missing, it is first copied from the running game's
-	/// <paramref name="installDataDirectory"/>, as <see cref="LoadForPlayer(string, string?)"/> says.
+	/// the install's data directory, as <see cref="LoadForPlayer(string, string?)"/> says.
 	/// </summary>
+	/// <param name="installDataDirectory">The running game's data directory, if it has one.</param>
 	public static JoystickMapFile LoadForPlayer(string? installDataDirectory) => LoadForPlayer(PlayerPath,
 		installDataDirectory is null ? null : CaseInsensitivePath.Combine(installDataDirectory, FileName));
 
 	/// <summary>
-	/// Reads <paramref name="playerPath"/>. While it is missing and <paramref name="installPath"/> exists, the install's
-	/// copy is first written to <paramref name="playerPath"/>, so the maps a player set up for one game serve every game
+	/// Reads the player's file. While it is missing and the install's file exists, the install's
+	/// copy is first written to the player's path, so the maps a player set up for one game serve every game
 	/// from then on. With no install copy nothing is written, which leaves that to the next game that has one. If the copy
 	/// cannot be written, this run reads the install's copy instead.
 	/// </summary>
+	/// <param name="playerPath">The player's file.</param>
+	/// <param name="installPath">The install's file, if any.</param>
 	public static JoystickMapFile LoadForPlayer(string playerPath, string? installPath) {
 		if (File.Exists(playerPath)) {
 			return Load(playerPath);
@@ -152,9 +155,14 @@ public sealed class JoystickMapFile {
 
 	/// <summary>
 	/// Stores the device's mode and Custom profile in the device's own section, as <see cref="Set"/> does, keeping its map.
-	/// A gamepad's mode is always Custom, whatever <paramref name="mode"/> says. A null <paramref name="profile"/> removes
+	/// A gamepad's mode is always Custom, whatever the mode says. A null profile removes
 	/// the Custom settings, so the device falls back to its default profile.
 	/// </summary>
+	/// <param name="isGamepad">Whether the device is a gamepad.</param>
+	/// <param name="guid">The device's GUID, if any.</param>
+	/// <param name="deviceName">The device's name, if any.</param>
+	/// <param name="mode">The device's mode.</param>
+	/// <param name="profile">The Custom profile; null removes the Custom settings.</param>
 	public void SetProfile(bool isGamepad, string? guid, string? deviceName, ControllerMode mode, ControllerProfile? profile) =>
 		Update(isGamepad, guid, deviceName, entry => entry with { Mode = isGamepad ? ControllerMode.Custom : mode, Profile = profile });
 
@@ -176,11 +184,13 @@ public sealed class JoystickMapFile {
 	}
 
 	/// <summary>
-	/// Writes every section to <paramref name="path"/>, gamepads first, then the shared joystick section, then each
-	/// model's, through <see cref="UserConfig.TryWrite"/>; returns false, with the reason in <paramref name="error"/>,
+	/// Writes every section to a file, gamepads first, then the shared joystick section, then each
+	/// model's, through <see cref="UserConfig.TryWrite"/>; returns false, with the reason given,
 	/// when the write fails. When <see cref="Mouse"/> differs from the defaults and the file has no <c>[Gamepad]</c>
 	/// section, this creates one to hold the mouse settings.
 	/// </summary>
+	/// <param name="path">The file written.</param>
+	/// <param name="error">Says why the write failed; null on success.</param>
 	public bool Save(string path, out string? error) {
 		// Mouse settings changed with no gamepad section yet: the section they go in.
 		if (!Mouse.IsDefault && !_sections.ContainsKey(GamepadSection)) {

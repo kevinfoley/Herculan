@@ -137,13 +137,14 @@ public sealed class BspTree {
 	public IEnumerable<int> Frames => _restOffsets.Keys;
 
 	/// <summary>
-	/// Where <paramref name="frame"/> sits at the rest pose, in render space; zero for a frame neither
+	/// Where a frame sits at the rest pose, in render space; zero for a frame neither
 	/// a node plane nor a child is in.
 	/// </summary>
+	/// <param name="frame">The frame.</param>
 	public Vector3 RestOffset(int frame) => _restOffsets.GetValueOrDefault(frame);
 
 	/// <summary>
-	/// The node drawing child <paramref name="leaf"/> installs, or -1 for a child placed by no node.
+	/// The node drawing a child installs, or -1 for a child placed by no node.
 	/// <c>TSGroup_BindNodeTransform</c> (<c>00476014</c>) is the first thing every part's render does —
 	/// <c>TSGroup_RenderPolys</c> (<c>004758c8</c>), <c>TSCellAnimPart_Render</c> (<c>004767e4</c>) before it
 	/// picks its cell, <c>TSPartList_Render</c> (<c>004766fc</c>) — so this is the first non-negative
@@ -151,15 +152,17 @@ public sealed class BspTree {
 	/// <see cref="TSBSPPart"/> installs at most one node, the same one in each of its cells, so the one
 	/// id stands for the whole child; read off every <c>.DTS</c> root the game ships.
 	/// </summary>
+	/// <param name="leaf">The child's index.</param>
 	public int LeafNode(int leaf) => leaf >= 0 && leaf < _leafNodes.Length ? _leafNodes[leaf] : -1;
 
 	/// <summary>
-	/// Whether child <paramref name="leaf"/> is a hardpoint attachment slot, which the original
+	/// Whether a child is a hardpoint attachment slot, which the original
 	/// overwrites before each draw (<c>Mech_SpliceHardpointShapes</c>, <c>004030d0</c>): with the fitted
 	/// mount, whose render installs the slot's node (<c>ConfigPart_Render</c>, <c>0040316c</c>), or with a
 	/// blank record, whose render installs nothing. Its <see cref="LeafNode"/> is the node the mount
 	/// inherits.
 	/// </summary>
+	/// <param name="leaf">The child's index.</param>
 	public bool IsAttachmentSlot(int leaf) => leaf >= 0 && leaf < _attachmentSlots.Length && _attachmentSlots[leaf];
 
 	private static int FirstNode(TSObject? part) {
@@ -180,15 +183,17 @@ public sealed class BspTree {
 	}
 
 	/// <summary>
-	/// Which child is the part whose <c>TSBasePart.IdNumber</c> is <paramref name="partId"/> — how
+	/// Which child is the part whose <c>TSBasePart.IdNumber</c> is a given part id — how
 	/// a weapon finds the hardpoint slot <c>Mech_SpliceHardpointShapes</c> (<c>004030d0</c>) puts its
 	/// shape into, which the walk then draws in that child's turn. A child the tree never reaches
 	/// is still found, and what is put there is never drawn, as in the original.
 	/// </summary>
+	/// <param name="partId">The part's id.</param>
+	/// <param name="leaf">Receives the child's index.</param>
 	public bool TryGetLeafOfPart(short partId, out int leaf) => _leafOfPart.TryGetValue(partId, out leaf);
 
 	/// <summary>
-	/// The children in the order the original paints them for an eye at <paramref name="eyeInFrame"/>,
+	/// The children in the order the original paints them for an eye at a given position,
 	/// first painted first. At each node the side of the plane the eye is on is painted last, an eye
 	/// on the plane counting as in front: this is <c>TSBSPPart_RenderNode</c>'s branch for
 	/// <c>maybe_g_DepthBufferEnabled</c> zero, its value in the image. A child no node names is never

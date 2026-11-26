@@ -38,20 +38,26 @@ public static class KeyChords {
 public sealed class KeyLatch {
 	private bool _held;
 
-	/// <summary>Records <paramref name="down"/> and says whether it is a fresh press.</summary>
+	/// <summary>Records the key's state and says whether it is a fresh press.</summary>
+	/// <param name="down">Whether the key is down.</param>
 	public bool Press(bool down) {
 		bool edge = down && !_held;
 		_held = down;
 		return edge;
 	}
 
-	/// <summary>Reads <paramref name="key"/> off <paramref name="keys"/> and says whether it is a fresh press.</summary>
+	/// <summary>Reads a key off the key state and says whether it is a fresh press.</summary>
+	/// <param name="keys">The key state.</param>
+	/// <param name="key">The key.</param>
 	public bool Press(IKeyState keys, Key key) => Press(keys.IsKeyPressed(key));
 
 	/// <summary>
-	/// Reads <paramref name="key"/> off <paramref name="keys"/> and says whether it is a fresh press or one of its
-	/// auto-repeats. While <paramref name="when"/> is false the key counts as up.
+	/// Reads a key off the key state and says whether it is a fresh press or one of its
+	/// auto-repeats. While the condition is false the key counts as up.
 	/// </summary>
+	/// <param name="keys">The key state.</param>
+	/// <param name="key">The key.</param>
+	/// <param name="when">The condition under which the key is read.</param>
 	public bool PressOrRepeat(IKeyState keys, Key key, bool when = true) =>
 		Press(when && keys.IsKeyPressed(key)) | (when && keys.IsKeyRepeated(key));
 

@@ -167,9 +167,10 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 	}
 
 	/// <summary>
-	/// The tracks of <paramref name="tracks"/> with no complete copy in <paramref name="cacheDirectory"/>,
-	/// in track order.
+	/// The tracks with no complete copy in the cache directory, in track order.
 	/// </summary>
+	/// <param name="tracks">The disc's tracks, by number.</param>
+	/// <param name="cacheDirectory">The directory the copies are cached in.</param>
 	internal static List<int> UncachedTracks(IReadOnlyDictionary<int, (long Lba, long Sectors)> tracks,
 			string cacheDirectory) =>
 		tracks.Where(track => track.Value.Sectors > 0
@@ -340,9 +341,14 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 	}
 
 	/// <summary>
-	/// Reads <paramref name="track"/> off the disc. In the <paramref name="background"/> it waits before each
+	/// Reads a track off the disc. In the background it waits before each
 	/// read while the player's rip is reading, and gives up when that rip is reading this same track.
 	/// </summary>
+	/// <param name="lba">The track's first sector.</param>
+	/// <param name="sectors">The track's length in sectors.</param>
+	/// <param name="track">The track filled.</param>
+	/// <param name="token">Cancels the rip.</param>
+	/// <param name="background">Whether the rip is a background one.</param>
 	/// <returns>Whether it read to the end, damaged sectors and all.</returns>
 	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	private bool Rip(long lba, long sectors, MusicTrack track, CancellationToken token, bool background) {

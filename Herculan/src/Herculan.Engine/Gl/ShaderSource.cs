@@ -26,9 +26,12 @@ public static class ShaderSource {
 	public static string Load(string fileName) => Load(typeof(ShaderSource).Assembly, ResourceFolder, fileName);
 
 	/// <summary>
-	/// Reads one shader file embedded in another assembly — a game assembly's own programs — under the resource
-	/// folder <paramref name="resourceFolder"/>, which ends in a dot (<c>"Herculan.Es1.Render.Shaders."</c>).
+	/// Reads one shader file embedded in another assembly — a game assembly's own programs — under a resource
+	/// folder, which ends in a dot (<c>"Herculan.Es1.Render.Shaders."</c>).
 	/// </summary>
+	/// <param name="assembly">The assembly holding the file.</param>
+	/// <param name="resourceFolder">The resource folder.</param>
+	/// <param name="fileName">The shader file's name.</param>
 	public static string Load(Assembly assembly, string resourceFolder, string fileName) {
 		string resource = resourceFolder + fileName;
 		using Stream? stream = assembly.GetManifestResourceStream(resource);
@@ -45,13 +48,16 @@ public static class ShaderSource {
 	/// <summary>
 	/// The same source cut down to one stage, by defining the symbol that stage's <c>#ifdef</c> is
 	/// keyed on — <c>VERTEX_SHADER</c> or <c>FRAGMENT_SHADER</c> — plus any
-	/// <paramref name="variantDefines"/> the caller wants set, which is how one file yields more than
+	/// variant defines the caller wants set, which is how one file yields more than
 	/// one program (<c>EDITOR_GRID</c>).
 	///
 	/// <para>The defines have to go after the <c>#version</c> line, which GLSL requires to come first,
 	/// so they are spliced in behind it and followed by a <c>#line</c> directive putting the count
 	/// back. Without that every compiler error would report a line past where it is in the file.</para>
 	/// </summary>
+	/// <param name="source">The shader source.</param>
+	/// <param name="stage">The stage to cut it down to.</param>
+	/// <param name="variantDefines">The symbols to define; null for none.</param>
 	public static string ForStage(string source, ShaderType stage, IReadOnlyList<string>? variantDefines = null) {
 		string define = stage switch {
 			ShaderType.VertexShader => "VERTEX_SHADER",

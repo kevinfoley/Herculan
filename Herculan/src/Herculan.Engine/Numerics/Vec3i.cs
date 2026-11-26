@@ -35,12 +35,13 @@ public readonly struct Vec3i : IEquatable<Vec3i> {
 	public static bool operator !=(Vec3i a, Vec3i b) => !a.Equals(b);
 
 	/// <summary>
-	/// Distance to <paramref name="other"/> using the original's sqrt-free approximation — see
+	/// Distance to another point using the original's sqrt-free approximation — see
 	/// <see cref="SimMath.FastMagnitude3D"/>. This is the distance function DBSIM actually uses for
 	/// collision radii and proximity checks, so it is the one simulation code should reach for; it
 	/// runs from about 8% low to about 9% high against true Euclidean distance depending on
 	/// direction, and that bias is part of the behavior being reproduced, not an error to correct.
 	/// </summary>
+	/// <param name="other">The other point.</param>
 	public int ApproxDistanceTo(Vec3i other) =>
 		SimMath.FastMagnitude3D(X - other.X, Y - other.Y, Z - other.Z);
 

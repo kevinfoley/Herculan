@@ -82,10 +82,13 @@ public sealed class ShadeRamp {
 	}
 
 	/// <summary>
-	/// A ramp from rows already in hand, laid out as an <c>.RMP</c>'s: <paramref name="depthSlices"/> slices of
-	/// <paramref name="shadeLevels"/> rows of <see cref="RowLength"/> bytes. For a game whose theaters ship no
+	/// A ramp from rows already in hand, laid out as an <c>.RMP</c>'s: a number of depth slices of
+	/// shade-level rows of <see cref="RowLength"/> bytes each. For a game whose theaters ship no
 	/// <c>.RMP</c>.
 	/// </summary>
+	/// <param name="shadeLevels">The number of shade levels in a slice.</param>
+	/// <param name="depthSlices">The number of depth slices.</param>
+	/// <param name="rows">The rows.</param>
 	public static ShadeRamp FromRows(int shadeLevels, int depthSlices, byte[] rows) {
 		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(shadeLevels);
 		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(depthSlices);
@@ -134,7 +137,7 @@ public sealed class ShadeRamp {
 	}
 
 	/// <summary>
-	/// Which depth slice something at <paramref name="distance"/> is drawn in — a direct port of
+	/// Which depth slice something at a distance is drawn in — a direct port of
 	/// <c>Raster_SetDepthFadeFromDistance</c> (<c>00467fec</c>), whose result it expresses as a slice
 	/// number rather than the byte offset the original carries around.
 	///

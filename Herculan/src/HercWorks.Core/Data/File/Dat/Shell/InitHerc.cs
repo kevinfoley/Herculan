@@ -42,7 +42,8 @@ public class InitHerc {
 	public static readonly IReadOnlyList<string> FileStems =
 		new[] { "OUTL", "RAPT", "TOMA", "SAMS", "COLO", "APOC", "OGRE", "MAVR", "RAZR" };
 
-	/// <summary>The file holding chassis <paramref name="type"/>'s stock fit, e.g. <c>INI_OUTL.DAT</c>.</summary>
+	/// <summary>The file holding a chassis type's stock fit, e.g. <c>INI_OUTL.DAT</c>.</summary>
+	/// <param name="type">The chassis type.</param>
 	public static string FileNameFor(int type) => $"INI_{FileStems[type]}.DAT";
 
 	public InitHerc() { }

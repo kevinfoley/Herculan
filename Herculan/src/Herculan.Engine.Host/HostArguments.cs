@@ -10,7 +10,8 @@ namespace Herculan.Engine.Host;
 static class HostArguments {
 	public static bool IsHelp(string arg) => arg is "--help" or "-h" or "-?" or "/?";
 
-	/// <summary>The <c>--help</c> text for a host running <paramref name="games"/>.</summary>
+	/// <summary>The <c>--help</c> text for a host running a set of games.</summary>
+	/// <param name="games">The games the host runs.</param>
 	public static string Usage(IReadOnlyList<IGameModule> games) {
 		string variables = string.Join(" or ", games.Select(game => game.Identity.PathVariable));
 		string folders = string.Join(" or ", games.Select(game => game.Identity.FolderName));

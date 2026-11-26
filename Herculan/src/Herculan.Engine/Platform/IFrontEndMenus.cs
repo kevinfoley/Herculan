@@ -60,13 +60,15 @@ public interface IFrontEndMenus : IDisposable {
 
 	/// <summary>
 	/// Draws the bar and its windows inside the frame's ImGui frame; the frame skips it in a <c>--screenshot</c> capture.
-	/// <paramref name="owner"/> is the native window a picker belongs to, <paramref name="fullScreen"/> whether that window
-	/// is full screen, and <paramref name="revealOnHover"/> whether the pointer at the window's top may raise the bar this
-	/// frame.
 	/// </summary>
+	/// <param name="owner">The native window a picker belongs to.</param>
+	/// <param name="fullScreen">Whether that window is full screen.</param>
+	/// <param name="revealOnHover">Whether the pointer at the window's top may raise the bar this frame.</param>
 	void Draw(nint owner, bool fullScreen, bool revealOnHover);
 
-	/// <summary>Tells the player that <paramref name="message"/>, with <paramref name="detail"/> saying why, over the window.</summary>
+	/// <summary>Tells the player what failed and why, over the window.</summary>
+	/// <param name="message">What failed.</param>
+	/// <param name="detail">Why it failed.</param>
 	void ShowError(string message, string detail);
 
 	/// <summary>As <see cref="ShowError"/>, once the window's ImGui is gone, as it is after the window has closed.</summary>

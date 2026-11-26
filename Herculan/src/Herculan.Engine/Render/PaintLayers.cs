@@ -86,14 +86,17 @@ public sealed class PaintLayers {
 		return new PaintLayers(runStarts);
 	}
 
-	/// <summary>Whether <paramref name="slot"/> is painted in more than one layer.</summary>
+	/// <summary>Whether a slot is painted in more than one layer.</summary>
+	/// <param name="slot">The slot.</param>
 	public bool Layered(BspLeaf? slot) => _runStarts.ContainsKey(slot ?? default);
 
 	/// <summary>
-	/// The layer the poly <paramref name="polyId"/> is painted in, counted from 0: how many runs of its
+	/// The layer a poly is painted in, counted from 0: how many runs of its
 	/// slot start at or before it. Any id has one, so an outline or a line poly, which cuts no run,
 	/// takes the run it falls in.
 	/// </summary>
+	/// <param name="slot">The slot.</param>
+	/// <param name="polyId">The poly's id.</param>
 	public int LayerOf(BspLeaf? slot, int polyId) {
 		if (!_runStarts.TryGetValue(slot ?? default, out var starts)) {
 			return 0;
@@ -127,11 +130,13 @@ public sealed class PaintLayers {
 	}
 
 	/// <summary>
-	/// Whether <paramref name="later"/> lies over <paramref name="earlier"/>: drawn with it, placed by the
+	/// Whether a later poly lies over an earlier one: drawn with it, placed by the
 	/// same node, seen from a common side (<see cref="SeenFromOneSide"/>), every corner of one of its
 	/// triangles within <see cref="PlaneToleranceDts"/> of the plane of one of the earlier poly's, and the
 	/// two triangles sharing area in that plane.
 	/// </summary>
+	/// <param name="later">The later poly.</param>
+	/// <param name="earlier">The earlier poly.</param>
 	private static bool Overlays(Poly later, Poly earlier) {
 		if (later.Head.TransformId != earlier.Head.TransformId || NeverDrawnTogether(later.Head, earlier.Head)
 				|| !SeenFromOneSide(later, earlier)) {
@@ -165,13 +170,15 @@ public sealed class PaintLayers {
 	}
 
 	/// <summary>
-	/// Whether a side <paramref name="a"/> draws faces the way a side <paramref name="b"/> draws does. A
+	/// Whether the side one poly draws faces the way the side another draws does. A
 	/// drawn side faces along the stored normal for the front and against it for the back
 	/// (<see cref="Gl.MeshVertex.Side"/>), and a poly drawn from both sides faces both ways. So a
 	/// two-sided facade lies under a one-sided post face flush with it whichever way the facade's own
 	/// normal points, as on <c>BASES.DGS</c> shapes 42 and 43 (structure types 22 and 23), while two
 	/// one-sided faces back to back, or the two side copies of one poly, never meet.
 	/// </summary>
+	/// <param name="a">The first poly.</param>
+	/// <param name="b">The second poly.</param>
 	private static bool SeenFromOneSide(Poly a, Poly b) {
 		float cosine = Vector3.Dot(a.Normal, b.Normal);
 		int sides = a.Head.Side * b.Head.Side;
@@ -189,10 +196,13 @@ public sealed class PaintLayers {
 			&& a.Dependency.Distance == b.Dependency.Distance);
 
 	/// <summary>
-	/// Whether two triangles, projected into the plane of <paramref name="normal"/>, share more than an
+	/// Whether two triangles, projected into a plane, share more than an
 	/// edge: no axis of either triangle's edges separates them by less than
 	/// <see cref="OverlapEpsilonDts"/> of overlap.
 	/// </summary>
+	/// <param name="a">The first triangle.</param>
+	/// <param name="b">The second triangle.</param>
+	/// <param name="normal">The plane's normal.</param>
 	private static bool ShareArea(in Face a, in Face b, Vector3 normal) {
 		var u = Vector3.Normalize(Vector3.Cross(normal, MathF.Abs(normal.X) < 0.9f ? Vector3.UnitX : Vector3.UnitY));
 		var v = Vector3.Cross(normal, u);
@@ -209,7 +219,9 @@ public sealed class PaintLayers {
 		into[2] = new Vector2(Vector3.Dot(face.C, u), Vector3.Dot(face.C, v));
 	}
 
-	/// <summary>Whether an edge normal of <paramref name="edges"/> separates the two triangles.</summary>
+	/// <summary>Whether an edge normal of some edges separates the two triangles.</summary>
+	/// <param name="edges">The edges.</param>
+	/// <param name="other">The other triangle's edges.</param>
 	private static bool Separated(ReadOnlySpan<Vector2> edges, ReadOnlySpan<Vector2> other) {
 		for (int i = 0; i < 3; i++) {
 			var edge = edges[(i + 1) % 3] - edges[i];

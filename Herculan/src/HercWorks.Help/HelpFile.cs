@@ -10,7 +10,12 @@ public sealed record HelpWindow(
 	string Type, string Name, string Caption, int X, int Y, int Width, int Height,
 	int? Background, int? NonScrollingBackground);
 
-/// <summary>A font descriptor from <c>|FONT</c> (docs/retail/formats/winhelp.md#font). <paramref name="Colour"/> is <c>0xRRGGBB</c>.</summary>
+/// <summary>A font descriptor from <c>|FONT</c> (docs/retail/formats/winhelp.md#font).</summary>
+/// <param name="Attributes">The attribute flags.</param>
+/// <param name="HalfPoints">The size in half points.</param>
+/// <param name="Family">The font family.</param>
+/// <param name="Face">The face name.</param>
+/// <param name="Colour">The colour as <c>0xRRGGBB</c>.</param>
 public sealed record HelpFont(byte Attributes, int HalfPoints, byte Family, string Face, int Colour) {
 	public bool Bold => (Attributes & 0x01) != 0;
 
@@ -89,9 +94,11 @@ public sealed class HelpFile {
 	public IReadOnlyList<HelpKeyword> Keywords { get; private set; } = [];
 
 	/// <summary>
-	/// Parses <paramref name="bytes"/>. Returns null, with <paramref name="error"/> saying why, when the
-	/// file is malformed or uses something outside the supported subset.
+	/// Parses a help file. Returns null when the file is malformed or uses something outside the supported subset.
 	/// </summary>
+	/// <param name="bytes">The help file's bytes.</param>
+	/// <param name="error">Says why the parse failed; null on success.</param>
+	/// <param name="limits">The limits the parse stays within; null for the defaults.</param>
 	public static HelpFile? Parse(byte[] bytes, out string? error, HelpLimits? limits = null) {
 		ArgumentNullException.ThrowIfNull(bytes);
 		limits ??= HelpLimits.Default;
@@ -118,10 +125,11 @@ public sealed class HelpFile {
 	}
 
 	/// <summary>
-	/// The topic containing <paramref name="offset"/>, and the index of the block holding that
+	/// The topic containing a file offset, and the index of the block holding that
 	/// character; null when the offset lies before the first topic. Keyword targets land inside
 	/// topics, often mid-record, so the block is the last one starting at or before the offset.
 	/// </summary>
+	/// <param name="offset">The offset into the topic stream.</param>
 	public (HelpTopic Topic, int Block)? Locate(uint offset) {
 		HelpTopic? found = null;
 		foreach (var topic in Topics) {
@@ -149,9 +157,11 @@ public sealed class HelpFile {
 		Contexts.TryGetValue(hash, out uint offset) ? Locate(offset) : null;
 
 	/// <summary>
-	/// Decodes <c>|bm</c><paramref name="number"/>. Returns null, with <paramref name="error"/> saying
-	/// why, when there is no such picture or it is malformed or of a kind the corpus does not use.
+	/// Decodes a <c>|bm</c> picture. Returns null when there is no such picture or it is malformed or of a kind the corpus
+	/// does not use.
 	/// </summary>
+	/// <param name="number">The picture's number.</param>
+	/// <param name="error">Says why the decode failed; null on success.</param>
 	public HelpPicture? TryGetPicture(int number, out string? error) {
 		error = null;
 		if (number < 0 || !_files.TryGetValue("|bm" + number, out var range)) {

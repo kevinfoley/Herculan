@@ -59,9 +59,11 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 	private readonly uint[] _coefficients = new uint[8 * Indeo4Transforms.Stride];
 
 	/// <summary>
-	/// Creates a decoder for <paramref name="format"/>, or returns null when its dimensions are
+	/// Creates a decoder for a format, or returns null when its dimensions are
 	/// outside the limits or not a multiple of 4, which the 4:1:0 chroma planes require.
 	/// </summary>
+	/// <param name="format">The video format.</param>
+	/// <param name="limits">The limits the decoder stays within.</param>
 	internal static Indeo4Decoder? Create(AviVideoFormat format, VideoLimits limits) {
 		int width = format.Width;
 		int height = format.Height;
@@ -326,9 +328,10 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 		internal int SizeWords => (Rows * PitchWords) + (BandSlackBytes / 2);
 
 		/// <summary>
-		/// The word holding sample <paramref name="x"/> of a row, relative to the row. Columns
+		/// The word holding a sample of a row, relative to the row. Columns
 		/// outside the row continue into the neighbouring rows, as linear addressing does.
 		/// </summary>
+		/// <param name="x">The sample's column.</param>
 		internal int Column(int x) {
 			int group = x >> (Half == 8 ? 4 : 3);
 			int inGroup = x & ((2 * Half) - 1);
@@ -680,9 +683,12 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 
 	/// <summary>
 	/// Reads a macroblock code and returns its value as the codec's table at <c>1005b000</c> holds
-	/// it: 0, 1, -1, 2, -2, ..., as a byte biased by 0x80. A symbol past 255 has no entry and sets
-	/// <paramref name="invalid"/>.
+	/// it: 0, 1, -1, 2, -2, ..., as a byte biased by 0x80. A symbol past 255 has no entry and sets the
+	/// invalid flag.
 	/// </summary>
+	/// <param name="codebook">The codebook to read with.</param>
+	/// <param name="bits">The bit reader.</param>
+	/// <param name="invalid">Set when the symbol has no entry.</param>
 	private static int ReadMacroblockCode(Indeo4Codebook codebook, ref Indeo4Bits bits, ref bool invalid) {
 		int symbol = codebook.Read(ref bits);
 		if (symbol > 255) {
@@ -845,10 +851,12 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 	}
 
 	/// <summary>
-	/// Rescales an inherited motion vector to a band whose macroblocks are smaller by 2^-<paramref name="shift"/>,
+	/// Rescales an inherited motion vector to a band whose macroblocks are smaller by a power of two,
 	/// byte by byte as the codec does it, rounding half away from zero. See
 	/// docs/retail/formats/indeo4.md#inherited-type-motion-and-quantiser.
 	/// </summary>
+	/// <param name="motion">The inherited motion vector.</param>
+	/// <param name="shift">The power of two, as a number of halvings.</param>
 	private static uint ScaleMotion(uint motion, int shift) {
 		if (shift == 0) {
 			return motion;
@@ -868,10 +876,17 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 	}
 
 	/// <summary>
-	/// Copies <paramref name="width"/> by <paramref name="height"/> samples from the reference,
+	/// Copies a block of samples from the reference,
 	/// displaced by the motion vector, into the current buffer. Returns false when the source
 	/// leaves the codec's allocation.
 	/// </summary>
+	/// <param name="plane">The plane being decoded.</param>
+	/// <param name="y">The block's row.</param>
+	/// <param name="x">The block's column.</param>
+	/// <param name="mvx">The horizontal motion.</param>
+	/// <param name="mvy">The vertical motion.</param>
+	/// <param name="width">The block's width in samples.</param>
+	/// <param name="height">The block's height in samples.</param>
 	private bool CopyBlock(Plane plane, int y, int x, int mvx, int mvy, int width, int height) {
 		ushort[] mem = _mem!;
 		for (int r = 0; r < height; r++) {
@@ -1205,9 +1220,11 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 
 	/// <summary>
 	/// Converts the buffer just decoded to raster-order 8-bit planes and then to RGBA. A plane whose
-	/// bit is set in <paramref name="clampMask"/> (4 for luma, 2 and 1 for the chroma planes) is
+	/// bit is set in the clamp mask (4 for luma, 2 and 1 for the chroma planes) is
 	/// truncated to a byte rather than clamped, as the codec does.
 	/// </summary>
+	/// <param name="frame">The frame receiving the RGBA.</param>
+	/// <param name="clampMask">Marks the planes that are truncated rather than clamped.</param>
 	private void Output(VideoFrame frame, int clampMask) {
 		ushort[] mem = _mem!;
 		for (int p = 0; p < 3; p++) {

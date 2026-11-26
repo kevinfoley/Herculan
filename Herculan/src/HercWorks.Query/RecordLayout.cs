@@ -43,10 +43,14 @@ internal static class RecordLayout {
 		: int.TryParse(text, out value);
 
 	/// <summary>
-	/// The one of <paramref name="items"/> whose name <paramref name="spec"/> is, matched whole and then as a prefix,
-	/// ignoring case. Sets <paramref name="error"/> when it names none, or several.
+	/// The one of the items whose name a spec is, matched whole and then as a prefix,
+	/// ignoring case. Sets the error when it names none, or several.
 	/// </summary>
+	/// <param name="items">The items to choose from.</param>
+	/// <param name="name">Gives an item's name.</param>
+	/// <param name="spec">The name to match.</param>
 	/// <param name="noMatch">The error when nothing matches.</param>
+	/// <param name="error">Says why nothing was picked; null on success.</param>
 	public static T? MatchName<T>(IReadOnlyList<T> items, Func<T, string> name, string spec, string noMatch, out string? error) where T : class {
 		error = null;
 		var exact = items.Where(i => string.Equals(name(i), spec, StringComparison.OrdinalIgnoreCase)).ToList();

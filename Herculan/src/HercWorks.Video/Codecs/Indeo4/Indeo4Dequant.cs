@@ -32,9 +32,11 @@ internal static class Indeo4Dequant {
 	internal static int CodeCount(int step) => step <= 1 ? 16384 : 2 * (8192 / step);
 
 	/// <summary>
-	/// The value of level code <paramref name="code"/> (1-based) at <paramref name="step"/>, before
+	/// The value of a level code (1-based) at a quantiser step, before
 	/// the transform's scale. Odd codes are positive, even negative, magnitude <c>(code + 1) / 2</c>.
 	/// </summary>
+	/// <param name="code">The level code.</param>
+	/// <param name="step">The quantiser step.</param>
 	internal static int Value(int code, int step) {
 		int magnitude = (code + 1) >> 1;
 		int value = step <= 1 ? magnitude : (magnitude * step) + (step >> 1) - (step & 1);

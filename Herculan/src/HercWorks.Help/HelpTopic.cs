@@ -57,7 +57,8 @@ public abstract record HelpInline;
 /// <summary>Text, in the current font.</summary>
 public sealed record HelpText(string Text) : HelpInline;
 
-/// <summary><c>0x80</c>: switch to font descriptor <paramref name="Descriptor"/>.</summary>
+/// <summary><c>0x80</c>: switch to a font descriptor.</summary>
+/// <param name="Descriptor">The font descriptor's index.</param>
 public sealed record HelpFontChange(int Descriptor) : HelpInline;
 
 /// <summary><c>0x81</c>.</summary>
@@ -75,7 +76,9 @@ public enum HelpPicturePlacement {
 	Right,
 }
 
-/// <summary>A picture command naming <c>|bm</c><paramref name="Number"/>.</summary>
+/// <summary>A picture command naming a <c>|bm</c> picture.</summary>
+/// <param name="Placement">Where the picture goes.</param>
+/// <param name="Number">The picture's number.</param>
 public sealed record HelpPictureRef(HelpPicturePlacement Placement, int Number) : HelpInline;
 
 /// <summary>A type 5 picture: a button with a label that runs a macro (docs/retail/formats/winhelp.md#embedded-buttons).</summary>
@@ -91,14 +94,16 @@ public sealed record HelpHotspotEnd : HelpInline;
 public abstract record HelpLink;
 
 /// <summary>
-/// <c>0xE7</c>, or <c>0xEF</c> with a window: jump to the topic whose context string hashes to
-/// <paramref name="Hash"/>, in window <paramref name="Window"/> (an index into
-/// <see cref="HelpFile.Windows"/>) or, when null, the window the jump is made from.
+/// <c>0xE7</c>, or <c>0xEF</c> with a window: jump to the topic whose context string hashes to a given value.
 /// </summary>
+/// <param name="Hash">The hash of the target's context string.</param>
+/// <param name="Window">An index into <see cref="HelpFile.Windows"/>, or, when null, the window the jump is made from.</param>
 public sealed record HelpJump(uint Hash, int? Window) : HelpLink;
 
-/// <summary>A pop-up of the topic whose context string hashes to <paramref name="Hash"/>.</summary>
+/// <summary>A pop-up of the topic whose context string hashes to a given value.</summary>
+/// <param name="Hash">The hash of the target's context string.</param>
 public sealed record HelpPopup(uint Hash) : HelpLink;
 
-/// <summary><c>0xCC</c>: run <paramref name="Macro"/>.</summary>
+/// <summary><c>0xCC</c>: run a macro.</summary>
+/// <param name="Macro">The macro's text.</param>
 public sealed record HelpMacroLink(string Macro) : HelpLink;

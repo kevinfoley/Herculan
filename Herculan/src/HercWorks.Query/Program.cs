@@ -823,7 +823,11 @@ internal static class Program {
 		return 0;
 	}
 
-	/// <summary>The entries of the chassis <paramref name="type"/> names (all when null), or null when it names none of them.</summary>
+	/// <summary>The entries of the chassis a type names (all when null), or null when it names none of them.</summary>
+	/// <param name="data">The retail data.</param>
+	/// <param name="entries">The entries to pick from.</param>
+	/// <param name="index">Gives an entry's chassis index.</param>
+	/// <param name="type">The chassis type.</param>
 	private static IReadOnlyList<T>? PickChassis<T>(RetailData data, IReadOnlyList<T> entries, Func<T, int> index, string? type) {
 		if (type == null) {
 			return entries;

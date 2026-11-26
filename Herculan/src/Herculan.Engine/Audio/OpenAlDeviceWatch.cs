@@ -70,9 +70,12 @@ internal sealed unsafe class OpenAlDeviceWatch : IDisposable {
 	private long _nextReopen;
 
 	/// <summary>
-	/// Subscribes to whatever the runtime offers. <paramref name="al"/>'s context must be current, as
+	/// Subscribes to whatever the runtime offers. The AL context must be current, as
 	/// it is while <see cref="OpenAlBackend.TryCreate"/> builds the backend.
 	/// </summary>
+	/// <param name="al">The AL API.</param>
+	/// <param name="alc">The ALC API.</param>
+	/// <param name="device">The device to watch.</param>
 	public OpenAlDeviceWatch(AL al, ALContext alc, Device* device) {
 		_alc = alc;
 		_device = device;

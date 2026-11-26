@@ -87,6 +87,7 @@ public class Prefs {
 	/// </summary>
 	public byte[] Options { get; set; } = new byte[Length];
 
-	/// <summary>Option <paramref name="index"/>'s byte, or 0 when it is outside the array.</summary>
+	/// <summary>An option's byte, or 0 when it is outside the array.</summary>
+	/// <param name="index">The option's index.</param>
 	public byte this[int index] => index >= 0 && index < Options.Length ? Options[index] : (byte)0;
 }

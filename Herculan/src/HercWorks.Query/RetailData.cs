@@ -273,7 +273,9 @@ internal sealed class RetailData {
 		_ => StructureName(typeIndex),
 	};
 
-	/// <summary><paramref name="archive"/> in the install's <c>VOL</c> folder, else in the drive.cfg directory's; null when neither has it.</summary>
+	/// <summary>An archive in the install's <c>VOL</c> folder, else in the drive.cfg directory's; null when neither has it.</summary>
+	/// <param name="installRoot">The install's root folder.</param>
+	/// <param name="archive">The archive's file name.</param>
 	internal static string? FindArchive(string installRoot, string archive) {
 		foreach (string? root in new[] { installRoot, DiscDirectory(installRoot) }) {
 			if (root == null) {

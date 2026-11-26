@@ -6,10 +6,11 @@ namespace Herculan.Engine.Install;
 public readonly record struct InstallProgress(int FileIndex, int FileCount, string File, long BytesDone, long BytesTotal);
 
 /// <summary>
-/// An <see cref="IProgress{T}"/> that runs <paramref name="report"/> on the reporting thread itself.
+/// An <see cref="IProgress{T}"/> that runs a callback on the reporting thread itself.
 /// <see cref="Progress{T}"/> posts to the creating thread's synchronization context, which neither the console nor
 /// the ImGui frame loop has.
 /// </summary>
+/// <param name="report">The callback.</param>
 public sealed class ActionProgress<T>(Action<T> report) : IProgress<T> {
 	public void Report(T value) => report(value);
 }
@@ -28,9 +29,11 @@ public static class DiscCopy {
 	}
 
 	/// <summary>
-	/// Why <paramref name="destination"/> cannot be installed into from <paramref name="source"/>, or null when it can: it
+	/// Why a destination cannot be installed into from a source, or null when it can: it
 	/// must be a new or empty directory, outside the source when the source is a directory.
 	/// </summary>
+	/// <param name="source">The disc copied from.</param>
+	/// <param name="destination">The directory copied into.</param>
 	public static DestinationProblem? CheckDestination(GameDisc source, string destination) {
 		string full = Path.GetFullPath(destination);
 		if (File.Exists(full)) {
@@ -51,7 +54,8 @@ public static class DiscCopy {
 		return null;
 	}
 
-	/// <summary>The bytes free on the drive holding <paramref name="destination"/>, or null when that cannot be told.</summary>
+	/// <summary>The bytes free on the drive holding a destination, or null when that cannot be told.</summary>
+	/// <param name="destination">The destination directory.</param>
 	public static long? FreeSpace(string destination) {
 		try {
 			return new DriveInfo(Path.GetPathRoot(Path.GetFullPath(destination))!).AvailableFreeSpace;
@@ -60,7 +64,9 @@ public static class DiscCopy {
 		}
 	}
 
-	/// <summary>The bytes <paramref name="plan"/> copies from <paramref name="source"/>; a file missing from the disc counts as nothing.</summary>
+	/// <summary>The bytes a plan copies from a source; a file missing from the disc counts as nothing.</summary>
+	/// <param name="source">The disc copied from.</param>
+	/// <param name="plan">The files copied, each a source and a destination path.</param>
 	public static long PlanBytes(GameDisc source, IReadOnlyList<(string Source, string Destination)> plan) =>
 		plan.Sum(file => {
 			using var stream = source.OpenRead(file.Source);
@@ -68,10 +74,16 @@ public static class DiscCopy {
 		});
 
 	/// <summary>
-	/// Copies <paramref name="plan"/> from <paramref name="source"/> into <paramref name="destination"/>, then runs
-	/// <paramref name="writeAfter"/>(install root, the list of files written), which adds each file it writes to the list.
+	/// Copies a plan from a source into a destination, then runs
+	/// the write-after callback (install root, the list of files written), which adds each file it writes to the list.
 	/// A failure or a cancellation removes what was written and rethrows.
 	/// </summary>
+	/// <param name="source">The disc copied from.</param>
+	/// <param name="destination">The directory copied into.</param>
+	/// <param name="plan">The files copied, each a source and a destination path.</param>
+	/// <param name="writeAfter">Runs after the copy; adds each file it writes to the list.</param>
+	/// <param name="progress">Receives progress reports.</param>
+	/// <param name="cancellation">Cancels the copy.</param>
 	/// <exception cref="InvalidOperationException">The destination is refused, a file the plan names is not on the
 	/// disc, or there is not room for it.</exception>
 	public static void Copy(GameDisc source, string destination, IReadOnlyList<(string Source, string Destination)> plan,
@@ -122,9 +134,11 @@ public static class DiscCopy {
 	}
 
 	/// <summary>
-	/// <paramref name="relative"/> under <paramref name="root"/>. Every destination is an installer's constant or a disc
+	/// A relative path under a root. Every destination is an installer's constant or a disc
 	/// file's name; this keeps it so should one ever be wrong.
 	/// </summary>
+	/// <param name="root">The root folder.</param>
+	/// <param name="relative">The relative path.</param>
 	/// <exception cref="InvalidOperationException">The path leaves the install.</exception>
 	public static string Under(string root, string relative) {
 		string full = Path.GetFullPath(Path.Combine(root, relative));

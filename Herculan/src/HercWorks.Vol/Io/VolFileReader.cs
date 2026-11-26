@@ -33,8 +33,9 @@ public static class VolFileReader {
 
 	/// <summary>
 	/// <see cref="ReadProgramMask(string)"/> for an archive that is not a file of its own, such as one inside a
-	/// disc image, reading the first eight bytes from <paramref name="stream"/>'s current position.
+	/// disc image, reading the first eight bytes from the stream's current position.
 	/// </summary>
+	/// <param name="stream">The stream holding the archive.</param>
 	public static uint? ReadProgramMask(Stream stream) {
 		Span<byte> header = stackalloc byte[OffsetProgramMask + 4];
 		if (stream.ReadAtLeast(header, header.Length, throwOnEndOfStream: false) < header.Length) {
@@ -51,9 +52,11 @@ public static class VolFileReader {
 
 	/// <summary>
 	/// Parses an archive already read into memory, for one that is not a file of its own, such as one inside a
-	/// disc image. <paramref name="fileName"/> is its name, <paramref name="filePath"/> where it came from, for
-	/// <see cref="Voln.FilePath"/>.
+	/// disc image.
 	/// </summary>
+	/// <param name="fileName">The archive's name.</param>
+	/// <param name="data">The archive's bytes.</param>
+	/// <param name="filePath">Where the archive came from, for <see cref="Voln.FilePath"/>.</param>
 	public static Voln ParseVolBytes(string fileName, byte[] data, string? filePath = null) {
 		var volFile = new Voln.VolnBuilder()
 			.SetFileName(DataFile.MakeFileName(fileName))

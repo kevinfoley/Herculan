@@ -9,9 +9,16 @@ namespace HercWorks.Help;
 public sealed record HelpPicture(int Width, int Height, byte[] Rgb, IReadOnlyList<HelpHotspot> Hotspots);
 
 /// <summary>
-/// A picture's clickable region (docs/retail/formats/winhelp.md#hotspots). <paramref name="Kind"/> is the
-/// command byte, <c>0xE6</c> — a pop-up — throughout the corpus.
+/// A picture's clickable region (docs/retail/formats/winhelp.md#hotspots).
 /// </summary>
+/// <param name="Kind">The command byte, <c>0xE6</c> — a pop-up — throughout the corpus.</param>
+/// <param name="Left">The region's left edge.</param>
+/// <param name="Top">The region's top edge.</param>
+/// <param name="Width">The region's width.</param>
+/// <param name="Height">The region's height.</param>
+/// <param name="Hash">The hash of the target's context string.</param>
+/// <param name="Name">The hotspot's name.</param>
+/// <param name="Context">The target's context string.</param>
 public sealed record HelpHotspot(byte Kind, int Left, int Top, int Width, int Height, uint Hash, string Name, string Context);
 
 /// <summary>

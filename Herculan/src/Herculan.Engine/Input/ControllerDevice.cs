@@ -69,7 +69,8 @@ public sealed class ControllerDevice {
 	/// <summary>How many hats it reports. A gamepad has one, its d-pad.</summary>
 	public int HatCount => _gamepad != null ? 1 : _joystick!.Hats.Count;
 
-	/// <summary>Axis <paramref name="index"/> as a fraction of its travel, -1 to +1; 0 for one it does not have.</summary>
+	/// <summary>An axis as a fraction of its travel, -1 to +1; 0 for one it does not have.</summary>
+	/// <param name="index">The axis index.</param>
 	public float Axis(int index) {
 		if (_gamepad == null) {
 			return index >= 0 && index < _joystick!.Axes.Count ? _joystick.Axes[index].Position : 0f;
@@ -84,10 +85,12 @@ public sealed class ControllerDevice {
 		};
 	}
 
-	/// <summary>Where a gamepad's axis <paramref name="index"/> sits at rest: a stick centered at 0, a trigger let go at -1.</summary>
+	/// <summary>Where a gamepad's axis sits at rest: a stick centered at 0, a trigger let go at -1.</summary>
+	/// <param name="index">The axis index.</param>
 	public static float GamepadAxisAtRest(int index) => index is 4 or 5 ? -1f : 0f;
 
-	/// <summary>Whether button <paramref name="index"/> is pressed; false for one it does not have.</summary>
+	/// <summary>Whether a button is pressed; false for one it does not have.</summary>
+	/// <param name="index">The button index.</param>
 	public bool Button(int index) {
 		var buttons = _gamepad?.Buttons ?? _joystick!.Buttons;
 		return index >= 0 && index < buttons.Count && buttons[index].Pressed;
@@ -136,21 +139,25 @@ public sealed class ControllerDevice {
 	public const int GamepadDPadLeft = 14;
 
 	/// <summary>
-	/// Whether button <paramref name="index"/> is kept out of an Original-mode map (<see cref="JoystickDeviceMap"/>): a
+	/// Whether a button is kept out of an Original-mode map (<see cref="JoystickDeviceMap"/>): a
 	/// gamepad's Select/Back, Start, and its sticks' clicks. A map that names one reads it
 	/// as never pressed. A Custom profile (<see cref="ControllerProfile"/>) reads every button, and its own bindings decide
 	/// what these do.
 	/// </summary>
+	/// <param name="index">The button index.</param>
 	public bool Reserved(int index) =>
 		IsGamepad && index is GamepadBack or GamepadStart or GamepadLeftStick or GamepadRightStick;
 
-	/// <summary>Whether button <paramref name="index"/> is pressed, as a map's bindings see it: a <see cref="Reserved"/> one is never pressed.</summary>
+	/// <summary>Whether a button is pressed, as a map's bindings see it: a <see cref="Reserved"/> one is never pressed.</summary>
+	/// <param name="index">The button index.</param>
 	public bool BindableButton(int index) => !Reserved(index) && Button(index);
 
-	/// <summary>One frame of the device read through <paramref name="map"/> (<see cref="JoystickDeviceMap.Read"/>), using the hat that the map names.</summary>
+	/// <summary>One frame of the device read through a map (<see cref="JoystickDeviceMap.Read"/>), using the hat that the map names.</summary>
+	/// <param name="map">The map.</param>
 	public JoystickReading Read(JoystickDeviceMap map) => map.Read(Axis, BindableButton, Hat(map.HatIndex));
 
-	/// <summary>Whether <paramref name="source"/>, a control the map binds outside the eight CONTROLS buttons, is pressed on this device.</summary>
+	/// <summary>Whether a source, a control the map binds outside the eight CONTROLS buttons, is pressed on this device.</summary>
+	/// <param name="source">The control.</param>
 	public bool Held(JoystickButtonSource source) => source.Pressed(Axis, BindableButton);
 
 	/// <summary>Whether any button is held.</summary>
@@ -164,7 +171,8 @@ public sealed class ControllerDevice {
 		return false;
 	}
 
-	/// <summary>Which directions hat <paramref name="index"/> is pushed in. For a gamepad, hat 0 is the d-pad's four buttons.</summary>
+	/// <summary>Which directions a hat is pushed in. For a gamepad, hat 0 is the d-pad's four buttons.</summary>
+	/// <param name="index">The hat index.</param>
 	public JoystickHat Hat(int index) {
 		if (_gamepad == null) {
 			return index >= 0 && index < _joystick!.Hats.Count ? HatOf(_joystick.Hats[index].Position) : JoystickHat.None;
@@ -191,10 +199,12 @@ public sealed class ControllerDevice {
 	}
 
 	/// <summary>
-	/// The device in <paramref name="slot"/>, or null when nothing is connected there. Silk's own deadzone is turned off:
+	/// The device in a slot, or null when nothing is connected there. Silk's own deadzone is turned off:
 	/// retail's deadzone is applied in <see cref="JoystickDeviceMap.Read"/>, and two stacked deadzones would eat a fifth
 	/// of the travel twice over.
 	/// </summary>
+	/// <param name="input">The input context.</param>
+	/// <param name="slot">The device slot.</param>
 	public static ControllerDevice? At(IInputContext input, int slot) {
 		var off = new Deadzone(0f, DeadzoneMethod.Traditional);
 		if (slot >= 0 && slot < input.Gamepads.Count && input.Gamepads[slot] is { IsConnected: true } gamepad) {
@@ -221,13 +231,16 @@ public sealed class ControllerDevice {
 	}
 
 	/// <summary>
-	/// The device a mission reads: the first connected device that <paramref name="file"/> has a map for, else the first
+	/// The device a mission reads: the first connected device that the map file has a map for, else the first
 	/// connected device; null when none is connected.
 	/// </summary>
+	/// <param name="input">The input context.</param>
+	/// <param name="file">The map file.</param>
 	public static ControllerDevice? Pick(IInputContext input, JoystickMapFile file) =>
 		Connected(input).FirstOrDefault(device => device.MapIn(file) != null) ?? Connected(input).FirstOrDefault();
 
-	/// <summary>The map <paramref name="file"/> holds for this device, or null when it holds none.</summary>
+	/// <summary>The map a file holds for this device, or null when it holds none.</summary>
+	/// <param name="file">The map file.</param>
 	public JoystickDeviceMap? MapIn(JoystickMapFile file) => file.For(IsGamepad, Guid);
 
 	/// <summary>

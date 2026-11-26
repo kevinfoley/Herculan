@@ -45,7 +45,8 @@ internal sealed record ShadesReport(IReadOnlyList<ShadesFile> Files, IReadOnlyLi
 /// not consecutive runs, which are the two things a per-object ramp state needs to know about the data.
 /// </summary>
 internal static class ShadesQuery {
-	/// <summary>Every <c>SHADES.DAT</c> and <c>.DPL</c> of <paramref name="archivePaths"/>, each archive's in folder and name order.</summary>
+	/// <summary>Every <c>SHADES.DAT</c> and <c>.DPL</c> of the archives, each archive's in folder and name order.</summary>
+	/// <param name="archivePaths">The archives to search.</param>
 	public static ShadesReport Run(IReadOnlyList<string> archivePaths) {
 		var files = new List<ShadesFile>();
 		var palettes = new List<ShadesPalette>();
@@ -93,7 +94,8 @@ internal static class ShadesQuery {
 		return new ShadesReport(files, palettes, refused);
 	}
 
-	/// <summary>Whether each entry of <paramref name="entries"/> is one more than the one before it.</summary>
+	/// <summary>Whether each entry is one more than the one before it.</summary>
+	/// <param name="entries">The entries.</param>
 	private static bool IsRun(short[] entries) {
 		for (int i = 1; i < entries.Length; i++) {
 			if (entries[i] != entries[i - 1] + 1) {

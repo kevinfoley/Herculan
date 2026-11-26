@@ -263,10 +263,11 @@ public sealed class HostWindow : IDisposable {
 	public event Action<int, int, byte[]>? PrintScreenCaptured;
 
 	/// <summary>
-	/// What is on screen until the next turn draws its first frame: <paramref name="draw"/> over black, or black alone
+	/// What is on screen until the next turn draws its first frame: a draw callback over black, or black alone
 	/// for null. Drawn now, and again by each <see cref="PumpEvents"/>, so it survives a resize meanwhile. Opens the
 	/// window, black, if no turn has yet.
 	/// </summary>
+	/// <param name="draw">Draws over black; null for black alone.</param>
 	public void Hold(Action<GL, Vector2D<int>>? draw) {
 		_hold = draw;
 		Present(Open());
@@ -300,10 +301,11 @@ public sealed class HostWindow : IDisposable {
 	}
 
 	/// <summary>
-	/// Runs <paramref name="turn"/> until it ends (<see cref="EngineWindow.Close"/>) or the window is closed: a fresh
+	/// Runs a turn until it ends (<see cref="EngineWindow.Close"/>) or the window is closed: a fresh
 	/// input context, the turn's <see cref="EngineWindow.Load"/>, and then a frame at a time. A turn started after the
 	/// window has been closed gets no frames, only its <see cref="EngineWindow.Closing"/>.
 	/// </summary>
+	/// <param name="turn">The turn to run.</param>
 	internal void RunTurn(EngineWindow turn) {
 		var gl = Open();
 		if (Closed || TerminationSignal.Requested) {

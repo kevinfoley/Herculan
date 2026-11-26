@@ -13,7 +13,8 @@ public sealed class WaveFileMusicSource : MusicSourceBase {
 	private readonly string _directory;
 	private readonly int _trackCount;
 
-	/// <summary>Reads tracks from <paramref name="directory"/>, which need not exist.</summary>
+	/// <summary>Reads tracks from a directory, which need not exist.</summary>
+	/// <param name="directory">The directory.</param>
 	public WaveFileMusicSource(string directory) {
 		_directory = directory;
 		_trackCount = Directory.Exists(directory)
@@ -29,7 +30,9 @@ public sealed class WaveFileMusicSource : MusicSourceBase {
 		? $"{_trackCount} track files in {_directory}"
 		: $"no TrackNN.wav files in {_directory}";
 
-	/// <summary>Where track <paramref name="track"/> lives under <paramref name="directory"/>.</summary>
+	/// <summary>Where a track lives under a directory.</summary>
+	/// <param name="directory">The directory.</param>
+	/// <param name="track">The track number.</param>
 	public static string PathFor(string directory, int track) =>
 		CaseInsensitivePath.Combine(directory, $"Track{track:00}.wav");
 

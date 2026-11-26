@@ -62,7 +62,9 @@ public sealed class PolledButtons {
 	/// </summary>
 	public bool LeftPressedByAlso { get; private set; }
 
-	/// <summary>Each button that has changed state since the last update, left first, handed to <paramref name="changed"/> as the press or release it is.</summary>
+	/// <summary>Each button that has changed state since the last update, left first, handed to a callback as the press or release it is.</summary>
+	/// <param name="mouse">The mouse.</param>
+	/// <param name="changed">Receives each change.</param>
 	public void Deliver(IMouse mouse, Action<MouseButton, bool> changed) {
 		bool left = LeftHeld(mouse);
 		if (left && !_leftHeld) {

@@ -20,13 +20,16 @@ public abstract class GameDisc : IDisposable {
 	/// <summary>The image, when the disc is one; null for a directory.</summary>
 	public virtual DiscImage? Image => null;
 
-	/// <summary>Whether <paramref name="relativePath"/> names a file on the disc.</summary>
+	/// <summary>Whether a path names a file on the disc.</summary>
+	/// <param name="relativePath">The path relative to the disc's root.</param>
 	public abstract bool FileExists(string relativePath);
 
-	/// <summary>Whether <paramref name="relativePath"/> names a folder on the disc.</summary>
+	/// <summary>Whether a path names a folder on the disc.</summary>
+	/// <param name="relativePath">The path relative to the disc's root.</param>
 	public abstract bool DirectoryExists(string relativePath);
 
-	/// <summary>Opens <paramref name="relativePath"/> as a seekable, read-only stream, or answers null when there is no such file.</summary>
+	/// <summary>Opens a file as a seekable, read-only stream, or answers null when there is no such file.</summary>
+	/// <param name="relativePath">The path relative to the disc's root.</param>
 	public abstract Stream? OpenRead(string relativePath);
 
 	/// <summary>
@@ -36,12 +39,14 @@ public abstract class GameDisc : IDisposable {
 	public abstract IReadOnlyList<string> ArchiveNames();
 
 	/// <summary>
-	/// The names of the files directly in the disc folder <paramref name="relativeDirectory"/>, in no particular
+	/// The names of the files directly in a disc folder, in no particular
 	/// order; empty when there is no such folder.
 	/// </summary>
+	/// <param name="relativeDirectory">The folder's path relative to the disc's root.</param>
 	public abstract IReadOnlyList<string> FileNames(string relativeDirectory);
 
-	/// <summary>Where <paramref name="relativePath"/> is, for a message.</summary>
+	/// <summary>Where a path is, for a message.</summary>
+	/// <param name="relativePath">The path relative to the disc's root.</param>
 	public abstract string Describe(string relativePath);
 
 	/// <summary>A directory, which must exist.</summary>
@@ -64,9 +69,11 @@ public abstract class GameDisc : IDisposable {
 	}
 
 	/// <summary>
-	/// Reads <paramref name="relativePath"/> whole, or answers null when it is absent or longer than
-	/// <paramref name="maxBytes"/>. The length is checked before anything is allocated.
+	/// Reads a file whole, or answers null when it is absent or longer than
+	/// a byte limit. The length is checked before anything is allocated.
 	/// </summary>
+	/// <param name="relativePath">The path relative to the disc's root.</param>
+	/// <param name="maxBytes">The longest file read.</param>
 	public byte[]? ReadAllBytes(string relativePath, long maxBytes) {
 		using var stream = OpenRead(relativePath);
 		if (stream == null || stream.Length > maxBytes) {

@@ -49,9 +49,10 @@ public sealed class Overlay2DRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws the batched vertices against <paramref name="texture"/>. The batch is not cleared, so a
+	/// Draws the batched vertices against a texture. The batch is not cleared, so a
 	/// caller that goes on adding calls <see cref="Clear"/> first.
 	/// </summary>
+	/// <param name="texture">The texture.</param>
 	public void Submit(GpuTexture texture) {
 		_shader.SetSamplerTexture("uTexture", texture.Handle, 0);
 		_mesh.SubmitAndDraw(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_vertices));
@@ -129,8 +130,14 @@ public sealed class Overlay2DRenderer : IDisposable {
 
 	/// <summary>
 	/// A line between two arbitrary points, as a quad along its own normal: one framebuffer pixel thick, or
-	/// <paramref name="thickness"/> pixels, at least one.
+	/// a given thickness in pixels, at least one.
 	/// </summary>
+	/// <param name="x0">The first point's X.</param>
+	/// <param name="y0">The first point's Y.</param>
+	/// <param name="x1">The second point's X.</param>
+	/// <param name="y1">The second point's Y.</param>
+	/// <param name="color">The line's color.</param>
+	/// <param name="thickness">The line's thickness in pixels.</param>
 	public void AddLine(float x0, float y0, float x1, float y1, Vector3 color, float thickness = 1f) {
 		float dx = x1 - x0;
 		float dy = y1 - y0;

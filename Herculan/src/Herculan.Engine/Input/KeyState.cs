@@ -11,10 +11,11 @@ public interface IKeyState {
 	bool IsKeyPressed(Key key);
 
 	/// <summary>
-	/// Whether <paramref name="key"/>'s auto-repeat falls due this frame, which a binding that acts on every
+	/// Whether a key's auto-repeat falls due this frame, which a binding that acts on every
 	/// key-down event reads beside the key's edge (<see cref="KeyLatch.PressOrRepeat"/>). Never, unless a
 	/// keyboard says otherwise: a tape holds each repeat as a press of its own.
 	/// </summary>
+	/// <param name="key">The key.</param>
 	bool IsKeyRepeated(Key key) => false;
 }
 

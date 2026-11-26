@@ -56,10 +56,12 @@ public static partial class ReleaseCheck {
 	private static HttpClient? _client;
 
 	/// <summary>
-	/// Makes the check for a build of version <paramref name="current"/>. Never throws: a network, HTTP or parse failure
+	/// Makes the check for a build of the current version. Never throws: a network, HTTP or parse failure
 	/// comes back as <see cref="ReleaseCheckStatus.Failed"/>. The continuation runs on the thread pool, so a frame loop
 	/// polls the task rather than awaiting it.
 	/// </summary>
+	/// <param name="current">The running build's version.</param>
+	/// <param name="cancellation">Cancels the check.</param>
 	public static async Task<ReleaseCheckResult> RunAsync(ReleaseVersion current, CancellationToken cancellation = default) {
 		try {
 			using var response = await Client(current).GetAsync(ReleasesUrl, cancellation).ConfigureAwait(false);
@@ -74,7 +76,9 @@ public static partial class ReleaseCheck {
 		}
 	}
 
-	/// <summary>Compares the releases <paramref name="json"/> lists with <paramref name="current"/>.</summary>
+	/// <summary>Compares the releases a JSON document lists with the current version.</summary>
+	/// <param name="json">The releases, as JSON.</param>
+	/// <param name="current">The running build's version.</param>
 	public static ReleaseCheckResult Interpret(string json, ReleaseVersion current) {
 		ReleaseVersion? newest = null;
 		string? newestTag = null;

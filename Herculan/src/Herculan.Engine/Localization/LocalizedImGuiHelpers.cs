@@ -5,7 +5,7 @@ namespace Herculan.Engine.Localization;
 public static class LocalizedImGuiHelpers {
 	/// <summary>
 	/// Draws a row of buttons as <see cref="ImGuiHelpers.DrawButtonRow"/> does, each labelled with its key's string in
-	/// <paramref name="table"/>. Never writes to <paramref name="buttons"/> and allocates nothing, so a caller can keep
+	/// the table. Never writes to the buttons and allocates nothing, so a caller can keep
 	/// the array in a field and pass it every frame.
 	/// </summary>
 	/// <param name="table">The table the labels are read from.</param>

@@ -29,13 +29,18 @@ public readonly record struct ControllerInput(ControllerInputKind Kind, int Inde
 		(JoystickHat.North, "up"), (JoystickHat.East, "right"), (JoystickHat.South, "down"), (JoystickHat.West, "left"),
 	];
 
-	/// <summary>Device button <paramref name="index"/>.</summary>
+	/// <summary>A device button.</summary>
+	/// <param name="index">The button index.</param>
 	public static ControllerInput Button(int index) => new(ControllerInputKind.Button, index);
 
-	/// <summary>Device axis <paramref name="index"/> pushed toward the end <paramref name="sign"/> names.</summary>
+	/// <summary>A device axis pushed toward one end.</summary>
+	/// <param name="index">The axis index.</param>
+	/// <param name="sign">Negative for the low end, otherwise the high end.</param>
 	public static ControllerInput Axis(int index, int sign) => new(ControllerInputKind.Axis, index, sign < 0 ? -1 : 1);
 
-	/// <summary>Hat <paramref name="index"/> pushed toward <paramref name="direction"/>, one of the four cardinals.</summary>
+	/// <summary>A hat pushed toward one of the four cardinals.</summary>
+	/// <param name="index">The hat index.</param>
+	/// <param name="direction">The direction pushed.</param>
 	public static ControllerInput Hat(int index, JoystickHat direction) => new(ControllerInputKind.Hat, index, 0, direction);
 
 	/// <summary>

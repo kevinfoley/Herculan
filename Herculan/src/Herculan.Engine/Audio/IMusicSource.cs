@@ -18,11 +18,12 @@ public interface IMusicSource : IDisposable {
 	string Status { get; }
 
 	/// <summary>
-	/// Starts producing <paramref name="track"/> and returns at once, with the track filling on a
+	/// Starts producing a track and returns at once, with the track filling on a
 	/// worker thread. Asking again for the track most recently opened returns the same instance —
 	/// already filled or still filling — so a loop, a resume or a second mission never reads it
 	/// twice. Asking for a different one abandons the previous.
 	/// </summary>
+	/// <param name="track">The track number.</param>
 	/// <returns>The track, or null when this source does not have it.</returns>
 	MusicTrack? Open(int track);
 }
@@ -95,10 +96,11 @@ public abstract class MusicSourceBase : IMusicSource {
 	}
 
 	/// <summary>
-	/// Works out whether this source has <paramref name="track"/> and how long it is, and returns the
+	/// Works out whether this source has a track and how long it is, and returns the
 	/// empty track with the work that fills it. The work runs on a worker thread and must honour its
 	/// token; an exception it throws becomes the track's <see cref="MusicTrack.Failure"/>.
 	/// </summary>
+	/// <param name="track">The track number.</param>
 	protected abstract (MusicTrack Track, Action<CancellationToken> Produce)? Prepare(int track);
 
 	/// <summary>Waits for the current track's producer to finish. For tests.</summary>

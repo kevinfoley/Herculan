@@ -282,7 +282,8 @@ public sealed class Opl3Chip {
 	private ulong writebuf_lasttime;
 	private readonly WriteBuf[] writebuf = new WriteBuf[OPL_WRITEBUF_SIZE];
 
-	/// <summary>A chip reset for output at <paramref name="samplerate"/>, as <see cref="Reset"/> leaves it.</summary>
+	/// <summary>A chip reset for output at a given sample rate, as <see cref="Reset"/> leaves it.</summary>
+	/// <param name="samplerate">The output sample rate in Hz.</param>
 	public Opl3Chip(uint samplerate = NativeRate) {
 		Reset(samplerate);
 	}
@@ -1026,10 +1027,10 @@ public sealed class Opl3Chip {
 	}
 
 	/// <summary>
-	/// <c>OPL3_Generate4Ch</c>: one sample at <see cref="NativeRate"/> on the chip's four outputs, A, B, C and D, into
-	/// <paramref name="buf4"/>. The FM channels' right side (B, D) is the sample before the left's
-	/// (<c>OPL_QUIRK_CHANNELSAMPLEDELAY</c>).
+	/// <c>OPL3_Generate4Ch</c>: one sample at <see cref="NativeRate"/> on the chip's four outputs, A, B, C and D. The FM
+	/// channels' right side (B, D) is the sample before the left's (<c>OPL_QUIRK_CHANNELSAMPLEDELAY</c>).
 	/// </summary>
+	/// <param name="buf4">Receives the four outputs, in order.</param>
 	public void Generate4Ch(Span<short> buf4) {
 		Channel channel;
 		Signal[] @out;
@@ -1140,7 +1141,8 @@ public sealed class Opl3Chip {
 		writebuf_samplecnt++;
 	}
 
-	/// <summary><c>OPL3_Generate</c>: one stereo sample at <see cref="NativeRate"/>, the chip's outputs A and B, into <paramref name="buf"/>.</summary>
+	/// <summary><c>OPL3_Generate</c>: one stereo sample at <see cref="NativeRate"/>, the chip's outputs A and B.</summary>
+	/// <param name="buf">Receives outputs A and B.</param>
 	public void Generate(Span<short> buf) {
 		Span<short> samples = stackalloc short[4];
 		Generate4Ch(samples);
@@ -1178,7 +1180,8 @@ public sealed class Opl3Chip {
 		buf[1] = samples[1];
 	}
 
-	/// <summary><c>OPL3_Reset</c>: every register and every internal state cleared, the resampled output set to <paramref name="samplerate"/>.</summary>
+	/// <summary><c>OPL3_Reset</c>: every register and every internal state cleared, the resampled output set to a given sample rate.</summary>
+	/// <param name="samplerate">The output sample rate in Hz.</param>
 	public void Reset(uint samplerate) {
 		Slot slot;
 		Channel channel;
@@ -1249,7 +1252,9 @@ public sealed class Opl3Chip {
 		vibshift = 1;
 	}
 
-	/// <summary><c>OPL3_WriteReg</c>: <paramref name="v"/> written to register <paramref name="reg"/> at once, the second register array at <c>0x100</c>–<c>0x1ff</c>.</summary>
+	/// <summary><c>OPL3_WriteReg</c>: a value written to a register at once, the second register array at <c>0x100</c>–<c>0x1ff</c>.</summary>
+	/// <param name="reg">The register number.</param>
+	/// <param name="v">The value written.</param>
 	public void WriteReg(ushort reg, byte v) {
 		byte high = (byte)((reg >> 8) & 0x01);
 		byte regm = (byte)(reg & 0xff);
@@ -1339,9 +1344,11 @@ public sealed class Opl3Chip {
 	}
 
 	/// <summary>
-	/// <c>OPL3_WriteRegBuffered</c>: <paramref name="v"/> queued for register <paramref name="reg"/>, applied by a later
-	/// <see cref="Generate4Ch"/> at least <c>OPL_WRITEBUF_DELAY</c> samples after the write queued before it.
+	/// <c>OPL3_WriteRegBuffered</c>: a value queued for a register, applied by a later <see cref="Generate4Ch"/> at least
+	/// <c>OPL_WRITEBUF_DELAY</c> samples after the write queued before it.
 	/// </summary>
+	/// <param name="reg">The register number.</param>
+	/// <param name="v">The value written.</param>
 	public void WriteRegBuffered(ushort reg, byte v) {
 		ulong time1, time2;
 		uint writebuf_last;
@@ -1372,8 +1379,11 @@ public sealed class Opl3Chip {
 
 	/// <summary>
 	/// <c>OPL3_Generate4ChStream</c>: <see cref="Generate4ChResampled"/> for each frame, outputs A and B interleaved into
-	/// <paramref name="sndptr1"/>, C and D into <paramref name="sndptr2"/>; <paramref name="numsamples"/> frames.
+	/// the first buffer, C and D into the second.
 	/// </summary>
+	/// <param name="sndptr1">Receives outputs A and B, interleaved.</param>
+	/// <param name="sndptr2">Receives outputs C and D, interleaved.</param>
+	/// <param name="numsamples">The number of frames to generate.</param>
 	public void Generate4ChStream(Span<short> sndptr1, Span<short> sndptr2, uint numsamples) {
 		Span<short> samples = stackalloc short[4];
 
@@ -1386,7 +1396,9 @@ public sealed class Opl3Chip {
 		}
 	}
 
-	/// <summary><c>OPL3_GenerateStream</c>: <see cref="GenerateResampled"/> for each frame, interleaved into <paramref name="sndptr"/>; <paramref name="numsamples"/> frames.</summary>
+	/// <summary><c>OPL3_GenerateStream</c>: <see cref="GenerateResampled"/> for each frame, interleaved into a buffer.</summary>
+	/// <param name="sndptr">Receives the frames, interleaved.</param>
+	/// <param name="numsamples">The number of frames to generate.</param>
 	public void GenerateStream(Span<short> sndptr, uint numsamples) {
 		for (int i = 0; i < numsamples; i++) {
 			GenerateResampled(sndptr.Slice(2 * i, 2));

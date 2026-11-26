@@ -64,11 +64,13 @@ public sealed class MusicTrack {
 	public string? Failure => _failure;
 
 	/// <summary>
-	/// Copies frames from <paramref name="frame"/> on into <paramref name="destination"/>, as many as
+	/// Copies frames from a position on, as many as
 	/// have arrived and fit.
 	/// </summary>
+	/// <param name="frame">The first frame to copy.</param>
+	/// <param name="destination">Receives the frames.</param>
 	/// <returns>How many frames were copied — 0 when the producer has not yet reached
-	/// <paramref name="frame"/>.</returns>
+	/// that frame.</returns>
 	public int Read(long frame, Span<short> destination) {
 		long ready = FramesReady;
 		if (frame < 0 || frame >= ready) {
@@ -101,7 +103,8 @@ public sealed class MusicTrack {
 		Volatile.Write(ref _framesReady, ready + frames);
 	}
 
-	/// <summary>Producer side: appends <paramref name="sectors"/> sectors of silence.</summary>
+	/// <summary>Producer side: appends sectors of silence.</summary>
+	/// <param name="sectors">The number of sectors.</param>
 	internal void AppendDamaged(int sectors) {
 		long ready = FramesReady;
 		long frames = Math.Min((long)sectors * FramesPerSector, FrameCount - ready);

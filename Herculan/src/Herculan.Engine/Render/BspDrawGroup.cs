@@ -48,9 +48,13 @@ public sealed class BspDrawGroup {
 	}
 
 	/// <summary>
-	/// A group for a shape baked at its rest pose and placed whole by <paramref name="objectToWorld"/>:
+	/// A group for a shape baked at its rest pose and placed whole by an object-to-world matrix:
 	/// every frame is the rest offset in front of the object.
 	/// </summary>
+	/// <param name="tree">The shape's BSP tree.</param>
+	/// <param name="objectToWorld">Gives the matrix that places the object.</param>
+	/// <param name="parent">The group this one hangs from, if any.</param>
+	/// <param name="parentLeaf">The child of the parent this group attaches to; -1 for none.</param>
 	public static BspDrawGroup AtRest(BspTree tree, Func<Matrix4x4> objectToWorld,
 			BspDrawGroup? parent = null, int parentLeaf = -1) =>
 		new(tree, frame => Matrix4x4.CreateTranslation(tree.RestOffset(frame)) * objectToWorld(),
@@ -130,10 +134,11 @@ public sealed class BspDrawGroup {
 	}
 
 	/// <summary>
-	/// How many paint layers child <paramref name="leaf"/>'s items this pass run to
+	/// How many paint layers a child's items this pass run to
 	/// (<see cref="SceneItem.PaintLayer"/>), at least one. A layer below the top one with nothing drawn
 	/// this pass still takes its value, which costs nothing but the value.
 	/// </summary>
+	/// <param name="leaf">The child's index.</param>
 	internal int LayerCount(int leaf) {
 		int top = 0;
 		foreach (var item in Items[leaf]) {

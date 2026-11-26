@@ -110,7 +110,8 @@ public sealed class GamepadPointer {
 	/// </summary>
 	public Vector2? Override => _owned ? _placed : null;
 
-	/// <summary>The pointer in window coordinates: <see cref="Override"/>, or else where <paramref name="mouse"/> is.</summary>
+	/// <summary>The pointer in window coordinates: <see cref="Override"/>, or else where the mouse is.</summary>
+	/// <param name="mouse">The mouse.</param>
 	public Vector2 PositionOf(IMouse mouse) => Override ?? mouse.Position;
 
 	/// <summary>
@@ -120,11 +121,15 @@ public sealed class GamepadPointer {
 	public void WaitForRelease() => _waitForRelease = true;
 
 	/// <summary>
-	/// Reads the pad, once an update before anything asks. While <paramref name="active"/> is clear, such as while the
+	/// Reads the pad, once an update before anything asks. While the pad is not active, such as while the
 	/// menu bar's own gamepad navigation has the pad, the pointer stays where it is and the triggers count as let go.
-	/// <paramref name="confine"/> keeps the pointer inside <paramref name="client"/>; a host that has grabbed the cursor
-	/// for mouse-look clears it, so the stick can turn the view as far as it likes.
 	/// </summary>
+	/// <param name="input">The input context.</param>
+	/// <param name="mouse">The mouse, if any.</param>
+	/// <param name="client">The client area's size.</param>
+	/// <param name="delta">The time since the last update.</param>
+	/// <param name="active">Whether the pad drives the pointer.</param>
+	/// <param name="confine">Keeps the pointer inside the client area; a host that has grabbed the cursor for mouse-look clears it, so the stick can turn the view as far as it likes.</param>
 	public void Update(IInputContext input, IMouse? mouse, Vector2D<int> client, double delta, bool active, bool confine = true) {
 		if (mouse != null) {
 			FollowMouse(mouse);

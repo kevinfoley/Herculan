@@ -94,9 +94,9 @@ public sealed class PaletteRampTable {
 	/// <summary>
 	/// Builds the table for a theater, or returns null without a ramp or a palette — in which case a
 	/// textured surface falls back to its expanded colour and the renderer's own light term.
-	/// <paramref name="groundFillShade"/> is the shade an untextured ground cell is filled at (<see cref="GroundRow"/>),
-	/// for a game that draws them.
 	/// </summary>
+	/// <param name="shading">The surface shading, if any.</param>
+	/// <param name="groundFillShade">The shade an untextured ground cell is filled at (<see cref="GroundRow"/>), for a game that draws them.</param>
 	public static PaletteRampTable? Build(SurfaceShading? shading, int? groundFillShade = null) {
 		if (shading?.Palette is not { } palette) {
 			return null;

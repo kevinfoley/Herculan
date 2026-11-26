@@ -22,7 +22,8 @@ public sealed class A11ySettings : SettingsFile<A11ySettingDefinition<bool>> {
 	public A11ySettings() : this([]) {
 	}
 
-	/// <summary>The core's settings and then <paramref name="gameSettings"/>, each at its default.</summary>
+	/// <summary>The core's settings and then a game's, each at its default.</summary>
+	/// <param name="gameSettings">The game's settings.</param>
 	public A11ySettings(IReadOnlyList<A11ySettingDefinition<bool>> gameSettings)
 		: base([.. A11ySettingDefinitions.All, .. gameSettings], "a11y-settings.json") {
 	}

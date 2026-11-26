@@ -48,13 +48,15 @@ public static partial class DtsMeshBuilder {
 	}
 
 	/// <summary>
-	/// <paramref name="edges"/> with the face outlines first and the line polys after them, each kind in its own order, as
+	/// The edges with the face outlines first and the line polys after them, each kind in its own order, as
 	/// <see cref="MeshBuild"/> lays out the line range.
 	/// </summary>
+	/// <param name="edges">The edges.</param>
 	private static List<OutlineEdge> StandaloneLast(List<OutlineEdge> edges) =>
 		edges.Where(edge => !edge.Standalone).Concat(edges.Where(edge => edge.Standalone)).ToList();
 
-	/// <summary>How many vertices the line polys among <paramref name="edges"/> take.</summary>
+	/// <summary>How many vertices the line polys among some edges take.</summary>
+	/// <param name="edges">The edges.</param>
 	private static int StandaloneVertices(List<OutlineEdge> edges) => edges.Count(edge => edge.Standalone) * 2;
 
 	/// <summary>
@@ -92,7 +94,8 @@ public static partial class DtsMeshBuilder {
 	/// <summary>The sides a <see cref="Triangle.Side"/> draws, as bits: 1 the front, 2 the back.</summary>
 	private static int SideMask(int side) => side switch { > 0 => 1, < 0 => 2, _ => 3 };
 
-	/// <summary>The <see cref="Triangle.Side"/> that draws exactly the sides <paramref name="mask"/> names.</summary>
+	/// <summary>The <see cref="Triangle.Side"/> that draws exactly the sides a mask names.</summary>
+	/// <param name="mask">The sides, as a bit mask.</param>
 	private static int SideOfMask(int mask) => mask switch { 1 => 1, 2 => -1, _ => 0 };
 
 	/// <summary>
@@ -372,7 +375,7 @@ public static partial class DtsMeshBuilder {
 	/// discarding either would lose a state the part can be in. Two levels of one detail part are
 	/// alternatives in the same way, so the detail level is in the key too.</para>
 	///
-	/// <para><b>So is the <see cref="TSBSPPart"/> child</b>, with <paramref name="leavesApart"/>:
+	/// <para><b>So is the <see cref="TSBSPPart"/> child</b>, when children are kept apart:
 	/// twins in two children of one part are ordered by the part's walk, which the renderer
 	/// reproduces for pieces split by child, so neither is dropped there. The single flat mesh
 	/// <see cref="Emit"/> builds keeps no children apart and nothing orders them, so it still keeps
@@ -385,6 +388,8 @@ public static partial class DtsMeshBuilder {
 	/// and keeps the sides it wins: a two-sided copy that wins one side and loses the other goes on
 	/// drawing that one side alone.</para>
 	/// </summary>
+	/// <param name="triangles">The triangles.</param>
+	/// <param name="leavesApart">Whether the children of one part are kept apart.</param>
 	private static List<Triangle> DropCoincidentTwins(List<Triangle> triangles, bool leavesApart) {
 		// The last element pairs the side a copy competes for with the facing it depends on
 		// (Triangle.Dependency): two copies of one poly gated on opposite facings of another never

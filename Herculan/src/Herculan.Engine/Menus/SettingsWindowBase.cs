@@ -68,9 +68,10 @@ public abstract class SettingsWindowBase : IDrawnMenuBarPanel {
 	public virtual void Close() => Hide();
 
 	/// <summary>
-	/// Draws the window, when it is up. <paramref name="owner"/> is the native window a picker belongs to, and
-	/// <paramref name="centre"/> when the window is centred (<see cref="PanelCentring.Condition"/>).
+	/// Draws the window, when it is up.
 	/// </summary>
+	/// <param name="owner">The native window a picker belongs to.</param>
+	/// <param name="centre">When the window is centred (<see cref="PanelCentring.Condition"/>).</param>
 	public virtual void Draw(nint owner, ImGuiCond centre) {
 		if (!_open) {
 			return;
@@ -115,9 +116,11 @@ public abstract class SettingsWindowBase : IDrawnMenuBarPanel {
 	}
 
 	/// <summary>
-	/// Raises <paramref name="prompt"/> over the window as a modal, its message given <paramref name="messageArguments"/>;
-	/// accepting it passes the path chosen to <paramref name="apply"/>.
+	/// Raises a prompt over the window as a modal; accepting it passes the path chosen to the apply callback.
 	/// </summary>
+	/// <param name="prompt">The prompt.</param>
+	/// <param name="apply">Receives the path chosen.</param>
+	/// <param name="messageArguments">Fill the prompt's message.</param>
 	protected void RaisePrompt(PathPrompt prompt, Action<string> apply, params object[] messageArguments) {
 		_prompt = prompt;
 		_apply = apply;

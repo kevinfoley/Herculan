@@ -26,11 +26,12 @@ public sealed partial record ReleaseVersion : IComparable<ReleaseVersion> {
 	public bool IsPrerelease => Label != null;
 
 	/// <summary>
-	/// The version in <paramref name="text"/>. A leading <c>v</c> and anything from a <c>+</c> on (the commit the SDK
+	/// The version in a text. A leading <c>v</c> and anything from a <c>+</c> on (the commit the SDK
 	/// appends) are dropped, and missing parts count as 0, so <c>v0.9.7</c>, <c>0.9.7+abc123</c> and <c>0.9.7.0</c> are
 	/// all equal. Null when the number is not a version or the label holds anything but letters, digits, <c>-</c> and
 	/// dots between non-empty parts.
 	/// </summary>
+	/// <param name="text">The text to parse.</param>
 	public static ReleaseVersion? Parse(string text) {
 		string rest = text.StartsWith('v') || text.StartsWith('V') ? text[1..] : text;
 		int plus = rest.IndexOf('+');

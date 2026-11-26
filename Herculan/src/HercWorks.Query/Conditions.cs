@@ -47,9 +47,11 @@ internal static class Conditions {
 		code >= Es1FirstOperator && code < Es1FirstOperator + Es1Operators.Length ? Es1Operators[code - Es1FirstOperator] : null;
 
 	/// <summary>
-	/// What condition ref <paramref name="guid"/> asks, or null for <c>-1</c>. Several row-1 records may
+	/// What a condition ref asks, or null for <c>-1</c>. Several row-1 records may
 	/// share a GUID; the gate passes on any survivor that has it, so they are joined with <c>or</c>.
 	/// </summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="guid">The condition ref.</param>
 	public static string? Describe(MissionFile file, short guid) => guid == -1 ? null : Describe(Of(file), guid, 0);
 
 	/// <inheritdoc cref="Describe(MissionFile, short)"/>
@@ -69,7 +71,9 @@ internal static class Conditions {
 		return parts.Count == 1 ? parts[0] : "(" + string.Join(") or (", parts) + ")";
 	}
 
-	/// <summary>What row-1 record <paramref name="c"/> itself asks, with the chain above it.</summary>
+	/// <summary>What a row-1 record itself asks, with the chain above it.</summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="c">The record.</param>
 	public static string DescribeRecord(MissionFile file, MissionCondition14 c) =>
 		DescribeOne(Of(file), new Row1(c.GUID, c.ConditionRef, c.Type, c.FlagIndexOrRangeLower, c.OperatorOrRangeUpperOrResult, c.ComparisonOperand), 0);
 
@@ -106,10 +110,12 @@ internal static class Conditions {
 	}
 
 	/// <summary>
-	/// The random table key a record conditioned on <paramref name="guid"/> answers to: the key of the type-3
-	/// parent of the type-2 record <paramref name="guid"/> names, or null when it is not such a record
+	/// The random table key a record conditioned on a GUID answers to: the key of the type-3
+	/// parent of the type-2 record the GUID names, or null when it is not such a record
 	/// (docs/retail/formats/msn-mission-file.md#random-tables).
 	/// </summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="guid">The condition GUID.</param>
 	public static short? RandomTableKeyOf(MissionFile file, short guid) => RandomTableKeyOf(Of(file), guid);
 
 	/// <inheritdoc cref="RandomTableKeyOf(MissionFile, short)"/>
@@ -138,7 +144,9 @@ internal enum CounterLayer {
 }
 
 internal static class CounterOps {
-	/// <summary>What operation <paramref name="op"/> does to a counter in <paramref name="layer"/>.</summary>
+	/// <summary>What an operation does to a counter in a layer.</summary>
+	/// <param name="layer">The counter layer.</param>
+	/// <param name="op">The operation.</param>
 	public static string Describe(CounterLayer layer, short op) => layer switch {
 		CounterLayer.OutOfAction => op switch {
 			1 => "zero",

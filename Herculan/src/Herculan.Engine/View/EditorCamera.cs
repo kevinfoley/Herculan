@@ -59,9 +59,11 @@ public sealed class EditorCamera {
 	}
 
 	/// <summary>
-	/// Switches to the top-down view, north up, centered on <paramref name="ground"/> (world units) from
-	/// <paramref name="height"/> world units above it. The pose it leaves is kept for <see cref="LeaveTopDown"/>.
+	/// Switches to the top-down view, north up, centered on a ground point (world units) from
+	/// a height in world units above it. The pose it leaves is kept for <see cref="LeaveTopDown"/>.
 	/// </summary>
+	/// <param name="ground">The point centered on, in world units.</param>
+	/// <param name="height">The height above it, in world units.</param>
 	public void EnterTopDown(Vector3 ground, float height) {
 		if (TopDown) {
 			return;
@@ -73,7 +75,8 @@ public sealed class EditorCamera {
 		WorldPosition = ground - Forward * (height / MathF.Sin(PitchLimit));
 	}
 
-	/// <summary>Moves the camera by <paramref name="offset"/> world units, and the pose the top-down view returns to with it.</summary>
+	/// <summary>Moves the camera by an offset in world units, and the pose the top-down view returns to with it.</summary>
+	/// <param name="offset">The offset in world units.</param>
 	public void Shift(Vector3 offset) {
 		WorldPosition += offset;
 		if (_beforeTopDown is { } before) {
@@ -99,8 +102,12 @@ public sealed class EditorCamera {
 
 	/// <summary>
 	/// Frame the camera around a sphere with the given center and radius. Never farther than 
-	/// <paramref name="maxDistance"/>, so the sphere's center stays short of the far plane.
+	/// a maximum distance, so the sphere's center stays short of the far plane.
 	/// </summary>
+	/// <param name="center">The sphere's center.</param>
+	/// <param name="radius">The sphere's radius.</param>
+	/// <param name="verticalFieldOfView">The vertical field of view.</param>
+	/// <param name="maxDistance">The farthest the camera goes.</param>
 	public void Frame(Vector3 center, float radius, float verticalFieldOfView, float maxDistance) {
 		Pitch = MathF.Min(Pitch, -FramePitch);
 
@@ -120,11 +127,16 @@ public sealed class EditorCamera {
 		new(MathF.Cos(Pitch) * MathF.Sin(Yaw), MathF.Cos(Pitch) * MathF.Cos(Yaw), MathF.Sin(Pitch));
 
 	/// <summary>
-	/// Advances the camera by one frame. <paramref name="lookDelta"/> is the mouse's screen-space
-	/// movement (+X right, +Y down) since last frame, applied only while <paramref name="lookActive"/>
-	/// is true. Movement keys are read only when <paramref name="acceptKeyboardInput"/> is true, so
+	/// Advances the camera by one frame. The look delta is the mouse's screen-space
+	/// movement (+X right, +Y down) since last frame, applied only while looking is active.
+	/// Movement keys are read only when keyboard input is accepted, so
 	/// the caller can withhold them while ImGui wants the keyboard.
 	/// </summary>
+	/// <param name="deltaSeconds">The frame's duration in seconds.</param>
+	/// <param name="keyboard">The keyboard, if any.</param>
+	/// <param name="lookDelta">The mouse's movement.</param>
+	/// <param name="lookActive">Whether the mouse is looking.</param>
+	/// <param name="acceptKeyboardInput">Whether movement keys are read.</param>
 	public void Update(double deltaSeconds, IKeyboard? keyboard, Vector2 lookDelta, bool lookActive,
 			bool acceptKeyboardInput) {
 		if (lookActive) {

@@ -76,9 +76,10 @@ public class LocalizationTable {
 	}
 
 	/// <summary>
-	/// Loads <paramref name="locale"/>, with the default's strings behind it, without reading or writing the
+	/// Loads a locale, with the default's strings behind it, without reading or writing the
 	/// player's choice: for laying the panels out in each language. Throws when its file does not load.
 	/// </summary>
+	/// <param name="locale">The locale to load.</param>
 	internal LocalizationTable(string locale) {
 		if (!Apply(locale, persist: false)) {
 			throw new InvalidOperationException($"Localization file '{PathFor(locale)}' is missing or unreadable.");
@@ -140,11 +141,13 @@ public class LocalizationTable {
 		}
 	}
 
-	/// <summary>The string for <paramref name="key"/> in the selected locale, else in the default's; null when neither has it.</summary>
+	/// <summary>The string for a key in the selected locale, else in the default's; null when neither has it.</summary>
+	/// <param name="key">The string's key.</param>
 	public string? GetString(string key) => _keyValuePairs.GetValueOrDefault(key) ?? _fallback?.GetValueOrDefault(key);
 
-	/// <summary>The string for <paramref name="key"/>, or the key itself when no table has it, so a
+	/// <summary>The string for a key, or the key itself when no table has it, so a
 	/// missing translation shows on screen.</summary>
+	/// <param name="key">The string's key.</param>
 	public string GetStringOrKey(string key) => GetString(key) ?? key;
 
 	/// <summary>

@@ -15,11 +15,14 @@ public interface IOplChip {
 	int SampleRate { get; }
 
 	/// <summary>
-	/// Writes <paramref name="value"/> to <paramref name="register"/>, 0 to <c>0x1ff</c>: <c>0x00</c>–<c>0xff</c> is the
+	/// Writes a value to a register, 0 to <c>0x1ff</c>: <c>0x00</c>–<c>0xff</c> is the
 	/// register array an OPL2 has, <c>0x100</c>–<c>0x1ff</c> an OPL3's second.
 	/// </summary>
+	/// <param name="register">The register number.</param>
+	/// <param name="value">The value written.</param>
 	void WriteRegister(int register, byte value);
 
-	/// <summary>Produces <paramref name="frames"/>.Length / 2 frames of stereo 16-bit output, left and right interleaved.</summary>
+	/// <summary>Produces half as many frames of stereo 16-bit output as the buffer has samples, left and right interleaved.</summary>
+	/// <param name="frames">Receives the output.</param>
 	void Generate(Span<short> frames);
 }

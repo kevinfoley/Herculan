@@ -15,7 +15,7 @@ public readonly record struct AnimTransform(
 	short RotationX, short RotationY, short RotationZ, short X, short Y, short Z) {
 
 	/// <summary>
-	/// <c>Anim_BlendKeyframeTransforms</c> (<c>00492600</c>) — one keyframe transform blended toward another, <paramref name="q10"/>
+	/// <c>Anim_BlendKeyframeTransforms</c> (<c>00492600</c>) — one keyframe transform blended toward another, a Q10 fraction
 	/// of the way (0x400 == all the way).
 	///
 	/// <para>Rotation is blended along the shortest arc, the same wrap
@@ -23,6 +23,9 @@ public readonly record struct AnimTransform(
 	/// instead of unwinding the long way round. Translation is a plain lerp. Both truncate, and the
 	/// arithmetic is the original's: a Q10 multiply and a signed shift, not a float mix.</para>
 	/// </summary>
+	/// <param name="from">The transform blended from.</param>
+	/// <param name="to">The transform blended toward.</param>
+	/// <param name="q10">The fraction of the way, Q10.</param>
 	public static AnimTransform Blend(in AnimTransform from, in AnimTransform to, int q10) => new(
 		BlendAngle(from.RotationX, to.RotationX, q10),
 		BlendAngle(from.RotationY, to.RotationY, q10),
@@ -124,9 +127,10 @@ public sealed class AnimSequence {
 	public int PartCount => PartIds.Length;
 
 	/// <summary>
-	/// The column <paramref name="transformId"/> occupies in this sequence's frames, or -1 when the
+	/// The column a transform occupies in this sequence's frames, or -1 when the
 	/// sequence does not animate that node — in which case its default transform stands.
 	/// </summary>
+	/// <param name="transformId">The transform id.</param>
 	public int ColumnOf(int transformId) {
 		for (int i = 0; i < PartIds.Length; i++) {
 			if (PartIds[i] == transformId) {
@@ -160,7 +164,7 @@ public sealed class AnimSequence {
 	public bool Cyclic { get; }
 
 	/// <summary>
-	/// The frame after <paramref name="frame"/> — vtable <c>+0x20</c> on the sequence itself, which
+	/// The frame after the given one — vtable <c>+0x20</c> on the sequence itself, which
 	/// is <c>ANCyclicSequence_NextFrame</c> (<c>004786d8</c>) for a cyclic sequence and
 	/// <c>ANSequence_NextFrame</c> (<c>00478654</c>) for a plain one. The cyclic one wraps to 0;
 	/// the plain one <b>clamps</b>, returning the last frame forever once playback reaches it.
@@ -169,27 +173,33 @@ public sealed class AnimSequence {
 	/// that a one-shot has played out, because the test for it is <c>frame == nextFrame</c> — true
 	/// on a clamped sequence and never true on a wrapping one.</para>
 	/// </summary>
+	/// <param name="frame">The frame.</param>
 	public int NextFrame(int frame) =>
 		frame < FrameCount - 1 ? frame + 1 : Cyclic ? 0 : frame;
 
 	/// <summary>
-	/// The frame before <paramref name="frame"/> — vtable <c>+0x24</c>,
+	/// The frame before the given one — vtable <c>+0x24</c>,
 	/// <c>ANCyclicSequence_PrevFrame</c> (<c>004786f8</c>) and <c>ANSequence_PrevFrame</c>
 	/// (<c>00478670</c>), with the same asymmetry: the cyclic one wraps to the last frame, the plain
 	/// one holds at 0.
 	/// </summary>
+	/// <param name="frame">The frame.</param>
 	public int PreviousFrame(int frame) =>
 		frame != 0 ? frame - 1 : Cyclic ? FrameCount - 1 : 0;
 
 	/// <summary>
-	/// Whether playback landing on <paramref name="frame"/> at <paramref name="offset"/> still runs
-	/// into <paramref name="target"/> rather than past it — vtable <c>+0x28</c> forward and
+	/// Whether playback landing on a frame at an offset still runs
+	/// into the target rather than past it — vtable <c>+0x28</c> forward and
 	/// <c>+0x2c</c> backward: <c>ANSequence_FrameShortOfTarget</c> (<c>00478680</c>) and
 	/// <c>ANSequence_FrameShortOfTargetBackward</c> (<c>004786ac</c>) for a plain sequence, and for a
 	/// cyclic one <c>ANCyclicSequence_FrameShortOfTarget_Always</c> (<c>00478714</c>) and its
 	/// backward twin (<c>00478720</c>), which answer yes, since a loop reaches every frame. See
 	/// docs/retail/rendering/dts-node-posing.md, "Cyclic and one-shot sequences".
 	/// </summary>
+	/// <param name="frame">The frame playback lands on.</param>
+	/// <param name="target">The target frame.</param>
+	/// <param name="offset">The offset within the frame.</param>
+	/// <param name="backward">Whether playback runs backward.</param>
 	public bool FrameShortOfTarget(int frame, int target, int offset, bool backward) =>
 		Cyclic
 		|| (backward ? frame > target : frame < target)
@@ -293,9 +303,10 @@ public sealed class ShapeAnimation {
 		PartTransformIds.TryGetValue(partId, out int id) ? id : -1;
 
 	/// <summary>
-	/// Whether <paramref name="sequenceId"/> names a playable sequence — in range, and with frames
+	/// Whether a sequence id names a playable sequence — in range, and with frames
 	/// and parts to play. A sequence with neither is not something a thread can hold a cursor into.
 	/// </summary>
+	/// <param name="sequenceId">The sequence id.</param>
 	public bool HasSequence(int sequenceId) =>
 		sequenceId >= 0 && sequenceId < Sequences.Length
 		&& Sequences[sequenceId].FrameCount > 0 && Sequences[sequenceId].PartCount > 0;

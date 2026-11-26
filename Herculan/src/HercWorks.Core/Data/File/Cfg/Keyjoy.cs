@@ -45,10 +45,11 @@ public class Keyjoy {
 	public bool ReverseRudder { get; set; }
 
 	/// <summary>
-	/// Reads the file at <paramref name="path"/>, or every switch at its shipped setting when it is
+	/// Reads a file, or every switch at its shipped setting when it is
 	/// absent or unreadable — which is what the original does too, <c>GetPrivateProfileStringA</c>
 	/// falling back to the default string it is handed rather than failing.
 	/// </summary>
+	/// <param name="path">The file's path.</param>
 	public static Keyjoy Load(string path) {
 		try {
 			return new Io.Transform.Common.KeyjoyTransformer().Parse(System.IO.File.ReadAllBytes(path)) ?? new Keyjoy();

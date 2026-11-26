@@ -118,10 +118,14 @@ public static class GamePaths {
 		FindFile(fileName, SimSearchDirectories(folder), SimVolName, folder);
 
 	/// <summary>
-	/// Finds <paramref name="fileName"/> through <paramref name="find"/> and parses it, or adds
-	/// <c>folder\fileName</c> to <paramref name="missing"/> and returns null when it is absent, truncated
-	/// or malformed — for screens that read many files and list the failures on their status line.
+	/// Finds a file and parses it, or adds <c>folder\fileName</c> to the missing list and returns null when it is absent,
+	/// truncated or malformed — for screens that read many files and list the failures on their status line.
 	/// </summary>
+	/// <param name="transformer">Parses the file.</param>
+	/// <param name="find">Finds a file by name.</param>
+	/// <param name="folder">The folder the file is in.</param>
+	/// <param name="fileName">The file's name.</param>
+	/// <param name="missing">Receives the path of a file that could not be read.</param>
 	public static T? ReadOrReport<T>(Core.Io.Transform.ByteTransformer<T> transformer, Func<string, GameFile?> find,
 			string folder, string fileName, List<string> missing) where T : class {
 		try {

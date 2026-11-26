@@ -126,7 +126,9 @@ public class Es1GauFile {
 		return new Es1GauFileTransformer().Parse(bytes)!;
 	}
 
-	/// <summary>Adds <see cref="Origin"/> to the two corners of the rect at <paramref name="at"/>.</summary>
+	/// <summary>Adds <see cref="Origin"/> to the two corners of the rect at an offset.</summary>
+	/// <param name="bytes">The file's bytes.</param>
+	/// <param name="at">The rect's offset.</param>
 	private void AddOrigin(byte[] bytes, int at) {
 		if (at + 16 > bytes.Length) {
 			throw new InvalidDataException($"The weapon row count {WeaponRowCount} reaches past the file's {bytes.Length} bytes.");

@@ -102,7 +102,9 @@ public sealed class GpuMesh : IDisposable {
 		_gl.BindVertexArray(0);
 	}
 
-	/// <summary>Uploads <paramref name="ranges"/>' vertices with its ranges.</summary>
+	/// <summary>Uploads a mesh's vertices with its ranges.</summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="ranges">The mesh's vertices and ranges.</param>
 	public GpuMesh(GL gl, Render.IMeshRanges ranges)
 		: this(gl, ranges.Vertices, ranges.TriangleVertexCount, ranges.PointVertexCount, ranges.StandaloneLineVertexCount) {
 	}
@@ -130,9 +132,11 @@ public sealed class GpuMesh : IDisposable {
 	public Vector3 BoundsMax { get; private set; }
 
 	/// <summary>
-	/// Replaces the uploaded vertices from <paramref name="firstVertex"/> on with <paramref name="vertices"/>, for a
+	/// Replaces the uploaded vertices from a first vertex on, for a
 	/// mesh whose geometry has changed in place; the ranges and the count stay as built.
 	/// </summary>
+	/// <param name="firstVertex">The index of the first vertex replaced.</param>
+	/// <param name="vertices">The new vertices.</param>
 	public void Update(int firstVertex, ReadOnlySpan<MeshVertex> vertices) {
 		if (vertices.IsEmpty || firstVertex < 0 || firstVertex + vertices.Length > VertexCount) {
 			return;
@@ -160,13 +164,15 @@ public sealed class GpuMesh : IDisposable {
 	public void Draw() => Draw(1, null);
 
 	/// <summary>
-	/// Draws every range, the line polys and the points <paramref name="pixelScale"/> pixels wide: the
-	/// points at that point size, and the line polys once at each of <paramref name="pixelScale"/> ×
-	/// <paramref name="pixelScale"/> whole-pixel offsets centred on the line, each set through
-	/// <paramref name="setPixelOffset"/> before its draw and zero put back after the last. The face
+	/// Draws every range, the line polys and the points the pixel scale wide: the
+	/// points at that point size, and the line polys once at each of scale × scale
+	/// whole-pixel offsets centred on the line, each set through the offset callback
+	/// before its draw and zero put back after the last. The face
 	/// outlines stay one pixel wide. A core-profile context draws no line wider than one pixel, which
 	/// is why the line polys are drawn several times rather than through <c>glLineWidth</c>.
 	/// </summary>
+	/// <param name="pixelScale">The width of a point and the side of the square of line offsets, in pixels.</param>
+	/// <param name="setPixelOffset">Sets the pixel offset before a draw; null for none.</param>
 	public void Draw(int pixelScale, Action<Vector2>? setPixelOffset) {
 		if (VertexCount == 0) {
 			return;
@@ -217,7 +223,10 @@ public sealed class GpuMesh : IDisposable {
 		_gl.BindVertexArray(0);
 	}
 
-	/// <summary>The line polys from <paramref name="first"/>, once at each offset of a <paramref name="pixelScale"/>-pixel square.</summary>
+	/// <summary>The line polys from a first vertex, once at each offset of a square of pixels.</summary>
+	/// <param name="first">The first vertex.</param>
+	/// <param name="pixelScale">The side of the square of offsets, in pixels.</param>
+	/// <param name="setPixelOffset">Sets the pixel offset before a draw.</param>
 	private void DrawWideLines(int first, int pixelScale, Action<Vector2> setPixelOffset) {
 		float centre = (pixelScale - 1) / 2f;
 		for (int row = 0; row < pixelScale; row++) {

@@ -75,13 +75,16 @@ public sealed class KeyListBuilder(string rowPrefix) {
 	private string? _heading;
 	private readonly List<KeyListRow> _rows = [];
 
-	/// <summary>Starts a section under the <c>.lang</c> entry <paramref name="heading"/>.</summary>
+	/// <summary>Starts a section under a <c>.lang</c> entry.</summary>
+	/// <param name="heading">The heading's <c>.lang</c> entry.</param>
 	public void Section(string heading) {
 		Flush();
 		_heading = heading;
 	}
 
-	/// <summary>A row whose description is the <c>.lang</c> entry the row prefix and <paramref name="id"/> make.</summary>
+	/// <summary>A row whose description is the <c>.lang</c> entry the row prefix and an id make.</summary>
+	/// <param name="id">The row's id.</param>
+	/// <param name="keys">The row's keys.</param>
 	public void Row(string id, params KeyListEntry[] keys) {
 		if (_heading == null) {
 			throw new InvalidOperationException("A row needs a section.");

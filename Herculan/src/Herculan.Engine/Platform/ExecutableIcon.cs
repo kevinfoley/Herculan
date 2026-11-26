@@ -57,7 +57,8 @@ internal sealed class ExecutableIcon : IDisposable {
 		_previousProc = SetWindowLongPtrW(hwnd, WindowProcIndex, Marshal.GetFunctionPointerForDelegate(_subclass));
 	}
 
-	/// <summary>Gives <paramref name="hwnd"/> the executable's icon; null, changing nothing, when the executable has none.</summary>
+	/// <summary>Gives a window the executable's icon; null, changing nothing, when the executable has none.</summary>
+	/// <param name="hwnd">The window's handle.</param>
 	public static ExecutableIcon? TrySet(nint hwnd) {
 		nint module = GetModuleHandleW(null);
 		return FindResourceW(module, ApplicationIconId, IconGroupType) != 0 ? new ExecutableIcon(hwnd, module) : null;

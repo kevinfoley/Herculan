@@ -33,11 +33,15 @@ public sealed class WrappedTextInput {
 	}
 
 	/// <summary>
-	/// Draws the field, <paramref name="size"/> as <c>InputTextMultiline</c> takes it, showing <paramref name="text"/>, or what
+	/// Draws the field, showing the text, or what
 	/// is being typed into it. Answers whether an edit changed the text this frame, and the text then, without soft breaks,
-	/// in <paramref name="text"/>. The text takes at most <paramref name="maxBytes"/> bytes of UTF-8; an edit past that is
+	/// in the text. The text takes at most a limit of bytes of UTF-8; an edit past that is
 	/// undone.
 	/// </summary>
+	/// <param name="id">The field's ImGui id.</param>
+	/// <param name="text">The text shown; receives the edited text, without soft breaks.</param>
+	/// <param name="maxBytes">The most bytes of UTF-8 the text takes.</param>
+	/// <param name="size">The field's size, as <c>InputTextMultiline</c> takes it.</param>
 	public bool Draw(string id, ref string text, int maxBytes, Vector2 size) {
 		var style = ImGui.GetStyle();
 		float itemWidth = size.X > 0f ? size.X : ImGui.GetContentRegionAvail().X + size.X;
@@ -60,10 +64,13 @@ public sealed class WrappedTextInput {
 	}
 
 	/// <summary>
-	/// <paramref name="text"/> wrapped at <paramref name="width"/>, as <paramref name="measure"/> sizes a line: what a field
+	/// A text wrapped at a width, as a measuring function sizes a line: what a field
 	/// shows of it, and the indices there of the soft breaks put in. A line breaks after the spaces that follow a word, and a
 	/// word wider than the line breaks where it reaches the edge.
 	/// </summary>
+	/// <param name="text">The text.</param>
+	/// <param name="width">The width to wrap at.</param>
+	/// <param name="measure">Sizes a line.</param>
 	public static (string Shown, List<int> Soft) Wrap(string text, float width, Func<string, float> measure) {
 		var shown = new StringBuilder(text.Length + 16);
 		var soft = new List<int>();

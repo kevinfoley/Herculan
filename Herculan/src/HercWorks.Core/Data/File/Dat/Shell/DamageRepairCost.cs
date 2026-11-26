@@ -45,19 +45,23 @@ public class DamageRepairCost {
 	public const int KilogramsPerTon = 1000;
 
 	/// <summary>
-	/// External group <paramref name="group"/>'s unit value, in kilograms, for a chassis priced at
-	/// <paramref name="priceTons"/> — <c>LoadDamageDat_Shell</c> (<c>00413628</c>)'s expansion, the
+	/// An external group's unit value, in kilograms, for a chassis priced at a number of tons — <c>LoadDamageDat_Shell</c> (<c>00413628</c>)'s expansion, the
 	/// share and then <see cref="ChassisScale"/> each applied as a Q10 fraction of the price. See
 	/// docs/retail/formats/herc-catalogs.md#gamdamagedat--the-component-and-weapon-value-table.
 	/// </summary>
+	/// <param name="priceTons">The chassis' price in tons.</param>
+	/// <param name="group">The external group.</param>
 	public int ExternalGroupValue(int priceTons, int group) =>
 		Q10(ChassisScale, Q10(ExternalGroupPercent[group], priceTons * KilogramsPerTon));
 
-	/// <summary>Internal <paramref name="component"/>'s unit value, as <see cref="ExternalGroupValue"/>.</summary>
+	/// <summary>An internal component's unit value, as <see cref="ExternalGroupValue"/>.</summary>
+	/// <param name="priceTons">The chassis' price in tons.</param>
+	/// <param name="component">The internal component.</param>
 	public int InternalValue(int priceTons, int component) =>
 		Q10(ChassisScale, Q10(InternalPercent[component], priceTons * KilogramsPerTon));
 
-	/// <summary>Weapon <paramref name="weaponId"/>'s unit value: <see cref="WeaponValue"/> scaled by <see cref="WeaponScale"/>.</summary>
+	/// <summary>A weapon's unit value: <see cref="WeaponValue"/> scaled by <see cref="WeaponScale"/>.</summary>
+	/// <param name="weaponId">The weapon's id.</param>
 	public int WeaponUnitValue(int weaponId) => Q10(WeaponScale, WeaponValue[weaponId]);
 
 	/// <summary><c>FixedMulQ10</c> (<c>00450a84</c>), <c>(a * b) &gt;&gt; 10</c>.</summary>

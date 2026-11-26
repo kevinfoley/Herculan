@@ -33,7 +33,7 @@ public sealed class ShapeInstance {
 	public IReadOnlyList<AnimationThread> Threads => _threads;
 
 	/// <summary>
-	/// Adds a thread playing <paramref name="sequence"/> from its first frame, stopped —
+	/// Adds a thread playing a sequence from its first frame, stopped —
 	/// <c>ShapeInst_AddThread</c> (<c>00402374</c>), which builds the thread, cuts it to the sequence, sets its rate to zero
 	/// and registers it on the shape instance (<c>ShapeInst_RegisterThread</c>, <c>00478930</c>). A
 	/// caller that wants the thread running sets <see cref="AnimationThread.Rate"/> itself, as the
@@ -43,6 +43,7 @@ public sealed class ShapeInstance {
 	/// step; this list stays in registration order and <see cref="LocalOf"/> applies the ranking
 	/// when it reads.</para>
 	/// </summary>
+	/// <param name="sequence">The sequence the thread plays.</param>
 	public AnimationThread AddThread(int sequence) {
 		var thread = new AnimationThread(Animation);
 		thread.SetSequence(sequence, 0, 0);

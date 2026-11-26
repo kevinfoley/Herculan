@@ -38,9 +38,11 @@ public static class DelayedActions {
 	private const int GroupRow = 16;
 
 	/// <summary>
-	/// The row-10 GUID of row-11 timer <paramref name="timer"/>'s own action (the class summary), or <c>-1</c> when it has none
+	/// The row-10 GUID of a row-11 timer's own action (the class summary), or <c>-1</c> when it has none
 	/// or the layout has no such timer.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
 	public static short Of(MissionDocument document, short timer) {
 		if (document.Layout.Entry(TimerRow, timer) == null) {
 			return -1;
@@ -63,10 +65,13 @@ public static class DelayedActions {
 	}
 
 	/// <summary>
-	/// Appends a new timer started by row-10 action <paramref name="start"/>, or by none for <c>-1</c>, and a new action testing
-	/// no area in its fired slot 0, as one <see cref="MissionDocument.Change"/>; answers their GUIDs in <paramref name="timer"/>
-	/// and <paramref name="action"/>.
+	/// Appends a new timer started by a row-10 action, or by none for <c>-1</c>, and a new action testing
+	/// no area in its fired slot 0, as one <see cref="MissionDocument.Change"/>; answers their GUIDs.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="start">The row-10 action that starts the timer.</param>
+	/// <param name="timer">Receives the new timer's GUID.</param>
+	/// <param name="action">Receives the new action's GUID.</param>
 	public static MsnEdit Create(MissionDocument document, short start, out short timer, out short action) {
 		ActionWiring.CheckAction(document, start);
 		short createdTimer = -1;
@@ -83,10 +88,13 @@ public static class DelayedActions {
 	}
 
 	/// <summary>
-	/// Appends a new action testing no area and adds it after row-11 timer <paramref name="timer"/>'s last fired one, as one
-	/// <see cref="MissionDocument.Change"/>, answering its GUID in <paramref name="action"/>. Throws
+	/// Appends a new action testing no area and adds it after a row-11 timer's last fired one, as one
+	/// <see cref="MissionDocument.Change"/>, answering its GUID. Throws
 	/// <see cref="InvalidOperationException"/> when <see cref="TimerEditing.WhyNoAddFired"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
+	/// <param name="action">Receives the new action's GUID.</param>
 	public static MsnEdit AddNew(MissionDocument document, short timer, out short action) {
 		int slot = TimerEditing.NextFiredSlot(document, timer, -1);
 		short created = -1;
@@ -98,7 +106,9 @@ public static class DelayedActions {
 		return change;
 	}
 
-	/// <summary>What <see cref="Remove"/> of row-11 timer <paramref name="timer"/> takes with it, by the class summary's rule.</summary>
+	/// <summary>What <see cref="Remove"/> of a row-11 timer takes with it, by the class summary's rule.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
 	public static TimerRemoval Removal(MissionDocument document, short timer) {
 		TimerEditing.Fields(document, timer);
 		var timers = new List<short>();
@@ -149,11 +159,13 @@ public static class DelayedActions {
 	}
 
 	/// <summary>
-	/// Removes row-11 timer <paramref name="timer"/> and what <see cref="Removal"/> finds with it, as one
+	/// Removes a row-11 timer and what <see cref="Removal"/> finds with it, as one
 	/// <see cref="MissionDocument.Change"/>: every record of each timer and action, the actions' unreferenced text as
 	/// <see cref="ActionEditing.Delete"/> removes it, and the groups' and orders' references unset. Throws
 	/// <see cref="InvalidOperationException"/> with <see cref="TimerRemoval.Refusal"/>.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
 	public static MsnEdit Remove(MissionDocument document, short timer) {
 		var removal = Removal(document, timer);
 		if (removal.Refusal is { } reason) {

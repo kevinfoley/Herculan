@@ -39,9 +39,9 @@ public sealed class AccessibilityMenu {
 	}
 
 	/// <summary>
-	/// Draws the panel, if it is open. Call once per frame, inside the ImGui frame. <paramref name="centre"/> is when
-	/// it is centred on the window (<see cref="PanelCentring.Condition"/>).
+	/// Draws the panel, if it is open. Call once per frame, inside the ImGui frame.
 	/// </summary>
+	/// <param name="centre">When the panel is centred on the window (<see cref="PanelCentring.Condition"/>).</param>
 	public void Draw(ImGuiCond centre) {
 		if (!IsOpen) {
 			return;

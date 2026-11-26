@@ -222,11 +222,13 @@ public sealed class FrontEndWindow : IDisposable {
 	}
 
 	/// <summary>
-	/// Tells the player that <paramref name="message"/>, with <paramref name="detail"/> saying why: over the window while
+	/// Tells the player what failed and why: over the window while
 	/// it is up (<see cref="IFrontEndMenus.ShowError"/>), or without it once the window has closed
 	/// (<see cref="IFrontEndMenus.ShowErrorOutsideWindow"/>), as it has for the autosave at the loop's end. A
 	/// <c>--screenshot</c> capture, which has nobody to close either, only writes it to standard error.
 	/// </summary>
+	/// <param name="message">What failed.</param>
+	/// <param name="detail">Why it failed.</param>
 	public void ShowError(string message, string detail) {
 		if (_screenshotPath != null) {
 			Console.Error.WriteLine($"{message} {detail}");

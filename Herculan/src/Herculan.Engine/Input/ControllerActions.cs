@@ -95,9 +95,12 @@ public static class ControllerActions {
 
 	/// <summary>
 	/// The actions the Controller window lists for a machine, in <see cref="Offered"/>'s order: the RAZOR's, or the HERC's,
-	/// without the other machine's own; in <paramref name="list"/>; and, for a gamepad, without the command display's and
+	/// without the other machine's own; in the given list; and, for a gamepad, without the command display's and
 	/// the damage detail's keys.
 	/// </summary>
+	/// <param name="list">The action list.</param>
+	/// <param name="razor">Whether the machine is a RAZOR; otherwise a HERC.</param>
+	/// <param name="gamepad">Whether the device is a gamepad.</param>
 	public static IEnumerable<(KeySection Section, KeyAction Action)> Listed(ControllerActionList list, bool razor, bool gamepad) =>
 		Offered.Where(entry => !Unlisted.Contains(entry.Action)
 			&& !(razor ? HercOnly : RazorOnly).Contains(entry.Action)

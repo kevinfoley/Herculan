@@ -24,10 +24,11 @@ public sealed class ShapeCellFrames {
 	public const int SequenceCount = 64;
 
 	/// <summary>
-	/// Which cell sequence <paramref name="sequence"/> is showing. Out-of-range sequences read zero
+	/// Which cell sequence is showing for a sequence. Out-of-range sequences read zero
 	/// and are silently ignored on write, so a data file naming one costs a part its damage state
 	/// rather than throwing.
 	/// </summary>
+	/// <param name="sequence">The sequence.</param>
 	public short this[int sequence] {
 		get => (uint)sequence < SequenceCount ? _frames[sequence] : (short)0;
 		set {

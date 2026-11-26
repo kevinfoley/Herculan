@@ -85,12 +85,15 @@ public static class ActionEditing {
 	public const short NewPairOp = CounterIncrement;
 
 	/// <summary>
-	/// Appends a new action, answering its GUID in <paramref name="guid"/>, testing row-9 area <paramref name="area"/> in slot
+	/// Appends a new action, answering its GUID, testing a row-9 area in slot
 	/// 0, or none for <c>-1</c>. The record takes each field's most common retail value (<c>HercWorks.Query values --row 10</c>):
 	/// unconditioned and its dead word <c>0x04</c> <c>-1</c> (all 338), <see cref="NewType"/> and <see cref="NewVerb"/>, every
 	/// other area slot <c>-1</c>, no counter write and a pair count of 0 (272), no text ref (337), no message (272) and no
 	/// target (334).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="area">The row-9 area tested in slot 0, or <c>-1</c> for none.</param>
+	/// <param name="guid">Receives the new action's GUID.</param>
 	public static MsnEdit Create(MissionDocument document, short area, out short guid) {
 		if (area != -1 && document.Layout.Entry(AreaRow, area) == null) {
 			throw new InvalidOperationException(NoArea);
@@ -112,15 +115,19 @@ public static class ActionEditing {
 		};
 	}
 
-	/// <summary>Row-10 GUID <paramref name="action"/>'s base fields (a copy), throwing for one no record carries.</summary>
+	/// <summary>A row-10 GUID's base fields (a copy), throwing for one no record carries.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static MissionAction82 Fields(MissionDocument document, short action) =>
 		document.Layout.Entry<MissionAction82>(action)?.Fields
 			?? throw new InvalidOperationException("That trigger is not in the mission.");
 
 	/// <summary>
-	/// The row-9 GUIDs in <paramref name="action"/>'s first <see cref="AreaSlots"/> slots as its base names them, <c>-1</c> for
+	/// The row-9 GUIDs in an action's first <see cref="AreaSlots"/> slots as its base names them, <c>-1</c> for
 	/// an empty one or one naming no area.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static short[] Areas(MissionDocument document, short action) =>
 		Fields(document, action).AreaRefs.Take(AreaSlots)
 			.Select(area => document.Layout.Entry(AreaRow, area) != null ? area : (short)-1).ToArray();
@@ -128,7 +135,10 @@ public static class ActionEditing {
 	/// <summary>How many area slots are filled before the first empty one, the areas DBSIM tests.</summary>
 	public static int FilledAreas(short[] areas) => Array.IndexOf(areas, (short)-1) is >= 0 and var gap ? gap : areas.Length;
 
-	/// <summary>Why row-9 area <paramref name="area"/> cannot be added to <paramref name="action"/>, or null when it can.</summary>
+	/// <summary>Why a row-9 area cannot be added to an action, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="area">The row-9 area.</param>
 	public static string? WhyNoAddArea(MissionDocument document, short action, short area) {
 		var areas = Areas(document, action);
 		return FilledAreas(areas) >= AreaSlots ? $"It already tests {AreaSlots} areas, the most it can hold."
@@ -137,7 +147,10 @@ public static class ActionEditing {
 			: null;
 	}
 
-	/// <summary>Adds row-9 area <paramref name="area"/> to <paramref name="action"/> in the slot after its last filled one.</summary>
+	/// <summary>Adds a row-9 area to an action in the slot after its last filled one.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="area">The row-9 area.</param>
 	public static MsnEdit AddArea(MissionDocument document, short action, short area) {
 		if ((area == -1 ? "No area was given." : WhyNoAddArea(document, action, area)) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -147,7 +160,11 @@ public static class ActionEditing {
 		return document.Change(() => document.SetField(MsnField.ActionArea(slot), action, area));
 	}
 
-	/// <summary>Puts row-9 area <paramref name="area"/> in <paramref name="action"/>'s filled slot <paramref name="slot"/>.</summary>
+	/// <summary>Puts a row-9 area in an action's filled slot.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="slot">The slot.</param>
+	/// <param name="area">The row-9 area.</param>
 	public static MsnEdit SetArea(MissionDocument document, short action, int slot, short area) {
 		var areas = Areas(document, action);
 		if (slot < 0 || slot >= FilledAreas(areas)) {
@@ -165,7 +182,10 @@ public static class ActionEditing {
 		return document.Change(() => document.SetField(MsnField.ActionArea(slot), action, area));
 	}
 
-	/// <summary>Removes the area in <paramref name="action"/>'s slot <paramref name="slot"/>, moving every later area up a slot.</summary>
+	/// <summary>Removes the area in an action's slot, moving every later area up a slot.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="slot">The slot.</param>
 	public static MsnEdit RemoveArea(MissionDocument document, short action, int slot) {
 		var areas = Areas(document, action);
 		int last = FilledAreas(areas) - 1;
@@ -183,12 +203,16 @@ public static class ActionEditing {
 	}
 
 	/// <summary>
-	/// The script.dat block a target of type <paramref name="type"/> indexes: 7 hercs, 8 flyers, 9 structures, 11 groups for
+	/// The script.dat block a target of a given type indexes: 7 hercs, 8 flyers, 9 structures, 11 groups for
 	/// type 10; null for a type whose target is not read.
 	/// </summary>
+	/// <param name="type">The target type.</param>
 	public static int? TargetBlock(short type) => type switch { 7 => 7, 8 => 8, 9 => 9, 10 => 11, _ => null };
 
-	/// <summary>Why <paramref name="action"/> cannot be made type <paramref name="type"/>, or null when it can.</summary>
+	/// <summary>Why an action cannot be made a given type, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="type">The type.</param>
 	public static string? WhyNoType(MissionDocument document, short action, short type) {
 		if (type is < 0 or > LastType) {
 			return $"A type is 0 to {LastType}.";
@@ -203,13 +227,17 @@ public static class ActionEditing {
 	private static short FirstTarget(MissionDocument document, int block) =>
 		document.Layout.Entries(block + 5) is { Count: > 0 } entries ? entries[0].Guid : (short)-1;
 
-	/// <summary>What a target of type <paramref name="type"/> is, in a word.</summary>
+	/// <summary>What a target of a given type is, in a word.</summary>
+	/// <param name="type">The target type.</param>
 	public static string TargetKind(short type) => type switch { 7 => "HERC", 8 => "flyer", 9 => "structure", _ => "group" };
 
 	/// <summary>
-	/// Sets <paramref name="action"/>'s type, 0 to <see cref="LastType"/>. A change to 7 to 10 gives it the first layout entry of
+	/// Sets an action's type, 0 to <see cref="LastType"/>. A change to 7 to 10 gives it the first layout entry of
 	/// that kind as its target, and a change to 0 to 6 unsets the target (the class summary).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="type">The type.</param>
 	public static MsnEdit SetType(MissionDocument document, short action, short type) {
 		if (WhyNoType(document, action, type) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -228,9 +256,11 @@ public static class ActionEditing {
 	}
 
 	/// <summary>
-	/// The GUID of <paramref name="action"/>'s base's target, in the row its type names; <c>-1</c> for none, one naming no
+	/// The GUID of an action's base's target, in the row its type names; <c>-1</c> for none, one naming no
 	/// record, or a type that reads none.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static short Target(MissionDocument document, short action) {
 		var fields = Fields(document, action);
 		return TargetBlock(fields.Type) is { } block && document.Layout.Entry(block + 5, fields.TargetRef) != null
@@ -239,9 +269,12 @@ public static class ActionEditing {
 	}
 
 	/// <summary>
-	/// Sets <paramref name="action"/>'s target to <paramref name="target"/>, a GUID of the row its type, 7 to 10, names. Throws for
+	/// Sets an action's target to a GUID of the row its type, 7 to 10, names. Throws for
 	/// any other type, and for a GUID no record of that row carries.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="target">The target's GUID.</param>
 	public static MsnEdit SetTarget(MissionDocument document, short action, short target) {
 		if (TargetBlock(Fields(document, action).Type) is not { } block) {
 			throw new InvalidOperationException("Only a trigger tested on a particular HERC, flyer, structure or group has a target.");
@@ -254,7 +287,10 @@ public static class ActionEditing {
 		return document.Change(() => document.SetField(MsnField.ActionTarget, action, target));
 	}
 
-	/// <summary>Sets <paramref name="action"/>'s verb, 0 to <see cref="LastVerb"/>.</summary>
+	/// <summary>Sets an action's verb, 0 to <see cref="LastVerb"/>.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="verb">The verb.</param>
 	public static MsnEdit SetVerb(MissionDocument document, short action, short verb) {
 		if (verb is < 0 or > LastVerb) {
 			throw new ArgumentOutOfRangeException(nameof(verb), verb, $"An arrival is 0 to {LastVerb}.");
@@ -264,7 +300,9 @@ public static class ActionEditing {
 		return document.Change(() => document.SetField(MsnField.ActionVerb, action, verb));
 	}
 
-	/// <summary><paramref name="action"/>'s ten (counter, operation) pairs as its base sets them.</summary>
+	/// <summary>An action's ten (counter, operation) pairs as its base sets them.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static (short Counter, short Op)[] CounterPairs(MissionDocument document, short action) {
 		var pairs = Fields(document, action).CounterPairs;
 		return Enumerable.Range(0, Pairs).Select(slot => (pairs[slot * 2], pairs[slot * 2 + 1])).ToArray();
@@ -281,11 +319,15 @@ public static class ActionEditing {
 		return 0;
 	}
 
-	/// <summary>Why no counter write can be added to <paramref name="action"/>, or null when one can.</summary>
+	/// <summary>Why no counter write can be added to an action, or null when one can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static string? WhyNoAddPair(MissionDocument document, short action) =>
 		FilledPairs(CounterPairs(document, action)) >= Pairs ? $"It already lists {Pairs} campaign variable changes, the most it can hold." : null;
 
-	/// <summary>Adds a counter write after <paramref name="action"/>'s last (<see cref="NewPairCounter"/>, <see cref="NewPairOp"/>).</summary>
+	/// <summary>Adds a counter write after an action's last (<see cref="NewPairCounter"/>, <see cref="NewPairOp"/>).</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static MsnEdit AddPair(MissionDocument document, short action) {
 		if (WhyNoAddPair(document, action) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -300,9 +342,14 @@ public static class ActionEditing {
 	}
 
 	/// <summary>
-	/// Sets <paramref name="action"/>'s filled counter write <paramref name="slot"/> to counter <paramref name="counter"/>, 0 to
-	/// <see cref="Counters"/> - 1, and operation <paramref name="op"/>, <see cref="CounterClear"/> or <see cref="CounterIncrement"/>.
+	/// Sets an action's filled counter write to a counter, 0 to
+	/// <see cref="Counters"/> - 1, and an operation, <see cref="CounterClear"/> or <see cref="CounterIncrement"/>.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="slot">The counter write's slot.</param>
+	/// <param name="counter">The counter.</param>
+	/// <param name="op">The operation.</param>
 	public static MsnEdit SetPair(MissionDocument document, short action, int slot, short counter, short op) {
 		if (slot < 0 || slot >= FilledPairs(CounterPairs(document, action))) {
 			throw new InvalidOperationException($"There is no campaign variable write {slot + 1}.");
@@ -322,7 +369,10 @@ public static class ActionEditing {
 		});
 	}
 
-	/// <summary>Removes <paramref name="action"/>'s counter write <paramref name="slot"/>, moving every later one up.</summary>
+	/// <summary>Removes an action's counter write, moving every later one up.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="slot">The counter write's slot.</param>
 	public static MsnEdit RemovePair(MissionDocument document, short action, int slot) {
 		var pairs = CounterPairs(document, action);
 		int last = FilledPairs(pairs) - 1;
@@ -342,10 +392,15 @@ public static class ActionEditing {
 		});
 	}
 
-	/// <summary>The message <paramref name="action"/>'s base posts, its id, or <c>-1</c> for none: the stored value less one.</summary>
+	/// <summary>The message an action's base posts, its id, or <c>-1</c> for none: the stored value less one.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static short Message(MissionDocument document, short action) => (short)(Fields(document, action).MessageId - 1);
 
-	/// <summary>Sets the message <paramref name="action"/> posts to id <paramref name="id"/>, stored plus one, or none for <c>-1</c>.</summary>
+	/// <summary>Sets the message an action posts to an id, stored plus one, or none for <c>-1</c>.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
+	/// <param name="id">The message's id.</param>
 	public static MsnEdit SetMessage(MissionDocument document, short action, short id) {
 		if (id is < -1 or >= short.MaxValue) {
 			throw new ArgumentOutOfRangeException(nameof(id), id, "A message id is 0 or more, or -1 for none.");
@@ -355,7 +410,9 @@ public static class ActionEditing {
 		return document.Change(() => document.SetField(MsnField.ActionMessage, action, (short)(id + 1)));
 	}
 
-	/// <summary>The records referencing row-10 GUID <paramref name="action"/>, every record whatever its condition.</summary>
+	/// <summary>The records referencing a row-10 GUID, every record whatever its condition.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static ActionNamers Namers(MissionDocument document, short action) {
 		var mission = document.Mission;
 		if (action == -1) {
@@ -385,11 +442,13 @@ public static class ActionEditing {
 	}
 
 	/// <summary>
-	/// Deletes row-10 GUID <paramref name="action"/>: every record of the GUID, whatever its condition, and the <c>.ENG</c>
+	/// Deletes a row-10 GUID: every record of the GUID, whatever its condition, and the <c>.ENG</c>
 	/// records of each text id they referenced that no field references afterwards, as one
 	/// <see cref="MissionDocument.Change"/>. Throws <see cref="InvalidOperationException"/> while <see cref="Namers"/> finds
 	/// anything.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static MsnEdit Delete(MissionDocument document, short action) {
 		CheckUnreferenced(document, action);
 		return document.Change(() => RemoveRecords(document, action));

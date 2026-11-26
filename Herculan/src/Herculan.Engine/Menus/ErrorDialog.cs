@@ -41,7 +41,9 @@ public sealed class ErrorDialog {
 	/// <summary>Whether the dialog is up, or a failure is waiting to raise it.</summary>
 	public bool IsOpen => _shown != null || _waiting.Count > 0;
 
-	/// <summary>Raises the dialog with <paramref name="message"/>, what failed, over <paramref name="detail"/>, why.</summary>
+	/// <summary>Raises the dialog with what failed over why.</summary>
+	/// <param name="message">What failed.</param>
+	/// <param name="detail">Why it failed.</param>
 	public void Show(string message, string detail) {
 		if (_shown == null && _waiting.Count == 0) {
 			_shown = (message, detail);
