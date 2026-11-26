@@ -55,13 +55,12 @@ public static class Es1Launcher {
 	private const string IntroSwitch = "-a", AltDriveSwitch = "-c", DemoSwitch = "-D", Eggplant = "-eggplant";
 
 	/// <summary>
-	/// Runs the launcher on <paramref name="installRoot"/> with <paramref name="arguments"/>, its own command line after
-	/// the program's path, which it hands on whole to each program (<see cref="BuildArgs"/>). Returns 0 when the loop
-	/// ends, as it does when a start-up check refuses (<c>exit</c>(0)), <see cref="AssertExitStatus"/> after a fatal
-	/// assert or the fault of a <c>PREFER_ALT</c> without <c>ALT_DRIVE</c>, and <see cref="NoDiscExitStatus"/> for a
-	/// minimum or medium install with no disc kept. Retail's <c>Launcher_Main</c> returns no value.
+	/// Runs the launcher, which hands its own command line on whole to each program (<see cref="BuildArgs"/>).
 	/// </summary>
+	/// <param name="installRoot">The install folder, which stands in for DOS's current folder.</param>
+	/// <param name="arguments">The launcher's own command line after the program's path.</param>
 	/// <param name="imguiFontPath">The faces the shell's ImGui draws in (<see cref="Es1ShellHost.Run"/>).</param>
+	/// <param name="imguiItalicFontPath">The italic faces the shell's ImGui draws in (<see cref="Es1ShellHost.Run"/>).</param>
 	/// <param name="menus">
 	/// Builds each shell turn's and each mission's menu bar and its windows (<see cref="Es1ShellHost.Run"/>,
 	/// <see cref="Es1MissionHost.Run"/>), given whether the turn is a mission.
@@ -69,15 +68,20 @@ public static class Es1Launcher {
 	/// <param name="screenshotPath"><c>--screenshot</c>'s file, which the first shell turn captures; none for a play.</param>
 	/// <param name="window">The window every turn runs in, which the host owns.</param>
 	/// <param name="silent">The host's <c>--no-sound</c>: the flics', the shell's and the simulator's turns open no audio device.</param>
+	/// <returns>
+	/// 0 when the loop ends, as it does when a start-up check refuses (<c>exit</c>(0)); <see cref="AssertExitStatus"/>
+	/// after a fatal assert or the fault of a <c>PREFER_ALT</c> without <c>ALT_DRIVE</c>; <see cref="NoDiscExitStatus"/>
+	/// for a minimum or medium install with no disc kept. Retail's <c>Launcher_Main</c> returns no value.
+	/// </returns>
 	public static int Run(string installRoot, IReadOnlyList<string> arguments, string imguiFontPath, string imguiItalicFontPath,
 			Func<bool, IFrontEndMenus> menus, string? screenshotPath, HostWindow window, bool silent = false) {
-		// 1. Mem_New(argc * 4 + 8), its answer not kept: no counterpart.
-		// 2. The memory check, X32_LargestFreeBlock() - 25,000 against 3,435,000: the extender's largest free block has no
-		// counterpart, so the check always passes, an engine choice, and its figure is not computed.
+		// 1. Mem_New (00001664)(argc * 4 + 8), its answer not kept: no counterpart.
+		// 2. The memory check, X32_LargestFreeBlock (00002e63)() - 25,000 against 3,435,000: the extender's largest free
+		// block has no counterpart, so the check always passes, an engine choice, and its figure is not computed.
 
 		// 3. The drive prefixes. With PREFER_ALT set and ALT_DRIVE not, retail's copy reads from address 0 and faults
 		// (docs/es1/shell/launcher.md#starting--launcher_main-000005cc); the fault ends retail's, so it is reported and ends
-		// this one. Assert_SetLogDir: this engine keeps no assert log.
+		// this one. Assert_SetLogDir (00001814): this engine keeps no assert log.
 		string? altDrive = Environment.GetEnvironmentVariable(AltDriveVariable);
 		bool preferAlt = Environment.GetEnvironmentVariable(PreferAltVariable) != null;
 		if (preferAlt && altDrive == null) {
@@ -123,11 +127,10 @@ public static class Es1Launcher {
 		}
 
 		// 5. NO EFFECT: data\es.got, which holds step 2's free-memory figure, is not written: step 2's figure has no
-		// counterpart, and a search of GO.EXE, DBSIM.EXE, DETECT.EXE and PLAYFLIC.EXE for the string es.got finds no reader
-		// (launcher.md's Open).
-		// 6. Mem_InitHeap(20,000): this engine has no fixed heap.
-		// 7. Launcher_SaveVideoMode, the BIOS's equipment byte and video mode, and at the end Launcher_RestoreVideoMode: this
-		// engine sets no DOS video mode, so there is nothing to save or restore.
+		// counterpart, and no reader of the file is known (docs/es1/shell/launcher.md#open).
+		// 6. Mem_InitHeap (000015dc)(20,000): this engine has no fixed heap.
+		// 7. Launcher_SaveVideoMode (00000b60), the BIOS's equipment byte and video mode, and at the end
+		// Launcher_RestoreVideoMode (00000b83): this engine sets no DOS video mode, so there is nothing to save or restore.
 
 		// 8. The flics' command lines, only with ALT_DRIVE set or the disc standing in for it; 9. the flic player looked for
 		// (docs/es1/shell/launcher.md#the-flics).
@@ -199,14 +202,22 @@ public static class Es1Launcher {
 			state = next;
 		}
 
-		// The end: Launcher_RestoreVideoMode (step 7) and Mem_HeapOff.
+		// The end: Launcher_RestoreVideoMode (step 7) and Mem_HeapOff (00001658).
 		return 0;
 	}
 
 	/// <summary>
-	/// A turn of the shell, <c>spawnv</c>(0, <c>go.exe</c>, ...), its status not kept, under menus <paramref name="menus"/>
-	/// builds for it, with <paramref name="disc"/> for the CD drive whose <c>vol\</c> it mounts under <c>-C</c>.
+	/// A turn of the shell, <c>spawnv</c>(0, <c>go.exe</c>, ...), its status not kept.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="disc">The disc standing in for the CD drive, whose <c>vol\</c> the shell mounts under <c>-C</c>; null for none.</param>
+	/// <param name="arguments">The shell's command line, <see cref="BuildArgs"/>'s vector.</param>
+	/// <param name="imguiFontPath">The faces the shell's ImGui draws in.</param>
+	/// <param name="imguiItalicFontPath">The italic faces the shell's ImGui draws in.</param>
+	/// <param name="menus">Builds the turn's menu bar and its windows.</param>
+	/// <param name="screenshotPath"><c>--screenshot</c>'s file, which this turn captures; none for a play.</param>
+	/// <param name="window">The window the turn runs in.</param>
+	/// <param name="silent">Whether the turn opens no audio device.</param>
 	private static void RunShell(string installRoot, GameDisc? disc, IReadOnlyList<string> arguments, string imguiFontPath,
 			string imguiItalicFontPath, Func<bool, IFrontEndMenus> menus, string? screenshotPath, HostWindow window, bool silent) {
 		Es1ShellHost.Run(installRoot, arguments, imguiFontPath, imguiItalicFontPath, menus(false), screenshotPath, window, silent, disc);
@@ -215,17 +226,20 @@ public static class Es1Launcher {
 
 	/// <summary>
 	/// A turn of the simulator on the install's <c>data\</c> files, <c>spawnv</c>(0, <c>dbsim.exe</c>, ...), its status not
-	/// kept: <paramref name="arguments"/> read as <c>Sim_ParseCommandLine</c> (<c>00058e74</c>) reads them
-	/// (docs/es1/simulation/main-loop.md#the-command-line), each switch looked up by the character after its <c>-</c>,
-	/// case-sensitive, a character not in its table passed over, and handed to <see cref="Es1MissionHost.Run"/> as far as
-	/// it takes them. <c>-D</c> is its demo; <c>-p</c> and <c>-r</c> its tape to play and to record, each name taken only
-	/// when none was given before, and <c>-D</c>'s pick replacing any; an argument opening with <c>-c</c>
-	/// (<c>Sim_PreParseCommandLine</c>, <c>00058e30</c>) lets it honor <c>ALT_DRIVE</c>, which the install's paths stand in
-	/// for here, and has it mount <paramref name="disc"/>'s <c>vol\</c> after the install's; <c>-eggplant</c> is what step
-	/// 6's refusal tests, which <see cref="Es1MissionHost"/> does not make; and each <c>-s</c> toggles <c>000b5b68</c>
-	/// from 1, which clear makes no sound manager. The mission's menu bar is one <paramref name="menus"/> builds, as a
-	/// shell turn's is.
+	/// kept: the arguments read as <c>ES1DBSIM</c>'s <c>Sim_ParseCommandLine</c> (<c>00058e74</c>) and
+	/// <c>Sim_PreParseCommandLine</c> (<c>00058e30</c>) read them (docs/es1/simulation/main-loop.md#the-command-line).
+	/// <c>-D</c>, <c>-p</c>, <c>-r</c>, <c>-s</c> and whether an argument opens with <c>-c</c> are handed to
+	/// <see cref="Es1MissionHost.Run"/>; <c>-c</c>'s <c>ALT_DRIVE</c> is the install's paths and the disc here. <c>-eggplant</c> is what the simulator's step 6 refusal
+	/// tests, which <see cref="Es1MissionHost"/> does not make. The switches the simulator does not take are reported.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="disc">The disc standing in for the CD drive, whose <c>vol\</c> is mounted after the install's under <c>-c</c>; null for none.</param>
+	/// <param name="arguments">The simulator's command line, <see cref="BuildArgs"/>'s vector.</param>
+	/// <param name="imguiFontPath">The faces the mission's ImGui draws in.</param>
+	/// <param name="imguiItalicFontPath">The italic faces the mission's ImGui draws in.</param>
+	/// <param name="menus">Builds the mission's menu bar and its windows, as a shell turn's.</param>
+	/// <param name="window">The window the turn runs in.</param>
+	/// <param name="silent">Whether the turn opens no audio device.</param>
 	private static void RunSimulator(string installRoot, GameDisc? disc, IReadOnlyList<string> arguments, string imguiFontPath,
 			string imguiItalicFontPath, Func<bool, IFrontEndMenus> menus, HostWindow window, bool silent) {
 		bool demo = false, nameGiven = false, soundOn = true;
@@ -280,8 +294,12 @@ public static class Es1Launcher {
 	/// <c>Launcher_BuildArgs</c> (<c>00000518</c>): the launcher's own <paramref name="arguments"/>, then by
 	/// <paramref name="state"/> <c>-a</c> and <c>-c</c> for the shell's states and <c>-c</c> for the simulator's with the
 	/// flic player found, <c>-D</c> first for state 5, and last <c>-eggplant</c>. Retail's vector opens with the
-	/// launcher's <c>argv[0]</c>, which neither program reads; both hosts take the arguments after it.
+	/// launcher's <c>argv[0]</c>; this one leaves it out, as both hosts take a command line after the program's path.
 	/// </summary>
+	/// <param name="arguments">The launcher's own command line after the program's path.</param>
+	/// <param name="state"><c>Launcher_State</c>, which says the program and its switches.</param>
+	/// <param name="flicPlayerFound"><c>Launcher_FlicPlayerFound</c>, without which neither <c>-a</c> nor <c>-c</c> is given.</param>
+	/// <returns>The program's command line.</returns>
 	private static List<string> BuildArgs(IReadOnlyList<string> arguments, int state, bool flicPlayerFound) {
 		var vector = new List<string>(arguments);
 		switch (state) {
@@ -309,12 +327,17 @@ public static class Es1Launcher {
 	}
 
 	/// <summary>
-	/// <c>Launcher_HasDiskSpace</c> (<c>000003bc</c>), (<paramref name="bytes"/>, <c>Launcher_PreferredPrefix</c>): the
-	/// drive is the install's with an empty prefix, standing in for DOS's current drive, and otherwise the prefix's first
-	/// character's. True when the drive has at least <paramref name="bytes"/> free, and for a drive with no free-space
-	/// answer, which DOS gives as -1 and the unsigned comparison passes; false when it has fewer; null for a first
-	/// character that is not a letter, which asserts at severity 4.
+	/// <c>Launcher_HasDiskSpace</c> (<c>000003bc</c>), (<paramref name="bytes"/>, <c>Launcher_PreferredPrefix</c>)
+	/// (docs/es1/shell/launcher.md#the-disk-check--launcher_hasdiskspace-000003bc): the drive is the install's with an
+	/// empty prefix, standing in for DOS's current drive, and otherwise the prefix's first character's.
 	/// </summary>
+	/// <param name="bytes">The free bytes needed.</param>
+	/// <param name="prefixes">The prefixes, whose preferred one names the drive.</param>
+	/// <returns>
+	/// True when the drive has at least <paramref name="bytes"/> free, and for a drive with no free-space answer, which
+	/// DOS gives as -1 and the unsigned comparison passes; false when it has fewer; null for a first character that is not
+	/// a letter, which asserts at severity 4.
+	/// </returns>
 	private static bool? HasDiskSpace(long bytes, Prefixes prefixes) {
 		string? root;
 		if (prefixes.Preferred.Length == 0) {
@@ -339,19 +362,25 @@ public static class Es1Launcher {
 	/// <c>Launcher_ReadExitCfg</c> (<c>00000448</c>): <c>data\exit.cfg</c> opened <c>r+b</c> through
 	/// <c>Launcher_PreferredPrefix</c> and <c>fread</c>(<c>Launcher_State</c>, 4, 1) from it: up to 4 bytes over
 	/// <paramref name="state"/>'s low bytes, the bytes past the file's end keeping their value, so the programs' 2-byte
-	/// code lands in the low word; that this <c>fread</c> keeps a short item's bytes is a reading launcher.md lists as
-	/// Open. Null when the file does not open, where retail asserts at severity 4.
+	/// code lands in the low word (docs/es1/shell/launcher.md#the-loop).
 	/// </summary>
+	/// <param name="prefixes">The prefixes, whose preferred one the file is read through.</param>
+	/// <param name="state"><c>Launcher_State</c> as it stands, whose bytes the file's replace.</param>
+	/// <returns>The next state; null when the file does not open, where retail asserts at severity 4.</returns>
 	private static int? ReadExitCfg(Prefixes prefixes, int state) => Es1ExitCfg.ReadOver(prefixes.Path(ExitPath), state);
 
 	/// <summary>
-	/// <c>Launcher_FileReadable</c> (<c>000004ac</c>): false for a null path, otherwise whether <paramref name="path"/>
-	/// opens <c>rb</c>. Retail installs a critical-error handler around the open that retries once and then fails, so a
-	/// missing disc fails quietly; the host's file system raises no critical error, so it has no counterpart.
+	/// <c>Launcher_FileReadable</c> (<c>000004ac</c>). Retail's critical-error handler around the open
+	/// (docs/es1/shell/launcher.md#the-flic-player--launcher_filereadable-000004ac) has no counterpart: the host's file
+	/// system raises no critical error.
 	/// </summary>
+	/// <param name="path">The path to open, or null.</param>
+	/// <returns>False for a null path, otherwise whether <paramref name="path"/> opens <c>rb</c>.</returns>
 	private static bool FileReadable(string? path) => path != null && Opens(path);
 
-	/// <summary>Whether <paramref name="path"/> opens for reading, then closed.</summary>
+	/// <summary>Opens <paramref name="path"/> for reading and closes it.</summary>
+	/// <param name="path">The file to open.</param>
+	/// <returns>Whether it opened.</returns>
 	private static bool Opens(string path) {
 		try {
 			using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -365,15 +394,22 @@ public static class Es1Launcher {
 	/// <c>Launcher_PreferredPrefix</c> (<c>0000657c</c>) and <c>Launcher_OtherPrefix</c> (<c>00006580</c>), each upper-cased
 	/// as <c>strupr</c> does, with the paths built through them (docs/es1/shell/launcher.md#the-files).
 	/// </summary>
+	/// <param name="installRoot">The install folder, which an empty prefix stands for.</param>
+	/// <param name="preferred"><c>Launcher_PreferredPrefix</c> before upper-casing.</param>
+	/// <param name="other"><c>Launcher_OtherPrefix</c> before upper-casing.</param>
 	private sealed class Prefixes(string installRoot, string preferred, string other) {
 		public string InstallRoot { get; } = installRoot;
 		public string Preferred { get; } = preferred.ToUpperInvariant();
 		public string Other { get; } = other.ToUpperInvariant();
 
 		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_PreferredPrefix</c>, <paramref name="path"/>).</summary>
+		/// <param name="path">The DOS path, a drive of its own dropped.</param>
+		/// <returns>The host path.</returns>
 		public string Path(string path) => PrefixPath(Preferred, path);
 
 		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_OtherPrefix</c>, <paramref name="path"/>).</summary>
+		/// <param name="path">The DOS path, a drive of its own dropped.</param>
+		/// <returns>The host path.</returns>
 		public string OtherPath(string path) => PrefixPath(Other, path);
 
 		/// <summary>
@@ -382,6 +418,9 @@ public static class Es1Launcher {
 		/// DOS's current folder, matched ignoring case; with a prefix it is taken as the host's file system resolves it, a
 		/// drive-relative one against the process's current folder on that drive, as DOS's does.
 		/// </summary>
+		/// <param name="prefix">The prefix, empty for the install folder.</param>
+		/// <param name="path">The DOS path.</param>
+		/// <returns>The host path.</returns>
 		private string PrefixPath(string prefix, string path) {
 			string own = path.Length > 1 && path[1] == ':' ? path[2..] : path;
 			return prefix.Length == 0 ? CaseInsensitivePath.Combine(InstallRoot, own) : System.IO.Path.GetFullPath(prefix + own);
@@ -409,9 +448,10 @@ public static class Es1Launcher {
 		/// <summary>
 		/// The starting drive is the install's, standing in for <c>dos_getdrive</c>'s, or none off Windows; the flic drive
 		/// the other prefix's first character when the preferred prefix is empty, and the starting drive otherwise. The
-		/// preferred drive is not taken (<see cref="Play"/>). <paramref name="altDrive"/> is <c>ALT_DRIVE</c>'s value, which
-		/// the flics' sounds may be read under (<see cref="Es1FlicHost.Run"/>).
+		/// preferred drive is not taken (<see cref="Play"/>).
 		/// </summary>
+		/// <param name="prefixes">The launcher's prefixes.</param>
+		/// <param name="altDrive"><c>ALT_DRIVE</c>'s value, which the flics' sounds may be read under (<see cref="Es1FlicHost.Run"/>).</param>
 		public Flics(Prefixes prefixes, string altDrive) {
 			_prefixes = prefixes;
 			_installRoot = prefixes.InstallRoot;
@@ -425,9 +465,10 @@ public static class Es1Launcher {
 		}
 
 		/// <summary>
-		/// The flics on <paramref name="disc"/>, which stands for the CD drive, a full install's <c>ALT_DRIVE</c> or a
-		/// minimum or medium install's current folder: the paths are the same names on the disc's root, with no drive.
+		/// The flics on <paramref name="disc"/>: the paths are the same names on the disc's root, with no drive.
 		/// </summary>
+		/// <param name="prefixes">The launcher's prefixes.</param>
+		/// <param name="disc">The disc standing for the CD drive, a full install's <c>ALT_DRIVE</c> or a minimum or medium install's current folder.</param>
 		public Flics(Prefixes prefixes, GameDisc disc) {
 			_prefixes = prefixes;
 			_installRoot = prefixes.InstallRoot;
@@ -441,17 +482,22 @@ public static class Es1Launcher {
 		public bool PlayerFound() => _disc != null ? _disc.FileExists(Probe) : FileReadable(Probe);
 
 		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_OtherPrefix</c>, <paramref name="path"/>), or where it is on the disc, for a message.</summary>
+		/// <param name="path">The DOS path.</param>
+		/// <returns>The path as a message shows it.</returns>
 		public string OtherPath(string path) => _disc != null ? _disc.Describe(path) : _prefixes.OtherPath(path);
 
 		/// <summary>
 		/// A flic played: <c>dos_setdrive</c>(the preferred drive), <c>spawnl</c>(0, program, program, file, <c>-B1000000</c>,
 		/// <c>-S83</c>) and <c>dos_setdrive</c>(the starting drive), its status not kept. The program is
-		/// <see cref="Es1FlicHost"/> in <paramref name="window"/>, opening no audio device when <paramref name="silent"/>.
-		/// The file's path is taken as the host's file system resolves it, a drive-relative one against the process's current
+		/// <see cref="Es1FlicHost"/>. The file's path is taken as the host's file system resolves it, a drive-relative one
+		/// against the process's current
 		/// folder on that drive, as DOS's does, and one with no drive against the current folder; with a disc it is taken
 		/// on the disc. The preferred drive, DOS's current one while the player runs, is where it reads <c>RESOURCE.CFG</c>,
 		/// which the install folder stands in for.
 		/// </summary>
+		/// <param name="flic">The flic's command line, <see cref="Intro"/> or <see cref="End"/>.</param>
+		/// <param name="window">The window the flic plays in.</param>
+		/// <param name="silent">Whether the player opens no audio device.</param>
 		public void Play((string Program, string File) flic, HostWindow window, bool silent) {
 			if (_disc != null) {
 				Es1FlicHost.Run(_disc, flic.File, FlicSwitches, window, _installRoot, silent);
@@ -468,6 +514,9 @@ public static class Es1Launcher {
 		/// <c>Launcher_DrivePath</c> (<c>00000360</c>): the drive's letter and <c>:</c> followed by <paramref name="path"/>
 		/// less a drive letter of its own; with no drive, the path alone.
 		/// </summary>
+		/// <param name="drive">The drive's letter, or null for none.</param>
+		/// <param name="path">The DOS path.</param>
+		/// <returns>The path on the drive.</returns>
 		private static string DrivePath(char? drive, string path) {
 			string own = path.Length > 1 && path[1] == ':' ? path[2..] : path;
 			return drive is { } letter ? $"{letter}:{own}" : own;
