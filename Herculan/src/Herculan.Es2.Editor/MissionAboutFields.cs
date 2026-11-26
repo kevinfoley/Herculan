@@ -29,9 +29,10 @@ internal sealed class MissionAboutFields {
 	public static string Today => DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
 	/// <summary>
-	/// Draws the fields showing <paramref name="about"/>. Answers <paramref name="about"/> with the edit made, once a field lets
+	/// Draws the fields showing an about. Answers the about with the edit made, once a field lets
 	/// go after one or the Today button is clicked; null otherwise. An emptied field says nothing.
 	/// </summary>
+	/// <param name="about">The about shown.</param>
 	public MissionAbout? Draw(MissionAbout about) {
 		var style = ImGui.GetStyle();
 		float fieldStart = new[] { "Author:", "Version:", "Date:" }.Max(label => ImGui.CalcTextSize(label).X) + style.ItemSpacing.X;

@@ -11,20 +11,26 @@ namespace Herculan.Es2.Host.Install;
 public static class InstallPrompt {
 	/// <summary>
 	/// The prompt's body: <c>install_prompt</c>'s strings, refusing what <see cref="InstallPromptWindow.Refusal"/> refuses
-	/// for Earthsiege 2. <paramref name="dismissKey"/> is the string of the button that gives up, and
-	/// <paramref name="messageKey"/> the message's, when not the startup's own.
+	/// for Earthsiege 2.
 	/// </summary>
+	/// <param name="localization">The localization table.</param>
+	/// <param name="dismissKey">The string of the button that gives up.</param>
+	/// <param name="initialPath">The path the prompt starts at.</param>
+	/// <param name="messageKey">The string of the message, when not the startup's own.</param>
+	/// <param name="alternativeKey">The string of the alternative button, or null for none.</param>
 	internal static PathPrompt Create(LocalizationTable localization, string dismissKey, string initialPath = "",
 			string? messageKey = null, string? alternativeKey = null) =>
 		InstallPromptWindow.Create(localization, Es2GameModule.Identity, dismissKey, initialPath, messageKey, alternativeKey);
 
 	/// <summary>
 	/// Shows the prompt until the player picks an install, makes one from a disc, or gives up. Returns the install root,
-	/// or null when the player gave up or closed the window. <paramref name="fontPath"/> is the ImGui font.
-	/// <paramref name="refused"/> is a folder found at startup that cannot be the install, which the prompt first opens on
-	/// with the reason showing. <paramref name="dismissKey"/> is the giving-up button's string
-	/// (<see cref="InstallPromptWindow.Run"/>).
+	/// or null when the player gave up or closed the window.
 	/// </summary>
+	/// <param name="localization">The localization table.</param>
+	/// <param name="fontPath">The ImGui font.</param>
+	/// <param name="refused">A folder found at startup that cannot be the install, which the prompt first opens on
+	/// with the reason showing.</param>
+	/// <param name="dismissKey">The giving-up button's string (<see cref="InstallPromptWindow.Run"/>).</param>
 	public static string? Run(LocalizationTable localization, string fontPath, string? refused = null,
 			string dismissKey = "install_prompt.quit") {
 		while (true) {

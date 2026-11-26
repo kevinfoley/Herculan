@@ -119,10 +119,11 @@ public sealed class JoystickBindings {
 	public void ResetLatches() => Array.Clear(_latched);
 
 	/// <summary>
-	/// Whether button <paramref name="index"/> is latched, waiting for a release. While the first row is,
+	/// Whether a button is latched, waiting for a release. While the first row is,
 	/// the original holds the pair of axes its camera pointers address still — see
 	/// docs/retail/simulation/joystick-input.md#the-buttons.
 	/// </summary>
+	/// <param name="index">The button's index.</param>
 	public bool ButtonLatched(int index) => index >= 0 && index < ButtonCount && _latched[index];
 
 	/// <summary>
@@ -141,9 +142,11 @@ public sealed class JoystickBindings {
 	}
 
 	/// <summary>
-	/// Reads one axis row out of <paramref name="preferences"/>. Rows 0-3 are JOYSTICK, THROTTLE,
+	/// Reads one axis row out of the preferences. Rows 0-3 are JOYSTICK, THROTTLE,
 	/// RUDDER and HAT.
 	/// </summary>
+	/// <param name="preferences">The preferences.</param>
+	/// <param name="row">The axis row.</param>
 	public JoystickAxisAssignment Assignment(SimulatorPreferences preferences, int row) {
 		byte value = preferences[Prefs.ControlsBase(PilotingRazor) + row];
 		return value <= (byte)JoystickAxisAssignment.Turret
@@ -151,15 +154,16 @@ public sealed class JoystickBindings {
 			: JoystickAxisAssignment.Unassigned;
 	}
 
-	/// <summary>What button <paramref name="index"/> (0-based) is bound to.</summary>
+	/// <summary>What a button (0-based) is bound to.</summary>
+	/// <param name="preferences">The preferences.</param>
+	/// <param name="index">The button's index.</param>
 	public JoystickAction Action(SimulatorPreferences preferences, int index) =>
 		(JoystickAction)preferences[
 			Prefs.ControlsBase(PilotingRazor)
 			+ Prefs.ControlsAxisCount + index];
 
 	/// <summary>
-	/// Resolves one tick. <paramref name="reading"/> is the stick as the device map built it and
-	/// <paramref name="capabilities"/> what it can do; a row whose control the device does not have is
+	/// Resolves one tick. A row whose control the device does not have is
 	/// skipped exactly as the original skips it, so a stick with no rudder cannot be steered by a
 	/// RUDDER binding left over from one that had.
 	///
@@ -169,6 +173,9 @@ public sealed class JoystickBindings {
 	/// is pitch and roll — docs/retail/simulation/joystick-input.md#a-stick-that-does-not-enumerate. Not
 	/// reproduced.</para>
 	/// </summary>
+	/// <param name="reading">The stick as the device map built it.</param>
+	/// <param name="capabilities">What the stick can do.</param>
+	/// <param name="preferences">The preferences.</param>
 	public JoystickPilotInput Resolve(JoystickReading reading, JoystickCapabilities capabilities,
 			SimulatorPreferences preferences) {
 		if (!capabilities.Present) {
@@ -315,14 +322,16 @@ public sealed class JoystickBindings {
 
 	/// <summary>
 	/// Finishes the axis chain and applies the last of <c>data\keyjoy.cfg</c>: the joystick where it
-	/// has moved, otherwise <paramref name="keyboard"/>, and then <c>Backturn</c>.
+	/// has moved, otherwise the keyboard, and then <c>Backturn</c>.
 	///
-	/// <para><paramref name="keyboard"/> is the keyboard's own two axis pairs, already in game-axis
+	/// <para>The keyboard is its own two axis pairs, already in game-axis
 	/// order. When <see cref="JoystickPilotInput.KeyboardAimsTurret"/> is set the original
 	/// <b>moves</b> the first pair onto the second — with the stick steering, the arrow keys aim the
 	/// turret instead of duplicating it — and negates the pitch half on the way, so the caller hands
 	/// over the pair it would otherwise have steered with and lets this do the shuffle.</para>
 	/// </summary>
+	/// <param name="input">The joystick's pilot input.</param>
+	/// <param name="keyboard">The keyboard's axes.</param>
 	public PilotAxes Combine(JoystickPilotInput input, PilotAxes keyboard) =>
 		ApplyBackturn(CombineBeforeBackturn(input, keyboard));
 
@@ -463,7 +472,11 @@ public sealed class JoystickBindings {
 		return -1;
 	}
 
-	/// <summary>Puts <paramref name="value"/> in the first free rank of destination <paramref name="axis"/>.</summary>
+	/// <summary>Puts a value in the first free rank of a destination axis.</summary>
+	/// <param name="primary">The primary ranks.</param>
+	/// <param name="secondary">The secondary ranks.</param>
+	/// <param name="axis">The destination axis.</param>
+	/// <param name="value">The value.</param>
 	private static void Assign(int?[] primary, int?[] secondary, int axis, int value) {
 		if (primary[axis] is null) {
 			primary[axis] = value;

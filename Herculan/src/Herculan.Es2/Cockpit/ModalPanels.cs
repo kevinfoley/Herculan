@@ -378,9 +378,9 @@ public sealed class ModalPanels {
 
 	/// <summary>
 	/// What the player answered. Only the button the status's own table names ends the mission; every other
-	/// answer just puts the panel away and carries on. Returns whether the answer ends the mission, and in
-	/// <paramref name="quitGame"/> whether it leaves the game as well.
+	/// answer just puts the panel away and carries on. Returns whether the answer ends the mission.
 	/// </summary>
+	/// <param name="quitGame">Receives whether the answer leaves the game as well.</param>
 	public bool TakeMissionEnding(out bool quitGame) {
 		quitGame = false;
 		if (StatusAlert == null || !StatusAlert.TryTakeAnswer(out int button, out bool ends)) {

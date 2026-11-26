@@ -18,8 +18,10 @@ internal static class SelectionBounds {
 	private const float PointRadius = 3000f;
 
 	/// <summary>
-	/// The sphere <paramref name="selection"/> fills, or null when it stands nowhere (a timer, or a group out of the scene).
+	/// The sphere a selection fills, or null when it stands nowhere (a timer, or a group out of the scene).
 	/// </summary>
+	/// <param name="mission">The mission.</param>
+	/// <param name="selection">The selection.</param>
 	public static (Vector3 Centre, float Radius)? Of(EditorMission mission, EditorSelection selection) {
 		var spheres = new List<(Vector3 Centre, float Radius)>();
 		switch (selection) {

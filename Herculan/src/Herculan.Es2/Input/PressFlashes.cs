@@ -34,9 +34,11 @@ public sealed class PressFlashes<TId> where TId : notnull {
 	public int Count => _entries.Count;
 
 	/// <summary>
-	/// <c>WidgetRoot_FlashPress</c>: queues <paramref name="id"/> to show pressed until <see cref="FlashTicks"/>
-	/// after <paramref name="nowTicks"/>. A button already flashing gets a second entry, as in the original.
+	/// <c>WidgetRoot_FlashPress</c>: queues a button to show pressed until <see cref="FlashTicks"/>
+	/// after the time given. A button already flashing gets a second entry, as in the original.
 	/// </summary>
+	/// <param name="id">The button's id.</param>
+	/// <param name="nowTicks">The current time in ticks.</param>
 	public void Flash(TId id, long nowTicks) {
 		_entries.Add((id, nowTicks + FlashTicks));
 		_queued = true;

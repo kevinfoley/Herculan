@@ -203,9 +203,11 @@ public sealed class CockpitScreenLayout {
 		Math.Max(0, (sideWidth + centerWidth + sideWidth - windowWidth) / 2);
 
 	/// <summary>
-	/// The width a panel needs to show <paramref name="frame"/> at <paramref name="height"/> without
+	/// The width a panel needs to show a frame at a height without
 	/// distorting it. Never zero, so a degenerate window still yields a usable viewport.
 	/// </summary>
+	/// <param name="frame">The frame.</param>
+	/// <param name="height">The panel's height.</param>
 	public static int PanelWidthForHeight(CockpitFrame frame, int height) =>
 		Math.Max(1, (int)MathF.Round(frame.Width * (height / (float)Math.Max(frame.Height, 1))));
 

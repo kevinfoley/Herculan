@@ -44,7 +44,7 @@ public sealed class SncScript {
 	}
 
 	/// <summary>
-	/// The frame to show <paramref name="elapsed"/> coarse ticks after the script started, or
+	/// The frame to show a number of coarse ticks after the script started, or
 	/// <see cref="Finished"/> past its end. <c>Snc_Advance</c> (<c>004633ac</c>) walks pairs until the
 	/// accumulated time passes now and publishes the frame it stopped on; this is the same walk
 	/// expressed as a function of elapsed time, so nothing has to be stepped.
@@ -52,6 +52,7 @@ public sealed class SncScript {
 	/// <para>An empty script is finished immediately, matching the original's buffer of just the
 	/// appended terminator — "the voice plays with the portrait held".</para>
 	/// </summary>
+	/// <param name="elapsed">The coarse ticks since the script started.</param>
 	public int Frame(long elapsed) {
 		long at = 0;
 		foreach (var (frame, delta) in _events) {

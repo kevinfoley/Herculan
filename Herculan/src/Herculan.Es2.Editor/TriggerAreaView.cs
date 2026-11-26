@@ -51,10 +51,11 @@ internal sealed class TriggerAreaView {
 	}
 
 	/// <summary>
-	/// Row-9 GUID <paramref name="guid"/>'s view; its shape and corners are the layout's (<see cref="MissionIndex"/>), which a
+	/// A row-9 area's view; its shape and corners are the layout's (<see cref="MissionIndex"/>), which a
 	/// drag's preview moves. An area whose corner or center references a position the layout has none for shows its name, why,
 	/// and Delete.
 	/// </summary>
+	/// <param name="guid">The area's row-9 GUID.</param>
 	public void Draw(short guid) {
 		var name = _names.Area(guid);
 		EditorText.Wrapped(name.Text);

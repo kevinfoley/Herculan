@@ -51,9 +51,10 @@ internal sealed class RouteView {
 	}
 
 	/// <summary>
-	/// <paramref name="selected"/>'s view; its waypoints are the layout's (<see cref="MissionIndex"/>), which a drag's preview
+	/// A selected route's view; its waypoints are the layout's (<see cref="MissionIndex"/>), which a drag's preview
 	/// moves. A route none of whose waypoints stands anywhere shows its name, why, and Delete.
 	/// </summary>
+	/// <param name="selected">The selected route.</param>
 	public void Draw(RouteSelection selected) {
 		var name = _names.Route(selected.Guid);
 		EditorText.Wrapped(name.Text);

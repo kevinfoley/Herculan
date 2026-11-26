@@ -52,18 +52,23 @@ internal sealed class MissionBrowser {
 		_listMissions = listMissions;
 	}
 
-	/// <summary>The archive's missions of <paramref name="missions"/> (<see cref="Merge"/>), "Load from VOL"'s list.</summary>
+	/// <summary>The archive's missions of a list (<see cref="Merge"/>), "Load from VOL"'s list.</summary>
+	/// <param name="missions">The merged list.</param>
 	public static IReadOnlyList<BrowsedMission> Archived(IEnumerable<BrowsedMission> missions) =>
 		missions.Where(mission => mission.InArchive).ToList();
 
-	/// <summary>The custom missions of <paramref name="missions"/> (<see cref="Merge"/>), "Load custom mission"'s list.</summary>
+	/// <summary>The custom missions of a list (<see cref="Merge"/>), "Load custom mission"'s list.</summary>
+	/// <param name="missions">The merged list.</param>
 	public static IReadOnlyList<BrowsedMission> Custom(IEnumerable<BrowsedMission> missions) =>
 		missions.Where(mission => !mission.InArchive).ToList();
 
 	/// <summary>
-	/// The archives' missions <paramref name="archive"/>, the install's loose ones <paramref name="saved"/> and those HERCULAN
-	/// comes with <paramref name="included"/>, by file name, as one list in name order, each name once.
+	/// The archives' missions, the install's loose ones and those HERCULAN
+	/// comes with, by file name, as one list in name order, each name once.
 	/// </summary>
+	/// <param name="archive">The archives' mission names.</param>
+	/// <param name="saved">The install's loose mission names.</param>
+	/// <param name="included">The mission names HERCULAN comes with, or null for none.</param>
 	public static IReadOnlyList<BrowsedMission> Merge(IEnumerable<string> archive, IEnumerable<string> saved,
 			IEnumerable<string>? included = null) {
 		var inArchive = new HashSet<string>(archive, StringComparer.OrdinalIgnoreCase);
@@ -76,9 +81,11 @@ internal sealed class MissionBrowser {
 	}
 
 	/// <summary>
-	/// The mission of <paramref name="missions"/> named <paramref name="name"/>, as the list names it, with or without its
+	/// The mission of a list of a name, as the list names it, with or without its
 	/// <c>.MSN</c> and in any case; null for none.
 	/// </summary>
+	/// <param name="missions">The list.</param>
+	/// <param name="name">The name.</param>
 	public static BrowsedMission? Find(IEnumerable<BrowsedMission> missions, string name) {
 		string file = Path.GetExtension(name).Equals(MissionFileLaunch.MissionExtension, StringComparison.OrdinalIgnoreCase)
 			? name
@@ -86,7 +93,8 @@ internal sealed class MissionBrowser {
 		return missions.FirstOrDefault(mission => mission.File.Equals(file, StringComparison.OrdinalIgnoreCase));
 	}
 
-	/// <summary>The listed mission named <paramref name="name"/>, as <see cref="Find(IEnumerable{BrowsedMission}, string)"/> finds it.</summary>
+	/// <summary>The listed mission of a name, as <see cref="Find(IEnumerable{BrowsedMission}, string)"/> finds it.</summary>
+	/// <param name="name">The name.</param>
 	public BrowsedMission? Find(string name) => Find(_missions ??= _listMissions(), name);
 
 	/// <summary>Lists the missions again the next time the window is drawn, after a save has added one.</summary>

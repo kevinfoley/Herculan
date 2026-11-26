@@ -51,10 +51,14 @@ internal sealed class HercPlacer {
 	public string? WhyNoAdd => HercGroups.WhyNoAdd(_source);
 
 	/// <summary>
-	/// Adds a herc of <c>MECHS.NAM</c> type <paramref name="typeIndex"/> on <paramref name="side"/> at
-	/// (<paramref name="x"/>, <paramref name="y"/>), in a group of its own or, given <paramref name="joinGroup"/>, as a
-	/// member of that herc group; and selects it. Answers why it could not, or null when it did.
+	/// Adds a herc at a point, in a group of its own or as a
+	/// member of a herc group; and selects it. Answers why it could not, or null when it did.
 	/// </summary>
+	/// <param name="typeIndex">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="side">The side.</param>
+	/// <param name="x">The X.</param>
+	/// <param name="y">The Y.</param>
+	/// <param name="joinGroup">The row-16 GUID of the herc group it joins, or null for a group of its own.</param>
 	public string? Add(int typeIndex, MissionSide side, int x, int y, short? joinGroup = null) {
 		if (WhyNoAdd is { } refused) {
 			return refused;
@@ -78,7 +82,8 @@ internal sealed class HercPlacer {
 		return Commit(typeIndex, () => HercGroups.Create(source, herc, (short)side, x, y, out mech, out _), () => mech);
 	}
 
-	/// <summary>Why a herc cannot be added to group <paramref name="group"/>, by its row-16 GUID, or null when it can.</summary>
+	/// <summary>Why a herc cannot be added to a group, or null when it can.</summary>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public string? WhyNotJoin(short group) =>
 		_index.Group(group) == null ? EditorToolbox.GroupGone : HercGroups.WhyNoJoin(_source, group);
 
@@ -86,18 +91,23 @@ internal sealed class HercPlacer {
 	public string? Failure { get; private set; }
 
 	/// <summary>
-	/// Why no herc can be put in member slot <paramref name="slot"/> of <paramref name="group"/>, by its row-16 GUID, or null
+	/// Why no herc can be put in a member slot of a group, or null
 	/// when one can: block 7 is full (<see cref="WhyNoAdd"/>), or the slot cannot be filled (<see cref="HercGroups.WhyNoJoinSlot"/>).
 	/// </summary>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The member slot.</param>
 	public string? WhyNotFillSlot(short group, int slot) =>
 		WhyNoAdd ?? (_index.Group(group) == null ? EditorToolbox.GroupGone : HercGroups.WhyNoJoinSlot(_source, group, slot));
 
 	/// <summary>
-	/// Asks for a herc of type <paramref name="typeIndex"/>, with the fit a new herc of it gets, to be added in member slot
-	/// <paramref name="slot"/> of herc group <paramref name="group"/>. Its record names no point of its own, so it stands on
+	/// Asks for a herc, with the fit a new herc of its type gets, to be added in a member slot
+	/// of a herc group. Its record names no point of its own, so it stands on
 	/// the slot's formation spot (docs/retail/formats/script-dat.md#placement--the-actual-rule); it is not selected, so the
 	/// group's view stays. The edit runs when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered.
 	/// </summary>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The member slot.</param>
+	/// <param name="typeIndex">The <c>MECHS.NAM</c> type.</param>
 	public void RequestJoin(short group, int slot, int typeIndex) => _requested = () => JoinSlot(typeIndex, group, slot);
 
 	/// <summary>Makes the slot join asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
@@ -124,10 +134,12 @@ internal sealed class HercPlacer {
 	}
 
 	/// <summary>
-	/// The herc <see cref="Add"/> would add of <paramref name="typeIndex"/> on <paramref name="side"/>, built the same way
+	/// The herc <see cref="Add"/> would add, built the same way
 	/// but in no roster slot or group and recorded nowhere, for <see cref="DropPreview"/> to draw; null for a type the
 	/// install has nothing for.
 	/// </summary>
+	/// <param name="typeIndex">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="side">The side.</param>
 	public SceneObject? Ghost(int typeIndex, MissionSide side) =>
 		_fitter.NewHercFit(typeIndex) is var (weapons, ammo)
 			? _scene.CreateObject(new MissionPlacement(MissionUnitKind.Mech, typeIndex, _names[typeIndex], -1, -1, Vec3i.Zero, 0,

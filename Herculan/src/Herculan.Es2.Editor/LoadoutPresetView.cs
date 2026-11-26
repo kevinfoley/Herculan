@@ -47,11 +47,16 @@ internal sealed class LoadoutPresetView {
 	public bool IsOpen => _prompt != Prompt.None;
 
 	/// <summary>
-	/// The "Loadout preset" dropdown, <paramref name="width"/> wide, for the herc of row-12 GUID <paramref name="guid"/>, of
-	/// <c>MECHS.NAM</c> type <paramref name="type"/> and fitted with <paramref name="weapons"/> and <paramref name="ammo"/>: the
+	/// The "Loadout preset" dropdown for a herc: the
 	/// type's presets, by name, each the current fit does not take disabled with the reason; picking one applies it, in
-	/// <paramref name="option"/>'s template where a template supplies a field (<see cref="MachineFitter.RequestLoadout"/>).
+	/// the option's template where a template supplies a field (<see cref="MachineFitter.RequestLoadout"/>).
 	/// </summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
+	/// <param name="type">The herc's <c>MECHS.NAM</c> type.</param>
+	/// <param name="weapons">The weapons it is fitted with.</param>
+	/// <param name="ammo">The ammunition types it is fitted with.</param>
+	/// <param name="width">The dropdown's width.</param>
+	/// <param name="option">The option being edited, or null.</param>
 	public void DrawChoice(short guid, int type, short[] weapons, short[] ammo, float width, MsnRecordId? option) {
 		var presets = _presets.For(type);
 		var current = Matching(presets, weapons, ammo);
@@ -79,9 +84,15 @@ internal sealed class LoadoutPresetView {
 
 	/// <summary>
 	/// "Save preset" and "Delete preset" for the herc <see cref="DrawChoice"/> draws, both disabled while
-	/// <paramref name="disabled"/>, with the prompt either put up for it; <paramref name="chassisName"/> names its chassis as the
-	/// view shows it. Save takes the weapon and ammunition type of each hardpoint the view edits.
+	/// the view is, with the prompt either put up for it. Save takes the weapon and ammunition type of each hardpoint the view edits.
 	/// </summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
+	/// <param name="type">The herc's <c>MECHS.NAM</c> type.</param>
+	/// <param name="chassisName">The chassis's name as the view shows it.</param>
+	/// <param name="weapons">The weapons it is fitted with.</param>
+	/// <param name="ammo">The ammunition types it is fitted with.</param>
+	/// <param name="option">The option being edited, or null.</param>
+	/// <param name="disabled">Whether both buttons are disabled.</param>
 	public void DrawButtons(short guid, int type, string chassisName, short[] weapons, short[] ammo, MsnRecordId? option,
 			bool disabled) {
 		var current = Matching(_presets.For(type), weapons, ammo);

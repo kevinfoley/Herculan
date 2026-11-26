@@ -19,7 +19,8 @@ internal sealed class RadarSettingField {
 		_editor = editor;
 	}
 
-	/// <summary>Draws <paramref name="key"/>'s radar setting; nothing for anything but a herc the layout still has.</summary>
+	/// <summary>Draws a record's radar setting; nothing for anything but a herc the layout still has.</summary>
+	/// <param name="key">The roster record.</param>
 	public void Draw(ObjectKey key) {
 		var source = _editor.Source;
 		if (key.Row != HercRow || source.Layout.Entry(key.Row, key.Guid) == null) {

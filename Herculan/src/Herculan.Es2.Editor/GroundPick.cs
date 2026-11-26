@@ -18,8 +18,12 @@ internal static class GroundPick {
 
 	/// <summary>
 	/// The ground point under a render-space ray, in world units, or null when the ray meets no ground
-	/// within <paramref name="maxDistanceRender"/>.
+	/// within a distance.
 	/// </summary>
+	/// <param name="originRender">The ray's origin, in render space.</param>
+	/// <param name="directionRender">The ray's direction, in render space.</param>
+	/// <param name="terrain">The terrain.</param>
+	/// <param name="maxDistanceRender">The farthest the ray is followed, in render space.</param>
 	public static Vec3i? Cast(Vector3 originRender, Vector3 directionRender, HeightGrid terrain,
 			float maxDistanceRender) {
 		float step = terrain.CellSize / WorldScale.WorldUnitsPerMeter / StepsPerCell;

@@ -114,13 +114,14 @@ public readonly struct ThrottleTrack {
 	}
 
 	/// <summary>
-	/// The throttle setting a pointer at <paramref name="deviceY"/> asks for: the drag handler
+	/// The throttle setting a pointer asks for: the drag handler
 	/// (<c>SliderWidget_DragToPointV</c>, <c>004525d8</c>) clamps the pointer into the track and puts the knob's bottom edge there,
 	/// and the getter reads the setting back off the knob's top.
 	///
 	/// <para>The pointer lands on the knob's <i>bottom</i>, not its centre, which is the original's
 	/// own behaviour: grabbing the knob makes it jump so its lower edge is under the cursor.</para>
 	/// </summary>
+	/// <param name="deviceY">The pointer's device-pixel Y.</param>
 	public short ThrottleAt(float deviceY) {
 		if (Scale <= 0) {
 			return 0;

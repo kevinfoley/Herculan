@@ -9,9 +9,14 @@ namespace Herculan.Es2.Editor;
 
 /// <summary>
 /// What File &gt; New mission was asked for: the mission's name; its terrain, either a zone the install has
-/// (<paramref name="Zone"/>) or its own (<paramref name="OwnZone"/>), the other null; its theater; and whether it is played
+/// or its own, the other null; its theater; and whether it is played
 /// by night.
 /// </summary>
+/// <param name="Name">The mission's name.</param>
+/// <param name="Zone">A zone the install has, or null.</param>
+/// <param name="OwnZone">The mission's own terrain, or null.</param>
+/// <param name="Theater">The theater.</param>
+/// <param name="Night">Whether it is played by night.</param>
 internal sealed record NewMissionRequest(string Name, ZoneChoice? Zone, ZoneFiles? OwnZone, short Theater, bool Night);
 
 /// <summary>

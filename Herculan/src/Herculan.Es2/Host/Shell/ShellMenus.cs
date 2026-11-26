@@ -83,8 +83,11 @@ sealed class ShellMenus : IFrontEndMenus {
 
 	/// <summary>
 	/// The menu bar and its windows, and the update notice, once the automatic check has found a newer release and the
-	/// welcome and any error notice are down. <paramref name="revealOnHover"/> is <see cref="HostMenuBar.ShowOnHover"/>.
+	/// welcome and any error notice are down.
 	/// </summary>
+	/// <param name="owner">The native window.</param>
+	/// <param name="fullScreen">Whether the window is full screen.</param>
+	/// <param name="revealOnHover">Whether the menu bar shows on hover (<see cref="HostMenuBar.ShowOnHover"/>).</param>
 	public void Draw(nint owner, bool fullScreen, bool revealOnHover) {
 		if (!_menuBar.Welcome.IsOpen && !_menuBar.Error.IsOpen && UpdateChecks.TakeNews() is { } news) {
 			_menuBar.Update.Offer(news);

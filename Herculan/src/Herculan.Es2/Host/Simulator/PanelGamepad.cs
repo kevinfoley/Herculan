@@ -43,8 +43,13 @@ sealed class PanelGamepad {
 
 	/// <summary>
 	/// Reads the pad, once an update after the host's keys are cleared and before the frame reads them.
-	/// <paramref name="allowed"/> is whether the pad may have the panels: one is up, with nothing of the host's over it.
 	/// </summary>
+	/// <param name="input">The input context.</param>
+	/// <param name="keys">The live keys, or null for none.</param>
+	/// <param name="panels">The panels.</param>
+	/// <param name="keyMap">The key map.</param>
+	/// <param name="allowed">Whether the pad may have the panels: one is up, with nothing of the host's over it.</param>
+	/// <param name="deltaSeconds">The time since the last update, in seconds.</param>
 	public void Update(IInputContext input, LiveKeys? keys, ModalPanels panels, KeyMap keyMap, bool allowed,
 			double deltaSeconds) {
 		var pad = allowed && keys != null

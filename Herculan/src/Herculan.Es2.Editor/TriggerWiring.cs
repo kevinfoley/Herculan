@@ -9,13 +9,17 @@ namespace Herculan.Es2.Editor;
 /// </summary>
 internal abstract record TriggerFollower;
 
-/// <summary>Row-16 GUID <paramref name="Group"/> is not in the mission until the trigger activates (its deployment action).</summary>
+/// <summary>A row-16 group is not in the mission until the trigger activates (its deployment action).</summary>
+/// <param name="Group">The group's row-16 GUID.</param>
 internal sealed record BringsInGroup(short Group) : TriggerFollower;
 
-/// <summary>Row-16 GUID <paramref name="Group"/> moves on from the order in its slot <paramref name="Slot"/> when the trigger activates.</summary>
+/// <summary>A row-16 group moves on from the order in one of its slots when the trigger activates.</summary>
+/// <param name="Group">The group's row-16 GUID.</param>
+/// <param name="Slot">The order slot.</param>
 internal sealed record EndsOrder(short Group, int Slot) : TriggerFollower;
 
-/// <summary>Row-11 GUID <paramref name="Countdown"/> starts counting down when the trigger activates.</summary>
+/// <summary>A row-11 countdown starts counting down when the trigger activates.</summary>
+/// <param name="Countdown">The countdown's row-11 GUID.</param>
 internal sealed record StartsCountdown(short Countdown) : TriggerFollower;
 
 /// <summary>
@@ -42,7 +46,8 @@ internal sealed record TriggerLinks(IReadOnlyList<short> FiringCountdowns, IRead
 internal static class TriggerWiring {
 	private const int ActionRow = 10;
 
-	/// <summary>Each trigger's links in <paramref name="plan"/>; a trigger nothing fires or follows has no entry.</summary>
+	/// <summary>Each trigger's links in a plan; a trigger nothing fires or follows has no entry.</summary>
+	/// <param name="plan">The plan.</param>
 	public static IReadOnlyDictionary<short, TriggerLinks> Build(LayoutPlan plan) {
 		var layout = plan.Layout;
 		var links = new Dictionary<short, Builder>();
@@ -120,13 +125,20 @@ internal static class TriggerWiring {
 /// longer ends on a trigger. The Then list removes a countdown by deleting it (<see cref="DelayedActions.Remove"/>).
 /// </summary>
 internal static class TriggerFollowers {
-	/// <summary>Makes <paramref name="follower"/> wait on row-10 GUID <paramref name="trigger"/>.</summary>
+	/// <summary>Makes a follower wait on a row-10 trigger.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="trigger">The trigger's row-10 GUID.</param>
+	/// <param name="follower">The follower.</param>
 	public static MsnEdit Add(MissionDocument document, short trigger, TriggerFollower follower) => Set(document, follower, trigger);
 
-	/// <summary>Takes <paramref name="follower"/> off whatever trigger it waits on.</summary>
+	/// <summary>Takes a follower off whatever trigger it waits on.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="follower">The follower.</param>
 	public static MsnEdit Remove(MissionDocument document, TriggerFollower follower) => Set(document, follower, -1);
 
-	/// <summary>Why <paramref name="follower"/> cannot be set to wait on a trigger, or null when it can.</summary>
+	/// <summary>Why a follower cannot be set to wait on a trigger, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="follower">The follower.</param>
 	public static string? WhyNoAdd(MissionDocument document, TriggerFollower follower) => follower switch {
 		BringsInGroup bring => ActionWiring.WhyNoDeployment(document, bring.Group),
 		_ => null,

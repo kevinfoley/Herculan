@@ -58,31 +58,49 @@ internal sealed record PlacementOverrides {
 
 /// <summary>
 /// One roster record as placed: what it is, as its base's fields give it, and where it stands before the ground is read
-/// (<see cref="MissionMemberPlace"/>). <paramref name="Group"/> is the row-16 GUID of the group that places it, and
-/// <paramref name="MemberIndex"/> its member slot there, which for a squad herc is its entry in the squad.
+/// (<see cref="MissionMemberPlace"/>).
 /// </summary>
+/// <param name="Key">The record's key.</param>
+/// <param name="Kind">The kind of unit.</param>
+/// <param name="TypeIndex">The type's index.</param>
+/// <param name="TypeName">The type's name, or null.</param>
+/// <param name="WeaponRefs">The weapon references.</param>
+/// <param name="WeaponSecondary">The secondary weapon references.</param>
+/// <param name="StartingCondition">The starting condition.</param>
+/// <param name="AiCruiseSpeed">The AI cruise speed.</param>
+/// <param name="AiRadarActive">Whether the AI's radar is active.</param>
+/// <param name="Group">The row-16 GUID of the group that places it.</param>
+/// <param name="MemberIndex">Its member slot in the group, which for a squad herc is its entry in the squad.</param>
+/// <param name="Squad">Whether it belongs to the squad.</param>
+/// <param name="Side">The side.</param>
+/// <param name="Place">Where it stands before the ground is read.</param>
 internal sealed record PlannedObject(ObjectKey Key, MissionUnitKind Kind, int TypeIndex, string? TypeName,
 	IReadOnlyList<short> WeaponRefs, IReadOnlyList<short> WeaponSecondary, short StartingCondition, short AiCruiseSpeed,
 	bool AiRadarActive, short Group, int MemberIndex, bool Squad, MissionSide Side, MissionMemberPlace Place);
 
 /// <summary>
-/// One row-16 group as placed: its place in the layout's row 16 (<paramref name="Position"/>, from 0, the squad's 0;
-/// <see cref="Number"/> is what the editor shows), roster, side, the action it waits on
-/// (<c>-1</c> for none), its setup (<see cref="MissionPlacementRules.GroupSetup"/>) and the records it places, in roster
-/// order, the squad's in slot order.
+/// One row-16 group as placed: its place in the layout's row 16 (<see cref="Number"/> is what the editor shows), roster,
+/// side, the action it waits on (<c>-1</c> for none), its setup (<see cref="MissionPlacementRules.GroupSetup"/>) and the
+/// records it places, in roster order, the squad's in slot order.
 /// </summary>
+/// <param name="Guid">The group's row-16 GUID.</param>
+/// <param name="Position">Its place in the layout's row 16, from 0, the squad's 0.</param>
+/// <param name="Kind">The group's kind.</param>
+/// <param name="Side">The group's side.</param>
 /// <param name="DeploymentAction">The row-10 GUID it waits on, or <c>-1</c>.</param>
 /// <param name="Waiting">Whether that action is in the layout, so the group is not in the mission until it fires.</param>
 /// <param name="ArrivalVerb">
 /// That action's verb (<see cref="MissionAction82.Verb"/>), which says how the group arrives when it fires; <c>-1</c> when
 /// it is not <paramref name="Waiting"/>.
 /// </param>
+/// <param name="Setup">Its setup (<see cref="MissionPlacementRules.GroupSetup"/>).</param>
 /// <param name="OwnPoint">The row-6 GUID of its own point when the layout has it, else <c>-1</c>.</param>
 /// <param name="StartPoints">
 /// The row-6 GUIDs its slot-0 route's first waypoint names, and the last's too when the route closes on its start, the
 /// point it stands on when it has none of its own; empty for none.
 /// </param>
 /// <param name="Orders">Its ten order slots' row-15 GUIDs, <c>-1</c> where unset.</param>
+/// <param name="Members">The records it places, in roster order, the squad's in slot order.</param>
 /// <param name="Pad">The ground it paints, read from its first member, or null.</param>
 internal sealed record PlannedGroup(short Guid, int Position, MissionUnitKind Kind, MissionSide Side, short DeploymentAction,
 		bool Waiting, short ArrivalVerb, MissionGroupSetup Setup, short OwnPoint, IReadOnlyList<short> StartPoints,
@@ -155,7 +173,8 @@ internal sealed class LayoutPlan {
 
 	public PlannedGroup? Group(short guid) => _groups.GetValueOrDefault(guid);
 
-	/// <summary>Whether group <paramref name="guid"/>'s first order slot names a sleep order, so it starts the mission asleep.</summary>
+	/// <summary>Whether a group's first order slot names a sleep order, so it starts the mission asleep.</summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public bool Asleep(short guid) => Group(guid)?.Orders is [var first, ..] && first != -1
 		&& Layout.Entry<MissionOrder22>(first)?.Fields.Verb == MissionOrder.VerbSleep;
 
@@ -198,9 +217,12 @@ internal static class LayoutPlacement {
 	private const int BaseRow = 14;
 
 	/// <summary>
-	/// The layout's groups, placed records, routes, areas and actions, with <paramref name="overrides"/> read in place of the
+	/// The layout's groups, placed records, routes, areas and actions, with some overrides read in place of the
 	/// layout's.
 	/// </summary>
+	/// <param name="layout">The layout.</param>
+	/// <param name="tables">The placement tables.</param>
+	/// <param name="overrides">The placements read in place of the layout's, or null for none.</param>
 	public static LayoutPlan Place(MissionLayout layout, PlacementTables tables, PlacementOverrides? overrides = null) {
 		overrides ??= PlacementOverrides.None;
 		var groupEntries = layout.Entries<MissionGroup164>();
@@ -332,7 +354,10 @@ internal static class LayoutPlacement {
 	private static Vec3i? OwnPoint(MissionLayout layout, ObjectKey key, short point, PlacementOverrides overrides) =>
 		overrides.ObjectPoint is { } alone && alone.Object == key ? alone.Point : Point(layout, point, overrides);
 
-	/// <summary>The coordinates of row-6 GUID <paramref name="guid"/>, a drag's in place of its record's, or null when the layout has no such point.</summary>
+	/// <summary>The coordinates of a row-6 point, a drag's in place of its record's, or null when the layout has no such point.</summary>
+	/// <param name="layout">The layout.</param>
+	/// <param name="guid">The point's row-6 GUID.</param>
+	/// <param name="overrides">The drag's placements.</param>
 	internal static Vec3i? Point(MissionLayout layout, short guid, PlacementOverrides overrides) {
 		if (guid == -1) {
 			return null;

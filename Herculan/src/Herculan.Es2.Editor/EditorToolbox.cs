@@ -67,7 +67,8 @@ internal sealed class EditorToolbox {
 	/// <summary>Why the selected group cannot be joined once the <c>.MSN</c> has no such group.</summary>
 	public const string GroupGone = "Not found.";
 
-	/// <summary>Why an object of roster row <paramref name="row"/> (12 to 14) cannot be changed once the <c>.MSN</c> has no record for it.</summary>
+	/// <summary>Why an object of a roster row cannot be changed once the <c>.MSN</c> has no record for it.</summary>
+	/// <param name="row">The roster row, 12 to 14.</param>
 	public static string ObjectGone(int row) => row switch {
 		12 => "Not found.",
 		13 => "Not found.",

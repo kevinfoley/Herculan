@@ -70,9 +70,10 @@ internal sealed class SquadEditor {
 	}
 
 	/// <summary>
-	/// Why squadmate <paramref name="number"/>, from 1, cannot be removed, or null when it can, with what references or
+	/// Why a squadmate cannot be removed, or null when it can, with what references or
 	/// needs it.
 	/// </summary>
+	/// <param name="number">The squadmate's number, from 1.</param>
 	public (string? Fixed, DeleteNamers Names, bool OwnActions) WhyNoRemove(int number) {
 		if (SquadRoster.Check(_source, number) is not var (_, check)) {
 			return ("Its record is also another squad member's, or it is the only HERC the squad has.", DeleteNamers.None, false);
@@ -85,7 +86,8 @@ internal sealed class SquadEditor {
 	/// <summary>Asks for a squadmate to be added after the last.</summary>
 	public void RequestAdd() => _requested = Add;
 
-	/// <summary>Asks for squadmate <paramref name="number"/>, from 1, to be removed.</summary>
+	/// <summary>Asks for a squadmate to be removed.</summary>
+	/// <param name="number">The squadmate's number, from 1.</param>
 	public void RequestRemove(int number) => _requested = () => Remove(number);
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>

@@ -102,12 +102,15 @@ public sealed class SquadMessagePort {
 	public event Action<Queued>? Shown;
 
 	/// <summary>
-	/// Posts what <paramref name="slot"/>'s squadmate has to say — <c>Ai_PostSquadMessage</c>
+	/// Posts what a slot's squadmate has to say — <c>Ai_PostSquadMessage</c>
 	/// (<c>00420a98</c>) through the port's vtable slot 0. The id names a line in that pilot's own
 	/// message set, and the recording is rolled among that id's variants here rather than at play
 	/// time, so the portrait script and the clip agree. Queued as <see cref="MessagePort.Post"/>
 	/// queues, departure from retail included.
 	/// </summary>
+	/// <param name="messageId">The line's id in the pilot's message set.</param>
+	/// <param name="slot">The squadmate's slot.</param>
+	/// <param name="speaker">The speaker, or null for none.</param>
 	public void Post(int messageId, int slot, object? speaker = null) {
 		var catalog = _catalogs(slot);
 		IReadOnlyList<SquadMessages.Entry> sentences = Training
@@ -150,9 +153,10 @@ public sealed class SquadMessagePort {
 	}
 
 	/// <summary>
-	/// Runs the port for one frame at <paramref name="coarseTicks"/> — <c>MessagePort_Tick</c>. Call
+	/// Runs the port for one frame — <c>MessagePort_Tick</c>. Call
 	/// once a frame, before <see cref="SquadCommChannel"/>'s own update.
 	/// </summary>
+	/// <param name="coarseTicks">The current coarse tick.</param>
 	public void Update(long coarseTicks) {
 		_now = coarseTicks;
 
@@ -212,10 +216,11 @@ public sealed class SquadMessagePort {
 	}
 
 	/// <summary>
-	/// <c>MessagePort_MarkReady</c> (<c>00435b14</c>) — lets <paramref name="message"/> go up on the
+	/// <c>MessagePort_MarkReady</c> (<c>00435b14</c>) — lets a message go up on the
 	/// next <see cref="Update"/>, if it is the current line and due. The comm box calls it as the
 	/// speaker's portrait starts talking.
 	/// </summary>
+	/// <param name="message">The message, or null.</param>
 	public void MarkReady(Queued? message) {
 		if (message != null && ReferenceEquals(message, _current) && _activated) {
 			_ready = true;
@@ -224,10 +229,11 @@ public sealed class SquadMessagePort {
 
 	/// <summary>
 	/// <c>MessagePort_Cancel</c> (<c>00435b38</c>) — takes the current line down on the next
-	/// <see cref="Update"/>, when <paramref name="message"/> is it or is null. The comm box calls it
+	/// <see cref="Update"/>, when a message is it or is null. The comm box calls it
 	/// as the portrait's script runs out; a line the port has already taken down is not current, so
 	/// the call does nothing.
 	/// </summary>
+	/// <param name="message">The message, or null.</param>
 	public void Cancel(Queued? message) {
 		if (message == null || ReferenceEquals(message, _current)) {
 			_cancel = true;

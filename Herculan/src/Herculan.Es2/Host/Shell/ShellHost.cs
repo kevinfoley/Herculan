@@ -109,29 +109,43 @@ public sealed class ShellHost : IDisposable {
 		code is MissionResults.DebriefExitCode or DebriefDestroyedCode or MissionResults.DemoExitCode;
 
 	/// <summary>
-	/// Runs the front end's turn in <paramref name="window"/> until it ends. Returns the exit code and, when <c>Rock &amp; Roll &gt;</c>,
+	/// Runs the front end's turn in a window until it ends. Returns the exit code and, when <c>Rock &amp; Roll &gt;</c>,
 	/// <c>Begin Mission</c>, <c>INSTANT ACTION</c> or the debrief's <c>REPLAY MISSION?</c> closed it, the mission
 	/// to run — <c>Shell_SetExitCode(2)</c> (<c>0040876a</c>), the code the retail launcher answers by starting the simulator.
 	/// <c>VIEW DEMO</c> closes it with <see cref="DemoExitCode"/> and no mission.
 	///
-	/// <para><paramref name="returnCode"/> is <c>-X</c>, the state the launcher starts the shell in
+	/// <para>The return code is <c>-X</c>, the state the launcher starts the shell in
 	/// (<c>Shell_StartupCode</c>, <c>0048227e</c>): <see cref="StartupCode"/> on a first start, or the code the simulator returned —
 	/// <see cref="MissionResults.DebriefExitCode"/> into the debrief, <see cref="MissionResults.DemoExitCode"/>
 	/// after a demo (<c>Shell_BuildScreensAndStart</c>, <c>004012b0</c>) — or this engine's own
 	/// <see cref="SettingsRestartCode"/>, the Settings menu's restart, <see cref="EditorExitCode"/>, a return from the
 	/// mission editor, or <see cref="CustomMissionExitCode"/>, a return from a custom mission. Custom Missions' Play closes it
-	/// with <see cref="CustomMissionExitCode"/> and the mission. <paramref name="forcedMode"/> overrides
+	/// with <see cref="CustomMissionExitCode"/> and the mission. The forced mode overrides
 	/// the campaign/training mode the startup seeds from <c>prefs.cfg</c> option 42 (<c>Shell_InitGameState</c> (<c>0040e17e</c>)); the mode
 	/// the shell ends in is returned for the next turn, which is how it survives a return from the simulator when
 	/// <c>--no-write-prefs</c> keeps option 42 off the disk.</para>
 	///
-	/// <para><paramref name="missionPicker"/> is <c>-@</c>, which <c>ES.EXE</c> hands the shell under <c>-SPRUNKNOWN</c>, as
+	/// <para>The mission picker is <c>-@</c>, which <c>ES.EXE</c> hands the shell under <c>-SPRUNKNOWN</c>, as
 	/// <c>--developer</c> is here: each career's mission load waits on the DEBUG dialog
 	/// (docs/retail/shell/main-menu.md#the-mission-name-dialog).</para>
 	///
 	/// <para>Retail ignores <c>WM_CLOSE</c> while the startup sequence runs (<c>Shell_CloseAllowed</c> (<c>0046c098</c>) clear); this
 	/// window closes.</para>
 	/// </summary>
+	/// <param name="session">The session.</param>
+	/// <param name="window">The window the turn runs in.</param>
+	/// <param name="paletteName">The palette's name, or null.</param>
+	/// <param name="screenshotPath">Where to save a screenshot, or null for none.</param>
+	/// <param name="forcedMode">The campaign/training mode that overrides the startup's, or null for none.</param>
+	/// <param name="startTab">The tab the shell starts on.</param>
+	/// <param name="startBay">The hangar bay the shell starts on.</param>
+	/// <param name="startPractice">Whether the shell starts in practice.</param>
+	/// <param name="silentAudio">Whether the audio is silent.</param>
+	/// <param name="writePreferences">Whether preferences are written to disk.</param>
+	/// <param name="startWindowed">Whether the window starts windowed.</param>
+	/// <param name="moviesEnabled">Whether movies are played.</param>
+	/// <param name="returnCode">The <c>-X</c> return code the shell starts in.</param>
+	/// <param name="missionPicker">Whether <c>-@</c> is set.</param>
 	public static (int ExitCode, ShellLaunch? Launch, ShellCampaignMode? Mode) Run(HostSession session, HostWindow window,
 			string? paletteName, string? screenshotPath = null,
 			ShellCampaignMode? forcedMode = null, int startTab = ShellScreen.MainMenuTab,

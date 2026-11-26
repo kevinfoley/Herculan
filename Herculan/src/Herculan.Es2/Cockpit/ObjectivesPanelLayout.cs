@@ -48,7 +48,7 @@ public static class ObjectivesPanelLayout {
 	public static readonly AlertPanelLayout.Rect Button = new(254, 186, 254 + 120, 186 + 20);
 
 	/// <summary>
-	/// The rect the <paramref name="index"/>'th objective line is centred in.
+	/// The rect an objective line is centred in.
 	///
 	/// <para><b>Its horizontal extent is the panel's screen rect, not its local one</b> — the
 	/// constructor takes x from <c>panel+0x04</c> and <c>panel+0x0c</c>, the absolute pair, while
@@ -57,6 +57,7 @@ public static class ObjectivesPanelLayout {
 	/// title and the button sit on it. Reproduced rather than corrected: it is what the original
 	/// draws, and the retail screenshot shows the offset.</para>
 	/// </summary>
+	/// <param name="index">The line's index.</param>
 	public static AlertPanelLayout.Rect Line(int index) =>
 		new(ScreenLeft, FirstLineY + LineHeight * index,
 			ScreenLeft + Width, FirstLineY + LineHeight * index + LineHeight);

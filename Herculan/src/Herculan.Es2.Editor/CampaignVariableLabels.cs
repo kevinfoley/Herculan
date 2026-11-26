@@ -34,12 +34,14 @@ internal static class CampaignVariableLabels {
 	public static IReadOnlyList<short> Set { get; } = [0, 1, 2, 4, 5, 6, 8, 9, 10];
 
 	/// <summary>
-	/// Whether variable <paramref name="flag"/> is one of the three random numbers every load picks, the only variables a
+	/// Whether a variable is one of the three random numbers every load picks, the only variables a
 	/// mission loaded outside the campaign starts with other than 0 (ShellTrainingLaunch's SeedDrawnFlags).
 	/// </summary>
+	/// <param name="flag">The campaign variable.</param>
 	public static bool IsRandomNumber(int flag) => flag is >= FirstDrawnFlag and < FirstDrawnFlag + 3;
 
-	/// <summary>What variable <paramref name="flag"/> holds, as a list entry names it, where the retail docs say; null otherwise.</summary>
+	/// <summary>What a variable holds, as a list entry names it, where the retail docs say; null otherwise.</summary>
+	/// <param name="flag">The campaign variable.</param>
 	public static string? Label(int flag) => flag switch {
 		// docs/retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store: the debrief writes 0, 8 and
 		// 9 after each mission, a campaign load writes 1 and 2 from the career position, and every load 4 to 6 from a draw.
@@ -60,11 +62,12 @@ internal static class CampaignVariableLabels {
 	};
 
 	/// <summary>
-	/// Variable <paramref name="flag"/> as a sentence names it: what it holds where <see cref="Label"/> says, else "campaign
-	/// variable N", with what the game does with it after (<see cref="Effect"/>) where it reads it. With
-	/// <paramref name="atDebrief"/>, as the debrief's conditions read it: the debrief has just written 0, 8 and 9 from the
-	/// mission flown, and 10 is that mission's count (docs/retail/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7).
+	/// A variable as a sentence names it: what it holds where <see cref="Label"/> says, else "campaign
+	/// variable N", with what the game does with it after (<see cref="Effect"/>) where it reads it.
 	/// </summary>
+	/// <param name="flag">The campaign variable.</param>
+	/// <param name="atDebrief">Whether the sentence reads as the debrief's conditions read it: the debrief has just written 0, 8 and 9 from the
+	/// mission flown, and 10 is that mission's count (docs/retail/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7).</param>
 	public static string Phrase(int flag, bool atDebrief = false) => (flag, atDebrief) switch {
 		(0, true) => "the outcome of the mission",
 		(8, true) => "the number of squad HERCs written off after the mission",
@@ -85,7 +88,8 @@ internal static class CampaignVariableLabels {
 		_ => Effect(flag) is { } effect ? $"campaign variable {flag} ({Lower(effect)})" : $"campaign variable {flag}",
 	};
 
-	/// <summary>Variable <paramref name="flag"/> as a picker shows it chosen: its label, else "Campaign variable N", with its <see cref="Effect"/>.</summary>
+	/// <summary>A variable as a picker shows it chosen: its label, else "Campaign variable N", with its <see cref="Effect"/>.</summary>
+	/// <param name="flag">The campaign variable.</param>
 	public static string Name(int flag) => Label(flag) ?? Numbered(flag, Effect(flag));
 
 	/// <summary>
@@ -96,13 +100,14 @@ internal static class CampaignVariableLabels {
 		.Where(flag => Effect(flag) != null).Select(flag => (short)flag).ToList();
 
 	/// <summary>
-	/// What the debrief does with variable <paramref name="flag"/> as the mission left it, in a campaign: pays the salvage bonus
+	/// What the debrief does with a variable as the mission left it, in a campaign: pays the salvage bonus
 	/// (<see cref="Es2.Sim.MissionResults.SalvageBonusKilograms"/>), adds units of a weapon to the armory, or unlocks a weapon or a
 	/// chassis when it holds a set value (<see cref="Es2.Shell.ShellHangar.UnitGrantWeapon"/>, <see cref="Es2.Shell.ShellHangar.WeaponUnlock"/>,
 	/// <see cref="Es2.Shell.ShellHangar.ChassisUnlock"/>); null for a variable it does not read. A weapon is named as the armory
 	/// names it, a chassis as the shell does. Flags 43 to 49, which the unit-grant loop reads past its table, are not named:
 	/// they name no weapon, and no retail mission writes them.
 	/// </summary>
+	/// <param name="flag">The campaign variable.</param>
 	public static string? Effect(int flag) {
 		if (flag == Es2.World.MissionLoader.SalvageBonusCounter) {
 			return $"Salvage paid at the debrief: {Es2.Sim.MissionResults.SalvageBonusKilograms / KilogramsPerTon} tons for each 1";
@@ -126,10 +131,11 @@ internal static class CampaignVariableLabels {
 	}
 
 	/// <summary>
-	/// What a mission's write to variable <paramref name="flag"/> amounts to, for one the game sets: what it holds and what
+	/// What a mission's write to a variable amounts to, for one the game sets: what it holds and what
 	/// replaces the value written (docs/retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store), or
 	/// for 10 what it counts while the mission runs; null for any other.
 	/// </summary>
+	/// <param name="flag">The campaign variable.</param>
 	public static string? WriteLabel(int flag) => flag switch {
 		0 => "Outcome of the previous mission; the debrief replaces it with this one's",
 		1 => "Campaign chapter; the next mission's load sets it again",
@@ -141,11 +147,13 @@ internal static class CampaignVariableLabels {
 		_ => null,
 	};
 
-	/// <summary>Variable <paramref name="flag"/> as a write's sentence names it: "campaign variable N", with what a write to it amounts to where the game sets or reads it.</summary>
+	/// <summary>A variable as a write's sentence names it: "campaign variable N", with what a write to it amounts to where the game sets or reads it.</summary>
+	/// <param name="flag">The campaign variable.</param>
 	public static string WritePhrase(int flag) =>
 		(WriteLabel(flag) ?? Effect(flag)) is { } meaning ? $"campaign variable {flag} ({Lower(meaning)})" : $"campaign variable {flag}";
 
-	/// <summary>Variable <paramref name="flag"/> as the picker for a write shows it chosen: its <see cref="WriteLabel"/>, else as <see cref="Name"/>.</summary>
+	/// <summary>A variable as the picker for a write shows it chosen: its <see cref="WriteLabel"/>, else as <see cref="Name"/>.</summary>
+	/// <param name="flag">The campaign variable.</param>
 	public static string WriteName(int flag) => WriteLabel(flag) ?? Numbered(flag, Effect(flag));
 
 	private const int KilogramsPerTon = 1000;
@@ -162,11 +170,12 @@ internal static class CampaignVariableLabels {
 	private static string WeaponName(int weapon) => WeaponLUT.GetById(weapon)?.Name ?? $"weapon {weapon}";
 
 	/// <summary>
-	/// The values of variable <paramref name="flag"/> the retail docs give a meaning, each with the test written for it; empty
+	/// The values of a variable the retail docs give a meaning, each with the test written for it; empty
 	/// for a number. Won is written <c>&gt; 0</c> and Not won <c>&lt; 1</c>, the two tests of flag 0 retail writes most, 53 and
-	/// 24 of its 90 (<c>HercWorks.Query flag 0</c>). With <paramref name="atDebrief"/>, the sentences read as the debrief's
-	/// conditions do (<see cref="Phrase(int, bool)"/>).
+	/// 24 of its 90 (<c>HercWorks.Query flag 0</c>).
 	/// </summary>
+	/// <param name="flag">The campaign variable.</param>
+	/// <param name="atDebrief">Whether the sentences read as the debrief's conditions do (<see cref="Phrase(int, bool)"/>).</param>
 	public static IReadOnlyList<VariableMeaning> Meanings(int flag, bool atDebrief = false) {
 		if (flag != 0) {
 			return [];
@@ -180,16 +189,20 @@ internal static class CampaignVariableLabels {
 	}
 
 	/// <summary>
-	/// The meaning <paramref name="clause"/> tests for: the one of its variable's <see cref="Meanings"/> whose value alone of
+	/// The meaning a clause tests for: the one of its variable's <see cref="Meanings"/> whose value alone of
 	/// theirs the test holds for (<c>&gt; 0</c>, <c>= 1</c> and <c>&gt;= 1</c> all test for Won); null when there is none.
 	/// </summary>
+	/// <param name="clause">The clause.</param>
+	/// <param name="atDebrief">Whether the meanings read as the debrief's conditions do.</param>
 	public static VariableMeaning? MeaningOf(VariableClause clause, bool atDebrief = false) {
 		var meanings = Meanings(clause.Variable, atDebrief);
 		var held = meanings.Where(meaning => Holds(clause, meaning.Value)).ToList();
 		return held.Count == 1 ? held[0] : null;
 	}
 
-	/// <summary>Whether <paramref name="clause"/> holds with its variable at <paramref name="value"/>, flag on the left (<see cref="ConditionEditing.OperatorText"/>).</summary>
+	/// <summary>Whether a clause holds with its variable at a value, flag on the left (<see cref="ConditionEditing.OperatorText"/>).</summary>
+	/// <param name="clause">The clause.</param>
+	/// <param name="value">The variable's value.</param>
 	public static bool Holds(VariableClause clause, short value) => clause.Operator switch {
 		MissionGenerator.OpEqual => value == clause.Value,
 		MissionGenerator.OpNotEqual => value != clause.Value,
@@ -202,8 +215,11 @@ internal static class CampaignVariableLabels {
 }
 
 /// <summary>
-/// A value of a campaign variable that the retail docs give a meaning (<see cref="CampaignVariableLabels.Meanings"/>): its
-/// <paramref name="Name"/> in a choice, the <paramref name="Sentence"/> saying the variable holds it, and the test written
-/// for it, <paramref name="Operator"/> and <paramref name="Operand"/>.
+/// A value of a campaign variable that the retail docs give a meaning (<see cref="CampaignVariableLabels.Meanings"/>).
 /// </summary>
+/// <param name="Value">The value.</param>
+/// <param name="Name">The meaning's name in a choice.</param>
+/// <param name="Sentence">The sentence saying the variable holds the value.</param>
+/// <param name="Operator">The operator of the test written for it.</param>
+/// <param name="Operand">The operand of the test written for it.</param>
 internal sealed record VariableMeaning(short Value, string Name, string Sentence, short Operator, short Operand);

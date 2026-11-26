@@ -75,9 +75,12 @@ internal sealed class SceneSync {
 	public IEnumerable<SceneObject> Built => _built.Values.SelectMany(objects => objects);
 
 	/// <summary>
-	/// The objects for the records <paramref name="plan"/> places, each built for its record (<see cref="MissionScene.CreateObject"/>)
+	/// The objects for the records a plan places, each built for its record (<see cref="MissionScene.CreateObject"/>)
 	/// at its placement, not yet on the ground; a record of a type the install has nothing for gets none.
 	/// </summary>
+	/// <param name="scene">The mission scene.</param>
+	/// <param name="source">The mission.</param>
+	/// <param name="plan">The plan.</param>
 	public static Dictionary<ObjectKey, SceneObject> Create(MissionScene scene, MissionDocument source, LayoutPlan plan) {
 		var objects = new Dictionary<ObjectKey, SceneObject>();
 		foreach (var planned in plan.Objects) {
@@ -110,22 +113,26 @@ internal sealed class SceneSync {
 	}
 
 	/// <summary>
-	/// Makes <paramref name="edit"/>, which writes the <c>.MSN</c> and builds its layout again, then syncs the scene with it. An
+	/// Makes an edit, which writes the <c>.MSN</c> and builds its layout again, then syncs the scene with it. An
 	/// edit that throws has put the records back, and nothing is synced.
 	/// </summary>
+	/// <typeparam name="T">The edit's result type.</typeparam>
+	/// <param name="edit">The edit.</param>
 	public T Run<T>(Func<T> edit) {
 		var result = edit();
 		Sync();
 		return result;
 	}
 
-	/// <summary>Puts back the rows <paramref name="change"/> changed as it found them, and syncs.</summary>
+	/// <summary>Puts back the rows a change changed as it found them, and syncs.</summary>
+	/// <param name="change">The change.</param>
 	public void Undo(MsnEdit change) => Run(() => {
 		_source.Undo(change);
 		return change;
 	});
 
-	/// <summary>Puts back the rows <paramref name="change"/> changed as it left them, and syncs.</summary>
+	/// <summary>Puts back the rows a change changed as it left them, and syncs.</summary>
+	/// <param name="change">The change.</param>
 	public void Redo(MsnEdit change) => Run(() => {
 		_source.Redo(change);
 		return change;
@@ -168,10 +175,11 @@ internal sealed class SceneSync {
 	}
 
 	/// <summary>
-	/// Places every record again with <paramref name="overrides"/>, a drag's, read in place of the layout's, or as the layout
+	/// Places every record again with a drag's overrides read in place of the layout's, or as the layout
 	/// stands for null, standing each object where it then stands and taking the groups' setups and pads and the routes and
 	/// areas into the index and the overlay's lines: a drag's preview, which writes nothing.
 	/// </summary>
+	/// <param name="overrides">The drag's overrides, or null for none.</param>
 	public void Preview(PlacementOverrides? overrides) {
 		var plan = LayoutPlacement.Place(_source.Layout, _tables, overrides);
 		foreach (var planned in plan.Objects) {
@@ -191,7 +199,10 @@ internal sealed class SceneSync {
 		_overlay.Replan();
 	}
 
-	/// <summary>Stands <paramref name="sceneObject"/> at a position and heading, for whatever draws and picks it.</summary>
+	/// <summary>Stands an object at a position and heading, for whatever draws and picks it.</summary>
+	/// <param name="sceneObject">The object.</param>
+	/// <param name="position">The position.</param>
+	/// <param name="heading">The heading.</param>
 	public void Place(SceneObject sceneObject, Vec3i position, int heading) {
 		sceneObject.Object.Position = position;
 		sceneObject.Object.Face(heading);

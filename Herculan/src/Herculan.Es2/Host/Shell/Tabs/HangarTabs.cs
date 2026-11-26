@@ -96,10 +96,11 @@ sealed class HangarTabs {
 	public int RepairBay => _repairScreen.SelectedBay;
 
 	/// <summary>
-	/// A tab's entry, for the tabs this owns; returns whether <paramref name="tab"/> is one. Every entry
+	/// A tab's entry, for the tabs this owns; returns whether the tab is one. Every entry
 	/// requotes the repair screen first: the repair and build screens quote the pool net of the queue, which
 	/// the armory tab changes.
 	/// </summary>
+	/// <param name="tab">The tab.</param>
 	public bool Enter(int tab) {
 		_repairScreen.QueuedKilograms = _armoryCatalog.QueuedTotal(_game.Hangar);
 

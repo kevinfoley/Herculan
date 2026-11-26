@@ -28,29 +28,40 @@ internal sealed class RosterTypeEditor {
 	public string? Failure { get; private set; }
 
 	/// <summary>
-	/// Why roster row <paramref name="row"/>'s GUID <paramref name="guid"/>'s type cannot be changed, or null when it can: any
+	/// Why a roster row's GUID's type cannot be changed, or null when it can: any
 	/// record the layout has, one the mission as opened leaves out included.
 	/// </summary>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
 	public string? WhyFixed(int row, short guid) =>
 		_source.Layout.Entry(row, guid) == null ? EditorToolbox.ObjectGone(row) : null;
 
 	/// <summary>
-	/// The template of the option the layout shows roster row <paramref name="row"/>'s GUID <paramref name="guid"/> with that
+	/// The template of the option the layout shows a roster row's GUID with that
 	/// its type is copied from (<see cref="RosterFit.PickedTemplate"/>); null when its type is its own, or it cannot change.
 	/// </summary>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
 	public MsnRecordId? PickedTemplate(int row, short guid) =>
 		WhyFixed(row, guid) == null ? RosterFit.PickedTemplate(_source, guid, [MsnField.RosterType(row)]) : null;
 
 	/// <summary>
-	/// Roster row <paramref name="row"/>'s GUID <paramref name="guid"/>'s type, as a load picking <paramref name="option"/>, a
+	/// A roster row's GUID's type, as a load picking an option, a
 	/// template of its table, makes it, or as the layout shows it for no option (<see cref="RosterFit.Current"/>).
 	/// </summary>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="option">The option, or null for none.</param>
 	public int Type(int row, short guid, MsnRecordId? option) => RosterFit.Current(_source, MsnField.RosterType(row), guid, option);
 
 	/// <summary>
-	/// Asks for roster row <paramref name="row"/>'s GUID <paramref name="guid"/> to become type <paramref name="type"/>, written
-	/// to <paramref name="option"/>, the template of the option being edited, when a template supplies its type.
+	/// Asks for a roster row's GUID to become a type, written
+	/// to the template of the option being edited when a template supplies its type.
 	/// </summary>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="type">The type.</param>
+	/// <param name="option">The option being edited, or null.</param>
 	public void RequestType(int row, short guid, int type, MsnRecordId? option = null) => _requested = () => {
 		if (WhyFixed(row, guid) is { } reason) {
 			return reason;

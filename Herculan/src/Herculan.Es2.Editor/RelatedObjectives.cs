@@ -16,7 +16,9 @@ internal sealed class RelatedObjectives {
 		_links = links;
 	}
 
-	/// <summary>Draws <paramref name="objectives"/>, those about <paramref name="subject"/>, and Add a win condition about it.</summary>
+	/// <summary>Draws some objectives, those about a subject, and Add a win condition about it.</summary>
+	/// <param name="objectives">The objectives about the subject.</param>
+	/// <param name="subject">The subject.</param>
 	public void Draw(IEnumerable<LayoutObjective> objectives, EditorSelection subject) {
 		ImGui.Separator();
 		ImGui.TextUnformatted("Win and lose conditions about it:");

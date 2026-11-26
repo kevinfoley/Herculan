@@ -22,7 +22,8 @@ public static class GameInstall {
 	/// <summary>Earthsiege 2's install root as <see cref="RetailInstalls.Locate"/> resolves it.</summary>
 	public static string? Locate(string? explicitPath = null) => RetailInstalls.Locate(Es2GameModule.Identity, explicitPath);
 
-	/// <summary>Whether <paramref name="path"/> is an Earthsiege 2 install root (<see cref="RetailInstalls.IsInstallOf"/>).</summary>
+	/// <summary>Whether a path is an Earthsiege 2 install root (<see cref="RetailInstalls.IsInstallOf"/>).</summary>
+	/// <param name="path">The path.</param>
 	public static bool IsInstallRoot(string path) => RetailInstalls.IsInstallOf(path, Es2GameModule.Identity);
 
 	/// <summary>What DBSIM mounts of the install and of the disc <see cref="OpenDisc"/> opens.</summary>
@@ -74,10 +75,11 @@ public static class GameInstall {
 	}
 
 	/// <summary>
-	/// Why <paramref name="directory"/> cannot go into <c>drive.cfg</c>, or null when it can: it must exist,
+	/// Why a directory cannot go into <c>drive.cfg</c>, or null when it can: it must exist,
 	/// and survive the retail readers' <c>fscanf("%s")</c> and the file's single-byte text, so no whitespace
 	/// and nothing outside Latin-1.
 	/// </summary>
+	/// <param name="directory">The directory.</param>
 	public static DiscDirectoryProblem? CheckDiscDirectory(string directory) =>
 		!Directory.Exists(directory) ? DiscDirectoryProblem.Missing
 		: DriveTransformer.HasWhitespace(directory) ? DiscDirectoryProblem.Whitespace
@@ -85,11 +87,13 @@ public static class GameInstall {
 		: null;
 
 	/// <summary>
-	/// Writes <paramref name="directory"/> into the install's <c>data\drive.cfg</c> as the disc, keeping the
-	/// file's second line, the install's own directory, or writing <paramref name="installRoot"/> there when it
+	/// Writes a directory into the install's <c>data\drive.cfg</c> as the disc, keeping the
+	/// file's second line, the install's own directory, or writing the install root there when it
 	/// has none, as the installer's <c>BATCH.EXE</c> does (docs/retail/retail-builds.md, "The installer"). Takes only a
 	/// directory <see cref="CheckDiscDirectory"/> passes.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="directory">The disc directory.</param>
 	public static void WriteDiscDirectory(string installRoot, string directory) {
 		if (CheckDiscDirectory(directory) is { } problem) {
 			throw new ArgumentException($"{directory} cannot go into drive.cfg: {problem}.", nameof(directory));
@@ -145,11 +149,13 @@ public static class GameInstall {
 	}
 
 	/// <summary>
-	/// Why <paramref name="path"/> cannot be the install's disc image, or null when it can: it must open as a CD
+	/// Why a path cannot be the install's disc image, or null when it can: it must open as a CD
 	/// image with an ISO 9660 file system holding archives (<c>VOL\*.vol</c>) and the movie the shell's startup
-	/// looks for, <paramref name="discCheckFile"/>. <paramref name="detail"/> carries the reader's own account of
-	/// a failure to open.
+	/// looks for.
 	/// </summary>
+	/// <param name="path">The image's path.</param>
+	/// <param name="discCheckFile">The movie the shell's startup looks for.</param>
+	/// <param name="detail">Receives the reader's own account of a failure to open.</param>
 	public static DiscImageProblem? CheckDiscImage(string path, string discCheckFile, out string? detail) {
 		detail = null;
 		if (!File.Exists(path)) {
@@ -203,11 +209,13 @@ public static class GameInstall {
 	}
 
 	/// <summary>
-	/// Writes <paramref name="imagePath"/> into the install's <c>data\drive.cfg</c> as its disc image, or takes the
+	/// Writes an image path into the install's <c>data\drive.cfg</c> as its disc image, or takes the
 	/// image out with null, keeping the file's two retail lines. A file without them gets <c>.</c>, the install
-	/// itself, as its disc, and <paramref name="installRoot"/> as its install, so that retail's two reads find two
+	/// itself, as its disc, and the install root as its install, so that retail's two reads find two
 	/// tokens before the image's line.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="imagePath">The image's path, or null to take the image out.</param>
 	public static void WriteDiscImage(string installRoot, string? imagePath) {
 		string path = DriveCfgPath(installRoot);
 		var transformer = new DriveTransformer();
@@ -224,7 +232,7 @@ public static class GameInstall {
 
 	/// <summary>
 	/// Opens a file both programs read from the disc — a movie, the on-line manual, a training instructor
-	/// clip: <paramref name="relativePath"/> on <paramref name="disc"/> when it is there, and otherwise under the
+	/// clip: a relative path on the disc when it is there, and otherwise under the
 	/// install root; null when neither has it.
 	///
 	/// <para>Retail looks on the disc only (<c>DriveCfg_PrefixPath</c>, <c>0045ee44</c>;
@@ -232,6 +240,9 @@ public static class GameInstall {
 	/// so an install copied whole, whose <c>drive.cfg</c> still names a CD drive that is gone, keeps its
 	/// movies, manual and instructor; see KNOWN_ISSUES_ES2.md.</para>
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="disc">The disc, or null for none.</param>
+	/// <param name="relativePath">The file's path relative to the disc or install root.</param>
 	public static Stream? OpenDiscFile(string installRoot, GameDisc? disc, string relativePath) {
 		if (disc?.OpenRead(relativePath) is { } onDisc) {
 			return onDisc;
@@ -241,18 +252,28 @@ public static class GameInstall {
 		return File.Exists(inInstall) ? File.OpenRead(inInstall) : null;
 	}
 
-	/// <summary>Whether <see cref="OpenDiscFile"/> would find <paramref name="relativePath"/>.</summary>
+	/// <summary>Whether <see cref="OpenDiscFile"/> would find a relative path.</summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="disc">The disc, or null for none.</param>
+	/// <param name="relativePath">The file's path relative to the disc or install root.</param>
 	public static bool DiscFileExists(string installRoot, GameDisc? disc, string relativePath) =>
 		disc?.FileExists(relativePath) == true || File.Exists(CaseInsensitivePath.Combine(installRoot, relativePath));
 
-	/// <summary>Whether <paramref name="relativePath"/> names a folder on <paramref name="disc"/> or under the install root.</summary>
+	/// <summary>Whether a relative path names a folder on the disc or under the install root.</summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="disc">The disc, or null for none.</param>
+	/// <param name="relativePath">The folder's path relative to the disc or install root.</param>
 	public static bool DiscFolderExists(string installRoot, GameDisc? disc, string relativePath) =>
 		disc?.DirectoryExists(relativePath) == true || Directory.Exists(CaseInsensitivePath.Combine(installRoot, relativePath));
 
 	/// <summary>
 	/// <see cref="OpenDiscFile"/>'s file read whole, or null when neither place has it or it is longer than
-	/// <paramref name="maxBytes"/>, which is checked before anything is allocated.
+	/// a size limit, which is checked before anything is allocated.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="disc">The disc, or null for none.</param>
+	/// <param name="relativePath">The file's path relative to the disc or install root.</param>
+	/// <param name="maxBytes">The longest the file may be.</param>
 	public static byte[]? ReadDiscFile(string installRoot, GameDisc? disc, string relativePath, long maxBytes) {
 		using var stream = OpenDiscFile(installRoot, disc, relativePath);
 		if (stream == null || stream.Length > maxBytes) {
@@ -294,9 +315,11 @@ public static class GameInstall {
 	}
 
 	/// <summary>
-	/// Writes <paramref name="language"/>'s letter as the install's whole <c>data\language.cfg</c>, as the installer's
+	/// Writes a language's letter as the install's whole <c>data\language.cfg</c>, as the installer's
 	/// <c>BATCH.EXE</c> does (<see cref="RetailInstaller.Install"/>).
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="language">The language.</param>
 	public static void WriteLanguage(string installRoot, RetailInstaller.Language language) {
 		string path = LanguageCfgPath(installRoot);
 		Directory.CreateDirectory(Path.GetDirectoryName(path)!);

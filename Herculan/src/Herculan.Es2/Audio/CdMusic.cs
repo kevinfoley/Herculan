@@ -101,7 +101,7 @@ public sealed class CdMusic : IDisposable {
 	/// <summary>
 	/// <c>Sim_InitMissionSession</c>'s music arm (<c>00461c86</c>-<c>00461cbc</c>): sets the track and
 	/// the enable byte, then starts the track through <c>Sound_StartMissionMusic</c> (<c>00463038</c>), which plays only when
-	/// <paramref name="musicEnabled"/> (<see cref="SoundDirector.MusicEnabled"/>) is up. The original guards the whole arm on the mission being a
+	/// music is enabled (<see cref="SoundDirector.MusicEnabled"/>). The original guards the whole arm on the mission being a
 	/// <b>non-training</b> one - see <see cref="World.ScriptDatHeader.TrainingMissionNumber"/> - so a
 	/// training mission runs in silence.
 	///

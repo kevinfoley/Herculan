@@ -40,7 +40,9 @@ public static class MfdNavMap {
 	/// <summary>How far each arm of the cross reaches from the centre, GAU units.</summary>
 	public const int CrossArm = 1;
 
-	/// <summary>What the screen draws this frame for <paramref name="viewer"/>.</summary>
+	/// <summary>What the screen draws this frame for a viewer.</summary>
+	/// <param name="viewer">The viewer.</param>
+	/// <param name="raster">The map raster, or null for none.</param>
 	public static MfdNavMapState Build(SimObject viewer, HddMapRaster? raster) =>
 		new(viewer.Position.X, viewer.Position.Y, unchecked((short)viewer.Heading), raster);
 

@@ -54,10 +54,12 @@ internal sealed class AreaEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why row-9 GUID <paramref name="area"/> cannot be edited, or null when it can.</summary>
+	/// <summary>Why a row-9 area cannot be edited, or null when it can.</summary>
+	/// <param name="area">The row-9 GUID.</param>
 	public string? WhyFixed(short area) => _mover.WhyFixedArea(area);
 
-	/// <summary>What keeps <paramref name="area"/> from being deleted; <see cref="AreaDeleteBlockers.None"/> when nothing does.</summary>
+	/// <summary>What keeps an area from being deleted; <see cref="AreaDeleteBlockers.None"/> when nothing does.</summary>
+	/// <param name="area">The row-9 GUID.</param>
 	public AreaDeleteBlockers BlockersOf(short area) {
 		if (_index.Layout.Entry(AreaRow, area) == null) {
 			return AreaDeleteBlockers.Because(FeatureMoves.AreaGone);
@@ -68,12 +70,15 @@ internal sealed class AreaEditor {
 		return new AreaDeleteBlockers(null, _deleter.Resolve(source, new MsnNamers([], namers, [])));
 	}
 
-	/// <summary>Asks for <paramref name="area"/> to be a box (<paramref name="circle"/> false) or a circle.</summary>
+	/// <summary>Asks for an area to be a box or a circle.</summary>
+	/// <param name="area">The row-9 GUID.</param>
+	/// <param name="circle">True for a circle, false for a box.</param>
 	public void RequestShape(short area, bool circle) =>
 		_requested = () => WhyFixed(area)
 			?? Commit(() => TriggerAreaEditing.SetShape(_source, area, circle ? TriggerAreaEditing.Circle : TriggerAreaEditing.Box), area);
 
-	/// <summary>Asks for <paramref name="area"/> to be deleted.</summary>
+	/// <summary>Asks for an area to be deleted.</summary>
+	/// <param name="area">The row-9 GUID.</param>
 	public void RequestDelete(short area) {
 		_requested = () => {
 			var blockers = BlockersOf(area);
@@ -94,9 +99,11 @@ internal sealed class AreaEditor {
 	}
 
 	/// <summary>
-	/// Adds a box from <paramref name="corner"/> to <paramref name="opposite"/> and selects it; one with no width or no depth
+	/// Adds a box and selects it; one with no width or no depth
 	/// adds nothing. Answers why it could not, or null.
 	/// </summary>
+	/// <param name="corner">One corner.</param>
+	/// <param name="opposite">The opposite corner.</param>
 	public string? CreateBox(Vec3i corner, Vec3i opposite) {
 		if (corner.X == opposite.X || corner.Y == opposite.Y) {
 			return null;
@@ -107,9 +114,11 @@ internal sealed class AreaEditor {
 	}
 
 	/// <summary>
-	/// Adds a circle of <paramref name="radius"/> world units about <paramref name="centre"/> and selects it; a radius of 0
+	/// Adds a circle and selects it; a radius of 0
 	/// adds nothing. Answers why it could not, or null.
 	/// </summary>
+	/// <param name="centre">The circle's centre.</param>
+	/// <param name="radius">The radius in world units.</param>
 	public string? CreateCircle(Vec3i centre, int radius) {
 		if (radius <= 0) {
 			return null;

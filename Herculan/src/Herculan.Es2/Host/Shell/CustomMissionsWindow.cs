@@ -108,9 +108,10 @@ sealed class CustomMissionsWindow : IDrawnMenuBarPanel {
 	}
 
 	/// <summary>
-	/// Draws the window, if it is open. Call once per frame, inside the ImGui frame. <paramref name="owner"/> is the native
-	/// window the file picker belongs to, and <paramref name="centre"/> when the window is centred (<see cref="PanelCentring.Condition"/>).
+	/// Draws the window, if it is open. Call once per frame, inside the ImGui frame.
 	/// </summary>
+	/// <param name="owner">The native window the file picker belongs to.</param>
+	/// <param name="centre">When the window is centred (<see cref="PanelCentring.Condition"/>).</param>
 	public void Draw(nint owner, ImGuiCond centre) {
 		if (!IsOpen) {
 			return;

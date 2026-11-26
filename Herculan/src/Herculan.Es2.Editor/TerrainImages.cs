@@ -25,10 +25,12 @@ internal static class TerrainImages {
 	private static readonly string SidesText = string.Join(" or ", ZoneFiles.Sides.Select(side => $"{side}x{side}"));
 
 	/// <summary>
-	/// The heights the image at <paramref name="path"/> holds, as <see cref="ZoneFiles.Heights"/> orders them, or null with
+	/// The heights an image holds, as <see cref="ZoneFiles.Heights"/> orders them, or null with
 	/// the reason it holds none: it cannot be read, is not a PNG or raw file this reads, is not one of
 	/// <see cref="ZoneFiles.Sides"/> square, or has a pixel that is not gray.
 	/// </summary>
+	/// <param name="path">The image's path.</param>
+	/// <param name="failure">Receives why it holds none, or null.</param>
 	public static byte[]? Read(string path, out string? failure) {
 		byte[] bytes;
 		try {
@@ -47,9 +49,11 @@ internal static class TerrainImages {
 	}
 
 	/// <summary>
-	/// <paramref name="heights"/>, <paramref name="height"/> rows of <paramref name="width"/> in image order, as an 8-bit
-	/// grayscale PNG.
+	/// Some heights as an 8-bit grayscale PNG.
 	/// </summary>
+	/// <param name="width">The width in pixels.</param>
+	/// <param name="height">The number of rows.</param>
+	/// <param name="heights">The heights, rows of the width in image order.</param>
 	public static byte[] WritePng(int width, int height, ReadOnlySpan<byte> heights) =>
 		PngEncoder.EncodeGray(width, height, heights[..(width * height)].ToArray());
 

@@ -75,14 +75,17 @@ internal sealed class MachineFitter {
 	/// <summary><c>Herc_CapacityForType</c> (<c>00410d54</c>): how many mounts a chassis has, which the squad build fits.</summary>
 	public static int Capacity(int chassis) => Math.Max(ShellBayMachine.Delivered(chassis).MountCapacity, 0);
 
-	/// <summary>Row-12 GUID <paramref name="guid"/>'s base, as the layout shows it, or null when no record carries it.</summary>
+	/// <summary>A row-12 record's base, as the layout shows it, or null when no record carries it.</summary>
+	/// <param name="guid">The row-12 GUID.</param>
 	public MechRosterEntry144? Record(short guid) => _source.Layout.Entry<MechRosterEntry144>(guid)?.Fields;
 
 	/// <summary>
-	/// Row-12 GUID <paramref name="guid"/>'s type and its ten slots' weapons and ammunition types, as a load picking
-	/// <paramref name="option"/>, a template of its table, makes them, or as the layout shows them for no option
+	/// A row-12 record's type and its ten slots' weapons and ammunition types, as a load picking
+	/// an option, a template of its table, makes them, or as the layout shows them for no option
 	/// (<see cref="RosterFit.Current"/>). Null when no record carries it.
 	/// </summary>
+	/// <param name="guid">The row-12 GUID.</param>
+	/// <param name="option">The option, or null for none.</param>
 	public (int Type, short[] Weapons, short[] Ammo)? Fit(short guid, MsnRecordId? option) {
 		if (Record(guid) == null) {
 			return null;
@@ -93,21 +96,25 @@ internal sealed class MachineFitter {
 			Enumerable.Range(0, Slots).Select(slot => Get(MsnField.MechAmmo(slot))).ToArray());
 	}
 
-	/// <summary>Why the herc of row-12 GUID <paramref name="guid"/> cannot be edited, or null when it can.</summary>
+	/// <summary>Why a herc cannot be edited, or null when it can.</summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
 	public string? WhyFixed(short guid) => Record(guid) == null ? "Its record is not in the mission." : null;
 
 	/// <summary>
-	/// The fit slots <paramref name="chassis"/>'s view edits, ascending: a Human chassis's first <see cref="Capacity"/>, a
+	/// The fit slots a chassis's view edits, ascending: a Human chassis's first <see cref="Capacity"/>, a
 	/// Cybrid's hardpoints (<see cref="CybridWeapons.Hardpoints"/>).
 	/// </summary>
+	/// <param name="chassis">The <c>MECHS.NAM</c> type.</param>
 	public IReadOnlyList<int> Mounts(int chassis) => HercGroups.IsCybrid(chassis)
 		? _cybrid.Hardpoints(chassis).Where(slot => slot < Slots).ToList()
 		: Enumerable.Range(0, Math.Min(Capacity(chassis), Slots)).ToList();
 
 	/// <summary>
-	/// The weapons fit slot <paramref name="mount"/> of <paramref name="chassis"/> offers: a Human chassis's in the weapons
+	/// The weapons a fit slot of a chassis offers: a Human chassis's in the weapons
 	/// screen's order, none without an arming layout; a Cybrid's <see cref="CybridWeapons.Offered"/>.
 	/// </summary>
+	/// <param name="chassis">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="mount">The fit slot.</param>
 	public IEnumerable<int> WeaponsFor(int chassis, int mount) {
 		if (HercGroups.IsCybrid(chassis)) {
 			return _cybrid.Offered(chassis, mount).Select(weapon => (int)weapon);
@@ -118,9 +125,11 @@ internal sealed class MachineFitter {
 	}
 
 	/// <summary>
-	/// Why fit slot <paramref name="mount"/> of <paramref name="chassis"/> offers no weapon, so its weapon is not changed in the
+	/// Why a fit slot of a chassis offers no weapon, so its weapon is not changed in the
 	/// view, or null when it offers some.
 	/// </summary>
+	/// <param name="chassis">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="mount">The fit slot.</param>
 	public string? WhyNoWeapons(int chassis, int mount) {
 		if (WeaponsFor(chassis, mount).Any()) {
 			return null;
@@ -138,10 +147,11 @@ internal sealed class MachineFitter {
 	public IEnumerable<int> UnrestrictedWeaponsFor(int chassis) => _cybrid.UnrestrictedOffer(chassis).Select(weapon => (int)weapon);
 
 	/// <summary>
-	/// The template of the option the layout shows the herc of row-12 GUID <paramref name="guid"/> with that its type, or a
+	/// The template of the option the layout shows a herc with that its type, or a
 	/// weapon or an ammunition type of a mount the view edits, is copied from (<see cref="RosterFit.PickedTemplate"/>); null
 	/// when none is, or the herc cannot be edited.
 	/// </summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
 	public MsnRecordId? PickedTemplate(short guid) =>
 		WhyFixed(guid) == null ? RosterFit.PickedTemplate(_source, guid, FitFields(guid)) : null;
 
@@ -156,32 +166,46 @@ internal sealed class MachineFitter {
 	}
 
 	/// <summary>
-	/// Asks for the herc of row-12 GUID <paramref name="guid"/> to become <paramref name="chassis"/> with the fit a new herc of
-	/// it gets, in <paramref name="option"/>, the template of the option being edited, where a template supplies them.
+	/// Asks for a herc to become a chassis with the fit a new herc of
+	/// it gets, in the template of the option being edited, where a template supplies them.
 	/// </summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
+	/// <param name="chassis">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="option">The option being edited, or null.</param>
 	public void RequestChassis(short guid, int chassis, MsnRecordId? option = null) =>
 		_requested = () => SetChassis(guid, chassis, option);
 
 	/// <summary>
-	/// Asks for <paramref name="weapon"/> in fit slot <paramref name="mount"/> of the herc of row-12 GUID <paramref name="guid"/>,
-	/// in <paramref name="option"/>'s template where a template supplies it.
+	/// Asks for a weapon in a fit slot of a herc,
+	/// in the option's template where a template supplies it.
 	/// </summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
+	/// <param name="mount">The fit slot.</param>
+	/// <param name="weapon">The weapon id.</param>
+	/// <param name="option">The option being edited, or null.</param>
 	public void RequestWeapon(short guid, int mount, int weapon, MsnRecordId? option = null) => _requested = () => Write(guid,
 		[(MsnField.MechWeapon(mount), (short)weapon), (MsnField.MechAmmo(mount), AmmoFor(guid, mount, weapon, option))], option);
 
 	/// <summary>
-	/// Asks for guidance kind <paramref name="kind"/> in fit slot <paramref name="mount"/> of the herc of row-12 GUID
-	/// <paramref name="guid"/>, in <paramref name="option"/>'s template where a template supplies it.
+	/// Asks for a guidance kind in a fit slot of a herc,
+	/// in the option's template where a template supplies it.
 	/// </summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
+	/// <param name="mount">The fit slot.</param>
+	/// <param name="kind">The guidance kind.</param>
+	/// <param name="option">The option being edited, or null.</param>
 	public void RequestGuidance(short guid, int mount, int kind, MsnRecordId? option = null) => _requested = () => Write(guid,
 		[(MsnField.MechAmmo(mount), (short)kind)], option);
 
 	/// <summary>
-	/// Asks for each of <paramref name="slots"/>' weapon and ammunition type in its fit slot of the herc of row-12 GUID
-	/// <paramref name="guid"/>, as one change and one step of the history, in <paramref name="option"/>'s template where a template
+	/// Asks for each of some slots' weapon and ammunition type in its fit slot of a herc,
+	/// as one change and one step of the history, in the option's template where a template
 	/// supplies them: a loadout preset applied (docs/herculan/editor-design.md#new-units). A slot the view does not
 	/// edit (<see cref="WhyNoWeapons"/>) is left as it is.
 	/// </summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
+	/// <param name="slots">The slots, each a fit slot with its weapon and ammunition type.</param>
+	/// <param name="option">The option being edited, or null.</param>
 	public void RequestLoadout(short guid, IReadOnlyList<(int Mount, short Weapon, short Ammo)> slots, MsnRecordId? option = null) =>
 		_requested = () => Fit(guid, option) is { } herc
 			? Write(guid, slots.Where(slot => WhyNoWeapons(herc.Type, slot.Mount) == null)
@@ -198,10 +222,11 @@ internal sealed class MachineFitter {
 	}
 
 	/// <summary>
-	/// The ten slots' weapons and ammunition types of <paramref name="chassis"/>'s stock fit as a row-12 record carries
+	/// The ten slots' weapons and ammunition types of a chassis's stock fit as a row-12 record carries
 	/// them: each mount below the capacity its weapon or <c>None</c> (0) and its guidance, every slot past it <c>-1</c> with
 	/// the filler 5. Null when the install has no stock fit for it.
 	/// </summary>
+	/// <param name="chassis">The <c>MECHS.NAM</c> type.</param>
 	public (short[] Weapons, short[] Guidance)? StockFit(int chassis) {
 		if (ShellTrainingLaunch.StockFit(_shellContent(), chassis) is not { } stock) {
 			return null;
@@ -220,10 +245,11 @@ internal sealed class MachineFitter {
 	}
 
 	/// <summary>
-	/// The weapons and ammunition types a new herc of <c>MECHS.NAM</c> type <paramref name="type"/> is fitted with: a Human
+	/// The weapons and ammunition types a new herc of a <c>MECHS.NAM</c> type is fitted with: a Human
 	/// chassis's stock fit (<see cref="StockFit"/>), a Cybrid's <see cref="HercGroups.CybridFit"/>; null when there are none
 	/// to give.
 	/// </summary>
+	/// <param name="type">The <c>MECHS.NAM</c> type.</param>
 	public (short[] Weapons, short[] Ammo)? NewHercFit(int type) =>
 		HercGroups.IsCybrid(type) ? HercGroups.CybridFit(type) : StockFit(type);
 

@@ -48,7 +48,8 @@ internal sealed class ObjectiveView {
 
 	private MissionLayout Layout => _index.Layout;
 
-	/// <summary>Row-17 record <paramref name="record"/>'s view; nothing for an index the row has no record at.</summary>
+	/// <summary>A row-17 record's view; nothing for an index the row has no record at.</summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public void Draw(int record) {
 		if (Layout.Objectives.FirstOrDefault(objective => objective.Index == record) is not { } objective) {
 			return;

@@ -59,7 +59,8 @@ internal sealed class GroupView {
 		_deleter = deleter;
 	}
 
-	/// <summary>Draws row-16 GUID <paramref name="guid"/>'s view; nothing for a group the layout does not have.</summary>
+	/// <summary>Draws a row-16 group's view; nothing for a group the layout does not have.</summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public void Draw(short guid) {
 		if (_index.Group(guid) is not { } group) {
 			return;

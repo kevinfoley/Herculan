@@ -357,7 +357,8 @@ public sealed class HddLayout {
 	/// </summary>
 	public int PilotHighlightMode { get; }
 
-	/// <summary>Widget <paramref name="widget"/>'s rect.</summary>
+	/// <summary>A widget's rect.</summary>
+	/// <param name="widget">The widget.</param>
 	public Rect this[Widget widget] => _widgets[(int)widget];
 
 	/// <summary>

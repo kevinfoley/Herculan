@@ -109,8 +109,7 @@ public static class TargetBox {
 	public static int ArrowColorFor(bool locked) => locked ? ArrowLockedColorId : ArrowColorId;
 
 	/// <summary>
-	/// The box's device-pixel rect about a target that projects to <paramref name="screenY"/> at
-	/// <paramref name="screenX"/>.
+	/// The box's device-pixel rect about a target.
 	///
 	/// <para>Its half-height is the target's own shape radius, halved, projected: <c>(radius &gt;&gt; 1)
 	/// * focal / distance</c> — where the focal length is <see cref="Engine.Render.Camera.FocalLengthPixels"/>,
@@ -119,6 +118,8 @@ public static class TargetBox {
 	/// from each other, and the width is taken from the clamped height, so the box is square give or
 	/// take the odd pixel integer halving leaves behind.</para>
 	/// </summary>
+	/// <param name="screenX">The target's projected X.</param>
+	/// <param name="screenY">The target's projected Y.</param>
 	/// <param name="shapeRadius">The target's <see cref="Herculan.Es2.Sim.SimObject.ShapeRadius"/>, world units.</param>
 	/// <param name="distance">Eye to aim point, world units. Zero or less yields the minimum box.</param>
 	public static (int X0, int Y0, int X1, int Y1) Bounds(

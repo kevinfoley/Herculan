@@ -34,12 +34,17 @@ internal sealed class FlyerHeights {
 		.ToList();
 
 	/// <summary>
-	/// Raises each of <paramref name="positions"/> by <paramref name="rise"/> of it, world units, moving it
-	/// <paramref name="east"/> and <paramref name="north"/> as it goes, inside a <see cref="MissionDocument.Change"/>; one whose
+	/// Raises each of some positions by a share of it, in world units, moving it
+	/// east and north as it goes, inside a <see cref="MissionDocument.Change"/>; one whose
 	/// rise is 0 is left as it is. Z 0 is where a flyer flies at its default height, and a raised one that lands on 0 is
 	/// written 1 above it. Answers how many were written; each that could not be is left at its height, with the reason added
-	/// to <paramref name="skipped"/>.
+	/// to the skipped list.
 	/// </summary>
+	/// <param name="positions">The flyer positions to raise.</param>
+	/// <param name="east">How far each moves east.</param>
+	/// <param name="north">How far each moves north.</param>
+	/// <param name="rise">The rise of each position, in world units.</param>
+	/// <param name="skipped">Receives the reason for each position that could not be written.</param>
 	public int Raise(IEnumerable<FlyerPosition> positions, int east, int north, Func<FlyerPosition, int> rise, List<string> skipped) {
 		int raised = 0;
 		foreach (var flyer in positions) {

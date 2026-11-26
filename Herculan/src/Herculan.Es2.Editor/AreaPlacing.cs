@@ -61,7 +61,8 @@ internal sealed class AreaPlacing {
 	/// <summary>Starts placing a circle.</summary>
 	public void BeginCircle() => Begin(circle: true);
 
-	/// <summary>A left press over the view, whose ray meets the ground at <paramref name="ground"/>, or none: the drag starts there.</summary>
+	/// <summary>A left press over the view: the drag starts at the ground its ray meets.</summary>
+	/// <param name="ground">Where the ray meets the ground, or null for none.</param>
 	public void Press(Vec3i? ground) {
 		if (Active && _finish == null && ground is { } at) {
 			_anchor = Flat(at);
@@ -77,9 +78,10 @@ internal sealed class AreaPlacing {
 	}
 
 	/// <summary>
-	/// The left button let go, over the ground at <paramref name="ground"/> or none, where the ground last under the pointer
+	/// The left button let go, where the ground last under the pointer
 	/// counts: ends a drag begun over the view.
 	/// </summary>
+	/// <param name="ground">The ground under the pointer, or null for none.</param>
 	public void Release(Vec3i? ground) {
 		if (Active && _finish == null && _anchor is { } from) {
 			_finish = (from, ground is { } at ? Flat(at) : _pointer ?? from);
@@ -122,7 +124,10 @@ internal sealed class AreaPlacing {
 		MissionOverlay.DrawLines(wireframe, camera, aspect, lines, BandColor);
 	}
 
-	/// <summary>The area's size by the pointer while it is dragged, and <see cref="Hint"/> centred at the top of the view, below <paramref name="top"/>.</summary>
+	/// <summary>The area's size by the pointer while it is dragged, and <see cref="Hint"/> centred at the top of the view.</summary>
+	/// <param name="camera">The view's camera.</param>
+	/// <param name="display">The display size.</param>
+	/// <param name="top">The y below which the hint is drawn.</param>
 	public void DrawLabels(Camera camera, Vector2 display, float top) {
 		if (!Active) {
 			return;

@@ -269,7 +269,7 @@ public static class MfdLayout {
 	};
 
 	/// <summary>
-	/// Whether button <paramref name="index"/> is a latching button — lit by being chosen and staying
+	/// Whether a button is a latching button — lit by being chosen and staying
 	/// chosen — rather than a momentary one that lights only while it is held down.
 	///
 	/// <para><b>They are two different C++ classes.</b> <c>MfdDisplay_Ctor</c> switches on the button
@@ -285,9 +285,12 @@ public static class MfdLayout {
 	/// the test is a class invariant restated rather than a rule of its own. Only latching buttons ever
 	/// re-font, which is why holding SELECT does not darken its caption.</para>
 	/// </summary>
+	/// <param name="index">The button's index.</param>
 	public static bool IsLatching(int index) => index < ModeCount || index is 11 or 12;
 
-	/// <summary>Whether <paramref name="mode"/> shows button <paramref name="button"/>.</summary>
+	/// <summary>Whether a mode shows a button.</summary>
+	/// <param name="mode">The mode.</param>
+	/// <param name="button">The button's index.</param>
 	public static bool ButtonVisible(MfdMode mode, int button) {
 		if (button < 0 || button >= ButtonCount) {
 			return false;
@@ -555,17 +558,21 @@ public static class MfdLayout {
 			: null;
 
 	/// <summary>
-	/// The title for <paramref name="mode"/> — "STATUS", "FLASH COMM", "NAV MAP", "SCANNER",
+	/// The title for a mode — "STATUS", "FLASH COMM", "NAV MAP", "SCANNER",
 	/// "TARGET", "MISSILE CAM" — or null when the string table is absent. Modes index
 	/// <see cref="CaptionGroup"/> directly, which is what <c>MfdDisplay_Update</c> (<c>00446328</c>) does.
 	/// </summary>
+	/// <param name="strings">The string table, or null when absent.</param>
+	/// <param name="mode">The mode.</param>
 	public static string? Title(StringFile? strings, MfdMode mode) =>
 		strings?.Text(CaptionGroup, (int)mode);
 
 	/// <summary>
-	/// Button <paramref name="index"/>'s caption: "F1".."F6" for the mode column, otherwise the
+	/// A button's caption: "F1".."F6" for the mode column, otherwise the
 	/// caption table entry. Null when the table is absent.
 	/// </summary>
+	/// <param name="strings">The string table, or null when absent.</param>
+	/// <param name="index">The button's index.</param>
 	public static string? Caption(StringFile? strings, int index) {
 		if (index < 0 || index >= ButtonCount) {
 			return null;

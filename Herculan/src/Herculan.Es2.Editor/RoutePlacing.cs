@@ -64,13 +64,15 @@ internal sealed class RoutePlacing {
 	/// <summary>How many waypoints have been placed so far.</summary>
 	public int Placed => _placed.Count;
 
-	/// <summary>Whether waypoints are being added to row-8 GUID <paramref name="route"/>.</summary>
+	/// <summary>Whether waypoints are being added to a row-8 route.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public bool IsAppendingTo(short route) => Active && _route != -1 && _route == route;
 
 	/// <summary>Starts placing a new route's waypoints.</summary>
 	public void BeginNew() => Begin(-1);
 
-	/// <summary>Starts placing waypoints after the last of row-8 GUID <paramref name="route"/>.</summary>
+	/// <summary>Starts placing waypoints after the last of a row-8 route.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public void BeginAppend(short route) {
 		if (_editor.WhyFixed(route) == null) {
 			Begin(route);
@@ -78,9 +80,11 @@ internal sealed class RoutePlacing {
 	}
 
 	/// <summary>
-	/// A left click at window pixel <paramref name="screen"/> over the view, whose ray meets the ground at
-	/// <paramref name="ground"/>, or none: closes the loop on the first waypoint when it lands there, else places a waypoint.
+	/// A left click over the view: closes the loop on the first waypoint when it lands there, else places a waypoint.
 	/// </summary>
+	/// <param name="camera">The view's camera.</param>
+	/// <param name="screen">The click's window pixel.</param>
+	/// <param name="ground">Where the view's ray meets the ground, or null for none.</param>
 	public void Click(Camera camera, Vector2 screen, Vec3i? ground) {
 		if (!Active || _finishing) {
 			return;
@@ -103,7 +107,8 @@ internal sealed class RoutePlacing {
 		}
 	}
 
-	/// <summary>Ends placing once the frame's ImGui is rendered, closing the loop when <paramref name="close"/>.</summary>
+	/// <summary>Ends placing once the frame's ImGui is rendered, closing the loop when asked.</summary>
+	/// <param name="close">Whether to close the loop.</param>
 	public void RequestFinish(bool close = false) {
 		if (Active) {
 			_finishing = true;
@@ -132,7 +137,11 @@ internal sealed class RoutePlacing {
 		Failure = route == -1 ? _editor.Create(placed, close) : _editor.Extend(route, placed, close);
 	}
 
-	/// <summary>The waypoints placed, their legs, and the leg from the last to <paramref name="pointer"/>, the ground under the pointer.</summary>
+	/// <summary>The waypoints placed, their legs, and the leg from the last to the pointer.</summary>
+	/// <param name="wireframe">The wireframe renderer.</param>
+	/// <param name="camera">The view's camera.</param>
+	/// <param name="aspect">The view's aspect ratio.</param>
+	/// <param name="pointer">The ground under the pointer, or null for none.</param>
 	public void Draw(WireframeRenderer wireframe, Camera camera, float aspect, Vec3i? pointer) {
 		if (!Active) {
 			return;
@@ -162,7 +171,10 @@ internal sealed class RoutePlacing {
 		MissionOverlay.DrawLines(wireframe, camera, aspect, band, BandColor);
 	}
 
-	/// <summary>The placed waypoints' marks and numbers, and <see cref="Hint"/> centered at the top of the view, below <paramref name="top"/>.</summary>
+	/// <summary>The placed waypoints' marks and numbers, and <see cref="Hint"/> centered at the top of the view.</summary>
+	/// <param name="camera">The view's camera.</param>
+	/// <param name="display">The display size.</param>
+	/// <param name="top">The y below which the hint is drawn.</param>
 	public void DrawLabels(Camera camera, Vector2 display, float top) {
 		if (!Active) {
 			return;

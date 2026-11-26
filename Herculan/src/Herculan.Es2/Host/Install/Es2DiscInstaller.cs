@@ -105,7 +105,8 @@ sealed class Es2DiscInstaller(LocalizationTable localization) : IDiscInstaller {
 		_ => "install.size_maximum",
 	};
 
-	/// <summary>The localization key of <paramref name="language"/>'s name, which the Settings menu shows too.</summary>
+	/// <summary>The localization key of a language's name, which the Settings menu shows too.</summary>
+	/// <param name="language">The language.</param>
 	internal static string LanguageKey(RetailInstaller.Language language) => language switch {
 		RetailInstaller.Language.French => "install.language_french",
 		RetailInstaller.Language.German => "install.language_german",

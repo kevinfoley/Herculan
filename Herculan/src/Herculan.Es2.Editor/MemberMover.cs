@@ -28,12 +28,16 @@ internal sealed class MemberMover {
 	/// <summary>Why the last move run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why <paramref name="placed"/> cannot move into row-16 group <paramref name="group"/>, or null when it can.</summary>
+	/// <summary>Why an object cannot move into a row-16 group, or null when it can.</summary>
+	/// <param name="placed">The object.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public string? WhyNoMove(SceneObject placed, short group) =>
 		_index.KeyOf(placed) is not { } key ? "Not found."
 			: MemberMoves.WhyNoMove(_source, key.Row, key.Guid, group, BaseObject.IsGroundVehicle);
 
-	/// <summary>Asks for <paramref name="placed"/> to move into row-16 group <paramref name="group"/>.</summary>
+	/// <summary>Asks for an object to move into a row-16 group.</summary>
+	/// <param name="placed">The object.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public void Request(SceneObject placed, short group) => _requested = () => {
 		if (_index.KeyOf(placed) is not { } key) {
 			return "Not found.";

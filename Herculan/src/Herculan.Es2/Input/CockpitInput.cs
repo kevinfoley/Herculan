@@ -199,7 +199,7 @@ public sealed class CockpitInput {
 	/// in a fixed order. The returned list is reused between calls — copy it if it needs to outlive
 	/// the frame.</para>
 	///
-	/// <para>Every event in one drain is hit-tested against the <paramref name="state"/> passed in, so
+	/// <para>Every event in one drain is hit-tested against the HUD state passed in, so
 	/// a click that changes which widgets are visible does not affect a second click in the same
 	/// frame. The original re-reads its list as handlers run and so would; with one pointer at frame
 	/// rate, two clicks in one frame does not arise.</para>
@@ -308,11 +308,12 @@ public sealed class CockpitInput {
 	}
 
 	/// <summary>
-	/// Lets <paramref name="id"/> back up if the pointer is holding it down: a press flash on that button
+	/// Lets a button back up if the pointer is holding it down: a press flash on that button
 	/// ending, which writes the state byte the held press set back to 0 (see
 	/// <see cref="PressFlashes{TId}.Service"/>). The press stays armed, and the next pointer event over the
 	/// button depresses it again, as <c>Widget_TrackPressedWidget</c> does.
 	/// </summary>
+	/// <param name="id">The button's id.</param>
 	public void PopUp(CockpitWidgetId id) {
 		if (!_capturing && Depressed == id) {
 			Depressed = null;

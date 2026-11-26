@@ -61,7 +61,8 @@ internal sealed class TheaterChanger {
 	/// <summary>Why the last change asked for could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Asks for the mission to be played on theater <paramref name="theater"/>.</summary>
+	/// <summary>Asks for the mission to be played on a theater.</summary>
+	/// <param name="theater">The theater.</param>
 	public void RequestTheater(int theater) => _requested = (MissionOpener.TheaterWord, (short)theater);
 
 	/// <summary>Asks for the mission to be played by night, or by day.</summary>

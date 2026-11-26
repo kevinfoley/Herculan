@@ -138,7 +138,8 @@ public sealed class SoundCatalog {
 	/// <summary>How many rows the file held.</summary>
 	public int Count => _entries.Length;
 
-	/// <summary>Row <paramref name="id"/>, or null when the id is outside the table.</summary>
+	/// <summary>A row, or null when the id is outside the table.</summary>
+	/// <param name="id">The row's id.</param>
 	public Entry? this[int id] => id >= 0 && id < _entries.Length ? _entries[id] : null;
 
 	/// <summary>Whether an id falls in the music half of the catalog.</summary>

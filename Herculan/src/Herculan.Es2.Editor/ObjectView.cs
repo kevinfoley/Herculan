@@ -68,7 +68,8 @@ internal sealed class ObjectView {
 		_heading = heading;
 	}
 
-	/// <summary>Draws <paramref name="sel"/>'s view; nothing for an object the layout does not place.</summary>
+	/// <summary>Draws an object's view; nothing for an object the layout does not place.</summary>
+	/// <param name="sel">The object.</param>
 	public void Draw(SceneObject sel) {
 		if (_index.Planned(sel) is not { } planned || _index.Group(planned.Group) is not { } group) {
 			return;
@@ -256,12 +257,13 @@ internal sealed class ObjectView {
 			+ $"{pos.Z / WorldScale.WorldUnitsPerMeter:F1} m";
 
 	/// <summary>
-	/// The triggers the roster record <paramref name="key"/> activates when engaged and when defeated, from the layout, each a choice
+	/// The triggers a roster record activates when engaged and when defeated, from the layout, each a choice
 	/// of none or any trigger (<see cref="ActionEditor.RequestObjectAction"/>), with a link, and what engaged and defeated mean
 	/// (docs/retail/simulation/mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6), the engagement distance in
 	/// metres. Not for a machine of the player's squad, which is built from <c>player.mec</c>: no retail squad record carries
 	/// either.
 	/// </summary>
+	/// <param name="key">The roster record.</param>
 	private void DrawOwnActions(ObjectKey key) {
 		(short engaged, short defeated) = _index.Layout.Entry(key.Row, key.Guid)?.Fields switch {
 			MechRosterEntry144 herc => (herc.EngagementActionRef, herc.DefeatActionRef),

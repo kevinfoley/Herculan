@@ -34,14 +34,17 @@ internal sealed class BasePadEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why row-16 GUID <paramref name="group"/>'s base pad cannot be turned on or off, or null when it can.</summary>
+	/// <summary>Why a group's base pad cannot be turned on or off, or null when it can.</summary>
+	/// <param name="group">The row-16 GUID.</param>
 	public string? WhyFixed(short group) =>
 		_index.Group(group) is not { } planned ? EditorToolbox.GroupGone
 			: planned.IsSquad || planned.Kind != MissionUnitKind.Base ? "Only a group of structures lays a base pad."
 			: _formations.LayoutFor(planned.Setup.FormationId) == null ? "Its formation has no pad to lay."
 			: null;
 
-	/// <summary>Asks for row-16 GUID <paramref name="group"/> to lay its base pad, or with false not to.</summary>
+	/// <summary>Asks for a group to lay its base pad, or with false not to.</summary>
+	/// <param name="group">The row-16 GUID.</param>
+	/// <param name="lays">Whether it lays one.</param>
 	public void Request(short group, bool lays) => _requested = () => {
 		if (WhyFixed(group) is { } reason) {
 			return reason;

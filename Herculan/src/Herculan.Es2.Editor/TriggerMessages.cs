@@ -20,13 +20,16 @@ internal sealed class TriggerMessages {
 
 	public TriggerMessages(GameContent content) => _content = content;
 
-	/// <summary>The training mission number <paramref name="layout"/>'s header sets, 0 for an ordinary mission.</summary>
+	/// <summary>The training mission number a layout's header sets, 0 for an ordinary mission.</summary>
+	/// <param name="layout">The layout.</param>
 	public static int TrainingNumber(MissionLayout layout) => layout.Header?.Words[TrainingWord] ?? 0;
 
-	/// <summary>The file the mission of <paramref name="training"/> speaks from: <c>COMMAND0.STR</c> for an ordinary mission.</summary>
+	/// <summary>The file the mission of a training number speaks from: <c>COMMAND0.STR</c> for an ordinary mission.</summary>
+	/// <param name="training">The training mission number.</param>
 	public static string FileName(int training) => SquadMessages.CommandResourceName(training);
 
-	/// <summary>The lines of training mission <paramref name="training"/>'s file, or null when the install has none.</summary>
+	/// <summary>The lines of a training mission's file, or null when the install has none.</summary>
+	/// <param name="training">The training mission number.</param>
 	public SquadMessages? For(int training) {
 		if (!_loaded.TryGetValue(training, out var messages)) {
 			_loaded[training] = messages = SquadMessages.LoadCommand(_content, training);
@@ -35,7 +38,9 @@ internal sealed class TriggerMessages {
 		return messages;
 	}
 
-	/// <summary>Message <paramref name="id"/>'s text, an instruction's sentences joined; null when the file has no such line.</summary>
+	/// <summary>A message's text, an instruction's sentences joined; null when the file has no such line.</summary>
+	/// <param name="training">The training mission number.</param>
+	/// <param name="id">The message id.</param>
 	public string? Text(int training, int id) {
 		var entries = For(training)?.Instruction(id);
 		return entries is { Count: > 0 } ? string.Join(" ", entries.Select(entry => entry.Text)) : null;

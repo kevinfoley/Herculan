@@ -108,10 +108,12 @@ public sealed class HudColorTable {
 		logicalId >= 0 && logicalId < _entries.Length ? _entries[logicalId] : null;
 
 	/// <summary>
-	/// Resolves a logical colour id all the way to RGB through <paramref name="palette"/>. Null when
+	/// Resolves a logical colour id all the way to RGB through a palette. Null when
 	/// the id is out of range or the palette has no such entry — callers draw nothing rather than
 	/// substituting a colour of their own.
 	/// </summary>
+	/// <param name="logicalId">The logical colour id.</param>
+	/// <param name="palette">The palette.</param>
 	public RgbaColor? Resolve(int logicalId, DynamixPalette palette) =>
 		PaletteIndex(logicalId) is { } index && palette.Colors.TryGetValue(index, out var entry)
 			? entry.GetColor()

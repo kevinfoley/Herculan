@@ -127,21 +127,25 @@ public static class PreferencesPanelLayout {
 	/// </summary>
 	private static readonly int[] ValueY = { 38, 62, 86, 110, 134, 38, 62, 86, 110 };
 
-	/// <summary>The rect of button <paramref name="index"/>.</summary>
+	/// <summary>The rect of a button.</summary>
+	/// <param name="index">The button's index.</param>
 	public static AlertPanelLayout.Rect Button(int index) {
 		int i = Math.Clamp(index, 0, ButtonCount - 1);
 		return new AlertPanelLayout.Rect(ButtonX[i], ButtonY[i],
 			ButtonX[i] + ButtonWidth, ButtonY[i] + ButtonHeight);
 	}
 
-	/// <summary>The rect of option <paramref name="index"/>'s value readout.</summary>
+	/// <summary>The rect of an option's value readout.</summary>
+	/// <param name="index">The option's index.</param>
 	public static AlertPanelLayout.Rect Value(int index) {
 		int i = Math.Clamp(index, 0, OptionCount - 1);
 		return new AlertPanelLayout.Rect(ValueX[i], ValueY[i],
 			ValueX[i] + ValueWidth, ValueY[i] + ValueHeight);
 	}
 
-	/// <summary>The plate frame button <paramref name="index"/> draws in widget state <paramref name="state"/>.</summary>
+	/// <summary>The plate frame a button draws in a widget state.</summary>
+	/// <param name="index">The button's index.</param>
+	/// <param name="state">The widget state.</param>
 	public static int ButtonFrame(int index, int state) =>
 		ButtonFirstFrame + Math.Clamp(state, 0, 3);
 

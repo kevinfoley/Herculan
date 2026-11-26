@@ -8,7 +8,9 @@ namespace Herculan.Es2.Editor;
 /// the whole name on hover when it is cut; never wrapped across lines in a list or picker.
 /// </summary>
 internal static class NameText {
-	/// <summary><paramref name="text"/> cut, with "...", to fit <paramref name="width"/> pixels in the current font.</summary>
+	/// <summary>A text cut, with "...", to fit a width in the current font.</summary>
+	/// <param name="text">The text.</param>
+	/// <param name="width">The width in pixels.</param>
 	public static string Fit(string text, float width) {
 		const string more = "...";
 		if (ImGui.CalcTextSize(text).X <= width) {
@@ -23,7 +25,9 @@ internal static class NameText {
 		return text[..length].TrimEnd() + more;
 	}
 
-	/// <summary><paramref name="name"/>'s text cut to leave room for its number in <paramref name="width"/> pixels.</summary>
+	/// <summary>A name's text cut to leave room for its number in a width.</summary>
+	/// <param name="name">The name.</param>
+	/// <param name="width">The width in pixels.</param>
 	public static string FitText(RecordName name, float width) {
 		if (name.Number is not { } number) {
 			return Fit(name.Text, width);
@@ -33,16 +37,20 @@ internal static class NameText {
 		return Fit(name.Text, MathF.Max(width - numberWidth, ImGui.CalcTextSize("M...").X));
 	}
 
-	/// <summary><paramref name="name"/> as one string cut to fit <paramref name="width"/> pixels, its number kept whole.</summary>
+	/// <summary>A name as one string cut to fit a width, its number kept whole.</summary>
+	/// <param name="name">The name.</param>
+	/// <param name="width">The width in pixels.</param>
 	public static string Fit(RecordName name, float width) {
 		string text = FitText(name, width);
 		return name.Number is { } number ? $"{text} {number}" : text;
 	}
 
 	/// <summary>
-	/// <paramref name="name"/> in the panel's text color with its number dimmed, cut to the space left on the line less
-	/// <paramref name="reserve"/> pixels for what follows it there.
+	/// A name in the panel's text color with its number dimmed, cut to the space left on the line less
+	/// the room reserved for what follows it there.
 	/// </summary>
+	/// <param name="name">The name.</param>
+	/// <param name="reserve">The pixels reserved for what follows it.</param>
 	public static void Draw(RecordName name, float reserve = 0f) {
 		string text = FitText(name, ImGui.GetContentRegionAvail().X - reserve);
 		ImGui.TextUnformatted(text);
@@ -51,10 +59,14 @@ internal static class NameText {
 	}
 
 	/// <summary>
-	/// A row of a list or a picker that selects when clicked: <paramref name="name"/> cut to <paramref name="width"/> pixels
-	/// (the space left on the line when null), its number dimmed, the whole name on hover when cut. <paramref name="id"/> is its
-	/// ImGui ID, unique among its siblings.
+	/// A row of a list or a picker that selects when clicked: a name cut to a width
+	/// (the space left on the line when null), its number dimmed, the whole name on hover when cut.
 	/// </summary>
+	/// <param name="name">The name.</param>
+	/// <param name="id">The row's ImGui ID, unique among its siblings.</param>
+	/// <param name="selected">Whether the row is selected.</param>
+	/// <param name="width">The width in pixels, or null for the space left on the line.</param>
+	/// <param name="flags">The selectable flags.</param>
 	public static bool Selectable(RecordName name, string id, bool selected, float? width = null,
 			ImGuiSelectableFlags flags = ImGuiSelectableFlags.None) {
 		float room = width ?? ImGui.GetContentRegionAvail().X;
@@ -77,9 +89,11 @@ internal static class NameText {
 	}
 
 	/// <summary>
-	/// Opens a picker whose closed box shows <paramref name="name"/> cut to fit, the whole name on hover when cut; true while its
+	/// Opens a picker whose closed box shows a name cut to fit, the whole name on hover when cut; true while its
 	/// list is open, then end it with <see cref="ImGui.EndCombo"/>.
 	/// </summary>
+	/// <param name="id">The picker's ImGui id.</param>
+	/// <param name="name">The name shown.</param>
 	public static bool BeginCombo(string id, RecordName name) {
 		var style = ImGui.GetStyle();
 		float item = ImGui.CalcItemWidth();
@@ -98,7 +112,9 @@ internal static class NameText {
 		return open;
 	}
 
-	/// <summary>The whole of <paramref name="name"/> on hover of the item just drawn, when <paramref name="shown"/> is cut.</summary>
+	/// <summary>The whole of a name on hover of the item just drawn, when the text shown is cut.</summary>
+	/// <param name="name">The name.</param>
+	/// <param name="shown">The text shown.</param>
 	public static void Hover(RecordName name, string shown) {
 		if (shown != name.Text && ImGui.IsItemHovered()) {
 			ImGui.SetTooltip(name.Full);

@@ -23,10 +23,14 @@ internal sealed class CampaignVariablePicker {
 	private string _filter = "";
 
 	/// <summary>
-	/// Draws the dropdown <paramref name="id"/>, <paramref name="width"/> wide as ImGui reads an item width (by default the
-	/// rest of the line), showing <paramref name="current"/> by its name, or asking for one when null; answers the variable
-	/// chosen this frame, or null. <paramref name="forWrite"/> lists and names the variables for a write in place of a test.
+	/// Draws a dropdown, showing the current variable by its name, or asking for one when null; answers the variable
+	/// chosen this frame, or null.
 	/// </summary>
+	/// <param name="id">The dropdown's ImGui id.</param>
+	/// <param name="current">The variable shown, or null for none.</param>
+	/// <param name="source">The mission.</param>
+	/// <param name="forWrite">Whether the variables are listed and named for a write in place of a test.</param>
+	/// <param name="width">The width as ImGui reads an item width; by default the rest of the line.</param>
 	public short? Draw(string id, short? current, MissionDocument source, bool forWrite = false, float width = -1f) {
 		ImGui.SetNextItemWidth(width);
 		float listWidth = ImGui.GetContentRegionAvail().X;

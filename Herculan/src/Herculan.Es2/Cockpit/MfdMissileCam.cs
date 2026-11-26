@@ -144,8 +144,9 @@ public static class MfdMissileCam {
 		MfdLayout.ScreenCentre(gau) is { } centre ? -(-centre.Y >> 1) : 0;
 
 	/// <summary>
-	/// The camera <c>MfdMissileViewScreen_Paint</c> places for <paramref name="missile"/>.
+	/// The camera <c>MfdMissileViewScreen_Paint</c> places for a missile.
 	/// </summary>
+	/// <param name="missile">The missile.</param>
 	public static MissileCamView ViewFrom(Rocket missile) {
 		var (pitch, roll, heading) = missile.Euler;
 		var position = missile.Position;
@@ -158,11 +159,14 @@ public static class MfdMissileCam {
 	}
 
 	/// <summary>
-	/// <paramref name="view"/> as a <see cref="Camera"/> over a screen <paramref name="width"/> by
-	/// <paramref name="height"/> device pixels projecting about <paramref name="centre"/>: the
+	/// A view as a <see cref="Camera"/> over a screen of device pixels projecting about a centre: the
 	/// field of view is the angle <see cref="FocalLengthPixels"/> subtends over that height, so the
 	/// world is drawn at the original's size whatever the window's.
 	/// </summary>
+	/// <param name="view">The missile camera's view.</param>
+	/// <param name="width">The screen's width in device pixels.</param>
+	/// <param name="height">The screen's height in device pixels.</param>
+	/// <param name="centre">The point projected about, in device pixels.</param>
 	public static Camera CameraFor(MissileCamView view, int width, int height, (int X, int Y) centre) => new() {
 		Position = view.Eye,
 		Yaw = -view.Heading & 0xffff,
@@ -231,10 +235,12 @@ public sealed class MfdMissileCamSwitch {
 		&& record.SubtypeId == Rocket.PlayerFlownSubtype;
 
 	/// <summary>
-	/// <c>MfdDisplay_SetMode</c>: the mode the display shows after <paramref name="requested"/> is
+	/// <c>MfdDisplay_SetMode</c>: the mode the display shows after a mode is
 	/// asked for. A change while the switch holds releases it, so the switch neither moves the screen
 	/// again nor brings the saved one back until it next starts.
 	/// </summary>
+	/// <param name="current">The mode shown now.</param>
+	/// <param name="requested">The mode asked for.</param>
 	public MfdMode SetMode(MfdMode current, MfdMode requested) {
 		if (requested == current) {
 			return current;

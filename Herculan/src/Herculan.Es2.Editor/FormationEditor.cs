@@ -45,13 +45,15 @@ internal sealed class FormationEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why row-16 GUID <paramref name="group"/>'s formation cannot be set, or null when it can.</summary>
+	/// <summary>Why a group's formation cannot be set, or null when it can.</summary>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public string? WhyFixed(short group) =>
 		_index.Group(group) is not { } planned ? EditorToolbox.GroupGone
 			: planned.IsSquad ? "Not set here for the player's squad: the briefing map stands it in its first order's formation."
 			: null;
 
-	/// <summary>How many formations a group of <paramref name="kind"/> picks from.</summary>
+	/// <summary>How many formations a group of a kind picks from.</summary>
+	/// <param name="kind">The group's kind.</param>
 	public int Count(MissionUnitKind kind) => kind switch {
 		MissionUnitKind.Mech => _tables.Mechs.Count,
 		MissionUnitKind.Flyer => _tables.Flyers.Count,
@@ -59,9 +61,11 @@ internal sealed class FormationEditor {
 	};
 
 	/// <summary>
-	/// Every place of formation <paramref name="formation"/> for a group of <paramref name="kind"/> after the leader's, in
+	/// Every place of a formation for a group of a kind after the leader's, in
 	/// order: place 2 first. Empty for a formation outside the table.
 	/// </summary>
+	/// <param name="kind">The group's kind.</param>
+	/// <param name="formation">The formation.</param>
 	public IReadOnlyList<FormationPlace> Places(MissionUnitKind kind, int formation) {
 		var places = new List<FormationPlace>();
 		for (int member = 1; ; member++) {
@@ -78,11 +82,15 @@ internal sealed class FormationEditor {
 		}
 	}
 
-	/// <summary>Whether formation <paramref name="formation"/> of a group of <paramref name="kind"/> has a base pad to lay.</summary>
+	/// <summary>Whether a formation of a group of a kind has a base pad to lay.</summary>
+	/// <param name="kind">The group's kind.</param>
+	/// <param name="formation">The formation.</param>
 	public bool HasPad(MissionUnitKind kind, int formation) =>
 		kind == MissionUnitKind.Base && _tables.Bases.LayoutFor(formation) != null;
 
-	/// <summary>Asks for row-16 GUID <paramref name="group"/> to stand in formation <paramref name="formation"/>.</summary>
+	/// <summary>Asks for a group to stand in a formation.</summary>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="formation">The formation.</param>
 	public void Request(short group, short formation) => _requested = () => {
 		if (WhyFixed(group) is { } reason) {
 			return reason;

@@ -6,9 +6,13 @@ namespace Herculan.Es2.Input;
 /// <summary>
 /// The pointer as <c>Sim_PollPlayerInput</c> reads it for the gunsight drag: the right-button byte <c>+0x0b</c> of
 /// the frame's device block, and the position at <c>+0x02</c>/<c>+0x06</c> in the forward view's art pixels.
-/// <paramref name="Left"/> is this engine's: the held left button, which fires while the drag is armed (see
+/// The left button is this engine's: the held left button, which fires while the drag is armed (see
 /// <see cref="GunsightDrag.Firing"/>), and which only the tweak's caller sets.
 /// </summary>
+/// <param name="Right">Whether the right button is held.</param>
+/// <param name="X">The X in the forward view's art pixels.</param>
+/// <param name="Y">The Y in the forward view's art pixels.</param>
+/// <param name="Left">Whether the left button is held; this engine's own.</param>
 public readonly record struct GunsightPointer(bool Right, int X, int Y, bool Left = false) {
 	/// <summary>No right button: what a replay, a modal panel's loop or a missing pointer leaves in the block.</summary>
 	public static GunsightPointer Released => default;
@@ -48,9 +52,14 @@ public sealed class GunsightDrag {
 	public bool Firing => _armed && _left;
 
 	/// <summary>
-	/// One frame of the drag. <paramref name="armX0"/> to <paramref name="armY1"/> is the complex's rect, inclusive,
+	/// One frame of the drag. The arm rect is the complex's rect, inclusive,
 	/// in the same space as the pointer.
 	/// </summary>
+	/// <param name="pointer">The pointer.</param>
+	/// <param name="armX0">The arm rect's left edge.</param>
+	/// <param name="armY0">The arm rect's top edge.</param>
+	/// <param name="armX1">The arm rect's right edge.</param>
+	/// <param name="armY1">The arm rect's bottom edge.</param>
 	public void Update(GunsightPointer pointer, int armX0, int armY0, int armX1, int armY1) {
 		_left = pointer.Left;
 		if (!pointer.Right) {

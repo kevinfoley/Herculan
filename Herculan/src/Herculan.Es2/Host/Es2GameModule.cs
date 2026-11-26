@@ -14,8 +14,9 @@ namespace Herculan.Es2.Host;
 /// Earthsiege 2 as the host runs it (<see cref="IGameModule"/>): by default <c>ES.EXE</c>'s loop of front end and
 /// simulator (<see cref="Launcher.RunShellLoop"/>), or one mission (<see cref="Launcher.RunMission"/>) or one movie
 /// (<see cref="MovieHost"/>) when the command line asks for it; <c>--install</c> (<see cref="DiscInstall"/>) needs no
-/// install. The mission editor's assembly references this one, so the host hands its turn in (<paramref name="editor"/>).
+/// install. The mission editor's assembly references this one, so the host hands its turn in.
 /// </summary>
+/// <param name="editor">The mission editor's turn.</param>
 public sealed class Es2GameModule(EditorTurn editor) : IGameModule {
 	/// <summary>Earthsiege 2's identity: <c>ES2_GAME_PATH</c>, an <c>ES2</c> folder, <c>install-path.txt</c>.</summary>
 	public static GameIdentity Identity { get; } = new(RetailGame.Earthsiege2, NameKey: "game.earthsiege2", FolderName: "ES2",

@@ -40,7 +40,8 @@ public sealed class SystemMessages {
 	/// <summary>How many messages the file held.</summary>
 	public int Count => _entries.Length;
 
-	/// <summary>Message <paramref name="id"/>, or null when the id is outside the table.</summary>
+	/// <summary>A message, or null when the id is outside the table.</summary>
+	/// <param name="id">The message id.</param>
 	public Entry? this[int id] => id >= 0 && id < _entries.Length ? _entries[id] : null;
 
 	/// <summary>

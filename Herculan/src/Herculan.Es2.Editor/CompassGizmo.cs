@@ -39,11 +39,13 @@ public static class CompassGizmo {
 	private static readonly uint UpColor = Color(120, 190, 255, 200);
 
 	/// <summary>
-	/// Draws the gizmo into its own borderless, input-transparent overlay window whose top-left
-	/// corner is <paramref name="topLeft"/> and whose extent is <paramref name="size"/> pixels
-	/// square, its lines and discs scaled to the display (<see cref="ScaledImGui.Scaled(float)"/>). Input-transparent matters: the editor picks objects with a viewport click, and a
+	/// Draws the gizmo into its own borderless, input-transparent overlay window, its lines and discs scaled to the
+	/// display (<see cref="ScaledImGui.Scaled(float)"/>). Input-transparent matters: the editor picks objects with a viewport click, and a
 	/// window that swallowed the mouse would put a dead square over the scene.
 	/// </summary>
+	/// <param name="camera">The view's camera.</param>
+	/// <param name="topLeft">The window's top-left corner.</param>
+	/// <param name="size">The window's extent in pixels, square.</param>
 	public static void Draw(Camera camera, Vector2 topLeft, float size) {
 		ImGui.SetNextWindowPos(topLeft);
 		ImGui.SetNextWindowSize(new Vector2(size, size));

@@ -52,25 +52,32 @@ internal sealed class ActionEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why row-10 GUID <paramref name="action"/> cannot be edited, or null when it can.</summary>
+	/// <summary>Why a trigger cannot be edited, or null when it can.</summary>
+	/// <param name="action">The row-10 GUID.</param>
 	public string? WhyFixed(short action) => _source.Layout.Entry(ActionRow, action) == null ? "That trigger is not in the mission." : null;
 
-	/// <summary>Why <paramref name="action"/> cannot be made type <paramref name="type"/>, or null when it can.</summary>
+	/// <summary>Why a trigger cannot be made a type, or null when it can.</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="type">The type.</param>
 	public string? WhyNoType(short action, short type) => WhyFixed(action) ?? ActionEditing.WhyNoType(_source, action, type);
 
 	/// <summary>
-	/// Why row-9 GUID <paramref name="area"/>, or with <c>-1</c> any area, cannot be added to <paramref name="action"/>, or null
-	/// when it can.
+	/// Why a row-9 area cannot be added to a trigger, or null when it can.
 	/// </summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="area">The row-9 GUID, or <c>-1</c> for any area.</param>
 	public string? WhyNoAddArea(short action, short area = -1) => WhyFixed(action) ?? ActionEditing.WhyNoAddArea(_source, action, area);
 
-	/// <summary>Why no campaign variable write can be added to <paramref name="action"/>, or null when one can.</summary>
+	/// <summary>Why no campaign variable write can be added to a trigger, or null when one can.</summary>
+	/// <param name="action">The row-10 GUID.</param>
 	public string? WhyNoAddPair(short action) => WhyFixed(action) ?? ActionEditing.WhyNoAddPair(_source, action);
 
-	/// <summary>Why <paramref name="follower"/> cannot be made to wait on a trigger, or null when it can.</summary>
+	/// <summary>Why a follower cannot be made to wait on a trigger, or null when it can.</summary>
+	/// <param name="follower">The follower.</param>
 	public string? WhyNoFollow(TriggerFollower follower) => TriggerFollowers.WhyNoAdd(_source, follower);
 
-	/// <summary>What keeps <paramref name="action"/> from being deleted; <see cref="TriggerDeleteBlockers.None"/> when nothing does.</summary>
+	/// <summary>What keeps a trigger from being deleted; <see cref="TriggerDeleteBlockers.None"/> when nothing does.</summary>
+	/// <param name="action">The row-10 GUID.</param>
 	public TriggerDeleteBlockers BlockersOf(short action) {
 		if (WhyFixed(action) is { } reason) {
 			return TriggerDeleteBlockers.Because(reason);
@@ -122,7 +129,8 @@ internal sealed class ActionEditor {
 		return new TriggerDeleteBlockers(null, countdowns, groups, objects, orders.Distinct().ToList(), options, unrun);
 	}
 
-	/// <summary>Asks for a new trigger, testing row-9 GUID <paramref name="area"/> or none for <c>-1</c>, which is then selected.</summary>
+	/// <summary>Asks for a new trigger, which is then selected.</summary>
+	/// <param name="area">The row-9 GUID it tests, or <c>-1</c> for none.</param>
 	public void RequestCreate(short area = -1) {
 		_requested = () => {
 			short created = -1;
@@ -130,7 +138,8 @@ internal sealed class ActionEditor {
 		};
 	}
 
-	/// <summary>Asks for <paramref name="action"/> to be deleted.</summary>
+	/// <summary>Asks for a trigger to be deleted.</summary>
+	/// <param name="action">The row-10 GUID.</param>
 	public void RequestDelete(short action) {
 		_requested = () => {
 			var blockers = BlockersOf(action);
@@ -142,81 +151,121 @@ internal sealed class ActionEditor {
 		};
 	}
 
-	/// <summary>Asks for <paramref name="action"/>'s type, whose position its areas test, to be <paramref name="type"/>.</summary>
+	/// <summary>Asks for a trigger's type, whose position its areas test, to change.</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="type">The new type.</param>
 	public void RequestType(short action, short type) => Ask(action, () => ActionEditing.SetType(_source, action, type));
 
-	/// <summary>Asks for <paramref name="action"/>'s target to be the record of GUID <paramref name="target"/> in the row its type names.</summary>
+	/// <summary>Asks for a trigger's target to be a record in the row its type names.</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="target">The GUID of the target record.</param>
 	public void RequestTarget(short action, short target) => Ask(action, () => ActionEditing.SetTarget(_source, action, target));
 
-	/// <summary>Asks for <paramref name="action"/>'s verb, how the groups waiting on it arrive, to be <paramref name="verb"/>.</summary>
+	/// <summary>Asks for a trigger's verb, how the groups waiting on it arrive, to change.</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="verb">The new verb.</param>
 	public void RequestVerb(short action, short verb) => Ask(action, () => ActionEditing.SetVerb(_source, action, verb));
 
-	/// <summary>Asks for row-9 GUID <paramref name="area"/> to be added after <paramref name="action"/>'s last.</summary>
+	/// <summary>Asks for a row-9 area to be added after a trigger's last.</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="area">The row-9 GUID.</param>
 	public void RequestAddArea(short action, short area) => Ask(action, () => ActionEditing.AddArea(_source, action, area));
 
-	/// <summary>Asks for row-9 GUID <paramref name="area"/> in <paramref name="action"/>'s slot <paramref name="slot"/>.</summary>
+	/// <summary>Asks for a row-9 area in one of a trigger's slots.</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="slot">The area slot.</param>
+	/// <param name="area">The row-9 GUID.</param>
 	public void RequestArea(short action, int slot, short area) =>
 		Ask(action, () => ActionEditing.SetArea(_source, action, slot, area));
 
-	/// <summary>Asks for the area in <paramref name="action"/>'s slot <paramref name="slot"/> to be removed.</summary>
+	/// <summary>Asks for the area in one of a trigger's slots to be removed.</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="slot">The area slot.</param>
 	public void RequestRemoveArea(short action, int slot) => Ask(action, () => ActionEditing.RemoveArea(_source, action, slot));
 
-	/// <summary>Asks for a campaign variable write after <paramref name="action"/>'s last.</summary>
+	/// <summary>Asks for a campaign variable write after a trigger's last.</summary>
+	/// <param name="action">The row-10 GUID.</param>
 	public void RequestAddPair(short action) => Ask(action, () => ActionEditing.AddPair(_source, action));
 
-	/// <summary>Asks for <paramref name="action"/>'s write <paramref name="slot"/> to be campaign variable <paramref name="counter"/> and <paramref name="op"/>.</summary>
+	/// <summary>Asks for one of a trigger's writes to be a campaign variable and operation.</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="slot">The write slot.</param>
+	/// <param name="counter">The campaign variable.</param>
+	/// <param name="op">The operation.</param>
 	public void RequestPair(short action, int slot, short counter, short op) =>
 		Ask(action, () => ActionEditing.SetPair(_source, action, slot, counter, op));
 
-	/// <summary>Asks for <paramref name="action"/>'s write <paramref name="slot"/> to be removed.</summary>
+	/// <summary>Asks for one of a trigger's writes to be removed.</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="slot">The write slot.</param>
 	public void RequestRemovePair(short action, int slot) => Ask(action, () => ActionEditing.RemovePair(_source, action, slot));
 
-	/// <summary>Asks for <paramref name="action"/> to post message <paramref name="id"/>, or none for <c>-1</c>.</summary>
+	/// <summary>Asks for a trigger to post a message, or none.</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="id">The message id, or <c>-1</c> for none.</param>
 	public void RequestMessage(short action, short id) => Ask(action, () => ActionEditing.SetMessage(_source, action, id));
 
-	/// <summary>Asks for <paramref name="follower"/> to wait on <paramref name="action"/> (<see cref="TriggerFollowers.Add"/>).</summary>
+	/// <summary>Asks for a follower to wait on a trigger (<see cref="TriggerFollowers.Add"/>).</summary>
+	/// <param name="action">The row-10 GUID.</param>
+	/// <param name="follower">The follower.</param>
 	public void RequestFollow(short action, TriggerFollower follower) =>
 		Ask(action, () => TriggerFollowers.Add(_source, action, follower));
 
-	/// <summary>Asks for <paramref name="follower"/> to wait on no trigger (<see cref="TriggerFollowers.Remove"/>).</summary>
+	/// <summary>Asks for a follower to wait on no trigger (<see cref="TriggerFollowers.Remove"/>).</summary>
+	/// <param name="action">The row-10 GUID it waits on now.</param>
+	/// <param name="follower">The follower.</param>
 	public void RequestUnfollow(short action, TriggerFollower follower) =>
 		Ask(action, () => TriggerFollowers.Remove(_source, follower));
 
 	/// <summary>
-	/// Asks for a new countdown that <paramref name="action"/> starts, firing a new trigger (<see cref="DelayedActions.Create"/>),
+	/// Asks for a new countdown that a trigger starts, firing a new trigger (<see cref="DelayedActions.Create"/>),
 	/// staying on the trigger.
 	/// </summary>
+	/// <param name="action">The row-10 GUID that starts the countdown.</param>
 	public void RequestNewCountdown(short action) => Ask(action, () => DelayedActions.Create(_source, action, out _, out _));
 
 	/// <summary>
-	/// Asks for row-11 GUID <paramref name="countdown"/>, which <paramref name="action"/> starts, to be deleted with the trigger
+	/// Asks for a countdown that a trigger starts to be deleted with the trigger
 	/// that is its own and what that trigger wires (<see cref="DelayedActions.Remove"/>).
 	/// </summary>
+	/// <param name="action">The row-10 GUID that starts the countdown.</param>
+	/// <param name="countdown">The row-11 GUID.</param>
 	public void RequestRemoveCountdown(short action, short countdown) => Ask(action, () => DelayedActions.Remove(_source, countdown));
 
-	/// <summary>Asks for row-11 GUID <paramref name="countdown"/>'s delay to be <paramref name="seconds"/>, from the view of <paramref name="action"/>.</summary>
+	/// <summary>Asks for a countdown's delay to change, from the view of a trigger.</summary>
+	/// <param name="action">The row-10 GUID whose view it is.</param>
+	/// <param name="countdown">The row-11 GUID.</param>
+	/// <param name="seconds">The new delay in seconds.</param>
 	public void RequestCountdownDelay(short action, short countdown, int seconds) =>
 		Ask(action, () => TimerEditing.SetDelay(_source, countdown, seconds));
 
-	/// <summary>Why row-16 GUID <paramref name="group"/>'s deployment action cannot be set, or null when it can.</summary>
+	/// <summary>Why a group's deployment action cannot be set, or null when it can.</summary>
+	/// <param name="group">The row-16 GUID.</param>
 	public string? WhyNoDeployment(short group) => ActionWiring.WhyNoDeployment(_source, group);
 
-	/// <summary>Asks for <paramref name="group"/> to wait on row-10 GUID <paramref name="action"/>, or on none for <c>-1</c>.</summary>
+	/// <summary>Asks for a group to wait on a trigger, or on none.</summary>
+	/// <param name="group">The row-16 GUID.</param>
+	/// <param name="action">The row-10 GUID, or <c>-1</c> for none.</param>
 	public void RequestDeployment(short group, short action) =>
 		_requested = () => WhyNoDeployment(group) ?? Commit(() => ActionWiring.SetDeployment(_source, group, action));
 
-	/// <summary>Why the roster record <paramref name="key"/>'s own triggers cannot be set, or null when they can.</summary>
+	/// <summary>Why a roster record's own triggers cannot be set, or null when they can.</summary>
+	/// <param name="key">The roster record.</param>
 	public string? WhyNoObjectAction(ObjectKey key) =>
 		_source.Layout.Entry(key.Row, key.Guid) == null ? EditorToolbox.ObjectGone(key.Row) : ActionWiring.WhyNoObjectAction(_source, key.Row, key.Guid);
 
-	/// <summary>Why <paramref name="key"/>'s engaged trigger, or with <paramref name="defeated"/> its defeated one, cannot be none, or null.</summary>
+	/// <summary>Why a roster record's engaged trigger, or its defeated one, cannot be none, or null.</summary>
+	/// <param name="key">The roster record.</param>
+	/// <param name="defeated">Whether it is the defeated trigger.</param>
 	public string? WhyNoNone(ObjectKey key, bool defeated) =>
 		WhyNoObjectAction(key) != null ? null : ActionWiring.WhyNoNone(_source, MsnField.RosterAction(key.Row, defeated), key.Guid);
 
 	/// <summary>
-	/// Asks for the roster record <paramref name="key"/> to fire row-10 GUID <paramref name="action"/>, or none for <c>-1</c>,
-	/// when engaged, or with <paramref name="defeated"/> when defeated.
+	/// Asks for a roster record to fire a trigger, or none, when engaged, or when defeated.
 	/// </summary>
+	/// <param name="key">The roster record.</param>
+	/// <param name="defeated">Whether it is the defeated trigger rather than the engaged one.</param>
+	/// <param name="action">The row-10 GUID, or <c>-1</c> for none.</param>
 	public void RequestObjectAction(ObjectKey key, bool defeated, short action) =>
 		_requested = () => WhyNoObjectAction(key) ?? Commit(() => ActionWiring.SetObjectAction(_source, key.Row, key.Guid, defeated, action));
 

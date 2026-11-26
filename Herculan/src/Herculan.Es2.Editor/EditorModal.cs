@@ -10,9 +10,11 @@ namespace Herculan.Es2.Editor;
 /// </summary>
 internal static class EditorModal {
 	/// <summary>
-	/// Opens the popup <paramref name="title"/> and sets <paramref name="raised"/>, unless it is already set or another popup
+	/// Opens a popup and sets a flag, unless it is already set or another popup
 	/// is up; the <c>BeginPopupModal</c> after it then finds the modal shut, and the next frame tries again.
 	/// </summary>
+	/// <param name="title">The popup's title.</param>
+	/// <param name="raised">The flag to set.</param>
 	public static void Raise(string title, ref bool raised) {
 		if (raised || ImGui.IsPopupOpen("", ImGuiPopupFlags.AnyPopupId)) {
 			return;

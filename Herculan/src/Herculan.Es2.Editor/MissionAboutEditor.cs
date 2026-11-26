@@ -20,10 +20,12 @@ internal sealed class MissionAboutEditor {
 	/// <summary>What the about file says now.</summary>
 	public MissionAbout About { get; private set; } = MissionAbout.Blank;
 
-	/// <summary>Takes <paramref name="about"/> as what the mission was opened with, as no step of the undo history.</summary>
+	/// <summary>Takes an about as what the mission was opened with, as no step of the undo history.</summary>
+	/// <param name="about">The about.</param>
 	public void Load(MissionAbout about) => About = about;
 
-	/// <summary>Asks for the about file to say <paramref name="about"/>.</summary>
+	/// <summary>Asks for the about file to say an about.</summary>
+	/// <param name="about">The about.</param>
 	public void Request(MissionAbout about) => _requested = about;
 
 	/// <summary>Makes the edit asked for since the last call, if any and if it changes anything.</summary>
@@ -36,7 +38,8 @@ internal sealed class MissionAboutEditor {
 		Set(about);
 	}
 
-	/// <summary>Makes the about file say <paramref name="about"/> at once, as one step of the undo history, unless it already does.</summary>
+	/// <summary>Makes the about file say an about at once, as one step of the undo history, unless it already does.</summary>
+	/// <param name="about">The about.</param>
 	public void Set(MissionAbout about) {
 		if (about == About) {
 			return;

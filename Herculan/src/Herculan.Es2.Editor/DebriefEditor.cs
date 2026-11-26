@@ -30,9 +30,11 @@ internal sealed class DebriefEditor {
 	public string? Failure { get; private set; }
 
 	/// <summary>
-	/// Asks for debrief line <paramref name="line"/> to read <paramref name="text"/> where <paramref name="condition"/> holds,
-	/// its record under that condition, <c>-1</c> for its unconditioned text.
+	/// Asks for a debrief line to read a text where a condition holds, its record under that condition.
 	/// </summary>
+	/// <param name="line">The debrief line.</param>
+	/// <param name="condition">The condition's GUID, <c>-1</c> for the line's unconditioned text.</param>
+	/// <param name="text">The text.</param>
 	public void RequestText(DebriefLine line, short condition, string text) =>
 		Ask(() => DebriefText.Record(Source) is { } record
 			? Commit(() => MissionTextEditing.SetLineUnder(Source, new TextOwner(5, record, null, line.Slot), 0, condition, text))

@@ -52,11 +52,14 @@ public sealed class InputTapeRecorder : IDisposable {
 	public short LastTickDelta { get; private set; } = Sim.SimClock.VanillaTickDelta;
 
 	/// <summary>
-	/// Starts a tape at <paramref name="path"/> and writes its bundle: the mission file itself, its
+	/// Starts a tape at a path and writes its bundle: the mission file itself, its
 	/// squad file (<see cref="MissionLoader.PlayerPathFor"/>), and the other five files from
-	/// <paramref name="dataDirectory"/>. A file that is not there is an empty entry, as
+	/// the data directory. A file that is not there is an empty entry, as
 	/// <c>Tape_PackFile</c> writes one it cannot open.
 	/// </summary>
+	/// <param name="path">The tape's path.</param>
+	/// <param name="scriptPath">The mission's script path.</param>
+	/// <param name="dataDirectory">The data directory the other five files come from, or null for none.</param>
 	public static InputTapeRecorder Create(string path, string scriptPath, string? dataDirectory) {
 		var names = InputTapePlayer.BundleFileNames;
 		var bundle = new byte[InputTape.BundleFileCount][];
@@ -80,13 +83,14 @@ public sealed class InputTapeRecorder : IDisposable {
 	}
 
 	/// <summary>
-	/// <c>Input_QueryCapabilities</c>' eight bytes for <paramref name="capabilities"/>: <c>+0</c>, the button
+	/// <c>Input_QueryCapabilities</c>' eight bytes for a joystick's capabilities: <c>+0</c>, the button
 	/// count at <c>+2</c>, and the throttle, rudder and hat flags at <c>+4</c>, <c>+5</c> and <c>+6</c> —
 	/// the hat as <c>JOYCAPS_HASPOV</c>'s own <c>0x10</c>, which is what the retail tapes carry.
 	///
 	/// <para><c>+0</c> is 2 when the original enumerated a second stick and 1 otherwise, with or
 	/// without a first; this engine reads one device, so it is always 1.</para>
 	/// </summary>
+	/// <param name="capabilities">The joystick's capabilities.</param>
 	public static byte[] CapabilityBlock(JoystickCapabilities capabilities) {
 		var block = new byte[InputTape.CapabilityBlockSize];
 		block[0] = SingleStickFlag;
@@ -135,9 +139,11 @@ public sealed class InputTapeRecorder : IDisposable {
 	}
 
 	/// <summary>
-	/// Writes one frame that ticked with <paramref name="tickDelta"/>, carrying everything queued since
+	/// Writes one frame that ticked, carrying everything queued since
 	/// the last frame.
 	/// </summary>
+	/// <param name="tickDelta">The ticks the frame advanced.</param>
+	/// <param name="capabilities">The joystick's capabilities.</param>
 	public void EmitTick(short tickDelta, JoystickCapabilities capabilities) {
 		LastTickDelta = tickDelta;
 		Emit(tickDelta, capabilities);

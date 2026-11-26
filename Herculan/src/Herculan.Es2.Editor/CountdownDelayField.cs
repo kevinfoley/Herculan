@@ -13,9 +13,12 @@ internal sealed class CountdownDelayField {
 	private int _draft;
 
 	/// <summary>
-	/// Draws the field for row-11 GUID <paramref name="countdown"/>, whose delay is <paramref name="seconds"/>, as
-	/// <paramref name="id"/> in the current item width; answers the typed delay when the field lets go after a change to it.
+	/// Draws the field for a countdown's delay in the current item width; answers the typed delay when the field lets go
+	/// after a change to it.
 	/// </summary>
+	/// <param name="id">The field's ImGui id.</param>
+	/// <param name="countdown">The row-11 GUID.</param>
+	/// <param name="seconds">The countdown's delay now.</param>
 	public int? Draw(string id, short countdown, short seconds) {
 		if (_draftFor is { } draftFor && draftFor != countdown && !ImGui.IsAnyItemActive()) {
 			_draftFor = null;

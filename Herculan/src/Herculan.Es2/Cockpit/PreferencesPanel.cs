@@ -150,11 +150,12 @@ public sealed class PreferencesPanel {
 	public int HighlightedRow { get; private set; } = -1;
 
 	/// <summary>
-	/// The widget state button <paramref name="index"/> paints in. The nine option rows are built in
+	/// The widget state a button paints in. The nine option rows are built in
 	/// state 3, the bottom pair in state 0, a row with no sound device behind it is greyed to 2, and
 	/// the highlighted row drops to 0. A button shows pressed while the pointer holds it and while a press
 	/// flash does, and a flash's end leaves it in 0 (<see cref="AlertPanelPresses.RestedByFlash"/>).
 	/// </summary>
+	/// <param name="index">The button's index.</param>
 	public int RowState(int index) {
 		if ((index == PressedButton && !_pressPopped) || _presses.IsLit(index)) {
 			return AlertPanelLayout.WidgetState.Pressed;
@@ -206,13 +207,16 @@ public sealed class PreferencesPanel {
 
 	/// <summary>
 	/// Reads the panel's captions out of the mounted archives and resolves the nine readouts against
-	/// <paramref name="preferences"/>. Returns null when the string table is missing, since a panel
+	/// the preferences. Returns null when the string table is missing, since a panel
 	/// with no captions is not worth putting up.
 	/// </summary>
+	/// <param name="content">The game content.</param>
 	/// <param name="preferences">
 	/// The install's own <c>data\prefs.cfg</c>, or null for the all-zero array
 	/// <c>Prefs_LoadOptions</c> leaves behind when there is no file to read.
 	/// </param>
+	/// <param name="soundAvailable">Whether a sound device is available.</param>
+	/// <param name="voiceAvailable">Whether a voice device is available.</param>
 	public static PreferencesPanel? Build(GameContent content, SimulatorPreferences? preferences,
 			bool soundAvailable = true, bool voiceAvailable = true) {
 		ArgumentNullException.ThrowIfNull(content);
@@ -243,9 +247,11 @@ public sealed class PreferencesPanel {
 	}
 
 	/// <summary>
-	/// Steps row <paramref name="row"/> the way its click case does, and refreshes its readout. A row
+	/// Steps a row the way its click case does, and refreshes its readout. A row
 	/// whose rule refuses the click leaves the option alone.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="rightButton">Whether the right button clicked.</param>
 	private void Cycle(int row, bool rightButton) {
 		if (row < 0 || row >= Options.Length) {
 			return;

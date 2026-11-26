@@ -193,7 +193,8 @@ public sealed class SquadCommChannel {
 	/// <summary>Which slot owns the published transmission, or -1 for none.</summary>
 	public int SpeakingSlot => _speakingSlot;
 
-	/// <summary>What slot <paramref name="slot"/>'s box is doing.</summary>
+	/// <summary>What a slot's box is doing.</summary>
+	/// <param name="slot">The slot.</param>
 	public CommBoxState State(int slot) =>
 		slot >= 0 && slot < SlotCount ? _boxes[slot].State : CommBoxState.Idle;
 
@@ -220,24 +221,27 @@ public sealed class SquadCommChannel {
 		box.ScreamWasStatic = false;
 	}
 
-	/// <summary>Whether slot <paramref name="slot"/> has a pilot in it.</summary>
+	/// <summary>Whether a slot has a pilot in it.</summary>
+	/// <param name="slot">The slot.</param>
 	public bool Occupied(int slot) => slot >= 0 && slot < SlotCount && _boxes[slot].Portrait >= 0;
 
-	/// <summary>Which voice bank slot <paramref name="slot"/> speaks with, or 0 when it is empty.</summary>
+	/// <summary>Which voice bank a slot speaks with, or 0 when it is empty.</summary>
+	/// <param name="slot">The slot.</param>
 	public int VoiceBank(int slot) => slot >= 0 && slot < SlotCount ? _boxes[slot].VoiceBank : 0;
 
 	/// <summary>
-	/// The name in slot <paramref name="slot"/>, or empty when it is not seated — the box's own
+	/// The name in a slot, or empty when it is not seated — the box's own
 	/// <c>+0x137</c>, which <c>HddGauge_Name</c> (<c>0044b900</c>) hands out and which the message composer
 	/// (<c>PilotMessagePort_ComposeLine</c>, <c>00435d0c</c>) puts in front of the line the squadmate speaks. <see cref="NoSpeaker"/>
 	/// answers <c>HQ</c>, the composer's fallback for a record naming no object.
 	/// </summary>
+	/// <param name="slot">The slot.</param>
 	public string Name(int slot) =>
 		slot == NoSpeaker ? _headquarters
 		: slot >= 0 && slot < SlotCount ? _boxes[slot].Name : string.Empty;
 
 	/// <summary>
-	/// Whether the machine in slot <paramref name="slot"/> is destroyed — the machine's own flag,
+	/// Whether the machine in a slot is destroyed — the machine's own flag,
 	/// which <c>HddGauge_PaintIdle</c> reads to hand an idle box to the static paint, and which the
 	/// service loop reads as a message ends to latch the box's comms out. The owner of the machines
 	/// keeps it in step each frame.
@@ -249,6 +253,8 @@ public sealed class SquadCommChannel {
 	/// The difference matters for the scream, which is posted as the machine is destroyed and
 	/// would never get past the opening static if the latch followed the flag.</para>
 	/// </summary>
+	/// <param name="slot">The slot.</param>
+	/// <param name="destroyed">Whether the machine is destroyed.</param>
 	public void SetDestroyed(int slot, bool destroyed) {
 		if (slot >= 0 && slot < SlotCount) {
 			_boxes[slot].Destroyed = destroyed;
@@ -276,7 +282,8 @@ public sealed class SquadCommChannel {
 	/// </summary>
 	public void PostUnattributed(int messageId) => Port.Post(messageId, NoSpeaker);
 
-	/// <summary><c>Squad_IndexOf</c> — which box <paramref name="machine"/> talks in, or -1.</summary>
+	/// <summary><c>Squad_IndexOf</c> — which box a machine talks in, or -1.</summary>
+	/// <param name="machine">The machine.</param>
 	public int SlotOf(object? machine) {
 		if (machine == null) {
 			return -1;
@@ -362,9 +369,10 @@ public sealed class SquadCommChannel {
 	}
 
 	/// <summary>
-	/// Runs every box for one frame at <paramref name="coarseTicks"/> — the service loop's own state
+	/// Runs every box for one frame — the service loop's own state
 	/// machine, minus the painting. Call once per retail frame — see <see cref="MessagePorts.NoteRetailFrame"/>.
 	/// </summary>
+	/// <param name="coarseTicks">The current coarse tick.</param>
 	public void Update(long coarseTicks) {
 		_now = coarseTicks;
 		Port.Update(coarseTicks);
@@ -522,7 +530,7 @@ public sealed class SquadCommChannel {
 	}
 
 	/// <summary>
-	/// What slot <paramref name="slot"/>'s own box on the Heads-Down Display is showing, or null when
+	/// What a slot's own box on the Heads-Down Display is showing, or null when
 	/// it is showing the idle five labels instead. The service loop's paint dispatch, as a value:
 	/// <see cref="CommBoxState.Talking"/> gives the portrait frame and its <c>.OFS</c> offsets,
 	/// either static state gives the <c>STATIC</c> bank's current frame, and idle gives null — except
@@ -533,6 +541,7 @@ public sealed class SquadCommChannel {
 	/// <para>The name is carried on the record for both: the two video paints refresh the box's name
 	/// label and nothing else, so the plate survives the picture going over the rest of the box.</para>
 	/// </summary>
+	/// <param name="slot">The slot.</param>
 	public SquadTransmission? Video(int slot) {
 		if (slot < 0 || slot >= SlotCount) {
 			return null;

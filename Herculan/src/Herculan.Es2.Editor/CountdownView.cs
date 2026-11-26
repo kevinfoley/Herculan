@@ -22,7 +22,8 @@ internal sealed class CountdownView {
 		_links = links;
 	}
 
-	/// <summary>Row-11 GUID <paramref name="guid"/>'s view; nothing for a GUID the layout has no countdown for.</summary>
+	/// <summary>A row-11 countdown's view; nothing for a GUID the layout has no countdown for.</summary>
+	/// <param name="guid">The row-11 GUID.</param>
 	public void Draw(short guid) {
 		if (_index.Layout.Entry<ActionTimer30>(guid)?.Fields is not { } countdown) {
 			return;

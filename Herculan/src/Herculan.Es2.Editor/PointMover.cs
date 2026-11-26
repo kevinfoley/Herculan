@@ -16,11 +16,14 @@ internal abstract record MoveTarget;
 internal sealed record ObjectTarget(ObjectKey Key) : MoveTarget;
 
 /// <summary>
-/// Group <paramref name="Guid"/>, by its row-16 GUID, moved through the point it stands on: its own, else its slot-0
-/// route's first waypoint. <paramref name="Detach"/> when the move gives it a point of its own rather than moving the
-/// point it stands on. <paramref name="Carry"/> when a structure group's members standing on points of their own move by
-/// the same offset (<see cref="PointMover.CarriedMembers"/>).
+/// A group, moved through the point it stands on: its own, else its slot-0
+/// route's first waypoint.
 /// </summary>
+/// <param name="Guid">The group's row-16 GUID.</param>
+/// <param name="Detach">Whether the move gives it a point of its own rather than moving the
+/// point it stands on.</param>
+/// <param name="Carry">Whether a structure group's members standing on points of their own move by
+/// the same offset (<see cref="PointMover.CarriedMembers"/>).</param>
 internal sealed record GroupTarget(short Guid, bool Detach = false, bool Carry = false) : MoveTarget;
 
 /// <summary>
@@ -90,10 +93,11 @@ internal sealed class PointMover {
 	public MissionBox LoadedBox { get; }
 
 	/// <summary>
-	/// What <paramref name="selection"/> names that the move handles can drag: a movable object or group in the scene, by
+	/// What a selection names that the move handles can drag: a movable object or group in the scene, by
 	/// the record it stands for, or a waypoint, by its route's GUID; else null. An object or group out of the scene
 	/// (<see cref="PlannedGroup.OffScene"/>) has no handles.
 	/// </summary>
+	/// <param name="selection">The selection, or null for none.</param>
 	public MoveTarget? TargetOf(EditorSelection? selection) => selection switch {
 		ObjectSelection { Row: var row, Guid: var guid } when WhyFixed(new ObjectKey(row, guid)) == null
 				&& _index.ObjectOf(new ObjectKey(row, guid)) is { } placed && _index.InScene(placed) =>
@@ -105,9 +109,10 @@ internal sealed class PointMover {
 	};
 
 	/// <summary>
-	/// Everything of <paramref name="selection"/> the move handles drag: a trigger area's corners, or a circle's centre and
+	/// Everything of a selection the move handles drag: a trigger area's corners, or a circle's centre and
 	/// radius (<see cref="FeatureMoves.TargetsOf"/>); else <see cref="TargetOf"/>'s one target, or none.
 	/// </summary>
+	/// <param name="selection">The selection, or null for none.</param>
 	public IReadOnlyList<MoveTarget> TargetsOf(EditorSelection? selection) => selection is AreaSelection { Guid: var guid }
 		? _features.TargetsOf(guid)
 		: TargetOf(selection) is { } target ? [target] : [];
@@ -122,9 +127,11 @@ internal sealed class PointMover {
 	public IReadOnlyList<PointRef> SharersOf(WaypointTarget target) => _features.SharersOf(target);
 
 	/// <summary>
-	/// Sets the radius of circle trigger area <paramref name="area"/>, by its row-9 GUID, to <paramref name="radius"/> world
+	/// Sets the radius of a circle trigger area to a number of world
 	/// units, as one step of the undo history, as a drag of its radius handle does.
 	/// </summary>
+	/// <param name="area">The area's row-9 GUID.</param>
+	/// <param name="radius">The radius in world units.</param>
 	public void CommitRadius(short area, int radius) {
 		if (_index.Area(area)?.Area is not { } circle) {
 			return;
@@ -134,15 +141,17 @@ internal sealed class PointMover {
 		Commit(target, PositionOf(target), circle.A.X + radius, circle.A.Y, 0);
 	}
 
-	/// <summary>Why <paramref name="sceneObject"/> cannot be given a point of its own, or null when it can.</summary>
+	/// <summary>Why an object cannot be given a point of its own, or null when it can.</summary>
+	/// <param name="sceneObject">The object.</param>
 	public string? WhyFixed(SceneObject sceneObject) =>
 		_index.KeyOf(sceneObject) is { } key ? WhyFixed(key) : "Not found.";
 
 	/// <summary>
-	/// Why the object of <paramref name="key"/> cannot be given a point of its own, or null when it can. The player's squad
+	/// Why the object of a roster record cannot be given a point of its own, or null when it can. The player's squad
 	/// spreads from group 0 whatever point its records name (docs/retail/formats/script-dat.md#placement--the-actual-rule,
 	/// rule 6).
 	/// </summary>
+	/// <param name="key">The roster record.</param>
 	public string? WhyFixed(ObjectKey key) {
 		if (_index.Plan.Object(key) is not { } planned || _index.ObjectOf(key) == null
 				|| _source.Layout.Entry(key.Row, key.Guid) == null) {
@@ -153,9 +162,10 @@ internal sealed class PointMover {
 	}
 
 	/// <summary>
-	/// Why group <paramref name="guid"/> cannot be moved, or null when it can. A structure group that paints its ground
+	/// Why a group cannot be moved, or null when it can. A structure group that paints its ground
 	/// with no structure placed has no pad to snap by and nothing standing on its point.
 	/// </summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public string? WhyFixedGroup(short guid) {
 		if (_index.Group(guid) is not { } group) {
 			return EditorToolbox.GroupGone;
@@ -168,10 +178,11 @@ internal sealed class PointMover {
 	}
 
 	/// <summary>
-	/// The fields naming the point <paramref name="target"/>'s group stands on (trigger areas, other groups, waypoints), which
+	/// The fields naming the point a target's group stands on (trigger areas, other groups, waypoints), which
 	/// move with it unless it is detached: every field naming it but the group's own records'. For a group standing on its
 	/// route's first waypoint, that waypoint is one of them.
 	/// </summary>
+	/// <param name="target">The group target.</param>
 	public IReadOnlyList<PointRef> SharersOf(GroupTarget target) {
 		if (_index.Group(target.Guid) is not { } group) {
 			return [];
@@ -184,10 +195,11 @@ internal sealed class PointMover {
 	}
 
 	/// <summary>
-	/// The members a carrying move of structure group <paramref name="guid"/> takes along (<see cref="GroupTarget.Carry"/>):
+	/// The members a carrying move of a structure group takes along (<see cref="GroupTarget.Carry"/>):
 	/// those standing on a point of their own the layout has, but on none the group stands on, which a plain move moves
 	/// already; none for a group of any other kind.
 	/// </summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public IReadOnlyList<ObjectKey> CarriedMembers(short guid) {
 		if (_index.Group(guid) is not { Kind: MissionUnitKind.Base } group) {
 			return [];
@@ -198,9 +210,10 @@ internal sealed class PointMover {
 	}
 
 	/// <summary>
-	/// The fields naming the points <see cref="CarriedMembers"/> stand on, which a carrying move of group
-	/// <paramref name="guid"/> moves with them: every field naming them but those members' own and the group's.
+	/// The fields naming the points <see cref="CarriedMembers"/> stand on, which a carrying move of a group
+	/// moves with them: every field naming them but those members' own and the group's.
 	/// </summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public IReadOnlyList<PointRef> CarriedSharersOf(short guid) {
 		var members = CarriedMembers(guid);
 		var carried = members.Select(member => member.Guid).ToHashSet();
@@ -213,10 +226,12 @@ internal sealed class PointMover {
 			.ToList();
 	}
 
-	/// <summary>Whether a point's Z is the mission's to set for <paramref name="sceneObject"/>: only a flyer's is.</summary>
+	/// <summary>Whether a point's Z is the mission's to set for an object: only a flyer's is.</summary>
+	/// <param name="sceneObject">The object.</param>
 	public static bool HasOwnHeight(SceneObject sceneObject) => sceneObject.Object is FlyerObject;
 
-	/// <summary>Whether <paramref name="target"/> takes a height: a flyer or a flyer group alone.</summary>
+	/// <summary>Whether a target takes a height: a flyer or a flyer group alone.</summary>
+	/// <param name="target">The target.</param>
 	public bool HasOwnHeight(MoveTarget target) => target switch {
 		ObjectTarget { Key: var key } => _index.ObjectOf(key) is { } placed && HasOwnHeight(placed),
 		GroupTarget group => _index.Group(group.Guid)?.Kind == MissionUnitKind.Flyer,
@@ -224,10 +239,11 @@ internal sealed class PointMover {
 	};
 
 	/// <summary>
-	/// Where <paramref name="target"/> stands now, in world units, a drag's preview included. A group's is its authored
+	/// Where a target stands now, in world units, a drag's preview included. A group's is its authored
 	/// point, before a paints-ground snap; a flyer group's height is where its first member is drawn, 5000 for a point at Z 0 (rule 5)
 	/// or clear of the ground (<see cref="GroundStanding.Settled"/>).
 	/// </summary>
+	/// <param name="target">The target.</param>
 	public Vec3i PositionOf(MoveTarget target) => target switch {
 		ObjectTarget { Key: var key } when _index.ObjectOf(key) is { } placed => placed.Object.Position,
 		GroupTarget { Guid: var guid } when _index.Group(guid) is { Setup.AuthoredPoint: var point } group =>
@@ -248,10 +264,13 @@ internal sealed class PointMover {
 	}
 
 	/// <summary>
-	/// Where <paramref name="target"/> stands for a point at (<paramref name="x"/>, <paramref name="y"/>,
-	/// <paramref name="z"/>): an object where the simulator stands it, <paramref name="z"/> read for a flyer alone; a
-	/// waypoint at Z 0; a group at <paramref name="z"/> when it is a flyer group, else at its point's own Z.
+	/// Where a target stands for a point: an object where the simulator stands it, the Z read for a flyer alone; a
+	/// waypoint at Z 0; a group at the Z when it is a flyer group, else at its point's own Z.
 	/// </summary>
+	/// <param name="target">The target.</param>
+	/// <param name="x">The point's X.</param>
+	/// <param name="y">The point's Y.</param>
+	/// <param name="z">The point's Z.</param>
 	public Vec3i Standing(MoveTarget target, int x, int y, int z) => target switch {
 		ObjectTarget { Key: var key } when _index.ObjectOf(key) is { } placed => GroundStanding.Standing(_terrain, placed, x, y, z),
 		GroupTarget group => new Vec3i(x, y, HasOwnHeight(group) ? z : PositionOf(group).Z),
@@ -260,41 +279,47 @@ internal sealed class PointMover {
 	};
 
 	/// <summary>
-	/// Whether group <paramref name="guid"/> stands on a point the layout has, its own or its route's first waypoint's,
+	/// Whether a group stands on a point the layout has, its own or its route's first waypoint's,
 	/// rather than at the origin.
 	/// </summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public bool StandsOnPoint(short guid) => _index.Group(guid) is { } group && (group.OwnPoint != -1 || group.StartPoints.Count > 0);
 
-	/// <summary>Whether group <paramref name="guid"/> has no point of its own and stands on its slot-0 route's first waypoint.</summary>
+	/// <summary>Whether a group has no point of its own and stands on its slot-0 route's first waypoint.</summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public bool OnRouteStart(short guid) => _index.Group(guid) is { OwnPoint: -1, StartPoints.Count: > 0 };
 
 	/// <summary>Why the last <see cref="Reattach"/> or <see cref="ReturnToRoute"/> could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
 	/// <summary>
-	/// Whether the object of <paramref name="key"/> can be given a point of its own and stands on one the layout has, which
+	/// Whether the object of a roster record can be given a point of its own and stands on one the layout has, which
 	/// <see cref="Reattach"/> drops.
 	/// </summary>
+	/// <param name="key">The roster record.</param>
 	public bool StandsOnOwnPoint(ObjectKey key) =>
 		WhyFixed(key) == null && _source.Layout.Entry(key.Row, key.Guid)?.Fields is { } fields
 			&& Point(MsnField.RosterPosition(key.Row).Get(fields)) != null;
 
 	/// <summary>
-	/// Whether group <paramref name="guid"/> stands on a point of its own while its slot-0 route has a start to stand on
+	/// Whether a group stands on a point of its own while its slot-0 route has a start to stand on
 	/// instead, which <see cref="ReturnToRoute"/> puts it back on.
 	/// </summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public bool CanReturnToRoute(short guid) => _index.Group(guid) is { OwnPoint: not -1, StartPoints.Count: > 0 };
 
 	/// <summary>
-	/// Drops the point of its own the object of <paramref name="key"/> stands on, as one step of the undo history, so it stands
+	/// Drops the point of its own the object of a roster record stands on, as one step of the undo history, so it stands
 	/// on its place in its group's formation again (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 2).
 	/// </summary>
+	/// <param name="key">The roster record.</param>
 	public void Reattach(ObjectKey key) => DropOwnPoint(MsnField.RosterPosition(key.Row), key.Guid);
 
 	/// <summary>
-	/// Drops group <paramref name="guid"/>'s point of its own, as one step of the undo history, so it stands on its slot-0
+	/// Drops a group's point of its own, as one step of the undo history, so it stands on its slot-0
 	/// route's first waypoint again (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 3).
 	/// </summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public void ReturnToRoute(short guid) => DropOwnPoint(MsnField.GroupPosition, guid);
 
 	// Unsets <field>, a point of the record's own, in its base records, leaving records under other conditions setting it, and
@@ -322,10 +347,12 @@ internal sealed class PointMover {
 	}
 
 	/// <summary>
-	/// Stands <paramref name="target"/> at <paramref name="position"/> as a drag does before it lets go, writing nothing
+	/// Stands a target at a position as a drag does before it lets go, writing nothing
 	/// until <see cref="Commit"/>: whatever stands on what moves, the route and area lines included, is placed from the
 	/// layout with the drag's overrides.
 	/// </summary>
+	/// <param name="target">The target.</param>
+	/// <param name="position">Where the drag has it.</param>
 	public void Preview(MoveTarget target, Vec3i position) {
 		_sync.Preview(target switch {
 			GroupTarget group => GroupOverrides(group, position),
@@ -342,9 +369,14 @@ internal sealed class PointMover {
 	}
 
 	/// <summary>
-	/// Moves <paramref name="target"/> to (<paramref name="x"/>, <paramref name="y"/>, <paramref name="z"/>) for good,
-	/// as one step of the undo history: writes the <c>.MSN</c> and syncs the scene. <paramref name="before"/> is where it stood before any <see cref="Preview"/> of this move.
+	/// Moves a target to a point for good,
+	/// as one step of the undo history: writes the <c>.MSN</c> and syncs the scene.
 	/// </summary>
+	/// <param name="target">The target.</param>
+	/// <param name="before">Where it stood before any <see cref="Preview"/> of this move.</param>
+	/// <param name="x">The point's X.</param>
+	/// <param name="y">The point's Y.</param>
+	/// <param name="z">The point's Z.</param>
 	public void Commit(MoveTarget target, Vec3i before, int x, int y, int z) {
 		string? fixedNow = target switch {
 			ObjectTarget { Key: var key } => WhyFixed(key),

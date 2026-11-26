@@ -47,9 +47,12 @@ internal sealed class TriggerThenCountdowns {
 	private MissionNames Names => _links.Names;
 
 	/// <summary>
-	/// Row-10 GUID <paramref name="guid"/>'s <paramref name="countdowns"/>, every control disabled when <paramref name="locked"/>;
-	/// <paramref name="chain"/> holds the triggers whose lists are open around this one. Whether there was any.
+	/// A row-10 trigger's countdowns; whether there was any.
 	/// </summary>
+	/// <param name="guid">The trigger's row-10 GUID.</param>
+	/// <param name="countdowns">The countdowns.</param>
+	/// <param name="locked">Whether every control is disabled.</param>
+	/// <param name="chain">The triggers whose lists are open around this one.</param>
 	public bool Draw(short guid, IReadOnlyList<StartsCountdown> countdowns, bool locked, HashSet<short> chain) {
 		if (countdowns.Count == 0) {
 			return false;
@@ -78,9 +81,11 @@ internal sealed class TriggerThenCountdowns {
 	}
 
 	/// <summary>
-	/// Row-11 GUID <paramref name="countdown"/> as a read-only Then list shows it: its link, and its own trigger's list under it
-	/// as deep as the editable list nests, unless <paramref name="chain"/> holds that trigger.
+	/// A row-11 countdown as a read-only Then list shows it: its link, and its own trigger's list under it
+	/// as deep as the editable list nests, unless the chain holds that trigger.
 	/// </summary>
+	/// <param name="countdown">The countdown's row-11 GUID.</param>
+	/// <param name="chain">The triggers whose lists are open around this one.</param>
 	public void DrawSummary(short countdown, HashSet<short> chain) {
 		_links.Countdown(countdown, EditorText.AfterRoom(" starts"));
 		EditorText.After(" starts");

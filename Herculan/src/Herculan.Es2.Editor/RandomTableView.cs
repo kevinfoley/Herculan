@@ -33,9 +33,10 @@ internal sealed class RandomTableView {
 	}
 
 	/// <summary>
-	/// Draws the Random table view of row-1 GUID <paramref name="guid"/> when it is a random table, or one of a table's ranges,
+	/// Draws the Random table view of a row-1 condition when it is a random table, or one of a table's ranges,
 	/// that range's option highlighted; answers false, drawing nothing, for any other condition.
 	/// </summary>
+	/// <param name="guid">The condition's row-1 GUID.</param>
 	public bool DrawTableOf(short guid) {
 		var source = _editor.Source;
 		short? table = RandomTableEditing.IsTable(source, guid) ? guid : RandomTableEditing.TableOfRange(source, guid);
@@ -264,10 +265,12 @@ internal sealed class RandomTableView {
 	}
 
 	/// <summary>
-	/// The Random table line of the view of roster row <paramref name="row"/>'s GUID <paramref name="guid"/> when it picks from a
+	/// The Random table line of the view of a roster row's GUID when it picks from a
 	/// table and no choice of it is offered there, a squad herc's or one whose table the editor shows only: a link to the table
 	/// and which option the scene shows it with.
 	/// </summary>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
 	public void DrawPickedTable(int row, short guid) {
 		if (RandomTableEditing.TableOf(_editor.Source, row, guid) is not { } picked) {
 			return;
@@ -282,9 +285,10 @@ internal sealed class RandomTableView {
 	}
 
 	/// <summary>
-	/// The Random table line of route <paramref name="guid"/>'s view when its waypoints are an option of a random table: which
+	/// The Random table line of a route's view when its waypoints are an option of a random table: which
 	/// option, with a link to the table, and that an edit changes that option wherever it is picked.
 	/// </summary>
+	/// <param name="guid">The route's row-8 GUID.</param>
 	public void DrawRouteTable(short guid) {
 		const int routeRow = 8;
 		if (RandomTableEditing.TableOf(_editor.Source, routeRow, guid) is not { } table || _tables.Read(table) is not { } read) {
@@ -310,9 +314,12 @@ internal sealed class RandomTableView {
 	}
 
 	/// <summary>
-	/// The option of <paramref name="table"/> the layout shows the key record of roster row <paramref name="row"/>'s GUID
-	/// <paramref name="guid"/> with, an index into its options, or null for none of them.
+	/// The option of a table the layout shows the key record of a roster row's GUID
+	/// with, an index into its options, or null for none of them.
 	/// </summary>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="table">The table.</param>
 	internal int? ShownAt(int row, short guid, RandomTable table) {
 		var source = _editor.Source;
 		if (RandomTableEditing.KeyRecord(source, row, guid) is not { } key
@@ -326,7 +333,8 @@ internal sealed class RandomTableView {
 
 	private string TitleOf(short table) => _tables.Read(table) is { } read ? _tables.Title(read) : $"Condition {table}";
 
-	/// <summary>What the view of <paramref name="placed"/> calls it: herc, flyer, ground vehicle or structure.</summary>
+	/// <summary>What the view of an object calls it: herc, flyer, ground vehicle or structure.</summary>
+	/// <param name="placed">The object.</param>
 	internal static string Noun(SceneObject placed) => placed.Placement.Kind switch {
 		MissionUnitKind.Mech => "HERC",
 		MissionUnitKind.Flyer => "flyer",

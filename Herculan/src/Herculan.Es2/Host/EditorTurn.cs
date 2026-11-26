@@ -4,10 +4,13 @@ using Herculan.Es2.World;
 namespace Herculan.Es2.Host;
 
 /// <summary>
-/// One turn of the mission editor, in <paramref name="window"/> on <paramref name="session"/>'s install, opening
-/// <paramref name="mission"/> or, for null, the mission it last had open. The host builds it, since the editor's assembly
+/// One turn of the mission editor on a session's install, opening
+/// a mission or, for null, the mission it last had open. The host builds it, since the editor's assembly
 /// references this one; <see cref="Launcher"/> runs it between the shell's turns.
 /// </summary>
+/// <param name="session">The session.</param>
+/// <param name="window">The window the turn runs in.</param>
+/// <param name="mission">The mission to open, or null for the one it last had open.</param>
 public delegate EditorTurnEnd EditorTurn(HostSession session, HostWindow window, string? mission);
 
 /// <summary>How a turn of the mission editor ended.</summary>

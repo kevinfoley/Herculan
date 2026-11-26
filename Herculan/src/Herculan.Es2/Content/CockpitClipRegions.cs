@@ -4,10 +4,11 @@ using Herculan.Engine.Content;
 namespace Herculan.Es2.Content;
 
 /// <summary>
-/// One horizontal run of pixels on a single scanline: <paramref name="Start"/> is the leftmost column
-/// and <paramref name="Length"/> the number of columns, matching the original's own
+/// One horizontal run of pixels on a single scanline, matching the original's own
 /// <c>{int start, int length}</c> span pairs.
 /// </summary>
+/// <param name="Start">The leftmost column.</param>
+/// <param name="Length">The number of columns.</param>
 public readonly record struct ClipSpan(int Start, int Length);
 
 /// <summary>
@@ -58,12 +59,15 @@ public sealed class CockpitClipRegions {
 		y >= 0 && y < _rows.Length ? _rows[y] : Array.Empty<ClipSpan>();
 
 	/// <summary>
-	/// Loads one view's cutout for <paramref name="hercName"/>. <paramref name="viewIndex"/> is the
-	/// original's own view number: 0 forward, 1 heads-down, 2 and 3 the two sideways glances (2 and 3
-	/// share a canopy bitmap but have their own clip files). Returns null when the file is missing or
+	/// Loads one view's cutout for a herc. Returns null when the file is missing or
 	/// malformed — the caller decides what to do about it rather than getting a silently empty mask,
 	/// since "no spans" and "no file" mean opposite things here.
 	/// </summary>
+	/// <param name="content">The game content.</param>
+	/// <param name="hercName">The herc's name.</param>
+	/// <param name="viewIndex">The original's own view number: 0 forward, 1 heads-down, 2 and 3 the two sideways glances (2 and 3
+	/// share a canopy bitmap but have their own clip files).</param>
+	/// <param name="hiRes">Whether the high-resolution file is read.</param>
 	public static CockpitClipRegions? Load(GameContent content, string hercName, int viewIndex, bool hiRes = true) {
 		string stem = hiRes ? HiResFolderStem : LoResFolderStem;
 		string folder = stem + viewIndex.ToString();

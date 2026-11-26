@@ -100,10 +100,17 @@ sealed class SimulatorHost : IDisposable {
 	private FixedResolutionTarget? _retailFrame;
 
 	/// <summary>
-	/// Runs one mission in <paramref name="window"/> with -R&lt;n&gt;'s track select, and returns its exit code
-	/// (Sim_Shutdown, 00461eec): 1 when there was nothing to run. <paramref name="developer"/> turns developer mode on
-	/// whatever <c>--developer</c> says, as the mission editor's Play does.
+	/// Runs one mission in a window with -R&lt;n&gt;'s track select, and returns its exit code
+	/// (Sim_Shutdown, 00461eec): 1 when there was nothing to run.
 	/// </summary>
+	/// <param name="session">The session.</param>
+	/// <param name="window">The window.</param>
+	/// <param name="options">The options.</param>
+	/// <param name="staging">The simulator's staging.</param>
+	/// <param name="shellLaunch">The shell's launch, or null for none.</param>
+	/// <param name="demoTape">Whether a demo tape is played.</param>
+	/// <param name="trackSelect">The <c>-R</c> track select.</param>
+	/// <param name="developer">Whether developer mode is on whatever <c>--developer</c> says, as the mission editor's Play does.</param>
 	public static int Run(HostSession session, HostWindow window, Es2Options options, SimulatorStaging staging,
 			ShellLaunch? shellLaunch, bool demoTape, int trackSelect, bool developer = false) {
 		using var loading = new LoadingScreen(window);

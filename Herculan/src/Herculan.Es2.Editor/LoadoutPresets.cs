@@ -54,20 +54,26 @@ internal sealed class LoadoutPresets {
 		}
 	}
 
-	/// <summary>The presets of <c>MECHS.NAM</c> type <paramref name="chassis"/>, by name.</summary>
+	/// <summary>The presets of a <c>MECHS.NAM</c> type, by name.</summary>
+	/// <param name="chassis">The <c>MECHS.NAM</c> type.</param>
 	public IReadOnlyList<LoadoutPreset> For(int chassis) =>
 		_presets.Where(preset => preset.Chassis == chassis).OrderBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
-	/// <summary>The preset of <paramref name="chassis"/> named <paramref name="name"/>, trimmed and ignoring case, or null.</summary>
+	/// <summary>The preset of a chassis of a name, trimmed and ignoring case, or null.</summary>
+	/// <param name="chassis">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="name">The preset's name.</param>
 	public LoadoutPreset? Find(int chassis, string name) {
 		string trimmed = name.Trim();
 		return _presets.FirstOrDefault(preset => preset.Chassis == chassis && SameName(preset.Name, trimmed));
 	}
 
 	/// <summary>
-	/// Saves <paramref name="slots"/> as <paramref name="chassis"/>'s preset <paramref name="name"/>, trimmed, in place of one
+	/// Saves some slots as a chassis's preset of a name, trimmed, in place of one
 	/// of that name, and writes the file.
 	/// </summary>
+	/// <param name="chassis">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="name">The preset's name.</param>
+	/// <param name="slots">The slots.</param>
 	public void Save(int chassis, string name, IReadOnlyList<LoadoutPresetSlot> slots) {
 		string trimmed = name.Trim();
 		if (trimmed.Length == 0) {
@@ -79,7 +85,9 @@ internal sealed class LoadoutPresets {
 		Write();
 	}
 
-	/// <summary>Deletes <paramref name="chassis"/>'s preset <paramref name="name"/>, ignoring case, and writes the file.</summary>
+	/// <summary>Deletes a chassis's preset of a name, ignoring case, and writes the file.</summary>
+	/// <param name="chassis">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="name">The preset's name.</param>
 	public void Delete(int chassis, string name) {
 		string trimmed = name.Trim();
 		if (_presets.RemoveAll(preset => preset.Chassis == chassis && SameName(preset.Name, trimmed)) > 0) {

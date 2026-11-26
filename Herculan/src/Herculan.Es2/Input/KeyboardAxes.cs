@@ -88,9 +88,11 @@ public static class KeyboardAxes {
 	/// rather than <see cref="MechControls.KeyboardAxis"/>, so a held key turns the turret as fast as the stick can
 	/// (<see cref="Engine.Settings.TweakSettingDefinitions.FasterKeyboardAiming"/>). <b>This engine's own</b>; retail's key
 	/// is worth half a stick. The second pair aims the turret in a walker; the first does too when
-	/// <paramref name="firstPairAims"/>, the stick having taken the movement pair
+	/// the stick has taken the movement pair
 	/// (<see cref="JoystickPilotInput.KeyboardAimsTurret"/>).
 	/// </summary>
+	/// <param name="keys">The keyboard's axes.</param>
+	/// <param name="firstPairAims">Whether the first pair aims the turret too.</param>
 	public static PilotAxes AtStickRate(PilotAxes keys, bool firstPairAims) => new(
 		firstPairAims ? AtStickRate(keys.Steer) : keys.Steer,
 		firstPairAims ? AtStickRate(keys.Throttle) : keys.Throttle,

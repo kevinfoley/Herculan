@@ -18,7 +18,8 @@ internal sealed record ZoneChoice(short Zone, int Width, int Height) {
 		$"Zone {Zone} ({Kilometres(Width)} by {Kilometres(Height)} km): "
 		+ (UsedBy.Count > 0 ? $"used by {string.Join(", ", UsedBy)}" : "used by no retail mission");
 
-	/// <summary><paramref name="worldUnits"/> in kilometers, to one decimal place.</summary>
+	/// <summary>A distance in kilometers, to one decimal place.</summary>
+	/// <param name="worldUnits">The distance in world units.</param>
 	public static string Kilometres(int worldUnits) =>
 		(worldUnits / Engine.Render.WorldScale.WorldUnitsPerMeter / 1000f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
 }
@@ -33,7 +34,8 @@ internal static class MissionZones {
 	private const string HeaderExtension = ".DAT";
 	private const string HeightmapExtension = ".DBA";
 
-	/// <summary>Every zone <paramref name="simulator"/>, DBSIM's mount, holds both readable resources of, in number order.</summary>
+	/// <summary>Every zone the simulator, DBSIM's mount, holds both readable resources of, in number order.</summary>
+	/// <param name="simulator">DBSIM's mount.</param>
 	public static IReadOnlyList<ZoneChoice> List(GameContent simulator) {
 		var zones = new List<ZoneChoice>();
 		foreach (string name in simulator.ListFolder(TerrainZoneLoader.HeaderFolder)) {

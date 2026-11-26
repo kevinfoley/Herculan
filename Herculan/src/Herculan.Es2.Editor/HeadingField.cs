@@ -28,7 +28,9 @@ internal sealed class HeadingField {
 		_editor = editor;
 	}
 
-	/// <summary>Draws <paramref name="key"/>'s heading, <paramref name="facing"/> the binary angle its object faces.</summary>
+	/// <summary>Draws an object's heading.</summary>
+	/// <param name="key">The object.</param>
+	/// <param name="facing">The binary angle the object faces.</param>
 	public void DrawObject(ObjectKey key, int facing) {
 		if (key.Row != StructureRow || _editor.Source.Layout.Entry(key.Row, key.Guid) == null) {
 			ImGui.Text($"Heading: {MissionText.Heading(facing)}");
@@ -40,9 +42,12 @@ internal sealed class HeadingField {
 	}
 
 	/// <summary>
-	/// Draws row-16 GUID <paramref name="guid"/>'s heading, <paramref name="facing"/> the binary angle it faces, and whether
-	/// its first order's route has a first leg to face along (<paramref name="alongRoute"/>).
+	/// Draws a row-16 group's heading, and whether
+	/// its first order's route has a first leg to face along.
 	/// </summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
+	/// <param name="facing">The binary angle the group faces.</param>
+	/// <param name="alongRoute">Whether its first order's route has a first leg to face along.</param>
 	public void DrawGroup(short guid, int facing, bool alongRoute) {
 		if (_editor.Source.Layout.Entry(GroupRow, guid) == null) {
 			ImGui.Text($"Heading: {MissionText.Heading(facing)}");
@@ -57,8 +62,13 @@ internal sealed class HeadingField {
 
 	/// <summary>
 	/// Draws the choice of heading source. An own heading shows its degrees beside the choice; no own heading shows the
-	/// <paramref name="without"/> note below it. Last come the other headings the mission names under conditions.
+	/// without note below it. Last come the other headings the mission names under conditions.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="facing">The binary angle it faces.</param>
+	/// <param name="sources">The heading sources offered.</param>
+	/// <param name="without">The note shown below the choice when there is no own heading.</param>
 	/// <param name="turns">What the heading turns, shown on hover; none when null.</param>
 	private void Draw(int row, short guid, int facing, string[] sources, string without, string? turns = null) {
 		var source = _editor.Source;

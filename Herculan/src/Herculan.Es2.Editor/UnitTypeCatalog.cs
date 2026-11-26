@@ -79,7 +79,8 @@ internal sealed class UnitTypeCatalog {
 		Entries = entries;
 	}
 
-	/// <summary>A catalog of <paramref name="entries"/> alone, with nothing left out.</summary>
+	/// <summary>A catalog of some entries alone, with nothing left out.</summary>
+	/// <param name="entries">The entries.</param>
 	internal UnitTypeCatalog(IReadOnlyList<(ToolboxKind Kind, int TypeIndex, string Name)> entries) => Entries = entries;
 
 	/// <summary>Every type offered, by kind: the hercs, the flyers, the ground vehicles, then the structures, each in type order.</summary>
@@ -91,25 +92,35 @@ internal sealed class UnitTypeCatalog {
 	/// <summary>The vehicle types not offered, which DBSIM builds no object for; null when there are none.</summary>
 	public string? VehiclesLeftOut { get; }
 
-	/// <summary>The types of <paramref name="kind"/> offered, in type order.</summary>
+	/// <summary>The types of a kind offered, in type order.</summary>
+	/// <param name="kind">The kind.</param>
 	public IEnumerable<int> Of(ToolboxKind kind) => Entries.Where(entry => entry.Kind == kind).Select(entry => entry.TypeIndex);
 
-	/// <summary>The types of <paramref name="kind"/> offered for <paramref name="side"/>, in type order (<see cref="OffersFor"/>).</summary>
+	/// <summary>The types of a kind offered for a side, in type order (<see cref="OffersFor"/>).</summary>
+	/// <param name="kind">The kind.</param>
+	/// <param name="side">The side.</param>
 	public IEnumerable<int> Of(ToolboxKind kind, MissionSide side) => Of(kind).Where(type => OffersFor(kind, type, side));
 
 	/// <summary>
-	/// Whether type <paramref name="typeIndex"/> of <paramref name="kind"/> is offered for <paramref name="side"/>: every type
+	/// Whether a type of a kind is offered for a side: every type
 	/// is, but for the Cybrids the hercs leave out the nine chassis the player pilots (<see cref="HercGroups.FirstCybridType"/>)
 	/// and offer the Cybrids' own (the editor's choice).
 	/// </summary>
+	/// <param name="kind">The kind.</param>
+	/// <param name="typeIndex">The type's index.</param>
+	/// <param name="side">The side.</param>
 	public static bool OffersFor(ToolboxKind kind, int typeIndex, MissionSide side) =>
 		kind != ToolboxKind.Herc || side != MissionSide.Cybrid || HercGroups.IsCybrid(typeIndex);
 
-	/// <summary>The name a type of <paramref name="kind"/> is offered under, or <c>Type n</c> for one not offered.</summary>
+	/// <summary>The name a type of a kind is offered under, or <c>Type n</c> for one not offered.</summary>
+	/// <param name="kind">The kind.</param>
+	/// <param name="typeIndex">The type's index.</param>
 	public string NameOf(ToolboxKind kind, int typeIndex) =>
 		Entries.FirstOrDefault(entry => entry.Kind == kind && entry.TypeIndex == typeIndex).Name ?? $"Type {typeIndex}";
 
-	/// <summary>The types an object of <paramref name="kind"/> is offered as its own: those of its <see cref="KindOf"/>.</summary>
+	/// <summary>The types an object of a kind is offered as its own: those of its <see cref="KindOf"/>.</summary>
+	/// <param name="kind">The object's kind.</param>
+	/// <param name="isVehicle">Whether the object is a ground vehicle.</param>
 	public IEnumerable<int> ChoicesFor(MissionUnitKind kind, bool isVehicle) => Of(KindOf(kind, isVehicle));
 
 	/// <summary>

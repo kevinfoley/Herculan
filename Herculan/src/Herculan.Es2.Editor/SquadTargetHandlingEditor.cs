@@ -72,7 +72,8 @@ internal sealed class SquadTargetHandlingEditor {
 		}
 	}
 
-	/// <summary>Asks for the squad target handling to be <paramref name="choice"/>, one of <see cref="Choices"/>.</summary>
+	/// <summary>Asks for the squad target handling to be one of <see cref="Choices"/>.</summary>
+	/// <param name="choice">The choice.</param>
 	public void Request(short choice) => _requested = choice;
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
@@ -98,7 +99,8 @@ internal sealed class SquadTargetHandlingEditor {
 		_history.Record(new RecordsEdit(_sync, change));
 	}
 
-	/// <summary>The choice squad target handling <paramref name="type"/> plays as.</summary>
+	/// <summary>The choice a squad target handling type plays as.</summary>
+	/// <param name="type">The squad target handling type.</param>
 	public static short Choice(short type) =>
 		type is MechObject.SquadTargetHandlingAnnounce or MechObject.SquadTargetHandlingDataLink or MechObject.SquadTargetHandlingDataLinkAlt
 			? type

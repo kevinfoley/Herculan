@@ -35,9 +35,12 @@ internal static class RosterCountsOverlay {
 	private const float TooltipWidth = 400f;
 
 	/// <summary>
-	/// Draws the readout over the viewport, its bottom-left corner a margin in from <paramref name="viewportLeft"/> and the
+	/// Draws the readout over the viewport, its bottom-left corner a margin in from the viewport's left and the
 	/// display's bottom, in an input-transparent window so a click there still picks the scene, as the compass's is.
 	/// </summary>
+	/// <param name="layout">The layout.</param>
+	/// <param name="display">The display size.</param>
+	/// <param name="viewportLeft">The viewport's left edge.</param>
 	public static void Draw(MissionLayout layout, Vector2 display, float viewportLeft) {
 		float margin = ScaledImGui.Scaled(Margin);
 		ImGui.SetNextWindowPos(new Vector2(viewportLeft + margin, display.Y - margin), ImGuiCond.Always, new Vector2(0f, 1f));

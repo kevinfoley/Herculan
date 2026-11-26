@@ -77,9 +77,12 @@ public sealed class RetailInstaller {
 		[Language.English, Language.French, Language.German];
 
 	/// <summary>
-	/// An installer for <paramref name="source"/>, or null with the reason when it holds no <c>SIERRA.INF</c> or one
-	/// of a version this does not know. <paramref name="version"/> is the version line's value, when there is one.
+	/// An installer for a source, or null with the reason when it holds no <c>SIERRA.INF</c> or one
+	/// of a version this does not know.
 	/// </summary>
+	/// <param name="source">The disc.</param>
+	/// <param name="problem">Receives the reason when there is no installer.</param>
+	/// <param name="version">Receives the version line's value, when there is one.</param>
 	public static RetailInstaller? Identify(GameDisc source, out Problem problem, out string? version) {
 		problem = Problem.NoScript;
 		version = null;
@@ -109,15 +112,18 @@ public sealed class RetailInstaller {
 	}
 
 	/// <summary>
-	/// What the script copies for <paramref name="size"/> and <paramref name="language"/>: each file's path on the
+	/// What the script copies for a size and language: each file's path on the
 	/// disc and under the install, renames already applied.
 	///
-	/// <para>With <paramref name="discFiles"/>, also what both programs read from the disc at every size, for the
+	/// <para>With the disc files, also what both programs read from the disc at every size, for the
 	/// language the install runs in: the <c>AVI</c> folder, a v1.10 French or German install's intro folder, the
 	/// training instructor's clip folder, and the language folder's on-line manual. No retail script copies these
 	/// (docs/retail/retail-builds.md, "The installer"); this engine's option, so an install plays them without its
 	/// disc, through <see cref="GameInstall.OpenDiscFile"/>'s fallback to the install.</para>
 	/// </summary>
+	/// <param name="size">The install size.</param>
+	/// <param name="language">The language.</param>
+	/// <param name="discFiles">Whether the disc files are included.</param>
 	public IReadOnlyList<(string Source, string Destination)> Plan(Size size, Language language, bool discFiles) {
 		var files = new List<(string, string)>();
 		void Add(params string[] paths) => files.AddRange(paths.Select(path => (path, path)));
@@ -178,7 +184,8 @@ public sealed class RetailInstaller {
 		_ => GameLanguage.English,
 	};
 
-	/// <summary>The bytes <paramref name="plan"/> copies (<see cref="DiscCopy.PlanBytes"/>).</summary>
+	/// <summary>The bytes a plan copies (<see cref="DiscCopy.PlanBytes"/>).</summary>
+	/// <param name="plan">The plan.</param>
 	public long PlanBytes(IReadOnlyList<(string Source, string Destination)> plan) => DiscCopy.PlanBytes(_source, plan);
 
 	/// <summary>
@@ -189,7 +196,7 @@ public sealed class RetailInstaller {
 		_source.Image == null ? GameInstall.CheckDiscDirectory(_source.Location) : null;
 
 	/// <summary>
-	/// Copies <see cref="Plan"/>, with or without <paramref name="discFiles"/>, into <paramref name="destination"/>
+	/// Copies <see cref="Plan"/>, with or without the disc files, into a destination
 	/// (<see cref="DiscCopy.Copy"/>), then writes <c>BATCH.EXE</c>'s three files:
 	/// <list type="number">
 	/// <item><c>data\drive.cfg</c>: the disc folder and the install, one per line. From an image, the disc line is
@@ -200,6 +207,12 @@ public sealed class RetailInstaller {
 	/// </list>
 	/// A failure or a cancellation removes what this wrote and rethrows.
 	/// </summary>
+	/// <param name="destination">The destination.</param>
+	/// <param name="size">The install size.</param>
+	/// <param name="language">The language.</param>
+	/// <param name="discFiles">Whether the disc files are copied too.</param>
+	/// <param name="progress">Receives progress, or null for none.</param>
+	/// <param name="cancellation">Cancels the copy.</param>
 	/// <exception cref="InvalidOperationException">The destination is refused, a file the plan names is not on the
 	/// disc, or there is not room for it.</exception>
 	public void Install(string destination, Size size, Language language, bool discFiles,
@@ -234,9 +247,10 @@ public sealed class RetailInstaller {
 	private static string Under(string root, string relative) => DiscCopy.Under(root, relative);
 
 	/// <summary>
-	/// <paramref name="language"/>'s folder on the disc, which holds its manual and readme (and in v1.10 its
+	/// A language's folder on the disc, which holds its manual and readme (and in v1.10 its
 	/// <c>ERROR</c> and <c>MISSION</c> text), and that text's extension.
 	/// </summary>
+	/// <param name="language">The language.</param>
 	public static (string Folder, string Extension) LanguageFolder(Language language) => language switch {
 		Language.French => ("FRENCH", "FRE"),
 		Language.German => ("GERMAN", "GER"),

@@ -16,11 +16,15 @@ internal sealed class PointFields {
 	private Vec3i _draft;
 
 	/// <summary>
-	/// Draws <paramref name="at"/>'s X and Y, and Z when <paramref name="withZ"/>, as fields for <paramref name="key"/>,
-	/// disabled when not <paramref name="enabled"/>. Answers the point typed once a field lets go after an edit that
-	/// changes it, Z kept as <paramref name="at"/>'s without <paramref name="withZ"/>; else null. A view drawing several
-	/// points gives each its own <paramref name="key"/>, compared by <see cref="object.Equals(object?)"/>, and its own ImGui ID.
+	/// Draws a point's X and Y, and Z when asked, as fields for a key,
+	/// disabled when not enabled. Answers the point typed once a field lets go after an edit that
+	/// changes it, Z kept as the point's without the Z; else null. A view drawing several
+	/// points gives each its own key, compared by <see cref="object.Equals(object?)"/>, and its own ImGui ID.
 	/// </summary>
+	/// <param name="key">What the fields edit.</param>
+	/// <param name="at">The point.</param>
+	/// <param name="withZ">Whether Z is drawn too.</param>
+	/// <param name="enabled">Whether the fields are enabled.</param>
 	public Vec3i? Draw(object key, Vec3i at, bool withZ, bool enabled = true) {
 		// Another point's draft is dropped once nothing is being typed: the selection moved on.
 		if (_draftFor != null && !_draftFor.Equals(key) && !ImGui.IsAnyItemActive()) {
@@ -58,12 +62,14 @@ internal sealed class PointFields {
 	}
 
 	/// <summary>
-	/// Says when <paramref name="at"/> is outside <paramref name="box"/>, the mission box as opened
+	/// Says when a point is outside the mission box as opened
 	/// (<see cref="PointMover.LoadedBox"/>), which a block-1 point outside it grows: a test of the point's X and Y alone, as
 	/// the box is of the points alone (<see cref="MissionBox.Of"/>). The UI calls the box the play area: the heads-down map
 	/// frames it in red, the player is warned "APPROACHING MISSION ZONE BOUNDARY" once outside it, and the mission is aborted
 	/// <see cref="Es2.Sim.MissionObjectives.RulesOfEngagementMargin"/> past it (docs/retail/simulation/mission-objectives.md#the-status--mission_status-004135e8).
 	/// </summary>
+	/// <param name="box">The mission box as opened.</param>
+	/// <param name="at">The point.</param>
 	public static void BoxWarning(MissionBox box, Vec3i at) {
 		if (!box.IsEmpty && (at.X < box.MinX || at.X > box.MaxX || at.Y < box.MinY || at.Y > box.MaxY)) {
 			EditorText.Note(PlayAreaWarning);

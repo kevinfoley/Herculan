@@ -42,8 +42,9 @@ sealed class ShellAudio : IDisposable {
 	/// option 5 flipped, committed and all 54 options saved, so the next run plays the other track. The
 	/// startup then starts the music at volume 0 (Shell_BuildScreensAndStart's ShellSound_Start), and the movie queue
 	/// fades it in after the intro — or, with movies off, leaves it there. A run staged on another screen
-	/// has no intro, and fades it in here: <paramref name="fadeIn"/>.
+	/// has no intro, and fades it in here.
 	/// </summary>
+	/// <param name="fadeIn">Whether the music is faded in here.</param>
 	public void Start(bool fadeIn) {
 		if (_silent) {
 			return;

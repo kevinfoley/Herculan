@@ -33,10 +33,12 @@ internal sealed class TimerEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why row-11 GUID <paramref name="timer"/> cannot be edited, or null when it can.</summary>
+	/// <summary>Why a row-11 countdown cannot be edited, or null when it can.</summary>
+	/// <param name="timer">The countdown's row-11 GUID.</param>
 	public string? WhyFixed(short timer) => _source.Layout.Entry(TimerRow, timer) == null ? "That countdown is not in the mission." : null;
 
-	/// <summary>Why no trigger can be added to <paramref name="timer"/>'s fired ones, or null when one can.</summary>
+	/// <summary>Why no trigger can be added to a countdown's fired ones, or null when one can.</summary>
+	/// <param name="timer">The countdown's row-11 GUID.</param>
 	public string? WhyNoAddFired(short timer) => WhyFixed(timer) ?? TimerEditing.WhyNoAddFired(_source, timer);
 
 	/// <summary>Asks for a new timer, which is then selected.</summary>
@@ -47,26 +49,39 @@ internal sealed class TimerEditor {
 		};
 	}
 
-	/// <summary>Asks for <paramref name="timer"/> to be deleted.</summary>
+	/// <summary>Asks for a countdown to be deleted.</summary>
+	/// <param name="timer">The countdown's row-11 GUID.</param>
 	public void RequestDelete(short timer) => Ask(timer, () => TimerEditing.Delete(_source, timer));
 
-	/// <summary>Asks for <paramref name="timer"/> to start when row-10 GUID <paramref name="action"/> fires, or from mission start for <c>-1</c>.</summary>
+	/// <summary>Asks for a countdown to start when a row-10 trigger fires, or from mission start for <c>-1</c>.</summary>
+	/// <param name="timer">The countdown's row-11 GUID.</param>
+	/// <param name="action">The trigger's row-10 GUID, or <c>-1</c> for mission start.</param>
 	public void RequestStart(short timer, short action) => Ask(timer, () => TimerEditing.SetStart(_source, timer, action));
 
-	/// <summary>Asks for <paramref name="timer"/>'s delay to be <paramref name="seconds"/>.</summary>
+	/// <summary>Asks for a countdown's delay to change.</summary>
+	/// <param name="timer">The countdown's row-11 GUID.</param>
+	/// <param name="seconds">The delay in seconds.</param>
 	public void RequestDelay(short timer, int seconds) => Ask(timer, () => TimerEditing.SetDelay(_source, timer, seconds));
 
-	/// <summary>Asks for row-10 GUID <paramref name="action"/> to be added after <paramref name="timer"/>'s last fired one.</summary>
+	/// <summary>Asks for a row-10 trigger to be added after a countdown's last fired one.</summary>
+	/// <param name="timer">The countdown's row-11 GUID.</param>
+	/// <param name="action">The trigger's row-10 GUID.</param>
 	public void RequestAddFired(short timer, short action) => Ask(timer, () => TimerEditing.AddFired(_source, timer, action));
 
-	/// <summary>Asks for a new trigger after <paramref name="timer"/>'s last fired one (<see cref="DelayedActions.AddNew"/>), staying on the countdown.</summary>
+	/// <summary>Asks for a new trigger after a countdown's last fired one (<see cref="DelayedActions.AddNew"/>), staying on the countdown.</summary>
+	/// <param name="timer">The countdown's row-11 GUID.</param>
 	public void RequestNewFired(short timer) => Ask(timer, () => DelayedActions.AddNew(_source, timer, out _));
 
-	/// <summary>Asks for row-10 GUID <paramref name="action"/> in <paramref name="timer"/>'s fired slot <paramref name="slot"/>.</summary>
+	/// <summary>Asks for a row-10 trigger in a countdown's fired slot.</summary>
+	/// <param name="timer">The countdown's row-11 GUID.</param>
+	/// <param name="slot">The fired slot.</param>
+	/// <param name="action">The trigger's row-10 GUID.</param>
 	public void RequestFired(short timer, int slot, short action) =>
 		Ask(timer, () => TimerEditing.SetFired(_source, timer, slot, action));
 
-	/// <summary>Asks for the action in <paramref name="timer"/>'s fired slot <paramref name="slot"/> to be removed.</summary>
+	/// <summary>Asks for the trigger in a countdown's fired slot to be removed.</summary>
+	/// <param name="timer">The countdown's row-11 GUID.</param>
+	/// <param name="slot">The fired slot.</param>
 	public void RequestRemoveFired(short timer, int slot) => Ask(timer, () => TimerEditing.RemoveFired(_source, timer, slot));
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>

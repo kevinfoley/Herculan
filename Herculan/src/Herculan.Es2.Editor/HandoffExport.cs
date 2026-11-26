@@ -20,7 +20,9 @@ internal static class HandoffExport {
 	// The handoff files the document does not hold.
 	private static readonly string[] Copied = [MissionLoader.PlayerFileName, MissionLoader.CountersFileName];
 
-	/// <summary>Why the handoff cannot be exported into <paramref name="folder"/>, or null when it can.</summary>
+	/// <summary>Why the handoff cannot be exported into a folder, or null when it can.</summary>
+	/// <param name="folder">The folder.</param>
+	/// <param name="installRoot">The install's root.</param>
 	/// <param name="handoffDirectory">The scratch folder the open wrote the handoff into.</param>
 	public static string? WhyNotFolder(string folder, string installRoot, string handoffDirectory) {
 		if (folder.Trim().Length == 0) {
@@ -39,11 +41,18 @@ internal static class HandoffExport {
 	}
 
 	/// <summary>
-	/// Writes <paramref name="script"/>, <paramref name="missionText"/>, <paramref name="playerMec"/> and the mission's own
-	/// terrain <paramref name="zone"/> into <paramref name="folder"/>, creating it, with the other handoff files
-	/// <paramref name="handoffDirectory"/> holds, its <c>player.mec</c> among them only when <paramref name="playerMec"/> is
-	/// null. Returns the paths written. Throws <see cref="ArgumentException"/> for a folder <see cref="WhyNotFolder"/> refuses.
+	/// Writes the script, the mission text, the player mec and the mission's own
+	/// terrain zone into a folder, creating it, with the other handoff files
+	/// the handoff directory holds, its <c>player.mec</c> among them only when no player mec is given.
+	/// Returns the paths written. Throws <see cref="ArgumentException"/> for a folder <see cref="WhyNotFolder"/> refuses.
 	/// </summary>
+	/// <param name="folder">The folder written into.</param>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="handoffDirectory">The folder holding the other handoff files.</param>
+	/// <param name="script">The <c>script.dat</c> bytes.</param>
+	/// <param name="missionText">The <c>mission.str</c> bytes.</param>
+	/// <param name="playerMec">The <c>player.mec</c> bytes, or null to copy the handoff's.</param>
+	/// <param name="zone">The mission's terrain zone files, or null for none.</param>
 	public static IReadOnlyList<string> Write(string folder, string installRoot, string handoffDirectory, byte[] script,
 			byte[] missionText, byte[]? playerMec, ZoneFiles? zone) {
 		if (WhyNotFolder(folder, installRoot, handoffDirectory) is { } why) {

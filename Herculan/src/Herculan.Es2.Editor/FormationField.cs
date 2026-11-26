@@ -18,9 +18,10 @@ internal sealed class FormationField {
 	}
 
 	/// <summary>
-	/// Draws <paramref name="group"/>'s formation: its choice, with why it cannot be set on hover, and its diagram when the
+	/// Draws a group's formation: its choice, with why it cannot be set on hover, and its diagram when the
 	/// foldout is open. Why the last edit failed shows either way.
 	/// </summary>
+	/// <param name="group">The group.</param>
 	public void Draw(PlannedGroup group) {
 		var kind = group.Kind;
 		int current = group.Setup.FormationId;

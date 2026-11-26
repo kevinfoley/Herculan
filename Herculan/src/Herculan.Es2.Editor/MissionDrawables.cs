@@ -37,10 +37,15 @@ internal sealed class MissionDrawables : IDisposable {
 	private readonly Dictionary<string, GpuMesh> _groundMeshes = new();
 
 	/// <summary>
-	/// Uploads <paramref name="mission"/>'s scene and points <paramref name="renderer"/> and <paramref name="sky"/>, its
+	/// Uploads a mission's scene and points a renderer and sky, its
 	/// backdrop, at its theater: the fog, sky and shading come off the zone and its theater as in Herculan.Engine.Host,
 	/// rather than being hand-picked.
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="renderer">The scene renderer.</param>
+	/// <param name="sky">The sky backdrop.</param>
+	/// <param name="mission">The mission.</param>
+	/// <param name="settings">The editor's settings.</param>
 	public MissionDrawables(GL gl, SceneRenderer renderer, SkyBackdrop sky, EditorMission mission, EditorSettings settings) {
 		_gl = gl;
 		_isWaiting = mission.Index.IsWaiting;
@@ -98,9 +103,10 @@ internal sealed class MissionDrawables : IDisposable {
 	public List<SceneItem> WaitingItems { get; } = new();
 
 	/// <summary>
-	/// Draws <paramref name="sceneObject"/> where its simulation object stands, uploading its model first if nothing
+	/// Draws an object where its simulation object stands, uploading its model first if nothing
 	/// drawn so far uses it. An object with no model draws nothing.
 	/// </summary>
+	/// <param name="sceneObject">The object.</param>
 	public void Add(SceneObject sceneObject) {
 		if (DrawnModel(sceneObject) is not { } model || _objects.ContainsKey(sceneObject)) {
 			return;
@@ -171,7 +177,8 @@ internal sealed class MissionDrawables : IDisposable {
 			? hulk
 			: sceneObject.Model;
 
-	/// <summary>Stops drawing <paramref name="sceneObject"/>. Its model's uploads stay, for a redo to draw it again.</summary>
+	/// <summary>Stops drawing an object. Its model's uploads stay, for a redo to draw it again.</summary>
+	/// <param name="sceneObject">The object.</param>
 	public void Remove(SceneObject sceneObject) {
 		if (!_objects.Remove(sceneObject, out var draw)) {
 			return;
@@ -225,7 +232,8 @@ internal sealed class MissionDrawables : IDisposable {
 	public IEnumerable<SceneObject> Shown =>
 		_objects.Where(entry => entry.Value.Items.Count > 0 && entry.Value.Items[0].Visible).Select(entry => entry.Key);
 
-	/// <summary>Re-places <paramref name="sceneObject"/>'s items where its simulation object now stands.</summary>
+	/// <summary>Re-places an object's items where its simulation object now stands.</summary>
+	/// <param name="sceneObject">The object.</param>
 	public void Move(SceneObject sceneObject) {
 		if (!_objects.TryGetValue(sceneObject, out var draw)) {
 			return;

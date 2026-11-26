@@ -28,9 +28,11 @@ public sealed class SpriteSequence {
 	public int? Frame { get; private set; }
 
 	/// <summary>
-	/// Starts <paramref name="entries"/> from its first frame: the start and the first frame's hold are
+	/// Starts some entries from their first frame: the start and the first frame's hold are
 	/// stamped, the state goes to playing, and frame 0 is blitted.
 	/// </summary>
+	/// <param name="entries">The entries.</param>
+	/// <param name="coarseTicks">The current coarse tick.</param>
 	public void Start(IReadOnlyList<Entry> entries, long coarseTicks) {
 		_entries = entries;
 		_index = 0;
@@ -182,8 +184,11 @@ public sealed class SensorDropout {
 
 	/// <summary>
 	/// <c>PanelGauge_RollDuration</c> (<c>00438d6c</c>): <c>(next &amp; 0xffff) % (hi - lo) + lo</c> on the
-	/// presentation generator, and <paramref name="min"/> without a draw when the two bounds agree.
+	/// presentation generator, and the minimum without a draw when the two bounds agree.
 	/// </summary>
+	/// <param name="random">The presentation generator.</param>
+	/// <param name="min">The lower bound.</param>
+	/// <param name="max">The upper bound.</param>
 	private static int RollDuration(SimRandom random, int min, int max) =>
 		max == min ? min : (random.Next() & 0xffff) % (max - min) + min;
 
@@ -283,7 +288,8 @@ public sealed class CockpitDropouts {
 	/// <summary>The Heads-Down Display's.</summary>
 	public SensorDropout HeadsDown { get; } = SensorDropout.ForHeadsDown();
 
-	/// <summary>Weapon row <paramref name="row"/>'s, or null past the ten rows.</summary>
+	/// <summary>A weapon row's, or null past the ten rows.</summary>
+	/// <param name="row">The weapon row.</param>
 	public SensorDropout? Row(int row) => row >= 0 && row < _rows.Length ? _rows[row] : null;
 
 	/// <summary>One frame's ticks.</summary>

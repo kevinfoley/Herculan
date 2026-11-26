@@ -69,14 +69,17 @@ sealed class JoystickSource : IJoystickSource {
 	}
 
 	/// <summary>
-	/// Opens the joystick layer over the player's map file, which <paramref name="dataDirectory"/>, the game's
-	/// <c>data</c> folder, seeds while it is missing (<see cref="JoystickMapFile.LoadForPlayer(string?)"/>); for a device
+	/// Opens the joystick layer over the player's map file, which the game's
+	/// <c>data</c> folder seeds while it is missing (<see cref="JoystickMapFile.LoadForPlayer(string?)"/>); for a device
 	/// the file has no map for, <see cref="ControllerDevice.Defaults"/> applies, once the device reports its shape.
 	///
 	/// <para>Returns a source even when nothing is attached — a stick plugged in later is picked up on
 	/// a following frame, and until then <see cref="Capabilities"/> reads
 	/// <see cref="JoystickCapabilities.None"/>.</para>
 	/// </summary>
+	/// <param name="input">The input context.</param>
+	/// <param name="dataDirectory">The game's <c>data</c> folder, or null for none.</param>
+	/// <param name="probe">Whether the device is probed.</param>
 	/// <param name="razor">Whether the mission pilots a RAZOR, whose half of a Custom profile is read.</param>
 	public static JoystickSource Open(IInputContext input, string? dataDirectory, bool probe, bool razor) =>
 		new(input, JoystickMapFile.LoadForPlayer(dataDirectory), probe, razor);
@@ -174,10 +177,11 @@ sealed class JoystickSource : IJoystickSource {
 	public GamepadMouseSettings MouseSettings => _controller.File.Mouse;
 
 	/// <summary>
-	/// Reads the stick through <paramref name="file"/>'s maps from now on, as the Controller window saves it, picking the
+	/// Reads the stick through a file's maps from now on, as the Controller window saves it, picking the
 	/// device again, and says what it can do again on the next <see cref="Announce"/>, so the CONTROLS panel greys its rows
 	/// against the new map.
 	/// </summary>
+	/// <param name="file">The map file.</param>
 	public void Configure(JoystickMapFile file) {
 		_controller.Reset(file);
 		_custom = null;
@@ -251,12 +255,14 @@ sealed class JoystickSource : IJoystickSource {
 		!Quiet && Custom is { } custom && Device is { } device ? custom.HeldActions(StateOf(device)) : [];
 
 	/// <summary>
-	/// Whether a Custom profile holds <paramref name="action"/>, whether or not the stick is <see cref="Quiet"/>: for the
+	/// Whether a Custom profile holds an action, whether or not the stick is <see cref="Quiet"/>: for the
 	/// host's own actions, which work the menus that mute it. False in Original mode.
 	/// </summary>
+	/// <param name="action">The action.</param>
 	public bool HostActionHeld(KeyAction action) => HostActionInput(action) != null;
 
-	/// <summary>The input holding <paramref name="action"/>, as <see cref="HostActionHeld"/> reads it, or null for none.</summary>
+	/// <summary>The input holding an action, as <see cref="HostActionHeld"/> reads it, or null for none.</summary>
+	/// <param name="action">The action.</param>
 	public ControllerInput? HostActionInput(KeyAction action) =>
 		Custom is { } custom && Device is { } device ? custom.HeldInput(ControllerState.Of(device), action) : null;
 

@@ -11,7 +11,8 @@ internal static class PresenceSentences {
 	/// <summary>The operators' words, flag on the left, in <see cref="ConditionEditing.Operators"/>' order.</summary>
 	private static readonly string[] OperatorWords = ["is", "is not", "is less than", "is at most", "is more than", "is at least"];
 
-	/// <summary>Operator <paramref name="op"/> in words ("is more than"), flag on the left; its code for one the load does not read.</summary>
+	/// <summary>An operator in words ("is more than"), flag on the left; its code for one the load does not read.</summary>
+	/// <param name="op">The operator's code.</param>
 	public static string Operator(short op) =>
 		ConditionEditing.Operators.ToList().IndexOf(op) is >= 0 and var index ? OperatorWords[index] : $"(code {op})";
 
@@ -24,9 +25,12 @@ internal static class PresenceSentences {
 	};
 
 	/// <summary>
-	/// What changes when <paramref name="rule"/> holds, the fields <paramref name="aspects"/> of a row-<paramref name="row"/>
-	/// record: "Its chassis and weapons change when ... .", or "Some of its details change ..." where none is named.
+	/// What changes when a rule holds, the aspects of a record of a row:
+	/// "Its chassis and weapons change when ... .", or "Some of its details change ..." where none is named.
 	/// </summary>
+	/// <param name="row">The record's row.</param>
+	/// <param name="aspects">The aspects that change.</param>
+	/// <param name="rule">The rule.</param>
 	public static string Variation(int row, IReadOnlyList<RecordAspect> aspects, PresenceRule? rule) {
 		string when = Occasion(rule);
 		var named = aspects.Where(aspect => aspect != RecordAspect.Other).Select(aspect => Aspect(row, aspect)).ToList();
@@ -43,9 +47,10 @@ internal static class PresenceSentences {
 	}
 
 	/// <summary>
-	/// When a variation's <paramref name="rule"/> holds, as it reads after what changes: "when campaign variable 30 is more than
+	/// When a variation's rule holds, as it reads after what changes: "when campaign variable 30 is more than
 	/// 0", "in about 50% of loads", "in some versions of the mission" for null.
 	/// </summary>
+	/// <param name="rule">The rule, or null for none.</param>
 	public static string Occasion(PresenceRule? rule) => rule switch {
 		null => "in some versions of the mission",
 		{ IsAlways: true } => "in every version of the mission",

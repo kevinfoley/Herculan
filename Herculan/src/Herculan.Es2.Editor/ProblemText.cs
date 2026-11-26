@@ -25,7 +25,10 @@ internal static class ProblemText {
 	private const int GroupRow = 16;
 	private const int ObjectiveRow = 17;
 
-	/// <summary><paramref name="finding"/>'s sentence, its record shown by its selection (<see cref="EditorFinding.Target"/>), if any.</summary>
+	/// <summary>A finding's sentence, its record shown by its selection (<see cref="EditorFinding.Target"/>), if any.</summary>
+	/// <param name="finding">The finding.</param>
+	/// <param name="names">The mission's names.</param>
+	/// <param name="layout">The layout.</param>
 	public static string Of(EditorFinding finding, MissionNames names, MissionLayout layout) {
 		var (found, target) = finding;
 		string named = Who(found, target, names, layout);

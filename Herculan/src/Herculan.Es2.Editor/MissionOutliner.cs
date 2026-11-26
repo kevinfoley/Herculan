@@ -249,11 +249,13 @@ internal sealed class MissionOutliner {
 	}
 
 	/// <summary>
-	/// Selects <paramref name="selection"/> when the item just drawn was <paramref name="clicked"/>, and frames it in the
+	/// Selects a selection when the item just drawn was clicked, and frames it in the
 	/// view when that click was the second of a double-click. The click is the row's own, not a hover test after it: a
 	/// selectable row's last item is the text drawn over it, never hovered while the selectable is, so a row's selectable
 	/// carries <see cref="DoubleClick"/> to press on the second click.
 	/// </summary>
+	/// <param name="selection">The selection.</param>
+	/// <param name="clicked">Whether the item just drawn was clicked.</param>
 	private void Choose(EditorSelection selection, bool clicked) {
 		if (clicked && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
 			_selection.Focus(selection);
@@ -263,13 +265,20 @@ internal sealed class MissionOutliner {
 	}
 
 	/// <summary>
-	/// A row naming the row-<paramref name="row"/> record of <paramref name="guid"/> (<see cref="NameText.Selectable"/>), marked
+	/// A row naming a record of a row's GUID (<see cref="NameText.Selectable"/>), marked
 	/// <see cref="NotAlways"/> when it is not always present; whether it was clicked.
 	/// </summary>
+	/// <param name="name">The record's name.</param>
+	/// <param name="row">The record's row.</param>
+	/// <param name="guid">The record's GUID.</param>
+	/// <param name="id">The row's ImGui id.</param>
+	/// <param name="selection">The selection the row selects.</param>
 	private bool Row(RecordName name, int row, short guid, string id, EditorSelection selection) =>
 		NameText.Selectable(name with { Text = name.Text + Marker(row, guid) }, id, _selection.Is(selection), flags: DoubleClick);
 
-	/// <summary><see cref="NotAlways"/> when row <paramref name="row"/>'s entry for <paramref name="guid"/> is present only under a condition, else nothing.</summary>
+	/// <summary><see cref="NotAlways"/> when a row's entry for a GUID is present only under a condition, else nothing.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
 	private string Marker(int row, short guid) => Layout.Entry(row, guid)?.Presence.Always == false ? NotAlways : string.Empty;
 
 	/// <summary>

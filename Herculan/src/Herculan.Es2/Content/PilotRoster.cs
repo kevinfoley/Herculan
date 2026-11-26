@@ -57,7 +57,8 @@ public sealed class PilotRoster {
 	/// <summary>Every name, in file order. The index into this is the pilot index.</summary>
 	public IReadOnlyList<string> Names => _names;
 
-	/// <summary>Pilot <paramref name="pilot"/>'s name, or null when the index is off the roster.</summary>
+	/// <summary>A pilot's name, or null when the index is off the roster.</summary>
+	/// <param name="pilot">The pilot's index.</param>
 	public string? Name(int pilot) => pilot >= 0 && pilot < _names.Length ? _names[pilot] : null;
 
 	/// <summary>Which portrait bank a pilot talks with — <c>Pilot_PortraitOf</c>.</summary>
@@ -104,7 +105,9 @@ public sealed class PilotRoster {
 		return offsets;
 	}
 
-	/// <summary>Frame <paramref name="frame"/>'s offset, or (0,0) when the table does not cover it.</summary>
+	/// <summary>A frame's offset, or (0,0) when the table does not cover it.</summary>
+	/// <param name="portrait">The portrait.</param>
+	/// <param name="frame">The frame.</param>
 	public (int X, int Y) Offset(int portrait, int frame) {
 		var offsets = Offsets(portrait);
 		return frame >= 0 && frame < offsets.Length ? offsets[frame] : (0, 0);

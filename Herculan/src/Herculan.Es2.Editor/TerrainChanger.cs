@@ -104,10 +104,12 @@ internal sealed class TerrainChanger {
 	/// <summary>What the last replacement did to the mission's positions, or null.</summary>
 	public string? Note { get; private set; }
 
-	/// <summary>Takes <paramref name="zone"/> as the terrain the mission was opened with, as no step of the undo history.</summary>
+	/// <summary>Takes a zone as the terrain the mission was opened with, as no step of the undo history.</summary>
+	/// <param name="zone">The terrain, or null for none of its own.</param>
 	public void Load(ZoneFiles? zone) => OwnZone = zone;
 
-	/// <summary>Asks for the mission's terrain to be <paramref name="zone"/>.</summary>
+	/// <summary>Asks for the mission's terrain to be a zone.</summary>
+	/// <param name="zone">The terrain.</param>
 	public void Request(ZoneFiles zone) => _requested = zone;
 
 	/// <summary>Makes the replacement asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
@@ -268,7 +270,8 @@ internal sealed class TerrainChanger {
 		return OwnZone;
 	}
 
-	/// <summary>Puts <paramref name="zone"/> back as the mission's own terrain, for a sculpting stroke's undo or redo.</summary>
+	/// <summary>Puts a zone back as the mission's own terrain, for a sculpting stroke's undo or redo.</summary>
+	/// <param name="zone">The terrain.</param>
 	internal void PutSculpted(ZoneFiles zone) => OwnZone = zone;
 
 	// Puts <terrain> in the scene and <zone> as the mission's own, levels the ground and stands everything on it again.

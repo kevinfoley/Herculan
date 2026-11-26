@@ -161,7 +161,7 @@ public sealed class InputTapePlayer {
 	}
 
 	/// <summary>
-	/// Lays the tape's starting state out in <paramref name="directory"/> the way <c>-p</c> leaves the
+	/// Lays the tape's starting state out in a directory the way <c>-p</c> leaves the
 	/// install's own <c>data\</c>, and returns the mission file to load from it.
 	///
 	/// <para>DBSIM unpacks the bundle over the live <c>data\</c>; this copies that folder somewhere
@@ -175,6 +175,8 @@ public sealed class InputTapePlayer {
 	/// <c>-p</c> unpacks it into <c>tapes\</c>, and <c>Keyjoy_LoadConfig</c> reads
 	/// <c>data\keyjoy.cfg</c> whatever is playing.</para>
 	/// </summary>
+	/// <param name="directory">The directory the starting state is laid out in.</param>
+	/// <param name="installDataDirectory">The install's own <c>data\</c>, or null for none.</param>
 	public string ExtractBundle(string directory, string? installDataDirectory) {
 		Directory.CreateDirectory(directory);
 		foreach (string stale in Directory.GetFiles(directory)) {
@@ -240,9 +242,11 @@ public sealed class InputTapePlayer {
 	public const int RecordedButtonCount = 4;
 
 	/// <summary>
-	/// Whether bound button <paramref name="index"/> (0-3) fired this frame. The frame is written after
+	/// Whether a bound button (0-3) fired this frame. The frame is written after
 	/// the press-once latch has masked the build, so a bit is set on the one frame its action acts on.
 	/// </summary>
+	/// <param name="frame">The tape frame.</param>
+	/// <param name="index">The button's index, 0 to 3.</param>
 	public static bool ButtonOf(InputTape.Frame frame, int index) =>
 		index is >= 0 and < RecordedButtonCount && (frame.ButtonBank & (1 << index)) != 0;
 

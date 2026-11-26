@@ -62,7 +62,11 @@ public class Es1ScriptDatTransformer : ByteTransformer<Es1ScriptDat> {
 		return file;
 	}
 
-	/// <summary>A block's count and records; <paramref name="size"/> is a record's size, or a waypoint group's fixed part.</summary>
+	/// <summary>A block's count and records.</summary>
+	/// <typeparam name="T">The record type.</typeparam>
+	/// <param name="block">The block's name.</param>
+	/// <param name="size">A record's size, or a waypoint group's fixed part.</param>
+	/// <param name="readOne">Reads one record.</param>
 	private T[] Block<T>(string block, int size, Func<T> readOne) {
 		Need(2, $"the {block}' count");
 		int count = IndexShortLE();

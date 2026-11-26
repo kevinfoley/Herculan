@@ -90,9 +90,10 @@ public sealed class BeamAppearance {
 	}
 
 	/// <summary>
-	/// The record for <paramref name="subtypeId"/>, or null when the id is outside the table — which
+	/// The record for a subtype, or null when the id is outside the table — which
 	/// no retail beam is, but a hand-edited <c>PROJ.DAT</c> could be.
 	/// </summary>
+	/// <param name="subtypeId">The beam subtype.</param>
 	public BeamData.Entry? Record(int subtypeId) =>
 		_table.Data is { } data && subtypeId >= 0 && subtypeId < data.Length ? data[subtypeId] : null;
 
@@ -110,10 +111,11 @@ public sealed class BeamAppearance {
 	public Vector3 Color(int subtypeId) => Lookup(_palette, Record(subtypeId)?.ColorId ?? 0);
 
 	/// <summary>
-	/// The cross-section for <paramref name="subtypeId"/> as RGBA texels, one per source row, running
+	/// The cross-section for a subtype as RGBA texels, one per source row, running
 	/// from one edge of the beam to the other. Falls back to frame 0 when the record names a frame the
 	/// bank does not have.
 	/// </summary>
+	/// <param name="subtypeId">The beam subtype.</param>
 	public ReadOnlySpan<byte> Profile(int subtypeId) {
 		int frame = Record(subtypeId)?.DBAFrameNum ?? 0;
 		if (frame < 0 || frame >= _profiles.Length) {
@@ -129,28 +131,34 @@ public sealed class BeamAppearance {
 	/// <summary>The <c>PROJ.DAT</c> subtype id of PBW2, whose beam <see cref="Settings.Es2TweakSettingDefinitions.ChangePbwBeamHue"/> recolours.</summary>
 	public const int Pbw2Subtype = 6;
 
-	/// <summary>Whether <paramref name="subtypeId"/> is PBW's or PBW2's.</summary>
+	/// <summary>Whether a subtype is PBW's or PBW2's.</summary>
+	/// <param name="subtypeId">The beam subtype.</param>
 	public static bool IsParticleBeam(int subtypeId) => subtypeId is PbwSubtype or Pbw2Subtype;
-	/// <summary>Whether <paramref name="subtypeId"/> is PBW's.</summary>
+	/// <summary>Whether a subtype is PBW's.</summary>
+	/// <param name="subtypeId">The beam subtype.</param>
 	public static bool IsPBW(int subtypeId) => subtypeId is PbwSubtype;
-	/// <summary>Whether <paramref name="subtypeId"/> is PBW2's.</summary>
+	/// <summary>Whether a subtype is PBW2's.</summary>
+	/// <param name="subtypeId">The beam subtype.</param>
 	public static bool IsPBW2(int subtypeId) => subtypeId is Pbw2Subtype;
 
 	/// <summary>
-	/// <paramref name="texels"/> recoloured for <see cref="Settings.Es2TweakSettingDefinitions.ChangePbwBeamHue"/>, after the
+	/// Some texels recoloured for <see cref="Settings.Es2TweakSettingDefinitions.ChangePbwBeamHue"/>, after the
 	/// colours Metaltech: Earthsiege gives the two weapons: PBW's beam blue (<see cref="TurnHueHalf"/>) and PBW2's green
 	/// (<see cref="TurnHueThird"/>). Any other subtype comes back unchanged. The shades are HERCULAN's, not retail's.
 	/// </summary>
+	/// <param name="subtypeId">The beam subtype.</param>
+	/// <param name="texels">The beam's RGBA texels.</param>
 	public static byte[] ParticleBeamHue(int subtypeId, ReadOnlySpan<byte> texels) =>
 		IsPBW(subtypeId) ? TurnHueHalf(texels)
 		: IsPBW2(subtypeId) ? TurnHueThird(texels)
 		: texels.ToArray();
 
 	/// <summary>
-	/// <paramref name="texels"/> with every texel's hue turned 180 degrees and its saturation, value and alpha kept. A
+	/// Some texels with every texel's hue turned 180 degrees and its saturation, value and alpha kept. A
 	/// half turn in HSV maps each channel <c>c</c> to <c>max + min - c</c>, so the fire ramp, dark orange
 	/// (184, 92, 20) to near-white (252, 248, 228), becomes dark blue (20, 112, 184) to (228, 232, 252).
 	/// </summary>
+	/// <param name="texels">The RGBA texels.</param>
 	public static byte[] TurnHueHalf(ReadOnlySpan<byte> texels) {
 		var turned = new byte[texels.Length];
 		for (int i = 0; i + 3 < texels.Length; i += 4) {
@@ -166,10 +174,11 @@ public sealed class BeamAppearance {
 	}
 
 	/// <summary>
-	/// <paramref name="texels"/> with every texel's hue turned 120 degrees, red toward green, and its saturation, value
+	/// Some texels with every texel's hue turned 120 degrees, red toward green, and its saturation, value
 	/// and alpha kept. A third of a turn in HSV moves each channel's value to the next channel along, so the fire ramp,
 	/// dark orange (184, 92, 20) to near-white (252, 248, 228), becomes dark green (20, 184, 92) to (228, 252, 248).
 	/// </summary>
+	/// <param name="texels">The RGBA texels.</param>
 	public static byte[] TurnHueThird(ReadOnlySpan<byte> texels) {
 		var turned = new byte[texels.Length];
 		for (int i = 0; i + 3 < texels.Length; i += 4) {

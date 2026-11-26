@@ -79,7 +79,7 @@ public readonly record struct HddDamageSubject(
 	}
 
 	/// <summary>
-	/// Reads the subject in <paramref name="slot"/>. The squad slots keep their machine once it is
+	/// Reads the subject in a slot. The squad slots keep their machine once it is
 	/// destroyed, as the display's array does, so a dead squadmate can still be inspected.
 	/// </summary>
 	/// <param name="slot">The selector.</param>

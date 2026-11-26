@@ -33,11 +33,15 @@ internal sealed class MachineFitView {
 	private bool Unrestricted => _fitter.CybridUnrestricted;
 
 	/// <summary>
-	/// Draws the chassis choice and the hardpoints of the herc of row-12 GUID <paramref name="guid"/>:
-	/// <paramref name="chassis"/> offered under <paramref name="name"/>, <paramref name="note"/> under the choice; given
-	/// <paramref name="option"/>, the template of the option being edited, each field as a load picking it makes it, and each
+	/// Draws the chassis choice and the hardpoints of a herc; given an option,
+	/// the template of the option being edited, each field as a load picking it makes it, and each
 	/// edit of a field a template supplies written there (<see cref="MachineFitter.Fit"/>).
 	/// </summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
+	/// <param name="chassis">The chassis offered.</param>
+	/// <param name="name">Names a chassis.</param>
+	/// <param name="note">The note under the choice.</param>
+	/// <param name="option">The option being edited, or null.</param>
 	public void Draw(short guid, IEnumerable<int> chassis, Func<int, string> name, string note, MsnRecordId? option = null) {
 		if (_fitter.Fit(guid, option) is not { } record) {
 			return;

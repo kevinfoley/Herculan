@@ -142,9 +142,11 @@ internal sealed class MissionOverlay {
 	}
 
 	/// <summary>
-	/// Tints the ground a selected trigger area catches, through <paramref name="highlight"/>, and clears it for any
+	/// Tints the ground a selected trigger area catches, through a highlight, and clears it for any
 	/// other selection.
 	/// </summary>
+	/// <param name="highlight">The ground highlight.</param>
+	/// <param name="selection">The selection.</param>
 	public void Highlight(GroundHighlight highlight, SelectionState selection) {
 		if (selection.Current is not AreaSelection { Guid: var guid } || _index.Area(guid)?.Area is not { } area) {
 			highlight.Clear();
@@ -369,10 +371,12 @@ internal sealed class MissionOverlay {
 	}
 
 	/// <summary>
-	/// The smallest trigger area containing <paramref name="ground"/>, or null — smallest, because
+	/// The smallest trigger area containing a ground point, or null — smallest, because
 	/// areas nest (a small trigger inside a wide boundary strip) and the inner one is the one a click
 	/// there means.
 	/// </summary>
+	/// <param name="ground">The ground point.</param>
+	/// <param name="settings">The editor's settings.</param>
 	public AreaSelection? PickArea(Vec3i ground, EditorSettings settings) {
 		if (!settings.ShowTriggerAreas) {
 			return null;

@@ -35,7 +35,8 @@ internal sealed class PresentWhenView {
 		_links = links;
 	}
 
-	/// <summary>Draws <paramref name="target"/>'s Present when; nothing for null, which the squad has.</summary>
+	/// <summary>Draws a target's Present when; nothing for null, which the squad has.</summary>
+	/// <param name="target">The target, or null.</param>
 	public void Draw(PresenceTarget? target) {
 		if (target == null) {
 			return;
@@ -257,8 +258,10 @@ internal sealed class PresentWhenView {
 	/// <summary>
 	/// For a herc, flyer, structure or ground vehicle whose group the mission check finds standing with no member where its
 	/// members are absent (<see cref="MissionCheck.EmptyUnless"/>), what that does, and a button that sets the member's Present
-	/// when on <paramref name="group"/> instead (<see cref="RecordConditions.MoveToGroup"/>); nothing otherwise.
+	/// when on a group instead (<see cref="RecordConditions.MoveToGroup"/>); nothing otherwise.
 	/// </summary>
+	/// <param name="target">The member's target, or null.</param>
+	/// <param name="group">The group the button moves the presence onto.</param>
 	public void DrawGroupLeftEmpty(PresenceTarget? target, short group) {
 		var source = _editor.Source;
 		if (target == null || MissionCheck.EmptyUnless(source.Layout, group) is null) {

@@ -42,7 +42,8 @@ internal readonly record struct WriteOperation(WriteKind Kind, short Value) {
 		_ => "Unknown operation (no effect in play)",
 	};
 
-	/// <summary>The write to <paramref name="variable"/>, as a sentence names the variable, as a sentence.</summary>
+	/// <summary>The write to a variable, as a sentence names the variable, as a sentence.</summary>
+	/// <param name="variable">The variable's name as a sentence.</param>
 	public string Sentence(string variable) => Kind switch {
 		WriteKind.Add => $"Add {Value} to {variable}",
 		WriteKind.Subtract => $"Subtract {Value} from {variable}",
@@ -54,13 +55,17 @@ internal readonly record struct WriteOperation(WriteKind Kind, short Value) {
 /// <summary>A change a <see cref="CampaignVariableWrites"/> list asks for, which its view makes through its own editor.</summary>
 internal abstract record WriteRequest;
 
-/// <summary>Write <paramref name="Slot"/> to be campaign variable <paramref name="Variable"/> and the layer's code <paramref name="Op"/>.</summary>
+/// <summary>A request to set a write to a campaign variable and the layer's code.</summary>
+/// <param name="Slot">The write's slot.</param>
+/// <param name="Variable">The campaign variable.</param>
+/// <param name="Op">The layer's code.</param>
 internal sealed record SetWriteRequest(int Slot, short Variable, short Op) : WriteRequest;
 
 /// <summary>A write after the last.</summary>
 internal sealed record AddWriteRequest : WriteRequest;
 
-/// <summary>Write <paramref name="Slot"/> to be removed.</summary>
+/// <summary>A request to remove a write.</summary>
+/// <param name="Slot">The write's slot.</param>
 internal sealed record RemoveWriteRequest(int Slot) : WriteRequest;
 
 /// <summary>
@@ -77,9 +82,10 @@ internal sealed class CampaignVariableWrites {
 	private readonly CampaignVariablePicker _picker = new();
 
 	/// <summary>
-	/// The codes <paramref name="layer"/> has a case for, each with its operation, in the order a choice offers them. The action
+	/// The codes a layer has a case for, each with its operation, in the order a choice offers them. The action
 	/// and objective codes are those their edits write (<see cref="ActionEditing"/>, <see cref="ObjectiveEditing"/>).
 	/// </summary>
+	/// <param name="layer">The layer.</param>
 	public static IReadOnlyList<(short Code, WriteOperation Operation)> Offered(WriteLayer layer) => layer switch {
 		WriteLayer.Action => [
 			(ActionEditing.CounterIncrement, WriteOperation.AddOne),
@@ -99,7 +105,9 @@ internal sealed class CampaignVariableWrites {
 		],
 	};
 
-	/// <summary>What <paramref name="layer"/>'s code <paramref name="code"/> does; <see cref="WriteOperation.Unknown"/> for one it has no case for.</summary>
+	/// <summary>What a layer's code does; <see cref="WriteOperation.Unknown"/> for one it has no case for.</summary>
+	/// <param name="layer">The layer.</param>
+	/// <param name="code">The code.</param>
 	public static WriteOperation Operation(WriteLayer layer, short code) {
 		foreach (var (offered, operation) in Offered(layer)) {
 			if (offered == code) {
@@ -110,7 +118,10 @@ internal sealed class CampaignVariableWrites {
 		return WriteOperation.Unknown;
 	}
 
-	/// <summary>A write of <paramref name="layer"/>'s code <paramref name="code"/> to <paramref name="variable"/>, as a sentence; <c>-1</c> for none chosen.</summary>
+	/// <summary>A write of a layer's code to a variable, as a sentence; <c>-1</c> for none chosen.</summary>
+	/// <param name="layer">The layer.</param>
+	/// <param name="variable">The campaign variable.</param>
+	/// <param name="code">The layer's code.</param>
 	public static string Sentence(WriteLayer layer, short variable, short code) {
 		if (variable < 0) {
 			return "No campaign variable chosen (no effect in play)";
@@ -123,12 +134,16 @@ internal sealed class CampaignVariableWrites {
 	}
 
 	/// <summary>
-	/// The writes <paramref name="writes"/> of <paramref name="layer"/>, each (variable, code), under <paramref name="heading"/>:
-	/// each a sentence, an operation choice and a variable choice with Remove, then Add, disabled with
-	/// <paramref name="whyNoAdd"/> under it when one cannot be added; every control disabled when <paramref name="locked"/>.
+	/// Draws the writes of a layer, each (variable, code): each a sentence, an operation choice and a variable choice with
+	/// Remove, then Add, disabled with a reason under it when one cannot be added.
 	/// Answers the change asked for this frame, or null.
 	/// </summary>
+	/// <param name="heading">The heading the writes are drawn under.</param>
+	/// <param name="layer">The layer.</param>
+	/// <param name="writes">The writes, each (variable, code).</param>
 	/// <param name="source">The mission, whose uses of each variable the variable choice lists.</param>
+	/// <param name="locked">Whether every control is disabled.</param>
+	/// <param name="whyNoAdd">Said under Add when one cannot be added, or null.</param>
 	public WriteRequest? Draw(string heading, WriteLayer layer, IReadOnlyList<(short Variable, short Op)> writes,
 			MissionDocument source, bool locked, string? whyNoAdd) {
 		ImGui.Spacing();
@@ -181,7 +196,10 @@ internal sealed class CampaignVariableWrites {
 		return request;
 	}
 
-	/// <summary>The writes <paramref name="writes"/> of <paramref name="layer"/> under <paramref name="heading"/>, read-only, one line each, or a note when there are none.</summary>
+	/// <summary>The writes of a layer under a heading, read-only, one line each, or a note when there are none.</summary>
+	/// <param name="heading">The heading.</param>
+	/// <param name="layer">The layer.</param>
+	/// <param name="writes">The writes, each (variable, code).</param>
 	public static void DrawReadOnly(string heading, WriteLayer layer, IReadOnlyList<(short Variable, short Op)> writes) {
 		ImGui.Separator();
 		ImGui.TextWrapped($"{heading}:");
@@ -190,7 +208,9 @@ internal sealed class CampaignVariableWrites {
 		}
 	}
 
-	/// <summary>One line per write of <paramref name="writes"/> that names a variable; whether there was any.</summary>
+	/// <summary>One line per write that names a variable; whether there was any.</summary>
+	/// <param name="layer">The layer.</param>
+	/// <param name="writes">The writes, each (variable, code).</param>
 	public static bool DrawLines(WriteLayer layer, IReadOnlyList<(short Variable, short Op)> writes) {
 		bool any = false;
 		foreach (var (variable, code) in writes.Where(write => write.Variable >= 0)) {
@@ -202,11 +222,14 @@ internal sealed class CampaignVariableWrites {
 		return any;
 	}
 
-	/// <summary>The (variable, code) pairs of parallel <paramref name="variables"/> and <paramref name="codes"/>, as a record carries them.</summary>
+	/// <summary>The (variable, code) pairs of parallel variable and code lists, as a record carries them.</summary>
+	/// <param name="variables">The variables.</param>
+	/// <param name="codes">The codes, parallel to the variables.</param>
 	public static IReadOnlyList<(short Variable, short Op)> Pairs(IReadOnlyList<short> variables, IReadOnlyList<short> codes) =>
 		Enumerable.Range(0, Math.Min(variables.Count, codes.Count)).Select(slot => (variables[slot], codes[slot])).ToList();
 
-	/// <summary>The (variable, code) pairs of a record's interleaved out-of-action <paramref name="words"/>, as the <c>.MSN</c> holds them.</summary>
+	/// <summary>The (variable, code) pairs of a record's interleaved out-of-action words, as the <c>.MSN</c> holds them.</summary>
+	/// <param name="words">The interleaved words.</param>
 	public static IReadOnlyList<(short Variable, short Op)> Interleaved(IReadOnlyList<short> words) =>
 		Enumerable.Range(0, words.Count / 2).Select(pair => (words[pair * 2], words[pair * 2 + 1])).ToList();
 

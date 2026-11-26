@@ -5,9 +5,11 @@ using Herculan.Es2.World;
 namespace Herculan.Es2.Editor;
 
 /// <summary>
-/// One row-8 route as placed: its place in the layout's row 8 (<paramref name="Position"/>, from 0; <see cref="Number"/> is
+/// One row-8 route as placed: its place in the layout's row 8 (<see cref="Number"/> is
 /// what the editor shows), its waypoints, and the groups whose orders name it.
 /// </summary>
+/// <param name="Guid">The route's row-8 GUID.</param>
+/// <param name="Position">Its place in the layout's row 8, from 0.</param>
 /// <param name="Points">
 /// Its waypoints, in order: each entry of its list naming a point the layout has, as the load drops a waypoint naming none.
 /// </param>
@@ -34,9 +36,11 @@ internal sealed record PlannedRoute(short Guid, int Position, IReadOnlyList<Vec3
 }
 
 /// <summary>
-/// One row-9 trigger area as placed: its place in the layout's row 9 (<paramref name="Position"/>, from 0;
-/// <see cref="Number"/> is what the editor shows), where it stands and the actions testing it.
+/// One row-9 trigger area as placed: its place in the layout's row 9
+/// (<see cref="Number"/> is what the editor shows), where it stands and the actions testing it.
 /// </summary>
+/// <param name="Guid">The area's row-9 GUID.</param>
+/// <param name="Position">Its place in the layout's row 9, from 0.</param>
 /// <param name="Area">
 /// Its shape and where it stands, resolved as the load resolves a block-4 record (<see cref="MissionLoader.TriggerArea"/>): a
 /// circle's radius its stored one times ten. Its <see cref="MissionTriggerArea.Reference"/> is unset, as the area is named by
@@ -51,11 +55,14 @@ internal sealed record PlannedArea(short Guid, int Position, MissionTriggerArea 
 }
 
 /// <summary>
-/// One row-10 action as placed: its place in the layout's row 10 (<paramref name="Position"/>, from 0; <see cref="Number"/> is
+/// One row-10 action as placed: its place in the layout's row 10 (<see cref="Number"/> is
 /// what the editor shows), its type, which says whose position its areas test, and the areas it tests: its area slots up to
 /// the first unset one or the first naming an area the layout has not, which the generation resolves to unset and the load
 /// stops at (<see cref="MissionLoader"/>'s action pass), each area that stands somewhere (<see cref="LayoutPlan.Area"/>).
 /// </summary>
+/// <param name="Guid">The action's row-10 GUID.</param>
+/// <param name="Position">Its place in the layout's row 10, from 0.</param>
+/// <param name="Type">Its type, which says whose position its areas test.</param>
 /// <param name="Areas">The row-9 GUIDs of the areas it tests, in slot order.</param>
 internal sealed record PlannedAction(short Guid, int Position, short Type, IReadOnlyList<short> Areas) {
 	/// <summary>Its number as the editor shows it (<see cref="MissionText.Number"/>).</summary>
@@ -72,7 +79,10 @@ internal sealed record PlannedAction(short Guid, int Position, short Type, IRead
 internal static class LayoutFeatures {
 	private const int AreaRow = 9;
 
-	/// <summary>The routes, areas and actions of <paramref name="layout"/>, whose groups are <paramref name="groups"/>.</summary>
+	/// <summary>The routes, areas and actions of a layout, whose groups are given.</summary>
+	/// <param name="layout">The layout.</param>
+	/// <param name="groups">The layout's groups.</param>
+	/// <param name="overrides">The placements read in place of the layout's.</param>
 	public static (IReadOnlyList<PlannedRoute> Routes, IReadOnlyList<PlannedArea> Areas, IReadOnlyList<PlannedAction> Actions)
 			Place(MissionLayout layout, IReadOnlyList<PlannedGroup> groups, PlacementOverrides overrides) {
 		var routes = Routes(layout, groups, overrides);

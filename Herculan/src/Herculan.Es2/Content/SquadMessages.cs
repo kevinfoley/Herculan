@@ -47,12 +47,13 @@ public sealed class SquadMessages {
 	/// <summary>Every message id the file carries, in the order of each id's first entry.</summary>
 	public IEnumerable<int> Ids => _firstIndex.OrderBy(entry => entry.Value).Select(entry => entry.Key);
 
-	/// <summary>Every recording of <paramref name="id"/>, or an empty list when it has none.</summary>
+	/// <summary>Every recording of an id, or an empty list when it has none.</summary>
+	/// <param name="id">The message id.</param>
 	public IReadOnlyList<Entry> Variants(int id) =>
 		_byId.TryGetValue(id, out var entries) ? entries : Array.Empty<Entry>();
 
 	/// <summary>
-	/// One recording of <paramref name="id"/>, rolled among its variants the way
+	/// One recording of an id, rolled among its variants the way
 	/// <c>PilotMessagePort_Post</c> (<c>00435c48</c>) and <c>MessagePort_PickVariant</c>
 	/// (<c>00436a3c</c>) do, or null when the file has no such id. Both take the full sixteen bits
 	/// unsigned, <c>(next &amp; 0xffff) % count</c>, rather than <see cref="Engine.Numerics.SimRandom.NextBelow"/>'s
@@ -61,10 +62,13 @@ public sealed class SquadMessages {
 	/// <para>A roll of 0 is the id's first entry and any other roll the entry after it in file order,
 	/// whatever its id, because <c>MessagePort_StepToVariant</c> (<c>00435a74</c>) steps from the first
 	/// entry on every pass (docs/retail/simulation/cockpit-message-port.md, "Posting"). So an id's
-	/// third recording is never picked. <paramref name="everyVariant"/> is this engine's alternative,
+	/// third recording is never picked. Picking every variant is this engine's alternative,
 	/// the <see cref="Settings.Es2TweakSettingDefinitions.EverySquadmateReply"/> tweak: the roll picks
 	/// that variant, so each is equally likely. The draw is the same either way.</para>
 	/// </summary>
+	/// <param name="id">The message id.</param>
+	/// <param name="random">The generator the roll is drawn from.</param>
+	/// <param name="everyVariant">Whether every variant can be picked.</param>
 	public Entry? Pick(int id, Engine.Numerics.SimRandom? random, bool everyVariant = false) {
 		var entries = Variants(id);
 		if (entries.Count == 0) {
@@ -82,13 +86,14 @@ public sealed class SquadMessages {
 	}
 
 	/// <summary>
-	/// A training instruction: the first entry carrying <paramref name="id"/> and, after it, as many
+	/// A training instruction: the first entry carrying an id and, after it, as many
 	/// more entries <b>in file order</b> as the id has — <c>PilotMessagePort_WrapText</c>
 	/// (<c>00436318</c>) takes the count from the id's table slot and steps with
 	/// <c>StrTable_NextString</c> (<c>004539cc</c>), which returns the string after the one it is given in the loaded file,
 	/// whatever that string's id. Retail files keep an id's entries together, so the two readings
 	/// agree. Empty when the file has no such id.
 	/// </summary>
+	/// <param name="id">The message id.</param>
 	public IReadOnlyList<Entry> Instruction(int id) {
 		if (!_firstIndex.TryGetValue(id, out int first)) {
 			return Array.Empty<Entry>();

@@ -113,7 +113,7 @@ public readonly record struct WeaponRowState(
 	public const int PodSuffixStringGroup = 3;
 
 	/// <summary>
-	/// Lays out one machine's weapon panel: <paramref name="slots"/> rows, each filled by whichever
+	/// Lays out one machine's weapon panel: a row per slot, each filled by whichever
 	/// mount claims it.
 	///
 	/// <para>Names follow the gauge constructors: an energy or ammunition row takes the mount's name as

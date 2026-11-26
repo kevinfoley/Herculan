@@ -20,10 +20,12 @@ public enum PadDirection {
 /// </summary>
 public static class PanelPadFocus {
 	/// <summary>
-	/// Steps <paramref name="focus"/> toward <paramref name="direction"/> through <see cref="AlertPanelFocus.Set"/>, so the
+	/// Steps a focus toward a direction through <see cref="AlertPanelFocus.Set"/>, so the
 	/// pointer follows as it does for any focus change. With nothing focused, the first widget takes the focus, as
 	/// [Return] gives it.
 	/// </summary>
+	/// <param name="focus">The focus.</param>
+	/// <param name="direction">The direction.</param>
 	public static void Step(AlertPanelFocus focus, PadDirection direction) {
 		if (focus.Count <= 0) {
 			return;
@@ -36,7 +38,11 @@ public static class PanelPadFocus {
 		}
 	}
 
-	/// <summary>The widget a step from <paramref name="from"/> toward <paramref name="direction"/> lands on, or null for none.</summary>
+	/// <summary>The widget a step from a widget toward a direction lands on, or null for none.</summary>
+	/// <param name="rect">Gives a widget's rect.</param>
+	/// <param name="count">The number of widgets.</param>
+	/// <param name="from">The widget stepped from.</param>
+	/// <param name="direction">The direction.</param>
 	public static int? Nearest(Func<int, AlertPanelLayout.Rect> rect, int count, int from, PadDirection direction) {
 		var origin = rect(from);
 		bool vertical = direction is PadDirection.Up or PadDirection.Down;

@@ -56,9 +56,11 @@ internal sealed class TerrainImageForm {
 	public ZoneFiles? Zone => _heights is { } heights ? ZoneFiles.Create(heights, CellSizeShift, HeightScale) : null;
 
 	/// <summary>
-	/// Starts the fields at <paramref name="cellSizeShift"/> and <paramref name="heightScale"/>, a terrain's own, which an
+	/// Starts the fields at a terrain's own cell size and height scale, which an
 	/// image read keeps, and drops any image read.
 	/// </summary>
+	/// <param name="cellSizeShift">The cell size shift.</param>
+	/// <param name="heightScale">The height scale.</param>
 	public void Reset(int cellSizeShift, int heightScale) {
 		Reset();
 		CellSizeShift = cellSizeShift;
@@ -130,7 +132,8 @@ internal sealed class TerrainImageForm {
 		}
 	}
 
-	/// <summary>Pictures the image read, <paramref name="side"/> pixels a side, and what its shades mean; nothing with none read.</summary>
+	/// <summary>Pictures the image read, and what its shades mean; nothing with none read.</summary>
+	/// <param name="side">The picture's side in pixels.</param>
 	public void DrawPicture(float side) {
 		if (_heights is not { } heights || _pictures?.Picture(heights, Side(heights)) is not { } texture) {
 			return;

@@ -28,9 +28,11 @@ sealed class LoadingScreen(HostWindow window) : IDisposable {
 	private bool _disposed;
 
 	/// <summary>
-	/// Shows the loading screen for the mission at <paramref name="scriptPath"/>, out of <paramref name="content"/>. A
+	/// Shows the loading screen for a mission. A
 	/// mission whose screen cannot be read loads behind black, having said so.
 	/// </summary>
+	/// <param name="content">The game content.</param>
+	/// <param name="scriptPath">The mission's script path.</param>
 	public void Show(GameContent content, string scriptPath) {
 		if (NameFor(scriptPath) is not { } name) {
 			Console.Error.WriteLine($"No loading screen: {scriptPath} or its {MissionLoader.PlayerFileName} could not be read.");
@@ -52,10 +54,11 @@ sealed class LoadingScreen(HostWindow window) : IDisposable {
 	public void PumpEvents() => window.PumpEvents();
 
 	/// <summary>
-	/// The loading screen's resource name for the mission at <paramref name="scriptPath"/>, built from the script's theater
+	/// The loading screen's resource name for a mission, built from the script's theater
 	/// and the player's machine type in <c>player.mec</c> as <c>Sim_InitMissionSession</c> builds it
 	/// (docs/retail/simulation/mission-loading.md#which-picture). Null when either file cannot be read that far.
 	/// </summary>
+	/// <param name="scriptPath">The mission's script path.</param>
 	public static string? NameFor(string scriptPath) {
 		if (ReadInt16(scriptPath, 0) is not { } theater
 			|| ReadInt16(MissionLoader.PlayerPathFor(scriptPath), 8) is not { } machineType) {

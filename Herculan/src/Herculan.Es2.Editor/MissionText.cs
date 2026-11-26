@@ -98,9 +98,10 @@ internal static class MissionText {
 
 	/// <summary>
 	/// Why a group kept out of the scene (<see cref="PlannedGroup.OffScene"/>) is not shown in it, in one sentence with how
-	/// far from the player it arrives and how (<see cref="Arrival"/>): for the group's own view, or for a member's
-	/// (<paramref name="member"/>).
+	/// far from the player it arrives and how (<see cref="Arrival"/>): for the group's own view, or for a member's.
 	/// </summary>
+	/// <param name="verb">The arrival verb.</param>
+	/// <param name="member">Whether the sentence is for a member's view.</param>
 	public static string OffScene(short verb, bool member) {
 		string away = $"{ArrivalDistance(verb)} from the player, wherever they are";
 		return member
@@ -156,10 +157,11 @@ internal static class MissionText {
 		"Ground vehicles always drive a route; the selected order only affects when the order counts as done.";
 
 	/// <summary>
-	/// When a convoy's order of <paramref name="verb"/> counts as done, for the Does choice's tooltip: its completion test
+	/// When a convoy's order of a verb counts as done, for the Does choice's tooltip: its completion test
 	/// (docs/retail/simulation/ai-goals.md#when-an-order-is-finished--group_isordercomplete-004239fc), whose route-end test reads
 	/// the cursor the convoy's leader steps.
 	/// </summary>
+	/// <param name="verb">The order's verb.</param>
 	public static string ConvoyOrderVerbNote(short verb) => verb switch {
 		MissionOrder.VerbSearchDestroy => "Done when the target is destroyed (a group: every member destroyed or immobilized).",
 		MissionOrder.VerbGuard => "Done when the target is destroyed, or when no enemy group's order is against it any more.",
@@ -170,17 +172,21 @@ internal static class MissionText {
 	};
 
 	/// <summary>
-	/// What an order's target does under <paramref name="verb"/>, for the Target choice's tooltip, then what it does under any
+	/// What an order's target does under a verb, for the Target choice's tooltip, then what it does under any
 	/// verb: an enemy guard on the same target holds while it is named
 	/// (docs/retail/simulation/ai-goals.md#no-rival-group-is-still-working-to-it--group_norivalorderonsubject-00412e74), and, on
-	/// the player's squad's orders (<paramref name="squad"/>), it is the mission target
+	/// the player's squad's orders, it is the mission target
 	/// (docs/retail/simulation/mission-objectives.md#the-player-thinks-objective-arms). For a herc group the verb's part is
 	/// docs/retail/simulation/ai-navigation.md#the-navigation-states, the guard's reach
 	/// docs/retail/simulation/ai-targeting.md#taking-fire--mech_aiontakingfire-0041f7b8-mech-vtable-0x50 and the hold on a
 	/// fight docs/retail/simulation/ai-targeting.md#abandoning-a-target--ai_shouldabandontarget-0041c4a8; for a flyer group
-	/// (<paramref name="flyer"/>) docs/retail/simulation/ai-flyers.md#the-thinks; a convoy (<paramref name="convoy"/>) moves
+	/// docs/retail/simulation/ai-flyers.md#the-thinks; a convoy moves
 	/// none of its vehicles by it, so only the completion test reads it.
 	/// </summary>
+	/// <param name="verb">The order's verb.</param>
+	/// <param name="flyer">Whether the group is a flyer group.</param>
+	/// <param name="convoy">Whether the group is a convoy.</param>
+	/// <param name="squad">Whether the orders are the player's squad's.</param>
 	public static string OrderTargetNote(short verb, bool flyer, bool convoy, bool squad) {
 		const string Holds = "A Cybrid keeps at it until it is destroyed, a human until it is destroyed or immobilized.";
 		string own = convoy
@@ -234,9 +240,12 @@ internal static class MissionText {
 	};
 
 	/// <summary>
-	/// What an objective's condition means in play, in a sentence or two for the What happens choice's tooltips;
-	/// <paramref name="clear"/> and <paramref name="clearTarget"/> are the clear-of-threats distances, in words.
+	/// What an objective's condition means in play, in a sentence or two for the What happens choice's tooltips.
 	/// </summary>
+	/// <param name="code">The condition's code.</param>
+	/// <param name="group">Whether the subject is a group.</param>
+	/// <param name="clear">The clear-of-threats distance, in words.</param>
+	/// <param name="clearTarget">The clear-of-threats distance around the target, in words.</param>
 	public static string ObjectiveNote(short code, bool group, string clear, string clearTarget) => code switch {
 		MissionObjective.ConditionOrderComplete => "True once the group finishes by itself its first order on the route below; a "
 			+ "trigger moving it on does not count.",
@@ -266,16 +275,20 @@ internal static class MissionText {
 	};
 
 	/// <summary>
-	/// The number the editor shows for a record at <paramref name="position"/> in its row, from 0: every record number a
+	/// The number the editor shows for a record at a position in its row, from 0: every record number a
 	/// designer sees counts from 1 (docs/herculan/editor-design.md#writing-the-editors-ui). It is the record's place among its row's
 	/// identities, not its index in a file, so nothing is matched against a file through it.
 	/// </summary>
+	/// <param name="position">The record's position in its row, from 0.</param>
 	public static int Number(int position) => position + 1;
 
 	/// <summary>
-	/// The number the editor shows for row-<paramref name="row"/> GUID <paramref name="guid"/> in <paramref name="layout"/>
+	/// The number the editor shows for a row's GUID in a layout
 	/// (<see cref="Number"/>); null for <c>-1</c> or a GUID the row has no entry for.
 	/// </summary>
+	/// <param name="layout">The layout.</param>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
 	public static int? NumberIn(MissionLayout layout, int row, short guid) {
 		if (guid == -1) {
 			return null;
@@ -292,11 +305,12 @@ internal static class MissionText {
 	}
 
 	/// <summary>
-	/// Waypoint <paramref name="index"/> of a route, from 0, as the route view names it: "Start" for the first, where a group
+	/// A waypoint of a route, from 0, as the route view names it: "Start" for the first, where a group
 	/// stands, then "Waypoint 1" on. That is the cockpit's numbering: the waypoint indicator reads "WAYPOINT n" for the route's
 	/// waypoint <i>n</i> counted from its start, and the heads-down map's first route marker is on waypoint 1
 	/// (docs/retail/simulation/cockpit-gunsight-hud.md#waypoint-indicators, docs/retail/simulation/heads-down-display.md#markers).
 	/// </summary>
+	/// <param name="index">The waypoint's index, from 0.</param>
 	public static string Waypoint(int index) => index == 0 ? "Start" : $"Waypoint {index}";
 
 	/// <summary><see cref="Waypoint"/> inside a sentence: "the start", "waypoint 2".</summary>
@@ -306,9 +320,11 @@ internal static class MissionText {
 	public static string WaypointMark(int index) => index == 0 ? "Start" : index.ToString();
 
 	/// <summary>
-	/// How far waypoint <paramref name="index"/> of <paramref name="points"/> lies from the one before it, along the ground:
+	/// How far a waypoint of a route lies from the one before it, along the ground:
 	/// "420 m from waypoint 2"; null for the start, which has none before it.
 	/// </summary>
+	/// <param name="points">The route's points.</param>
+	/// <param name="index">The waypoint's index.</param>
 	public static string? LegFromPrevious(IReadOnlyList<Vec3i> points, int index) {
 		if (index <= 0 || index >= points.Count) {
 			return null;
@@ -332,7 +348,8 @@ internal static class MissionText {
 	public static string Heading(int binaryAngle) =>
 		$"{BinaryAngle.ToRadians(binaryAngle) * (180f / MathF.PI):F1} deg";
 
-	/// <summary>A duration of <paramref name="seconds"/> in hours, minutes and seconds, leaving out the parts that are 0.</summary>
+	/// <summary>A duration in hours, minutes and seconds, leaving out the parts that are 0.</summary>
+	/// <param name="seconds">The duration in seconds.</param>
 	public static string Duration(int seconds) {
 		if (seconds < 60) {
 			return $"{seconds} s";

@@ -82,9 +82,13 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 	}
 
 	/// <summary>
-	/// Reads a row's count and its records. <paramref name="minSize"/> is a record's size, or for
-	/// waypoint groups its fixed part, whose waypoints <see cref="ParseWaypointGroup"/> checks.
+	/// Reads a row's count and its records. A waypoint group's size is its fixed part, whose waypoints
+	/// <see cref="ParseWaypointGroup"/> checks.
 	/// </summary>
+	/// <typeparam name="T">The record type.</typeparam>
+	/// <param name="row">The row's name.</param>
+	/// <param name="minSize">A record's size, or for waypoint groups its fixed part.</param>
+	/// <param name="parseOne">Parses one record.</param>
 	private T[] ReadRow<T>(string row, int minSize, Func<T> parseOne) {
 		Require(2, $"the {row}' count");
 		int at = Index;

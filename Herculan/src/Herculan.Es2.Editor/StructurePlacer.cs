@@ -86,11 +86,15 @@ internal sealed class StructurePlacer {
 	public string? WhyNoAdd => RosterLimits.WhyNoRoom(_source.Layout, BaseRow, 1);
 
 	/// <summary>
-	/// Adds a structure of <c>BASES.DAT</c> type <paramref name="typeIndex"/> on <paramref name="side"/>, standing on
-	/// the ground at (<paramref name="x"/>, <paramref name="y"/>), in a group of its own or, given
-	/// <paramref name="joinGroup"/>, as a member of that structure group; and selects it. Answers why it could not, or
+	/// Adds a structure standing on
+	/// the ground at a point, in a group of its own or as a member of a structure group; and selects it. Answers why it could not, or
 	/// null when it did.
 	/// </summary>
+	/// <param name="typeIndex">The <c>BASES.DAT</c> type.</param>
+	/// <param name="side">The side.</param>
+	/// <param name="x">The X.</param>
+	/// <param name="y">The Y.</param>
+	/// <param name="joinGroup">The row-16 GUID of the structure group it joins, or null for a group of its own.</param>
 	public string? Add(int typeIndex, MissionSide side, int x, int y, short? joinGroup = null) {
 		if (WhyNoAdd is { } refused) {
 			return refused;
@@ -112,15 +116,15 @@ internal sealed class StructurePlacer {
 	}
 
 	/// <summary>
-	/// Why <paramref name="template"/> cannot be added, or null when it can: block 9 has no room for all its members in some
+	/// Why a template cannot be added, or null when it can: block 9 has no room for all its members in some
 	/// version of the mission.
 	/// </summary>
+	/// <param name="template">The template.</param>
 	public string? WhyNoBase(BaseTemplate template) => RosterLimits.WhyNoRoom(_source.Layout, BaseRow, template.Types.Count);
 
 	/// <summary>
-	/// Adds <paramref name="template"/> on <paramref name="side"/> as one structure group, its point on the ground at
-	/// (<paramref name="x"/>, <paramref name="y"/>), and selects the group. Answers why it could not, or null when it did.
-	///
+	/// Adds a template as one structure group, its point on the ground at
+	/// a position, and selects the group. Answers why it could not, or null when it did.
 	/// <para>The group is in the template's formation and lays its pad, so its point only picks the ground tile, the
 	/// formation's layout fixing where in it the group stands (docs/retail/formats/script-dat.md#base-formation-terrain); it
 	/// faces the shared heading of 0 degrees, since the pad is painted on a tile aligned with the map while the members'
@@ -129,6 +133,10 @@ internal sealed class StructurePlacer {
 	/// (docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 2 and 7). Everything else is as
 	/// <see cref="Add"/> writes it for a lone structure.</para>
 	/// </summary>
+	/// <param name="template">The template.</param>
+	/// <param name="side">The side.</param>
+	/// <param name="x">The X.</param>
+	/// <param name="y">The Y.</param>
 	public string? AddBase(BaseTemplate template, MissionSide side, int x, int y) {
 		if (WhyNoBase(template) is { } refused) {
 			return refused;
@@ -150,11 +158,14 @@ internal sealed class StructurePlacer {
 	}
 
 	/// <summary>
-	/// Where each member of <paramref name="template"/> would stand, by member slot, were it added at (<paramref name="x"/>,
-	/// <paramref name="y"/>): the group's point snapped into its ground tile by the formation's pad layout, then each slot
+	/// Where each member of a template would stand, by member slot, were it added at a position:
+	/// the group's point snapped into its ground tile by the formation's pad layout, then each slot
 	/// placed from it at heading 0, through the rules the sync places <see cref="AddBase"/>'s records by
 	/// (<see cref="MissionPlacementRules.GroupSetup"/>, <see cref="MissionPlacementRules.PlaceStructure"/>).
 	/// </summary>
+	/// <param name="template">The template.</param>
+	/// <param name="x">The X.</param>
+	/// <param name="y">The Y.</param>
 	public IReadOnlyList<MissionMemberPlace> BasePlaces(BaseTemplate template, int x, int y) {
 		var setup = MissionPlacementRules.GroupSetup(MissionUnitKind.Base, new Vec3i(x, y, _terrain.HeightAtWorld(x, y)),
 			MissionPlacementRules.HeadingFromDegrees(0), [], template.FormationId, paintsGround: true, _formations);
@@ -164,9 +175,10 @@ internal sealed class StructurePlacer {
 	}
 
 	/// <summary>
-	/// Why a structure cannot be added to <paramref name="group"/>, by its row-16 GUID, or null when it can: the group must be
+	/// Why a structure cannot be added to a group, or null when it can: the group must be
 	/// a structure group of the mission, other than the player's squad, with a member slot no record of it fills in any state.
 	/// </summary>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public string? WhyNotJoin(short group) =>
 		WhyNoAdd is { } full ? full
 			: _index.Group(group) is not { } planned ? EditorToolbox.GroupGone
@@ -201,10 +213,12 @@ internal sealed class StructurePlacer {
 	public string? Failure { get; private set; }
 
 	/// <summary>
-	/// Why nothing can be put in member slot <paramref name="slot"/> of <paramref name="group"/>, by its row-16 GUID, or null
+	/// Why nothing can be put in a member slot of a group, or null
 	/// when something can: what refuses any add to the group (<see cref="WhyNotJoin"/>, but for a free slot elsewhere), and a
 	/// slot some record of the group fills.
 	/// </summary>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The member slot.</param>
 	public string? WhyNotFillSlot(short group, int slot) =>
 		WhyNoAdd is { } full ? full
 			: _index.Group(group) is not { } planned ? EditorToolbox.GroupGone
@@ -214,10 +228,13 @@ internal sealed class StructurePlacer {
 			: null;
 
 	/// <summary>
-	/// Why a structure or ground vehicle of <c>BASES.DAT</c> type <paramref name="typeIndex"/> cannot be put in member slot
-	/// <paramref name="slot"/> of <paramref name="group"/>, or null when it can: <see cref="WhyNotFillSlot"/>, and a ground
+	/// Why a structure or ground vehicle cannot be put in a member slot of a group, or null when it can:
+	/// <see cref="WhyNotFillSlot"/>, and a ground
 	/// vehicle past a convoy's first <see cref="VehicleGroups.LastJoinSlot"/> + 1 slots.
 	/// </summary>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The member slot.</param>
+	/// <param name="typeIndex">The <c>BASES.DAT</c> type.</param>
 	public string? WhyNotJoinSlot(short group, int slot, int typeIndex) =>
 		WhyNotFillSlot(group, slot) is { } reason ? reason
 			: slot > VehicleGroups.LastJoinSlot && BaseObject.IsGroundVehicle(typeIndex) && VehicleGroups.IsConvoy(_source, group, BaseObject.IsGroundVehicle)
@@ -225,9 +242,12 @@ internal sealed class StructurePlacer {
 			: null;
 
 	/// <summary>
-	/// Asks for a structure or ground vehicle of type <paramref name="typeIndex"/> to be added in member slot
-	/// <paramref name="slot"/> of structure group <paramref name="group"/>, with no point of its own.
+	/// Asks for a structure or ground vehicle to be added in a member slot
+	/// of a structure group, with no point of its own.
 	/// </summary>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The member slot.</param>
+	/// <param name="typeIndex">The <c>BASES.DAT</c> type.</param>
 	public void RequestJoin(short group, int slot, int typeIndex) => _requested = () => JoinSlot(typeIndex, group, slot);
 
 	/// <summary>Makes the slot join asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
@@ -286,10 +306,12 @@ internal sealed class StructurePlacer {
 	}
 
 	/// <summary>
-	/// The structure <see cref="Add"/> would add of <paramref name="typeIndex"/> on <paramref name="side"/>, built the
+	/// The structure <see cref="Add"/> would add, built the
 	/// same way but in no roster slot or group and recorded nowhere, for <see cref="DropPreview"/> to draw; null for a
 	/// type the install has nothing for.
 	/// </summary>
+	/// <param name="typeIndex">The <c>BASES.DAT</c> type.</param>
+	/// <param name="side">The side.</param>
 	public SceneObject? Ghost(int typeIndex, MissionSide side) =>
 		_scene.CreateObject(new MissionPlacement(MissionUnitKind.Base, typeIndex, null, -1, -1, Vec3i.Zero, 0,
 			Array.Empty<short>(), Array.Empty<short>(), Side: side, OutOfActionReport: new OutOfActionReport(Unset(10), Unset(10))));

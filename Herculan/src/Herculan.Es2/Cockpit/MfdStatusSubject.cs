@@ -222,7 +222,7 @@ public readonly record struct MfdStatusSubject(
 	}
 
 	/// <summary>
-	/// The range <c>DIST:</c> prints, from <paramref name="viewer"/> to <paramref name="subject"/>, 0 with no viewer.
+	/// The range <c>DIST:</c> prints, from the viewer to the subject, 0 with no viewer.
 	///
 	/// <para>The paint measures <c>Math_DistanceBetweenPoints</c> between the two origins, which counts the height
 	/// difference. v1.0 prints that in raw world units, and v1.10 passes it through
@@ -233,6 +233,10 @@ public readonly record struct MfdStatusSubject(
 	/// F4 scanner's <c>TRG:</c> would: metres of the ground-plane range, at least 1 unit, so the two screens agree.
 	/// Neither release does this; it is the tweak's own reading (KNOWN_ISSUES_ES2.md, the F5 range entry).</para>
 	/// </summary>
+	/// <param name="subject">The subject.</param>
+	/// <param name="viewer">The viewer, or null for none.</param>
+	/// <param name="v110">Whether the release is v1.10.</param>
+	/// <param name="scannerRange">Whether the tweak's reading of the F4 scanner's range applies.</param>
 	public static int Range(Sim.SimObject subject, Sim.SimObject? viewer, bool v110, bool scannerRange) {
 		if (viewer == null) {
 			return 0;
@@ -249,19 +253,22 @@ public readonly record struct MfdStatusSubject(
 	}
 
 	/// <summary>
-	/// The name the status screen prints for a structure or ground vehicle of <paramref name="type"/>: its silhouette's
-	/// line in the structure or vehicle name group of <paramref name="strings"/>, or null without one.
+	/// The name the status screen prints for a structure or ground vehicle: its silhouette's
+	/// line in the structure or vehicle name group of the strings, or null without one.
 	/// </summary>
+	/// <param name="type">The structure or ground vehicle type.</param>
+	/// <param name="strings">The string table.</param>
 	public static string? BaseName(World.BaseType type, StringFile? strings) =>
 		strings?.Text(type.IsVehicle ? MfdLayout.VehicleNameGroup : MfdLayout.StructureNameGroup, type.SilhouetteIndex);
 
 	private static string FlyerName(Sim.FlyerObject flyer) => FlyerTypeName(flyer.SimData, flyer.Name);
 
 	/// <summary>
-	/// The name the status screen prints for a flyer of <c>nam\FLYERS.NAM</c> type <paramref name="typeName"/> whose
-	/// <c>dat\&lt;type&gt;.DAT</c> is <paramref name="data"/>: the type record's own string, which sits at the same
+	/// The name the status screen prints for a flyer: the type record's own string, which sits at the same
 	/// <c>+0x12</c> the paint reads. Falls back to the type name when the <c>.DAT</c> is missing.
 	/// </summary>
+	/// <param name="data">The flyer's <c>dat\&lt;type&gt;.DAT</c>.</param>
+	/// <param name="typeName">The <c>nam\FLYERS.NAM</c> type name.</param>
 	public static string FlyerTypeName(HercWorks.Core.Data.File.Dat.Sim.FlyerSimData? data, string typeName) {
 		if (data?.NameBytes is { Length: > 0 } bytes) {
 			string name = System.Text.Encoding.ASCII.GetString(bytes).TrimEnd('\0', ' ');

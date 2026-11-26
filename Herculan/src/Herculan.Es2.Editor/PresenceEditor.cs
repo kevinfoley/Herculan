@@ -70,35 +70,49 @@ internal sealed class PresenceEditor {
 	/// <summary>The target the last set run was for.</summary>
 	public PresenceTarget? FailureFor { get; private set; }
 
-	/// <summary>Why <paramref name="target"/>'s presence cannot be set at all, or null when it can.</summary>
+	/// <summary>Why a target's presence cannot be set at all, or null when it can.</summary>
+	/// <param name="target">The target.</param>
 	public string? WhyFixed(PresenceTarget target) => RecordConditions.WhyFixed(_source, target);
 
-	/// <summary>The target of the roster record <paramref name="placed"/> stands for; null for one of the player's squad.</summary>
+	/// <summary>The target of the roster record an object stands for; null for one of the player's squad.</summary>
+	/// <param name="placed">The object.</param>
 	public PresenceTarget? ObjectTarget(SceneObject placed) =>
 		_scene.Planned(placed) is { Squad: false } planned ? PresenceTarget.Of(planned.Key.Row, planned.Key.Guid) : null;
 
-	/// <summary>Row-16 group <paramref name="group"/>'s target; null for the player's squad, the layout's first group.</summary>
+	/// <summary>A row-16 group's target; null for the player's squad, the layout's first group.</summary>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public PresenceTarget? GroupTarget(short group) =>
 		_scene.Groups.Count > 0 && _scene.Groups[0].Guid == group ? null : PresenceTarget.Of(GroupRow, group);
 
-	/// <summary>The target of the order in row-16 group <paramref name="group"/>'s slot <paramref name="slot"/>.</summary>
+	/// <summary>The target of the order in a row-16 group's slot.</summary>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The order slot.</param>
 	public PresenceTarget OrderTarget(short group, int slot) => PresenceTarget.OrderSlot(group, slot);
 
-	/// <summary>Row-17 record <paramref name="record"/>'s target.</summary>
+	/// <summary>A row-17 record's target.</summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public PresenceTarget ObjectiveTarget(int record) => PresenceTarget.Objective(record);
 
-	/// <summary>Asks for <paramref name="target"/> to be present by <paramref name="rule"/>.</summary>
+	/// <summary>Asks for a target to be present by a rule.</summary>
+	/// <param name="target">The target.</param>
+	/// <param name="rule">The rule.</param>
 	public void RequestRule(PresenceTarget target, PresenceRule rule) =>
 		Ask(target, () => PresenceRules.SetRule(_source, target, rule, out _));
 
-	/// <summary>Asks for <paramref name="target"/> to be present only while row-1 GUID <paramref name="condition"/> holds, or always for -1.</summary>
+	/// <summary>Asks for a target to be present only while a row-1 condition holds, or always for -1.</summary>
+	/// <param name="target">The target.</param>
+	/// <param name="condition">The row-1 GUID, or -1 for always.</param>
 	public void Request(PresenceTarget target, short condition) =>
 		Ask(target, () => RecordConditions.SetPresence(_source, target, condition, out _));
 
-	/// <summary>Why roster object <paramref name="member"/>'s presence cannot be moved onto row-16 group <paramref name="group"/> (<see cref="RecordConditions.WhyNoMoveToGroup"/>).</summary>
+	/// <summary>Why a roster object's presence cannot be moved onto a row-16 group (<see cref="RecordConditions.WhyNoMoveToGroup"/>).</summary>
+	/// <param name="member">The roster object.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public string? WhyNoMoveToGroup(PresenceTarget member, short group) => RecordConditions.WhyNoMoveToGroup(_source, member, group);
 
-	/// <summary>Asks for row-16 group <paramref name="group"/> to be present when roster object <paramref name="member"/> is, and the object always (<see cref="RecordConditions.MoveToGroup"/>).</summary>
+	/// <summary>Asks for a row-16 group to be present when a roster object is, and the object always (<see cref="RecordConditions.MoveToGroup"/>).</summary>
+	/// <param name="member">The roster object.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public void RequestMoveToGroup(PresenceTarget member, short group) =>
 		Ask(member, () => RecordConditions.MoveToGroup(_source, member, group));
 
@@ -111,7 +125,8 @@ internal sealed class PresenceEditor {
 		}
 	}
 
-	/// <summary>What loses its reference to <paramref name="target"/> where it is absent; null for an objective, which nothing references.</summary>
+	/// <summary>What loses its reference to a target where it is absent; null for an objective, which nothing references.</summary>
+	/// <param name="target">The target.</param>
 	public PresenceLosers? LosersOf(PresenceTarget target) {
 		var source = _source;
 		short guid = RecordConditions.GuidOf(source, target);

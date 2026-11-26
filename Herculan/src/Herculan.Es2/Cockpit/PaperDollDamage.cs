@@ -55,15 +55,19 @@ public static class PaperDollDamage {
 	public readonly record struct WeaponIcon(int Frame, int X, int Y, int Width, int Height);
 
 	/// <summary>
-	/// <c>PaperDoll_BuildWeaponIcons</c> (<c>00437c8c</c>) for one <c>.PDG</c> hardpoint: frame
-	/// <paramref name="iconIndex"/> plus the entry's own offset, anchored at its origin by its
+	/// <c>PaperDoll_BuildWeaponIcons</c> (<c>00437c8c</c>) for one <c>.PDG</c> hardpoint: the icon's
+	/// frame plus the entry's own offset, anchored at its origin by its
 	/// alignment. Arithmetic is in device pixels, as the original's is after the load-time shift, so
 	/// a centred 9-pixel icon backs off 9 device pixels rather than 8. Null for a weapon with no icon
-	/// or a frame <paramref name="sizes"/> has no size for.
+	/// or a frame the sizes have no size for.
 	///
 	/// <para>The entry's blit flags are not applied. Flag 2 moves the icon left by the bitmap's width
 	/// less its <c>WEAPONS.PDG</c> width, but every retail hardpoint entry states 0.</para>
 	/// </summary>
+	/// <param name="hardpoint">The hardpoint's entry.</param>
+	/// <param name="iconIndex">The icon's frame.</param>
+	/// <param name="sizes">The weapon icons' sizes.</param>
+	/// <param name="scale">The device-pixel scale.</param>
 	public static WeaponIcon? PlaceWeaponIcon(PaperDollGraphic.HardpointEntry hardpoint, int iconIndex,
 			WeaponPaperDiagram sizes, int scale) {
 		int frame = iconIndex + hardpoint.FrameOffset;
@@ -98,7 +102,8 @@ public static class PaperDollDamage {
 	/// </summary>
 	public static int State(int damage) => MfdStatusSubject.ConditionFromDamage(damage);
 
-	/// <summary>The <c>COLORS.DAT</c> id state <paramref name="state"/> tints a doll region with.</summary>
+	/// <summary>The <c>COLORS.DAT</c> id a state tints a doll region with.</summary>
+	/// <param name="state">The state.</param>
 	public static int TintColorId(int state) => state switch {
 		0 => OkColorId,
 		1 => LightColorId,
@@ -173,10 +178,12 @@ public static class PaperDollDamage {
 
 	/// <summary>
 	/// The reading behind a weapons-view row and its icon: the weapon mount's component and the
-	/// dependent under it, weighed together. Mount <paramref name="loadoutSlot"/> is component
+	/// dependent under it, weighed together. A loadout slot's mount is component
 	/// <see cref="Sim.WeaponMounts.FirstMountComponent"/><c> + slot</c>, which is the buffer's
 	/// <see cref="ComponentDamage.FirstCombinedReadout"/><c> + slot</c>.
 	/// </summary>
+	/// <param name="loadoutSlot">The loadout slot.</param>
+	/// <param name="readouts">The buffer's readouts.</param>
 	public static int? WeaponRowReading(int loadoutSlot, IReadOnlyList<short> readouts) =>
 		loadoutSlot >= 0 && loadoutSlot < ComponentDamage.CombinedReadoutCount
 			? readouts[ComponentDamage.FirstCombinedReadout + loadoutSlot]

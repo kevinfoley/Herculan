@@ -121,9 +121,10 @@ public sealed class StatusAlertPanel {
 	public int PressedButton { get; private set; } = -1;
 
 	/// <summary>
-	/// Whether button <paramref name="index"/> shows pressed — its second plate, captioned in <c>PUSHED</c>:
+	/// Whether a button shows pressed — its second plate, captioned in <c>PUSHED</c>:
 	/// while the pointer holds it, and while a key's press flash does.
 	/// </summary>
+	/// <param name="index">The button's index.</param>
 	public bool ShowsPressed(int index) =>
 		(index == PressedButton && !_pressPopped) || _presses.IsLit(index);
 
@@ -169,7 +170,8 @@ public sealed class StatusAlertPanel {
 		: Array.IndexOf(TwoButtonStatuses, status) >= 0 ? 2
 		: 0;
 
-	/// <summary>Whether either panel can show <paramref name="status"/> at all.</summary>
+	/// <summary>Whether either panel can show a status at all.</summary>
+	/// <param name="status">The status.</param>
 	public static bool CanShow(int status) =>
 		status >= 0 && status < StatusCount && ButtonCountFor(status) > 0;
 
@@ -271,10 +273,11 @@ public sealed class StatusAlertPanel {
 	}
 
 	/// <summary>
-	/// Answers as though <paramref name="button"/> had been pressed, recording whether that answer ends the
+	/// Answers as though a button had been pressed, recording whether that answer ends the
 	/// mission, and sets the close flag — <c>StatusAlertPanel_OnChildClick</c> (<c>00456160</c>). The panel
 	/// comes down at the frame's <see cref="Present"/>.
 	/// </summary>
+	/// <param name="button">The button.</param>
 	public void Choose(int button) {
 		if (!IsOpen || button < 0 || button >= _buttons.Length) {
 			return;

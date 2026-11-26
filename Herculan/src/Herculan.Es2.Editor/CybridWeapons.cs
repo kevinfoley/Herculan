@@ -57,7 +57,8 @@ internal sealed class CybridWeapons {
 	/// <summary>Whether the install's archives hold any mission to read the fits from.</summary>
 	public bool HasMissions => Fits() != null;
 
-	/// <summary>The fit slots <c>MECHS.NAM</c> type <paramref name="type"/>'s hardpoints address, ascending; none without a hardpoint list.</summary>
+	/// <summary>The fit slots a <c>MECHS.NAM</c> type's hardpoints address, ascending; none without a hardpoint list.</summary>
+	/// <param name="type">The <c>MECHS.NAM</c> type.</param>
 	public IReadOnlyList<int> Hardpoints(int type) {
 		if (_hardPoints.TryGetValue(type, out var slots)) {
 			return slots;
@@ -73,23 +74,28 @@ internal sealed class CybridWeapons {
 	}
 
 	/// <summary>
-	/// The weapon ids retail missions fit in fit slot <paramref name="slot"/> of type <paramref name="type"/>, <c>0</c> where
+	/// The weapon ids retail missions fit in a fit slot of a type, <c>0</c> where
 	/// one leaves it empty, in the weapons screen's order; none without missions.
 	/// </summary>
+	/// <param name="type">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="slot">The fit slot.</param>
 	public IReadOnlyList<short> WeaponsFor(int type, int slot) =>
 		Fits()?.Weapons(type, slot).OrderBy(WeaponsScreenOrder).ToList() ?? [];
 
 	/// <summary>
-	/// The weapon ids fit slot <paramref name="slot"/> of type <paramref name="type"/> offers: under Vanilla those retail
+	/// The weapon ids a fit slot of a type offers: under Vanilla those retail
 	/// missions fit there (<see cref="WeaponsFor"/>), under Unrestricted <see cref="UnrestrictedOffer"/>.
 	/// </summary>
+	/// <param name="type">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="slot">The fit slot.</param>
 	public IReadOnlyList<short> Offered(int type, int slot) => Unrestricted ? UnrestrictedOffer(type) : WeaponsFor(type, slot);
 
 	/// <summary>
-	/// The weapon ids each hardpoint of type <paramref name="type"/> offers under Unrestricted, whichever choice the setting
+	/// The weapon ids each hardpoint of a type offers under Unrestricted, whichever choice the setting
 	/// holds: <see cref="PitbullWeapons"/> on PITBULL, and on every other chassis every weapon of the weapons screen's list but
 	/// those, a list that holds every other weapon a retail Cybrid carries; <c>0</c> last on both.
 	/// </summary>
+	/// <param name="type">The <c>MECHS.NAM</c> type.</param>
 	public IReadOnlyList<short> UnrestrictedOffer(int type) {
 		_names ??= UnitTypeNames.LoadMechs(_simulator);
 		return _names[type] == Pitbull
@@ -98,9 +104,12 @@ internal sealed class CybridWeapons {
 	}
 
 	/// <summary>
-	/// The ammunition type retail records carry most often with <paramref name="weapon"/> in fit slot <paramref name="slot"/>
-	/// of type <paramref name="type"/>, the filler 5 for a weapon no retail record fits there.
+	/// The ammunition type retail records carry most often with a weapon in a fit slot
+	/// of a type, the filler 5 for a weapon no retail record fits there.
 	/// </summary>
+	/// <param name="type">The <c>MECHS.NAM</c> type.</param>
+	/// <param name="slot">The fit slot.</param>
+	/// <param name="weapon">The weapon id.</param>
 	public short AmmoFor(int type, int slot, short weapon) => Fits()?.Ammo(type, slot, weapon) ?? RosterFit.Filler;
 
 	// The weapons screen's order, then a weapon it does not list, by id, and no weapon last.

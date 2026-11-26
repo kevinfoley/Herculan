@@ -157,10 +157,11 @@ internal sealed class GroupOverlay {
 	private static readonly Vector3 NotAlwaysColor = new(1f, 0.75f, 0.35f);
 
 	/// <summary>
-	/// Each order slot of <paramref name="group"/> whose order the layout has and names a subject the layout places in the
+	/// Each order slot of a group whose order the layout has and names a subject the layout places in the
 	/// scene, with the order's verb and where that subject stands: a group's point, or the object of a herc, flyer or
 	/// structure.
 	/// </summary>
+	/// <param name="group">The group.</param>
 	private IEnumerable<(int Slot, short Verb, Vec3i At)> Subjects(PlannedGroup group) {
 		for (int slot = 0; slot < group.Orders.Count; slot++) {
 			if (group.Orders[slot] == -1 || _index.Layout.Entry<MissionOrder22>(group.Orders[slot])?.Fields is not { } order
@@ -187,9 +188,12 @@ internal sealed class GroupOverlay {
 		_index.ObjectOf(key) is { } placed && _index.InScene(placed) ? placed.Object.Position : null;
 
 	/// <summary>
-	/// An arrow on the ground from <paramref name="from"/> along <paramref name="heading"/>. A machine
+	/// An arrow on the ground from a point along a heading. A machine
 	/// faces <c>(-sin h, cos h)</c> in world XY — see <see cref="Es2.Scene.MissionScene.TransformOf"/>.
 	/// </summary>
+	/// <param name="into">The list the vertices are appended to.</param>
+	/// <param name="from">Where the arrow starts.</param>
+	/// <param name="heading">The heading.</param>
 	private void AddArrow(List<Vector3> into, Vec3i from, int heading) {
 		Vec3i Along(Vec3i origin, int angle, int length) {
 			float radians = BinaryAngle.ToRadians(angle);

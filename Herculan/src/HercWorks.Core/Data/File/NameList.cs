@@ -11,7 +11,8 @@ public class NameList {
 	/// <summary>The names, upper-cased, in type order.</summary>
 	public string[] Names { get; set; } = [];
 
-	/// <summary>The name of <paramref name="typeIndex"/>, or null when the list has no such type.</summary>
+	/// <summary>The name of a type, or null when the list has no such type.</summary>
+	/// <param name="typeIndex">The type's index.</param>
 	public string? this[int typeIndex] =>
 		typeIndex >= 0 && typeIndex < Names.Length ? Names[typeIndex] : null;
 }

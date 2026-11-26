@@ -58,9 +58,16 @@ sealed class HddGamepad {
 
 	/// <summary>
 	/// Reads the pad, once an update after the host's keys are cleared and before the frame reads them.
-	/// <paramref name="active"/> is whether the display has the pad: the view down on it with nothing else holding the
-	/// input. <paramref name="damagePage"/> picks the damage detail's arrows over the command display's.
 	/// </summary>
+	/// <param name="input">The input context.</param>
+	/// <param name="simulatorInput">The simulator's input.</param>
+	/// <param name="client">The client size.</param>
+	/// <param name="delta">The time since the last update.</param>
+	/// <param name="active">Whether the display has the pad: the view down on it with nothing else holding the
+	/// input.</param>
+	/// <param name="damagePage">Whether the pad picks the damage detail's arrows over the command display's.</param>
+	/// <param name="keyMap">The key map.</param>
+	/// <param name="settings">The gamepad mouse settings.</param>
 	public void Update(IInputContext input, SimulatorInput simulatorInput, Vector2D<int> client, double delta,
 			bool active, bool damagePage, KeyMap keyMap, GamepadMouseSettings settings) {
 		var pad = input.Gamepads.FirstOrDefault(gamepad => gamepad.IsConnected);

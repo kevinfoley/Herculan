@@ -47,8 +47,13 @@ public sealed class TapeRecording {
 	/// one. Keys are edges of the polled state rather than the device's own events, because the handlers poll
 	/// too: a key pressed and let go between two frames is one no handler saw. Only what reaches the game is
 	/// recorded — nothing while the debug UI has the keyboard or the free camera is being flown, and no [Esc] the
-	/// host's own menu takes (<paramref name="hostTakesEscape"/>).
+	/// host's own menu takes.
 	/// </summary>
+	/// <param name="panelOpen">Whether a panel is open.</param>
+	/// <param name="liveKeys">The live keys, or null for none.</param>
+	/// <param name="imguiHasKeyboard">Whether the debug UI has the keyboard.</param>
+	/// <param name="piloting">Whether the player is piloting.</param>
+	/// <param name="hostTakesEscape">Whether the host's own menu takes [Esc].</param>
 	public void BeginFrame(bool panelOpen, IKeyState? liveKeys, bool imguiHasKeyboard, bool piloting,
 			bool hostTakesEscape = false) {
 		if (Recorder == null) {

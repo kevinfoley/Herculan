@@ -145,10 +145,12 @@ sealed class CampaignScreens {
 	}
 
 	/// <summary>
-	/// A training career started on <paramref name="row"/> (<see cref="ShellCampaignLoop.StartTraining"/>), its position
+	/// A training career started on a row (<see cref="ShellCampaignLoop.StartTraining"/>), its position
 	/// step ending in the mission load. Returns whether that launched the mission, closing the shell on exit code 2: not
 	/// when it failed, nor when the mission-name dialog is left up for the launch to come from its button.
 	/// </summary>
+	/// <param name="row">The career row.</param>
+	/// <param name="label">The career's label.</param>
 	public bool LaunchTraining(int row, string label) {
 		_trainingLabel = label;
 		return _campaign.StartTraining(row, label) && StartMissionLoad(_repaint);
@@ -158,9 +160,10 @@ sealed class CampaignScreens {
 	/// Career_StartMissionLoad (00412ce1), the end of a career's position step: the mission-name dialog shown with the
 	/// position's mission as its default (MissionNameDialog_Show, 0044db25), and then, without -@, a press and a release
 	/// posted at its Use Default, which the original delivers once the handler that got here has returned. Here that
-	/// click is the load itself, run at once. <paramref name="loadFailed"/> is where a load that fails goes back to.
+	/// click is the load itself, run at once.
 	/// Returns whether the load ran and succeeded.
 	/// </summary>
+	/// <param name="loadFailed">Where a load that fails goes back to.</param>
 	private bool StartMissionLoad(Action loadFailed) {
 		_loadFailed = loadFailed;
 		if (!_missionPicker) {
@@ -173,13 +176,14 @@ sealed class CampaignScreens {
 	}
 
 	/// <summary>
-	/// Career_LoadCurrentMission (0044d4cc) for a null <paramref name="missionPath"/>, MissionNameDialog_OnLoad (0044d5bd)
+	/// Career_LoadCurrentMission (0044d4cc) for a null path, MissionNameDialog_OnLoad (0044d5bd)
 	/// for a typed one. A campaign's puts the frame up on the mission tab in the view MissionScreenView holds; a training
 	/// one's launches, closing the shell on exit code 2. Returns whether it loaded.
 	///
 	/// <para>The load that follows a debrief writes the auto-save once the mission is in (<see cref="SaveNames.AutoSaveAfterDebrief"/>),
 	/// so the save holds what SAVE would write with the debrief up.</para>
 	/// </summary>
+	/// <param name="missionPath">The typed mission path, or null for the career's current mission.</param>
 	private bool LoadCurrentMission(string? missionPath) {
 		bool debriefLoad = _debriefLoad;
 		_debriefLoad = false;

@@ -42,30 +42,42 @@ internal sealed class RandomTableEditor {
 	public (int Row, short Guid)? RecordOf(SceneObject placed) =>
 		_index.Planned(placed) is { Squad: false } planned ? (planned.Key.Row, planned.Key.Guid) : null;
 
-	/// <summary>Why the object of roster row <paramref name="row"/>'s GUID <paramref name="guid"/> cannot change table at all, or null when it can.</summary>
+	/// <summary>Why the object of a roster row's GUID cannot change table at all, or null when it can.</summary>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
 	public string? WhyNoTables(int row, short guid) => RandomTableEditing.WhyNoTables(_source, row, guid);
 
 	/// <summary>Asks for a new table of the object's own, which then stays selected.</summary>
 	public void RequestCreate(int row, short guid) =>
 		Ask(() => WhyNoTables(row, guid), source => RandomTableEditing.CreateTable(source, row, guid, out _), null);
 
-	/// <summary>Asks for the object to pick from <paramref name="table"/> (<see cref="RandomTableEditing.SetTable"/>).</summary>
+	/// <summary>Asks for the object to pick from a table (<see cref="RandomTableEditing.SetTable"/>).</summary>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="table">The table's GUID.</param>
 	public void RequestTable(int row, short guid, short table) =>
 		Ask(() => RandomTableEditing.WhyNoTable(_source, row, guid, table),
 			source => RandomTableEditing.SetTable(source, row, guid, table), null);
 
 	/// <summary>
-	/// Asks for the object to pick from no table, keeping range <paramref name="range"/>'s option as its own
+	/// Asks for the object to pick from no table, keeping a range's option as its own
 	/// (<see cref="RandomTableEditing.SetFixed"/>).
 	/// </summary>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="range">The range whose option it keeps.</param>
 	public void RequestFixed(int row, short guid, short range) =>
 		Ask(() => RandomTableEditing.WhyNoFixed(_source, row, guid, range),
 			source => RandomTableEditing.SetFixed(source, row, guid, range), null);
 
 	/// <summary>
-	/// Asks for an option copying range <paramref name="copyOf"/>'s template to be added to <paramref name="table"/>, which is
-	/// then selected when <paramref name="selectTable"/>; <paramref name="added"/> is told the new option's range.
+	/// Asks for an option copying a range's template to be added to a table, which is
+	/// then selected when asked.
 	/// </summary>
+	/// <param name="table">The table's GUID.</param>
+	/// <param name="copyOf">The range whose template is copied.</param>
+	/// <param name="selectTable">Whether the table is then selected.</param>
+	/// <param name="added">Told the new option's range.</param>
 	public void RequestAdd(short table, short copyOf, bool selectTable = true, Action<short>? added = null) =>
 		Ask(() => RandomTableEditing.WhyNoAdd(_source, table), source => {
 			var edit = RandomTableEditing.AddOption(source, table, copyOf, out short range);
@@ -74,22 +86,29 @@ internal sealed class RandomTableEditor {
 		}, selectTable ? table : null);
 
 	/// <summary>
-	/// Asks for range <paramref name="range"/>'s option to be removed from <paramref name="table"/>, which is then selected
-	/// when <paramref name="selectTable"/>.
+	/// Asks for a range's option to be removed from a table, which is then selected
+	/// when asked.
 	/// </summary>
+	/// <param name="table">The table's GUID.</param>
+	/// <param name="range">The range.</param>
+	/// <param name="selectTable">Whether the table is then selected.</param>
 	public void RequestRemove(short table, short range, bool selectTable = true) =>
 		Ask(() => RandomTableEditing.WhyNoRemove(_source, table, range),
 			source => RandomTableEditing.RemoveOption(source, table, range), selectTable ? table : null);
 
 	/// <summary>
-	/// Asks for <paramref name="table"/>'s chances to be <paramref name="percents"/>, one percent to one decimal per option;
-	/// the table is then selected when <paramref name="selectTable"/>.
+	/// Asks for a table's chances to change, one percent to one decimal per option;
+	/// the table is then selected when asked.
 	/// </summary>
+	/// <param name="table">The table's GUID.</param>
+	/// <param name="percents">The percents, one per option.</param>
+	/// <param name="selectTable">Whether the table is then selected.</param>
 	public void RequestChances(short table, IReadOnlyList<decimal> percents, bool selectTable = true) =>
 		Ask(() => RandomTableEditing.WhyNoChances(_source, table, percents),
 			source => RandomTableEditing.SetChances(source, table, percents), selectTable ? table : null);
 
-	/// <summary>Asks for <paramref name="table"/> to be deleted, with its ranges and templates.</summary>
+	/// <summary>Asks for a table to be deleted, with its ranges and templates.</summary>
+	/// <param name="table">The table's GUID.</param>
 	public void RequestDelete(short table) =>
 		Ask(() => RandomTableEditing.WhyNoDelete(_source, table),
 			source => RandomTableEditing.DeleteTable(source, table), -1);

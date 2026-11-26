@@ -29,13 +29,16 @@ internal sealed class SideChanger {
 		_sync = sync;
 	}
 
-	/// <summary>Why row-16 GUID <paramref name="group"/>'s side cannot be changed, or null when it can.</summary>
+	/// <summary>Why a row-16 group's side cannot be changed, or null when it can.</summary>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public string? WhyFixed(short group) =>
 		_index.Group(group) is not { } planned ? EditorToolbox.GroupGone
 			: planned.IsSquad ? "The editor leaves the player's squad's team alone."
 			: null;
 
-	/// <summary>Puts <paramref name="group"/> on <paramref name="side"/>, unless it is there already or cannot change.</summary>
+	/// <summary>Puts a group on a side, unless it is there already or cannot change.</summary>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="side">The side.</param>
 	public void Set(short group, MissionSide side) {
 		if (WhyFixed(group) != null || _index.Group(group)?.Side == side) {
 			return;

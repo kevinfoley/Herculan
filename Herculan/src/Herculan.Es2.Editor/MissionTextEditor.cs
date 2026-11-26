@@ -27,28 +27,39 @@ internal sealed class MissionTextEditor {
 	/// <inheritdoc cref="MissionTextEditing.Lines"/>
 	public int LineCount => MissionTextEditing.Lines(_source);
 
-	/// <summary><paramref name="list"/>'s filled slots, with the id each references and its text, null for an id with no text in this state.</summary>
+	/// <summary>A list's filled slots, with the id each references and its text, null for an id with no text in this state.</summary>
+	/// <param name="list">The list.</param>
 	public IReadOnlyList<(int Slot, short Id, string? Text)> Lines(MissionTextList list) =>
 		MissionTextEditing.Filled(_source, list)
 			.Select(entry => (entry.Slot, entry.Id, MissionTextEditing.LineText(_source, entry.Id)))
 			.ToList();
 
-	/// <summary>Why no line can be added to <paramref name="list"/>, or null when one can.</summary>
+	/// <summary>Why no line can be added to a list, or null when one can.</summary>
+	/// <param name="list">The list.</param>
 	public string? WhyNoAdd(MissionTextList list) => MissionTextEditing.WhyNoAdd(_source, list);
 
-	/// <summary>Asks for an empty line after <paramref name="list"/>'s last.</summary>
+	/// <summary>Asks for an empty line after a list's last.</summary>
+	/// <param name="list">The list.</param>
 	public void RequestAdd(MissionTextList list) =>
 		Ask(() => WhyNoAdd(list) ?? Commit(() => MissionTextEditing.AddLine(_source, list, out _)));
 
-	/// <summary>Asks for the line in <paramref name="list"/>'s slot <paramref name="slot"/> to be removed, the later lines moving up.</summary>
+	/// <summary>Asks for the line in a list's slot to be removed, the later lines moving up.</summary>
+	/// <param name="list">The list.</param>
+	/// <param name="slot">The slot.</param>
 	public void RequestRemove(MissionTextList list, int slot) =>
 		Ask(() => Commit(() => MissionTextEditing.RemoveLine(_source, list, slot)));
 
-	/// <summary>Asks for the lines in <paramref name="list"/>'s slots <paramref name="slot"/> and <paramref name="to"/> to trade places.</summary>
+	/// <summary>Asks for the lines in two of a list's slots to trade places.</summary>
+	/// <param name="list">The list.</param>
+	/// <param name="slot">One slot.</param>
+	/// <param name="to">The other slot.</param>
 	public void RequestMove(MissionTextList list, int slot, int to) =>
 		Ask(() => Commit(() => MissionTextEditing.MoveLine(_source, list, slot, to)));
 
-	/// <summary>Asks for the line in <paramref name="list"/>'s slot <paramref name="slot"/> to read <paramref name="text"/>.</summary>
+	/// <summary>Asks for the line in a list's slot to read a text.</summary>
+	/// <param name="list">The list.</param>
+	/// <param name="slot">The slot.</param>
+	/// <param name="text">The text.</param>
 	public void RequestText(MissionTextList list, int slot, string text) =>
 		Ask(() => MissionTextEditing.PackageRecord(_source) is { } record
 			? Commit(() => MissionTextEditing.SetLine(_source, TextOwner.Package(record, list, slot), 0, text))

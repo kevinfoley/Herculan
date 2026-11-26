@@ -57,9 +57,11 @@ internal static class MissionOpener {
 	}
 
 	/// <summary>
-	/// <paramref name="opened"/>, generated again writing nothing over the theater and time of day when it was loaded in
-	/// training mode, which <paramref name="squad"/> says: a squad that is not the career's.
+	/// A mission document, generated again writing nothing over the theater and time of day when it was loaded in
+	/// training mode, which its squad says: a squad that is not the career's.
 	/// </summary>
+	/// <param name="opened">The mission document.</param>
+	/// <param name="squad">The squad the mission was loaded with, or null.</param>
 	private static MissionDocument? OwnWorld(MissionDocument? opened, MissionSquad? squad) =>
 		opened != null && squad is { PlayerMachine: not PlayerMachineSource.CareerSquad }
 			? new MissionDocument(opened.Mission, opened.Text, opened.Generation.WithoutOverwrite(TheaterWord, VariantWord))

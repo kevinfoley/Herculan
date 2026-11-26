@@ -40,7 +40,8 @@ internal sealed class StartingConditionField {
 		_editor = editor;
 	}
 
-	/// <summary>Draws <paramref name="key"/>'s starting condition; nothing for a flyer or a record the layout no longer has.</summary>
+	/// <summary>Draws a record's starting condition; nothing for a flyer or a record the layout no longer has.</summary>
+	/// <param name="key">The roster record.</param>
 	public void Draw(ObjectKey key) {
 		var source = _editor.Source;
 		if (!StartingConditions.Carries(key.Row) || source.Layout.Entry(key.Row, key.Guid) == null) {

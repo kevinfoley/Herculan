@@ -37,14 +37,17 @@ internal sealed class ObjectiveEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why row-17 record <paramref name="record"/> cannot be edited, or null when it can.</summary>
+	/// <summary>Why a row-17 record cannot be edited, or null when it can.</summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public string? WhyFixed(int record) =>
 		_source.Layout.Objectives.Any(objective => objective.Index == record) ? null : "That objective is not in the mission.";
 
 	/// <summary>
-	/// The subject an objective about <paramref name="selection"/> would have, as its kind (0 a group, 1 a herc, 3 a
+	/// The subject an objective about a selection would have, as its kind (0 a group, 1 a herc, 3 a
 	/// structure) and GUID, or why the selection cannot be one.
 	/// </summary>
+	/// <param name="selection">The selection, or null for none.</param>
+	/// <param name="whyNot">Receives why the selection cannot be a subject, or null when it can.</param>
 	public (short Kind, short Guid)? SubjectOf(EditorSelection? selection, out string? whyNot) {
 		whyNot = null;
 		switch (selection) {
@@ -63,14 +66,16 @@ internal sealed class ObjectiveEditor {
 		}
 	}
 
-	/// <summary>Why no objective can be created about <paramref name="selection"/>, or null when one can.</summary>
+	/// <summary>Why no objective can be created about a selection, or null when one can.</summary>
+	/// <param name="selection">The selection, or null for none.</param>
 	public string? WhyNoCreate(EditorSelection? selection) {
 		return SubjectOf(selection, out string? whyNot) is { } subject
 			? ObjectiveEditing.WhyNoCreate(_source, subject.Kind, subject.Guid)
 			: whyNot;
 	}
 
-	/// <summary>Asks for a new objective about <paramref name="selection"/>, which is then selected.</summary>
+	/// <summary>Asks for a new objective about a selection, which is then selected.</summary>
+	/// <param name="selection">The selection, or null for none.</param>
 	public void RequestCreate(EditorSelection? selection) {
 		if (SubjectOf(selection, out _) is not { } subject) {
 			return;
@@ -86,50 +91,71 @@ internal sealed class ObjectiveEditor {
 		};
 	}
 
-	/// <summary>Why row-17 record <paramref name="record"/> cannot be deleted, or null when it can.</summary>
+	/// <summary>Why a row-17 record cannot be deleted, or null when it can.</summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public string? WhyNoDelete(int record) => WhyFixed(record) ?? ObjectiveEditing.WhyNoDelete(_source, record);
 
-	/// <summary>Asks for row-17 record <paramref name="record"/> to be deleted; a selection of it is cleared.</summary>
+	/// <summary>Asks for a row-17 record to be deleted; a selection of it is cleared.</summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public void RequestDelete(int record) =>
 		_requested = () => WhyNoDelete(record) ?? Commit(() => ObjectiveEditing.Delete(_source, record), null, deleted: record);
 
-	/// <summary>Asks for <paramref name="record"/> to be mandatory, or a failure condition.</summary>
+	/// <summary>Asks for a record to be mandatory, or a failure condition.</summary>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="mandatory">True for mandatory, false for a failure condition.</param>
 	public void RequestRequired(int record, bool mandatory) =>
 		Ask(record, () => ObjectiveEditing.SetRequired(_source, record, mandatory));
 
-	/// <summary>Asks for <paramref name="record"/>'s condition to be <paramref name="code"/>.</summary>
+	/// <summary>Asks for a record's condition to change.</summary>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="code">The new condition's code.</param>
 	public void RequestCondition(int record, short code) => Ask(record, () => ObjectiveEditing.SetCondition(_source, record, code));
 
-	/// <summary>Asks for <paramref name="record"/>'s subject to be <paramref name="kind"/>'s record of GUID <paramref name="subject"/>.</summary>
+	/// <summary>Asks for a record's subject to be a record of a kind.</summary>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="kind">The subject's kind.</param>
+	/// <param name="subject">The subject's GUID.</param>
 	public void RequestSubject(int record, short kind, short subject) =>
 		Ask(record, () => ObjectiveEditing.SetSubject(_source, record, kind, subject));
 
-	/// <summary>Asks for <paramref name="record"/>'s route to be row-8 GUID <paramref name="route"/>.</summary>
+	/// <summary>Asks for a record's route to be a row-8 route.</summary>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public void RequestRoute(int record, short route) => Ask(record, () => ObjectiveEditing.SetRoute(_source, record, route));
 
 	/// <summary>
-	/// The routes, by row-8 GUID, condition 0 of row-17 record <paramref name="record"/> can be about
+	/// The routes, by row-8 GUID, condition 0 of a row-17 record can be about
 	/// (<see cref="ObjectiveEditing.RouteChoices"/>); none when the row has no such record.
 	/// </summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public IReadOnlyList<short> RouteChoices(int record) => WhyFixed(record) == null ? ObjectiveEditing.RouteChoices(_source, record) : [];
 
-	/// <summary>Why no counter write can be added to <paramref name="record"/>, or null when one can.</summary>
+	/// <summary>Why no counter write can be added to a record, or null when one can.</summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public string? WhyNoAddPair(int record) => WhyFixed(record) ?? ObjectiveEditing.WhyNoAddPair(_source, record);
 
-	/// <summary>Asks for a counter write after <paramref name="record"/>'s last.</summary>
+	/// <summary>Asks for a counter write after a record's last.</summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public void RequestAddPair(int record) => Ask(record, () => ObjectiveEditing.AddPair(_source, record));
 
-	/// <summary>Asks for <paramref name="record"/>'s counter write <paramref name="slot"/> to be <paramref name="counter"/> and <paramref name="op"/>.</summary>
+	/// <summary>Asks for one of a record's counter writes to be a counter and an operation.</summary>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="slot">The write slot.</param>
+	/// <param name="counter">The counter.</param>
+	/// <param name="op">The operation.</param>
 	public void RequestPair(int record, int slot, short counter, short op) =>
 		Ask(record, () => ObjectiveEditing.SetPair(_source, record, slot, counter, op));
 
-	/// <summary>Asks for <paramref name="record"/>'s counter write <paramref name="slot"/> to be removed.</summary>
+	/// <summary>Asks for one of a record's counter writes to be removed.</summary>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="slot">The write slot.</param>
 	public void RequestRemovePair(int record, int slot) => Ask(record, () => ObjectiveEditing.RemovePair(_source, record, slot));
 
 	/// <summary>
-	/// The text of each line of <paramref name="record"/>'s failure text as it is shown, or null for a line it has no text
+	/// The text of each line of a record's failure text as it is shown, or null for a line it has no text
 	/// for in the editor; empty when it has no failure text or the row has no such record.
 	/// </summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public IReadOnlyList<string?> FailureLines(int record) {
 		if (WhyFixed(record) != null) {
 			return [];
@@ -140,14 +166,19 @@ internal sealed class ObjectiveEditor {
 			.ToList();
 	}
 
-	/// <summary>Asks for line <paramref name="line"/> of <paramref name="record"/>'s failure text to read <paramref name="text"/>.</summary>
+	/// <summary>Asks for a line of a record's failure text to read a text.</summary>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="line">The line.</param>
+	/// <param name="text">The text.</param>
 	public void RequestText(int record, int line, string text) =>
 		Ask(record, () => MissionTextEditing.SetLine(_source, TextOwner.Objective(record), line, text));
 
-	/// <summary>Why <paramref name="record"/> cannot be given a failure text, or null when it can.</summary>
+	/// <summary>Why a record cannot be given a failure text, or null when it can.</summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public string? WhyNoGiveText(int record) => WhyFixed(record) ?? ObjectiveEditing.WhyNoText(_source, record);
 
-	/// <summary>Asks for <paramref name="record"/>, which has no failure text, to be given one of three empty lines.</summary>
+	/// <summary>Asks for a record, which has no failure text, to be given one of three empty lines.</summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public void RequestGiveText(int record) => Ask(record, () => ObjectiveEditing.GiveText(_source, record));
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>

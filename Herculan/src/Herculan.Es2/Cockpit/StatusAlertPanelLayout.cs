@@ -71,15 +71,18 @@ public static class StatusAlertPanelLayout {
 	public const int ScreenLeft = (AlertPanelLayout.ScreenWidth - Width) / 2;
 
 	/// <summary>
-	/// The rect of button <paramref name="index"/> of <paramref name="buttonCount"/>. The
+	/// The rect of a button. The
 	/// constructor picks the x set from the button count and gives every button the same y and size.
 	/// </summary>
+	/// <param name="index">The button's index.</param>
+	/// <param name="buttonCount">The number of buttons.</param>
 	public static AlertPanelLayout.Rect Button(int index, int buttonCount) {
 		int x0 = buttonCount <= 1 ? SingleButtonX : PairButtonX[Math.Clamp(index, 0, 1)];
 		return new AlertPanelLayout.Rect(x0, ButtonY, x0 + ButtonWidth, ButtonY + ButtonHeight);
 	}
 
-	/// <summary>The rect body row <paramref name="index"/> is centred in.</summary>
+	/// <summary>The rect a body row is centred in.</summary>
+	/// <param name="index">The row's index.</param>
 	public static AlertPanelLayout.Rect BodyRow(int index) =>
 		new(BodyX0, FirstBodyY + BodyRowHeight * index,
 			BodyX1, FirstBodyY + BodyRowHeight * index + BodyRowHeight);
@@ -91,11 +94,12 @@ public static class StatusAlertPanelLayout {
 	}
 
 	/// <summary>
-	/// Which body row a body of <paramref name="lineCount"/> lines starts on. A single line starts on
+	/// Which body row a body of some lines starts on. A single line starts on
 	/// row 1 rather than row 0, so it sits nearer the middle of the plate instead of at the top of
 	/// the block; anything longer starts on row 0. <c>StatusAlertPanel_Paint</c>'s own
 	/// <c>lineCount == 1</c> test.
 	/// </summary>
+	/// <param name="lineCount">The number of lines.</param>
 	public static int FirstRowFor(int lineCount) => lineCount == 1 ? 1 : 0;
 
 	/// <summary>Where the panel lands in a window of the given size.</summary>

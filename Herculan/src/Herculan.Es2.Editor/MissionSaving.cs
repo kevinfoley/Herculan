@@ -107,7 +107,8 @@ internal sealed class MissionSaving {
 		}
 	}
 
-	/// <summary>Takes <paramref name="mission"/>, a new mission no file holds yet, as the one saved, and as unsaved until it is.</summary>
+	/// <summary>Takes a new mission no file holds yet as the one saved, and as unsaved until it is.</summary>
+	/// <param name="mission">The new mission.</param>
 	public void OpenNew(EditorMission mission) {
 		Mission = mission;
 		mission.History.MarkNeverSaved();
@@ -158,17 +159,21 @@ internal sealed class MissionSaving {
 	}
 
 	/// <summary>
-	/// Runs <paramref name="proceed"/>, which leaves the mission, at once when it has no unsaved changes; otherwise asks
-	/// first whether to save them, saying the mission is being left for <paramref name="what"/> ("quitting"), and runs it
+	/// Runs a step that leaves the mission, at once when it has no unsaved changes; otherwise asks
+	/// first whether to save them, saying the mission is being left for a purpose, and runs it
 	/// after a save or a discard, and not on Cancel. Answers whether it ran now.
 	/// </summary>
+	/// <param name="what">What the mission is being left for, such as "quitting".</param>
+	/// <param name="proceed">The step that leaves the mission.</param>
 	public bool Leave(string what, Action proceed) => Ask(what, proceed, discards: true);
 
 	/// <summary>
-	/// Runs <paramref name="proceed"/>, which reads the mission's saved files, at once when it has no unsaved changes; otherwise
-	/// asks as <see cref="Leave"/> does, for <paramref name="what"/> ("playing it"), except that a new mission no file holds
+	/// Runs a step that reads the mission's saved files, at once when it has no unsaved changes; otherwise
+	/// asks as <see cref="Leave"/> does, except that a new mission no file holds
 	/// yet is offered no Discard, since there would be nothing to read. Answers whether it ran now.
 	/// </summary>
+	/// <param name="what">What the files are being read for, such as "playing it".</param>
+	/// <param name="proceed">The step that reads the saved files.</param>
 	public bool SaveFirst(string what, Action proceed) =>
 		Ask(what, proceed, discards: _mission?.History.NeverSaved != true);
 
@@ -186,13 +191,14 @@ internal sealed class MissionSaving {
 		return false;
 	}
 
-	/// <summary>Puts up <paramref name="message"/> with an OK button.</summary>
+	/// <summary>Puts up a message with an OK button.</summary>
+	/// <param name="message">The message.</param>
 	public void Tell(string message) => ShowMessage(message);
 
 	/// <summary>
 	/// Draws the prompt that is up, if one is. Call once per frame, inside the ImGui frame, outside any menu.
-	/// <paramref name="owner"/> is the native window the folder picker belongs to (0 for none).
 	/// </summary>
+	/// <param name="owner">The native window the folder picker belongs to, 0 for none.</param>
 	public void Draw(nint owner) {
 		if (_prompt == Prompt.None) {
 			return;
@@ -351,20 +357,23 @@ internal sealed class MissionSaving {
 	}
 
 	/// <summary>
-	/// Why a new mission cannot be named <paramref name="name"/>, or null when it can. The name must pass Save As's rules
+	/// Why a new mission cannot be given a name, or null when it can. The name must pass Save As's rules
 	/// (<see cref="SavedMissions.WhyNotName"/>) and must not belong to an archive mission or to a mission HERCULAN comes with,
 	/// because the game gives a saved mission precedence over a mission of the same name.
 	/// </summary>
+	/// <param name="name">The name.</param>
 	public string? WhyNotNewName(string name) =>
 		SavedMissions.WhyNotName(name)
 		?? (InArchive(name) ? $"The archives already have a mission named {name}. Choose another name."
 			: Included(name) ? $"HERCULAN already comes with a mission named {name}. Choose another name."
 			: null);
 
-	/// <summary>Whether the install already has a saved mission named <paramref name="name"/>, so that saving under that name replaces its files.</summary>
+	/// <summary>Whether the install already has a saved mission of a name, so that saving under that name replaces its files.</summary>
+	/// <param name="name">The name.</param>
 	public bool HasSaved(string name) => SavedMissions.Exists(_installRoot, name);
 
-	/// <summary>The question asked before a save replaces the saved mission <paramref name="name"/>.</summary>
+	/// <summary>The question asked before a save replaces a saved mission.</summary>
+	/// <param name="name">The saved mission's name.</param>
 	public string ReplaceQuestion(string name) =>
 		$"The install already has a saved {name}. Replace it? The one there is kept as "
 		+ $"{Path.GetFileName(SavedMissions.MissionPath(_installRoot, name))}{SavedMissions.BackupExtension}.";

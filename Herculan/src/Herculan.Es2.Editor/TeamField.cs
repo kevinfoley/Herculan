@@ -18,7 +18,9 @@ internal sealed class TeamField {
 		_sides = sides;
 	}
 
-	/// <summary>Draws row-16 GUID <paramref name="guid"/>'s team, fixed in a member's view (<paramref name="ofMember"/>).</summary>
+	/// <summary>Draws a row-16 group's team, fixed in a member's view.</summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
+	/// <param name="ofMember">Whether it is a member's view.</param>
 	public void Draw(short guid, bool ofMember) {
 		if (_index.Group(guid) is not { } group) {
 			return;

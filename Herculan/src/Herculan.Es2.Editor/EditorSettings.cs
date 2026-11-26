@@ -102,9 +102,10 @@ public sealed class EditorSettings {
 	}
 
 	/// <summary>
-	/// Copies the values the settings panel edits out of <paramref name="other"/> — the other half of Cancel. View's
+	/// Copies the values the settings panel edits out of another — the other half of Cancel. View's
 	/// toggles are left alone: they are saved as they are clicked, so a Cancel does not take one back.
 	/// </summary>
+	/// <param name="other">The settings to copy from.</param>
 	public void CopyFrom(EditorSettings other) {
 		CybridLoadouts = other.CybridLoadouts;
 	}

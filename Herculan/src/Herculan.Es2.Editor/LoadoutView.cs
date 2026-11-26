@@ -38,7 +38,8 @@ internal sealed class LoadoutView {
 		_tableView = tableView;
 	}
 
-	/// <summary>Draws the section of <paramref name="placed"/>, an object outside the squad; nothing for one of the squad.</summary>
+	/// <summary>Draws the section of an object outside the squad; nothing for one of the squad.</summary>
+	/// <param name="placed">The object.</param>
 	public void Draw(SceneObject placed) {
 		if (_editor.RecordOf(placed) is not var (row, guid)) {
 			return;

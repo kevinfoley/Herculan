@@ -77,7 +77,8 @@ public sealed class CustomControls : IControlsOverride {
 		}
 	}
 
-	/// <summary>One frame of <paramref name="device"/> in the shape the retail bindings read, as the summary describes.</summary>
+	/// <summary>One frame of a device in the shape the retail bindings read, as the summary describes.</summary>
+	/// <param name="device">The device.</param>
 	public JoystickReading Read(ControllerState device) {
 		var (functions, flipped, _) = Layout(_razor);
 		int Slot(int slot) {
@@ -108,13 +109,18 @@ public sealed class CustomControls : IControlsOverride {
 		return new JoystickReading(Slot(0), Slot(1), Slot(2), Slot(3), hat, buttons);
 	}
 
-	/// <summary>The actions held on <paramref name="device"/> that <see cref="Read"/> does not carry, for the host to send.</summary>
+	/// <summary>The actions held on a device that <see cref="Read"/> does not carry, for the host to send.</summary>
+	/// <param name="device">The device.</param>
 	public IEnumerable<KeyAction> HeldActions(ControllerState device) => Held(device).Except(ThroughReading);
 
-	/// <summary>Whether an input bound to <paramref name="action"/> is held on <paramref name="device"/>.</summary>
+	/// <summary>Whether an input bound to an action is held on a device.</summary>
+	/// <param name="device">The device.</param>
+	/// <param name="action">The action.</param>
 	public bool IsHeld(ControllerState device, KeyAction action) => HeldInput(device, action) != null;
 
-	/// <summary>The first input bound to <paramref name="action"/> that is held on <paramref name="device"/>, or null for none.</summary>
+	/// <summary>The first input bound to an action that is held on a device, or null for none.</summary>
+	/// <param name="device">The device.</param>
+	/// <param name="action">The action.</param>
 	public ControllerInput? HeldInput(ControllerState device, KeyAction action) => _profile.HeldInput(device, action, _razor);
 
 	/// <inheritdoc/>

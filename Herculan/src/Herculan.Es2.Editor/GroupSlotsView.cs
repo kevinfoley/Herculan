@@ -61,10 +61,12 @@ internal sealed class GroupSlotsView {
 		_flyers = flyers;
 	}
 
-	/// <summary>Whether <paramref name="group"/> gets these rows: any group but the player's squad.</summary>
+	/// <summary>Whether a group gets these rows: any group but the player's squad.</summary>
+	/// <param name="group">The group.</param>
 	public static bool Covers(PlannedGroup group) => !group.IsSquad;
 
-	/// <summary>Draws <paramref name="group"/>'s slots.</summary>
+	/// <summary>Draws a group's slots.</summary>
+	/// <param name="group">The group.</param>
 	public void Draw(PlannedGroup group) {
 		int slots = Places(group);
 		int last = -1;

@@ -27,10 +27,11 @@ public readonly record struct PilotAxes(short Steer = 0, short Throttle = 0,
 	public bool Any => Steer != 0 || Throttle != 0 || TorsoTwist != 0 || TorsoPitch != 0;
 
 	/// <summary>
-	/// This set where it is off centre, <paramref name="fallback"/> where it is not — the arbitration
+	/// This set where it is off centre, a fallback where it is not — the arbitration
 	/// <c>Input_ReadPlayerInput</c> runs per axis when it combines its sources, testing each for
 	/// non-zero in turn and taking the first that has moved.
 	/// </summary>
+	/// <param name="fallback">The set used where this one is centred.</param>
 	public PilotAxes Or(PilotAxes fallback) => new(
 		Steer != 0 ? Steer : fallback.Steer,
 		Throttle != 0 ? Throttle : fallback.Throttle,

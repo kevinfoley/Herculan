@@ -11,11 +11,14 @@ using Herculan.Engine.Render;
 namespace Herculan.Es2.Render;
 
 /// <summary>
-/// One tracer object as the original allocates and files it: span <paramref name="Span"/> of a straight beam, or a chain
-/// tracer whole when <paramref name="Span"/> is -1 — see <see cref="BeamTracer.Span"/>. <paramref name="Filing"/> files it
+/// One tracer object as the original allocates and files it: a span of a straight beam, or a chain
+/// tracer whole when the span is -1 — see <see cref="BeamTracer.Span"/>. Its filing files it
 /// by the span's start point with no radius, a <see cref="ObjectTypeTag.Projectile"/>, as <c>Scene_SubmitObject</c>
 /// (<c>004282d8</c>) files every object of the tracer pool (docs/retail/simulation/beam-visuals.md, "Chain").
 /// </summary>
+/// <param name="Tracer">The tracer.</param>
+/// <param name="Span">The span, or -1 for a chain tracer whole.</param>
+/// <param name="Filing">How the object is filed.</param>
 public readonly record struct BeamSpanDraw(BeamTracer Tracer, int Span, DrawEntry Filing);
 
 /// <summary>
@@ -120,15 +123,20 @@ public sealed class BeamRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws every tracer in <paramref name="tracers"/> into the viewport already set by whoever drew
+	/// Draws every tracer in a list into the viewport already set by whoever drew
 	/// the world — call this straight after <see cref="SceneRenderer.Render"/> for the same panel,
 	/// passing that panel's own camera and pixel size.
 	///
-	/// <para>With <paramref name="filing"/>, the table that pass filed its objects in, each span of a
+	/// <para>With a filing, the table that pass filed its objects in, each span of a
 	/// straight beam is drawn only where its own tracer would be — filed by its start point with no
 	/// radius, as <c>Scene_SubmitObject</c> (<c>004282d8</c>) files every object of the tracer pool — and
 	/// a chain only where its one tracer would be. See <see cref="BeamTracer.Span"/>.</para>
 	/// </summary>
+	/// <param name="camera">The panel's camera.</param>
+	/// <param name="tracers">The tracers.</param>
+	/// <param name="viewportWidth">The viewport's width in pixels.</param>
+	/// <param name="viewportHeight">The viewport's height in pixels.</param>
+	/// <param name="filing">The table the pass filed its objects in, or null for none.</param>
 	public void Render(Camera camera, IReadOnlyList<BeamTracer> tracers,
 			int viewportWidth, int viewportHeight, ObjectDrawTable? filing = null) {
 		if (tracers.Count == 0) {
@@ -241,11 +249,16 @@ public sealed class BeamRenderer : IDisposable {
 
 	/// <summary>
 	/// Draws one tracer object as its entry's turn in <see cref="WorldDrawPass"/>'s painter's order: a straight beam's
-	/// span, or a chain and the muzzle stub its tracer leaves (see the class remarks). Placed through
-	/// <paramref name="entryProjection"/>, measured through <paramref name="projection"/> (the camera's own), and kept only
-	/// where the ground showing ranks no later than <paramref name="rank"/>. The caller has bound the paint ranks, set the
+	/// span, or a chain and the muzzle stub its tracer leaves (see the class remarks). The caller has bound the paint ranks, set the
 	/// entry's depth range and turned depth clamping on, which the straight segment needs as <see cref="Render"/> gives it.
 	/// </summary>
+	/// <param name="span">The tracer object.</param>
+	/// <param name="camera">The camera.</param>
+	/// <param name="projection">The camera's own projection, which measures the span.</param>
+	/// <param name="entryProjection">The projection the entry is placed through.</param>
+	/// <param name="rank">The latest rank of ground showing that the span is kept at.</param>
+	/// <param name="viewportWidth">The viewport's width in pixels.</param>
+	/// <param name="viewportHeight">The viewport's height in pixels.</param>
 	internal void DrawSpan(in BeamSpanDraw span, Camera camera, in Matrix4x4 projection, in Matrix4x4 entryProjection,
 			uint rank, int viewportWidth, int viewportHeight) {
 		var tracer = span.Tracer;
@@ -274,10 +287,14 @@ public sealed class BeamRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Widens [<paramref name="nearest"/>, <paramref name="farthest"/>] to the view depths <see cref="DrawSpan"/> would
-	/// draw <paramref name="span"/> at: its points' depths, each no nearer than the view's near plane the segment is
+	/// Widens a nearest-to-farthest range to the view depths <see cref="DrawSpan"/> would
+	/// draw a span at: its points' depths, each no nearer than the view's near plane the segment is
 	/// clipped at, give or take the ribbon's half-width.
 	/// </summary>
+	/// <param name="span">The tracer object.</param>
+	/// <param name="camera">The camera.</param>
+	/// <param name="nearest">The range's near end, widened.</param>
+	/// <param name="farthest">The range's far end, widened.</param>
 	internal void ExtendDepth(in BeamSpanDraw span, Camera camera, ref float nearest, ref float farthest) {
 		var tracer = span.Tracer;
 		var view = camera.ViewMatrix;
@@ -308,7 +325,9 @@ public sealed class BeamRenderer : IDisposable {
 		}
 	}
 
-	/// <summary>Whether the tracer filed at <paramref name="start"/> is drawn this pass — true with no table.</summary>
+	/// <summary>Whether the tracer filed at a start point is drawn this pass — true with no table.</summary>
+	/// <param name="filing">The table the pass filed its objects in, or null for none.</param>
+	/// <param name="start">The span's start point.</param>
 	private static bool SpanDrawn(ObjectDrawTable? filing, Engine.Numerics.Vec3i start) =>
 		filing?.WouldDraw(start, 0, ObjectTypeTag.Projectile) ?? true;
 
@@ -416,9 +435,11 @@ public sealed class BeamRenderer : IDisposable {
 
 	/// <summary>
 	/// The uploaded cross-section for one subtype id, built on first use. The profile is one texel
-	/// wide and as tall as the source frame's row count, so it is sampled purely by v. With
-	/// <paramref name="hueTurned"/>, the profile through <see cref="BeamAppearance.ParticleBeamHue"/>.
+	/// wide and as tall as the source frame's row count, so it is sampled purely by v. When hue turned,
+	/// the profile goes through <see cref="BeamAppearance.ParticleBeamHue"/>.
 	/// </summary>
+	/// <param name="subtypeId">The beam subtype.</param>
+	/// <param name="hueTurned">Whether the hue is turned.</param>
 	private GpuTexture? Profile(int subtypeId, bool hueTurned) {
 		if (_profiles.TryGetValue((subtypeId, hueTurned), out var cached)) {
 			return cached;

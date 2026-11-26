@@ -50,9 +50,13 @@ internal sealed class ScenePicker {
 	public IReadOnlyList<Pickable> Pickables => _pickables;
 
 	/// <summary>
-	/// What a click at <paramref name="screen"/> (window pixels, +Y down) selects, or null for
+	/// What a click selects, or null for
 	/// nothing.
 	/// </summary>
+	/// <param name="camera">The view's camera.</param>
+	/// <param name="screen">The click's window pixel, +Y down.</param>
+	/// <param name="viewport">The viewport's size.</param>
+	/// <param name="settings">The editor's settings.</param>
 	public EditorSelection? Pick(Camera camera, Vector2 screen, Vector2 viewport, EditorSettings settings) {
 		if (_overlay.PickWaypoint(camera, screen, settings) is { } waypoint) {
 			return waypoint;
@@ -128,18 +132,22 @@ internal sealed class ScenePicker {
 	}
 
 	/// <summary>
-	/// Makes <paramref name="objects"/> what is picked, each where its simulation object now stands, but those out of the
+	/// Makes some objects what is picked, each where its simulation object now stands, but those out of the
 	/// scene.
 	/// </summary>
+	/// <param name="objects">The objects.</param>
 	public void Rebuild(IEnumerable<SceneObject> objects) => _pickables = PickablesOf(objects);
 
 	private List<Pickable> PickablesOf(IEnumerable<SceneObject> objects) =>
 		objects.Where(_index.InScene).Select(PickableFor).OfType<Pickable>().ToList();
 
 	/// <summary>
-	/// The ground under window pixel <paramref name="screen"/> (+Y down), in world units, or null when the view ray
+	/// The ground under a window pixel, in world units, or null when the view ray
 	/// meets none within the far plane.
 	/// </summary>
+	/// <param name="camera">The view's camera.</param>
+	/// <param name="screen">The window pixel, +Y down.</param>
+	/// <param name="viewport">The viewport's size.</param>
 	public Vec3i? GroundAt(Camera camera, Vector2 screen, Vector2 viewport) {
 		var (origin, direction) = Ray(camera, screen, viewport);
 		return GroundPick.Cast(origin, direction, _terrain, camera.FarPlane);
@@ -152,7 +160,8 @@ internal sealed class ScenePicker {
 		return camera.ViewportPointToRay(new Vector2(ndcX, ndcY), aspect);
 	}
 
-	/// <summary>Re-places <paramref name="sceneObject"/>'s pick sphere where its simulation object now stands.</summary>
+	/// <summary>Re-places an object's pick sphere where its simulation object now stands.</summary>
+	/// <param name="sceneObject">The object.</param>
 	public void Move(SceneObject sceneObject) {
 		foreach (var pickable in _pickables) {
 			if (ReferenceEquals(pickable.SceneObject, sceneObject)) {
@@ -161,7 +170,8 @@ internal sealed class ScenePicker {
 		}
 	}
 
-	/// <summary>The pick sphere of <paramref name="sceneObject"/>, or null when it has no model or is out of the scene.</summary>
+	/// <summary>The pick sphere of an object, or null when it has no model or is out of the scene.</summary>
+	/// <param name="sceneObject">The object.</param>
 	public Pickable? PickableOf(SceneObject sceneObject) =>
 		_pickables.Find(pickable => ReferenceEquals(pickable.SceneObject, sceneObject));
 

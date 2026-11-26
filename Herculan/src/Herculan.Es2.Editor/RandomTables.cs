@@ -78,7 +78,8 @@ internal sealed class RandomTables {
 		}
 	}
 
-	/// <summary>Table <paramref name="guid"/>, or null when it is not one.</summary>
+	/// <summary>A table, or null when the GUID is not one.</summary>
+	/// <param name="guid">The table's GUID.</param>
 	public RandomTable? Read(short guid) {
 		Refresh();
 		if (!_tables.TryGetValue(guid, out var table)) {
@@ -89,10 +90,11 @@ internal sealed class RandomTables {
 	}
 
 	/// <summary>
-	/// What <paramref name="table"/> picks, by its kind numbered from 1 among the tables of that kind in row-1 order, so two
+	/// What a table picks, by its kind numbered from 1 among the tables of that kind in row-1 order, so two
 	/// tables of one chassis read apart (the editor's choice), then its options: each type named once, three at most and then
 	/// how many more; a table of routes by its number of options.
 	/// </summary>
+	/// <param name="table">The table.</param>
 	public string Title(RandomTable table) {
 		string noun = KindOf(table);
 		int number = All.Select(Read).TakeWhile(other => other?.Guid != table.Guid).Count(other => other != null && KindOf(other) == noun) + 1;
@@ -119,10 +121,12 @@ internal sealed class RandomTables {
 	private string KindOf(RandomTable table) => table.Options.Count == 0 ? "table" : Noun(table);
 
 	/// <summary>
-	/// What option <paramref name="at"/> of <paramref name="table"/> is, with what tells it from the others: a herc's chassis,
+	/// What an option of a table is, with what tells it from the others: a herc's chassis,
 	/// and its weapons when another option has that chassis; a flyer's type; a structure's or ground vehicle's kind and the
 	/// name the MFD prints, as its view titles it (<see cref="RosterTypeNames.StructureTitle"/>); a route's waypoint count and length, and its start when another option matches both.
 	/// </summary>
+	/// <param name="table">The table.</param>
+	/// <param name="at">The option's index.</param>
 	public string Option(RandomTable table, int at) {
 		var record = Record(table.Options[at]);
 		var others = table.Options.Where((_, i) => i != at).Select(Record).ToList();
@@ -145,7 +149,8 @@ internal sealed class RandomTables {
 		}
 	}
 
-	/// <summary>What <paramref name="table"/>'s options are, in the singular: herc, flyer, structure, ground vehicle or route.</summary>
+	/// <summary>What a table's options are, in the singular: herc, flyer, structure, ground vehicle or route.</summary>
+	/// <param name="table">The table.</param>
 	public string Noun(RandomTable table) => table.Row switch {
 		MechRow => "HERC",
 		FlyerRow => "flyer",
@@ -157,15 +162,18 @@ internal sealed class RandomTables {
 	};
 
 	/// <summary>
-	/// Every record that picks from <paramref name="table"/>, whatever its condition: each layout entry of a row carrying a
+	/// Every record that picks from a table, whatever its condition: each layout entry of a row carrying a
 	/// random table key, one of whose picks is by the table's key, in row and layout order.
 	/// </summary>
+	/// <param name="table">The table.</param>
 	public IReadOnlyList<RandomTableUser> Users(RandomTable table) => UsersOf(table).Users;
 
-	/// <summary>How many templates, records of no entry, pick by <paramref name="table"/>'s key themselves.</summary>
+	/// <summary>How many templates, records of no entry, pick by a table's key themselves.</summary>
+	/// <param name="table">The table.</param>
 	public int Others(RandomTable table) => UsersOf(table).Others;
 
-	/// <summary>What references <paramref name="table"/> other than its own options, one short identity per line (<see cref="RandomTableEditing.Referencers"/>).</summary>
+	/// <summary>What references a table other than its own options, one short identity per line (<see cref="RandomTableEditing.Referencers"/>).</summary>
+	/// <param name="table">The table.</param>
 	public IReadOnlyList<(string Label, EditorSelection? Target)> Referencing(RandomTable table) {
 		var namers = RandomTableEditing.Referencers(_source, table);
 		var found = new List<(string Label, EditorSelection? Target)>();
@@ -191,7 +199,8 @@ internal sealed class RandomTables {
 		return found.DistinctBy(item => item.Label).ToList();
 	}
 
-	/// <summary>What a Used by line says for <paramref name="unused"/>: why the record has no effect in play.</summary>
+	/// <summary>What a Used by line says for an unused case: why the record has no effect in play.</summary>
+	/// <param name="unused">The unused case.</param>
 	public static string UnusedNote(RandomTableUnused unused) => unused switch {
 		RandomTableUnused.CareerSquad => "Not used: campaign missions use the career's HERCs.",
 		RandomTableUnused.HercType => "Not used: the player pilots the Herc Type chosen on the practice screen.",

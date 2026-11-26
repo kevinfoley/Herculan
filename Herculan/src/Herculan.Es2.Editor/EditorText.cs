@@ -31,34 +31,41 @@ internal static class EditorText {
 	public static void Wrapped(string text) => ImGui.TextWrapped(text.Replace("%", "%%"));
 
 	/// <summary>
-	/// The width a small button labelled <paramref name="label"/> takes after <see cref="ImGui.SameLine()"/>, its spacing
+	/// The width a small button takes after <see cref="ImGui.SameLine()"/>, its spacing
 	/// included: what to keep free before it so it stays inside the panel.
 	/// </summary>
+	/// <param name="label">The button's label.</param>
 	public static float ButtonRoom(string label) {
 		var style = ImGui.GetStyle();
 		return ImGui.CalcTextSize(label).X + style.FramePadding.X * 2f + style.ItemSpacing.X;
 	}
 
-	/// <summary>The width <paramref name="text"/> takes drawn after <see cref="ImGui.SameLine(float, float)"/> with no spacing.</summary>
+	/// <summary>The width a text takes drawn after <see cref="ImGui.SameLine(float, float)"/> with no spacing.</summary>
+	/// <param name="text">The text.</param>
 	public static float TextRoom(string text) => ImGui.CalcTextSize(text).X;
 
 	/// <summary>
-	/// The room a link keeps free for <paramref name="text"/> drawn after it by <see cref="After"/>: all of it, up to half the
+	/// The room a link keeps free for a text drawn after it by <see cref="After"/>: all of it, up to half the
 	/// space left on the line, so a long text wraps rather than cutting the link's name to nothing.
 	/// </summary>
+	/// <param name="text">The text.</param>
 	public static float AfterRoom(string text) => MathF.Min(TextRoom(text), ImGui.GetContentRegionAvail().X / 2f);
 
-	/// <summary><paramref name="text"/> right after the item just drawn, on its line, wrapped at the window's edge.</summary>
+	/// <summary>A text right after the item just drawn, on its line, wrapped at the window's edge.</summary>
+	/// <param name="text">The text.</param>
 	public static void After(string text) {
 		ImGui.SameLine(0f, 0f);
 		Wrapped(text);
 	}
 
 	/// <summary>
-	/// Opens a dropdown whose closed box shows <paramref name="preview"/> cut with "..." to fit, the whole of it on hover when cut;
+	/// Opens a dropdown whose closed box shows its preview cut with "..." to fit, the whole of it on hover when cut;
 	/// true while its list is open, then end it with <see cref="ImGui.EndCombo"/>. Every dropdown in the panels opens through here
 	/// or <see cref="NameText.BeginCombo"/>: ImGui's own trims a long preview mid-letter at the box's edge.
 	/// </summary>
+	/// <param name="id">The dropdown's ImGui id.</param>
+	/// <param name="preview">The text the closed box shows.</param>
+	/// <param name="flags">The combo flags.</param>
 	public static bool BeginCombo(string id, string preview, ImGuiComboFlags flags = ImGuiComboFlags.None) {
 		var style = ImGui.GetStyle();
 		float arrow = (flags & ImGuiComboFlags.NoArrowButton) != 0 ? 0f : ImGui.GetFrameHeight();
@@ -71,7 +78,9 @@ internal static class EditorText {
 		return open;
 	}
 
-	/// <summary>Why a control is disabled, as a note led by <paramref name="lead"/>; nothing for null.</summary>
+	/// <summary>Why a control is disabled, as a note; nothing for null.</summary>
+	/// <param name="reason">The reason, or null for none.</param>
+	/// <param name="lead">The text the note starts with.</param>
 	public static void Reason(string? reason, string lead = "") {
 		if (reason != null) {
 			Note(lead + reason);

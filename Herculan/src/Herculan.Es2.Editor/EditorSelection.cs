@@ -11,11 +11,13 @@ namespace Herculan.Es2.Editor;
 /// </summary>
 internal abstract record EditorSelection {
 	/// <summary>
-	/// Whether <paramref name="mission"/> still has the record <paramref name="selection"/> names: a group, trigger area,
+	/// Whether a mission still has the record a selection names: a group, trigger area,
 	/// action, timer, route or condition by a record of its row (16, 9, 10, 11, 8 or 1) carrying its GUID, since GUIDs are
 	/// per row, and an object by a record of its roster row (12, 13 or 14); an objective by a row-17 record at its index.
 	/// Every other kind answers false.
 	/// </summary>
+	/// <param name="mission">The mission.</param>
+	/// <param name="selection">The selection.</param>
 	public static bool InFile(MissionFile mission, EditorSelection selection) => selection switch {
 		GroupSelection { Guid: var guid } => Carries(mission.Groups, guid),
 		AreaSelection { Guid: var guid } => Carries(mission.TriggerAreas, guid),
@@ -75,16 +77,18 @@ internal sealed class SelectionState {
 	/// <summary>Raised by <see cref="Focus"/>, for the camera to frame the selection.</summary>
 	public event Action<EditorSelection>? FocusRequested;
 
-	/// <summary>Selects <paramref name="selection"/> and asks for the view to frame it, as a double-click does.</summary>
+	/// <summary>Selects a selection and asks for the view to frame it, as a double-click does.</summary>
+	/// <param name="selection">The selection.</param>
 	public void Focus(EditorSelection selection) {
 		Current = selection;
 		FocusRequested?.Invoke(selection);
 	}
 
 	/// <summary>
-	/// Whether <paramref name="selection"/> is the current selection. A route counts as selected when
+	/// Whether a selection is the current selection. A route counts as selected when
 	/// any of its waypoints is.
 	/// </summary>
+	/// <param name="selection">The selection to test.</param>
 	public bool Is(EditorSelection selection) => selection switch {
 		RouteSelection { Waypoint: < 0 } route => Current is RouteSelection current && current.Guid == route.Guid,
 		_ => Equals(Current, selection)

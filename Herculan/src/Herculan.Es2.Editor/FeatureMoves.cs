@@ -5,24 +5,29 @@ using Herculan.Es2.World;
 namespace Herculan.Es2.Editor;
 
 /// <summary>
-/// Waypoint <paramref name="Index"/> of the route of row-8 GUID <paramref name="Route"/>, by its index in
-/// <see cref="PlannedRoute.Points"/>. <paramref name="WithLast"/> when it is a closed route's first waypoint, whose last
-/// waypoint moves with it so the route stays closed (<see cref="PlannedRoute.Closed"/>). <paramref name="Detach"/> when the
-/// move gives it a point of its own rather than moving the point it names.
+/// A waypoint of a route, by its index in <see cref="PlannedRoute.Points"/>.
 /// </summary>
+/// <param name="Route">The route's row-8 GUID.</param>
+/// <param name="Index">The waypoint's index in <see cref="PlannedRoute.Points"/>.</param>
+/// <param name="WithLast">Whether it is a closed route's first waypoint, whose last
+/// waypoint moves with it so the route stays closed (<see cref="PlannedRoute.Closed"/>).</param>
+/// <param name="Detach">Whether the move gives it a point of its own rather than moving the point it names.</param>
 internal sealed record WaypointTarget(short Route, int Index, bool WithLast, bool Detach = false) : MoveTarget;
 
 /// <summary>
-/// Corner <paramref name="Corner"/> of the trigger area of row-9 GUID <paramref name="Area"/>: 0 a box's first corner or a
-/// circle's centre (row 9's <c>0x08</c>), 1 a box's second corner (<c>0x0A</c>). <paramref name="Detach"/> when the move gives
-/// the corner a point of its own rather than moving the point it names.
+/// A corner of a trigger area: 0 a box's first corner or a
+/// circle's centre (row 9's <c>0x08</c>), 1 a box's second corner (<c>0x0A</c>).
 /// </summary>
+/// <param name="Area">The area's row-9 GUID.</param>
+/// <param name="Corner">The corner, 0 or 1.</param>
+/// <param name="Detach">Whether the move gives the corner a point of its own rather than moving the point it names.</param>
 internal sealed record AreaCornerTarget(short Area, int Corner, bool Detach = false) : MoveTarget;
 
 /// <summary>
-/// The radius of the circle trigger area of row-9 GUID <paramref name="Area"/>, dragged by a point on its edge: the radius is
+/// The radius of a circle trigger area, dragged by a point on its edge: the radius is
 /// that point's ground-plane distance from the centre.
 /// </summary>
+/// <param name="Area">The area's row-9 GUID.</param>
 internal sealed record AreaRadiusTarget(short Area) : MoveTarget;
 
 /// <summary>
@@ -57,19 +62,22 @@ internal sealed class FeatureMoves {
 		_index = index;
 	}
 
-	/// <summary>Whether <paramref name="target"/> is a waypoint, an area corner or a radius, which these moves are.</summary>
+	/// <summary>Whether a target is a waypoint, an area corner or a radius, which these moves are.</summary>
+	/// <param name="target">The target.</param>
 	public static bool Moves(MoveTarget target) => target is WaypointTarget or AreaCornerTarget or AreaRadiusTarget;
 
-	/// <summary>The waypoint <paramref name="selection"/> names, or null when it names none the layout places.</summary>
+	/// <summary>The waypoint a selection names, or null when it names none the layout places.</summary>
+	/// <param name="selection">The route selection.</param>
 	public WaypointTarget? TargetOf(RouteSelection selection) =>
 		selection.Waypoint >= 0 && _index.Route(selection.Guid) is { } route && selection.Waypoint < route.Points.Count
 			? new WaypointTarget(selection.Guid, selection.Waypoint, selection.Waypoint == 0 && route.Closed)
 			: null;
 
 	/// <summary>
-	/// What of trigger area <paramref name="area"/> the move handles drag: a box's corners, or a circle's radius and centre,
+	/// What of a trigger area the move handles drag: a box's corners, or a circle's radius and centre,
 	/// the radius first, so its small handle wins where the centre's arrow crosses it; none when it cannot be moved.
 	/// </summary>
+	/// <param name="area">The area's row-9 GUID.</param>
 	public IReadOnlyList<MoveTarget> TargetsOf(short area) {
 		if (WhyFixedArea(area) != null || _index.Area(area) is not { } placed) {
 			return [];
@@ -83,13 +91,15 @@ internal sealed class FeatureMoves {
 	/// <summary>Why a trigger area the selection names is not edited once the <c>.MSN</c> has no such area.</summary>
 	public const string AreaGone = "Not found.";
 
-	/// <summary>Why trigger area <paramref name="area"/>, by its row-9 GUID, cannot be moved or edited, or null when it can.</summary>
+	/// <summary>Why a trigger area cannot be moved or edited, or null when it can.</summary>
+	/// <param name="area">The area's row-9 GUID.</param>
 	public string? WhyFixedArea(short area) =>
 		_index.Area(area) != null ? null
 		: _source.Layout.Entry(AreaRow, area) == null ? AreaGone
 		: "A corner or its center references a position the mission does not have, so it cannot be moved or reshaped.";
 
-	/// <summary>Why <paramref name="target"/> cannot be moved, or null when it can.</summary>
+	/// <summary>Why a target cannot be moved, or null when it can.</summary>
+	/// <param name="target">The target.</param>
 	public string? WhyFixed(MoveTarget target) => target switch {
 		WaypointTarget waypoint => _index.Route(waypoint.Route) is { } route && waypoint.Index < route.Points.Count
 			? null
@@ -100,10 +110,11 @@ internal sealed class FeatureMoves {
 	};
 
 	/// <summary>
-	/// The other fields naming the points <paramref name="target"/>'s waypoint names (trigger areas, groups, other waypoints),
+	/// The other fields naming the points a target's waypoint names (trigger areas, groups, other waypoints),
 	/// which move with it unless it is detached: every field naming them but the waypoint's own entries, in the route's
 	/// record or in the template of a random table option that supplies its list.
 	/// </summary>
+	/// <param name="target">The waypoint.</param>
 	public IReadOnlyList<PointRef> SharersOf(WaypointTarget target) {
 		if (WhyFixed(target) != null) {
 			return [];
@@ -117,9 +128,10 @@ internal sealed class FeatureMoves {
 	}
 
 	/// <summary>
-	/// The other fields naming the point <paramref name="target"/>'s corner names (waypoints, other areas, groups), which move
+	/// The other fields naming the point a target's corner names (waypoints, other areas, groups), which move
 	/// with it unless it is detached: every field naming it but that corner of the area's own records.
 	/// </summary>
+	/// <param name="target">The area corner.</param>
 	public IReadOnlyList<PointRef> SharersOf(AreaCornerTarget target) {
 		if (WhyFixed(target) != null || PointsOf(target) is not [var point]) {
 			return [];
@@ -129,7 +141,8 @@ internal sealed class FeatureMoves {
 			|| _source.RecordAt(reference.Record)?.GUID != target.Area).ToList();
 	}
 
-	/// <summary>Where <paramref name="target"/> stands now, in world units, a drag's preview included.</summary>
+	/// <summary>Where a target stands now, in world units, a drag's preview included.</summary>
+	/// <param name="target">The target.</param>
 	public Vec3i PositionOf(MoveTarget target) => target switch {
 		WaypointTarget waypoint when _index.Route(waypoint.Route) is { } route => route.Points[waypoint.Index],
 		AreaCornerTarget corner when _index.Area(corner.Area)?.Area is { } area =>
@@ -139,10 +152,12 @@ internal sealed class FeatureMoves {
 	};
 
 	/// <summary>
-	/// Where a drag of <paramref name="target"/> to <paramref name="position"/> stands what it moves before it lets go: the
+	/// Where a drag of a target to a position stands what it moves before it lets go: the
 	/// points it names, with whatever shares them; the waypoint or corner alone on a point of its own when it is detached; or
 	/// the circle at the radius that would be stored.
 	/// </summary>
+	/// <param name="target">The target.</param>
+	/// <param name="position">Where the drag has it.</param>
 	public PlacementOverrides Overrides(MoveTarget target, Vec3i position) => target switch {
 		WaypointTarget { Detach: true } waypoint => new PlacementOverrides { DetachedWaypoint = (waypoint.Route, EntriesOf(waypoint), position) },
 		AreaCornerTarget { Detach: true } corner => new PlacementOverrides { DetachedCorner = (corner.Area, corner.Corner, position) },
@@ -155,15 +170,19 @@ internal sealed class FeatureMoves {
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
 
-	/// <summary>Whether a radius handle at <paramref name="position"/> gives the radius already stored, so nothing is written.</summary>
+	/// <summary>Whether a radius handle at a position gives the radius already stored, so nothing is written.</summary>
+	/// <param name="target">The radius target.</param>
+	/// <param name="position">The handle's position.</param>
 	public bool Unchanged(AreaRadiusTarget target, Vec3i position) =>
 		_source.Layout.Entry<TriggerArea12>(target.Area)?.Fields is { } record
 		&& TriggerAreaEditing.StoredRadius(RadiusAt(target, position)) == record.SecondPointOrRadius;
 
 	/// <summary>
-	/// The radius, in world units, a radius handle at <paramref name="position"/> gives: its ground-plane distance from the
+	/// The radius, in world units, a radius handle at a position gives: its ground-plane distance from the
 	/// centre.
 	/// </summary>
+	/// <param name="target">The radius target.</param>
+	/// <param name="position">The handle's position.</param>
 	public int RadiusAt(AreaRadiusTarget target, Vec3i position) {
 		var centre = _index.Area(target.Area)?.Area.A ?? position;
 		double dx = (double)position.X - centre.X, dy = (double)position.Y - centre.Y;
@@ -171,10 +190,12 @@ internal sealed class FeatureMoves {
 	}
 
 	/// <summary>
-	/// Writes a move of <paramref name="target"/> to <paramref name="position"/> into the <c>.MSN</c>, inside one
+	/// Writes a move of a target to a position into the <c>.MSN</c>, inside one
 	/// <see cref="MissionDocument.Change"/>: the points a waypoint or a corner names; a circle's stored radius; or a point of
 	/// its own for a detached waypoint or corner.
 	/// </summary>
+	/// <param name="target">The target.</param>
+	/// <param name="position">Where it moves to.</param>
 	public void Write(MoveTarget target, Vec3i position) {
 		switch (target) {
 			case WaypointTarget { Detach: false } or AreaCornerTarget { Detach: false }:
@@ -192,7 +213,8 @@ internal sealed class FeatureMoves {
 		}
 	}
 
-	/// <summary>What a failed move of <paramref name="target"/> is called on the console.</summary>
+	/// <summary>What a failed move of a target is called on the console.</summary>
+	/// <param name="target">The target.</param>
 	public string Describe(MoveTarget target) => target switch {
 		WaypointTarget waypoint => $"{MissionText.WaypointInSentence(waypoint.Index)} of route {_index.Route(waypoint.Route)?.Number}",
 		AreaCornerTarget corner => $"corner {corner.Corner + 1} of trigger area {_index.Area(corner.Area)?.Number}",

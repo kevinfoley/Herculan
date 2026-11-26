@@ -27,7 +27,8 @@ internal sealed class ZoneHeightmaps : IDisposable {
 		_simulator = simulator;
 	}
 
-	/// <summary>Zone <paramref name="zone"/>'s heightmap, or null when its <c>.dba</c> cannot be read.</summary>
+	/// <summary>A zone's heightmap, or null when its <c>.dba</c> cannot be read.</summary>
+	/// <param name="zone">The zone's number.</param>
 	public GpuTexture? For(short zone) {
 		if (!_textures.TryGetValue(zone, out var texture)) {
 			texture = Upload(zone);
@@ -38,9 +39,10 @@ internal sealed class ZoneHeightmaps : IDisposable {
 	}
 
 	/// <summary>
-	/// The picture of <paramref name="heights"/>, <paramref name="side"/> rows of <paramref name="side"/> in image order,
-	/// uploaded the first time this array is asked for and kept until <see cref="Forget"/> or <see cref="Dispose"/>.
+	/// The picture of some heights, uploaded the first time this array is asked for and kept until <see cref="Forget"/> or <see cref="Dispose"/>.
 	/// </summary>
+	/// <param name="heights">The heights, rows of the side in image order.</param>
+	/// <param name="side">The side in pixels.</param>
 	public GpuTexture Picture(byte[] heights, int side) {
 		if (!_pictures.TryGetValue(heights, out var texture)) {
 			texture = Stretched(heights, side, side);
@@ -50,7 +52,8 @@ internal sealed class ZoneHeightmaps : IDisposable {
 		return texture;
 	}
 
-	/// <summary>Frees the picture of <paramref name="heights"/>, once nothing asks for it any more.</summary>
+	/// <summary>Frees the picture of some heights, once nothing asks for it any more.</summary>
+	/// <param name="heights">The heights.</param>
 	public void Forget(byte[] heights) {
 		if (_pictures.Remove(heights, out var texture)) {
 			texture.Dispose();

@@ -32,7 +32,10 @@ internal sealed class DrapedLines {
 		_world = world;
 	}
 
-	/// <summary>Appends one edge from <paramref name="from"/> to <paramref name="to"/>, by their X and Y.</summary>
+	/// <summary>Appends one edge between two points, by their X and Y.</summary>
+	/// <param name="into">The list the vertices are appended to.</param>
+	/// <param name="from">The edge's start.</param>
+	/// <param name="to">The edge's end.</param>
 	public void AddEdge(List<Vector3> into, Vec3i from, Vec3i to) {
 		long dx = to.X - from.X;
 		long dy = to.Y - from.Y;
@@ -48,7 +51,10 @@ internal sealed class DrapedLines {
 		}
 	}
 
-	/// <summary>Appends a polyline through <paramref name="points"/>, closing it if asked.</summary>
+	/// <summary>Appends a polyline through some points, closing it if asked.</summary>
+	/// <param name="into">The list the vertices are appended to.</param>
+	/// <param name="points">The points.</param>
+	/// <param name="closed">Whether the polyline is closed.</param>
 	public void AddPolyline(List<Vector3> into, IReadOnlyList<Vec3i> points, bool closed = false) {
 		for (int i = 1; i < points.Count; i++) {
 			AddEdge(into, points[i - 1], points[i]);
@@ -59,14 +65,20 @@ internal sealed class DrapedLines {
 		}
 	}
 
-	/// <summary>Appends the axis-aligned rectangle with corners <paramref name="a"/> and <paramref name="b"/>.</summary>
+	/// <summary>Appends the axis-aligned rectangle between two corners.</summary>
+	/// <param name="into">The list the vertices are appended to.</param>
+	/// <param name="a">One corner.</param>
+	/// <param name="b">The opposite corner.</param>
 	public void AddRectangle(List<Vector3> into, Vec3i a, Vec3i b) {
 		var c = new Vec3i(a.X, b.Y, 0);
 		var d = new Vec3i(b.X, a.Y, 0);
 		AddPolyline(into, new[] { a, c, b, d }, closed: true);
 	}
 
-	/// <summary>Appends a circle of <paramref name="radius"/> world units about <paramref name="centre"/>.</summary>
+	/// <summary>Appends a circle about a centre.</summary>
+	/// <param name="into">The list the vertices are appended to.</param>
+	/// <param name="centre">The centre.</param>
+	/// <param name="radius">The radius in world units.</param>
 	public void AddCircle(List<Vector3> into, Vec3i centre, int radius) {
 		var ring = new Vec3i[CircleSegments];
 		for (int i = 0; i < ring.Length; i++) {
@@ -78,7 +90,11 @@ internal sealed class DrapedLines {
 		AddPolyline(into, ring, closed: true);
 	}
 
-	/// <summary>A vertical post from the ground at (x, y) up <paramref name="heightWorld"/> units.</summary>
+	/// <summary>A vertical post from the ground at (x, y) up to a height.</summary>
+	/// <param name="into">The list the vertices are appended to.</param>
+	/// <param name="x">The X.</param>
+	/// <param name="y">The Y.</param>
+	/// <param name="heightWorld">The height in world units.</param>
 	public void AddPost(List<Vector3> into, int x, int y, int heightWorld) {
 		int ground = _terrain.HeightAtWorld(x, y);
 		into.Add(WorldScale.ToRender(new Vec3i(x, y, ground)));

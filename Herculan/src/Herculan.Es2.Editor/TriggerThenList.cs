@@ -39,11 +39,16 @@ internal sealed class TriggerThenList {
 	// The widest a menu entry is drawn, in pixels: the Properties panel's width.
 	private static float MenuWidth => ScaledImGui.Scaled(PropertiesPanel.PanelWidth);
 
-	/// <summary>Row-10 GUID <paramref name="guid"/>'s Then list, of base <paramref name="fields"/>; every control disabled when <paramref name="locked"/>.</summary>
+	/// <summary>A row-10 trigger's Then list; every control disabled when locked.</summary>
+	/// <param name="guid">The trigger's row-10 GUID.</param>
+	/// <param name="fields">The trigger's base fields.</param>
+	/// <param name="locked">Whether every control is disabled.</param>
 	public void Draw(short guid, MissionAction82 fields, bool locked) =>
 		DrawList(guid, fields, locked, "Then:", "Nothing happens when it fires yet: Add... lists what can.", [guid]);
 
-	/// <summary>Row-10 GUID <paramref name="guid"/>'s Then list, read-only, each record a link, as a trigger area's view lists it.</summary>
+	/// <summary>A row-10 trigger's Then list, read-only, each record a link, as a trigger area's view lists it.</summary>
+	/// <param name="guid">The trigger's row-10 GUID.</param>
+	/// <param name="fields">The trigger's base fields.</param>
 	public void DrawSummary(short guid, MissionAction82 fields) {
 		ImGui.Text("Then:");
 		ImGui.Indent();

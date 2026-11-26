@@ -29,10 +29,13 @@ internal sealed class ZoneCatalog {
 	/// <summary>Every zone the install holds, in number order, each with the retail missions played in it.</summary>
 	public IReadOnlyList<ZoneChoice> Zones => _zones ??= Build();
 
-	/// <summary>Zone <paramref name="zone"/> as its <see cref="ZoneChoice.Label"/>, or by its number alone when the install has no such zone.</summary>
+	/// <summary>A zone as its <see cref="ZoneChoice.Label"/>, or by its number alone when the install has no such zone.</summary>
+	/// <param name="zone">The zone's number.</param>
 	public string Describe(short zone) => Zones.FirstOrDefault(choice => choice.Zone == zone)?.Label ?? $"Zone {zone}";
 
-	/// <summary>A mission's own terrain <paramref name="own"/>, played as zone <paramref name="zone"/>, and its size.</summary>
+	/// <summary>A mission's own terrain, played as a zone, and its size.</summary>
+	/// <param name="zone">The zone's number.</param>
+	/// <param name="own">The mission's own terrain.</param>
 	public static string DescribeOwn(short zone, ZoneFiles own) {
 		string side = ZoneChoice.Kilometres(own.Side << own.CellSizeShift);
 		return $"Zone {zone}: the mission's own terrain ({side} by {side} km)";

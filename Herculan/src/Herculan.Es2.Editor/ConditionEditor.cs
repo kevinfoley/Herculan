@@ -53,34 +53,50 @@ internal sealed class ConditionEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why <paramref name="guid"/> cannot be edited, or null when it can.</summary>
+	/// <summary>Why a condition cannot be edited, or null when it can.</summary>
+	/// <param name="guid">The condition's GUID.</param>
 	public string? WhyFixed(short guid) => ConditionEditing.WhyFixed(_source, guid);
 
-	/// <summary>Asks for a new range over draw <paramref name="draw"/>, which is then selected.</summary>
+	/// <summary>Asks for a new range over a draw, which is then selected.</summary>
+	/// <param name="draw">The draw's GUID.</param>
 	public void RequestCreateRange(short draw) =>
 		Create((MissionDocument source, out short guid) => ConditionEditing.CreateRange(source, draw, out guid));
 
-	/// <summary>Asks for flag test <paramref name="guid"/> to read flag <paramref name="flag"/>.</summary>
+	/// <summary>Asks for a flag test to read a flag.</summary>
+	/// <param name="guid">The flag test's GUID.</param>
+	/// <param name="flag">The flag.</param>
 	public void RequestFlag(short guid, short flag) => Ask(guid, source => ConditionEditing.SetFlag(source, guid, flag));
 
-	/// <summary>Asks for flag test <paramref name="guid"/> to compare by <paramref name="op"/>.</summary>
+	/// <summary>Asks for a flag test to compare by an operator.</summary>
+	/// <param name="guid">The flag test's GUID.</param>
+	/// <param name="op">The operator.</param>
 	public void RequestOperator(short guid, short op) => Ask(guid, source => ConditionEditing.SetOperator(source, guid, op));
 
-	/// <summary>Asks for flag test <paramref name="guid"/> to compare its flag with <paramref name="value"/>.</summary>
+	/// <summary>Asks for a flag test to compare its flag with a value.</summary>
+	/// <param name="guid">The flag test's GUID.</param>
+	/// <param name="value">The value.</param>
 	public void RequestValue(short guid, short value) => Ask(guid, source => ConditionEditing.SetValue(source, guid, value));
 
-	/// <summary>Asks for draw <paramref name="guid"/> to draw below <paramref name="bound"/>.</summary>
+	/// <summary>Asks for a draw to draw below a bound.</summary>
+	/// <param name="guid">The draw's GUID.</param>
+	/// <param name="bound">The bound.</param>
 	public void RequestBound(short guid, short bound) => Ask(guid, source => ConditionEditing.SetBound(source, guid, bound));
 
-	/// <summary>Asks for range <paramref name="guid"/> to run from <paramref name="low"/> to <paramref name="high"/>.</summary>
+	/// <summary>Asks for a range to run between two ends.</summary>
+	/// <param name="guid">The range's GUID.</param>
+	/// <param name="low">The low end.</param>
+	/// <param name="high">The high end.</param>
 	public void RequestEnds(short guid, short low, short high) =>
 		Ask(guid, source => ConditionEditing.SetEnds(source, guid, low, high));
 
-	/// <summary>Asks for <paramref name="guid"/> to require <paramref name="required"/>, or nothing for <c>-1</c>; for a range, to be over that draw.</summary>
+	/// <summary>Asks for a condition to require another, or nothing; for a range, to be over that draw.</summary>
+	/// <param name="guid">The condition's GUID.</param>
+	/// <param name="required">The GUID it requires, or <c>-1</c> for nothing.</param>
 	public void RequestRequirement(short guid, short required) =>
 		Ask(guid, source => ConditionEditing.SetRequirement(source, guid, required));
 
-	/// <summary>Asks for <paramref name="guid"/> to be deleted.</summary>
+	/// <summary>Asks for a condition to be deleted.</summary>
+	/// <param name="guid">The condition's GUID.</param>
 	public void RequestDelete(short guid) => Ask(guid, source => ConditionEditing.Delete(source, guid));
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
@@ -92,11 +108,12 @@ internal sealed class ConditionEditor {
 	}
 
 	/// <summary>
-	/// What references <paramref name="guid"/>, whatever its condition (<see cref="ConditionEditing.Namers"/>): each record by
+	/// What references a condition, whatever its condition (<see cref="ConditionEditing.Namers"/>): each record by
 	/// its identity from the layout, a link where it has a view: a route, trigger area, action, timer, group or objective
 	/// (<see cref="Selectable"/>), a herc, flyer, structure or ground vehicle when the scene has its object
 	/// (<see cref="Object"/>); a point, a heading and the rows the editor has no view for named by what they do.
 	/// </summary>
+	/// <param name="guid">The condition's GUID.</param>
 	public ConditionUses UsesOf(short guid) {
 		var source = _source;
 		var namers = ConditionEditing.Namers(source, guid);
@@ -168,12 +185,14 @@ internal sealed class ConditionEditor {
 	}
 
 	/// <summary>
-	/// <paramref name="count"/> records of row <paramref name="row"/>, one the editor has no view for, by what they do in the
+	/// A count of records of a row, one the editor has no view for, by what they do in the
 	/// mission (docs/retail/formats/msn-mission-file.md): a header patch sets the mission's settings, its zone among them, and
 	/// clears the campaign variables it lists as the mission loads; a row-3 value is a briefing's or a debrief's movie; a text
 	/// package other than the one the Mission Settings window edits is another version of the mission's lines and briefing movie; a
 	/// row-5 record a version of the debrief; then a point and a heading.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="count">The number of records.</param>
 	private static ConditionUse NoView(int row, int count) {
 		string what = (row, count) switch {
 			(2, 1) => "Mission settings, such as the zone",

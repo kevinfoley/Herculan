@@ -22,10 +22,11 @@ sealed class CustomHostActions(KeyMap keyMap) {
 	public bool PauseMenuPressed { get; private set; }
 
 	/// <summary>
-	/// Reads the menu bar and pause menu inputs off <paramref name="joystick"/>'s profile, once a frame. They are read even
+	/// Reads the menu bar and pause menu inputs off a joystick's profile, once a frame. They are read even
 	/// while the stick is <see cref="JoystickSource.Quiet"/>: the stick is quiet while those menus are up, and these inputs
 	/// still have to close them.
 	/// </summary>
+	/// <param name="joystick">The joystick, or null for none.</param>
 	public void Update(JoystickSource? joystick) {
 		bool menuBar = joystick?.HostActionHeld(KeyAction.MenuBar) == true;
 		bool pauseMenu = joystick?.HostActionHeld(KeyAction.PauseMenu) == true;
@@ -36,19 +37,23 @@ sealed class CustomHostActions(KeyMap keyMap) {
 	}
 
 	/// <summary>
-	/// Returns a test for whether the profile's input for <paramref name="wheel"/> is held on a given device, which is
+	/// Returns a test for whether the profile's input for a wheel is held on a given device, which is
 	/// what opens that radial. A radial is aimed by a gamepad's stick, so a radial bound on a joystick cannot be opened
 	/// (docs/herculan/plan-controller-profiles.md, "Open").
 	/// </summary>
+	/// <param name="joystick">The joystick.</param>
+	/// <param name="wheel">The wheel's action.</param>
 	public static Func<ControllerDevice, bool> WheelClick(JoystickSource joystick, KeyAction wheel) =>
 		device => joystick.Device is { } read && device.Slot == read.Slot && joystick.HostActionHeld(wheel);
 
 	/// <summary>
-	/// Sends, as keys, the actions that <paramref name="joystick"/>'s profile has held down this frame. Each one with a key
-	/// binding holds its first binding's keys and modifiers (<see cref="KeyMap.Chord"/>) in <paramref name="keys"/>. The
+	/// Sends, as keys, the actions that a joystick's profile has held down this frame. Each one with a key
+	/// binding holds its first binding's keys and modifiers (<see cref="KeyMap.Chord"/>) in the live keys. The
 	/// menu bar and pause menu are skipped, since the host handles them (<see cref="Update"/>), and so are the two radials,
 	/// since a radial is aimed by a gamepad's stick rather than by keys (<see cref="WheelClick"/>).
 	/// </summary>
+	/// <param name="keys">The live keys.</param>
+	/// <param name="joystick">The joystick.</param>
 	public void HoldKeys(LiveKeys keys, JoystickSource joystick) {
 		foreach (var action in joystick.HeldActions()) {
 			if (action is KeyAction.MenuBar or KeyAction.PauseMenu or KeyAction.SquadOrdersWheel or KeyAction.ScreensWheel

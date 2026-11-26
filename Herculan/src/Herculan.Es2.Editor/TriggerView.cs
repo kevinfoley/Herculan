@@ -38,7 +38,8 @@ internal sealed class TriggerView {
 
 	private MissionNames Names => _links.Names;
 
-	/// <summary>Row-10 GUID <paramref name="guid"/>'s view; nothing for a GUID the layout has no trigger for.</summary>
+	/// <summary>A row-10 trigger's view; nothing for a GUID the layout has no trigger for.</summary>
+	/// <param name="guid">The trigger's row-10 GUID.</param>
 	public void Draw(short guid) {
 		if (Layout.Entry<MissionAction82>(guid)?.Fields is not { } fields) {
 			return;
@@ -67,7 +68,8 @@ internal sealed class TriggerView {
 		DrawAdvanced(guid, fields);
 	}
 
-	/// <summary>Row-10 GUID <paramref name="guid"/>'s wiring, read-only, every record it mentions a link: what fires it, and what follows.</summary>
+	/// <summary>A row-10 trigger's wiring, read-only, every record it mentions a link: what fires it, and what follows.</summary>
+	/// <param name="guid">The trigger's row-10 GUID.</param>
 	public void DrawSummary(short guid) {
 		if (Layout.Entry<MissionAction82>(guid)?.Fields is not { } fields) {
 			return;

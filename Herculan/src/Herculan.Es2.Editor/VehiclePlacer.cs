@@ -45,10 +45,14 @@ internal sealed class VehiclePlacer {
 	public string? WhyNoAdd => VehicleGroups.WhyNoAdd(_source);
 
 	/// <summary>
-	/// Adds a ground vehicle of <c>BASES.DAT</c> type <paramref name="typeIndex"/> on <paramref name="side"/> at
-	/// (<paramref name="x"/>, <paramref name="y"/>), in a convoy of its own or, given <paramref name="joinGroup"/>, as a
-	/// member of that structure group; and selects it. Answers why it could not, or null when it did.
+	/// Adds a ground vehicle at a point, in a convoy of its own or as a
+	/// member of a structure group; and selects it. Answers why it could not, or null when it did.
 	/// </summary>
+	/// <param name="typeIndex">The <c>BASES.DAT</c> type.</param>
+	/// <param name="side">The side.</param>
+	/// <param name="x">The X.</param>
+	/// <param name="y">The Y.</param>
+	/// <param name="joinGroup">The row-16 GUID of the structure group it joins, or null for a convoy of its own.</param>
 	public string? Add(int typeIndex, MissionSide side, int x, int y, short? joinGroup = null) {
 		if (WhyNoAdd is { } refused) {
 			return refused;
@@ -78,17 +82,20 @@ internal sealed class VehiclePlacer {
 	}
 
 	/// <summary>
-	/// Why a ground vehicle cannot be added to group <paramref name="group"/>, by its row-16 GUID, or null when it can: a
+	/// Why a ground vehicle cannot be added to a group, or null when it can: a
 	/// convoy's limit (<see cref="VehicleGroups.WhyNoJoin"/>), or for any other group a structure's
 	/// (<see cref="StructurePlacer.WhyNotJoin"/>).
 	/// </summary>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public string? WhyNotJoin(short group) =>
 		IsConvoy(group) ? VehicleGroups.WhyNoJoin(_source, group, BaseObject.IsGroundVehicle) : _structures.WhyNotJoin(group);
 
 	/// <summary>
-	/// The vehicle <see cref="Add"/> would add of <paramref name="typeIndex"/> on <paramref name="side"/>, built as a
+	/// The vehicle <see cref="Add"/> would add, built as a
 	/// structure's ghost is (<see cref="StructurePlacer.Ghost"/>), for <see cref="DropPreview"/> to draw.
 	/// </summary>
+	/// <param name="typeIndex">The <c>BASES.DAT</c> type.</param>
+	/// <param name="side">The side.</param>
 	public SceneObject? Ghost(int typeIndex, MissionSide side) => _structures.Ghost(typeIndex, side);
 
 	// Whether row-16 group <group> is a convoy.

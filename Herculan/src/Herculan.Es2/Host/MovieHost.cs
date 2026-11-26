@@ -101,9 +101,12 @@ public static class MovieHost {
 
 	/// <summary>
 	/// Takes the argument as a path when it names a file, and otherwise as a name to look up in the
-	/// movie folder, so <c>--movie ALPH_TH.AVI</c> works without a full path. <paramref name="path"/> is
-	/// what was opened, for messages.
+	/// movie folder, so <c>--movie ALPH_TH.AVI</c> works without a full path.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="disc">The disc, or null for none.</param>
+	/// <param name="movieName">The argument: a path or a movie name.</param>
+	/// <param name="path">Receives what was opened, for messages.</param>
 	private static Stream? Open(string installRoot, GameDisc? disc, string movieName, out string path) {
 		path = movieName;
 		if (File.Exists(movieName)) {

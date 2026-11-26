@@ -6,10 +6,15 @@ namespace Herculan.Es2.Editor;
 internal static class ActionChoice {
 	/// <summary>
 	/// Draws a combo of None and each trigger of the layout, by <see cref="MissionNames.Trigger"/> cut to fit with its number
-	/// dimmed, showing row-10 GUID <paramref name="current"/> (<c>-1</c> for none), and answers the row-10 GUID of the one chosen
-	/// when it differs (<c>-1</c> for None), or null. Without <paramref name="offerNone"/>, None is left out, and
-	/// <paramref name="whyNoNone"/>, when given, is said under the combo. <paramref name="none"/> is what None is called.
+	/// dimmed, and answers the row-10 GUID of the one chosen when it differs (<c>-1</c> for None), or null.
 	/// </summary>
+	/// <param name="id">The combo's ImGui id.</param>
+	/// <param name="current">The row-10 GUID shown, <c>-1</c> for none.</param>
+	/// <param name="index">The mission's index.</param>
+	/// <param name="names">The mission's names.</param>
+	/// <param name="offerNone">Whether None is offered; when false it is left out.</param>
+	/// <param name="whyNoNone">Said under the combo when None is left out, when given.</param>
+	/// <param name="none">What None is called.</param>
 	public static short? Draw(string id, short current, MissionIndex index, MissionNames names, bool offerNone = true,
 			string? whyNoNone = null, string none = "None") {
 		short? chosen = null;

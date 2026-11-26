@@ -63,9 +63,11 @@ internal sealed class MissionIndex {
 	public MissionBox Box { get; private set; }
 
 	/// <summary>
-	/// Builds the index again over <paramref name="plan"/> and <paramref name="objects"/>, the object built for each placed
+	/// Builds the index again over a plan and some objects, the object built for each placed
 	/// record that has one.
 	/// </summary>
+	/// <param name="plan">The layout plan.</param>
+	/// <param name="objects">The objects by record.</param>
 	public void Reload(LayoutPlan plan, IReadOnlyDictionary<ObjectKey, SceneObject> objects) {
 		Plan = plan;
 		_byKey.Clear();
@@ -91,70 +93,89 @@ internal sealed class MissionIndex {
 	}
 
 	/// <summary>
-	/// Takes <paramref name="plan"/>, which places the same records as <see cref="Plan"/> elsewhere, for the groups' setups
+	/// Takes a plan, which places the same records as <see cref="Plan"/> elsewhere, for the groups' setups
 	/// and pads and the routes and areas, keeping the objects: a drag's preview.
 	/// </summary>
+	/// <param name="plan">The layout plan.</param>
 	public void Replan(LayoutPlan plan) {
 		Plan = plan;
 		_pads = PadsOf(plan);
 	}
 
-	/// <summary>The roster record <paramref name="placed"/> stands for, or null for an object not in the scene.</summary>
+	/// <summary>The roster record an object stands for, or null for an object not in the scene.</summary>
+	/// <param name="placed">The object.</param>
 	public ObjectKey? KeyOf(SceneObject placed) => _keyOf.TryGetValue(placed, out var key) ? key : null;
 
-	/// <summary>The object standing for <paramref name="key"/>, or null when the scene has none.</summary>
+	/// <summary>The object standing for a roster record, or null when the scene has none.</summary>
+	/// <param name="key">The roster record.</param>
 	public SceneObject? ObjectOf(ObjectKey key) => _byKey.GetValueOrDefault(key);
 
-	/// <summary>The object <paramref name="selection"/> names, or null when the scene has none.</summary>
+	/// <summary>The object a selection names, or null when the scene has none.</summary>
+	/// <param name="selection">The selection.</param>
 	public SceneObject? ObjectOf(ObjectSelection selection) => ObjectOf(new ObjectKey(selection.Row, selection.Guid));
 
-	/// <summary>The selection of <paramref name="placed"/>, by the record it stands for; null for an object not in the scene.</summary>
+	/// <summary>The selection of an object, by the record it stands for; null for an object not in the scene.</summary>
+	/// <param name="placed">The object.</param>
 	public ObjectSelection? SelectionOf(SceneObject placed) =>
 		KeyOf(placed) is { } key ? new ObjectSelection(key.Row, key.Guid) : null;
 
-	/// <summary>How <paramref name="placed"/> is placed, or null for an object not in the scene.</summary>
+	/// <summary>How an object is placed, or null for an object not in the scene.</summary>
+	/// <param name="placed">The object.</param>
 	public PlannedObject? Planned(SceneObject placed) => KeyOf(placed) is { } key ? Plan.Object(key) : null;
 
-	/// <summary>Row-16 GUID <paramref name="guid"/>'s group, or null when the layout has none.</summary>
+	/// <summary>A row-16 group, or null when the layout has none.</summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public PlannedGroup? Group(short guid) => Plan.Group(guid);
 
-	/// <summary>The group that places <paramref name="placed"/>, or null for an object not in the scene.</summary>
+	/// <summary>The group that places an object, or null for an object not in the scene.</summary>
+	/// <param name="placed">The object.</param>
 	public PlannedGroup? GroupOf(SceneObject placed) => Planned(placed) is { } planned ? Group(planned.Group) : null;
 
-	/// <summary>The objects group <paramref name="guid"/> places, in roster order, the squad's in slot order.</summary>
+	/// <summary>The objects a group places, in roster order, the squad's in slot order.</summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public IReadOnlyList<SceneObject> MembersOf(short guid) => _members.GetValueOrDefault(guid) ?? [];
 
-	/// <summary>Whether <paramref name="placed"/>'s group waits on an action before it is in the mission.</summary>
+	/// <summary>Whether an object's group waits on an action before it is in the mission.</summary>
+	/// <param name="placed">The object.</param>
 	public bool IsWaiting(SceneObject placed) => GroupOf(placed)?.Waiting == true;
 
-	/// <summary>Whether <paramref name="placed"/>'s group starts the mission asleep (<see cref="LayoutPlan.Asleep"/>).</summary>
+	/// <summary>Whether an object's group starts the mission asleep (<see cref="LayoutPlan.Asleep"/>).</summary>
+	/// <param name="placed">The object.</param>
 	public bool Asleep(SceneObject placed) => Planned(placed) is { } planned && Plan.Asleep(planned.Group);
 
 	/// <summary>
-	/// Whether <paramref name="placed"/> is in the scene, drawn and picked: false for a member of a group kept out of it
+	/// Whether an object is in the scene, drawn and picked: false for a member of a group kept out of it
 	/// (<see cref="PlannedGroup.OffScene"/>), which is still indexed and selected from the outliner.
 	/// </summary>
+	/// <param name="placed">The object.</param>
 	public bool InScene(SceneObject placed) => GroupOf(placed)?.OffScene != true;
 
-	/// <summary>The pad group <paramref name="guid"/> paints, or null.</summary>
+	/// <summary>The pad a group paints, or null.</summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public MissionBasePad? PadOf(short guid) => Group(guid)?.Pad;
 
-	/// <summary>Row-8 GUID <paramref name="guid"/>'s route, or null when it has no waypoint that stands somewhere.</summary>
+	/// <summary>A row-8 route, or null when it has no waypoint that stands somewhere.</summary>
+	/// <param name="guid">The route's row-8 GUID.</param>
 	public PlannedRoute? Route(short guid) => Plan.Route(guid);
 
-	/// <summary>Row-9 GUID <paramref name="guid"/>'s trigger area, or null when it stands nowhere.</summary>
+	/// <summary>A row-9 trigger area, or null when it stands nowhere.</summary>
+	/// <param name="guid">The area's row-9 GUID.</param>
 	public PlannedArea? Area(short guid) => Plan.Area(guid);
 
-	/// <summary>Row-10 GUID <paramref name="guid"/>'s action, or null when the layout has none.</summary>
+	/// <summary>A row-10 action, or null when the layout has none.</summary>
+	/// <param name="guid">The action's row-10 GUID.</param>
 	public PlannedAction? Action(short guid) => Plan.Action(guid);
 
-	/// <summary>What fires row-10 GUID <paramref name="guid"/> besides its areas, and what follows it; <see cref="TriggerLinks.None"/> for none.</summary>
+	/// <summary>What fires a row-10 action besides its areas, and what follows it; <see cref="TriggerLinks.None"/> for none.</summary>
+	/// <param name="guid">The action's row-10 GUID.</param>
 	public TriggerLinks Links(short guid) => _links.GetValueOrDefault(guid) ?? TriggerLinks.None;
 
 	/// <summary>
-	/// The roster record an objective's or order's subject of <paramref name="kind"/> (1 a herc, 2 a flyer, 3 a structure or
-	/// ground vehicle) and GUID <paramref name="guid"/> names; null for a group (kind 0), none or an unknown kind.
+	/// The roster record an objective's or order's subject names (kind 1 a herc, 2 a flyer, 3 a structure or
+	/// ground vehicle); null for a group (kind 0), none or an unknown kind.
 	/// </summary>
+	/// <param name="kind">The subject's kind.</param>
+	/// <param name="guid">The subject's GUID.</param>
 	public static ObjectKey? SubjectKey(short kind, short guid) => kind switch {
 		1 => new ObjectKey(12, guid),
 		2 => new ObjectKey(13, guid),
@@ -163,23 +184,27 @@ internal sealed class MissionIndex {
 	};
 
 	/// <summary>
-	/// The row-16 GUID of the group whose orders objective <paramref name="fields"/>'s condition 0 reads: its subject group, or
+	/// The row-16 GUID of the group whose orders an objective's condition 0 reads: its subject group, or
 	/// the group that places its subject; <c>-1</c> when there is none.
 	/// </summary>
+	/// <param name="fields">The objective.</param>
 	public short SubjectGroup(MissionObjective58 fields) => fields.SubjectKind == 0
 		? Group(fields.SubjectRef) != null ? fields.SubjectRef : (short)-1
 		: SubjectKey(fields.SubjectKind, fields.SubjectRef) is { } key && Plan.Object(key) is { } planned ? planned.Group : (short)-1;
 
-	/// <summary>The objects objective <paramref name="fields"/> is asked of: its subject's object, or every member of its subject group.</summary>
+	/// <summary>The objects an objective is asked of: its subject's object, or every member of its subject group.</summary>
+	/// <param name="fields">The objective.</param>
 	public IReadOnlyList<SceneObject> SubjectObjects(MissionObjective58 fields) => fields.SubjectKind == 0
 		? MembersOf(fields.SubjectRef)
 		: SubjectKey(fields.SubjectKind, fields.SubjectRef) is { } key && ObjectOf(key) is { } placed ? [placed] : [];
 
 	/// <summary>
-	/// The order slot of group <paramref name="group"/> whose completion a condition-0 objective on row-8 GUID
-	/// <paramref name="route"/> reads: the first slot whose order names that route, as <c>Mission_GroupOrderCompleteOnRoute</c>
+	/// The order slot of a group whose completion a condition-0 objective on a route reads: the first slot whose order
+	/// names that route, as <c>Mission_GroupOrderCompleteOnRoute</c>
 	/// (<c>0041324c</c>) scans them (docs/retail/simulation/ai-goals.md#what-else-reads-an-order); <c>-1</c> for none.
 	/// </summary>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public int SlotOnRoute(short group, short route) {
 		if (route == -1 || Group(group) is not { } planned) {
 			return -1;
@@ -194,7 +219,8 @@ internal sealed class MissionIndex {
 		return -1;
 	}
 
-	/// <summary>The group slots whose base names row-15 GUID <paramref name="order"/>, in layout order.</summary>
+	/// <summary>The group slots whose base names a row-15 order, in layout order.</summary>
+	/// <param name="order">The order's row-15 GUID.</param>
 	public IReadOnlyList<EndsOrder> OrderSlots(short order) {
 		var slots = new List<EndsOrder>();
 		if (order == -1) {
@@ -212,19 +238,23 @@ internal sealed class MissionIndex {
 		return slots;
 	}
 
-	/// <summary>The objectives whose subject is group <paramref name="group"/>, in row-17 order.</summary>
+	/// <summary>The objectives whose subject is a group, in row-17 order.</summary>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public IEnumerable<LayoutObjective> ObjectivesAbout(short group) =>
 		Layout.Objectives.Where(objective => objective.Fields.SubjectKind == 0 && objective.Fields.SubjectRef == group);
 
-	/// <summary>The objectives whose subject is the roster record <paramref name="key"/> itself, in row-17 order.</summary>
+	/// <summary>The objectives whose subject is a roster record itself, in row-17 order.</summary>
+	/// <param name="key">The roster record.</param>
 	public IEnumerable<LayoutObjective> ObjectivesAbout(ObjectKey key) =>
 		Layout.Objectives.Where(objective => SubjectKey(objective.Fields.SubjectKind, objective.Fields.SubjectRef) == key);
 
 	/// <summary>
-	/// The objectives that read the order in group <paramref name="group"/>'s slot <paramref name="slot"/>: those asking
+	/// The objectives that read the order in a group's slot: those asking
 	/// whether the subject's group has finished its order on a route (condition 0) whose group is this one and whose route is
 	/// the first this group's orders name in that slot (<see cref="SlotOnRoute"/>), in row-17 order.
 	/// </summary>
+	/// <param name="group">The group's row-16 GUID.</param>
+	/// <param name="slot">The order slot.</param>
 	public IReadOnlyList<LayoutObjective> ObjectivesReadingOrder(short group, int slot) => Layout.Objectives
 		.Where(objective => objective.Fields.ConditionCode == MissionObjective.ConditionOrderComplete
 			&& SubjectGroup(objective.Fields) == group && SlotOnRoute(group, objective.Fields.RouteRef) == slot)

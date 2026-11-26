@@ -280,25 +280,30 @@ internal sealed class EditorMission {
 	/// <summary>Whether a drag is under way, of the move handles or a sculpting stroke, while which no other edit is made.</summary>
 	public bool Dragging => Gizmo.Dragging || Sculptor.Stroking;
 
-	/// <summary>The window title, the name marked <c>*</c> when <paramref name="unsaved"/> changes are held.</summary>
+	/// <summary>The window title, the name marked <c>*</c> when changes are unsaved.</summary>
+	/// <param name="unsaved">Whether unsaved changes are held.</param>
 	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Zone}";
 
 	/// <summary>
-	/// Opens the handoff at <paramref name="scriptPath"/> as <paramref name="source"/>, the mission it holds as its
-	/// <c>.MSN</c>: the document's generated <c>script.dat</c> and <c>mission.str</c> are written over the handoff's, the
+	/// Opens a handoff with a mission document as its <c>.MSN</c>: the document's generated <c>script.dat</c> and
+	/// <c>mission.str</c> are written over the handoff's, the
 	/// world is loaded for the mission generated from them (<see cref="MissionScene.LoadWorld"/>), and the objects are built
 	/// for the records the document's layout places (<see cref="LayoutPlacement"/>) and stood on the ground as the game's
 	/// load stands its own (<see cref="MissionScene.Settle"/>). That write and load happen once, here; an edit writes nothing
-	/// and loads nothing. <paramref name="dataDirectory"/> is where the simulator's
-	/// settings are when they are not beside the script — see <see cref="MissionScene.Load"/>.
-	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the <c>player.mec</c> File &gt; Export
-	/// writes, <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables,
-	/// <paramref name="cybrid"/> what a Cybrid's hardpoints offer and <paramref name="zones"/> the install's zones with the
-	/// retail missions that use each, both built once per editor run, and <paramref name="presets"/> the loadout presets, read once
-	/// per editor run, or with none an empty set kept in memory only; <paramref name="pictures"/> pictures a terrain image in
-	/// the Terrain window, or with none it shows no picture. Throws
+	/// and loads nothing. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
 	/// </summary>
+	/// <param name="content">The game content.</param>
+	/// <param name="scriptPath">The handoff's script path.</param>
+	/// <param name="name">The mission's name.</param>
+	/// <param name="dataDirectory">Where the simulator's settings are when they are not beside the script — see <see cref="MissionScene.Load"/>.</param>
+	/// <param name="source">The mission the handoff holds as its <c>.MSN</c>.</param>
+	/// <param name="squad">Which Hercs the mission's squad pilots, which builds the <c>player.mec</c> File &gt; Export writes.</param>
+	/// <param name="shellContent">Makes VSHELL's mount, which holds the shell's chassis and weapon tables.</param>
+	/// <param name="cybrid">What a Cybrid's hardpoints offer, built once per editor run.</param>
+	/// <param name="zones">The install's zones with the retail missions that use each, built once per editor run.</param>
+	/// <param name="presets">The loadout presets, read once per editor run, or none for an empty set kept in memory only.</param>
+	/// <param name="pictures">Pictures a terrain image in the Terrain window, or none for no picture.</param>
 	public static EditorMission Open(GameContent content, string scriptPath, string name, string dataDirectory,
 			MissionDocument source, MissionSquad squad, Func<GameContent> shellContent, CybridWeapons cybrid, ZoneCatalog zones,
 			LoadoutPresets? presets = null, TerrainPictures? pictures = null) {

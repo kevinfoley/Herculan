@@ -7,10 +7,11 @@ using Herculan.Es2.World;
 namespace Herculan.Es2.Editor;
 
 /// <summary>
-/// A record's name as the editor shows it: what it is and does (<paramref name="Text"/>), and its number in its row
-/// (<paramref name="Number"/>), which a view draws dimmed after the text so a link still reads; null for a record
-/// with no number, such as the player's squad.
+/// A record's name as the editor shows it: what it is and does, and its number in its row, which a view draws dimmed
+/// after the text so a link still reads.
 /// </summary>
+/// <param name="Text">What the record is and does.</param>
+/// <param name="Number">Its number in its row; null for a record with no number, such as the player's squad.</param>
 internal readonly record struct RecordName(string Text, string? Number = null) {
 	/// <summary>The text and the number, as one string.</summary>
 	public string Full => Number is null ? Text : $"{Text} {Number}";
@@ -43,7 +44,8 @@ internal sealed class RosterTypeNames {
 	public static RosterTypeNames Load(GameContent content) => new(UnitTypeNames.LoadMechs(content),
 		UnitTypeNames.LoadFlyers(content), BaseTypeTable.Load(content), SimStrings.Load(content));
 
-	/// <summary><paramref name="record"/>'s type by name, or by its kind and type number for one no table names.</summary>
+	/// <summary>A record's type by name, or by its kind and type number for one no table names.</summary>
+	/// <param name="record">The record.</param>
 	public string Name(MapObject? record) => record switch {
 		MechRosterEntry144 herc => _mechs?[herc.TypeIndex] ?? $"HERC type {herc.TypeIndex}",
 		FlyerRosterEntry102 flyer => _flyers?[flyer.TypeIndex] ?? $"Flyer type {flyer.TypeIndex}",
@@ -64,13 +66,15 @@ internal sealed class RosterTypeNames {
 		return string.IsNullOrWhiteSpace(name) ? $"{kind} with no name on the MFD" : $"{kind}: {name}";
 	}
 
-	/// <summary>Whether <paramref name="structure"/>'s type is a ground vehicle, which drives.</summary>
+	/// <summary>Whether a structure's type is a ground vehicle, which drives.</summary>
+	/// <param name="structure">The structure.</param>
 	public bool IsVehicle(BaseRosterEntry62 structure) => _bases?[structure.TypeIndex]?.IsVehicle == true;
 
 	/// <summary>
-	/// Whether <c>BASES.DAT</c> type <paramref name="type"/> is invulnerable (<see cref="BaseType.Invulnerable"/>), so a
+	/// Whether a <c>BASES.DAT</c> type is invulnerable (<see cref="BaseType.Invulnerable"/>), so a
 	/// structure of it takes no damage and is never destroyed (docs/retail/formats/bases-dat.md).
 	/// </summary>
+	/// <param name="type">The <c>BASES.DAT</c> type.</param>
 	public bool IsInvulnerable(int type) => _bases?[type]?.Invulnerable == true;
 }
 
@@ -106,8 +110,9 @@ internal sealed class MissionNames {
 	// ---- Groups ------------------------------------------------------------------------------------
 
 	/// <summary>
-	/// Row-16 GUID <paramref name="guid"/> by its number, then its team, roster and members.
+	/// A row-16 group by its number, then its team, roster and members.
 	/// </summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public RecordName Group(short guid) {
 		if (_index.Group(guid) is not { } group) {
 			return new RecordName("A group not in the mission");
@@ -120,7 +125,8 @@ internal sealed class MissionNames {
 		return new RecordName($"Group {group.Number}: {Team(group)} {Roster(group)} ({Members(group)})");
 	}
 
-	/// <summary>Row-16 GUID <paramref name="guid"/> by its team and roster alone.</summary>
+	/// <summary>A row-16 group by its team and roster alone.</summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public RecordName GroupBrief(short guid) {
 		if (_index.Group(guid) is not { } group) {
 			return new RecordName("A group not in the mission");
@@ -130,12 +136,14 @@ internal sealed class MissionNames {
 	}
 
 	/// <summary>
-	/// Row-16 GUID <paramref name="guid"/> inside a sentence.
+	/// A row-16 group inside a sentence.
 	/// </summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public string GroupInSentence(short guid) =>
 		_index.Group(guid) is { } group && IsSquad(group) ? "the player's squad" : GroupBrief(guid).Full;
 
-	/// <summary>Whether a sentence about group <paramref name="guid"/> takes a plural verb: every group but the player's squad.</summary>
+	/// <summary>Whether a sentence about a group takes a plural verb: every group but the player's squad.</summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public bool GroupPlural(short guid) => _index.Group(guid) is not { } group || !IsSquad(group);
 
 	private static bool IsSquad(PlannedGroup group) => group.IsSquad;
@@ -175,13 +183,15 @@ internal sealed class MissionNames {
 
 	// ---- Objects -----------------------------------------------------------------------------------
 
-	/// <summary>The roster record <paramref name="key"/>'s type by name (<see cref="RosterTypeNames.Name"/>).</summary>
+	/// <summary>A roster record's type by name (<see cref="RosterTypeNames.Name"/>).</summary>
+	/// <param name="key">The roster record.</param>
 	public string TypeName(ObjectKey key) => Types.Name(Layout.Entry(key.Row, key.Guid)?.Fields);
 
 	/// <summary>
-	/// The roster record <paramref name="key"/> as its group's outliner row names it: its type, numbered in member order when
+	/// A roster record as its group's outliner row names it: its type, numbered in member order when
 	/// its group has more than one of that type; a squad HERC as the player's or a squadmate's, by its slot.
 	/// </summary>
+	/// <param name="key">The roster record.</param>
 	public string MemberName(ObjectKey key) {
 		string type = TypeName(key);
 		if (_index.Plan.Object(key) is not { } planned) {
@@ -203,9 +213,10 @@ internal sealed class MissionNames {
 	}
 
 	/// <summary>
-	/// The roster record <paramref name="key"/> by its <see cref="MemberName"/> and its group (<see cref="GroupBrief"/>); a squad
+	/// A roster record by its <see cref="MemberName"/> and its group (<see cref="GroupBrief"/>); a squad
 	/// HERC by its <see cref="MemberName"/> alone; a record no group places by its type, saying it is never in the mission.
 	/// </summary>
+	/// <param name="key">The roster record.</param>
 	public RecordName Object(ObjectKey key) {
 		if (_index.Plan.Object(key) is not { } planned) {
 			return new RecordName($"{TypeName(key)}, in no group: never in the mission");
@@ -219,7 +230,8 @@ internal sealed class MissionNames {
 		return new RecordName($"{MemberName(key)} in {group.Text}", group.Number);
 	}
 
-	/// <summary>Whether a group places the roster record <paramref name="key"/>, so it is in the mission.</summary>
+	/// <summary>Whether a group places a roster record, so it is in the mission.</summary>
+	/// <param name="key">The roster record.</param>
 	public bool Placed(ObjectKey key) => _index.Plan.Object(key) != null;
 
 	/// <summary>
@@ -238,8 +250,9 @@ internal sealed class MissionNames {
 	// ---- Areas and routes --------------------------------------------------------------------------
 
 	/// <summary>
-	/// Row-9 GUID <paramref name="guid"/> by its shape and who its first testing trigger tests, numbered by its place in row 9.
+	/// A row-9 area by its shape and who its first testing trigger tests, numbered by its place in row 9.
 	/// </summary>
+	/// <param name="guid">The area's row-9 GUID.</param>
 	public RecordName Area(short guid) {
 		if (MissionText.NumberIn(Layout, AreaRow, guid) is not { } number) {
 			return new RecordName("An area not in the mission");
@@ -262,9 +275,10 @@ internal sealed class MissionNames {
 	}
 
 	/// <summary>
-	/// Row-8 GUID <paramref name="guid"/> by its number, then who walks it and whether it loops.
+	/// A row-8 route by its number, then who walks it and whether it loops.
 	/// The number leads, so it is the text, with no dimmed <see cref="RecordName.Number"/>.
 	/// </summary>
+	/// <param name="guid">The route's row-8 GUID.</param>
 	public RecordName Route(short guid) {
 		if (MissionText.NumberIn(Layout, RouteRow, guid) is not { } number) {
 			return new RecordName("A route not in the mission");
@@ -282,16 +296,18 @@ internal sealed class MissionNames {
 		return new RecordName($"Route {number} ({walkedBy}{(route.Closed ? ", loop" : "")})");
 	}
 
-	/// <summary>Row-8 GUID <paramref name="guid"/> inside a sentence, by its number.</summary>
+	/// <summary>A row-8 route inside a sentence, by its number.</summary>
+	/// <param name="guid">The route's row-8 GUID.</param>
 	public string RouteInSentence(short guid) =>
 		MissionText.NumberIn(Layout, RouteRow, guid) is { } number ? $"route {number}" : "no route";
 
 	// ---- Triggers and countdowns -------------------------------------------------------------------
 
 	/// <summary>
-	/// Row-10 GUID <paramref name="guid"/> by its number, then what fires it (<see cref="Cause"/>) and what it does. The number
+	/// A row-10 trigger by its number, then what fires it (<see cref="Cause"/>) and what it does. The number
 	/// leads, so it is the text, with no dimmed <see cref="RecordName.Number"/>.
 	/// </summary>
+	/// <param name="guid">The trigger's row-10 GUID.</param>
 	public RecordName Trigger(short guid) {
 		if (MissionText.NumberIn(Layout, ActionRow, guid) is not { } number) {
 			return new RecordName("A trigger not in the mission");
@@ -302,10 +318,11 @@ internal sealed class MissionNames {
 	}
 
 	/// <summary>
-	/// What fires row-10 GUID <paramref name="guid"/>, as a clause: who enters its areas, else the countdowns firing it, else the
+	/// What fires a row-10 trigger, as a clause: who enters its areas, else the countdowns firing it, else the
 	/// objects firing it when engaged, else when defeated (<see cref="AnyOf"/>), else that nothing does. Areas and countdowns by
 	/// their numbers.
 	/// </summary>
+	/// <param name="guid">The trigger's row-10 GUID.</param>
 	public string Cause(short guid) {
 		if (Layout.Entry<MissionAction82>(guid)?.Fields is not { } fields) {
 			return "a trigger not in the mission";
@@ -425,9 +442,10 @@ internal sealed class MissionNames {
 	}
 
 	/// <summary>
-	/// Row-11 GUID <paramref name="guid"/> by its delay and what starts it (<see cref="Cause"/>), numbered by its place in row 11.
+	/// A row-11 countdown by its delay and what starts it (<see cref="Cause"/>), numbered by its place in row 11.
 	/// A start the layout has no trigger for is the mission's start, as the generation resolves it to none.
 	/// </summary>
+	/// <param name="guid">The countdown's row-11 GUID.</param>
 	public RecordName Countdown(short guid) {
 		if (MissionText.NumberIn(Layout, TimerRow, guid) is not { } number || Layout.Entry<ActionTimer30>(guid)?.Fields is not { } fields) {
 			return new RecordName("A countdown not in the mission");
@@ -441,8 +459,9 @@ internal sealed class MissionNames {
 	// ---- Objectives --------------------------------------------------------------------------------
 
 	/// <summary>
-	/// <paramref name="objective"/> as one sentence (<see cref="ObjectiveSentence"/>), numbered by its place in row 17.
+	/// An objective as one sentence (<see cref="ObjectiveSentence"/>), numbered by its place in row 17.
 	/// </summary>
+	/// <param name="objective">The objective.</param>
 	public RecordName Objective(LayoutObjective objective) {
 		int position = 0;
 		while (position < Layout.Objectives.Count && Layout.Objectives[position].Index != objective.Index) {
@@ -452,16 +471,18 @@ internal sealed class MissionNames {
 		return new RecordName(ObjectiveSentence(objective.Fields), $"(objective {MissionText.Number(position)})");
 	}
 
-	/// <summary>Row-17 record <paramref name="record"/> by <see cref="Objective(LayoutObjective)"/>, or a note when the row has none there.</summary>
+	/// <summary>A row-17 record by <see cref="Objective(LayoutObjective)"/>, or a note when the row has none there.</summary>
+	/// <param name="record">The record's index in row 17.</param>
 	public RecordName Objective(int record) =>
 		Layout.Objectives.FirstOrDefault(objective => objective.Index == record) is { } found
 			? Objective(found)
 			: new RecordName("An objective not in the mission");
 
 	/// <summary>
-	/// What <paramref name="fields"/> asks, as one sentence: whether it must or must not happen, then its subject and its
+	/// What an objective asks, as one sentence: whether it must or must not happen, then its subject and its
 	/// condition (docs/retail/simulation/mission-objectives.md#what-each-condition-asks).
 	/// </summary>
+	/// <param name="fields">The objective.</param>
 	public string ObjectiveSentence(MissionObjective58 fields) {
 		string role = fields.Required == ObjectiveEditing.Mandatory ? "Must happen" : "Must not happen";
 		return $"{role}: {ObjectiveClause(fields)}";

@@ -155,7 +155,8 @@ internal sealed class TerrainSculptor {
 		}
 	}
 
-	/// <summary>The mouse wheel turned <paramref name="notches"/> over the view: the radius grows or shrinks a step a notch (<see cref="Grow"/>).</summary>
+	/// <summary>The mouse wheel turned over the view: the radius grows or shrinks a step a notch (<see cref="Grow"/>).</summary>
+	/// <param name="notches">How many notches it turned.</param>
 	public void Wheel(float notches) {
 		_wheel += notches;
 		int steps = (int)MathF.Truncate(_wheel);
@@ -164,9 +165,10 @@ internal sealed class TerrainSculptor {
 	}
 
 	/// <summary>
-	/// Grows the radius <paramref name="steps"/> steps, or shrinks it for fewer than none: <see cref="MinRadius"/> a step below one
+	/// Grows the radius a number of steps, or shrinks it for fewer than none: <see cref="MinRadius"/> a step below one
 	/// cell, a whole cell a step from there, as [ and ] and the mouse wheel change it.
 	/// </summary>
+	/// <param name="steps">The number of steps.</param>
 	public void Grow(int steps) {
 		for (; steps > 0; steps--) {
 			Radius = Math.Min(Radius < 1f ? Radius + MinRadius : Radius + 1f, MaxRadius);
@@ -178,11 +180,13 @@ internal sealed class TerrainSculptor {
 	}
 
 	/// <summary>
-	/// A left press over the view, whose ray meets the ground at <paramref name="ground"/>, or none: starts a stroke, or on a
-	/// mission with no terrain of its own raises the prompt instead. With "Set height" and <paramref name="shift"/> held, it
+	/// A left press over the view: starts a stroke, or on a
+	/// mission with no terrain of its own raises the prompt instead. With "Set height" and Shift held, it
 	/// takes the elevation of the ground there as <see cref="Elevation"/> instead, to the nearest height step, and sculpts
 	/// nothing.
 	/// </summary>
+	/// <param name="ground">Where the view's ray meets the ground, or null for none.</param>
+	/// <param name="shift">Whether Shift is held.</param>
 	public void Press(Vec3i? ground, bool shift) {
 		if (!Active || Stroking || _asking) {
 			return;
@@ -230,10 +234,13 @@ internal sealed class TerrainSculptor {
 	}
 
 	/// <summary>
-	/// The stroke held for <paramref name="seconds"/> with the pointer over the ground at <paramref name="ground"/>, or none:
+	/// The stroke held with the pointer over the ground, or none:
 	/// works the ground under the brush with the tool chosen, raising and lowering the other way while
-	/// <paramref name="swap"/> (Shift) is held.
+	/// Shift is held.
 	/// </summary>
+	/// <param name="ground">The ground under the pointer, or null for none.</param>
+	/// <param name="seconds">How long the stroke has been held.</param>
+	/// <param name="swap">Whether Shift is held.</param>
 	public void Hold(Vec3i? ground, double seconds, bool swap) {
 		if (_stroke is not { } stroke || ground is not { } at || !ReferenceEquals(stroke.Terrain, _world.Terrain)) {
 			return;
@@ -346,10 +353,12 @@ internal sealed class TerrainSculptor {
 	}
 
 	/// <summary>
-	/// The brush's fill, painted on the ground at <paramref name="pointer"/>, the ground under the pointer, while sculpting is
-	/// on: added last to <paramref name="discs"/>, so it lies over the team discs, blended half as far as its strength, or
+	/// The brush's fill, painted on the ground under the pointer while sculpting is
+	/// on: added last to the discs, so it lies over the team discs, blended half as far as its strength, or
 	/// half way for "Set height", which works at the full rate.
 	/// </summary>
+	/// <param name="discs">The discs.</param>
+	/// <param name="pointer">The ground under the pointer, or null for none.</param>
 	public void Paint(GroundDiscs discs, Vec3i? pointer) {
 		if (!Active || pointer is not { } at) {
 			return;
@@ -360,7 +369,11 @@ internal sealed class TerrainSculptor {
 			new Vector4(RingColor, (Tool == SculptTool.SetHeight ? 100 : Strength) / 200f)));
 	}
 
-	/// <summary>The brush's ring, laid on the ground at <paramref name="pointer"/>, the ground under the pointer, while sculpting is on, opaque.</summary>
+	/// <summary>The brush's ring, laid on the ground under the pointer while sculpting is on, opaque.</summary>
+	/// <param name="wireframe">The wireframe renderer.</param>
+	/// <param name="camera">The view's camera.</param>
+	/// <param name="aspect">The view's aspect ratio.</param>
+	/// <param name="pointer">The ground under the pointer, or null for none.</param>
 	public void Draw(WireframeRenderer wireframe, Camera camera, float aspect, Vec3i? pointer) {
 		if (!Active || pointer is not { } at) {
 			return;

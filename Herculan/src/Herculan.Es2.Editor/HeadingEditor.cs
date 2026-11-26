@@ -31,18 +31,25 @@ internal sealed class HeadingEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why row <paramref name="row"/>'s GUID <paramref name="guid"/>'s heading cannot be set, or null when it can.</summary>
+	/// <summary>Why a row's GUID's heading cannot be set, or null when it can.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
 	public string? WhyFixed(int row, short guid) =>
 		_source.Layout.Entry(row, guid) != null ? null
 			: row == GroupRow ? "That group is not in the mission." : EditorToolbox.ObjectGone(row);
 
-	/// <summary>Why row <paramref name="row"/>'s GUID <paramref name="guid"/>'s heading cannot be taken away, or null when it can.</summary>
+	/// <summary>Why a row's GUID's heading cannot be taken away, or null when it can.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
 	public string? WhyNoNone(int row, short guid) => WhyFixed(row, guid) ?? OwnHeadings.WhyNoNone(_source, row, guid);
 
 	/// <summary>
-	/// Asks for row <paramref name="row"/>'s GUID <paramref name="guid"/> to face <paramref name="degrees"/>, or with null to
+	/// Asks for a row's GUID to face a heading, or with null to
 	/// have no heading of its own.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="degrees">The heading in degrees, or null for none of its own.</param>
 	public void Request(int row, short guid, short? degrees) => _requested = () => {
 		if (WhyFixed(row, guid) is { } reason) {
 			return reason;

@@ -19,9 +19,11 @@ internal sealed class RandomTableChances {
 	private float _draft;
 
 	/// <summary>
-	/// A typed percent to one decimal, 0 to 100, showing <paramref name="current"/>; answers the value when the field lets go
-	/// after a change. <paramref name="id"/> is the field's ImGui ID, unique among the chances shown.
+	/// A typed percent to one decimal, 0 to 100; answers the value when the field lets go
+	/// after a change.
 	/// </summary>
+	/// <param name="id">The field's ImGui ID, unique among the chances shown.</param>
+	/// <param name="current">The percent shown.</param>
 	public decimal? Field(string id, decimal current) {
 		if (_draftFor != null && _draftFor != id && !ImGui.IsAnyItemActive()) {
 			_draftFor = null;
@@ -46,9 +48,11 @@ internal sealed class RandomTableChances {
 	}
 
 	/// <summary>
-	/// Where <paramref name="table"/>'s percents round its chances, a note giving them exactly, and when
-	/// <paramref name="editable"/> that a change writes every chance as shown.
+	/// Where a table's percents round its chances, a note giving them exactly, and when
+	/// the table is editable that a change writes every chance as shown.
 	/// </summary>
+	/// <param name="table">The table.</param>
+	/// <param name="editable">Whether the table can be edited.</param>
 	public static void DrawRounding(RandomTable table, bool editable) {
 		if (RandomTableEditing.Exact(table)) {
 			return;
@@ -59,10 +63,13 @@ internal sealed class RandomTableChances {
 	}
 
 	/// <summary>
-	/// The share of <paramref name="table"/>'s rolls no option takes, from the <paramref name="percents"/> shown, when there is
+	/// The share of a table's rolls no option takes, from the percents shown, when there is
 	/// one; for a table of hercs, flyers, structures or ground vehicles with what a load landing there does to the record
-	/// picking, called <paramref name="noun"/>.
+	/// picking.
 	/// </summary>
+	/// <param name="table">The table.</param>
+	/// <param name="percents">The percents shown.</param>
+	/// <param name="noun">What the table's records are called.</param>
 	public static void DrawNoOption(RandomTable table, IReadOnlyList<decimal> percents, string noun) {
 		if (table.Leftover <= 0) {
 			return;

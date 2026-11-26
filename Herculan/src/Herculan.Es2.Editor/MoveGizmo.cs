@@ -103,11 +103,15 @@ internal sealed class MoveGizmo {
 	}
 
 	/// <summary>
-	/// Starts a drag when <paramref name="pointer"/> is on a handle of the selection, and says whether it did.
-	/// <paramref name="detach"/> gives a dragged waypoint, group or area corner a point of its own rather than moving the one
-	/// it stands on. <paramref name="carry"/> takes a structure group's members standing on points of their own along
-	/// (<see cref="GroupTarget.Carry"/>).
+	/// Starts a drag when the pointer is on a handle of the selection, and says whether it did.
 	/// </summary>
+	/// <param name="camera">The view's camera.</param>
+	/// <param name="pointer">The pointer's position.</param>
+	/// <param name="viewport">The viewport's size.</param>
+	/// <param name="detach">Whether a dragged waypoint, group or area corner gets a point of its own rather than moving the one
+	/// it stands on.</param>
+	/// <param name="carry">Whether a structure group's members standing on points of their own are taken along
+	/// (<see cref="GroupTarget.Carry"/>).</param>
 	public bool TryBegin(Camera camera, Vector2 pointer, Vector2 viewport, bool detach, bool carry) {
 		var (target, handle) = HandleUnder(camera, Movables, pointer, viewport);
 		if (target == null || handle == Handle.None) {
@@ -142,7 +146,10 @@ internal sealed class MoveGizmo {
 		return true;
 	}
 
-	/// <summary>Moves the dragged target under <paramref name="pointer"/>, for the eye alone.</summary>
+	/// <summary>Moves the dragged target under the pointer, for the eye alone.</summary>
+	/// <param name="camera">The view's camera.</param>
+	/// <param name="pointer">The pointer's position.</param>
+	/// <param name="viewport">The viewport's size.</param>
 	public void Drag(Camera camera, Vector2 pointer, Vector2 viewport) {
 		if (_target == null) {
 			return;
@@ -289,7 +296,9 @@ internal sealed class MoveGizmo {
 		return camera.ViewportPointToRay(new Vector2(ndcX, ndcY), viewport.X / MathF.Max(viewport.Y, 1f));
 	}
 
-	/// <summary>Where a ray meets the level plane at render height <paramref name="height"/>, or null when it never does.</summary>
+	/// <summary>Where a ray meets the level plane at a render height, or null when it never does.</summary>
+	/// <param name="ray">The ray.</param>
+	/// <param name="height">The render height.</param>
 	private static Vector3? OnPlane((Vector3 Origin, Vector3 Direction) ray, float height) {
 		if (MathF.Abs(ray.Direction.Y) < 1e-5f) {
 			return null;
@@ -300,9 +309,12 @@ internal sealed class MoveGizmo {
 	}
 
 	/// <summary>
-	/// How far along the line through <paramref name="origin"/> in <paramref name="axis"/> the point nearest the ray
+	/// How far along a line the point nearest the ray
 	/// lies, or null when the ray runs along the line and every point is as near.
 	/// </summary>
+	/// <param name="ray">The ray.</param>
+	/// <param name="origin">A point on the line.</param>
+	/// <param name="axis">The line's direction.</param>
 	private static float? Along((Vector3 Origin, Vector3 Direction) ray, Vector3 origin, Vector3 axis) {
 		var offset = origin - ray.Origin;
 		float b = Vector3.Dot(axis, ray.Direction);

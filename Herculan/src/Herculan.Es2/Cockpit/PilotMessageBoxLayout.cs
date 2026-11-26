@@ -65,9 +65,10 @@ public readonly record struct PilotMessageBoxLayout(int Top, int Bottom) {
 
 	/// <summary>
 	/// This herc's box, or null when its <c>.GAU</c> carries no rect for one. Every retail file
-	/// authors it as <c>0,y - 320,y+10</c>; the width is discarded, so only <paramref name="hud"/>'s
+	/// authors it as <c>0,y - 320,y+10</c>; the width is discarded, so only the HUD's
 	/// y pair reaches the screen.
 	/// </summary>
+	/// <param name="hud">The herc's cockpit art, or null for none.</param>
 	public static PilotMessageBoxLayout? From(CockpitArt? hud) {
 		if (hud?.Gau.PilotMessagePort is not { } rect) {
 			return null;
@@ -80,10 +81,12 @@ public readonly record struct PilotMessageBoxLayout(int Top, int Bottom) {
 	}
 
 	/// <summary>
-	/// Device-pixel left edge for a line <paramref name="textWidth"/> wide, on a screen
-	/// <paramref name="screenWidth"/> device pixels across — the paint's
+	/// Device-pixel left edge for a line of a width, on a screen
+	/// of a width — the paint's
 	/// <c>(screen / 2) - (width / 2) - padding</c>.
 	/// </summary>
+	/// <param name="screenWidth">The screen's width in device pixels.</param>
+	/// <param name="textWidth">The line's width in device pixels.</param>
 	public static int Left(int screenWidth, int textWidth) =>
 		(screenWidth >> 1) - (textWidth >> 1) - HorizontalPadding;
 

@@ -82,7 +82,8 @@ public sealed class SimulatorPreferences {
 	/// </summary>
 	public IControlsOverride? ControlsOverride { get; set; }
 
-	/// <summary>Option <paramref name="index"/>'s byte, or 0 when it is outside the array.</summary>
+	/// <summary>An option's byte, or 0 when it is outside the array.</summary>
+	/// <param name="index">The option's index.</param>
 	public byte this[int index] =>
 		ControlsOverride is { } controls && controls.Covers(index) ? controls[index]
 		: index >= 0 && index < _options.Length ? _options[index]
@@ -98,11 +99,13 @@ public sealed class SimulatorPreferences {
 	private readonly Action<byte>?[] _handlers = new Action<byte>?[Prefs.Length];
 
 	/// <summary>
-	/// Installs option <paramref name="index"/>'s handler — <c>Prefs_RegisterOptionHandler</c>
+	/// Installs an option's handler — <c>Prefs_RegisterOptionHandler</c>
 	/// (<c>00459c58</c>), into the table at <c>Prefs_OptionHandlers</c> (<c>004d2060</c>). <c>Prefs_Init</c> fills five slots
 	/// and leaves the rest empty; an option with no handler is read where it is used instead. See
 	/// docs/retail/simulation/preferences.md.
 	/// </summary>
+	/// <param name="index">The option's index.</param>
+	/// <param name="handler">The handler.</param>
 	public void RegisterHandler(int index, Action<byte> handler) {
 		ArgumentNullException.ThrowIfNull(handler);
 		if (index >= 0 && index < _handlers.Length) {
@@ -134,13 +137,16 @@ public sealed class SimulatorPreferences {
 
 	/// <summary>
 	/// Writes one option — <c>Prefs_SetOption</c> (<c>0045993c</c>), which stores the byte and, when
-	/// <paramref name="apply"/> is set, calls the option's handler with it. The handler runs whether
+	/// apply is set, calls the option's handler with it. The handler runs whether
 	/// or not the byte changed, as the original's does. Every caller in the original passes apply,
 	/// both panels included, so a stepped row takes effect while its panel is still up.
 	///
 	/// <para>The shadow copy the original saves the outgoing byte to (<c>DAT_004d2028</c>) is not
 	/// kept: it serves a revert, and neither panel reverts — see <see cref="PreferencesPanel.Close"/>.</para>
 	/// </summary>
+	/// <param name="index">The option's index.</param>
+	/// <param name="value">The byte.</param>
+	/// <param name="apply">Whether the option's handler runs.</param>
 	public void Set(int index, byte value, bool apply = true) {
 		if (index < 0 || index >= _options.Length) {
 			return;
@@ -165,9 +171,10 @@ public sealed class SimulatorPreferences {
 	/// preferences panel changed is applied a second time when the controls panel closes after it.
 	///
 	/// <para>VSHELL's <c>ShellOptions_Commit</c> (<c>0040d7b6</c>) is the same walk, and its preferences
-	/// screen's <c>Accept</c> passes <paramref name="apply"/> clear: the shadow is rebaselined and no
+	/// screen's <c>Accept</c> passes apply clear: the shadow is rebaselined and no
 	/// handler runs.</para>
 	/// </summary>
+	/// <param name="apply">Whether each differing option's handler runs.</param>
 	public void Commit(bool apply = true) {
 		for (int i = 0; i < Prefs.Length && i < _options.Length; i++) {
 			if (_baseline[i] == _options[i]) {
@@ -184,9 +191,10 @@ public sealed class SimulatorPreferences {
 
 	/// <summary>
 	/// VSHELL's <c>ShellOptions_RevertAll</c> (<c>0040d7fe</c>), the reverse of <see cref="Commit"/>: every option that differs from
-	/// the shadow takes the shadow's value back, and with <paramref name="apply"/> set its handler runs.
+	/// the shadow takes the shadow's value back, and with apply set its handler runs.
 	/// The preferences screen's <c>Cancel</c> passes it clear.
 	/// </summary>
+	/// <param name="apply">Whether each reverted option's handler runs.</param>
 	public void Revert(bool apply) {
 		for (int i = 0; i < Prefs.Length && i < _options.Length; i++) {
 			if (_baseline[i] == _options[i]) {
@@ -201,11 +209,14 @@ public sealed class SimulatorPreferences {
 	}
 
 	/// <summary>
-	/// Steps one option to its next value and returns it, wrapping at <paramref name="modulus"/> —
+	/// Steps one option to its next value and returns it, wrapping at a modulus —
 	/// <c>Prefs_StepOption</c> (<c>004599b8</c>) forward and <c>004599f4</c> back. The two are the
 	/// whole of how a panel row cycles, and the caller supplies the modulus, which is why the same
 	/// pair drives a three-value row and a five-value one.
 	/// </summary>
+	/// <param name="index">The option's index.</param>
+	/// <param name="modulus">The number of values the option wraps at.</param>
+	/// <param name="forward">True to step forward, false to step back.</param>
 	public byte Step(int index, int modulus, bool forward = true) {
 		if (modulus <= 0) {
 			return this[index];

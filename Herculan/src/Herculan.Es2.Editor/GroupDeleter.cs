@@ -48,7 +48,8 @@ internal sealed class GroupDeleter {
 	/// <summary>Why the last delete run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>What keeps row-16 GUID <paramref name="group"/> from being deleted; <see cref="GroupDeleteBlockers.None"/> when nothing does.</summary>
+	/// <summary>What keeps a group from being deleted; <see cref="GroupDeleteBlockers.None"/> when nothing does.</summary>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public GroupDeleteBlockers BlockersOf(short group) {
 		if (_index.Group(group) == null || _source.Layout.Entry(16, group) == null) {
 			return GroupDeleteBlockers.Because(EditorToolbox.GroupGone);
@@ -71,7 +72,8 @@ internal sealed class GroupDeleter {
 			check.Kept.Select(member => new ObjectKey(check.Row, member)).ToList());
 	}
 
-	/// <summary>Asks for row-16 GUID <paramref name="group"/> to be deleted once the frame's ImGui is rendered.</summary>
+	/// <summary>Asks for a group to be deleted once the frame's ImGui is rendered.</summary>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public void Request(short group) => _requested = group;
 
 	/// <summary>Makes the delete asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>

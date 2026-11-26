@@ -23,9 +23,14 @@ namespace Herculan.Es2.Host.Simulator;
 /// </summary>
 static class SimulatorStartup {
 	/// <summary>
-	/// Loads the mission from a shell launch, a demo tape or the command line, behind <paramref name="loading"/> once
+	/// Loads the mission from a shell launch, a demo tape or the command line, behind the loading screen once
 	/// the mission is known. Null when there is nothing to run, having said why; the simulator's turn then ends with 1.
 	/// </summary>
+	/// <param name="session">The session.</param>
+	/// <param name="options">The options.</param>
+	/// <param name="shellLaunch">The shell's launch, or null for none.</param>
+	/// <param name="demoTape">Whether a demo tape is played.</param>
+	/// <param name="loading">The loading screen.</param>
 	public static SimulatorStart? Load(HostSession session, Es2Options options, ShellLaunch? shellLaunch, bool demoTape,
 			LoadingScreen loading) {
 		string installRoot = session.InstallRoot;

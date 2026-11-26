@@ -63,7 +63,8 @@ internal sealed class ObjectDeleter {
 		_sync = sync;
 	}
 
-	/// <summary>What keeps <paramref name="placed"/> from being deleted; <see cref="DeleteBlockers.None"/> when nothing does.</summary>
+	/// <summary>What keeps an object from being deleted; <see cref="DeleteBlockers.None"/> when nothing does.</summary>
+	/// <param name="placed">The object.</param>
 	public DeleteBlockers BlockersOf(SceneObject placed) {
 		if (_index.Planned(placed) is not { } planned) {
 			return DeleteBlockers.Because("not found.");
@@ -84,7 +85,8 @@ internal sealed class ObjectDeleter {
 		return new DeleteBlockers(null, Resolve(source, check.Namers), own, groups);
 	}
 
-	/// <summary>Asks for <paramref name="placed"/> to be deleted once the frame's ImGui is rendered.</summary>
+	/// <summary>Asks for an object to be deleted once the frame's ImGui is rendered.</summary>
+	/// <param name="placed">The object.</param>
 	public void Request(SceneObject placed) => _requested = placed;
 
 	/// <summary>The object a delete was asked for since the last call, or null.</summary>
@@ -95,9 +97,10 @@ internal sealed class ObjectDeleter {
 	}
 
 	/// <summary>
-	/// Deletes <paramref name="placed"/>, its group too when it is the last member. Answers why it could not, or null
+	/// Deletes an object, its group too when it is the last member. Answers why it could not, or null
 	/// when it did.
 	/// </summary>
+	/// <param name="placed">The object.</param>
 	public string? Delete(SceneObject placed) {
 		var blockers = BlockersOf(placed);
 		if (!blockers.None) {
@@ -118,10 +121,12 @@ internal sealed class ObjectDeleter {
 	}
 
 	/// <summary>
-	/// The records <paramref name="namers"/> lists, by identity in the layout: an objective by its row-17 index, a trigger by
+	/// The records some namers list, by identity in the layout: an objective by its row-17 index, a trigger by
 	/// its GUID, and an order through each group slot running it, as the group's base names it. A record of GUID <c>-1</c> is
 	/// a template of a random table's option, and an order no slot runs is counted apart.
 	/// </summary>
+	/// <param name="source">The mission.</param>
+	/// <param name="namers">The namers to resolve.</param>
 	public DeleteNamers Resolve(MissionDocument source, MsnNamers namers) {
 		int options = 0;
 		List<short> Guids(IEnumerable<MsnRecordId> records) {

@@ -27,11 +27,14 @@ internal sealed class RadarSettingEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why herc GUID <paramref name="guid"/>'s radar setting cannot be set, or null when it can.</summary>
+	/// <summary>Why a herc's radar setting cannot be set, or null when it can.</summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
 	public string? WhyFixed(short guid) =>
 		_source.Layout.Entry(12, guid) == null ? EditorToolbox.ObjectGone(12) : RadarSettings.WhyFixed(_source, guid);
 
-	/// <summary>Asks for herc GUID <paramref name="guid"/>'s radar to be on or off.</summary>
+	/// <summary>Asks for a herc's radar to be on or off.</summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
+	/// <param name="on">Whether the radar is on.</param>
 	public void Request(short guid, bool on) => _requested = () => {
 		if (WhyFixed(guid) is { } reason) {
 			return reason;

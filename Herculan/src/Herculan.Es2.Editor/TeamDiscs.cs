@@ -16,7 +16,9 @@ internal static class TeamDiscs {
 	private static readonly Vector4 CybridColor = new(1f, 0.1f, 0.1f, 0.5f);
 	private static readonly Vector4 HumanColor = new(0.15f, 0.35f, 1f, 0.5f);
 
-	/// <summary>Fills <paramref name="discs"/> with one disc under each unit of <paramref name="shown"/>.</summary>
+	/// <summary>Fills a set of discs with one disc under each unit shown.</summary>
+	/// <param name="discs">The discs.</param>
+	/// <param name="shown">The units shown.</param>
 	public static void Fill(GroundDiscs discs, IEnumerable<SceneObject> shown) {
 		discs.Items.Clear();
 		foreach (var sceneObject in shown) {

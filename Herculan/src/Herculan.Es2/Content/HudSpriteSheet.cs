@@ -66,10 +66,12 @@ public sealed class HudSpriteSheet {
 	public IEnumerable<string> BankNames => _banks.Keys;
 
 	/// <summary>
-	/// Sprite <paramref name="frame"/> of <paramref name="bank"/>, or null when that bank never
+	/// A sprite of a bank, or null when that bank never
 	/// loaded or the frame index is out of its range. Callers draw nothing on null rather than
 	/// falling back to another frame — a missing sprite should look missing, not wrong.
 	/// </summary>
+	/// <param name="bank">The bank's name.</param>
+	/// <param name="frame">The frame's index.</param>
 	public HudSprite? Sprite(string bank, int frame) {
 		if (!_banks.TryGetValue(bank, out var entry)
 			|| frame < 0 || frame >= entry.FrameSizes.Length
@@ -82,10 +84,11 @@ public sealed class HudSpriteSheet {
 	}
 
 	/// <summary>
-	/// How many frames <paramref name="bank"/> holds, or zero when it never loaded. The heading tape
+	/// How many frames a bank holds, or zero when it never loaded. The heading tape
 	/// needs this: its scroll maps a whole turn onto the whole bank, so the bank's own length is the
 	/// scale — the original reads it out of the loaded resource the same way.
 	/// </summary>
+	/// <param name="bank">The bank's name.</param>
 	public int FrameCount(string bank) =>
 		_banks.TryGetValue(bank, out var entry) ? entry.FrameSizes.Length : 0;
 

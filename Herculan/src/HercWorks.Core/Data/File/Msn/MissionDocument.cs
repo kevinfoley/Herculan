@@ -656,10 +656,13 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Rewrites, through <paramref name="write"/>, every record of row <paramref name="row"/>'s GUID <paramref name="guid"/>,
-	/// whatever its condition: for a word the generation neither exports nor merges, such as a pair count, which each record
-	/// keeps for its own pairs.
+	/// Rewrites, through a delegate, every record of a row's GUID, whatever its condition: for a word the generation
+	/// neither exports nor merges, such as a pair count, which each record keeps for its own pairs.
 	/// </summary>
+	/// <typeparam name="T">The record type of the row.</typeparam>
+	/// <param name="row">The GUID-keyed row.</param>
+	/// <param name="guid">The GUID whose records are rewritten.</param>
+	/// <param name="write">Writes the change into one record.</param>
 	public MsnEdit RewriteEvery<T>(int row, short guid, Action<T> write) where T : MapObject {
 		var before = Begin(row);
 		foreach (var record in Records(row).Where(record => record.GUID == guid).Cast<T>()) {
@@ -724,9 +727,13 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Rewrites, through <paramref name="write"/>, record <paramref name="index"/> of GUID-keyed row <paramref name="row"/>
-	/// alone: a template, or the one record of a GUID that carries its random table key.
+	/// Rewrites, through a delegate, one record of a GUID-keyed row alone: a template, or the one record of a GUID that
+	/// carries its random table key.
 	/// </summary>
+	/// <typeparam name="T">The record type of the row.</typeparam>
+	/// <param name="row">The GUID-keyed row.</param>
+	/// <param name="index">The record's index in the row.</param>
+	/// <param name="write">Writes the change into the record.</param>
 	public MsnEdit RewriteAt<T>(int row, int index, Action<T> write) where T : MapObject {
 		var records = MsnRows.Get(Mission, row);
 		if (index < 0 || index >= records.Length || records.GetValue(index) is not T record) {
@@ -760,12 +767,16 @@ public sealed class MissionDocument {
 	// ---- Rows 4 and 17, and the text --------------------------------------------------------------
 
 	/// <summary>
-	/// Rewrites record <paramref name="index"/> of row <paramref name="row"/>, 1, 4 or 17, through <paramref name="write"/>.
+	/// Rewrites one record of row 1, 4 or 17, through a delegate.
 	/// Rows 4 and 17 have no GUID, nothing names one of their records and neither repeats or overlays, so the record is the
 	/// one that supplies everything it exports, whatever its condition (docs/retail/formats/msn-mission-file.md#row-17-field-decode--the-objective-record-dat_0047064a-58-bytesrecord).
 	/// A row-1 record is read on its own, a repeated GUID merging nothing (docs/retail/formats/msn-mission-file.md#the-conditions--row-1),
 	/// so it too is the record that decides what it tests.
 	/// </summary>
+	/// <typeparam name="T">The record type of the row.</typeparam>
+	/// <param name="row">The row: 1, 4 or 17.</param>
+	/// <param name="index">The record's index in the row.</param>
+	/// <param name="write">Writes the change into the record.</param>
 	public MsnEdit Rewrite<T>(int row, int index, Action<T> write) where T : class {
 		if (row != 1) {
 			CheckUnkeyed(row);

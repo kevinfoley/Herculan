@@ -59,7 +59,8 @@ internal sealed class RouteEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why row-8 GUID <paramref name="route"/>'s waypoints cannot be edited, or null when they can.</summary>
+	/// <summary>Why a row-8 route's waypoints cannot be edited, or null when they can.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public string? WhyFixed(short route) {
 		if (!InMission(route)) {
 			return Gone;
@@ -70,21 +71,29 @@ internal sealed class RouteEditor {
 			: null;
 	}
 
-	/// <summary>Whether <paramref name="route"/>'s list is a template's, shared by every route that can pick it.</summary>
+	/// <summary>Whether a route's list is a template's, shared by every route that can pick it.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public bool Shared(short route) => WhyFixed(route) == null && _source.WaypointsShared(route);
 
-	/// <summary>Why no waypoint can be inserted after waypoint <paramref name="waypoint"/> of <paramref name="route"/>, or null.</summary>
+	/// <summary>Why no waypoint can be inserted after a waypoint of a route, or null.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
+	/// <param name="waypoint">The waypoint's index.</param>
 	public string? WhyNoInsert(short route, int waypoint) =>
 		WhyFixed(route) ?? RouteEditing.WhyNoInsert(_source, route, Entry(route, waypoint));
 
-	/// <summary>Why waypoint <paramref name="waypoint"/> of <paramref name="route"/> cannot be removed, or null.</summary>
+	/// <summary>Why a waypoint of a route cannot be removed, or null.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
+	/// <param name="waypoint">The waypoint's index.</param>
 	public string? WhyNoRemove(short route, int waypoint) =>
 		WhyFixed(route) ?? RouteEditing.WhyNoRemove(_source, route, Entry(route, waypoint));
 
-	/// <summary>Why <paramref name="route"/> cannot be closed (<paramref name="closed"/>) or opened, or null.</summary>
+	/// <summary>Why a route cannot be closed or opened, or null.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
+	/// <param name="closed">True to close it, false to open it.</param>
 	public string? WhyNoClose(short route, bool closed) => WhyFixed(route) ?? RouteEditing.WhyNoClose(_source, route, closed);
 
-	/// <summary>What keeps <paramref name="route"/> from being deleted; <see cref="RouteDeleteBlockers.None"/> when nothing does.</summary>
+	/// <summary>What keeps a route from being deleted; <see cref="RouteDeleteBlockers.None"/> when nothing does.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public RouteDeleteBlockers BlockersOf(short route) {
 		var source = _source;
 		if (!InMission(route)) {
@@ -97,25 +106,32 @@ internal sealed class RouteEditor {
 		return new RouteDeleteBlockers(null, names, groups);
 	}
 
-	/// <summary>Asks for a waypoint halfway along the leg after waypoint <paramref name="waypoint"/> of <paramref name="route"/>.</summary>
+	/// <summary>Asks for a waypoint halfway along the leg after a waypoint of a route.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
+	/// <param name="waypoint">The waypoint's index.</param>
 	public void RequestInsert(short route, int waypoint) {
 		int entry = Entry(route, waypoint);
 		_requested = () => WhyNoInsert(route, waypoint)
 			?? Commit(() => RouteEditing.InsertAfter(_source, route, entry), route, waypoint + 1);
 	}
 
-	/// <summary>Asks for waypoint <paramref name="waypoint"/> of <paramref name="route"/> to be removed.</summary>
+	/// <summary>Asks for a waypoint of a route to be removed.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
+	/// <param name="waypoint">The waypoint's index.</param>
 	public void RequestRemove(short route, int waypoint) {
 		int entry = Entry(route, waypoint);
 		_requested = () => WhyNoRemove(route, waypoint)
 			?? Commit(() => RouteEditing.RemoveAt(_source, route, entry), route, -1);
 	}
 
-	/// <summary>Asks for <paramref name="route"/> to be closed into a loop, or opened.</summary>
+	/// <summary>Asks for a route to be closed into a loop, or opened.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
+	/// <param name="closed">True to close it, false to open it.</param>
 	public void RequestClosed(short route, bool closed) =>
 		_requested = () => WhyNoClose(route, closed) ?? Commit(() => RouteEditing.SetClosed(_source, route, closed), route, -1);
 
-	/// <summary>Asks for <paramref name="route"/> to be deleted.</summary>
+	/// <summary>Asks for a route to be deleted.</summary>
+	/// <param name="route">The route's row-8 GUID.</param>
 	public void RequestDelete(short route) {
 		_requested = () => {
 			var blockers = BlockersOf(route);
@@ -136,9 +152,11 @@ internal sealed class RouteEditor {
 	}
 
 	/// <summary>
-	/// Adds a route through <paramref name="waypoints"/>, closed when <paramref name="closed"/>, and selects it; with fewer
+	/// Adds a route through some waypoints, closed when asked, and selects it; with fewer
 	/// than <see cref="RouteEditing.MinWaypoints"/> waypoints, adds nothing. Answers why it could not, or null.
 	/// </summary>
+	/// <param name="waypoints">The waypoints.</param>
+	/// <param name="closed">Whether the route is closed.</param>
 	public string? Create(IReadOnlyList<Vec3i> waypoints, bool closed) {
 		if (waypoints.Count < RouteEditing.MinWaypoints) {
 			return null;
@@ -151,10 +169,13 @@ internal sealed class RouteEditor {
 	}
 
 	/// <summary>
-	/// Adds <paramref name="waypoints"/> after the last waypoint of row-8 GUID <paramref name="route"/>, closing an open
-	/// route after them when <paramref name="close"/>, and selects it. Answers why it could not, or null; nothing to add is
+	/// Adds some waypoints after the last waypoint of a row-8 route, closing an open
+	/// route after them when asked, and selects it. Answers why it could not, or null; nothing to add is
 	/// not a failure.
 	/// </summary>
+	/// <param name="route">The route's row-8 GUID.</param>
+	/// <param name="waypoints">The waypoints.</param>
+	/// <param name="close">Whether to close an open route after them.</param>
 	public string? Extend(short route, IReadOnlyList<Vec3i> waypoints, bool close) {
 		var source = _source;
 		if (!InMission(route)) {

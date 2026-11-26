@@ -35,10 +35,13 @@ internal sealed class PlayInGame {
 	public bool Running => _game != null;
 
 	/// <summary>
-	/// Starts the game on <paramref name="mission"/> in <paramref name="installRoot"/>, on the mission's own theater and time of
+	/// Starts the game on a mission in an install, on the mission's own theater and time of
 	/// day as the editor shows it (<c>--own-world</c>), in developer mode (<c>--developer</c>); whether it started, and why not
-	/// in <paramref name="failure"/>.
+	/// in the failure.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="mission">The mission's name.</param>
+	/// <param name="failure">Receives why it did not start, or null.</param>
 	public bool Start(string installRoot, string mission, out string? failure) {
 		failure = null;
 		if (GamePath is not { } path) {

@@ -631,11 +631,16 @@ public sealed class CockpitArt {
 	}
 
 	/// <summary>
-	/// Reads and decodes one <c>.HBx</c> file's single frame through <paramref name="palette"/>.
+	/// Reads and decodes one <c>.HBx</c> file's single frame through a palette.
 	/// Mirrors <c>TextureAtlas.DecodeFrame</c>'s indexed-colour expansion exactly (including no
 	/// special-casing of index 0 here — the viewport cutout is a separate, deliberate pass, not a
 	/// side effect of decoding).
 	/// </summary>
+	/// <param name="content">The game content.</param>
+	/// <param name="folder">The folder holding the file.</param>
+	/// <param name="name">The file's name.</param>
+	/// <param name="palette">The palette.</param>
+	/// <param name="impactPalette">The impact palette, or null for none.</param>
 	private static CockpitFrame? LoadFrame(GameContent content, string folder, string name,
 			DynamixPalette palette, DynamixPalette? impactPalette) {
 		byte[]? bytes = content.Read(folder, name);
@@ -709,7 +714,7 @@ public sealed class CockpitArt {
 	}
 
 	/// <summary>
-	/// Punches the view's 3D-viewport hole into <paramref name="frame"/>'s alpha channel using the
+	/// Punches the view's 3D-viewport hole into a frame's alpha channel using the
 	/// herc's own <c>.HD&lt;view&gt;</c> region file — the same data DBSIM's rasterizer is span-clipped
 	/// to. Returns true when that file supplied the mask, false when it was missing and
 	/// <see cref="CutViewportHoleByColor"/> had to infer one instead.
@@ -719,6 +724,10 @@ public sealed class CockpitArt {
 	/// forward and side views this class loads both have real spans, so a zero-span result here would
 	/// mean something else is wrong — but silently substituting a guessed mask would hide it.</para>
 	/// </summary>
+	/// <param name="content">The game content.</param>
+	/// <param name="hercName">The herc's name.</param>
+	/// <param name="viewIndex">The view's index.</param>
+	/// <param name="frame">The frame.</param>
 	private static bool CutViewportHole(GameContent content, string hercName, int viewIndex, CockpitFrame frame) {
 		if (CockpitClipRegions.Load(content, hercName, viewIndex) is not { } regions) {
 			CutViewportHoleByColor(frame);
@@ -729,7 +738,9 @@ public sealed class CockpitArt {
 		return true;
 	}
 
-	/// <summary>Sets every pixel <paramref name="regions"/> lists to alpha 0 — the viewport hole.</summary>
+	/// <summary>Sets every pixel some regions list to alpha 0 — the viewport hole.</summary>
+	/// <param name="regions">The regions.</param>
+	/// <param name="frame">The frame.</param>
 	private static void PunchSpans(CockpitClipRegions regions, CockpitFrame frame) {
 		byte[] pixels = frame.Pixels;
 		int rows = Math.Min(regions.RowCount, frame.Height);

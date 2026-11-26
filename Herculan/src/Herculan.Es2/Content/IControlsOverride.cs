@@ -6,13 +6,16 @@ namespace Herculan.Es2.Content;
 /// Earthsiege 2, a Custom profile's fixed rows.
 /// </summary>
 public interface IControlsOverride {
-	/// <summary>Whether option <paramref name="index"/>, by its <c>prefs.cfg</c> offset, is one of these.</summary>
+	/// <summary>Whether an option, by its <c>prefs.cfg</c> offset, is one of these.</summary>
+	/// <param name="index">The option's <c>prefs.cfg</c> offset.</param>
 	bool Covers(int index);
 
-	/// <summary>Option <paramref name="index"/>'s byte, for an index <see cref="Covers"/> takes.</summary>
+	/// <summary>An option's byte, for an index <see cref="Covers"/> takes.</summary>
+	/// <param name="index">The option's <c>prefs.cfg</c> offset.</param>
 	byte this[int index] { get; set; }
 
-	/// <summary>What the CONTROLS panel's RECOMMEND puts in option <paramref name="index"/>.</summary>
+	/// <summary>What the CONTROLS panel's RECOMMEND puts in an option.</summary>
+	/// <param name="index">The option's <c>prefs.cfg</c> offset.</param>
 	byte Recommended(int index);
 
 	/// <summary>Whether the CONTROLS panel's axis rows are fixed rather than the player's to step.</summary>

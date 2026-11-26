@@ -22,14 +22,18 @@ internal sealed class LineField {
 	private string? _key;
 	private string _draft = string.Empty;
 
-	/// <summary>Whether every character of <paramref name="text"/> is one the game's fonts draw.</summary>
+	/// <summary>Whether every character of a text is one the game's fonts draw.</summary>
+	/// <param name="text">The text.</param>
 	public static bool Drawn(string text) => text.All(c => c is >= FirstDrawn and <= LastDrawn);
 
 	/// <summary>
-	/// Draws a field, the width of the panel, showing <paramref name="text"/>, or what is being typed into it. Answers the text
+	/// Draws a field, the width of the panel, showing a text, or what is being typed into it. Answers the text
 	/// to apply once the field lets go after an edit that changed it, with the characters no font draws left out; null
-	/// otherwise. <paramref name="key"/> names what the field edits, and <paramref name="id"/> is its ImGui id.
+	/// otherwise.
 	/// </summary>
+	/// <param name="id">The field's ImGui id.</param>
+	/// <param name="key">What the field edits.</param>
+	/// <param name="text">The text shown.</param>
 	public string? Draw(string id, string key, string text) {
 		string shown = _key == key ? _draft : text;
 		bool wrong = !Drawn(shown);

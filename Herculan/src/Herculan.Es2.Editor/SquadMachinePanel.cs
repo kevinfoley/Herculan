@@ -75,7 +75,8 @@ internal sealed class SquadMachinePanel {
 		Failures();
 	}
 
-	/// <summary>The view of a squadmate's own object, the herc of row-12 GUID <paramref name="guid"/>.</summary>
+	/// <summary>The view of a squadmate's own object, a row-12 herc.</summary>
+	/// <param name="guid">The herc's row-12 GUID.</param>
 	public void DrawSquadmateObject(short guid) {
 		ImGui.Separator();
 		var squadmates = _editor.Squadmates;

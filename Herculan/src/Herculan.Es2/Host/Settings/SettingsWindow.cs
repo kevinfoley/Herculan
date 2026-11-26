@@ -240,9 +240,10 @@ sealed class SettingsWindow : SettingsWindowBase, IDisposable {
 	}
 
 	/// <summary>
-	/// Raises the folder prompt of <paramref name="kind"/> over the window, starting from the folder or image the
+	/// Raises a folder prompt over the window, starting from the folder or image the
 	/// install names now. The window's Change buttons raise it; a test lays it out without one.
 	/// </summary>
+	/// <param name="kind">The prompt's kind.</param>
 	internal void OpenPrompt(PromptKind kind) {
 		string installRoot = _session.InstallRoot;
 		switch (kind) {

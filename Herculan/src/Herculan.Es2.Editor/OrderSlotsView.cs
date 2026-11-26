@@ -41,7 +41,8 @@ internal sealed class OrderSlotsView {
 
 	private MissionNames Names => _links.Names;
 
-	/// <summary>The orders of row-16 GUID <paramref name="guid"/>.</summary>
+	/// <summary>The orders of a row-16 group.</summary>
+	/// <param name="guid">The group's row-16 GUID.</param>
 	public void Draw(short guid) {
 		ImGui.Separator();
 		ImGui.TextUnformatted("Orders:");

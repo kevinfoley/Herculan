@@ -95,7 +95,12 @@ sealed class WorldPassRenderer : IDisposable {
 	public IEnumerable<SceneItem> VisibleItems() =>
 		(LeavePlayerOut ? _world.Piloted : _world.All).Concat(_transient.Items);
 
-	/// <summary>The world into one viewport, from <paramref name="view"/>.</summary>
+	/// <summary>The world into one viewport, from a view.</summary>
+	/// <param name="view">The view's camera.</param>
+	/// <param name="x">The viewport's X.</param>
+	/// <param name="y">The viewport's Y.</param>
+	/// <param name="width">The viewport's width.</param>
+	/// <param name="height">The viewport's height.</param>
 	public void Draw(Camera view, int x, int y, int width, int height) {
 		DrawWorld(view, VisibleItems(), _world.GroundLayer, x, y, width, height);
 		DrawSkeleton(view, width, height);

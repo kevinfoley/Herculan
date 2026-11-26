@@ -26,9 +26,11 @@ internal sealed class DropPreview {
 	}
 
 	/// <summary>
-	/// Draws what <paramref name="drag"/> would add on <paramref name="ground"/>, or nothing when either is null: no drag,
+	/// Draws what a drag would add on the ground, or nothing when either is null: no drag,
 	/// or the pointer over a panel or the sky.
 	/// </summary>
+	/// <param name="drag">The drag, or null for none.</param>
+	/// <param name="ground">The ground under the pointer, or null for none.</param>
 	public void Update(ToolboxDrag? drag, Vec3i? ground) {
 		if (drag != _for) {
 			Hide();

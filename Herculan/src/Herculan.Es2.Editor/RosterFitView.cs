@@ -34,10 +34,12 @@ internal sealed class RosterFitView {
 	}
 
 	/// <summary>
-	/// Draws the type, and a herc's fit, of <paramref name="placed"/>, an object outside the squad: given
-	/// <paramref name="option"/>, the template of the option being edited of the table it picks from, as a load picking that
+	/// Draws the type, and a herc's fit, of an object outside the squad: given
+	/// an option, the template of the option being edited of the table it picks from, as a load picking that
 	/// option makes it, each edit of a field a template supplies written there; else as the layout shows it.
 	/// </summary>
+	/// <param name="placed">The object.</param>
+	/// <param name="option">The option being edited, or null.</param>
 	public void Draw(SceneObject placed, MsnRecordId? option) {
 		if (_tableEditor.RecordOf(placed) is not var (row, guid)) {
 			return;

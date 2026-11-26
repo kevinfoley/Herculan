@@ -16,10 +16,12 @@ static class InstallWindow {
 
 	/// <summary>
 	/// Shows the panel until the player installs and chooses to use the install, or gives up. Returns the install
-	/// root, or null when the window was dismissed or closed. <paramref name="fontPath"/> is the ImGui font. The window
+	/// root, or null when the window was dismissed or closed. The window
 	/// opens at <see cref="WindowWidth"/> by <see cref="WindowHeight"/> grown with the font
 	/// (<see cref="ScaledImGui.ScaledWindowSize"/>).
 	/// </summary>
+	/// <param name="localization">The localization table.</param>
+	/// <param name="fontPath">The ImGui font.</param>
 	public static string? Run(LocalizationTable localization, string fontPath) {
 		using var panel = new InstallPanel(localization, new Es2DiscInstaller(localization));
 		string? installed = null;

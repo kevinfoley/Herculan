@@ -453,7 +453,11 @@ public sealed class Es1MissionLoad {
 		return -1;
 	}
 
-	/// <summary>The first record of <paramref name="row"/>, read so far, whose condition is the picked option's range, its template, or -1.</summary>
+	/// <summary>The first record of a row, read so far, whose condition is the picked option's range, its template, or -1.</summary>
+	/// <typeparam name="T">The record type.</typeparam>
+	/// <param name="row">The records read so far.</param>
+	/// <param name="conditionOf">Reads a record's condition.</param>
+	/// <param name="key">The picked option.</param>
 	private int TemplateOf<T>(List<T> row, Func<T, short> conditionOf, short key) {
 		int picked = PickOption(key);
 		if (picked < 0) {
@@ -490,10 +494,14 @@ public sealed class Es1MissionLoad {
 	// ---- Rows 3 to 11 --------------------------------------------------------------------------------------------------
 
 	/// <summary>
-	/// A GUID's index among <paramref name="row"/>'s records with a GUID, the index <c>data\script.dat</c> gives it, or -1
+	/// A GUID's index among a row's records with a GUID, the index <c>data\script.dat</c> gives it, or -1
 	/// for <c>-1</c> or none. It is how every ref resolves, and the slot a repeated GUID lands on in the six rows that
 	/// find it this way (docs/es1/formats/msn-mission-file.md#filtering-random-tables-and-repeats).
 	/// </summary>
+	/// <typeparam name="T">The record type.</typeparam>
+	/// <param name="row">The row's records.</param>
+	/// <param name="guidOf">Reads a record's GUID.</param>
+	/// <param name="guid">The GUID to find.</param>
 	private static short Exported<T>(IReadOnlyList<T> row, Func<T, short> guidOf, short guid) {
 		if (guid == -1) {
 			return -1;

@@ -50,7 +50,8 @@ public readonly record struct TrainingMessageLayout(int Top) {
 		return new TrainingMessageLayout((rect.Origin.Y - rect.TrainingLift) * MessageTickerLayout.CoordScale);
 	}
 
-	/// <summary>Box height for <paramref name="lineCount"/> lines — one line's worth more than the text.</summary>
+	/// <summary>Box height for a number of lines — one line's worth more than the text.</summary>
+	/// <param name="lineCount">The number of lines.</param>
 	public static int Height(int lineCount) => (lineCount + 1) * LineHeight;
 
 	/// <inheritdoc cref="PilotMessageBoxLayout.Left"/>
@@ -66,10 +67,12 @@ public readonly record struct TrainingMessageLayout(int Top) {
 	public static int TextLeft(int screenWidth, int textWidth) => Left(screenWidth, textWidth) + HorizontalPadding;
 
 	/// <summary>
-	/// Device-pixel top of line <paramref name="line"/>'s glyphs. The paint anchors the first line
+	/// Device-pixel top of a line's glyphs. The paint anchors the first line
 	/// at <c>top + lineHeight / 2 + lineHeight</c> and steps one line height; the glyph blitter
 	/// subtracts <see cref="HudFont.InkHeight"/> from the anchor, as it does for the ticker.
 	/// </summary>
+	/// <param name="line">The line's index.</param>
+	/// <param name="font">The font.</param>
 	public int LineTop(int line, HudFont font) =>
 		Top + (LineHeight >> 1) + LineHeight + line * LineHeight - font.InkHeight;
 

@@ -50,13 +50,15 @@ public static class PausePanelLayout {
 	public static readonly int[] PairButtonY = { 16, 42 };
 
 	/// <summary>
-	/// The rect of button <paramref name="index"/> of <paramref name="buttonCount"/>.
+	/// The rect of a button.
 	///
 	/// <para><b>The three button y-origins are scaled by the horizontal shift</b>, not the vertical
 	/// one — the constructor's own slip, and the only place in the family where an axis is crossed.
 	/// It costs nothing: DBSIM's two coordinate shifts are equal in both video modes it supports, so
 	/// the numbers come out the same either way.</para>
 	/// </summary>
+	/// <param name="index">The button's index.</param>
+	/// <param name="buttonCount">The number of buttons.</param>
 	public static AlertPanelLayout.Rect Button(int index, int buttonCount) {
 		int y0 = buttonCount <= 1 ? SingleButtonY : PairButtonY[Math.Clamp(index, 0, 1)];
 		return new AlertPanelLayout.Rect(ButtonX, y0, ButtonX + ButtonWidth, y0 + ButtonHeight);

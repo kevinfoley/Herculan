@@ -30,9 +30,12 @@ internal sealed class PointSharers {
 	private MissionNames Names => _links.Names;
 
 	/// <summary>
-	/// Draws <paramref name="sharers"/> under <paramref name="heading"/>, each once by its identity, then, given
-	/// <paramref name="aloneNote"/>, that Alt+drag moves the dragged thing alone; nothing when there are none.
+	/// Draws some sharers under a heading, each once by its identity, then, when asked, that Alt+drag moves the
+	/// dragged thing alone; nothing when there are none.
 	/// </summary>
+	/// <param name="sharers">The fields sharing the point.</param>
+	/// <param name="heading">The heading.</param>
+	/// <param name="aloneNote">Whether to say that Alt+drag moves the dragged thing alone.</param>
 	public void Draw(IReadOnlyList<PointRef> sharers, string heading = "Also on this spot, moving with it:", bool aloneNote = true) {
 		if (sharers.Count == 0) {
 			return;

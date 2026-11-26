@@ -29,11 +29,14 @@ internal sealed class StartingConditionEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why the roster record <paramref name="key"/>'s starting condition cannot be set, or null when it can.</summary>
+	/// <summary>Why a roster record's starting condition cannot be set, or null when it can.</summary>
+	/// <param name="key">The roster record.</param>
 	public string? WhyFixed(ObjectKey key) =>
 		_source.Layout.Entry(key.Row, key.Guid) == null ? EditorToolbox.ObjectGone(key.Row) : StartingConditions.WhyFixed(_source, key.Row, key.Guid);
 
-	/// <summary>Asks for the roster record <paramref name="key"/>'s starting condition to be <paramref name="value"/> per cent.</summary>
+	/// <summary>Asks for a roster record's starting condition to change.</summary>
+	/// <param name="key">The roster record.</param>
+	/// <param name="value">The starting condition in per cent.</param>
 	public void Request(ObjectKey key, short value) => _requested = () => {
 		if (WhyFixed(key) is { } reason) {
 			return reason;
