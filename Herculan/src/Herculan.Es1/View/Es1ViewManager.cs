@@ -299,16 +299,16 @@ public sealed class Es1ViewManager {
 	private static bool WideCanvas => TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HighResolutionWidescreen);
 
 	/// <summary>
-	/// <b>This engine's own</b>, the "Fix cockpit edge flicker" tweak (<see cref="Settings.Es1TweakSettingDefinitions.FixCockpitEdgeFlicker"/>,
-	/// plan decision 35): command 3's copy in <see cref="StepViewTransition"/> stops at column 319. Retail's reaches column
+	/// <b>This engine's own</b>, the "Fix cockpit edge flicker" tweak (<see cref="Settings.Es1TweakSettingDefinitions.FixCockpitEdgeFlicker"/>):
+	/// command 3's copy in <see cref="StepViewTransition"/> stops at column 319. Retail's reaches column
 	/// 320, which in the 640-pixel row lies on the drawn page's column 0, and the copy's last pass moves that column a row (docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904), so the two
 	/// pages show it a row apart until the canopy is blitted again. Off, retail's copy.
 	/// </summary>
 	public static bool KeepCockpitEdge => TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixCockpitEdgeFlicker);
 
 	/// <summary>
-	/// <b>This engine's own</b>, the "Fix cursor after side view" tweak (<see cref="Settings.Es1TweakSettingDefinitions.FixGlanceCursor"/>,
-	/// plan decision 48): command 6, the return from a glance, ends in <see cref="Es1CockpitCursors.UseForwardCursor"/>
+	/// <b>This engine's own</b>, the "Fix cursor after side view" tweak (<see cref="Settings.Es1TweakSettingDefinitions.FixGlanceCursor"/>):
+	/// command 6, the return from a glance, ends in <see cref="Es1CockpitCursors.UseForwardCursor"/>
 	/// as the pan up does. Retail's ends in <c>Cockpit_UseOffForwardCursor</c>, as the slides away from the forward view
 	/// do, so the forward view keeps the glances' cursor until the next pan up
 	/// (docs/es1/simulation/cockpit-views.md#the-cursor-after-a-glance). Off, retail's call.

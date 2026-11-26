@@ -37,7 +37,7 @@ public static class Es1Shutdown {
 		}
 
 		// With TapeFile set, DmpFile and then the tape closed: the tape is read whole when it opens (Es1TapePlayback) and
-		// holds no file open, and -d, which opens DmpFile, is not taken (plan decision 21).
+		// holds no file open, and -d, which opens DmpFile, is not taken (ROADMAP.md, the tape checkpoint file).
 		// GndTex_Free: nothing to do here; the ground texture is a GL object disposed with the window.
 
 		var sound = simulation.Globals.Sound;

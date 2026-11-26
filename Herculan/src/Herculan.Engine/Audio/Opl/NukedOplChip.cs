@@ -3,7 +3,7 @@ using Herculan.Opl3;
 namespace Herculan.Engine.Audio.Opl;
 
 /// <summary>
-/// <see cref="IOplChip"/> over Nuked-OPL3, the emulator of decision 27 (docs/herculan/plan-es1-sound.md#the-opl-emulator),
+/// <see cref="IOplChip"/> over Nuked-OPL3, the emulator ES1's sound plan chose (docs/herculan/plan-es1-sound.md#the-opl-emulator),
 /// in its own LGPL assembly. The chip runs at its own rate, <see cref="Opl3Chip.NativeRate"/>; Nuked's resampler is not
 /// used.
 ///

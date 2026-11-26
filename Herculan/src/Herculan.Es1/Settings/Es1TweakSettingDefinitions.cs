@@ -27,8 +27,7 @@ public static class Es1TweakSettingDefinitions {
 
 	/// <summary>
 	/// The sound every flyer offers its position for plays from the nearest flyer; retail's plays from the first to move
-	/// in the frame (plan decision 28, docs/herculan/plan-es1-first-mission.md#decisions). See
-	/// <see cref="Es1Sound.NearestOfferWins"/>.
+	/// in the frame. See <see cref="Es1Sound.NearestOfferWins"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> NearestOfferWins = new("tweak.es1_nearest_flyer_sound", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 
@@ -48,29 +47,29 @@ public static class Es1TweakSettingDefinitions {
 	/// <summary>
 	/// The return from the external view copies the cockpit's page without retail's column past its edge, which moves the
 	/// other page's left-most column by a row, so that column no longer flickers every frame after.
-	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice (plan decision 35,
-	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="View.Es1ViewManager.KeepCockpitEdge"/>.</para>
+	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice. See
+	/// <see cref="View.Es1ViewManager.KeepCockpitEdge"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixCockpitEdgeFlicker = new("tweak.es1_fix_cockpit_edge_flicker", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);
 
 	/// <summary>
 	/// CREW's CANCEL puts the pilots' HERCs back before it makes the opening's pilot current again, so the bay selected is
 	/// the one the service bay shows and its HERC is not drawn over itself.
-	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice (plan decision 36,
-	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Es1CrewAssignMenu.CancelRestoresFirst"/>.</para>
+	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice. See
+	/// <see cref="Es1CrewAssignMenu.CancelRestoresFirst"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixCrewCancelBay = new("tweak.es1_fix_crew_cancel_bay", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);
 
 	/// <summary>
-	/// The shell's song fades out behind the next screen rather than holding the shell until it ends (plan decision 37,
-	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Shell.Es1ShellSound.SkipPause"/>.
+	/// The shell's song fades out behind the next screen rather than holding the shell until it ends. See
+	/// <see cref="Shell.Es1ShellSound.SkipPause"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> SkipScreenPause = new("tweak.es1_skip_screen_pause", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
 	/// What the cockpit draws while the view shakes is cut where the shake has moved its picture to: the weapon rows at the
-	/// top of the screen are drawn whole, and the energy meter's strips stay inside its clip shape (plan decision 40,
-	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="View.Es1Cockpit.DrawsFollowShake"/>.
+	/// top of the screen are drawn whole, and the energy meter's strips stay inside its clip shape. See
+	/// <see cref="View.Es1Cockpit.DrawsFollowShake"/>.
 	/// <para>The key keeps the name it had when the tweak covered the energy meter alone, so a saved choice carries over.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixHitShakeGlitches = new("tweak.es1_fix_energy_meter_shake", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
@@ -78,28 +77,27 @@ public static class Es1TweakSettingDefinitions {
 	/// <summary>
 	/// The RHINO's jammer pod is drawn on its top centre mount where the other weapons of that mount sit, and its damaged EMP
 	/// picture where its undamaged one sits.
-	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice (plan decision 41,
-	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Shell.Hangar.Es1HercArt.FixRhinoTopMount"/>.</para>
+	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice. See
+	/// <see cref="Shell.Hangar.Es1HercArt.FixRhinoTopMount"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixRhinoTopMount = new("tweak.es1_fix_rhino_top_mount", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);
 
 	/// <summary>
 	/// A HERC drawn into its bay shows each weapon damaged or whole by its condition as it now stands, so a repaired weapon
-	/// no longer keeps its damaged picture (plan decision 42, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// no longer keeps its damaged picture. See
 	/// <see cref="Shell.Hangar.Es1HercDiagrams.RefreshWeaponArt"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> RefreshWeaponArt = new("tweak.es1_refresh_weapon_art", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
-	/// A career's service bay lights its scramble lights only for a scramble the career's own next mission is (plan
-	/// decision 43, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// A career's service bay lights its scramble lights only for a scramble the career's own next mission is. See
 	/// <see cref="Shell.Hangar.Es1HangarBay.ScrambleLightsFollowCareer"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixScrambleLights = new("tweak.es1_fix_scramble_lights", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
-	/// The return from a glance makes the forward view's cursor slot the active one, as the pan up does (plan decision 48,
-	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="View.Es1ViewManager.ForwardCursorAfterGlance"/>.
+	/// The return from a glance makes the forward view's cursor slot the active one, as the pan up does. See
+	/// <see cref="View.Es1ViewManager.ForwardCursorAfterGlance"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixGlanceCursor = new("tweak.es1_fix_glance_cursor", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 	#endregion
@@ -107,7 +105,7 @@ public static class Es1TweakSettingDefinitions {
 	#region FUNCTIONAL
 	/// <summary>
 	/// SYSTEM REPAIR's PROCEED keeps only the levels + and − paid for, where retail's raises the item one level further for
-	/// nothing after a + (plan decision 23, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// nothing after a +. See
 	/// <see cref="Es1SystemRepairMenu.ProceedKeepsLevels"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> ProceedKeepsLevels = new("tweak.es1_no_free_repair_level", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
@@ -115,49 +113,48 @@ public static class Es1TweakSettingDefinitions {
 	/// <summary>
 	/// A gun round's lifetime counts time rather than ticks, so its reach no longer falls with the frame rate. This engine's
 	/// invention.
-	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice (plan decision 33,
-	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Projectiles.Es1Bullet.RealTimeLife"/>.</para>
+	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice. See
+	/// <see cref="Projectiles.Es1Bullet.RealTimeLife"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> RealTimeRoundLife = new("tweak.es1_real_time_round_life", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
 
 	/// <summary>
 	/// A flyer steps its type's speed along its nose per 40 ms rather than per tick, about Earthsiege 2's flyer speed at any
 	/// frame rate. This engine's invention.
-	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice (plan decision 34,
-	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Sim.Es1FlyerFlight.Es2Speed"/>.</para>
+	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice. See
+	/// <see cref="Sim.Es1FlyerFlight.Es2Speed"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> Es2FlyerSpeed = new("tweak.es1_es2_flyer_speed", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
 
 	/// <summary>
 	/// A HERC of the player's side lets go of its group's order target once that target is disabled, as Earthsiege 2's
-	/// human side does (plan decision 38, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// human side does. See
 	/// <see cref="Ai.Es1Targets.DropDisabledOrderTarget"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> DropDisabledOrderTarget = new("tweak.es1_drop_disabled_order_target", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
-	/// A flight whose leader is destroyed is led by its first member still flying (plan decision 39,
-	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Ai.Es1FlyerAi.LiveLeader"/>.
+	/// A flight whose leader is destroyed is led by its first member still flying. See
+	/// <see cref="Ai.Es1FlyerAi.LiveLeader"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> WingmanTakesLead = new("tweak.es1_wingman_takes_lead", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
 	/// A new career is numbered by the least pair of career files no other career uses, gets its own careers-log entry
-	/// however many are made in one run of the shell, and is written to the log at once (plan decision 44,
-	/// docs/herculan/plan-es1-first-mission.md#decisions). See <see cref="Shell.Es1ShellData.FixCareerSaves"/>.
+	/// however many are made in one run of the shell, and is written to the log at once. See
+	/// <see cref="Shell.Es1ShellData.FixCareerSaves"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixCareerSaves = new("tweak.es1_fix_career_saves", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
-	/// NEXT MISSION > on a career at its end shows CAREER OVER rather than moving the career past its last campaign (plan
-	/// decision 45, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// NEXT MISSION > on a career at its end shows CAREER OVER rather than moving the career past its last campaign. See
 	/// <see cref="Shell.Menus.Es1ServiceBayMenu.CareerOverStops"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> CareerOverStops = new("tweak.es1_career_over_stops", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
 	/// BUILD opens on a chassis the current career has made available rather than on the one it last showed, which may be
-	/// another career's (plan decision 47, docs/herculan/plan-es1-first-mission.md#decisions). See
+	/// another career's. See
 	/// <see cref="Es1FabricationMenu.ShownChassisFollowsCareer"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> ShownChassisFollowsCareer = new("tweak.es1_fix_build_exploit", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
@@ -172,9 +169,8 @@ public static class Es1TweakSettingDefinitions {
 	/// <summary>
 	/// The tweaks Metaltech: Earthsiege's Tweaks menu offers, those its code reads: of the core's,
 	/// <see cref="TweakSettingDefinitions.HighResolutionWidescreen"/> (<see cref="View.Es1ScreenPresenter.Fit"/>),
-	/// <see cref="TweakSettingDefinitions.SmootherTurretMovement"/> (<see cref="Sim.Es1Turret.Rounding"/>, plan decision 31),
-	/// <see cref="TweakSettingDefinitions.FasterKeyboardAiming"/> (<see cref="Input.Es1KeyboardAxes.Build"/>, plan
-	/// decision 32, docs/herculan/plan-es1-first-mission.md#decisions) and
+	/// <see cref="TweakSettingDefinitions.SmootherTurretMovement"/> (<see cref="Sim.Es1Turret.Rounding"/>),
+	/// <see cref="TweakSettingDefinitions.FasterKeyboardAiming"/> (<see cref="Input.Es1KeyboardAxes.Build"/>) and
 	/// <see cref="TweakSettingDefinitions.MouseOutsideView"/> (<see cref="View.Es1MouseOrbit"/>), then all of its own
 	/// (docs/herculan/planning.md#how-the-two-games-share-code).
 	/// </summary>

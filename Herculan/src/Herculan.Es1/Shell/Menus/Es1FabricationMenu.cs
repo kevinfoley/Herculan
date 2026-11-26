@@ -52,7 +52,7 @@ public sealed class Es1FabricationMenu : Es1Menu {
 
 	/// <summary>
 	/// Whether BUILD opens on a chassis the current career has made available, where retail's opens on whatever chassis
-	/// it last showed, another career's included (plan decision 47, docs/herculan/plan-es1-first-mission.md#decisions);
+	/// it last showed, another career's included;
 	/// <see cref="Settings.Es1TweakSettingDefinitions.ShownChassisFollowsCareer"/>.
 	/// </summary>
 	public static bool ShownChassisFollowsCareer =>

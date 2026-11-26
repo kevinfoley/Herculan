@@ -371,7 +371,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		}
 
 		// Subsystem phase 6, Vcr_FlushCheckpoints, does nothing without DmpFile, which only -d opens and this engine does
-		// not take (plan decision 21).
+		// not take (ROADMAP.md, the tape checkpoint file).
 	}
 
 	/// <summary>

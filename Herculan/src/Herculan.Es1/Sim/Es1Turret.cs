@@ -13,7 +13,7 @@ namespace Herculan.Es1.Sim;
 /// thread's sequence (docs/retail/simulation/torso-aim.md#angle-to-pose). The type record's fields are the chassis file's.
 ///
 /// <para>The multiplies are ES1's rounding ones, the rate-over-tick helpers <see cref="Es1SimClock"/>'s, and the seek
-/// <see cref="Rounding"/>'s (docs/herculan/plan-es1-first-mission.md#decisions, decisions 1 and 31).</para>
+/// <see cref="Rounding"/>'s (docs/herculan/plan-es1-first-mission.md#decisions, decision 1).</para>
 /// </summary>
 public sealed class Es1Turret {
 	/// <summary>The Q10 gain <c>Mech_CenterTorsoTick</c> takes of each angle.</summary>
