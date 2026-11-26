@@ -9,16 +9,18 @@ namespace Herculan.Es1.Host;
 
 /// <summary>What <see cref="Es1FrameLoop"/> paces: the simulation runner, or a test's clock.</summary>
 internal interface IEs1FramePacer {
-	/// <summary>Host time of <paramref name="elapsed"/> with nothing waiting: the clock. Returns whether a tick is due.</summary>
+	/// <summary>Host time with nothing waiting: the clock.</summary>
+	/// <param name="elapsed">The host time.</param>
+	/// <returns>Whether a tick is due.</returns>
 	bool AdvanceClock(TimeSpan elapsed);
 
-	/// <summary>
-	/// <c>Sim_MainTick</c>, yielding a wait at each pass of a panel's loop; <paramref name="ended"/> is set when it ends
-	/// the mission.
-	/// </summary>
+	/// <summary><c>Sim_MainTick</c>.</summary>
+	/// <param name="ended">Set when the tick ends the mission.</param>
+	/// <returns>A wait at each pass of a panel's loop.</returns>
 	IEnumerable<Es1Wait> Tick(StrongBox<bool> ended);
 
-	/// <summary>Host time of <paramref name="elapsed"/> while the frame stands waiting: the PC timer runs on, and no tick runs.</summary>
+	/// <summary>Host time while the frame stands waiting: the PC timer runs on, and no tick runs.</summary>
+	/// <param name="elapsed">The host time.</param>
 	void Hold(TimeSpan elapsed);
 
 	/// <summary><c>Sim_Frozen</c> (<c>ES1DBSIM 000b5b92</c>), which <c>Sim_EndFrame</c> reads.</summary>
@@ -32,16 +34,15 @@ internal interface IEs1FramePacer {
 /// (docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904); and the display's part of
 /// <c>Sim_StartMission</c>, steps 11 and 13 to 15 (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc).
 /// The host shows the 320 × 200 screen every host frame (<see cref="Es1ScreenPresenter"/>).
-///
 /// <para>The monitor is a timeline of vertical retraces on host time, <see cref="RetracesPerSecond"/> a second, the
 /// first at the loop's construction: the phase of the monitor against the PC timer is this engine's, the two running
 /// apart in retail. A retrace's own length is taken as nil, so a retrace is the instant it starts. A frame's end that
 /// waits for the monitor, a view's slide (<c>VGA8_ShowPage</c>) or the retrace wait that ends every frame past the
 /// cooldown and the page gate (<c>Vga_WaitVerticalRetrace</c> in <c>CockpitView_ProcessViewCommand</c>), holds the
-/// frame until the wait's retrace starts and goes on from that instant: the host goes on showing the screen, and until the frame's end
-/// has run no tick runs and no input is taken, while the PC timer runs on (<see cref="Es1SimulationRunner.Hold"/>).
-/// Then the clock takes the rest of the host frame, as <c>Time_BeginSimTick</c> follows <c>Sim_EndFrame</c>.</para>
-///
+/// frame until the wait's retrace starts and goes on from that instant: the host goes on showing the screen, and until
+/// the frame's end has run no tick runs and no input is taken, while the PC timer runs on
+/// (<see cref="Es1SimulationRunner.Hold"/>). Then the clock takes the rest of the host frame, as <c>Time_BeginSimTick</c>
+/// follows <c>Sim_EndFrame</c>.</para>
 /// <para><b>This engine's own:</b> a host frame longer than <see cref="StallRetraces"/> retraces is a stall, and the
 /// retraces in it before its last are missed: a wait for one of them waits for the last instead
 /// (<see cref="RunWork"/>). The frame's draw takes no host time here, where retail's took real time before its wait, so
@@ -50,7 +51,6 @@ internal interface IEs1FramePacer {
 /// every retrace (<see cref="Panels.Es1PreferencesRaise"/>), would sink to a few frames a second wherever one draw takes
 /// longer than a retrace, as under the "High resolution widescreen" tweak. A host that keeps up is untouched: a 60 Hz host
 /// still meets all 70 retraces a second.</para>
-///
 /// <para>The tick stands waiting the same way inside a panel's loop, which retail runs within <c>Sim_MainTick</c> (plan
 /// decision 11, <see cref="Es1Wait"/>): a pass of the loop that waits for no retrace ends with the next host frame, and
 /// the tick and the frame after it go on from there. So the frame's work from the tick on, the tick, the camera, the
@@ -84,6 +84,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	private IEs1FramePacer? _pacer;
 	private Es1SimulationRunner? _wired;
 
+	/// <summary>A frame loop on <paramref name="views"/>, its first retrace at host time 0.</summary>
 	/// <param name="views">The view manager, on the display it flips.</param>
 	/// <param name="camUpdate"><c>Cam_Update</c>(<c>ViewObjectPtr</c>): the current camera (<see cref="Es1ViewChain.Camera"/>) placed.</param>
 	/// <param name="beginWorldPass">
@@ -105,6 +106,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		_viewCamera = viewCamera;
 	}
 
+	/// <summary>The view manager, on the display it flips.</summary>
 	public Es1ViewManager Views { get; }
 
 	/// <summary>
@@ -138,21 +140,17 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// <summary>Whether the frame's work stands waiting, the frame's end for the monitor or the tick in a panel's loop.</summary>
 	internal bool Waiting => _work != null;
 
-	/// <summary>The host time retrace <paramref name="index"/> starts at, rounded up to a <see cref="TimeSpan"/> tick.</summary>
+	/// <summary>The host time a retrace starts at, rounded up to a <see cref="TimeSpan"/> tick.</summary>
+	/// <param name="index">The retrace, counted from 0 at the loop's construction.</param>
+	/// <returns>The host time, in <see cref="TimeSpan"/> ticks.</returns>
 	internal static long RetraceStart(long index) =>
 		(index * TimeSpan.TicksPerSecond + RetracesPerSecond - 1) / RetracesPerSecond;
 
 	/// <summary>
-	/// The display's part of <c>Sim_StartMission</c>: step 11, the pages at (0, 0), (0, 200), (320, 0) and (320, 200),
-	/// the pair {0, 2}, page 0 shown and page 3 drawn on; step 13, the bring-up flag set (<see cref="Es1Cockpit.BringUp"/>),
-	/// the player's weapon rows built (<c>WeaponMounts_BuildGauges</c>, <see cref="Sim.Es1WeaponMounts.BuildGauges"/>),
-	/// the squadmates and their pilots (<see cref="Es1Cockpit.LoadSquadmatePilots"/>), every machine's weapon icons
-	/// (<see cref="Panels.Es1PaperDoll.BuildWeaponIconsForPool"/>), <paramref name="cursor"/> installed on the display's cursor, <c>Player_PerFrameCockpitUpdate</c>, <c>Cam_Update</c>,
-	/// the draw page 2 again and views 1 and 0 set, so both canopies lie in page 2's half; step 14, the lift's search and
-	/// with it the darkening (<see cref="Es1LiftStart"/>), without it the pitch gradient at its forced step 8
-	/// (<see cref="BlendPitchGradient"/>) and the first frame's 3D pass; and step 15, the flag
-	/// cleared, the whole of page 2 copied onto page 0, the cursor shown, with the lift its ride, held as the frame's work
-	/// (<see cref="Waiting"/>), and, unless a tape plays, the cockpit's mouse made live.
+	/// The display's part of <c>Sim_StartMission</c>, steps 11 and 13 to 15
+	/// (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc). With the lift, its ride is held as
+	/// the frame's work (<see cref="Waiting"/>), run from the first host frame with a pacer, and the rest of step 15 runs
+	/// after it.
 	/// </summary>
 	/// <param name="cursor">Step 5's cursor, <c>dci\cursor</c>, which <c>00057640</c> loads.</param>
 	/// <param name="liftArt">The load of <c>dba\intro</c>'s first frame, which the lift's ride runs.</param>
@@ -215,6 +213,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	}
 
 	/// <summary><see cref="Es1LiftStart.RunRise"/> under the pacer's <c>Sim_Frozen</c>, then step 15's rest.</summary>
+	/// <param name="art">The load of the ride's art; null for none.</param>
+	/// <returns>The ride's waits.</returns>
 	private IEnumerable<Es1Wait> RunLift(Func<DynamixBitmap?>? art) {
 		foreach (var wait in Es1LiftStart.RunRise(this, art?.Invoke(), () => _pacer?.Frozen ?? false)) {
 			yield return wait;
@@ -262,11 +262,14 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	}
 
 	/// <summary>
-	/// One host frame of <paramref name="deltaSeconds"/>: while the frame's work waits, the timer runs on until the wait
-	/// ends and the work goes on from there, a wait for the next host frame ending with this one; then the runner's
-	/// clock for the rest of the host frame, and when it answers a tick the tick, the camera, the 3D pass and the frame's
-	/// end. Returns whether the tick ended the mission.
+	/// One host frame: while the frame's work waits, the timer runs on until the wait ends and the work goes on from
+	/// there, a wait for the next host frame ending with this one; then the runner's clock for the rest of the host frame,
+	/// and when it answers a tick the tick, the camera, the 3D pass and the frame's end. The first frame with a runner
+	/// wires the loop to it.
 	/// </summary>
+	/// <param name="deltaSeconds">The host frame's length, in seconds.</param>
+	/// <param name="runner">The simulation runner; null before it is built, when only the host time advances.</param>
+	/// <returns>Whether the tick ended the mission.</returns>
 	public bool AdvanceHostFrame(double deltaSeconds, Es1SimulationRunner? runner) {
 		if (runner != null && !ReferenceEquals(runner, _wired)) {
 			_wired = runner;
@@ -279,7 +282,10 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		return Advance(TimeSpan.FromSeconds(deltaSeconds), runner);
 	}
 
-	/// <summary><see cref="AdvanceHostFrame"/> on <paramref name="pacer"/>, which a test supplies.</summary>
+	/// <summary><see cref="AdvanceHostFrame"/> on a pacer, which a test supplies.</summary>
+	/// <param name="elapsed">The host frame's length.</param>
+	/// <param name="pacer">The pacer; null for none, when only the host time advances.</param>
+	/// <returns>Whether the tick ended the mission.</returns>
 	internal bool Advance(TimeSpan elapsed, IEs1FramePacer? pacer) {
 		ArgumentOutOfRangeException.ThrowIfLessThan(elapsed, TimeSpan.Zero);
 		long end = HostTime + elapsed.Ticks;
@@ -325,11 +331,15 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	}
 
 	/// <summary>
-	/// The frame's work held until each of its waits ends and run on from there, up to the host time
-	/// <paramref name="end"/>. In a stall, a wait for a retrace that starts before <paramref name="missedBefore"/>, one
-	/// retrace short of the host frame's end, waits instead for the first retrace from that time on, the host frame's
-	/// last. Returns whether it has run to its end.
+	/// The frame's work held until each of its waits ends and run on from there. In a stall, a wait for a missed retrace
+	/// waits instead for the first retrace from the missed ones' end on, the host frame's last.
 	/// </summary>
+	/// <param name="pacer">The pacer whose timer runs on while the work waits; null for none.</param>
+	/// <param name="end">The host time the work runs up to, the host frame's end.</param>
+	/// <param name="missedBefore">
+	/// In a stall, one retrace short of the host frame's end, before which retraces are missed; null otherwise.
+	/// </param>
+	/// <returns>Whether the work has run to its end.</returns>
 	private bool RunWork(IEs1FramePacer? pacer, long end, long? missedBefore = null) {
 		while (_work != null) {
 			if (_untilNextHostFrame || WaitEnds is not { } waitEnds || waitEnds > end) {
@@ -355,6 +365,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// nothing more, as <c>Sim_Main</c> leaves its loop; otherwise <see cref="RunFrame"/>, standing at each of the frame's
 	/// end's waits for the monitor.
 	/// </summary>
+	/// <param name="pacer">The pacer that runs the tick.</param>
+	/// <returns>The tick's and the frame's waits.</returns>
 	private IEnumerable<Es1Wait> RunTickAndFrame(IEs1FramePacer pacer) {
 		var ended = new StrongBox<bool>();
 		foreach (var wait in pacer.Tick(ended)) {
@@ -374,10 +386,13 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		// not take (ROADMAP.md, the tape checkpoint file).
 	}
 
-	/// <summary>
+	/// <summary>When a wait for the monitor ends.</summary>
+	/// <param name="now">The host time the wait starts at.</param>
+	/// <param name="wait">The wait.</param>
+	/// <returns>
 	/// The host time of the first retrace start at or after <paramref name="now"/> when <paramref name="wait"/> ends in a
 	/// retrace, and after it otherwise.
-	/// </summary>
+	/// </returns>
 	internal static long WaitEnd(long now, Es1Retrace wait) {
 		long index = now * RetracesPerSecond / TimeSpan.TicksPerSecond;
 		while (wait.EndsInRetrace ? RetraceStart(index) < now : RetraceStart(index) <= now) {
@@ -410,7 +425,9 @@ public sealed class Es1FrameLoop : IEs1Frame {
 		WaitEnds = null;
 	}
 
-	/// <summary>The host time up to <paramref name="until"/> held: the timer runs on.</summary>
+	/// <summary>The host time held: the timer runs on.</summary>
+	/// <param name="pacer">The pacer whose timer runs on; null for none.</param>
+	/// <param name="until">The host time held up to; one already passed holds nothing.</param>
 	private void Hold(IEs1FramePacer? pacer, long until) {
 		if (until > HostTime) {
 			pacer?.Hold(TimeSpan.FromTicks(until - HostTime));
@@ -423,6 +440,8 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	/// simulation frozen, and <see cref="EndFrame"/>, yielding a retrace for each wait either makes. The host runs it
 	/// through <see cref="AdvanceHostFrame"/>; a test drives it directly.
 	/// </summary>
+	/// <param name="frozen"><c>Sim_Frozen</c>.</param>
+	/// <returns>A retrace for each wait for the monitor.</returns>
 	internal IEnumerable<Es1Retrace> RunFrame(bool frozen) {
 		_camUpdate();
 		if (!(Views.Mouse.TapePlayback && frozen)) {
@@ -446,11 +465,11 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	void IEs1Frame.InstallPalette(int first, IReadOnlyList<uint> colors) => InstallPaletteRange?.Invoke(first, colors);
 
 	/// <summary>
-	/// <c>Sim_EndFrame</c> (<c>00059b40</c>): <c>Display_FlipWithoutPan</c> set unless frozen; the staged view change;
-	/// <c>Palette_FlushDirtyRange</c> (<see cref="FlushPalette"/>); <c>+0x8c</c> shown and <c>+0x88</c> drawn on, and the
-	/// pair swapped; the view command. Yields each wait for the monitor its routines make, after those still owed
-	/// (<see cref="Es1ViewManager.TakeOwedRetraces"/>).
+	/// <c>Sim_EndFrame</c> (<c>00059b40</c>, docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904),
+	/// after the waits still owed (<see cref="Es1ViewManager.TakeOwedRetraces"/>).
 	/// </summary>
+	/// <param name="frozen"><c>Sim_Frozen</c>, under which <c>Display_FlipWithoutPan</c> is clear.</param>
+	/// <returns>Each wait for the monitor its routines make.</returns>
 	private IEnumerable<Es1Retrace> EndFrame(bool frozen) {
 		var views = Views;
 		// A shake's page moves made since the last Sim_RenderFrame, as the lift's last ClearShake makes, each waiting for
@@ -482,35 +501,21 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	}
 
 	/// <summary>
-	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>): subsystem phase 5, whose ported functions are <c>Structure_FlushDeletes</c>
-	/// (<see cref="Sim.Es1BasePool.FlushDeletes"/>), <c>EffectLightPool_FlushDeletes</c>
-	/// (<see cref="Effects.Es1EffectLights.FlushDeletes"/>), <c>ExplosionPool_FlushDeletes</c>
-	/// (<see cref="Effects.Es1ExplosionPool.FlushDeletes"/>), <c>DebrisPool_FlushDeletes</c>
-	/// (<see cref="Effects.Es1DebrisPool.FlushDeletes"/>), <c>Smoke_FlushDeletes</c> (<see cref="Effects.Es1SmokePool.FlushDeletes"/>),
-	/// <c>FlatObjPool_FlushDeletes</c> (<see cref="Effects.Es1FlatObjPool.FlushDeletes"/>), <c>Projectile_FlushDeletes</c>
-	/// (<see cref="Projectiles.Es1ProjectilePool.FlushDeletes"/>) and <c>Flyer_FlushDeletes</c>
-	/// (<see cref="Sim.Es1FlyerPool.FlushDeletes"/>), in the static constructor table's order; the detail setting applied again when option 6 has changed, the view
-	/// shake's offset added to the projection pair (<see cref="Es1ViewManager.MoveProjectionPair"/>), the cockpit's
-	/// frame (<c>Cockpit_DrawFrame</c>), then the 3D pass, which installs the current camera's view and draws the world
-	/// into the draw page in the installed window and clip block when the current view is not 1 or a view change is
-	/// staged, with the pitch gradient at the end of <c>Scene_DrawTerrainPass</c> (<see cref="BlendPitchGradient"/>),
-	/// answering a pending pixel pick from what it drew (<see cref="Es1ObjectPick.Resolve"/>),
-	/// <c>Player_PerFrameCockpitUpdate</c>, and the gunsight's per-frame update over it
-	/// (<see cref="Gunsight.Es1Gunsight.UpdateAndPaint"/>), which reads the pick's answer in the same frame, as retail's does;
-	/// and last the pilot channel's slot <c>+0x10</c> (<see cref="Messages.Es1PilotChannel.Update"/>), after which the
-	/// shake's offset is taken back out; then this engine's record of the page drawn and its copy into the canvas
-	/// (<see cref="Es1ViewManager.EndRenderFrame"/>). After a 3D pass, this engine also draws the canvas's side panels
+	/// <c>Sim_RenderFrame</c> (<c>00059c08</c>, docs/es1/simulation/main-loop.md#the-frame). Subsystem phase 5 is its
+	/// pools' delete flushes, in the static constructor table's order.
+	/// <para><b>This engine's own:</b> after the shake's offset is taken back out, the record of the page drawn and its
+	/// copy into the canvas (<see cref="Es1ViewManager.EndRenderFrame"/>), and after a 3D pass the canvas's side panels
 	/// (<see cref="Es1ViewManager.DrawCanvasPanels"/>). The canvas already moves with the screen's shaken row, which
 	/// carries the cockpit; the frame's world, drawn with the shake's total as it stood before <c>Cockpit_DrawFrame</c>
 	/// stepped it, lies that step below it, and the panels' world is drawn the same step down, so it shakes as the
-	/// screen's does.
-	///
+	/// screen's does.</para>
 	/// <para>Yields each wait for the monitor a shake's page move owes (<see cref="Es1ViewManager.TakeOwedRetraces"/>):
 	/// those made before the frame, as the death flash's and the lift's steps are, first, and those the cockpit's frame
 	/// makes (<c>Cockpit_HitShakeTick</c>) after it, before the 3D pass. Retail waits inside <c>CockpitView_StepShake</c>,
 	/// so the screen shows the last frame until the wait ends; so does this engine's canvas, which takes the frame only
 	/// at the end of its draw.</para>
 	/// </summary>
+	/// <returns>Each wait for the monitor a shake's page move owes.</returns>
 	private IEnumerable<Es1Retrace> RenderFrame() {
 		foreach (var wait in Views.TakeOwedRetraces()) {
 			yield return wait;

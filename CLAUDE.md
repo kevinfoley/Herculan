@@ -62,6 +62,9 @@ The docs state what is true now. How the project got there belongs in `git log`.
    section, so an engine change never has to hunt for prose to update (rule 5 decides which is
    which). A retail doc may link to an engine doc, but it does not name C# types. The engine docs are
    `docs/herculan/`, `KNOWN_ISSUES_ES2.md` and `ROADMAP.md`.
+   
+10. **Code comments never reference planning document steps.** Such references are not helpful for
+understanding the code.
 
 `tools/scripts/doc_lint.py` enforces 1, 4, 6 and 8, warns on a doc over 70 KB (`doc-too-long`:
 split it by topic), and runs automatically after any edit under

@@ -33,8 +33,7 @@ namespace Herculan.Es1.Host;
 public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? WorldDetail);
 
 /// <summary>
-/// Runs an ES1 mission as far as this engine has ported one (docs/herculan/plan-es1-first-mission.md, steps 4, 6a and 6a2).
-/// It covers:
+/// Runs an ES1 mission:
 /// <list type="bullet">
 /// <item><description>the shell's single-mission load, when a mission is named;</description></item>
 /// <item><description>the simulator's world load, from the install's <c>data\</c> files;</description></item>
@@ -42,8 +41,7 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// <item><description>the cockpit's views of the player's machine, shown on the display's pages with the cockpit's screen edges and cursors; and</description></item>
 /// <item><description>the pause and quit prompts, the objectives and the preferences panel.</description></item>
 /// </list>
-///
-/// This class only composes other types:
+/// <para>This class only composes other types:</para>
 /// <list type="bullet">
 /// <item><description><see cref="Es1SingleMission"/> does the load, and <see cref="Es1MissionFiles"/> reads its files.</description></item>
 /// <item><description><see cref="Es1World"/> is the world.</description></item>
@@ -54,28 +52,13 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// <item><description><see cref="Es1FrameLoop"/> runs the frame on them.</description></item>
 /// <item><description><see cref="Es1ScreenPresenter"/> presents the screen.</description></item>
 /// </list>
-///
 /// <para>Each host frame runs a tick when the clock calls for one. After the tick it sets the camera, draws the world into the
 /// display's draw page and ends the frame, as <c>Sim_Main</c>'s frame does (docs/es1/simulation/main-loop.md#the-frame). Every
 /// host frame also shows the display's 320 × 200 screen. The window's update and its render run on the same thread, and both
 /// have the GL context current, so the tick's 3D pass is drawn during the update.</para>
-///
-/// <para><b>Not retail, awaiting the user's decision:</b> with no player's machine (only the free camera), no tick runs.
-/// Retail's controls read <c>LocalPlayerMech</c> without checking it, so retail has no behavior to port for this case.</para>
-///
-/// <para>With no cockpit view for the player's machine, or no player's machine, the world is shown from a free camera over the
-/// whole window, an engine aid with no retail counterpart. The simulator still reads every key, so the keys that move the free
-/// camera also drive the machine. While the cockpit is shown, the host's pointer is hidden over the window and the cockpit's
-/// cursor takes its place. The free camera shows the pointer, and hides it only while the right button is held to look around.</para>
-///
-/// <para>Closing the window quits. Esc quits only when there is no player's machine, since with one Esc is the simulator's key
-/// (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8). The mission also quits when it ends: through
-/// retail's way out (the QUIT from <c>Ctrl+Q</c> or <c>Ctrl+Esc</c>; plan decision 12), through a status panel's answer that ends it
-/// (docs/es1/simulation/main-loop.md#which-answer-ends-the-mission), or through the death flash
-/// (docs/es1/simulation/main-loop.md#the-death-flash--sim_deathflash-00058414). When a mission ends,
+/// <para>Closing the window quits. The mission also quits when it ends (through success, failure, or death). When a mission ends,
 /// <see cref="Es1Shutdown.Run"/> runs before the window closes. Closing the window has no retail counterpart: it runs nothing and
 /// writes no file, so <c>data\exit.cfg</c> keeps the 0 written when the run started.</para>
-///
 /// <para><b>This engine's own:</b> HERCULAN's menu bar is drawn over the mission, in a <see cref="FrontEndWindow"/> like the
 /// shell's. It covers either the screen or the free camera. The bar stays hidden until one of these raises it: [Shift+Esc], a
 /// gamepad's Back, or a joystick's Custom menu bar input (<see cref="Es1HostKeyboard.MenuBarTakes"/>,
@@ -93,14 +76,15 @@ public static class Es1MissionHost {
 	private const string HeapSizeName = "mem.got";
 
 	/// <summary>
-	/// The heap's size, <c>Mem_InitHeap</c> (<c>00001524</c>)'s answer to <c>Sim_Main</c>'s request of 6,000,000: the request,
-	/// capped at the extender's largest free block less 25,000 (docs/es1/simulation/memory.md#the-heap). This engine has no
-	/// extender and its memory is never short (as <see cref="Es1Preferences.LowMemory"/>), so the cap never applies and the
-	/// size is the request.
+	/// The heap's size, <c>Mem_InitHeap</c> (<c>00001524</c>)'s answer to <c>Sim_Main</c>'s request of 6,000,000
+	/// (docs/es1/simulation/memory.md#the-heap). This engine has no extender and its memory is never short (as
+	/// <see cref="Es1Preferences.LowMemory"/>), so the answer is always the request.
 	/// </summary>
 	private const int HeapSize = 6_000_000;
 
-	/// <summary><see cref="HeapSize"/> as 4 little-endian bytes over the install's <c>data\mem.got</c>; false when it does not open.</summary>
+	/// <summary>Writes <see cref="HeapSize"/> as 4 little-endian bytes over the install's <c>data\mem.got</c>.</summary>
+	/// <param name="installRoot">The install's folder.</param>
+	/// <returns>False when the file does not open for writing.</returns>
 	private static bool WriteHeapSize(string installRoot) {
 		var bytes = new byte[sizeof(int)];
 		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(bytes, HeapSize);
@@ -108,26 +92,27 @@ public static class Es1MissionHost {
 	}
 
 	/// <summary>
-	/// Starts <paramref name="missionName"/> (with or without <c>.MSN</c>) as a single mission and runs the simulator on the files
-	/// written by that load. With no mission named, it runs the simulator on the files already in the install's <c>data\</c> folder,
-	/// as <c>DBSIM.EXE</c> does. Returns the process exit code: 1 when <c>data\mem.got</c> or <c>data\exit.cfg</c> cannot be opened for writing or the
-	/// mission fails to load, and otherwise the code from <see cref="Show"/>. Returning the code held in <c>data\exit.cfg</c> as the
-	/// process's exit code is an addition of this engine: retail's <c>Sim_Main</c> returns nothing, and the shell reads the file.
-	///
-	/// <para>With <paramref name="playTape"/> (<c>--play</c>, retail's <c>-p</c>) or <paramref name="demo"/> (<c>--demo</c>,
-	/// retail's <c>-D</c>; combined with <c>--play</c>, that tape plays in demo mode), the host opens the tape and unpacks its bundle
-	/// over the install's <c>data\</c> mission files, <c>tapes\prefs.cfg</c> and <c>tapes\keyjoy.cfg</c>. <c>Sim_ParseCommandLine</c>
-	/// does the same before the mission loads (<see cref="Es1TapePlayback.FromCommandLine"/>). The tape carries its own mission, so
-	/// a named mission is not loaded. Returns 1 when a named tape is not found or cannot be read.</para>
-	///
-	/// <para>With <paramref name="recordTape"/> (<c>--record</c>, retail's <c>-r</c>), the host creates the tape at the path given
-	/// by the flag and packs the install's files into its bundle (<see cref="Es1TapeRecording.Start"/>). Every input build then
-	/// appends its frame. Retail packs the bundle while it parses the command line, after the shell has written the mission's
-	/// <c>data\</c> files. Here a named mission's load writes those files, so the bundle is packed after that load, from the
-	/// mission's own files. Returns 1 when the tape cannot be opened for writing.</para>
+	/// Starts a mission named as a single mission and runs the simulator on the files written by that load. With no mission named,
+	/// it runs the simulator on the files already in the install's <c>data\</c> folder, as <c>DBSIM.EXE</c> does.
+	/// <para>A tape played opens before the mission loads and unpacks its bundle over the install's <c>data\</c> mission files,
+	/// <c>tapes\prefs.cfg</c> and <c>tapes\keyjoy.cfg</c>, as <c>Sim_ParseCommandLine</c> does
+	/// (<see cref="Es1TapePlayback.FromCommandLine"/>). The tape carries its own mission, so a named mission is not loaded.</para>
+	/// <para>A tape recorded is created and has the install's files packed into its bundle (<see cref="Es1TapeRecording.Start"/>);
+	/// every input build then appends its frame. Retail packs the bundle while it parses the command line, after the shell has
+	/// written the mission's <c>data\</c> files. Here a named mission's load writes those files, so the bundle is packed after that
+	/// load, from the mission's own files.</para>
 	/// </summary>
+	/// <param name="installRoot">The install's folder.</param>
+	/// <param name="missionName">The mission to load, with or without <c>.MSN</c>; null to run on the files already in <c>data\</c>.</param>
+	/// <param name="overrides">The header words the launch overrides.</param>
 	/// <param name="imguiFontPath">The font file for the menu bar's ImGui text (<see cref="FrontEndWindow"/>).</param>
+	/// <param name="imguiItalicFontPath">The font file for the menu bar's italic ImGui text.</param>
 	/// <param name="menus">HERCULAN's menu bar and its windows over the mission. The window disposes of them once the mission has run.</param>
+	/// <param name="playTape">The tape to play, <c>--play</c> (retail's <c>-p</c>); null for none.</param>
+	/// <param name="demo">
+	/// <c>--demo</c> (retail's <c>-D</c>): a demo tape plays, in demo mode; with <paramref name="playTape"/>, that tape.
+	/// </param>
+	/// <param name="recordTape">The path of the tape to record, <c>--record</c> (retail's <c>-r</c>); null for none.</param>
 	/// <param name="window">
 	/// The launcher's window, shared by the shell, the movies and the missions it runs (<see cref="Es1Launcher"/>). It stays open
 	/// after the mission. When null, the simulator opens a window of its own and closes it with the mission.
@@ -141,6 +126,12 @@ public static class Es1MissionHost {
 	/// The disc standing in for the CD drive whose <c>vol\</c> the simulator mounts after the install's, as it does under
 	/// <c>-c</c>, and a named mission's load with it; null for the install alone.
 	/// </param>
+	/// <returns>
+	/// The process's exit code: 1 when <c>data\mem.got</c> or <c>data\exit.cfg</c> does not open for writing, the mission does not
+	/// load, a tape played is not found or does not read, or a tape recorded does not open for writing; otherwise
+	/// <see cref="Show"/>'s. <b>This engine's own:</b> retail's <c>Sim_Main</c> returns nothing, and the shell reads
+	/// <c>data\exit.cfg</c>.
+	/// </returns>
 	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides, string imguiFontPath,
 			string imguiItalicFontPath, IFrontEndMenus menus, string? playTape = null, bool demo = false,
 			string? recordTape = null, HostWindow? window = null, bool soundOn = true, bool silent = false, GameDisc? disc = null) {
@@ -222,7 +213,7 @@ public static class Es1MissionHost {
 		// the language is English.
 		var content = GameContent.MountInstall(installRoot, disc, Voln.DbsimProgram, GameLanguage.English);
 		// Unlike retail, the HERCs and the cockpit are loaded before the zone. The scene is therefore built in the live palette, with
-		// the scheme of the player's chassis already installed (Es1ZoneScene.Palette). With no player's machine, nothing is installed.
+		// the scheme of the player's chassis already installed (Es1ZoneScene.Palette).
 		Es1World world;
 		Es1ZoneScene scene;
 		Es1CockpitViews? views;
@@ -233,12 +224,11 @@ public static class Es1MissionHost {
 			// Flyer_LoadResources (0001c558) asserts when datforms does not open.
 			var flyerFormations = new Es1FlyerFormationsTransformer().Parse(content.ReadRequired("dat", "FFORMS.DAT"))
 				?? new Es1FlyerFormations();
-			// NO EFFECT: Sim_StartMission's step 6 sets option 1 to 0 around the spawn (Prefs_SetOption(1, 0, 1), then
-			// Prefs_RevertOption(1, 1)). That leaves Prefs_PreviousOptions[1] changed, which is not ported: the one reader of
+			// Sim_StartMission's step 6 sets option 1 to 0 around the spawn (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc),
+			// which is not ported because it has no effect here. It leaves Prefs_PreviousOptions[1] changed, but the one reader of
 			// Prefs_PreviousOptions es2_xref.py finds, Prefs_UndoSetOption, has one caller, Prefs_LimitDetailInLowMemory, which
-			// passes option 6. Here the spawn runs before
-			// Sound_Init, with no sound manager, so it plays nothing. Retail's spawn is silent the same way when the digital sounds are
-			// off.
+			// passes option 6. Here the spawn runs before Sound_Init, with no sound manager, so it plays nothing; retail's spawn is
+			// silent the same way when the digital sounds are off.
 			world = Es1World.Spawn(script, content, formations, flyerFormations);
 			world.Globals.Sound = sound;
 			views = world.LocalPlayer is { } machine ? Es1CockpitViews.Load(content, machine.Type.CockpitName) : null;
@@ -278,18 +268,25 @@ public static class Es1MissionHost {
 	/// <summary>The menu bar's font paths and menus, which <see cref="Show"/> passes to its <see cref="FrontEndWindow"/>.</summary>
 	private sealed record MenuLayer(string FontPath, string ItalicFontPath, IFrontEndMenus Menus);
 
-	/// <summary>
-	/// Runs the window until it closes. Returns the exit code that <see cref="Es1Shutdown.Run"/> wrote when the mission ended. When
-	/// the tick raised a fatal assert (<see cref="Es1FatalAssertException"/>), it returns the status from
-	/// <see cref="Es1Shutdown.AssertCleanup"/>. When the window closed without the mission ending, it returns 0, because that runs
-	/// no shutdown and writes no file.
-	/// </summary>
+	/// <summary>Runs the window until it closes.</summary>
+	/// <param name="installRoot">The install's folder.</param>
+	/// <param name="preferences">The simulator's options, from <c>data\prefs.cfg</c>.</param>
+	/// <param name="content">The volumes the simulator mounts.</param>
+	/// <param name="scene">The zone.</param>
+	/// <param name="world">The world.</param>
+	/// <param name="views">The cockpit's views of the player's machine; null for the free camera only.</param>
+	/// <param name="title">The window's title.</param>
 	/// <param name="tape">The tape being played, which the cockpit's mouse and the simulation read. Null when no tape is playing.</param>
 	/// <param name="recording">The tape being recorded. The simulation appends a frame to it on each input read. Null when nothing is recorded.</param>
 	/// <param name="host">The launcher's shared window. When null, this run opens a window of its own.</param>
-	/// <param name="devices">The six values from <c>resource.cfg</c> for step 3, which are passed to <c>Sound_Init</c>.</param>
+	/// <param name="devices">The six values from <c>resource.cfg</c> that <c>Sim_StartMission</c>'s step 3 passes to <c>Sound_Init</c>.</param>
 	/// <param name="silent">No audio device: the sound plays into nothing.</param>
 	/// <param name="menuLayer">The menu bar over the mission (the class summary).</param>
+	/// <returns>
+	/// The exit code <see cref="Es1Shutdown.Run"/> wrote when the mission ended; after a fatal assert in the tick
+	/// (<see cref="Es1FatalAssertException"/>), <see cref="Es1Shutdown.AssertCleanup"/>'s status; and 0 when the window closed
+	/// without the mission ending, since that runs no shutdown and writes no file.
+	/// </returns>
 	private static int Show(string installRoot, Es1Preferences preferences, GameContent content, Es1ZoneScene scene,
 			Es1World world, Es1CockpitViews? views, string title, Es1TapePlayback? tape, Es1TapeRecording? recording,
 			HostWindow? host, Es1SoundDevices devices, bool silent, MenuLayer menuLayer) {
@@ -650,7 +647,7 @@ public static class Es1MissionHost {
 
 			scene.Clouds?.Advance(deltaSeconds);
 
-			// The free camera's keys do nothing while you type in a menu bar field.
+			// The free camera's keys do nothing while a menu bar field is being typed into.
 			bool aidKeys = !window.ImGuiWantsKeyboard;
 
 			// After the pointer is grabbed, the first sample only re-syncs. See comments on lookNeedsResync in the mission editor's
@@ -672,7 +669,8 @@ public static class Es1MissionHost {
 				freeCamera.ApplyTo(camera);
 			}
 
-			// Hide or show the host cursor depending on where it's located.
+			// The host's pointer is hidden over the cockpit, where the cockpit's cursor stands in for it, and shown over the free
+			// camera and the menu bar.
 			if (mouse != null && !looking) {
 				var mode = !free && presenter != null && !window.ImGuiWantsMouse ? CursorMode.Hidden : CursorMode.Normal;
 				if (mouse.Cursor.CursorMode != mode) {
@@ -722,6 +720,16 @@ public static class Es1MissionHost {
 	/// and the impact effects (the two passes described by <see cref="Es1WorldDraw"/>), and last the effects' billboards.
 	/// The depth buffer is cleared between the passes so that no object is hidden by a shadow.
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="renderer">The renderer the shadows and objects are drawn with.</param>
+	/// <param name="sprites">The renderer the billboards are drawn with.</param>
+	/// <param name="backdrop">The sky and ground drawn behind the shadows; null for none.</param>
+	/// <param name="draw">The world's items.</param>
+	/// <param name="camera">The camera the view is drawn from.</param>
+	/// <param name="x">The viewport's left, in framebuffer pixels.</param>
+	/// <param name="y">The viewport's bottom, in framebuffer pixels.</param>
+	/// <param name="width">The viewport's width.</param>
+	/// <param name="height">The viewport's height.</param>
 	private static void DrawWorld(Silk.NET.OpenGL.GL gl, SceneRenderer renderer, SpriteRenderer sprites, Es1Backdrop? backdrop,
 			Es1WorldDraw draw, Camera camera, int x, int y, int width, int height) {
 		renderer.Backdrop = backdrop;
@@ -733,13 +741,21 @@ public static class Es1MissionHost {
 	}
 
 	/// <summary>
-	/// Draws a camera's view into a cockpit rect of <paramref name="size"/> screen pixels, in <paramref name="viewport"/>. The
-	/// <paramref name="camera"/> is placed and projected as <paramref name="view"/> says. What it draws depends on the view's scene:
-	/// for <see cref="Es1RectScene.FlatZoneShapes"/>, <see cref="Es1WorldDraw.FlatZoneShapes"/> with no backdrop; for
+	/// Draws a camera's view into a cockpit rect. What it draws depends on the view's scene: for
+	/// <see cref="Es1RectScene.FlatZoneShapes"/>, <see cref="Es1WorldDraw.FlatZoneShapes"/> with no backdrop; for
 	/// <see cref="Es1RectScene.HddMapZoneShapes"/>, <see cref="Es1WorldDraw.HddMapZoneShapes"/> the same way; for
-	/// <see cref="Es1RectScene.MissileCamera"/>, the forward view's pass (<see cref="DrawWorld"/>) over
-	/// <paramref name="missileHorizon"/>, with the items placed for the camera (<see cref="Es1WorldDraw.DrawFlatView"/>).
+	/// <see cref="Es1RectScene.MissileCamera"/>, the forward view's pass (<see cref="DrawWorld"/>) over the missile camera's
+	/// horizon, with the items placed for the camera (<see cref="Es1WorldDraw.DrawFlatView"/>).
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="renderer">The renderer the items are drawn with.</param>
+	/// <param name="sprites">The renderer the missile camera's billboards are drawn with.</param>
+	/// <param name="draw">The world's items.</param>
+	/// <param name="missileHorizon">The missile camera's horizon; null for none.</param>
+	/// <param name="camera">The rect's own camera, placed and projected as <paramref name="view"/> says.</param>
+	/// <param name="view">The rect's view.</param>
+	/// <param name="size">The rect's size, in screen pixels.</param>
+	/// <param name="viewport">Where the rect is drawn, in framebuffer pixels.</param>
 	private static void DrawRectView(Silk.NET.OpenGL.GL gl, SceneRenderer renderer, SpriteRenderer sprites, Es1WorldDraw draw,
 			Es1Backdrop? missileHorizon, Camera camera, Es1RectView view, (int Width, int Height) size,
 			(int X, int Y, int Width, int Height) viewport) {

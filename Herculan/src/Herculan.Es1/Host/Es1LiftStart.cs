@@ -42,11 +42,8 @@ internal static class Es1LiftStart {
 
 	/// <summary>
 	/// <b>This engine's own:</b> the host time a pass's drawing stands for, three PC timer interrupts (about 25 ms), after
-	/// which the frame's end waits for the next retrace. The port draws in no time, so each pass's
-	/// <c>Vga_WaitVerticalRetrace</c>, which ends at once while a retrace is in progress, would otherwise end inside the
-	/// retrace the last pass's wait ended on, and all 115 passes would run in one host frame. Retail's pass took as long as
-	/// the machine drew it; this gives it the play frame's minimum on the hardware of its day, so the ride lasts about
-	/// 3.3 s (115 passes of two 70 Hz retraces). The user's choice, plan decision 24
+	/// which the frame's end waits for the next retrace. Without it each pass's wait would end inside the retrace the last
+	/// one ended on, and every pass would run in one host frame. Plan decision 24
 	/// (docs/herculan/plan-es1-first-mission.md#decisions); listed in <c>KNOWN_ISSUES_ES1.md</c>.
 	/// </summary>
 	public static TimeSpan PassDrawTime => TimeSpan.FromSeconds(Es1SimClock.InterruptsPerTick / (double)Es1SimClock.InterruptsPerSecond);
@@ -55,11 +52,12 @@ internal static class Es1LiftStart {
 	public const int FirstSpan = 0x20, SecondSpan = 0x40, SpanLength = 0x10;
 
 	/// <summary>
-	/// Step 14's search (docs/es1/simulation/lift-start.md#when-it-runs): <c>g_BasePool</c> oldest first, stopping at the
-	/// first structure whose group has side 0 and whose point lies less than <see cref="GateDistance"/> from
-	/// <c>LocalPlayerMech</c>'s (<c>Math_DistanceBetweenPoints</c>). With no machine, which retail always has, none; a
-	/// structure with no group, whose side retail reads through the null, is passed over: engine guards.
+	/// Step 14's search of the structures for one of the player's side within <see cref="GateDistance"/>
+	/// (docs/es1/simulation/lift-start.md#when-it-runs). With no machine, which retail always has, none; a structure with no
+	/// group, whose side retail reads through the null, is passed over: engine guards.
 	/// </summary>
+	/// <param name="globals">The simulation whose structures and machine are searched.</param>
+	/// <returns>Whether the mission opens with the lift.</returns>
 	public static bool Gate(Es1SimGlobals globals) {
 		if (globals.LocalPlayerMech is not { } player) {
 			return false;
@@ -75,15 +73,11 @@ internal static class Es1LiftStart {
 	}
 
 	/// <summary>
-	/// <c>LiftStart_DarkenPalette</c> (docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4)
-	/// on <paramref name="loop"/>'s live palette: <c>PitchGradient_ForcedStep</c> 8 and the pitch gradient
-	/// (<see cref="Es1FrameLoop.BlendPitchGradient"/>), so entries 64–79 hold its step 8; the live palette's entries then
-	/// copied into a bright and a dark set; the dark set's two spans rewritten from the bright one, red = green / 2,
-	/// green = red / 2, blue = red / 2 and the top byte 1, and installed through <see cref="Es1FrameLoop.InstallPaletteRange"/>;
-	/// the cross fade from the dark set to the bright over <see cref="FadeLength"/>; and <c>PitchGradient_Enabled</c>
-	/// cleared. The two palette objects retail builds around the sets are the sets here. With no live palette, which
-	/// retail always has, nothing but the two flags and the gradient.
+	/// <c>LiftStart_DarkenPalette</c> (docs/es1/simulation/lift-start.md#the-darkening--liftstart_darkenpalette-00057cf4).
+	/// The two palette objects retail builds around the bright and dark sets are the sets here. With no live palette, which
+	/// retail always has, nothing but the two flags and the gradient: an engine guard.
 	/// </summary>
+	/// <param name="loop">The frame loop whose live palette is darkened and whose fade starts.</param>
 	public static void DarkenPalette(Es1FrameLoop loop) {
 		var globals = loop.Views.Cockpit.Globals;
 		var install = loop.InstallPaletteRange;
@@ -113,20 +107,9 @@ internal static class Es1LiftStart {
 
 	/// <summary>
 	/// <c>LiftStart_Rise</c> (docs/es1/simulation/lift-start.md#the-ride--liftstart_rise-00057ffc) on
-	/// <paramref name="loop"/>'s frames, yielding each wait for the monitor. Each pass from <see cref="Depth"/> below the
-	/// machine's height, rising <see cref="Rise"/>, while short of it: the machine at the pass's height, <c>Cam_Update</c>
-	/// and <c>Raster_InstallViewProjection</c>; the row the view point (0, <see cref="RowPointAhead"/>, −camera z)
-	/// projects to; the render context's bottom cut to the row, or to its top while the row is below 1, for
-	/// <c>Sim_RenderFrame</c> and put back; with the context's pair at 0, the art at (0, row) and the
-	/// <see cref="FillColor"/> fills, the whole rect while the art lies above its top, from the art's bottom edge while it
-	/// ends above its bottom; the gunsight's per-frame update; the pass's drawing standing <see cref="PassDrawTime"/>; while <c>LiftStart_FadeRemaining</c> is set and the row is
-	/// greater than <see cref="FadeRow"/> the fade's step, its answer kept there; and <c>Sim_EndFrame</c>. Then the
-	/// machine back at its height and the jolt: <c>CockpitView_SetShakeBand</c>(<see cref="JoltBand"/>), then until the
-	/// clock reaches its value then plus <see cref="JoltLength"/>, <c>CockpitView_StepShake</c> by the presentation
-	/// generator's next word mod <see cref="JoltSpread"/> and <c>Sim_RenderFrame</c>, each pass standing at the waits its
-	/// page moves owe, which <c>Sim_RenderFrame</c> pays before it draws, or, with none, until the next host frame (plan
-	/// decision 11); <c>CockpitView_ClearShake</c> and
-	/// <c>PitchGradient_Enabled</c> set.
+	/// <paramref name="loop"/>'s frames, the jolt at its top included. Each pass's drawing stands <see cref="PassDrawTime"/>
+	/// before its frame's end. A jolt pass stands at the waits its page moves owe, which <c>Sim_RenderFrame</c> pays
+	/// before it draws, or, with none, until the next host frame (plan decision 11).
 	/// <para><b>This engine's own</b> (plan decision 30): the canvas's side panels draw each pass's cut, art and fills too
 	/// (<see cref="Es1ViewManager.CanvasOverlay"/>). The canvas is held through each pass's drawing time
 	/// (<see cref="Es1ViewManager.CanvasHeld"/>), while the screen still shows the previous pass, and drawn just before
@@ -138,6 +121,10 @@ internal static class Es1LiftStart {
 	/// <para>With no machine or camera, which retail always has, nothing; with no art, which retail reads unchecked, no
 	/// art and no fill under it, the fill over the whole rect still drawn: engine guards.</para>
 	/// </summary>
+	/// <param name="loop">The frame loop the ride draws through.</param>
+	/// <param name="art">The art's first frame, <c>dba\intro</c>'s, drawn under the row.</param>
+	/// <param name="frozen">Read at each pass's frame end: <c>Sim_Frozen</c>, given to <see cref="IEs1Frame.EndFrame"/>.</param>
+	/// <returns>The ride's waits, in order: for the monitor, for host time and for the next host frame.</returns>
 	public static IEnumerable<Es1Wait> RunRise(Es1FrameLoop loop, DynamixBitmap? art, Func<bool> frozen) {
 		var views = loop.Views;
 		var globals = views.Cockpit.Globals;
@@ -214,22 +201,30 @@ internal static class Es1LiftStart {
 	}
 
 	/// <summary>
-	/// The row the view point (0, <see cref="RowPointAhead"/>, −<paramref name="camera"/>'s height) projects to through
-	/// <paramref name="projection"/>, which does not depend on the camera's angles
-	/// (docs/es1/simulation/lift-start.md#the-ride--liftstart_rise-00057ffc).
+	/// The row the view point (0, <see cref="RowPointAhead"/>, −camera height) projects to, which does not depend on the
+	/// camera's angles (docs/es1/simulation/lift-start.md#the-ride--liftstart_rise-00057ffc).
 	/// </summary>
+	/// <param name="projection">The installed view projection.</param>
+	/// <param name="camera">The camera whose height the point takes.</param>
+	/// <returns>The screen row the point projects to.</returns>
 	private static int Row(Es1ViewProjection projection, Es1Camera camera) =>
 		projection.ProjectToScreen(Es1ViewProjection.PerspectiveDivide(new Vec3i(0, RowPointAhead, -camera.Position.Z))).Y;
 
-	/// <summary><paramref name="window"/> with its bottom cut to <paramref name="row"/>, or to its top while the row is below 1.</summary>
+	/// <summary>The window with its bottom cut to the row, or to its top while the row is below 1.</summary>
+	/// <param name="window">The window to cut.</param>
+	/// <param name="row">The ride's row.</param>
+	/// <returns>The cut window.</returns>
 	private static Es1ViewWindow Cut(Es1ViewWindow window, int row) =>
 		window with { Y1 = row < 1 ? window.Y0 : Math.Min(row, window.Y1) };
 
 	/// <summary>
-	/// The art and the <see cref="FillColor"/> fills for <paramref name="row"/> through <paramref name="canvas"/>, at page
-	/// coordinates: the whole of <paramref name="window"/>'s rect while the art lies above its top; the art at (0, row)
-	/// and the fill from the art's bottom edge, from column 0, while it ends above its bottom; the art alone otherwise.
+	/// The art and the <see cref="FillColor"/> fills, at page coordinates
+	/// (docs/es1/simulation/lift-start.md#the-ride--liftstart_rise-00057ffc).
 	/// </summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="window">The window whose rect the fills cover, its bottom uncut.</param>
+	/// <param name="art">The art, or <see langword="null"/> for none.</param>
+	/// <param name="row">The ride's row, the art's top.</param>
 	private static void DrawArt(Es1SceneCanvas canvas, Es1ViewWindow window, DynamixBitmap? art, int row) {
 		int artRows = art?.Rows ?? 0;
 		if (row + artRows < window.Y0) {
