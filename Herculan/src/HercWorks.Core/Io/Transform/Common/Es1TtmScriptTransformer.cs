@@ -48,10 +48,12 @@ public class Es1TtmScriptTransformer : ByteTransformer<Es1TtmScript> {
 	}
 
 	/// <summary>
-	/// Run-length decodes <paramref name="length"/> bytes as <c>RLERStream_Read</c> does (docs/retail/runtime-library.md#the-decompression-filters):
+	/// Run-length decodes a number of bytes as <c>RLERStream_Read</c> does (docs/retail/runtime-library.md#the-decompression-filters):
 	/// a control byte with bit 7 set is a run of its low seven bits' copies of the byte after it, one with bit 7 clear that many
 	/// literal bytes. It reads no control byte once the length is reached.
 	/// </summary>
+	/// <param name="packed">The packed bytes.</param>
+	/// <param name="length">The number of bytes to decode.</param>
 	/// <param name="read">The packed bytes read.</param>
 	/// <exception cref="InvalidDataException">The packed bytes end first.</exception>
 	public static byte[] Unpack(ReadOnlySpan<byte> packed, int length, out int read) {
@@ -99,18 +101,22 @@ public class Es1TtmScriptTransformer : ByteTransformer<Es1TtmScript> {
 	}
 
 	/// <summary>
-	/// Where each of <paramref name="pageCount"/> pages starts in an unpacked <paramref name="script"/>, found as
+	/// Where each page starts in an unpacked script, found as
 	/// <c>TtmScript_IndexPages</c> (<c>ES1GO 000480d1</c>) finds them; null where <see cref="ReadPages"/> is.
 	/// </summary>
+	/// <param name="script">The unpacked script.</param>
+	/// <param name="pageCount">The number of pages.</param>
 	public static int[]? IndexPages(byte[] script, int pageCount) =>
 		ReadPages(script, pageCount)?.Select(page => page[0].Offset).ToArray();
 
 	/// <summary>
-	/// The commands of each of <paramref name="pageCount"/> pages of an unpacked <paramref name="script"/>, each page ending with
+	/// The commands of each page of an unpacked script, each page ending with
 	/// its <see cref="Es1TtmCommand.EndFrame"/>, divided as <c>TtmScript_IndexPages</c> (<c>ES1GO 000480d1</c>) divides them
 	/// (docs/es1/formats/ttm-scripts.md#pages); null where that walk fails, or where a command's arguments run past the script.
 	/// A string argument is decoded as Latin-1 up to its NUL.
 	/// </summary>
+	/// <param name="script">The unpacked script.</param>
+	/// <param name="pageCount">The number of pages.</param>
 	public static List<List<Es1TtmCommand>>? ReadPages(byte[] script, int pageCount) {
 		var pages = new List<List<Es1TtmCommand>>(pageCount);
 		int p = 0;

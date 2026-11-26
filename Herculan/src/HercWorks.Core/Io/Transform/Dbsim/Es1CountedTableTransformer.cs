@@ -18,7 +18,8 @@ public abstract class Es1CountedTableTransformer<TFile, TRecord> : ByteTransform
 	/// <summary>Writes one record, <see cref="RecordLength"/> bytes.</summary>
 	protected abstract void WriteRecord(BinaryWriter w, TRecord record);
 
-	/// <summary>The file holding <paramref name="records"/>.</summary>
+	/// <summary>The file holding some records.</summary>
+	/// <param name="records">The records.</param>
 	protected abstract TFile Create(TRecord[] records);
 
 	/// <summary>The file's records, in file order.</summary>

@@ -176,9 +176,11 @@ public class Es1GunsightTests {
 	/// <summary>
 	/// The view manager on a 320 × 200 canvas whose <c>.GAU</c> puts the tape at (40, 10)–(280, 25), the reticle at (160,
 	/// 70) and the click surface at (53, 0)–(266, 117), with a nine-frame tick bank and seven distinct cursors, for a
-	/// player at the origin, or <paramref name="player"/> in <paramref name="globals"/>. Every view's window is rows 0–140
-	/// of the screen, its clip region the same, and its projection centre (160, 70).
+	/// player at the origin, or a given one. Every view's window is rows 0–140 of the screen, its clip region the same, and its
+	/// projection centre (160, 70).
 	/// </summary>
+	/// <param name="globals">The simulation globals the player is in, or null for fresh ones.</param>
+	/// <param name="player">The player's machine, or null for one at the origin.</param>
 	internal static TestRig Rig(Es1SimGlobals? globals = null, Es1Mech? player = null) {
 		var records = new (int X, int Y)[] { (0, 0), (0, 197), (320, 0), (-320, 0) }
 			.Select(origin => new Vue.Entry {

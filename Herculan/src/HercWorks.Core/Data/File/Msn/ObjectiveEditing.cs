@@ -69,33 +69,43 @@ public static class ObjectiveEditing {
 	public const short NewPairCounter = 52;
 	public const short NewPairOp = CounterIncrement;
 
-	/// <summary>Row-17 record <paramref name="record"/>, throwing for one the row does not have.</summary>
+	/// <summary>A row-17 record, throwing for one the row does not have.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
 	public static MissionObjective58 Record(MissionDocument document, int record) =>
 		document.Mission.Objectives is { } row && record >= 0 && record < row.Length && row[record] is { } found
 			? found
 			: throw new InvalidOperationException($"There is no objective record {record}.");
 
-	/// <summary>How many of <paramref name="objective"/>'s counter pairs are filled, from the first.</summary>
+	/// <summary>How many of an objective's counter pairs are filled, from the first.</summary>
+	/// <param name="objective">The objective.</param>
 	public static int FilledPairs(MissionObjective58 objective) =>
 		Array.FindLastIndex(objective.Pairs, pair => pair.CounterRef != -1 || pair.Op != -1) + 1;
 
 	/// <summary>
-	/// Why no objective can be created about <paramref name="kind"/>'s GUID <paramref name="subject"/>, or null when one can: a
+	/// Why no objective can be created about a GUID of a kind, or null when one can: a
 	/// subject no record carries, a mission file that ends inside its objectives (<c>DEMO2</c>), and the three
 	/// lines of its failure text taking the mission's text past <see cref="MissionTextEditing.LineCap"/>.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="kind">The subject's kind.</param>
+	/// <param name="subject">The subject's GUID.</param>
 	public static string? WhyNoCreate(MissionDocument document, short kind, short subject) =>
 		document.Mission.TruncatedRow17Tail != null ? "The mission file ends inside its objectives."
 			: WhyNoSubject(document, kind, subject) ?? MissionTextEditing.WhyNoLines(document, MissionTextEditing.FailureLines);
 
 	/// <summary>
-	/// Appends an objective about <paramref name="kind"/>'s GUID <paramref name="subject"/>, answering its row-17 index in
-	/// <paramref name="record"/>. The record is the editor's default: unconditioned, mandatory, condition 1 (the subject is
+	/// Appends an objective about a GUID of a kind, answering its row-17 index. The record is the editor's default:
+	/// unconditioned, mandatory, condition 1 (the subject is
 	/// destroyed or written off), no route, no counter writes, the dead point <c>0x0A</c> <c>-1</c> as in all 127 retail
 	/// records, and a failure text of three new unconditioned <c>.ENG</c> records with consecutive new ids and no text,
 	/// which the author fills in (the editor's choice). The unused pairs are <c>-1</c>/<c>-1</c>, as every retail record's
 	/// (<c>HercWorks.Query values --row 17 --field Pairs[5]</c>).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="kind">The subject's kind.</param>
+	/// <param name="subject">The subject's GUID.</param>
+	/// <param name="record">The new record's index in row 17.</param>
 	public static MsnEdit Create(MissionDocument document, short kind, short subject, out int record) {
 		if (WhyNoCreate(document, kind, subject) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -118,15 +128,19 @@ public static class ObjectiveEditing {
 		return change;
 	}
 
-	/// <summary>Why row-17 record <paramref name="record"/> cannot be deleted, or null when it can.</summary>
+	/// <summary>Why a row-17 record cannot be deleted, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
 	public static string? WhyNoDelete(MissionDocument document, int record) =>
 		document.Mission.TruncatedRow17Tail != null ? "The mission file ends inside its objectives." : null;
 
 	/// <summary>
-	/// Removes row-17 record <paramref name="record"/>, the <c>.ENG</c> records of each id of its failure text that no
+	/// Removes a row-17 record, the <c>.ENG</c> records of each id of its failure text that no
 	/// field of rows 4, 5, 10 and 17 references any more, whatever its record's condition, and its point when nothing names
 	/// it any more (<see cref="RouteEditing.RemoveLeftBehind"/>).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
 	public static MsnEdit Delete(MissionDocument document, int record) {
 		if (WhyNoDelete(document, record) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -141,14 +155,20 @@ public static class ObjectiveEditing {
 		});
 	}
 
-	/// <summary>Makes row-17 record <paramref name="record"/> mandatory, or a failure condition.</summary>
+	/// <summary>Makes a row-17 record mandatory, or a failure condition.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="mandatory">True for mandatory, false for a failure condition.</param>
 	public static MsnEdit SetRequired(MissionDocument document, int record, bool mandatory) =>
 		Write(document, record, objective => objective.Required = mandatory ? Mandatory : Failure);
 
 	/// <summary>
-	/// Sets row-17 record <paramref name="record"/>'s condition, one of <see cref="Conditions"/>. A change to condition 0 on a
+	/// Sets a row-17 record's condition, one of <see cref="Conditions"/>. A change to condition 0 on a
 	/// record with no route gives it the route its subject's group's slot-0 order runs, when that order runs one.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="code">The condition's code.</param>
 	public static MsnEdit SetCondition(MissionDocument document, int record, short code) {
 		if (!Conditions.Contains(code)) {
 			throw new ArgumentOutOfRangeException(nameof(code), code, "A condition is 0 to 4 or 6 to 10.");
@@ -170,7 +190,10 @@ public static class ObjectiveEditing {
 		});
 	}
 
-	/// <summary>Why <paramref name="kind"/>'s GUID <paramref name="subject"/> cannot be an objective's subject, or null.</summary>
+	/// <summary>Why a GUID of a kind cannot be an objective's subject, or null.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="kind">The subject's kind.</param>
+	/// <param name="subject">The subject's GUID.</param>
 	public static string? WhyNoSubject(MissionDocument document, short kind, short subject) {
 		int? row = kind switch { GroupSubject => 16, HercSubject => 12, StructureSubject => 14, _ => null };
 		if (row == null) {
@@ -180,7 +203,11 @@ public static class ObjectiveEditing {
 		return document.Layout.Entry(row.Value, subject) == null ? "It is not in the mission." : null;
 	}
 
-	/// <summary>Sets row-17 record <paramref name="record"/>'s subject: a group, herc or structure GUID of <paramref name="kind"/>.</summary>
+	/// <summary>Sets a row-17 record's subject: a group, herc or structure GUID of a kind.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="kind">The subject's kind.</param>
+	/// <param name="subject">The subject's GUID.</param>
 	public static MsnEdit SetSubject(MissionDocument document, int record, short kind, short subject) {
 		if (WhyNoSubject(document, kind, subject) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -192,15 +219,20 @@ public static class ObjectiveEditing {
 		});
 	}
 
-	/// <summary>Sets row-17 record <paramref name="record"/>'s route, a row-8 GUID, or <c>-1</c> for none.</summary>
+	/// <summary>Sets a row-17 record's route, a row-8 GUID, or <c>-1</c> for none.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="route">The route's row-8 GUID, or <c>-1</c> for none.</param>
 	public static MsnEdit SetRoute(MissionDocument document, int record, short route) =>
 		Write(document, record, objective => objective.RouteRef = route);
 
 	/// <summary>
-	/// The row-16 GUID of the group whose orders <paramref name="objective"/>'s condition 0 reads, from the layout: its subject
+	/// The row-16 GUID of the group whose orders an objective's condition 0 reads, from the layout: its subject
 	/// group, or the first group whose base names its subject herc, flyer or structure as a member
 	/// (<see cref="LayoutPresence.Group"/>); <c>-1</c> for none.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="objective">The objective.</param>
 	public static short SubjectGroup(MissionDocument document, MissionObjective58 objective) {
 		var layout = document.Layout;
 		if (objective.SubjectKind == GroupSubject) {
@@ -212,9 +244,11 @@ public static class ObjectiveEditing {
 	}
 
 	/// <summary>
-	/// The routes, by row-8 GUID, that row-17 record <paramref name="record"/>'s condition 0 can be about: those its subject's
+	/// The routes, by row-8 GUID, that a row-17 record's condition 0 can be about: those its subject's
 	/// group's order slots run (<see cref="SubjectGroup"/>), in slot order, once each, from the layout.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
 	public static IReadOnlyList<short> RouteChoices(MissionDocument document, int record) {
 		short group = SubjectGroup(document, Record(document, record));
 		if (group == -1) {
@@ -228,11 +262,15 @@ public static class ObjectiveEditing {
 			.ToList();
 	}
 
-	/// <summary>Why no counter write can be added to row-17 record <paramref name="record"/>, or null when one can.</summary>
+	/// <summary>Why no counter write can be added to a row-17 record, or null when one can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
 	public static string? WhyNoAddPair(MissionDocument document, int record) =>
 		FilledPairs(Record(document, record)) >= Pairs ? $"It already lists {Pairs} campaign variable changes, the most it can hold." : null;
 
-	/// <summary>Adds a counter write after row-17 record <paramref name="record"/>'s last (<see cref="NewPairCounter"/>, <see cref="NewPairOp"/>).</summary>
+	/// <summary>Adds a counter write after a row-17 record's last (<see cref="NewPairCounter"/>, <see cref="NewPairOp"/>).</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
 	public static MsnEdit AddPair(MissionDocument document, int record) {
 		if (WhyNoAddPair(document, record) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -247,9 +285,13 @@ public static class ObjectiveEditing {
 	}
 
 	/// <summary>
-	/// Sets row-17 record <paramref name="record"/>'s counter write <paramref name="slot"/>, a filled one, to counter
-	/// <paramref name="counter"/>, 0 to <see cref="Counters"/> - 1, and operation <paramref name="op"/>, 4 to 7.
+	/// Sets a filled counter write of a row-17 record to a counter, 0 to <see cref="Counters"/> - 1, and an operation, 4 to 7.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="slot">The counter write's slot.</param>
+	/// <param name="counter">The counter, 0 to <see cref="Counters"/> - 1.</param>
+	/// <param name="op">The operation, 4 to 7.</param>
 	public static MsnEdit SetPair(MissionDocument document, int record, int slot, short counter, short op) {
 		if (slot < 0 || slot >= FilledPairs(Record(document, record))) {
 			throw new InvalidOperationException($"There is no campaign variable write {slot + 1}.");
@@ -269,7 +311,10 @@ public static class ObjectiveEditing {
 		});
 	}
 
-	/// <summary>Removes row-17 record <paramref name="record"/>'s counter write <paramref name="slot"/>, moving every later one up.</summary>
+	/// <summary>Removes a counter write of a row-17 record, moving every later one up.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
+	/// <param name="slot">The counter write's slot.</param>
 	public static MsnEdit RemovePair(MissionDocument document, int record, int slot) {
 		int filled = FilledPairs(Record(document, record));
 		if (slot < 0 || slot >= filled) {
@@ -288,11 +333,15 @@ public static class ObjectiveEditing {
 		});
 	}
 
-	/// <summary>Why row-17 record <paramref name="record"/> cannot be given a failure text, or null when it can.</summary>
+	/// <summary>Why a row-17 record cannot be given a failure text, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
 	public static string? WhyNoText(MissionDocument document, int record) =>
 		Record(document, record).TextRef != -1 ? "It has a failure text." : MissionTextEditing.WhyNoLines(document, MissionTextEditing.FailureLines);
 
-	/// <summary>Gives row-17 record <paramref name="record"/>, which has none, a failure text of three new empty lines, as <see cref="Create"/> does.</summary>
+	/// <summary>Gives a row-17 record, which has none, a failure text of three new empty lines, as <see cref="Create"/> does.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record's index in row 17.</param>
 	public static MsnEdit GiveText(MissionDocument document, int record) {
 		if (WhyNoText(document, record) is { } reason) {
 			throw new InvalidOperationException(reason);

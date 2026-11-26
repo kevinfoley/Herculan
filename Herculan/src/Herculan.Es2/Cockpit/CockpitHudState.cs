@@ -199,10 +199,11 @@ public readonly record struct CockpitHudState(
 	IReadOnlyList<int>? WeaponPaintOrder = null) {
 
 	/// <summary>
-	/// Whether <paramref name="id"/> is in its pressed state, the original's state byte <c>+0x1b</c> at 1: held
+	/// Whether a widget is in its pressed state, the original's state byte <c>+0x1b</c> at 1: held
 	/// under the pointer, or flashing from a press made for the player. Only the buttons whose paint reads that
 	/// byte draw it (docs/retail/simulation/cockpit-input.md#the-press-flash).
 	/// </summary>
+	/// <param name="id">The widget.</param>
 	public bool ShowsPressed(CockpitWidgetId id) =>
 		PressedWidget == id || (FlashingWidgets?.Contains(id) ?? false);
 

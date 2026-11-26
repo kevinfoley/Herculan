@@ -221,7 +221,9 @@ public class Es1ControlsPanelTests {
 			return passes;
 		}
 
-		/// <summary>One pass of a loop after <paramref name="key"/> is queued, none for 0; fails when the loop has ended.</summary>
+		/// <summary>One pass of a loop after a key is queued, none for 0; fails when the loop has ended.</summary>
+		/// <param name="passes">The loop to pass.</param>
+		/// <param name="key">The key to queue, or 0 for none.</param>
 		public void Pass(IEnumerator<Es1Wait> passes, ushort key) {
 			if (key != 0) {
 				Keys.Keyboard.Queue.Push(key);

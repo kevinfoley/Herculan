@@ -56,7 +56,7 @@ public static class MfdLayout {
 	public const string Bank = "MFD";
 
 	/// <summary>
-	/// The screen background frame for <paramref name="mode"/>, or null when that screen draws no
+	/// The screen background frame for a mode, or null when that screen draws no
 	/// background at all.
 	///
 	/// <para>Frames 0-2 are three pieces of screen chrome: frame 0 is split into two boxes by a
@@ -75,6 +75,7 @@ public static class MfdLayout {
 	/// vertical border at panel x 100-101 — exactly frame 2's box edge at frame-local x 64-65 plus the
 	/// <see cref="ScreenInsetX"/> offset.</para>
 	/// </summary>
+	/// <param name="mode">The MFD's mode.</param>
 	public static int? BackgroundFrame(MfdMode mode) => mode switch {
 		MfdMode.Status or MfdMode.FlashComm or MfdMode.TargetStatus => 1,
 		MfdMode.Scanner => 2,

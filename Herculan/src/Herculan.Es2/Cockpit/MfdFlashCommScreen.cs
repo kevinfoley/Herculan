@@ -20,10 +20,12 @@ public readonly record struct MfdFlashCommState(
 		Enumerable.Range(0, MfdLayout.FlashCommRowCount).ToArray(),
 		Enumerable.Repeat(true, MfdLayout.FlashCommRowCount).ToArray());
 
-	/// <summary>Row <paramref name="row"/>'s verb, or -1 when the snapshot does not cover it.</summary>
+	/// <summary>A row's verb, or -1 when the snapshot does not cover it.</summary>
+	/// <param name="row">The row.</param>
 	public int Verb(int row) => Verbs is { } verbs && row >= 0 && row < verbs.Count ? verbs[row] : -1;
 
-	/// <summary>Whether row <paramref name="row"/> can be taken. A row outside the snapshot is not.</summary>
+	/// <summary>Whether a row can be taken. A row outside the snapshot is not.</summary>
+	/// <param name="row">The row.</param>
 	public bool CanTake(int row) => Available is { } available && row >= 0 && row < available.Count && available[row];
 }
 
@@ -82,18 +84,21 @@ public sealed class MfdFlashCommScreen {
 	/// </summary>
 	public int Row => _row;
 
-	/// <summary>Whether the squad can currently take row <paramref name="row"/>'s order.</summary>
+	/// <summary>Whether the squad can currently take a row's order.</summary>
+	/// <param name="row">The row.</param>
 	public bool Available(int row) =>
 		row >= 0 && row < RowCount && (_state[row] & UnavailableBit) == 0;
 
-	/// <summary>Whether row <paramref name="row"/> is showing its second verb.</summary>
+	/// <summary>Whether a row is showing its second verb.</summary>
+	/// <param name="row">The row.</param>
 	public bool Toggled(int row) =>
 		row >= 0 && row < RowCount && (_state[row] & ToggledBit) != 0;
 
 	/// <summary>
-	/// The <c>STRINGS0.STR</c> group 0 index row <paramref name="row"/> currently names —
+	/// The <c>STRINGS0.STR</c> group 0 index a row currently names —
 	/// <c>MfdFlashComm_SelectedVerb</c>'s arithmetic for an arbitrary row.
 	/// </summary>
+	/// <param name="row">The row.</param>
 	public int VerbOf(int row) =>
 		row < 0 || row >= RowCount ? 0 : row + (Toggled(row) ? ToggledVerbStep : 0);
 
@@ -195,10 +200,11 @@ public sealed class MfdFlashCommScreen {
 	}
 
 	/// <summary>
-	/// The row a click at <paramref name="deviceX"/>, <paramref name="deviceY"/> — measured from the
-	/// inset origin — lands on, or -1 for none. <c>MfdFlashComm_HandleListClick</c> hit-tests the six row rects
+	/// The row a click lands on, or -1 for none. <c>MfdFlashComm_HandleListClick</c> hit-tests the six row rects
 	/// inclusively on all four edges and does nothing outside them.
 	/// </summary>
+	/// <param name="deviceX">The click's X in device pixels, measured from the inset origin.</param>
+	/// <param name="deviceY">The click's Y in device pixels, measured from the inset origin.</param>
 	public static int RowAt(float deviceX, float deviceY) {
 		var rows = MfdLayout.FlashCommRows;
 		if (deviceX < rows.X0 || deviceX > rows.X1) {

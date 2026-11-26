@@ -56,13 +56,15 @@ public sealed class AlertPanelFocus {
 	/// <summary>The focused widget, or -1.</summary>
 	public int Index { get; private set; } = -1;
 
-	/// <summary>Widget <paramref name="index"/>'s rect, in panel-local device pixels: what <see cref="PanelPadFocus"/> steps the focus by.</summary>
+	/// <summary>A widget's rect, in panel-local device pixels: what <see cref="PanelPadFocus"/> steps the focus by.</summary>
+	/// <param name="index">The widget's index.</param>
 	public AlertPanelLayout.Rect RectOf(int index) => _rect(index);
 
 	/// <summary>
-	/// <c>AlertPanel_SetFocus</c>: focuses <paramref name="index"/> and asks for the pointer at the centre of its
+	/// <c>AlertPanel_SetFocus</c>: focuses a widget and asks for the pointer at the centre of its
 	/// rect. A greyed widget takes the focus like any other; pressing it is what refuses it.
 	/// </summary>
+	/// <param name="index">The widget's index.</param>
 	public void Set(int index) {
 		Index = index;
 		var rect = _rect(index);
@@ -90,9 +92,11 @@ public sealed class AlertPanelFocus {
 	}
 
 	/// <summary>
-	/// The handler's key switch. <paramref name="press"/> is <c>AlertPanel_PressWidget</c> (<c>00454dcc</c>) for the
-	/// widget it is given, and <paramref name="cancel"/> the widget [Esc] presses, <c>panel+0x2fb</c>.
+	/// The handler's key switch.
 	/// </summary>
+	/// <param name="key">The key.</param>
+	/// <param name="cancel">The widget [Esc] presses, <c>panel+0x2fb</c>.</param>
+	/// <param name="press"><c>AlertPanel_PressWidget</c> (<c>00454dcc</c>) for the widget it is given.</param>
 	/// <returns>Whether the key was one the handler answers.</returns>
 	public bool AnswerKey(AlertPanelKey key, int cancel, Action<int> press) {
 		switch (key) {

@@ -25,10 +25,14 @@ public static class OwnHeadings {
 	private const int GroupRow = 16;
 	private const int HeadingRow = 7;
 
-	/// <summary>Whether a heading of row <paramref name="row"/>'s own is edited here: the structures' and the groups'.</summary>
+	/// <summary>Whether a row has a heading of its own that is edited here: the structures' and the groups'.</summary>
+	/// <param name="row">The row.</param>
 	public static bool Carries(int row) => row is StructureRow or GroupRow;
 
-	/// <summary>Row <paramref name="row"/>'s GUID <paramref name="guid"/>'s own heading in degrees; null when its base names none, or one the mission lacks.</summary>
+	/// <summary>A GUID's own heading in degrees; null when its base names none, or one the mission lacks.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
 	public static short? Degrees(MissionDocument document, int row, short guid) =>
 		DegreesOf(document, Field(row).Get(Entry(document, row, guid).Fields));
 
@@ -53,10 +57,13 @@ public static class OwnHeadings {
 	}
 
 	/// <summary>
-	/// Why row <paramref name="row"/>'s GUID <paramref name="guid"/>'s heading cannot be taken away, or null when it can: a
+	/// Why a GUID's heading cannot be taken away, or null when it can: a
 	/// group whose base's first order slot names no order, as DBSIM faults loading a group with neither
 	/// (<see cref="MissionCheckKind.NoHeadingNoOrder"/>).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
 	public static string? WhyNoNone(MissionDocument document, int row, short guid) =>
 		row == GroupRow && Entry(document, row, guid).Fields is MissionGroup164 group
 			&& document.Layout.Entry(OrderRow, group.OrderRefs[0]) == null
@@ -64,11 +71,15 @@ public static class OwnHeadings {
 			: null;
 
 	/// <summary>
-	/// Sets row <paramref name="row"/>'s GUID <paramref name="guid"/>'s own heading to <paramref name="degrees"/>, taken to 0
+	/// Sets a GUID's own heading, taken to 0
 	/// to 359, or with null takes it away, by the rules in the class summary. Throws <see cref="InvalidOperationException"/>
 	/// for a GUID no record carries, where <see cref="WhyNoNone"/> answers, and for null where a template the base picks
 	/// supplies a heading, which an overlay cannot unset.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="degrees">The heading in degrees, taken to 0 to 359, or null to take it away.</param>
 	public static MsnEdit Set(MissionDocument document, int row, short guid, short? degrees) {
 		var field = Field(row);
 		short named = field.Get(Entry(document, row, guid).Fields);
@@ -103,10 +114,12 @@ public static class OwnHeadings {
 	}
 
 	/// <summary>
-	/// Whether row-7 GUID <paramref name="heading"/> is one record, unconditioned and picking from no random table, that one field alone
+	/// Whether a row-7 GUID is one record, unconditioned and picking from no random table, that one field alone
 	/// names: the heading fields of rows 12, 13, 14 and 16, every record counted whatever its condition, templates
 	/// included. Such a record can be rewritten without turning anything else.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="heading">The row-7 GUID.</param>
 	public static bool Private(MissionDocument document, short heading) {
 		var records = (document.Mission.Headings ?? []).Where(record => record.GUID == heading).ToList();
 		if (records is not [{ ConditionRef: -1, RandomTableKey: -1 }]) {

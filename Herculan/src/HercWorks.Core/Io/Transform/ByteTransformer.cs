@@ -27,7 +27,8 @@ namespace HercWorks.Core.Io.Transform;
 /// </summary>
 /// <typeparam name="T">The parsed model this transformer reads and writes.</typeparam>
 public abstract class ByteTransformer<T> : ThreeSpaceByteTransformer where T : class {
-	/// <summary>Parses <paramref name="inputArray"/> into the model, or null if it cannot be read.</summary>
+	/// <summary>Parses bytes into the model, or null if they cannot be read.</summary>
+	/// <param name="inputArray">The bytes to parse, or null for none.</param>
 	public abstract T? Parse(byte[]? inputArray);
 
 	/// <summary>Serializes the model back to bytes, or null if it cannot be written.</summary>

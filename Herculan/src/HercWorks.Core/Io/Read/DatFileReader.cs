@@ -67,9 +67,11 @@ public static class DatFileReader {
 	}
 
 	/// <summary>
-	/// Replaces <paramref name="targetFile"/>'s content with <paramref name="newData"/>, keeping its existing header prefix.
+	/// Replaces a file's content with new data, keeping its existing header prefix.
 	/// The Java original ignored <c>newData</c> and spliced the header onto the file's own bytes; fixed here.
 	/// </summary>
+	/// <param name="newData">The new content.</param>
+	/// <param name="targetFile">The file to replace the content of.</param>
 	public static VolEntry ReplaceDatBytes(byte[] newData, DataFile targetFile) {
 		if (targetFile is not VolEntry entry) {
 			throw new Exception($"ERROR: file({targetFile.FileName}) was not a <VolEntry> object.");

@@ -41,9 +41,10 @@ public sealed class MissionGeneration {
 	public Func<Func<short, int>> NewRoll { get; }
 
 	/// <summary>
-	/// These inputs, but writing nothing over header words <paramref name="words"/>, which then keep what the mission's
+	/// These inputs, but writing nothing over some header words, which then keep what the mission's
 	/// row 2 patched.
 	/// </summary>
+	/// <param name="words">The header words to leave alone.</param>
 	public MissionGeneration WithoutOverwrite(params int[] words) {
 		var header = _header.ToArray();
 		foreach (int word in words) {
@@ -53,14 +54,18 @@ public sealed class MissionGeneration {
 		return new MissionGeneration(_flags, header, NewRoll);
 	}
 
-	/// <summary>Loads <paramref name="msn"/> and its <c>.ENG</c> <paramref name="text"/> with these inputs, the header words written over.</summary>
+	/// <summary>Loads a <c>.MSN</c> and its <c>.ENG</c> with these inputs, the header words written over.</summary>
+	/// <param name="msn">The <c>.MSN</c> file's bytes.</param>
+	/// <param name="text">The <c>.ENG</c> file's bytes, or null for none.</param>
 	public MissionGenerator Run(byte[] msn, byte[]? text) {
 		var generator = MissionGenerator.Load(msn, text, _flags.ToArray(), new short[MissionGenerator.ClearListLength], NewRoll());
 		WriteHeader(generator.Header, _header);
 		return generator;
 	}
 
-	/// <summary>Writes each of <paramref name="words"/> that is set over the same word of <paramref name="header"/>.</summary>
+	/// <summary>Writes each of a list of words that is set over the same word of a header.</summary>
+	/// <param name="header">The header to write over.</param>
+	/// <param name="words">The words, each null when unset.</param>
 	public static void WriteHeader(short[] header, IReadOnlyList<short?> words) {
 		for (int word = 0; word < words.Count && word < header.Length; word++) {
 			if (words[word] is { } value) {

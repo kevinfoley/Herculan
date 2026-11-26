@@ -71,10 +71,12 @@ public sealed class CockpitPowerUp {
 	}
 
 	/// <summary>
-	/// The sequence for a cockpit powering up at <paramref name="coarseTicks"/>. A flyer's comes back
+	/// The sequence for a cockpit powering up at a coarse tick. A flyer's comes back
 	/// finished, every widget armed and done — <c>Gau_BuildCockpitWidgets</c>' own branch on
 	/// <c>FlyerFlag</c>, the same one <see cref="HeadingTapeSweep.ForPowerUp"/> follows.
 	/// </summary>
+	/// <param name="pilot">The player's machine.</param>
+	/// <param name="coarseTicks">The coarse tick the power-up starts at.</param>
 	public static CockpitPowerUp ForPowerUp(MechObject pilot, long coarseTicks) {
 		ArgumentNullException.ThrowIfNull(pilot);
 		return new CockpitPowerUp(coarseTicks, finished: pilot.Type.IsFlyer);

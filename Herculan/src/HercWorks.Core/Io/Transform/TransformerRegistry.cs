@@ -313,20 +313,26 @@ public static class TransformerRegistry {
 	}
 
 	/// <summary>
-	/// A fresh transformer of the reader <paramref name="game"/>'s table binds under <paramref name="label"/>, whatever entry
+	/// A fresh transformer of the reader a game's table binds under a label, whatever entry
 	/// it is for, or null when the table has no such label.
 	/// </summary>
+	/// <param name="label">The label.</param>
+	/// <param name="game">The game whose table is searched.</param>
 	public static ThreeSpaceByteTransformer? CreateByLabel(string label, RetailGame game) =>
 		Tables[game].FirstOrDefault(r => r.Label == label)?.Create();
 
 	/// <summary>
-	/// Returns a fresh transformer instance for the given entry from <paramref name="game"/>'s table, or null if no known
+	/// Returns a fresh transformer instance for the given entry from a game's table, or null if no known
 	/// parser matches.
 	/// </summary>
+	/// <param name="entry">The entry.</param>
+	/// <param name="game">The game whose table is searched.</param>
 	public static ThreeSpaceByteTransformer? FindTransformer(VolEntry entry, RetailGame game = RetailGame.Earthsiege2) =>
 		Find(entry, game)?.Create();
 
-	/// <summary>Human-readable label for the matched file type in <paramref name="game"/>'s table, or null if no known parser matches.</summary>
+	/// <summary>Human-readable label for the matched file type in a game's table, or null if no known parser matches.</summary>
+	/// <param name="entry">The entry.</param>
+	/// <param name="game">The game whose table is searched.</param>
 	public static string? FindLabel(VolEntry entry, RetailGame game = RetailGame.Earthsiege2) =>
 		Find(entry, game)?.Label;
 

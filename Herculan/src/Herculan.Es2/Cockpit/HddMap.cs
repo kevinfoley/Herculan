@@ -175,11 +175,12 @@ public sealed class HddMapView {
 	}
 
 	/// <summary>
-	/// Re-centres on <paramref name="subject"/> and applies the clamp — the first thing
+	/// Re-centres on a subject and applies the clamp — the first thing
 	/// <c>HddCommandScreen_DrawMap</c> does each repaint, followed by <c>HddMap_ClampAndInstallView</c>. The map follows the
 	/// player's machine and the pan rides on top of it, which is why a stationary pan still drifts
 	/// as the machine walks.
 	/// </summary>
+	/// <param name="subject">The position to centre on.</param>
 	public void Follow(Vec3i subject) {
 		CentreX = subject.X + PanX;
 		CentreY = subject.Y + PanY;
@@ -440,10 +441,11 @@ public static class HddMap {
 	private static readonly int[] OctantNudgeY = { -8, -4, 0, 0, 0, 0, 0, -4 };
 
 	/// <summary>
-	/// Which of the eight octants <paramref name="heading"/> falls in, by the paint's own walk: a
+	/// Which of the eight octants a heading falls in, by the paint's own walk: a
 	/// heading within half an octant of zero is octant 0, and every other heading counts down from 7
 	/// in 0x2000 (45 degree) steps.
 	/// </summary>
+	/// <param name="heading">The heading.</param>
 	public static int Octant(int heading) {
 		int angle = heading & 0xffff;
 		if (angle is <= 0x1000 or >= 0xf000) {
@@ -459,10 +461,13 @@ public static class HddMap {
 	}
 
 	/// <summary>
-	/// The frame a rotating icon group shows at <paramref name="heading"/>, and the nudge that goes
+	/// The frame a rotating icon group shows at a heading, and the nudge that goes
 	/// with it. A destroyed object takes the group's base frame but keeps its octant's nudge: the
 	/// paint adds the nudge before its own <c>+0x99</c> branch.
 	/// </summary>
+	/// <param name="baseFrame">The group's base frame.</param>
+	/// <param name="heading">The heading.</param>
+	/// <param name="destroyed">Whether the object is destroyed.</param>
 	public static (int Frame, int NudgeX, int NudgeY) RotatedFrame(int baseFrame, int heading, bool destroyed) {
 		int octant = Octant(heading);
 		return (destroyed ? baseFrame : baseFrame + OctantFrame[octant],
@@ -588,8 +593,10 @@ public static class HddMap {
 
 	/// <summary>
 	/// A ranged marker's apparent size when it is drawn as a box rather than its icon, or null.
-	/// <paramref name="iconHeight"/> is its icon's height in device pixels, null when the bank has no such frame.
 	/// </summary>
+	/// <param name="marker">The marker.</param>
+	/// <param name="view">The map's view.</param>
+	/// <param name="iconHeight">Its icon's height in device pixels, null when the bank has no such frame.</param>
 	public static int? BoxedAt(HddMapMarker marker, HddMapView view, int? iconHeight) {
 		if (!marker.Ranged) {
 			return null;
@@ -612,18 +619,21 @@ public static class HddMap {
 		sprite is { Height: > 0 } icon ? icon.Height * icon.Scale : null;
 
 	/// <summary>
-	/// Whether <paramref name="subject"/>'s marker is drawn this frame — <c>HddCommandScreen_DrawMarker</c>
+	/// Whether a subject's marker is drawn this frame — <c>HddCommandScreen_DrawMarker</c>
 	/// (<c>0044e92c</c>)'s two early returns. A hostile that is <see cref="SimObject.Neutralised"/> is dropped, and
 	/// so is one no scanner is painting (<see cref="SimObject.RadarVisible"/>); a friendly is always drawn, wrecked
 	/// or not. See docs/retail/simulation/heads-down-display.md#which-markers-are-drawn.
 	/// </summary>
+	/// <param name="subject">The object the marker is for.</param>
 	public static bool Shown(SimObject subject) =>
 		subject.Side != MissionSide.Cybrid || (!subject.Neutralised && subject.RadarVisible);
 
 	/// <summary>
-	/// Which comm-box slot <paramref name="subject"/> occupies, or -1 — <c>Squad_IndexOf</c> over the
+	/// Which comm-box slot a subject occupies, or -1 — <c>Squad_IndexOf</c> over the
 	/// three-entry squad array.
 	/// </summary>
+	/// <param name="squad">The squad array, or null for none.</param>
+	/// <param name="subject">The object to look for.</param>
 	public static int SquadSlotOf(IReadOnlyList<SimObject>? squad, SimObject subject) {
 		for (int i = 0; squad != null && i < squad.Count; i++) {
 			if (ReferenceEquals(squad[i], subject)) {

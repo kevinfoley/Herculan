@@ -20,7 +20,8 @@ public sealed class RetailMountFits {
 	/// <summary>How many missions were read.</summary>
 	public int Missions { get; }
 
-	/// <summary>The fits of every row-12 record of <paramref name="missions"/>, by the rules in the class summary.</summary>
+	/// <summary>The fits of every row-12 record of some missions, by the rules in the class summary.</summary>
+	/// <param name="missions">The missions to scan.</param>
 	public static RetailMountFits Scan(IReadOnlyCollection<MissionFile> missions) {
 		var fits = new RetailMountFits(missions.Count);
 		foreach (var herc in missions.SelectMany(mission => mission.Mechs ?? [])) {
@@ -51,34 +52,47 @@ public sealed class RetailMountFits {
 		return fits;
 	}
 
-	/// <summary>How many records of type <paramref name="type"/> were read.</summary>
+	/// <summary>How many records of a type were read.</summary>
+	/// <param name="type">The herc type.</param>
 	public int Records(int type) => _records.GetValueOrDefault(type);
 
-	/// <summary>The fit slots of type <paramref name="type"/> some record fits, ascending.</summary>
+	/// <summary>The fit slots of a type some record fits, ascending.</summary>
+	/// <param name="type">The herc type.</param>
 	public IReadOnlyList<int> Slots(int type) =>
 		_fits.Keys.Where(key => key.Type == type).Select(key => key.Slot).Order().ToList();
 
 	/// <summary>
-	/// The weapon ids the records of type <paramref name="type"/> fit in slot <paramref name="slot"/>, <c>0</c> where one
+	/// The weapon ids the records of a type fit in a slot, <c>0</c> where one
 	/// leaves it empty, ascending; empty where none fits it.
 	/// </summary>
+	/// <param name="type">The herc type.</param>
+	/// <param name="slot">The fit slot.</param>
 	public IReadOnlyList<short> Weapons(int type, int slot) =>
 		_fits.TryGetValue((type, slot), out var weapons) ? weapons.Keys.Order().ToList() : [];
 
-	/// <summary>How many records of type <paramref name="type"/> fit <paramref name="weapon"/> in slot <paramref name="slot"/>.</summary>
+	/// <summary>How many records of a type fit a weapon in a slot.</summary>
+	/// <param name="type">The herc type.</param>
+	/// <param name="slot">The fit slot.</param>
+	/// <param name="weapon">The weapon id.</param>
 	public int Count(int type, int slot, short weapon) =>
 		_fits.TryGetValue((type, slot), out var weapons) && weapons.TryGetValue(weapon, out var ammo) ? ammo.Values.Sum() : 0;
 
 	/// <summary>
-	/// The ammunition type the records of type <paramref name="type"/> carry most often with <paramref name="weapon"/> in slot
-	/// <paramref name="slot"/>, the lowest on a tie; null where none fits it there.
+	/// The ammunition type the records of a type carry most often with a weapon in a
+	/// slot, the lowest on a tie; null where none fits it there.
 	/// </summary>
+	/// <param name="type">The herc type.</param>
+	/// <param name="slot">The fit slot.</param>
+	/// <param name="weapon">The weapon id.</param>
 	public short? Ammo(int type, int slot, short weapon) =>
 		_fits.TryGetValue((type, slot), out var weapons) && weapons.TryGetValue(weapon, out var ammo)
 			? ammo.OrderByDescending(pair => pair.Value).ThenBy(pair => pair.Key).First().Key
 			: null;
 
-	/// <summary>Every ammunition type the records of type <paramref name="type"/> carry with <paramref name="weapon"/> in slot <paramref name="slot"/>, with its count.</summary>
+	/// <summary>Every ammunition type the records of a type carry with a weapon in a slot, with its count.</summary>
+	/// <param name="type">The herc type.</param>
+	/// <param name="slot">The fit slot.</param>
+	/// <param name="weapon">The weapon id.</param>
 	public IReadOnlyDictionary<short, int> AmmoCounts(int type, int slot, short weapon) =>
 		_fits.TryGetValue((type, slot), out var weapons) && weapons.TryGetValue(weapon, out var ammo) ? ammo : new Dictionary<short, int>();
 }

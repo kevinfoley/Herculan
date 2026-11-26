@@ -10,12 +10,12 @@ public static class CaseInsensitivePath {
 	private static readonly char[] Separators = ['\\', '/'];
 
 	/// <summary>
-	/// <paramref name="root"/> joined with <paramref name="relative"/>, each name after the root taken as the entry
+	/// A root joined with relative parts, each name after the root taken as the entry
 	/// already there whose name matches it ignoring case, an exact match first. From the first name with no match on,
 	/// the names are kept as given, so the result also serves for a file or folder about to be created.
-	/// <paramref name="root"/> is taken as given. Each part is relative and may hold several names, separated by
-	/// <c>\</c> or <c>/</c>.
 	/// </summary>
+	/// <param name="root">The root, taken as given.</param>
+	/// <param name="relative">The relative parts, each of which may hold several names, separated by <c>\</c> or <c>/</c>.</param>
 	public static string Combine(string root, params string[] relative) {
 		string path = root;
 		bool matching = true;

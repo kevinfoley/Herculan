@@ -113,7 +113,10 @@ public class Es1SensorModelTests {
 		return (globals, human, near, far);
 	}
 
-	/// <summary>A human machine at <paramref name="from"/> facing the Cybrid at <paramref name="at"/>, which faces it, among the shapes given.</summary>
+	/// <summary>A human machine facing the Cybrid, which faces it, among the shapes given.</summary>
+	/// <param name="from">The human machine's position.</param>
+	/// <param name="at">The Cybrid's position.</param>
+	/// <param name="shapes">The shapes in the world.</param>
 	private static (Es1SimGlobals Globals, Es1Mech Human, Es1Mech Cybrid) Pair(Vec3i from, Vec3i at, Es1ShapeObject[] shapes) {
 		var globals = new Es1SimGlobals { ZoneShapes = new Es1ZoneShapes(shapes) };
 		short heading = Es1MissionGroup.HeadingToward(from, at);
@@ -122,7 +125,8 @@ public class Es1SensorModelTests {
 		return (globals, human, cybrid);
 	}
 
-	/// <summary>An unrotated shape at <paramref name="at"/>: one cell 512 units a side from its origin, <see cref="Height"/> tall, radius 2000.</summary>
+	/// <summary>An unrotated shape: one cell 512 units a side from its origin, <see cref="Height"/> tall, radius 2000.</summary>
+	/// <param name="at">The shape's position.</param>
 	private static Es1ShapeObject Shape(Vec3i at) {
 		var frame = Transform3.Identity;
 		frame.X = at.X;

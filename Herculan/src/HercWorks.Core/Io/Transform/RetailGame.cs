@@ -26,19 +26,21 @@ public static class RetailGameDetector {
 	public const string Es1ResourceMarker = "RESOURCE.CFG";
 
 	/// <summary>
-	/// <see cref="RetailGame.Earthsiege1"/> when <paramref name="installRoot"/> holds <see cref="Es1Marker"/> or
+	/// <see cref="RetailGame.Earthsiege1"/> when the install root holds <see cref="Es1Marker"/> or
 	/// <see cref="Es1ResourceMarker"/>, in any case; otherwise <see cref="RetailGame.Earthsiege2"/>, whether it holds
 	/// <c>VSHELL.EXE</c> or neither, so a folder that is not an install keeps ES2's readers.
 	/// </summary>
+	/// <param name="installRoot">The install's folder, or null.</param>
 	public static RetailGame Detect(string? installRoot) =>
 		installRoot != null && Directory.Exists(installRoot) && (Holds(installRoot, Es1Marker) || Holds(installRoot, Es1ResourceMarker))
 			? RetailGame.Earthsiege1
 			: RetailGame.Earthsiege2;
 
 	/// <summary>
-	/// The game of the install a <c>.VOL</c> belongs to: the parent of the folder holding <paramref name="archivePath"/>,
+	/// The game of the install a <c>.VOL</c> belongs to: the parent of the folder holding the archive,
 	/// where an install keeps its <c>VOL</c> folder.
 	/// </summary>
+	/// <param name="archivePath">The archive's path, or null.</param>
 	public static RetailGame DetectFromArchive(string? archivePath) =>
 		Detect(string.IsNullOrEmpty(archivePath) ? null : Path.GetDirectoryName(Path.GetDirectoryName(Path.GetFullPath(archivePath))));
 

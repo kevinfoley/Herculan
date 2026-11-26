@@ -172,9 +172,10 @@ public abstract class ThreeSpaceByteTransformer {
 	}
 
 	/// <summary>
-	/// Reads the byte at <paramref name="at"/> bytes past the cursor, without advancing it. The Java original
+	/// Reads the byte some bytes past the cursor, without advancing it. The Java original
 	/// returned the offset <c>index + at</c> instead of the byte there; fixed here.
 	/// </summary>
+	/// <param name="at">How many bytes past the cursor.</param>
 	public int PeekAt(int at) => Bytes![Index + at];
 
 	public void ResetIndex() => Index = 0;

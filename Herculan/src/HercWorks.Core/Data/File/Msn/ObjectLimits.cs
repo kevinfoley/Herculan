@@ -13,7 +13,8 @@ public static class ObjectLimits {
 	private const int MechRow = 12;
 	private const int BaseRow = 14;
 
-	/// <summary>The objects <paramref name="layout"/> puts in the simulation: the squad's machines and every object of a group.</summary>
+	/// <summary>The objects a layout puts in the simulation: the squad's machines and every object of a group.</summary>
+	/// <param name="layout">The mission layout.</param>
 	public static int Count(MissionLayout layout) {
 		short squad = SquadRoster.Squad(layout);
 		int objects = Enumerable.Range(MechRow, BaseRow - MechRow + 1)

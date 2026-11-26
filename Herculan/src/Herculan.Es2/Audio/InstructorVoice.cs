@@ -22,15 +22,21 @@ public static class InstructorVoice {
 	/// </summary>
 	public const long MaxClipBytes = 16 << 20;
 
-	/// <summary>The clip for instruction <paramref name="messageId"/> of training mission <paramref name="trainingMission"/>.</summary>
+	/// <summary>The clip for an instruction of a training mission.</summary>
+	/// <param name="trainingMission">The training mission.</param>
+	/// <param name="messageId">The instruction's message id.</param>
 	public static string ClipName(int trainingMission, int messageId) =>
 		$"TM{trainingMission}_{messageId + 1:0000}.WAV";
 
 	/// <summary>
-	/// That clip's bytes: <paramref name="voiceFolder"/>\<see cref="ClipName"/> through
+	/// That clip's bytes: the voice folder's <see cref="ClipName"/> through
 	/// <see cref="GameInstall.ReadDiscFile"/>, or null when there is none.
 	/// </summary>
+	/// <param name="installRoot">The install's folder.</param>
+	/// <param name="disc">The game disc, or null for none.</param>
 	/// <param name="voiceFolder"><c>SIMVOICE</c>, <c>SIMVOICF</c> or <c>SIMVOICG</c>.</param>
+	/// <param name="trainingMission">The training mission.</param>
+	/// <param name="messageId">The instruction's message id.</param>
 	public static byte[]? ReadClip(string installRoot, GameDisc? disc, string voiceFolder, int trainingMission, int messageId) =>
 		GameInstall.ReadDiscFile(installRoot, disc, Path.Combine(voiceFolder, ClipName(trainingMission, messageId)), MaxClipBytes);
 }

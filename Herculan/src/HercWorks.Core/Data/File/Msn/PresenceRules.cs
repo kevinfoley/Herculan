@@ -2,16 +2,21 @@ using HercWorks.Core.Io.Transform.Common;
 
 namespace HercWorks.Core.Data.File.Msn;
 
-/// <summary>One clause of a <see cref="PresenceRule"/>: campaign variable <paramref name="Variable"/> compared with <paramref name="Value"/>, a row-1 flag test.</summary>
+/// <summary>One clause of a <see cref="PresenceRule"/>: a campaign variable compared with a value, a row-1 flag test.</summary>
+/// <param name="Variable">The campaign variable.</param>
 /// <param name="Operator">One of <see cref="ConditionEditing.Operators"/>, read flag on the left (<see cref="ConditionEditing.OperatorText"/>).</param>
+/// <param name="Value">The value it is compared with.</param>
 public readonly record struct VariableClause(short Variable, short Operator, short Value);
 
 /// <summary>
-/// The chance clause of a <see cref="PresenceRule"/>: a row-1 draw below <paramref name="Bound"/> and a range from
-/// <paramref name="Low"/> to <paramref name="High"/> over it, compared unsigned as the load compares them
+/// The chance clause of a <see cref="PresenceRule"/>: a row-1 draw below a bound and a range from
+/// a low to a high end over it, compared unsigned as the load compares them
 /// (docs/retail/formats/msn-mission-file.md#the-conditions--row-1). A chance read from the file keeps its own bound and ends,
 /// so writing a rule back that leaves the chance alone changes neither.
 /// </summary>
+/// <param name="Bound">The bound the draw must be below.</param>
+/// <param name="Low">The low end of the range.</param>
+/// <param name="High">The high end of the range.</param>
 public readonly record struct ChanceClause(short Bound, short Low, short High) {
 	/// <summary>The bound a chance the editor writes draws below, so that each percent is one step (the editor's choice; every retail draw is below 11).</summary>
 	public const short PercentBound = 100;
@@ -20,7 +25,8 @@ public readonly record struct ChanceClause(short Bound, short Low, short High) {
 	public const int MinPercent = 1;
 	public const int MaxPercent = 99;
 
-	/// <summary>A chance of <paramref name="percent"/>: a draw below <see cref="PercentBound"/>, holding from 0 to one less than <paramref name="percent"/>.</summary>
+	/// <summary>A chance of a percentage: a draw below <see cref="PercentBound"/>, holding from 0 to one less than the percentage.</summary>
+	/// <param name="percent">The percentage.</param>
 	public static ChanceClause OfPercent(int percent) => percent is >= MinPercent and <= MaxPercent
 		? new ChanceClause(PercentBound, 0, (short)(percent - 1))
 		: throw new ArgumentOutOfRangeException(nameof(percent), percent, $"A chance is {MinPercent} to {MaxPercent}%.");
@@ -56,17 +62,22 @@ public sealed class PresenceRule : IEquatable<PresenceRule> {
 
 	public bool IsAlways => Variables.Count == 0 && Chance == null;
 
-	/// <summary>This rule with clause <paramref name="index"/> replaced by <paramref name="clause"/>.</summary>
+	/// <summary>This rule with a clause replaced.</summary>
+	/// <param name="index">The index of the clause to replace.</param>
+	/// <param name="clause">The replacement clause.</param>
 	public PresenceRule WithVariable(int index, VariableClause clause) =>
 		new(Variables.Select((existing, i) => i == index ? clause : existing).ToList(), Chance);
 
-	/// <summary>This rule with <paramref name="clause"/> added last.</summary>
+	/// <summary>This rule with a clause added last.</summary>
+	/// <param name="clause">The clause to add.</param>
 	public PresenceRule WithVariableAdded(VariableClause clause) => new([.. Variables, clause], Chance);
 
-	/// <summary>This rule without clause <paramref name="index"/>.</summary>
+	/// <summary>This rule without a clause.</summary>
+	/// <param name="index">The index of the clause to drop.</param>
 	public PresenceRule WithoutVariable(int index) => new(Variables.Where((_, i) => i != index).ToList(), Chance);
 
-	/// <summary>This rule's variables with <paramref name="chance"/>, or none for null.</summary>
+	/// <summary>This rule's variables with a chance, or none for null.</summary>
+	/// <param name="chance">The chance, or null for none.</param>
 	public PresenceRule WithChance(ChanceClause? chance) => new(Variables, chance);
 
 	public bool Equals(PresenceRule? other) =>
@@ -122,7 +133,9 @@ public static class PresenceRules {
 	private const string Never = "One of its tests never holds, so it is set under Advanced.";
 	private const string Differs = "Its details change between versions of the mission, so its presence cannot be set as one rule.";
 
-	/// <summary>The clauses row-1 GUID <paramref name="condition"/> stands for, or <c>-1</c> for always; no check of who else uses its draw.</summary>
+	/// <summary>The clauses a row-1 GUID stands for, or <c>-1</c> for always; no check of who else uses its draw.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="condition">The row-1 GUID, or <c>-1</c> for always.</param>
 	public static PresenceReading ReadCondition(MissionDocument document, short condition) {
 		var chain = new List<short>();
 		var variables = new List<VariableClause>();
@@ -181,9 +194,11 @@ public static class PresenceRules {
 	}
 
 	/// <summary>
-	/// <paramref name="target"/>'s Present when as clauses. Its rule is read whenever the chain is clauses, a shared roll
+	/// A target's Present when as clauses. Its rule is read whenever the chain is clauses, a shared roll
 	/// included, so a view can state it; it is settable only when nothing refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
 	public static PresenceReading Read(MissionDocument document, PresenceTarget target) {
 		var records = RecordConditions.Records(document, target);
 		if (records.Count == 0) {
@@ -209,16 +224,21 @@ public static class PresenceRules {
 		return alone ? reading : reading with { WhyFixed = Shared };
 	}
 
-	/// <summary>Why <paramref name="target"/>'s Present when cannot be set as clauses, or null when it can.</summary>
+	/// <summary>Why a target's Present when cannot be set as clauses, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
 	public static string? WhyFixed(MissionDocument document, PresenceTarget target) =>
 		RecordConditions.WhyFixed(document, target) ?? Read(document, target).WhyFixed;
 
 	/// <summary>
-	/// Makes <paramref name="target"/> present by <paramref name="rule"/>, as one <see cref="MissionDocument.Change"/>, and
+	/// Makes a target present by a rule, as one <see cref="MissionDocument.Change"/>, and
 	/// removes what of its old chain nothing references any more. Throws <see cref="InvalidOperationException"/> when
 	/// <see cref="WhyFixed"/> refuses it, and <see cref="ArgumentOutOfRangeException"/> for a clause the load cannot test.
-	/// <paramref name="written"/> is the GUID whose records now carry it, as <see cref="RecordConditions.SetPresence"/> answers it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
+	/// <param name="rule">The rule it is present by.</param>
+	/// <param name="written">The GUID whose records now carry the rule, as <see cref="RecordConditions.SetPresence"/> answers it.</param>
 	public static MsnEdit SetRule(MissionDocument document, PresenceTarget target, PresenceRule rule, out short written) {
 		if (WhyFixed(document, target) is { } reason) {
 			throw new InvalidOperationException(reason);

@@ -67,7 +67,9 @@ public class Es1SimClockTests {
 		Assert.Equal(-0x7fff, new Es1SimClock().IntegrateRateOverTick(short.MinValue));
 	}
 
-	/// <summary>The host time holding <paramref name="count"/> interrupts, rounded up to a whole <see cref="TimeSpan"/> tick.</summary>
+	/// <summary>The host time holding a number of interrupts, rounded up to a whole <see cref="TimeSpan"/> tick.</summary>
+	/// <param name="clock">The clock the interrupts are counted on.</param>
+	/// <param name="count">The number of interrupts.</param>
 	private static TimeSpan Interrupts(Es1SimClock clock, int count) =>
 		TimeSpan.FromTicks((count * TimeSpan.TicksPerSecond + clock.TicksPerSecond - 1) / clock.TicksPerSecond);
 }

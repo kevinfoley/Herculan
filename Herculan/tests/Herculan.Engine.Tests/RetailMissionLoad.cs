@@ -11,9 +11,12 @@ namespace Herculan.Engine.Tests;
 /// <summary>A retail mission loaded as the practice screen's DEBUG dialog loads a typed mission and handed to the simulator.</summary>
 internal static class RetailMissionLoad {
 	/// <summary>
-	/// The mission as a training load of the typed path writes it into <paramref name="root"/>, flown from the first
-	/// practice row; null when <paramref name="install"/> is missing.
+	/// The mission as a training load of the typed path writes it, flown from the first
+	/// practice row; null when the install is missing.
 	/// </summary>
+	/// <param name="root">The folder the training handoff is written into.</param>
+	/// <param name="install">The retail install's folder, or null when there is none.</param>
+	/// <param name="mission">The mission's name.</param>
 	public static MissionScene? Load(string root, string? install, string mission) {
 		if (install == null) {
 			return null;

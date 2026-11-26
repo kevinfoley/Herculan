@@ -8,7 +8,9 @@ namespace HercWorks.Core.Data.File.Msn;
 public static class RadarSettings {
 	private const int HercRow = 12;
 
-	/// <summary>Whether herc GUID <paramref name="guid"/>'s base states its radar on; throws for a GUID no record carries.</summary>
+	/// <summary>Whether a herc's base states its radar on; throws for a GUID no record carries.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The herc's GUID.</param>
 	public static bool Current(MissionDocument document, short guid) => BaseFieldValues.Current(document, MsnField.MechRadar, guid) != 0;
 
 	/// <inheritdoc cref="BaseFieldValues.Overrides"/>
@@ -16,16 +18,21 @@ public static class RadarSettings {
 		BaseFieldValues.Overrides(document, MsnField.MechRadar, guid);
 
 	/// <summary>
-	/// Why herc GUID <paramref name="guid"/>'s radar setting cannot be set, or null when it can: as for its starting condition
+	/// Why a herc's radar setting cannot be set, or null when it can: as for its starting condition
 	/// (<see cref="StartingConditions.WhyFixed"/>), a machine of the player's squad is built from <c>player.mec</c>, not its record.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The herc's GUID.</param>
 	public static string? WhyFixed(MissionDocument document, short guid) => ActionWiring.WhyNoObjectAction(document, HercRow, guid);
 
 	/// <summary>
-	/// Sets herc GUID <paramref name="guid"/>'s radar setting in its base (<see cref="BaseFieldValues.Set"/>). Throws
+	/// Sets a herc's radar setting in its base (<see cref="BaseFieldValues.Set"/>). Throws
 	/// <see cref="InvalidOperationException"/> where <see cref="WhyFixed"/> answers, and for off where a template the base picks
 	/// turns it on.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The herc's GUID.</param>
+	/// <param name="on">Whether the radar is on.</param>
 	public static MsnEdit Set(MissionDocument document, short guid, bool on) {
 		if (WhyFixed(document, guid) is { } reason) {
 			throw new InvalidOperationException(reason);

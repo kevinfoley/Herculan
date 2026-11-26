@@ -13,7 +13,9 @@ namespace HercWorks.Core.Io.Write;
 /// <see cref="Compile"/> takes the output path instead.
 /// </summary>
 public static class VolFileCompiler {
-	/// <summary>Compiles a brand-new VOL file, calculating offsets and sizes, and writes it to <paramref name="outputPath"/>.</summary>
+	/// <summary>Compiles a brand-new VOL file, calculating offsets and sizes, and writes it to a file.</summary>
+	/// <param name="vol">The VOL to compile.</param>
+	/// <param name="outputPath">The path to write to.</param>
 	public static void Compile(Voln vol, string outputPath) {
 		CalculateDirHeader(vol);
 		GenerateFileSet(vol);

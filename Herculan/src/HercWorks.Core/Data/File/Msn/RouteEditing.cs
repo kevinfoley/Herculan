@@ -55,18 +55,24 @@ public static class RouteEditing {
 	private const int GroupRow = 16;
 	private const int ObjectiveRow = 17;
 
-	/// <summary>Whether <paramref name="list"/> closes on itself: more than one entry, the last naming the first's point.</summary>
+	/// <summary>Whether a list closes on itself: more than one entry, the last naming the first's point.</summary>
+	/// <param name="list">The waypoint list.</param>
 	public static bool IsClosed(IReadOnlyList<short> list) => list.Count > 1 && list[^1] == list[0];
 
-	/// <summary>How many waypoints <paramref name="list"/> holds: a closed list's last entry is its first waypoint again.</summary>
+	/// <summary>How many waypoints a list holds: a closed list's last entry is its first waypoint again.</summary>
+	/// <param name="list">The waypoint list.</param>
 	public static int WaypointCount(IReadOnlyList<short> list) => IsClosed(list) ? list.Count - 1 : list.Count;
 
 	/// <summary>
-	/// Appends a route through <paramref name="waypoints"/>, closed back on the first when <paramref name="closed"/>, as one
-	/// <see cref="MissionDocument.Change"/>, and answers its GUID in <paramref name="route"/>. Throws
+	/// Appends a route through some waypoints, closed back on the first when asked, as one
+	/// <see cref="MissionDocument.Change"/>, and answers its GUID. Throws
 	/// <see cref="InvalidOperationException"/> for fewer than <see cref="MinWaypoints"/> waypoints, or a loop of fewer than
 	/// <see cref="MinLoopWaypoints"/>.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="waypoints">The waypoints' coordinates, in route order.</param>
+	/// <param name="closed">Whether the route closes back on its first waypoint.</param>
+	/// <param name="route">The new route's GUID.</param>
 	public static MsnEdit Create(MissionDocument document, IReadOnlyList<(int X, int Y)> waypoints, bool closed, out short route) {
 		if (waypoints.Count < MinWaypoints) {
 			throw new InvalidOperationException($"A route needs at least {MinWaypoints} waypoint.");
@@ -99,11 +105,15 @@ public static class RouteEditing {
 	}
 
 	/// <summary>
-	/// Adds a waypoint at each of <paramref name="waypoints"/> to route GUID <paramref name="route"/>, after its last: before
-	/// the closing entry of a closed route, which stays closed. <paramref name="close"/> closes an open route after them.
+	/// Adds a waypoint at each of some positions to a route, after its last: before
+	/// the closing entry of a closed route, which stays closed. An open route is closed after them when asked.
 	/// One <see cref="MissionDocument.Change"/>; throws <see cref="InvalidOperationException"/> when it would change nothing,
 	/// or close a loop of fewer than <see cref="MinLoopWaypoints"/>.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="route">The route's GUID.</param>
+	/// <param name="waypoints">The positions of the waypoints to add.</param>
+	/// <param name="close">Whether to close an open route after them.</param>
 	public static MsnEdit Extend(MissionDocument document, short route, IReadOnlyList<(int X, int Y)> waypoints, bool close) {
 		var list = document.Waypoints(route).ToList();
 		bool closed = IsClosed(list);
@@ -131,9 +141,12 @@ public static class RouteEditing {
 	}
 
 	/// <summary>
-	/// Why no waypoint can be inserted after list entry <paramref name="entry"/> of route GUID <paramref name="route"/>, or
+	/// Why no waypoint can be inserted after a list entry of a route, or
 	/// null when one can: the leg from it to the next entry must exist, and a record must carry each of its points.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="route">The route's GUID.</param>
+	/// <param name="entry">The list entry.</param>
 	public static string? WhyNoInsert(MissionDocument document, short route, int entry) {
 		var list = document.Waypoints(route);
 		if (entry < 0 || entry + 1 >= list.Length) {
@@ -146,10 +159,13 @@ public static class RouteEditing {
 	}
 
 	/// <summary>
-	/// Inserts a waypoint halfway along the leg from list entry <paramref name="entry"/> of route GUID
-	/// <paramref name="route"/> to the next, on a new point at Z 0, as one <see cref="MissionDocument.Change"/>. Throws
+	/// Inserts a waypoint halfway along the leg from a list entry of a route to the next, on a new point at Z 0, as one
+	/// <see cref="MissionDocument.Change"/>. Throws
 	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoInsert"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="route">The route's GUID.</param>
+	/// <param name="entry">The list entry the leg starts at.</param>
 	public static MsnEdit InsertAfter(MissionDocument document, short route, int entry) {
 		if (WhyNoInsert(document, route, entry) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -166,9 +182,12 @@ public static class RouteEditing {
 	}
 
 	/// <summary>
-	/// Why waypoint <paramref name="entry"/> of route GUID <paramref name="route"/> cannot be removed, or null when it can:
+	/// Why a waypoint of a route cannot be removed, or null when it can:
 	/// it must be a waypoint rather than a closed list's closing entry, and the route must keep <see cref="MinWaypoints"/>.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="route">The route's GUID.</param>
+	/// <param name="entry">The waypoint's list entry.</param>
 	public static string? WhyNoRemove(MissionDocument document, short route, int entry) {
 		var list = document.Waypoints(route);
 		int count = WaypointCount(list);
@@ -180,12 +199,15 @@ public static class RouteEditing {
 	}
 
 	/// <summary>
-	/// Removes waypoint <paramref name="entry"/> from route GUID <paramref name="route"/>'s list, and the records of a point
+	/// Removes a waypoint from a route's list, and the records of a point
 	/// that leaves named by nothing, as one <see cref="MissionDocument.Change"/>. A closed route's first waypoint is also its
 	/// last entry: both go, and the route closes on its new first waypoint. A loop left with fewer than
 	/// <see cref="MinLoopWaypoints"/> is left open. Throws <see cref="InvalidOperationException"/> when
 	/// <see cref="WhyNoRemove"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="route">The route's GUID.</param>
+	/// <param name="entry">The waypoint's list entry.</param>
 	public static MsnEdit RemoveAt(MissionDocument document, short route, int entry) {
 		if (WhyNoRemove(document, route, entry) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -210,9 +232,12 @@ public static class RouteEditing {
 	}
 
 	/// <summary>
-	/// Why route GUID <paramref name="route"/> cannot be closed (<paramref name="closed"/>) or opened, or null when it can:
+	/// Why a route cannot be closed or opened, or null when it can:
 	/// it must not be so already, and closing needs <see cref="MinLoopWaypoints"/>.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="route">The route's GUID.</param>
+	/// <param name="closed">True to ask about closing it, false about opening it.</param>
 	public static string? WhyNoClose(MissionDocument document, short route, bool closed) {
 		var list = document.Waypoints(route);
 		if (IsClosed(list) == closed) {
@@ -223,9 +248,12 @@ public static class RouteEditing {
 	}
 
 	/// <summary>
-	/// Closes route GUID <paramref name="route"/> by appending its first waypoint's point as its last entry, or opens it by
+	/// Closes a route by appending its first waypoint's point as its last entry, or opens it by
 	/// removing that entry. Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoClose"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="route">The route's GUID.</param>
+	/// <param name="closed">True to close the route, false to open it.</param>
 	public static MsnEdit SetClosed(MissionDocument document, short route, bool closed) {
 		if (WhyNoClose(document, route, closed) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -235,7 +263,9 @@ public static class RouteEditing {
 		return document.SetWaypoints(route, closed ? [.. list, list[0]] : list[..^1]);
 	}
 
-	/// <summary>The orders, objectives and groups naming route GUID <paramref name="route"/>, every record whatever its condition.</summary>
+	/// <summary>The orders, objectives and groups naming a route, every record whatever its condition.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="route">The route's GUID.</param>
 	public static RouteNamers Namers(MissionDocument document, short route) {
 		var mission = document.Mission;
 		if (route == -1) {
@@ -270,12 +300,14 @@ public static class RouteEditing {
 	}
 
 	/// <summary>
-	/// Deletes route GUID <paramref name="route"/>: every row-8 record of the GUID, whatever its condition, and the records of
+	/// Deletes a route: every row-8 record of the GUID, whatever its condition, and the records of
 	/// each point its lists named that is left named by nothing, as one <see cref="MissionDocument.Change"/>. The
 	/// templates a deleted record picked its list from are GUID <c>-1</c> records shared by every record picking them, and
 	/// stay; deleting a record that picks from a random table moves every later draw. Throws <see cref="InvalidOperationException"/>
 	/// while <see cref="Namers"/> finds anything.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="route">The route's GUID.</param>
 	public static MsnEdit Delete(MissionDocument document, short route) {
 		if (Namers(document, route).Any) {
 			throw new InvalidOperationException($"Route {route} is referenced by an order, an objective or a group.");
@@ -310,7 +342,9 @@ public static class RouteEditing {
 		return point;
 	}
 
-	/// <summary>Where row-6 GUID <paramref name="point"/>'s base stands, or null when no record carries it.</summary>
+	/// <summary>Where a row-6 GUID's base stands, or null when no record carries it.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="point">The row-6 GUID.</param>
 	internal static (int X, int Y)? Coordinates(MissionDocument document, short point) =>
 		document.Layout.Entry<MapPoint22>(point)?.Fields is { } fields ? (fields.X, fields.Y) : null;
 }

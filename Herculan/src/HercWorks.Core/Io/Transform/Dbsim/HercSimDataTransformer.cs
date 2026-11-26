@@ -150,10 +150,12 @@ public class HercSimDataTransformer : ByteTransformer<HercSimDat> {
 	private const int LegPartIdsOffset = 117;
 
 	/// <summary>
-	/// How many bytes from <paramref name="offset"/> come before the first negative one — the count
+	/// How many bytes from an offset come before the first negative one — the count
 	/// <c>Mech_Constructor</c> takes (<c>00415e3a</c>-<c>00415e46</c>: <c>MOVSX</c>, <c>INC</c>,
 	/// <c>JG</c>). It has no cap of its own; this one stops at the end of the record.
 	/// </summary>
+	/// <param name="record">The record's bytes.</param>
+	/// <param name="offset">The offset to count from.</param>
 	private static int TerminatedLength(byte[] record, int offset) {
 		int count = 0;
 		while (offset + count < record.Length && (sbyte)record[offset + count] >= 0) {

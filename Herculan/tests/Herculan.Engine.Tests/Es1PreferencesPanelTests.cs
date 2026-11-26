@@ -158,7 +158,10 @@ public class Es1PreferencesPanelTests {
 	private static (int, int, int, int, int, int) Six(Vue.Entry r) =>
 		(r.ViewportX0, r.ViewportY0, r.ViewportX1, r.ViewportY1, r.CenterX, r.CenterY);
 
-	/// <summary>One pass of the panel's loop after <paramref name="key"/> is queued; fails when the panel has closed.</summary>
+	/// <summary>One pass of the panel's loop after a key is queued; fails when the panel has closed.</summary>
+	/// <param name="rig">The rig the panel runs in.</param>
+	/// <param name="passes">The panel's loop.</param>
+	/// <param name="key">The key to queue.</param>
 	private static void Pass(Rig rig, IEnumerator<Es1Wait> passes, ushort key) {
 		rig.Keys.Keyboard.Queue.Push(key);
 		Assert.True(passes.MoveNext(), "The panel closed.");
@@ -217,7 +220,8 @@ public class Es1PreferencesPanelTests {
 		/// <summary>One host frame of 1/60 s; whether the mission ended.</summary>
 		public bool Advance() => Frames.Advance(TimeSpan.FromTicks(Second / 60), Pacer);
 
-		/// <summary>Host frames until <paramref name="done"/> or the mission ends, which it returns; fails after <see cref="MaxFrames"/>.</summary>
+		/// <summary>Host frames until a condition holds or the mission ends, which it returns; fails after <see cref="MaxFrames"/>.</summary>
+		/// <param name="done">The condition to stop on.</param>
 		public bool AdvanceUntil(Func<bool> done) {
 			for (int frame = 0; frame < MaxFrames; frame++) {
 				if (Advance()) {

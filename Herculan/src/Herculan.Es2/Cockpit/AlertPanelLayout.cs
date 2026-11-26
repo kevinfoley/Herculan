@@ -102,7 +102,11 @@ public static class AlertPanelLayout {
 	/// composite is anchored too.</para>
 	/// </summary>
 	public readonly record struct Placement(float Scale, float OriginX, float OriginY) {
-		/// <summary>Places a panel of <paramref name="panelWidth"/> x <paramref name="panelHeight"/> device pixels.</summary>
+		/// <summary>Places a panel in a window.</summary>
+		/// <param name="windowWidth">The window's width in device pixels.</param>
+		/// <param name="windowHeight">The window's height in device pixels.</param>
+		/// <param name="panelWidth">The panel's width in device pixels.</param>
+		/// <param name="panelHeight">The panel's height in device pixels.</param>
 		public static Placement Create(int windowWidth, int windowHeight, int panelWidth, int panelHeight) =>
 			CreateAt(windowWidth, windowHeight, ScreenLeft(panelWidth), ScreenTop(panelHeight));
 

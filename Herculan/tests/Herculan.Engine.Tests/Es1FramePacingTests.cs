@@ -114,10 +114,12 @@ public class Es1FramePacingTests {
 		}
 	}
 
-	/// <summary>The host time retrace <paramref name="index"/> starts at, 1/70 s apart from 0, rounded up to a tick.</summary>
+	/// <summary>The host time a retrace starts at, 1/70 s apart from 0, rounded up to a tick.</summary>
+	/// <param name="index">The retrace's number.</param>
 	private static long RetraceStart(long index) => (index * Second + 69) / 70;
 
-	/// <summary>The first retrace start after <paramref name="time"/>.</summary>
+	/// <summary>The first retrace start after a host time.</summary>
+	/// <param name="time">The host time.</param>
 	private static long FirstRetraceStartAfter(long time) {
 		long index = (long)Math.Floor(time * 70.0 / Second);
 		while (RetraceStart(index) <= time) {
@@ -128,9 +130,13 @@ public class Es1FramePacingTests {
 	}
 
 	/// <summary>
-	/// The loop advanced <paramref name="step"/> at a time for <paramref name="length"/> of host time; returns the host
-	/// time of each tick and the end of each wait the frame's ends made.
+	/// The loop advanced a step at a time for a length of host time; returns the host time of each tick and the end of each wait
+	/// the frame's ends made.
 	/// </summary>
+	/// <param name="frames">The loop to advance.</param>
+	/// <param name="pacer">The pacer that times the waits.</param>
+	/// <param name="length">The host time to run for.</param>
+	/// <param name="step">The host time each advance covers.</param>
 	private static (List<long> Ticks, List<long> Waits) Run(Es1FrameLoop frames, ClockPacer pacer, long length, long step) {
 		var ticks = new List<long>();
 		var waits = new List<long>();

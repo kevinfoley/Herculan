@@ -14,12 +14,15 @@ public static class SkipArrayLimits {
 	private const int RouteRow = 8;
 	private const int AreaRow = 9;
 
-	/// <summary>The records row <paramref name="row"/> (6 positions, 7 headings, 9 trigger areas) takes.</summary>
+	/// <summary>The records a row (6 positions, 7 headings, 9 trigger areas) takes.</summary>
+	/// <param name="layout">The mission layout.</param>
+	/// <param name="row">The row.</param>
 	public static int Count(MissionLayout layout, int row) => row is >= PointRow and <= AreaRow and not RouteRow
 		? layout.Entries(row).Count
 		: throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 6, 7 and 9 are counted whole.");
 
-	/// <summary>The most records of row <paramref name="row"/> the skip array holds; for row 8, the waypoints of one route.</summary>
+	/// <summary>The most records of a row the skip array holds; for row 8, the waypoints of one route.</summary>
+	/// <param name="row">The row.</param>
 	public static int Cap(int row) => row is >= PointRow and <= AreaRow
 		? ScriptDatLint.SkipArrayCap((ScriptBlock)(row - 5))!.Value
 		: throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 6 to 9 are the skipped blocks.");

@@ -34,15 +34,20 @@ public sealed record PresenceTarget {
 	/// <summary>An objective's index in row 17, else <c>-1</c>.</summary>
 	public int Index { get; }
 
-	/// <summary>Every record of row <paramref name="row"/>'s GUID <paramref name="guid"/>: row 12, 13, 14 or 16.</summary>
+	/// <summary>Every record of a row's GUID: row 12, 13, 14 or 16.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
 	public static PresenceTarget Of(int row, short guid) => row is (>= 12 and <= 14) or 16
 		? new PresenceTarget(row, guid, -1, -1, -1)
 		: throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 and 16 are the GUID rows a presence is set for.");
 
-	/// <summary>The order in row-16 group <paramref name="group"/>'s slot <paramref name="slot"/>.</summary>
+	/// <summary>The order in a row-16 group's slot.</summary>
+	/// <param name="group">The group's GUID.</param>
+	/// <param name="slot">The order slot.</param>
 	public static PresenceTarget OrderSlot(short group, int slot) => new(OrderRow, -1, group, slot, -1);
 
-	/// <summary>Row-17 record <paramref name="index"/>.</summary>
+	/// <summary>A row-17 record.</summary>
+	/// <param name="index">The record's index in row 17.</param>
 	public static PresenceTarget Objective(int index) => new(ObjectiveRow, -1, -1, -1, index);
 }
 
@@ -87,9 +92,11 @@ public static class RecordConditions {
 	public const short Always = -1;
 
 	/// <summary>
-	/// The records of <paramref name="target"/>, in file order, each with its condition: every record of its GUID, or the
+	/// The records of a target, in file order, each with its condition: every record of its GUID, or the
 	/// objective record itself. Empty for a target the file does not have.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
 	public static IReadOnlyList<PresenceRecord> Records(MissionDocument document, PresenceTarget target) {
 		if (target.Row == ObjectiveRow) {
 			var objectives = document.Mission.Objectives ?? [];
@@ -114,22 +121,28 @@ public static class RecordConditions {
 		return records;
 	}
 
-	/// <summary>The condition every record of <paramref name="target"/> carries, or null when they differ or there are none.</summary>
+	/// <summary>The condition every record of a target carries, or null when they differ or there are none.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
 	public static short? Shared(MissionDocument document, PresenceTarget target) {
 		var records = Records(document, target);
 		return records.Count > 0 && records.All(record => record.Condition == records[0].Condition) ? records[0].Condition : null;
 	}
 
 	/// <summary>
-	/// The row-12 to 16 GUID <paramref name="target"/> addresses now: its own, or the order in its slot; <c>-1</c> for an
+	/// The row-12 to 16 GUID a target addresses now: its own, or the order in its slot; <c>-1</c> for an
 	/// objective, an empty slot or a group no record carries.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
 	public static short GuidOf(MissionDocument document, PresenceTarget target) =>
 		target.Row == OrderRow
 			? target.Slot is >= 0 and < GroupOrders.Slots ? GroupOrders.Orders(document, target.Group)[target.Slot] : (short)-1
 			: target.Guid;
 
-	/// <summary>Whether a record's presence can be set to row-1 GUID <paramref name="condition"/>: a flag test, or a range over a draw.</summary>
+	/// <summary>Whether a record's presence can be set to a row-1 GUID: a flag test, or a range over a draw.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="condition">The row-1 GUID.</param>
 	public static bool Offered(MissionDocument document, short condition) =>
 		ConditionEditing.IndexOf(document, condition) != null && ConditionEditing.Record(document, condition) is var record
 			&& (record.Type == ConditionEditing.FlagTest
@@ -141,15 +154,18 @@ public static class RecordConditions {
 			.Where(guid => Offered(document, guid)).ToList();
 
 	/// <summary>
-	/// The reason given for <paramref name="target"/> when the mission has no record of it: a guard only, since the editor
+	/// The reason given for a target when the mission has no record of it: a guard only, since the editor
 	/// clears a selection whose record an edit removes.
 	/// </summary>
+	/// <param name="target">The target.</param>
 	public static string Gone(PresenceTarget target) => "Not found.";
 
 	/// <summary>Why a record of the player's squad has no presence of its own, as <see cref="WhyFixed"/> gives it.</summary>
 	public const string SquadPresence = "The squad is built from group 0's members, so its presence is not set here.";
 
-	/// <summary>Why <paramref name="target"/>'s presence cannot be set at all, or null when it can.</summary>
+	/// <summary>Why a target's presence cannot be set at all, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
 	public static string? WhyFixed(MissionDocument document, PresenceTarget target) {
 		var records = Records(document, target);
 		if (records.Count == 0) {
@@ -169,9 +185,12 @@ public static class RecordConditions {
 	}
 
 	/// <summary>
-	/// Why <paramref name="target"/> cannot be made present only when row-1 GUID <paramref name="condition"/> holds, or always for
+	/// Why a target cannot be made present only when a row-1 GUID holds, or always for
 	/// <see cref="Always"/>; null when it can.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
+	/// <param name="condition">The row-1 GUID, or <see cref="Always"/>.</param>
 	public static string? WhyNoPresence(MissionDocument document, PresenceTarget target, short condition) =>
 		WhyFixed(document, target)
 			?? (condition == Always ? null
@@ -180,11 +199,14 @@ public static class RecordConditions {
 				: null);
 
 	/// <summary>
-	/// Makes <paramref name="target"/> present only while row-1 GUID <paramref name="condition"/> holds, or always for
+	/// Makes a target present only while a row-1 GUID holds, or always for
 	/// <see cref="Always"/>, as one <see cref="MissionDocument.Change"/>. Throws <see cref="InvalidOperationException"/> when
-	/// <see cref="WhyNoPresence"/> refuses it. <paramref name="written"/> is the GUID whose records now carry it: the target's,
-	/// an order slot's own copy of its order, or <c>-1</c> for an objective.
+	/// <see cref="WhyNoPresence"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
+	/// <param name="condition">The row-1 GUID, or <see cref="Always"/>.</param>
+	/// <param name="written">The GUID whose records now carry it: the target's, an order slot's own copy of its order, or <c>-1</c> for an objective.</param>
 	public static MsnEdit SetPresence(MissionDocument document, PresenceTarget target, short condition, out short written) {
 		if (WhyNoPresence(document, target, condition) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -197,10 +219,12 @@ public static class RecordConditions {
 	}
 
 	/// <summary>
-	/// Why the condition every record of roster object <paramref name="member"/> carries cannot be moved onto row-16 group
-	/// <paramref name="group"/>'s records, or null when it can: both can be set (<see cref="WhyFixed"/>), the object is present
-	/// only under a condition, and the group always.
+	/// Why the condition every record of a roster object carries cannot be moved onto a row-16 group's records, or null when it
+	/// can: both can be set (<see cref="WhyFixed"/>), the object is present only under a condition, and the group always.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="member">The roster object.</param>
+	/// <param name="group">The group's GUID.</param>
 	public static string? WhyNoMoveToGroup(MissionDocument document, PresenceTarget member, short group) {
 		var target = PresenceTarget.Of(GroupRow, group);
 		if ((WhyFixed(document, member) ?? WhyFixed(document, target)) is { } reason) {
@@ -215,11 +239,14 @@ public static class RecordConditions {
 	}
 
 	/// <summary>
-	/// Makes row-16 group <paramref name="group"/> present when roster object <paramref name="member"/> is, and the object
+	/// Makes a row-16 group present when a roster object is, and the object
 	/// always, as one <see cref="MissionDocument.Change"/>: the condition the object's records carry is written into the
 	/// group's and the object's are cleared, so the group is never there without it. Throws
 	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoMoveToGroup"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="member">The roster object.</param>
+	/// <param name="group">The group's GUID.</param>
 	public static MsnEdit MoveToGroup(MissionDocument document, PresenceTarget member, short group) {
 		if (WhyNoMoveToGroup(document, member, group) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -233,11 +260,13 @@ public static class RecordConditions {
 	}
 
 	/// <summary>
-	/// The conditions of <paramref name="target"/>'s variations that set some field (<see cref="LayoutEntry.Variations"/>):
+	/// The conditions of a target's variations that set some field (<see cref="LayoutEntry.Variations"/>):
 	/// an edit writes the base, so where such a condition holds, a field the variation sets keeps the variation's value.
 	/// Distinct, in file order, <see cref="Always"/> included; empty for an objective, which no other record overlays, and for
 	/// a target no record carries.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
 	public static IReadOnlyList<short> VariationConditions(MissionDocument document, PresenceTarget target) {
 		if (target.Row == ObjectiveRow || document.Layout.Entry(target.Row, GuidOf(document, target)) is not { } entry) {
 			return [];
@@ -247,7 +276,9 @@ public static class RecordConditions {
 			.ToList();
 	}
 
-	/// <summary>Whether a record of <paramref name="target"/> picks from a random table: its records' random table keys are set.</summary>
+	/// <summary>Whether a record of a target picks from a random table: its records' random table keys are set.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
 	public static bool PicksFromRandomTable(MissionDocument document, PresenceTarget target) =>
 		Records(document, target).Any(record => document.RecordAt(record.Record) switch {
 			MechRosterEntry144 mech => mech.RandomTableKey != -1,
@@ -258,10 +289,13 @@ public static class RecordConditions {
 		});
 
 	/// <summary>
-	/// Writes <paramref name="condition"/> into every record of <paramref name="target"/>, inside the caller's
+	/// Writes a condition into every record of a target, inside the caller's
 	/// <see cref="MissionDocument.Change"/>, an order slot's order given to the slot first; answers the GUID written, <c>-1</c>
 	/// for an objective.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="target">The target.</param>
+	/// <param name="condition">The row-1 GUID to write.</param>
 	internal static short Write(MissionDocument document, PresenceTarget target, short condition) {
 		switch (target.Row) {
 			case ObjectiveRow:

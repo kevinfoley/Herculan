@@ -250,9 +250,13 @@ public class Es1TargetSelectionTests {
 	}
 
 	/// <summary>
-	/// The box of a selection at <paramref name="position"/> of radius <paramref name="radius"/> on side
-	/// <paramref name="side"/>, painted after the mission start in view 0 with the view of a camera at the origin facing +Y.
+	/// The box of a selection at a position of a radius on a side, painted after the mission start in view 0 with the view of a
+	/// camera at the origin facing +Y.
 	/// </summary>
+	/// <param name="position">The selection's position.</param>
+	/// <param name="radius">The selection's radius.</param>
+	/// <param name="side">The side the selection is on.</param>
+	/// <param name="lockLamp">Whether the lock lamp is lit.</param>
 	private static (Es1GunsightTests.TestRig Rig, Es1GunsightTargetIndicator Box) Box(Vec3i position, int radius, byte side,
 			bool lockLamp) {
 		var w = World();
@@ -309,7 +313,10 @@ public class Es1TargetSelectionTests {
 		return mech;
 	}
 
-	/// <summary>A left press and release at (<paramref name="x"/>, <paramref name="y"/>), handled as the input read handles them.</summary>
+	/// <summary>A left press and release at a point, handled as the input read handles them.</summary>
+	/// <param name="mouse">The mouse to click.</param>
+	/// <param name="x">The column of the click.</param>
+	/// <param name="y">The row of the click.</param>
 	private static void Click(Es1CockpitMouse mouse, int x, int y) {
 		mouse.Push(1, new Es1MouseRecord(x, y, Es1HostMouse.LeftBit));
 		mouse.Push(2, new Es1MouseRecord(x, y, 0));
@@ -326,7 +333,8 @@ public class Es1TargetSelectionTests {
 
 	private sealed record TestWorld(Es1GunsightTests.TestRig Rig, Es1Mech Player, Es1Mech Behind, Es1Mech Ahead, Es1Mech Right);
 
-	/// <summary>A world layer that draws nothing and answers <paramref name="answer"/> for every cell it is asked, recording each.</summary>
+	/// <summary>A world layer that draws nothing and answers the same for every cell it is asked, recording each.</summary>
+	/// <param name="answer">The answer given for every cell.</param>
 	private sealed class PickingLayer(object answer) : IEs1WorldLayer {
 		public List<(int X, int Y)> Asked { get; } = [];
 

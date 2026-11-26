@@ -415,9 +415,11 @@ public class MechLocomotionTests {
 	}
 
 	/// <summary>
-	/// Makes <paramref name="mech"/> the player's machine, in a group of its own: a machine moves only
+	/// Makes a machine the player's, in a group of its own: a machine moves only
 	/// from its group's AI tick, and only the player's takes <see cref="MechObject.Controls"/>.
 	/// </summary>
+	/// <param name="world">The world the machine is in.</param>
+	/// <param name="mech">The machine to make the player's.</param>
 	internal static void BecomePlayer(SimWorld world, MechObject mech) {
 		mech.IsPlayer = true;
 		var group = new MissionGroup(0, Es2.World.MissionUnitKind.Mech, Es2.World.MissionSide.Human,

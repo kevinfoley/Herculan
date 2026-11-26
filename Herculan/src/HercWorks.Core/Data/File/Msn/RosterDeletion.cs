@@ -86,7 +86,10 @@ public static class RosterDeletion {
 	private const int GroupRow = 16;
 	private const int ObjectiveRow = 17;
 
-	/// <summary>What deleting row <paramref name="row"/>'s GUID <paramref name="guid"/> would take with it, and what refuses it.</summary>
+	/// <summary>What deleting a roster GUID would take with it, and what refuses it.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
 	public static RosterDeleteCheck Check(MissionDocument document, int row, short guid) {
 		var mission = document.Mission;
 		var records = RosterRecords(mission, row, guid);
@@ -120,9 +123,12 @@ public static class RosterDeletion {
 	}
 
 	/// <summary>
-	/// Deletes row <paramref name="row"/>'s GUID <paramref name="guid"/> as one <see cref="MissionDocument.Change"/>.
+	/// Deletes a roster GUID as one <see cref="MissionDocument.Change"/>.
 	/// Throws <see cref="InvalidOperationException"/> when <see cref="Check"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
 	public static MsnEdit Delete(MissionDocument document, int row, short guid) {
 		var check = Check(document, row, guid);
 		if (!check.Allowed) {
@@ -133,10 +139,12 @@ public static class RosterDeletion {
 	}
 
 	/// <summary>
-	/// What deleting row-16 group GUID <paramref name="group"/> whole would take with it, and what refuses it: each member no
+	/// What deleting a row-16 group whole would take with it, and what refuses it: each member no
 	/// other group names goes with it, refused as its own delete is, but for the group it empties, which is this one; a member
 	/// another group names stays. Every record counts whatever its condition.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's GUID.</param>
 	public static GroupDeleteCheck CheckGroup(MissionDocument document, short group) {
 		var records = (document.Mission.Groups ?? []).Where(record => record.GUID == group).ToList();
 		if (group == -1 || records.Count == 0) {
@@ -165,10 +173,12 @@ public static class RosterDeletion {
 	}
 
 	/// <summary>
-	/// Deletes row-16 group GUID <paramref name="group"/> as one <see cref="MissionDocument.Change"/>: every record of each
+	/// Deletes a row-16 group as one <see cref="MissionDocument.Change"/>: every record of each
 	/// member that goes with it (<see cref="CheckGroup"/>), then the group as a delete of its last member removes it. Throws
 	/// <see cref="InvalidOperationException"/> when <see cref="CheckGroup"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's GUID.</param>
 	public static MsnEdit DeleteGroup(MissionDocument document, short group) {
 		var check = CheckGroup(document, group);
 		if (!check.Allowed) {
@@ -188,11 +198,15 @@ public static class RosterDeletion {
 	}
 
 	/// <summary>
-	/// The record edits of a delete <paramref name="check"/> allowed: every record of the GUID out of its row, and the GUID
+	/// The record edits of a delete the check allowed: every record of the GUID out of its row, and the GUID
 	/// out of every group naming it, a group it leaves empty removed, then each point its records named that nothing names
 	/// any more, as a route's delete removes its points (<see cref="RouteEditing.RemoveLeftBehind"/>). Made inside the
 	/// caller's <see cref="MissionDocument.Change"/>.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The roster row.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="check">The check that allowed the delete.</param>
 	internal static void Take(MissionDocument document, int row, short guid, RosterDeleteCheck check) {
 		var points = PointsOf(document, row, guid);
 		document.Remove(row, guid);
@@ -226,10 +240,13 @@ public static class RosterDeletion {
 	}
 
 	/// <summary>
-	/// The row-6 GUIDs the records of row <paramref name="row"/>'s GUID <paramref name="guid"/> name as their point, whatever
+	/// The row-6 GUIDs the records of a roster GUID name as their point, whatever
 	/// their condition: a roster record's or a group's <c>PositionRef</c>, an order's <c>PointRef</c> — the fields of those
 	/// rows <see cref="MissionDocument.PointRefs"/> counts.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
 	internal static List<short> PointsOf(MissionDocument document, int row, short guid) {
 		var mission = document.Mission;
 		IEnumerable<short> points = row switch {
@@ -243,7 +260,9 @@ public static class RosterDeletion {
 		return guid == -1 ? [] : points.Where(point => point != -1).Distinct().ToList();
 	}
 
-	/// <summary>The objectives, actions (type 10) and orders naming row-16 group GUID <paramref name="group"/> as their subject or target.</summary>
+	/// <summary>The objectives, actions (type 10) and orders naming a row-16 group as their subject or target.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's GUID.</param>
 	public static MsnNamers GroupNamers(MissionDocument document, short group) => NamersOf(0, 10, group, document.Mission);
 
 	// What names <guid> as an objective's or order's subject of <subjectKind>, or as an action's target of <actionType>.

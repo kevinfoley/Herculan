@@ -20,13 +20,16 @@ public class StringFile {
 	public int GroupCount => Groups.Length;
 
 	/// <summary>
-	/// Group <paramref name="index"/>'s strings, or an empty list when the file had no such group —
+	/// A group's strings, or an empty list when the file had no such group —
 	/// a caller drawing text is better off drawing none than an invented caption.
 	/// </summary>
+	/// <param name="index">The group's index.</param>
 	public IReadOnlyList<Entry> Group(int index) =>
 		index >= 0 && index < Groups.Length ? Groups[index] : Array.Empty<Entry>();
 
-	/// <summary>String <paramref name="index"/> of <paramref name="group"/>, or null when either index is out of range.</summary>
+	/// <summary>A string of a group, or null when either index is out of range.</summary>
+	/// <param name="group">The group's index.</param>
+	/// <param name="index">The string's index in the group.</param>
 	public string? Text(int group, int index) {
 		var entries = Group(group);
 		return index >= 0 && index < entries.Count ? entries[index].Text : null;

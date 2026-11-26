@@ -31,9 +31,10 @@ public sealed class MsnEdit {
 	public bool ChangesText => _text != null;
 
 	/// <summary>
-	/// The edits <paramref name="edits"/> made one after another, as one: each row, and the text, as the first edit to
+	/// Edits made one after another, as one: each row, and the text, as the first edit to
 	/// change it found it, and as the last left it.
 	/// </summary>
+	/// <param name="edits">The edits, in the order they were made.</param>
 	public static MsnEdit Combine(IEnumerable<MsnEdit> edits) {
 		var rows = new SortedDictionary<int, (Array Before, Array After)>();
 		TextSides? text = null;
@@ -56,9 +57,11 @@ public sealed class MsnEdit {
 	}
 
 	/// <summary>
-	/// Writes each changed row of <paramref name="file"/>, and its <see cref="MissionFile.Extensions"/> when the edit changed
+	/// Writes each changed row of a file, and its <see cref="MissionFile.Extensions"/> when the edit changed
 	/// them, as the edit found them, or as it left them.
 	/// </summary>
+	/// <param name="file">The file to write to.</param>
+	/// <param name="after">True for the rows as the edit left them, false for as it found them.</param>
 	internal void WriteTo(MissionFile file, bool after) {
 		foreach (var (row, sides) in _rows) {
 			MsnRows.Set(file, row, MsnRows.Copy(after ? sides.After : sides.Before));
@@ -70,9 +73,11 @@ public sealed class MsnEdit {
 	}
 
 	/// <summary>
-	/// The <c>.ENG</c>'s records as the edit found them, or as it left it, copied, for <paramref name="text"/> to hold;
+	/// The <c>.ENG</c>'s records as the edit found them, or as it left it, copied;
 	/// null for a side where the mission had no <c>.ENG</c>. False when the edit left the text alone.
 	/// </summary>
+	/// <param name="after">True for the records as the edit left them, false for as it found them.</param>
+	/// <param name="text">The copied records.</param>
 	internal bool TextSide(bool after, out MissionStringFile.StringEntry[]? text) {
 		text = _text == null ? null : MsnRows.CopyText(after ? _text.After : _text.Before);
 		return _text != null;
@@ -136,13 +141,15 @@ public sealed class MsnField {
 	public static MsnField MechRadar { get; } = new(12, MechRosterEntry144.AiRadarActiveWord,
 		record => ((MechRosterEntry144)record).AiRadarActive, (record, value) => ((MechRosterEntry144)record).AiRadarActive = value);
 
-	/// <summary>Weapon slot <paramref name="slot"/> of a mech's fit, row 12's <see cref="MechRosterEntry144.WeaponRefs"/>.</summary>
+	/// <summary>A weapon slot of a mech's fit, row 12's <see cref="MechRosterEntry144.WeaponRefs"/>.</summary>
+	/// <param name="slot">The weapon slot.</param>
 	public static MsnField MechWeapon(int slot) => new(12, MechRosterEntry144.WeaponRefsWord + slot,
 		record => ((MechRosterEntry144)record).WeaponRefs[slot], (record, value) => ((MechRosterEntry144)record).WeaponRefs[slot] = value);
 
 	/// <summary>
-	/// The ammunition type of weapon slot <paramref name="slot"/>, row 12's <see cref="MechRosterEntry144.WeaponSecondary"/>.
+	/// The ammunition type of a weapon slot, row 12's <see cref="MechRosterEntry144.WeaponSecondary"/>.
 	/// </summary>
+	/// <param name="slot">The weapon slot.</param>
 	public static MsnField MechAmmo(int slot) => new(12, MechRosterEntry144.WeaponSecondaryWord + slot,
 		record => ((MechRosterEntry144)record).WeaponSecondary[slot],
 		(record, value) => ((MechRosterEntry144)record).WeaponSecondary[slot] = value);
@@ -171,11 +178,13 @@ public sealed class MsnField {
 	public static MsnField GroupFormation { get; } = new(16, MissionGroup164.FormationIdWord,
 		record => ((MissionGroup164)record).FormationId, (record, value) => ((MissionGroup164)record).FormationId = value);
 
-	/// <summary>Member slot <paramref name="slot"/> of a group, row 16's <see cref="MissionGroup164.MemberRefs"/>.</summary>
+	/// <summary>A member slot of a group, row 16's <see cref="MissionGroup164.MemberRefs"/>.</summary>
+	/// <param name="slot">The member slot.</param>
 	public static MsnField GroupMember(int slot) => new(16, MissionGroup164.MemberRefsWord + slot,
 		record => ((MissionGroup164)record).MemberRefs[slot], (record, value) => ((MissionGroup164)record).MemberRefs[slot] = value);
 
-	/// <summary>Order slot <paramref name="slot"/> of a group, row 16's <see cref="MissionGroup164.OrderRefs"/>.</summary>
+	/// <summary>An order slot of a group, row 16's <see cref="MissionGroup164.OrderRefs"/>.</summary>
+	/// <param name="slot">The order slot.</param>
 	public static MsnField GroupOrder(int slot) => new(16, MissionGroup164.OrderRefsWord + slot,
 		record => ((MissionGroup164)record).OrderRefs[slot], (record, value) => ((MissionGroup164)record).OrderRefs[slot] = value);
 
@@ -212,16 +221,19 @@ public sealed class MsnField {
 	public static MsnField ActionVerb { get; } = new(10, MissionAction82.VerbWord,
 		record => ((MissionAction82)record).Verb, (record, value) => ((MissionAction82)record).Verb = value);
 
-	/// <summary>Area slot <paramref name="slot"/> of an action, row 10's <see cref="MissionAction82.AreaRefs"/>.</summary>
+	/// <summary>An area slot of an action, row 10's <see cref="MissionAction82.AreaRefs"/>.</summary>
+	/// <param name="slot">The area slot.</param>
 	public static MsnField ActionArea(int slot) => new(10, MissionAction82.AreaRefsWord + slot,
 		record => ((MissionAction82)record).AreaRefs[slot], (record, value) => ((MissionAction82)record).AreaRefs[slot] = value);
 
-	/// <summary>The counter of pair <paramref name="slot"/> of an action, in row 10's <see cref="MissionAction82.CounterPairs"/>.</summary>
+	/// <summary>The counter of a pair of an action, in row 10's <see cref="MissionAction82.CounterPairs"/>.</summary>
+	/// <param name="slot">The pair's slot.</param>
 	public static MsnField ActionCounter(int slot) => new(10, MissionAction82.CounterPairsWord + slot * 2,
 		record => ((MissionAction82)record).CounterPairs[slot * 2],
 		(record, value) => ((MissionAction82)record).CounterPairs[slot * 2] = value);
 
-	/// <summary>The operation of pair <paramref name="slot"/> of an action, in row 10's <see cref="MissionAction82.CounterPairs"/>.</summary>
+	/// <summary>The operation of a pair of an action, in row 10's <see cref="MissionAction82.CounterPairs"/>.</summary>
+	/// <param name="slot">The pair's slot.</param>
 	public static MsnField ActionCounterOp(int slot) => new(10, MissionAction82.CounterPairsWord + slot * 2 + 1,
 		record => ((MissionAction82)record).CounterPairs[slot * 2 + 1],
 		(record, value) => ((MissionAction82)record).CounterPairs[slot * 2 + 1] = value);
@@ -242,14 +254,17 @@ public sealed class MsnField {
 	public static MsnField TimerDelay { get; } = new(11, ActionTimer30.DelayWord,
 		record => ((ActionTimer30)record).Delay, (record, value) => ((ActionTimer30)record).Delay = value);
 
-	/// <summary>Fired slot <paramref name="slot"/> of a timer, row 11's <see cref="ActionTimer30.SequenceRefs"/>.</summary>
+	/// <summary>A fired slot of a timer, row 11's <see cref="ActionTimer30.SequenceRefs"/>.</summary>
+	/// <param name="slot">The fired slot.</param>
 	public static MsnField TimerFired(int slot) => new(11, ActionTimer30.SequenceRefsWord + slot,
 		record => ((ActionTimer30)record).SequenceRefs[slot], (record, value) => ((ActionTimer30)record).SequenceRefs[slot] = value);
 
 	/// <summary>
-	/// The action a roster object of row <paramref name="row"/> (12 to 14) fires when engaged, or with
-	/// <paramref name="defeated"/> when defeated: the records' <c>EngagementActionRef</c> and <c>DefeatActionRef</c>.
+	/// The action a roster object (rows 12 to 14) fires when engaged, or when defeated: the records' <c>EngagementActionRef</c>
+	/// and <c>DefeatActionRef</c>.
 	/// </summary>
+	/// <param name="row">The roster row, 12 to 14.</param>
+	/// <param name="defeated">True for the action fired when defeated, false for when engaged.</param>
 	public static MsnField RosterAction(int row, bool defeated) => (row, defeated) switch {
 		(12, false) => new(12, MechRosterEntry144.EngagementActionRefWord,
 			record => ((MechRosterEntry144)record).EngagementActionRef,
@@ -285,7 +300,8 @@ public sealed class MsnField {
 		_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters."),
 	};
 
-	/// <summary>The row-7 heading a roster object of row <paramref name="row"/> (12 to 14) names: the records' <c>HeadingRef</c>.</summary>
+	/// <summary>The row-7 heading a roster object (rows 12 to 14) names: the records' <c>HeadingRef</c>.</summary>
+	/// <param name="row">The roster row, 12 to 14.</param>
 	public static MsnField RosterHeading(int row) => row switch {
 		12 => new(12, MechRosterEntry144.HeadingRefWord,
 			record => ((MechRosterEntry144)record).HeadingRef, (record, value) => ((MechRosterEntry144)record).HeadingRef = value),
@@ -321,13 +337,17 @@ internal static class MsnRows {
 		typeof(object).GetMethod("MemberwiseClone", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
 	/// <summary>
-	/// Row <paramref name="row"/>'s records. Row 5 is kept raw (<see cref="MissionFile.DebriefBytes"/>): its array is the
+	/// A row's records. Row 5 is kept raw (<see cref="MissionFile.DebriefBytes"/>): its array is the
 	/// row's bytes, which an edit snapshots and puts back whole.
 	/// </summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="row">The row.</param>
 	public static Array Get(MissionFile file, int row) =>
 		Find(file, row) ?? throw new InvalidOperationException($"The mission file has no row {row}.");
 
-	/// <summary>Row <paramref name="row"/>'s records, or null when the file has none (<see cref="Get"/>).</summary>
+	/// <summary>A row's records, or null when the file has none (<see cref="Get"/>).</summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="row">The row.</param>
 	public static Array? Find(MissionFile file, int row) =>
 		row switch {
 			1 => file.Conditions,
@@ -379,7 +399,8 @@ internal static class MsnRows {
 			Guid = entry.Guid, ConditionRef = entry.ConditionRef, ParentRef = entry.ParentRef, Len = entry.Len, Val = entry.Val,
 		});
 
-	/// <summary>A copy of <paramref name="records"/> sharing nothing with it: each record and each array it holds copied.</summary>
+	/// <summary>A copy of an array of records sharing nothing with it: each record and each array it holds copied.</summary>
+	/// <param name="records">The records to copy.</param>
 	public static Array Copy(Array records) {
 		if (records is byte[] bytes) {
 			return (byte[])bytes.Clone();

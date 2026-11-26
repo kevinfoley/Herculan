@@ -41,9 +41,11 @@ public sealed record MissionExtensions {
 	public bool Any => HerculanOnly || OtherFlags != 0 || Unread.Length > 0 || Version != CurrentVersion;
 
 	/// <summary>
-	/// The block at the start of <paramref name="bytes"/> and how many bytes it takes, or null and 0 when they do not open with
+	/// The block at the start of a span and how many bytes it takes, or null and 0 when they do not open with
 	/// <see cref="Signature"/> and a whole header and payload.
 	/// </summary>
+	/// <param name="bytes">The bytes to read.</param>
+	/// <param name="length">How many bytes the block takes, or 0.</param>
 	public static MissionExtensions? Read(ReadOnlySpan<byte> bytes, out int length) {
 		length = 0;
 		if (bytes.Length < HeaderSize || !bytes[..Signature.Length].SequenceEqual(Signature)) {

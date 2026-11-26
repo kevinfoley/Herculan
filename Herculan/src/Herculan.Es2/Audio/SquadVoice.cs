@@ -80,9 +80,10 @@ public sealed class SquadVoice {
 
 	/// <summary>
 	/// Plays a loose <c>.WAV</c> on the same channel — the training instructor's clips, which ship outside
-	/// any archive (<see cref="InstructorVoice"/>). <paramref name="read"/> supplies the file the first time
-	/// <paramref name="name"/> is asked for; a clip it has no bytes for plays nothing.
+	/// any archive (<see cref="InstructorVoice"/>). A clip it has no bytes for plays nothing.
 	/// </summary>
+	/// <param name="name">The clip's name.</param>
+	/// <param name="read">Supplies the file the first time the name is asked for.</param>
 	public void SpeakClip(string name, Func<byte[]?> read) {
 		if (!_looseSamples.TryGetValue(name, out int sample)) {
 			sample = -1;

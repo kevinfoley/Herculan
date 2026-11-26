@@ -22,9 +22,11 @@ namespace Herculan.Es2.Cockpit;
 /// </param>
 public readonly record struct AltitudeReading(int Ground, int Machine, int Floor, int Ceiling) {
 	/// <summary>
-	/// The reading for <paramref name="pilot"/> over <paramref name="grid"/>, or null when the machine
+	/// The reading for a machine over a height grid, or null when the machine
 	/// is not a flyer — <c>Gunsight_PaintAltitudeScale</c>'s own gate, type record <c>+0x50</c>.
 	/// </summary>
+	/// <param name="pilot">The machine.</param>
+	/// <param name="grid">The height grid under it.</param>
 	public static AltitudeReading? For(MechObject pilot, HeightGrid grid) {
 		ArgumentNullException.ThrowIfNull(pilot);
 		ArgumentNullException.ThrowIfNull(grid);

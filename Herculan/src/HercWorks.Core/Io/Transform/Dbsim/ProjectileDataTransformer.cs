@@ -30,8 +30,10 @@ public class ProjectileDataTransformer : ByteTransformer<ProjectileData> {
 
 	/// <summary>
 	/// One 36-byte record, for a file that carries the records without this file's count: ES1's <c>WEAPONS.DAT</c>
-	/// (see <see cref="Es1WeaponsSimTransformer"/>). Advances <paramref name="offset"/> past it.
+	/// (see <see cref="Es1WeaponsSimTransformer"/>). Advances the offset past it.
 	/// </summary>
+	/// <param name="bytes">The buffer.</param>
+	/// <param name="offset">Where the record starts; advanced past it.</param>
 	public ProjectileData.Projectile ReadProjectile(byte[] bytes, ref int offset) {
 		SetBytes(bytes);
 		Index = offset;

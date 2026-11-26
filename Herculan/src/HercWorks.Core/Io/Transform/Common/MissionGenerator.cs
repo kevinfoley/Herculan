@@ -96,13 +96,14 @@ public sealed class MissionGenerator {
 	public MissionProvenance Provenance { get; } = new();
 
 	/// <summary>
-	/// Loads a mission. <paramref name="flags"/> is the campaign flag array the row-1 comparisons read,
-	/// and row 2 zeroes the entries it names in it. <paramref name="clearList"/> is <c>DAT_0048545a</c>:
-	/// row 2 writes into it and the entries it holds are then cleared from the flags. The original never
-	/// resets it, so what one load leaves there the next load clears again — the caller keeps it.
-	/// <paramref name="roll"/> is VSHELL's <c>ShellRandom_Below</c> (<c>004659ec</c>), a draw in <c>[0, n)</c>.
-	/// <paramref name="text"/> is the <c>.ENG</c> beside the mission, or null for none.
+	/// Loads a mission. The original never resets the clear list, so what one load leaves there the next load clears
+	/// again — the caller keeps it.
 	/// </summary>
+	/// <param name="msn">The <c>.MSN</c> file's bytes.</param>
+	/// <param name="text">The <c>.ENG</c> beside the mission, or null for none.</param>
+	/// <param name="flags">The campaign flag array the row-1 comparisons read, and row 2 zeroes the entries it names in it.</param>
+	/// <param name="clearList"><c>DAT_0048545a</c>: row 2 writes into it and the entries it holds are then cleared from the flags.</param>
+	/// <param name="roll">VSHELL's <c>ShellRandom_Below</c> (<c>004659ec</c>), a draw in <c>[0, n)</c>.</param>
 	public static MissionGenerator Load(byte[] msn, byte[]? text, short[] flags, short[] clearList, Func<short, int> roll) {
 		if (flags.Length < CampaignFlagCount) {
 			throw new ArgumentException($"The campaign flag array holds {CampaignFlagCount} entries.", nameof(flags));
@@ -127,12 +128,16 @@ public sealed class MissionGenerator {
 
 	/// <summary>
 	/// <c>Msn_LoadDebriefRows</c> (<c>0041ca4e</c>) and <c>Msn_LoadDebrief</c> (<c>0041d2c3</c>), the debrief's reload of the mission
-	/// just flown (docs/retail/formats/msn-mission-file.md#row-5--the-debrief): row 1 against <paramref name="flags"/>,
-	/// drawing from <paramref name="roll"/> as <see cref="Load"/> does; row 2 skipped, so no flag is cleared;
+	/// just flown (docs/retail/formats/msn-mission-file.md#row-5--the-debrief): row 1 against the flags,
+	/// drawing as <see cref="Load"/> does; row 2 skipped, so no flag is cleared;
 	/// the <c>.ENG</c> text; row 3; row 4 skipped; and row 5. Returns row 5's first slot — its thirty
 	/// <c>mission.str</c> lines and its row-3 value, the debrief movie — with the <c>mission.str</c> it writes,
 	/// or null for a mission with no row-5 record, where the original asserts.
 	/// </summary>
+	/// <param name="msn">The <c>.MSN</c> file's bytes.</param>
+	/// <param name="text">The <c>.ENG</c> beside the mission, or null for none.</param>
+	/// <param name="flags">The campaign flag array row 1 is read against.</param>
+	/// <param name="roll">The random draw, as <see cref="Load"/> takes it.</param>
 	public static MissionDebriefText? LoadDebriefText(byte[] msn, byte[]? text, short[] flags, Func<short, int> roll) {
 		if (flags.Length < CampaignFlagCount) {
 			throw new ArgumentException($"The campaign flag array holds {CampaignFlagCount} entries.", nameof(flags));
@@ -249,8 +254,10 @@ public sealed class MissionGenerator {
 
 	/// <summary>
 	/// <c>Msn_ConditionFilterGate</c> (<c>00417610</c>): no condition passes, and a condition passes when
-	/// it names one of the first <paramref name="count"/> surviving row-1 records.
+	/// it names one of the first surviving row-1 records.
 	/// </summary>
+	/// <param name="condition">The condition.</param>
+	/// <param name="count">How many of the surviving row-1 records are considered.</param>
 	private bool Gate(short condition, int count) {
 		if (condition == -1) {
 			return true;
@@ -321,9 +328,12 @@ public sealed class MissionGenerator {
 
 	/// <summary>
 	/// <c>Msn_TemplateRow6</c> (<c>00416120</c>) and its six siblings: the option picked, then the first of the row's first
-	/// <paramref name="count"/> records whose condition is that option's range: the template a record with a
+	/// records whose condition is that option's range: the template a record with a
 	/// random table key copies its fields from.
 	/// </summary>
+	/// <param name="row">The row's records.</param>
+	/// <param name="key">The random table key.</param>
+	/// <param name="count">How many of the row's first records are considered.</param>
 	private int TemplateOf(IReadOnlyList<short[]> row, short key, int count) {
 		int picked = PickOption(key);
 		int source = -1;
@@ -468,11 +478,15 @@ public sealed class MissionGenerator {
 	}
 
 	/// <summary>
-	/// The family <c>Msn_ResolveRow6Ref</c> (<c>00415b44</c>) and its siblings share, one per row: a GUID's position among the row's first <paramref name="count"/> records. Exported
-	/// (<c>1</c>) skips the records whose GUID is <c>-1</c>, which is the index <c>script.dat</c> gives the
+	/// The family <c>Msn_ResolveRow6Ref</c> (<c>00415b44</c>) and its siblings share, one per row: a GUID's position among the row's first records.
+	/// Exported (<c>1</c>) skips the records whose GUID is <c>-1</c>, which is the index <c>script.dat</c> gives the
 	/// record; otherwise (<c>0</c>) they count, which is the record's place in the array. <c>-1</c> for a
 	/// <c>-1</c> GUID or none found.
 	/// </summary>
+	/// <param name="row">The row's records.</param>
+	/// <param name="guid">The GUID.</param>
+	/// <param name="count">How many of the row's first records are considered.</param>
+	/// <param name="exported">1 to skip the records whose GUID is <c>-1</c>, 0 to count them.</param>
 	private static short Find(IReadOnlyList<short[]> row, short guid, int count, bool exported) {
 		if (guid == -1) {
 			return -1;
@@ -527,10 +541,14 @@ public sealed class MissionGenerator {
 	private static short Ref(IReadOnlyList<short[]> row, short guid) => Find(row, guid, row.Count, exported: true);
 
 	/// <summary>
-	/// Adds record <paramref name="index"/> of <c>.MSN</c> row <paramref name="msnRow"/>, or when an earlier
+	/// Adds a record of a <c>.MSN</c> row, or when an earlier
 	/// record has its GUID merges it into that one by the row's <see cref="MergeRules"/> — the compaction every
 	/// GUID-keyed row shares. The slot the original read into is reused.
 	/// </summary>
+	/// <param name="row">The row's survivors.</param>
+	/// <param name="msnRow">The <c>.MSN</c> row.</param>
+	/// <param name="index">The record's index in the row.</param>
+	/// <param name="record">The record.</param>
 	private void AddOrMerge(List<short[]> row, int msnRow, int index, short[] record) {
 		int existing = Find(row, record[MapObject.GUIDWord], row.Count, exported: false);
 		if (existing == -1) {
@@ -557,7 +575,11 @@ public sealed class MissionGenerator {
 		}
 	}
 
-	/// <summary>A template copy of row <paramref name="msnRow"/>'s <see cref="MergeRules.TemplateCopy"/> spans from slot <paramref name="source"/> of <paramref name="row"/> into <paramref name="target"/>.</summary>
+	/// <summary>A template copy of a row's <see cref="MergeRules.TemplateCopy"/> spans from one slot into a record.</summary>
+	/// <param name="row">The row's records.</param>
+	/// <param name="source">The slot to copy from.</param>
+	/// <param name="target">The record to copy into.</param>
+	/// <param name="msnRow">The <c>.MSN</c> row whose spans are copied.</param>
 	private void CopyTemplate(IReadOnlyList<short[]> row, int source, short[] target, int msnRow) {
 		foreach (var span in MergeRules.TemplateCopy(msnRow)) {
 			Array.Copy(row[source], span.First, target, span.First, span.Count);
@@ -1018,7 +1040,8 @@ public sealed class MissionGenerator {
 	/// </summary>
 	public short[]? TextPackage => (_texts.Count > 0 ? _texts[0] : _textSlot0)?.ToArray();
 
-	/// <summary>Group 0's member slot <paramref name="slot"/> — a HERC's <c>script.dat</c> index, or <c>-1</c>.</summary>
+	/// <summary>One of group 0's member slots — a HERC's <c>script.dat</c> index, or <c>-1</c>.</summary>
+	/// <param name="slot">The member slot.</param>
 	public short SquadMember(int slot) =>
 		_groups.Count > 0 && slot >= 0 && slot < 20 ? _groups[0][MissionGroup164.MemberRefsWord + slot] : (short)-1;
 

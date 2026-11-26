@@ -121,9 +121,11 @@ public class Es1ShellSoundTests {
 	}
 
 	/// <summary>
-	/// <paramref name="test"/> given a shell sound made by <see cref="Es1ShellSound.Init"/> from a <c>resource.cfg</c> that
+	/// Runs a test on a shell sound made by <see cref="Es1ShellSound.Init"/> from a <c>resource.cfg</c> that
 	/// names a digital device, whose reader opens every name as ten bytes, and its backend.
 	/// </summary>
+	/// <param name="waitTicks">The shell's tick wait.</param>
+	/// <param name="test">The test, given the shell sound and its backend.</param>
 	private static void WithShellSound(Func<short, IEnumerable<Es1ShellWait>> waitTicks,
 			Action<Es1ShellSound, Es1SoundManagerTests.EndlessBackend> test) {
 		var root = Directory.CreateTempSubdirectory("es1shellsound");

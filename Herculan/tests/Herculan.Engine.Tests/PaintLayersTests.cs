@@ -95,9 +95,17 @@ public class PaintLayersTests {
 	}
 
 	/// <summary>
-	/// A square from (from, from) to (to, to) in the plane Z = z, as two triangles of one poly, facing
-	/// <paramref name="normal"/> (+Z by default) and drawn from <paramref name="side"/> (both by default).
+	/// A square from (from, from) to (to, to) in the plane Z = z, as two triangles of one poly, facing +Z by default
+	/// and drawn from both sides by default.
 	/// </summary>
+	/// <param name="polyId">The poly's id.</param>
+	/// <param name="from">The square's low corner on both axes.</param>
+	/// <param name="to">The square's high corner on both axes.</param>
+	/// <param name="z">The plane's Z.</param>
+	/// <param name="gate">The cell gate of the faces, or null for none.</param>
+	/// <param name="slot">The BSP leaf of the faces, or null for none.</param>
+	/// <param name="normal">The direction the faces face, or null for +Z.</param>
+	/// <param name="side">The side the faces are drawn from, 0 for both.</param>
 	private static PaintLayers.Face[] Quad(int polyId, float from, float to, float z = 0f,
 			CellGate? gate = null, BspLeaf? slot = null, Vector3? normal = null, int side = 0) {
 		var a = new Vector3(from, from, z);

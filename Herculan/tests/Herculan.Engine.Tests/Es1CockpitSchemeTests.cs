@@ -37,7 +37,8 @@ public class Es1CockpitSchemeTests {
 
 	private static int Rgb(DynamixPalette palette, int index) => palette.Colors[index].ColorIntRgb();
 
-	/// <summary>256 entries, entry <c>i</c> coloured (<c>i</c>, <paramref name="green"/>, 0) so the two palettes differ everywhere.</summary>
+	/// <summary>256 entries, entry <c>i</c> coloured (<c>i</c>, green, 0) so the two palettes differ everywhere.</summary>
+	/// <param name="green">The green component of every entry.</param>
 	private static DynamixPalette Palette(byte green) {
 		var palette = new DynamixPalette { ColorCount = 256 };
 		for (int i = 0; i < 256; i++) {

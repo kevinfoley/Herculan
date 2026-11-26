@@ -40,11 +40,13 @@ public sealed class HeadingTapeSweep {
 	}
 
 	/// <summary>
-	/// The sweep for a cockpit powering up at <paramref name="coarseTicks"/>. A flyer's comes back
+	/// The sweep for a cockpit powering up at a coarse tick. A flyer's comes back
 	/// already latched and never moves the tape — <c>Gau_BuildCockpitWidgets</c>' own branch, on the
 	/// same <c>FlyerFlag</c> that gates the engine hum in
 	/// <see cref="MessagePorts.PowerUp"/>.
 	/// </summary>
+	/// <param name="pilot">The player's machine.</param>
+	/// <param name="coarseTicks">The coarse tick the power-up starts at.</param>
 	public static HeadingTapeSweep ForPowerUp(MechObject pilot, long coarseTicks) {
 		ArgumentNullException.ThrowIfNull(pilot);
 		return new HeadingTapeSweep(coarseTicks, latched: pilot.Type.IsFlyer);

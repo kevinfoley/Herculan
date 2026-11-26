@@ -592,7 +592,8 @@ public class ShellRepairScreenTests {
 		return ShellHangar.From(save);
 	}
 
-	/// <summary>A screen over <paramref name="hangar"/>, entered as the host enters it, so its snapshot is taken.</summary>
+	/// <summary>A screen over a hangar, entered as the host enters it, so its snapshot is taken.</summary>
+	/// <param name="hangar">The hangar the screen is over.</param>
 	private static ShellRepairScreen ScreenFor(ShellHangar hangar) {
 		var screen = new ShellRepairScreen(hangar, ShellRepairCosts.Expand(RetailValues(), new short[] { 100 }));
 		screen.Enter();

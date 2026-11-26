@@ -154,7 +154,10 @@ public class Es1DeluxePaintAnimationTransformer : ByteTransformer<Es1DeluxePaint
 		return o.ToArray();
 	}
 
-	/// <summary>The record at <paramref name="at"/>, split as <c>Anm_FindFrameRecord</c> finds its operations.</summary>
+	/// <summary>A record, split as <c>Anm_FindFrameRecord</c> finds its operations.</summary>
+	/// <param name="b">The file's bytes.</param>
+	/// <param name="at">The record's offset.</param>
+	/// <param name="size">The record's size.</param>
 	private static Es1AnimationRecord ReadRecord(byte[] b, int at, int size) {
 		if (size < 4) {
 			throw new InvalidDataException($"The record at {at} is {size} bytes, shorter than its header.");

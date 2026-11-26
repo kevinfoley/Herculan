@@ -58,13 +58,15 @@ public abstract class Es1WalkedFileTransformer<T> : ByteTransformer<T> where T :
 		return IndexIntLE();
 	}
 
-	/// <summary><paramref name="count"/> <c>int16</c> at the cursor.</summary>
+	/// <summary>Some <c>int16</c> at the cursor.</summary>
+	/// <param name="count">How many to read.</param>
 	protected short[] ReadInt16s(int count) {
 		Require(2 * count);
 		return IndexShortLEArray(count);
 	}
 
-	/// <summary><paramref name="count"/> bytes at the cursor.</summary>
+	/// <summary>Some bytes at the cursor.</summary>
+	/// <param name="count">How many to read.</param>
 	protected byte[] ReadBytes(int count) {
 		Require(count);
 		return IndexSegment(count);
@@ -72,9 +74,10 @@ public abstract class Es1WalkedFileTransformer<T> : ByteTransformer<T> where T :
 
 	/// <summary>
 	/// A NUL-terminated name at the cursor that <c>Stream_ReadCString</c> (<c>ES1GO 00020154</c>) reads into
-	/// <paramref name="bufferLength"/> bytes. A name with no NUL in that many bytes throws: the retail reader takes it whole,
+	/// a buffer. A name with no NUL in the buffer's length throws: the retail reader takes it whole,
 	/// with no NUL, and the next field starts after it, which the model could not give back.
 	/// </summary>
+	/// <param name="bufferLength">The buffer's length in bytes.</param>
 	protected string ReadCString(int bufferLength) {
 		int end = Array.IndexOf(Bytes!, (byte)0, Index, Math.Min(bufferLength, Bytes!.Length - Index));
 		if (end < 0) {
@@ -86,13 +89,17 @@ public abstract class Es1WalkedFileTransformer<T> : ByteTransformer<T> where T :
 		return name;
 	}
 
-	/// <summary>Writes <paramref name="name"/> and its NUL.</summary>
+	/// <summary>Writes a name and its NUL.</summary>
+	/// <param name="w">The writer.</param>
+	/// <param name="name">The name.</param>
 	protected static void WriteCString(BinaryWriter w, string name) {
 		w.Write(Encoding.Latin1.GetBytes(name));
 		w.Write((byte)0);
 	}
 
-	/// <summary>Writes each of <paramref name="values"/>.</summary>
+	/// <summary>Writes each of some values.</summary>
+	/// <param name="w">The writer.</param>
+	/// <param name="values">The values.</param>
 	protected static void WriteInt16s(BinaryWriter w, IEnumerable<short> values) {
 		foreach (short value in values) {
 			w.Write(value);

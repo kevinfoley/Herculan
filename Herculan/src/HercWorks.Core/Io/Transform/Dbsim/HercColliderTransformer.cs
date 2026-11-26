@@ -28,8 +28,10 @@ public class HercColliderTransformer : ByteTransformer<HercCollider> {
 
 	/// <summary>
 	/// One model's worth of nodes — <c>Collision_LoadRecordArray</c> (<c>0040ccf8</c>) itself.
-	/// Advances <paramref name="offset"/> past everything it read.
+	/// Advances the offset past everything it read.
 	/// </summary>
+	/// <param name="bytes">The buffer.</param>
+	/// <param name="offset">Where the nodes start; advanced past them.</param>
 	public ColliderNode[] ReadNodes(byte[] bytes, ref int offset) {
 		// Index directly rather than JumpTo, which silently no-ops an offset at end-of-buffer.
 		SetBytes(bytes);
@@ -54,8 +56,10 @@ public class HercColliderTransformer : ByteTransformer<HercCollider> {
 	/// <summary>
 	/// One cluster — <c>Collision_ReadCluster</c> (<c>0040cc14</c>) itself, which the sim
 	/// <c>WEAPONS.DAT</c> reader runs too (see <see cref="WeaponsSimTransformer"/>). Advances
-	/// <paramref name="offset"/> past everything it read.
+	/// the offset past everything it read.
 	/// </summary>
+	/// <param name="bytes">The buffer.</param>
+	/// <param name="offset">Where the cluster starts; advanced past it.</param>
 	public ColliderCluster ReadCluster(byte[] bytes, ref int offset) {
 		SetBytes(bytes);
 		Index = offset;

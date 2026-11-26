@@ -30,12 +30,20 @@ internal static class NewGroups {
 	private const short MapShown = -1;
 
 	/// <summary>
-	/// Adds <paramref name="member"/> to roster row <paramref name="row"/> (12 or 13) in a new group of
-	/// <paramref name="memberKind"/> (0 hercs, 1 flyers) on <paramref name="side"/>, standing on a route of one waypoint at
-	/// (<paramref name="x"/>, <paramref name="y"/>, Z 0) and given <see cref="FirstOrder"/> on it, as one
+	/// Adds a member to a roster row (12 or 13) in a new group of a kind (0 hercs, 1 flyers) on a side, standing on a route of
+	/// one waypoint at (x, y, Z 0) and given <see cref="FirstOrder"/> on it, as one
 	/// <see cref="MissionDocument.Change"/>; answers the member's and the group's GUIDs. Throws
 	/// <see cref="InvalidOperationException"/> when the group would hunt the squad and the mission has no group 0.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The roster row, 12 or 13.</param>
+	/// <param name="member">The member to add.</param>
+	/// <param name="memberKind">The group's kind: 0 hercs, 1 flyers.</param>
+	/// <param name="side">The group's side.</param>
+	/// <param name="x">The waypoint's X.</param>
+	/// <param name="y">The waypoint's Y.</param>
+	/// <param name="memberGuid">The member's GUID.</param>
+	/// <param name="groupGuid">The group's GUID.</param>
 	internal static MsnEdit Create(MissionDocument document, int row, MapObject member, short memberKind, short side, int x,
 			int y, out short memberGuid, out short groupGuid) {
 		var (verb, subjectKind, subject) = FirstOrder(document, side);
@@ -44,7 +52,7 @@ internal static class NewGroups {
 	}
 
 	/// <summary>
-	/// The verb and subject a new herc or flyer group's first order gets on <paramref name="side"/>, this editor's choice of a
+	/// The verb and subject a new herc or flyer group's first order gets on a side, this editor's choice of a
 	/// retail shape. A Cybrid group hunts group 0, the player's squad: search/destroy on the squad is the slot-0 order of 299
 	/// of the 410 records of Cybrid herc groups outside the squad and of 62 of the 75 of Cybrid flyer groups
 	/// (<c>HercWorks.Query orders</c>, the squad's GUID left out). A Human group patrols, naming no subject: search/destroy
@@ -56,6 +64,8 @@ internal static class NewGroups {
 	/// groups outside the squad have no majority shape (7 guard a group, 6 sleep, 3 patrol naming no subject).
 	/// Throws <see cref="InvalidOperationException"/> for a Cybrid group when the mission has no group 0.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="side">The group's side.</param>
 	internal static (short Verb, short SubjectKind, short Subject) FirstOrder(MissionDocument document, short side) {
 		if (side != CybridSide) {
 			return (GroupOrders.Patrol, -1, -1);
@@ -73,13 +83,24 @@ internal static class NewGroups {
 	internal const short CybridSide = 1;
 
 	/// <summary>
-	/// Adds <paramref name="member"/> to roster row <paramref name="row"/> (12 to 14) in a new group of
-	/// <paramref name="memberKind"/> on <paramref name="side"/>, its paints-ground flag <paramref name="paintsGround"/>,
-	/// standing on a route of one waypoint at (<paramref name="x"/>, <paramref name="y"/>, Z 0) and given an order of
-	/// <paramref name="verb"/> on it whose subject is <paramref name="subject"/> of <paramref name="subjectKind"/>
-	/// (<see cref="HercGroups.Order"/>; kind <c>-1</c> for none), as one <see cref="MissionDocument.Change"/>; answers the
+	/// Adds a member to a roster row (12 to 14) in a new group of a kind on a side,
+	/// standing on a route of one waypoint at (x, y, Z 0) and given an order on it
+	/// (<see cref="HercGroups.Order"/>; subject kind <c>-1</c> for none), as one <see cref="MissionDocument.Change"/>; answers the
 	/// member's and the group's GUIDs.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The roster row, 12 to 14.</param>
+	/// <param name="member">The member to add.</param>
+	/// <param name="memberKind">The group's kind.</param>
+	/// <param name="side">The group's side.</param>
+	/// <param name="x">The waypoint's X.</param>
+	/// <param name="y">The waypoint's Y.</param>
+	/// <param name="verb">The order's verb.</param>
+	/// <param name="subjectKind">The kind of the order's subject, <c>-1</c> for none.</param>
+	/// <param name="subject">The order's subject.</param>
+	/// <param name="paintsGround">The group's paints-ground flag.</param>
+	/// <param name="memberGuid">The member's GUID.</param>
+	/// <param name="groupGuid">The group's GUID.</param>
 	internal static MsnEdit Create(MissionDocument document, int row, MapObject member, short memberKind, short side, int x,
 			int y, short verb, short subjectKind, short subject, short paintsGround, out short memberGuid, out short groupGuid) {
 		short added = -1, made = -1;
@@ -95,11 +116,17 @@ internal static class NewGroups {
 	}
 
 	/// <summary>
-	/// Why row-16 group <paramref name="group"/> cannot take another member of <paramref name="memberKind"/>, or null when it
-	/// can: it is <paramref name="notKind"/> unless its base is a group of that kind, and
-	/// <paramref name="full"/> when no member slot up to <paramref name="lastSlot"/> is free in every record of it
+	/// Why a row-16 group cannot take another member of a kind, or null when it
+	/// can: it is not that kind unless its base is a group of that kind, and
+	/// it is full when no member slot up to the last is free in every record of it
 	/// (<see cref="MissionDocument.FreeMemberSlot"/>).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's GUID.</param>
+	/// <param name="memberKind">The kind of member to join.</param>
+	/// <param name="lastSlot">The last member slot the kind may take.</param>
+	/// <param name="notKind">The reason given when the group is not of the kind.</param>
+	/// <param name="full">The reason given when the group is full.</param>
 	internal static string? WhyNoJoin(MissionDocument document, short group, short memberKind, int lastSlot, string notKind,
 			string full) {
 		if (document.Layout.Entry<MissionGroup164>(group)?.Fields.MemberKind != memberKind) {
@@ -111,11 +138,18 @@ internal static class NewGroups {
 	}
 
 	/// <summary>
-	/// Why row-16 group <paramref name="group"/> cannot take a member of <paramref name="memberKind"/> in member slot
-	/// <paramref name="slot"/>, or null when it can: it is <paramref name="notKind"/> unless its base is a group of that kind,
-	/// <paramref name="past"/> for a slot after <paramref name="lastSlot"/>, and a slot some record of it fills is taken
+	/// Why a row-16 group cannot take a member of a kind in a member slot,
+	/// or null when it can: it is not that kind unless its base is a group of that kind,
+	/// a slot after the last is past it, and a slot some record of it fills is taken
 	/// (<see cref="MissionDocument.MemberSlotFree"/>).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's GUID.</param>
+	/// <param name="slot">The member slot.</param>
+	/// <param name="memberKind">The kind of member to join.</param>
+	/// <param name="lastSlot">The last member slot the kind may take.</param>
+	/// <param name="notKind">The reason given when the group is not of the kind.</param>
+	/// <param name="past">The reason given for a slot after the last.</param>
 	internal static string? WhyNoJoinSlot(MissionDocument document, short group, int slot, short memberKind, int lastSlot,
 			string notKind, string past) =>
 		document.Layout.Entry<MissionGroup164>(group)?.Fields.MemberKind != memberKind ? notKind
@@ -124,18 +158,29 @@ internal static class NewGroups {
 			: null;
 
 	/// <summary>
-	/// Appends <paramref name="member"/> to roster row <paramref name="row"/> and names it in <paramref name="group"/>'s
+	/// Appends a member to a roster row and names it in a group's
 	/// first free member slot, in the record supplying that slot, as one <see cref="MissionDocument.Change"/>; answers the
 	/// member's GUID. The caller has checked the join.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The roster row.</param>
+	/// <param name="group">The group's GUID.</param>
+	/// <param name="member">The member to append.</param>
+	/// <param name="memberGuid">The member's GUID.</param>
 	internal static MsnEdit Join(MissionDocument document, int row, short group, MapObject member, out short memberGuid) =>
 		Join(document, row, group, document.FreeMemberSlot(group), member, out memberGuid);
 
 	/// <summary>
-	/// Appends <paramref name="member"/> to roster row <paramref name="row"/> and names it in member slot
-	/// <paramref name="slot"/> of <paramref name="group"/>, in the record supplying that slot, as one
+	/// Appends a member to a roster row and names it in a member slot
+	/// of a group, in the record supplying that slot, as one
 	/// <see cref="MissionDocument.Change"/>; answers the member's GUID. The caller has checked the join.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="row">The roster row.</param>
+	/// <param name="group">The group's GUID.</param>
+	/// <param name="slot">The member slot to name it in.</param>
+	/// <param name="member">The member to append.</param>
+	/// <param name="memberGuid">The member's GUID.</param>
 	internal static MsnEdit Join(MissionDocument document, int row, short group, int slot, MapObject member, out short memberGuid) {
 		short added = -1;
 		var change = document.Change(() => {
@@ -146,7 +191,8 @@ internal static class NewGroups {
 		return change;
 	}
 
-	/// <summary><paramref name="count"/> unset words, <c>-1</c> each.</summary>
+	/// <summary>Unset words, <c>-1</c> each.</summary>
+	/// <param name="count">How many words.</param>
 	internal static short[] Unset(int count) => Enumerable.Repeat((short)-1, count).ToArray();
 
 	// The new group: the member in slot 0 and the order in slot 0, on <side>. It names no point and no heading (402 and 405

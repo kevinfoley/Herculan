@@ -16,10 +16,11 @@ public readonly record struct Es1MissionParams(short Ammo, short Damage, short D
 
 	/// <summary>
 	/// The words as the shell's start-up leaves them: <c>00020630</c> copies options 12 to 16 of <c>data\prefs.cfg</c> into
-	/// them, and <c>Prefs_Load</c> zeroes every option when the file does not open, so a null <paramref name="prefs"/> gives
+	/// them, and <c>Prefs_Load</c> zeroes every option when the file does not open, so a null file gives
 	/// five zeros. A file shorter than the 17 bytes the load reads gives 0 for each option past its end, which is this
 	/// port's reading: what <c>Prefs_Load</c> leaves after a short read is not in the doc.
 	/// </summary>
+	/// <param name="prefs">The bytes of <c>data\prefs.cfg</c>, or null when it does not open.</param>
 	public static Es1MissionParams FromPrefs(byte[]? prefs) {
 		short Option(int index) => prefs != null && index < prefs.Length ? prefs[index] : (short)0;
 		return new(Option(FirstOption), Option(FirstOption + 1), Option(FirstOption + 2), Option(FirstOption + 3),
@@ -125,13 +126,18 @@ public sealed class Es1MissionLoad {
 	}
 
 	/// <summary>
-	/// Loads <paramref name="mission"/> as a single mission. <paramref name="roll"/> is the shell's <c>Math_RandomBelow</c>
-	/// (<c>ES1GO 00038774</c>) on <c>Shell_RandomState</c>, a draw in [0, bound) that returns 0 without a draw for a bound of
-	/// 0 (docs/es1/formats/msn-mission-file.md#the-shells-generator). <paramref name="hangar"/> is <c>car\sm_init.dat</c> and
-	/// <paramref name="tech"/> <c>bst\tech_sng.dat</c>. <paramref name="record"/> is <c>SingleMission_Record</c> as the shell
-	/// holds it, which the squad build sets up in place and the result carries; a new record, all zero as the image's
-	/// static record is, when null.
+	/// Loads a mission as a single mission.
 	/// </summary>
+	/// <param name="mission">The mission file.</param>
+	/// <param name="missionParams">The mission parameters.</param>
+	/// <param name="hangar"><c>car\sm_init.dat</c>.</param>
+	/// <param name="tech"><c>bst\tech_sng.dat</c>.</param>
+	/// <param name="roll">The shell's <c>Math_RandomBelow</c>
+	/// (<c>ES1GO 00038774</c>) on <c>Shell_RandomState</c>, a draw in [0, bound) that returns 0 without a draw for a bound of
+	/// 0 (docs/es1/formats/msn-mission-file.md#the-shells-generator).</param>
+	/// <param name="record"><c>SingleMission_Record</c> as the shell
+	/// holds it, which the squad build sets up in place and the result carries; a new record, all zero as the image's
+	/// static record is, when null.</param>
 	/// <exception cref="NotSupportedException">The mission is in the other layout, whose reader is Open; it sets a point's
 	/// sum flag, which no retail point does and the doc does not cover; or its squad has more than four members.</exception>
 	/// <exception cref="InvalidDataException">A squad member's ref names no mech record, or its type no chassis.</exception>
@@ -167,19 +173,24 @@ public sealed class Es1MissionLoad {
 	}
 
 	/// <summary>
-	/// Loads <paramref name="mission"/> as a career's, in <c>Shell_Mode</c> 1, on the roster's current record
-	/// <paramref name="record"/> and the career's hangar <paramref name="hangar"/>, as the load leaves the shell's:
-	/// <paramref name="flags"/> are the shell's 100 flags <c>000ab244</c> as they stand, which mode 1 keeps but for flags 1
+	/// Loads a mission as a career's, in <c>Shell_Mode</c> 1, as the load leaves the shell's:
+	/// mode 1 keeps the flags but for flags 1
 	/// and 2, the record's campaign <c>+6</c> and position <c>+8</c>, and the three draws
-	/// (docs/es1/formats/msn-mission-file.md#the-flags); <paramref name="timeOfDay"/> is <c>MissionParams_TimeOfDay</c>
-	/// (<c>000aacc4</c>), flag 3. Only draws 1 to 3 are made (docs/es1/formats/msn-mission-file.md#the-order-of-the-loads-draws);
+	/// (docs/es1/formats/msn-mission-file.md#the-flags). Only draws 1 to 3 are made (docs/es1/formats/msn-mission-file.md#the-order-of-the-loads-draws);
 	/// header word 0 is the record's campaign's theater, words 5 to 7 are 0, 0 and 2 and words 8 and 9 the patches'
 	/// (docs/es1/formats/msn-mission-file.md#header-patches); no squad is built, but <c>Squad_MemberCount</c> is counted;
-	/// and <c>data\player.mec</c> is written from the record and the hangar in mode 1 (<see cref="WriteCareerPlayerMec"/>,
-	/// <paramref name="playerNameWord"/> the careers-log entry's word <c>+0x40</c>). <c>PlayerMec_Write</c>'s
+	/// and <c>data\player.mec</c> is written from the record and the hangar in mode 1 (<see cref="WriteCareerPlayerMec"/>).
+	/// <c>PlayerMec_Write</c>'s
 	/// <c>CareerRecord_SaveCurrent</c>, <c>Career_Save</c>, is the caller's. A campaign outside the eight indexes past
 	/// <see cref="CareerTheaters"/> in retail; here it leaves word 0 as the patches left it, an engine guard.
 	/// </summary>
+	/// <param name="mission">The mission file.</param>
+	/// <param name="flags">The shell's 100 flags <c>000ab244</c> as they stand.</param>
+	/// <param name="timeOfDay"><c>MissionParams_TimeOfDay</c> (<c>000aacc4</c>), flag 3.</param>
+	/// <param name="record">The roster's current record.</param>
+	/// <param name="hangar">The career's hangar.</param>
+	/// <param name="playerNameWord">The careers-log entry's word <c>+0x40</c>.</param>
+	/// <param name="roll">The shell's random draw, as <see cref="Load"/> takes it.</param>
 	/// <exception cref="NotSupportedException">The mission is in the other layout, or sets a point's sum flag, as <see cref="Load"/>.</exception>
 	public static Es1MissionLoadResult LoadCareer(Es1MissionFile mission, IReadOnlyList<short> flags, short timeOfDay,
 			Es1CareerRecord record, Es1Hangar hangar, short playerNameWord, Func<short, int> roll) {
@@ -213,7 +224,9 @@ public sealed class Es1MissionLoad {
 		return new Es1MissionLoadResult(script, written, player, record, hangar, null, members);
 	}
 
-	/// <summary>The load made for <paramref name="mission"/>, refused for a file in the other layout.</summary>
+	/// <summary>The load made for a mission, refused for a file in the other layout.</summary>
+	/// <param name="mission">The mission file.</param>
+	/// <param name="roll">The shell's random draw.</param>
 	private static Es1MissionLoad Begin(Es1MissionFile mission, Func<short, int> roll) {
 		if (mission.HeaderWords != null) {
 			throw new NotSupportedException(
@@ -263,34 +276,45 @@ public sealed class Es1MissionLoad {
 	/// <summary>
 	/// <c>PlayerMec_WriteEntries</c> (<c>00022a05</c>) in <c>Shell_Mode</c> 0
 	/// (docs/es1/formats/career-log-and-player-mec.md#the-player-file), for the load's step 10 and BEGIN MISSION >'s
-	/// write: with the record's current pilot and <paramref name="hangar"/>'s selected slot kept, the player's entry
+	/// write: with the record's current pilot and the hangar's selected slot kept, the player's entry
 	/// <c>+0xe</c>, the count of entries on strength with a slot (<see cref="Es1CareerRecord.CountPilots"/>), the player's
 	/// entry made the current pilot; then, that many times, the current pilot's two words
-	/// (<c>PlayerMec_WritePilotWords</c>, <c>0001548f</c>: for the player's entry a draw below 11 with
-	/// <paramref name="roll"/> and 0, for any other its name index and its number), the HERC in the selected slot, when
+	/// (<c>PlayerMec_WritePilotWords</c>, <c>0001548f</c>: for the player's entry a draw below 11 and 0, for any other its name
+	/// index and its number), the HERC in the selected slot, when
 	/// there is one, with every status word set to 100 (<see cref="Es1HercRecord.SetAllStatus"/> and internal word 9)
 	/// and written with <c>Herc_Write</c> (<see cref="Es1HercRecord.PrepareWrite"/>, a copy kept), and the next pilot
 	/// (<see cref="Es1CareerRecord.NextPilot"/>); then the record's weapons' available bytes, and the kept current pilot
 	/// and selected slot put back. The HERCs' changes are made in the hangar, as retail's are.
 	/// </summary>
+	/// <param name="record">The roster's current record.</param>
+	/// <param name="hangar">The hangar, whose selected slot's HERC is written.</param>
+	/// <param name="roll">The shell's random draw, used for the player's entry.</param>
 	public static Es1PlayerMec WritePlayerMec(Es1CareerRecord record, Es1Hangar hangar, Func<short, int> roll) =>
 		WriteEntries(record, hangar, SingleMissionMode, roll, 0);
 
 	/// <summary>
 	/// <c>PlayerMec_WriteEntries</c> (<c>00022a05</c>) in <c>Shell_Mode</c> 1, on the roster's current record, for a
 	/// career's load and BEGIN MISSION >'s write: as <see cref="WritePlayerMec"/>, but the player's two words are
-	/// <paramref name="playerNameWord"/>, the word <c>+0x40</c> of the roster's careers-log entry, and its rank <c>+0xd</c>
+	/// the careers-log entry's word and its rank <c>+0xd</c>
 	/// after <c>CareerRecord_SelectPilot</c> on it; any other entry's are its name index and its rank; and each HERC
 	/// written has only its internal word 9 set, to the condition of the player's entry (<c>PilotEntry_Condition</c>,
 	/// <c>0001618d</c>), whichever entry is being written. Nothing is drawn.
 	/// </summary>
+	/// <param name="record">The roster's current record.</param>
+	/// <param name="hangar">The career's hangar.</param>
+	/// <param name="playerNameWord">The word <c>+0x40</c> of the roster's careers-log entry.</param>
 	public static Es1PlayerMec WriteCareerPlayerMec(Es1CareerRecord record, Es1Hangar hangar, short playerNameWord) =>
 		WriteEntries(record, hangar, CareerMode, null, playerNameWord);
 
 	/// <summary>
-	/// <c>PlayerMec_WriteEntries</c> in <paramref name="mode"/>. Retail reads an entry past the four with no bounds test;
+	/// <c>PlayerMec_WriteEntries</c> in a mode. Retail reads an entry past the four with no bounds test;
 	/// such an entry's rank and condition read 0 here, an engine guard.
 	/// </summary>
+	/// <param name="record">The roster's current record.</param>
+	/// <param name="hangar">The hangar.</param>
+	/// <param name="mode">The <c>Shell_Mode</c>.</param>
+	/// <param name="roll">The shell's random draw, or null when nothing is drawn.</param>
+	/// <param name="playerNameWord">The word <c>+0x40</c> of the roster's careers-log entry, for mode 1.</param>
 	private static Es1PlayerMec WriteEntries(Es1CareerRecord record, Es1Hangar hangar, short mode, Func<short, int>? roll,
 			short playerNameWord) {
 		static Es1PilotEntry? Entry(Es1CareerRecord record, short index) =>
@@ -499,10 +523,14 @@ public sealed class Es1MissionLoad {
 		guid == -1 ? -1 : row.FindIndex(record => record[0] == guid);
 
 	/// <summary>
-	/// Adds a survivor, or when an earlier one has its GUID hands the slot to <paramref name="repeat"/>. The slot is
+	/// Adds a survivor, or when an earlier one has its GUID hands the slot to a callback. The slot is
 	/// <see cref="Exported"/>'s index for points, headings, waypoint groups, trigger areas, actions and groups, and the earlier
 	/// record's own slot for mechs, flyers and bases.
 	/// </summary>
+	/// <param name="row">The row's survivors.</param>
+	/// <param name="record">The record to add.</param>
+	/// <param name="exportedSlot">Whether the slot is <see cref="Exported"/>'s index rather than the earlier record's own.</param>
+	/// <param name="repeat">Called with the earlier record and the new one when the GUID repeats.</param>
 	private static void AddOrRepeat(List<short[]> row, short[] record, bool exportedSlot, Action<short[], short[]> repeat) {
 		int slot = exportedSlot ? Ref(row, record[0]) : OwnSlot(row, record[0]);
 		if (slot == -1) {
@@ -514,7 +542,12 @@ public sealed class Es1MissionLoad {
 
 	private static void Replace(short[] source, short[] target) => Array.Copy(source, target, target.Length);
 
-	/// <summary>Copies each word of the span that is not <paramref name="unset"/>.</summary>
+	/// <summary>Copies each word of a span that is not the unset value.</summary>
+	/// <param name="source">The words to copy from.</param>
+	/// <param name="target">The words to copy into.</param>
+	/// <param name="first">The span's first word.</param>
+	/// <param name="count">The span's length in words.</param>
+	/// <param name="unset">The unset value.</param>
 	private static void Overlay(short[] source, short[] target, int first, int count, short unset) {
 		for (int i = first; i < first + count; i++) {
 			if (source[i] != unset) {
@@ -757,9 +790,10 @@ public sealed class Es1MissionLoad {
 	// ---- Step 7: data\script.dat ----------------------------------------------------------------------------------------
 
 	/// <summary>
-	/// <c>WriteScriptDatFile</c> (<c>0003445b</c>): the header with <paramref name="mode"/> in place of word 2, then each
+	/// <c>WriteScriptDatFile</c> (<c>0003445b</c>): the header with a mode in place of word 2, then each
 	/// row's records whose GUID is not -1, cut to the fields the simulator reads (docs/es1/formats/script-dat.md#writing).
 	/// </summary>
+	/// <param name="mode">The value written as header word 2.</param>
 	private Es1ScriptDat WriteScriptDat(short mode) {
 		static IEnumerable<short[]> Kept(List<short[]> row) => row.Where(record => record[0] != -1);
 		static short[] Span(short[] record, int first, int count) => record[first..(first + count)];
@@ -847,9 +881,10 @@ public sealed class Es1MissionLoad {
 		public Es1HercList SavedHangar { get; }
 
 		/// <summary>
-		/// Step 3 for each of the first group's <paramref name="members"/>: an entry set up by <see cref="Es1PilotEntry.Init"/>,
+		/// Step 3 for each of the first group's members: an entry set up by <see cref="Es1PilotEntry.Init"/>,
 		/// filled, and copied over pilot entry <i>i</i> of the record.
 		/// </summary>
+		/// <param name="members">The number of members.</param>
 		private void BuildMembers(int members) {
 			var group = _load._groups.Count > 0 ? _load._groups[0] : null;
 			if (members > Es1CareerRecord.PilotCount) {
@@ -877,7 +912,8 @@ public sealed class Es1MissionLoad {
 			}
 		}
 
-		/// <summary><c>MsnGen_HercArrayIndex</c> (<c>0003581a</c>): the mech record that is block-6 record <paramref name="exported"/>.</summary>
+		/// <summary><c>MsnGen_HercArrayIndex</c> (<c>0003581a</c>): the mech record that is a block-6 record.</summary>
+		/// <param name="exported">The block-6 record's exported index.</param>
 		private short[] MechRecord(short exported) {
 			var kept = _load._mechs.Where(record => record[0] != -1).ToList();
 			return exported >= 0 && exported < kept.Count

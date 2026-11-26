@@ -32,9 +32,11 @@ public static class SquadRoster {
 	public static short Squad(MissionDocument document) => Squad(document.Layout);
 
 	/// <summary>
-	/// The row-12 GUID group 0's member slot <paramref name="slot"/> names, as its base gives it, or <c>-1</c> when it names
+	/// The row-12 GUID a member slot of group 0 names, as its base gives it, or <c>-1</c> when it names
 	/// none, a GUID no row-12 record carries, or the layout has no group 0 of hercs.
 	/// </summary>
+	/// <param name="layout">The mission layout.</param>
+	/// <param name="slot">The member slot.</param>
 	public static short Member(MissionLayout layout, int slot) {
 		if (Group(layout) is not { } group || slot < 0 || slot >= group.MemberRefs.Length) {
 			return -1;
@@ -59,7 +61,8 @@ public static class SquadRoster {
 		return positions;
 	}
 
-	/// <summary>Why a squadmate cannot be added to <paramref name="document"/>, or null when one can.</summary>
+	/// <summary>Why a squadmate cannot be added to a document, or null when one can.</summary>
+	/// <param name="document">The mission document.</param>
 	public static string? WhyNoAdd(MissionDocument document) {
 		var layout = document.Layout;
 		if (Squad(layout) == -1) {
@@ -87,10 +90,13 @@ public static class SquadRoster {
 	}
 
 	/// <summary>
-	/// Appends <paramref name="record"/> to row 12 under a new GUID, <paramref name="guid"/>, and names it in group 0's
+	/// Appends a record to row 12 under a new GUID and names it in group 0's
 	/// member slot just past the squadmates, as one <see cref="MissionDocument.Change"/>. Throws
 	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="record">The record to append.</param>
+	/// <param name="guid">The new GUID.</param>
 	public static MsnEdit Add(MissionDocument document, MechRosterEntry144 record, out short guid) {
 		if (WhyNoAdd(document) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -108,10 +114,12 @@ public static class SquadRoster {
 	}
 
 	/// <summary>
-	/// The row-12 GUID of the squadmate in group 0's member slot <paramref name="member"/>, from 1, and what deleting it
+	/// The row-12 GUID of the squadmate in one of group 0's member slots, from 1, and what deleting it
 	/// would take and what refuses it; null for a slot that is not a squadmate's, a squadmate whose record is also the
 	/// player's HERC or another squadmate's, or one whose delete would leave group 0 with no member.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="member">The member slot of group 0, from 1.</param>
 	public static (short Guid, RosterDeleteCheck Check)? Check(MissionDocument document, int member) {
 		var layout = document.Layout;
 		int positions = Positions(layout);
@@ -131,11 +139,13 @@ public static class SquadRoster {
 	}
 
 	/// <summary>
-	/// Removes the squadmate in group 0's member slot <paramref name="member"/> as one <see cref="MissionDocument.Change"/>:
+	/// Removes the squadmate in one of group 0's member slots as one <see cref="MissionDocument.Change"/>:
 	/// each later squadmate moves up a slot in the record supplying it, the last slot of the run is unset in every record
 	/// of the group, and the squadmate's records go as a roster delete's do. Throws <see cref="InvalidOperationException"/>
 	/// when <see cref="Check(MissionDocument, int)"/> finds no squadmate there or the mission names or needs it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="member">The member slot of group 0.</param>
 	public static MsnEdit Remove(MissionDocument document, int member) {
 		if (Check(document, member) is not var (guid, check)) {
 			throw new InvalidOperationException($"Squadmate {member} is not one of its own.");
@@ -160,12 +170,14 @@ public static class SquadRoster {
 	}
 
 	/// <summary>
-	/// A squad HERC of chassis <paramref name="chassis"/> with the weapons <paramref name="weapons"/> and ammunition
-	/// types <paramref name="guidance"/> of its ten slots, as a GUID-only record (<see cref="MissionDocument.Append"/> gives
+	/// A squad HERC as a GUID-only record (<see cref="MissionDocument.Append"/> gives
 	/// it one), unconditioned and picking from no random table. Every other field is <c>TRAIN1.MSN</c>'s player record's, mech 46
 	/// with the option it picks resolved: radar active, cruise speed 0, no point or heading of its own, no
 	/// out-of-action writes, firing no action, pristine.
 	/// </summary>
+	/// <param name="chassis">The HERC's chassis.</param>
+	/// <param name="weapons">The weapons of its ten slots.</param>
+	/// <param name="guidance">The ammunition types of its ten slots.</param>
 	public static MechRosterEntry144 Machine(short chassis, short[] weapons, short[] guidance) => new() {
 		GUID = -1, ConditionRef = -1, RandomTableKey = -1, CompoundConditionPartner = -1, AiRadarActive = 1, AiCruiseSpeed = 0,
 		DeadZone = new short[18], TypeIndex = chassis, WeaponRefs = weapons, PositionRef = -1, HeadingRef = -1, PairCount = 0,

@@ -298,7 +298,9 @@ public sealed class HddLayout {
 		/// <summary>Inclusive height.</summary>
 		public int Height => Y1 - Y0 + 1;
 
-		/// <summary>This rect inset by <paramref name="dx"/> and <paramref name="dy"/> on every edge.</summary>
+		/// <summary>This rect inset on every edge.</summary>
+		/// <param name="dx">The inset on the left and right edges.</param>
+		/// <param name="dy">The inset on the top and bottom edges.</param>
 		public Rect Inset(int dx, int dy) => new(X0 + dx, Y0 + dy, X1 - dx, Y1 - dy);
 	}
 
@@ -359,7 +361,7 @@ public sealed class HddLayout {
 	public Rect this[Widget widget] => _widgets[(int)widget];
 
 	/// <summary>
-	/// Whether <paramref name="widget"/> is latching — lit by being the chosen page and staying chosen
+	/// Whether a widget is latching — lit by being the chosen page and staying chosen
 	/// — rather than momentary, lighting only while held.
 	///
 	/// <para>Unlike the MFD, which splits this across two classes, the Heads-Down Display's paint
@@ -369,11 +371,12 @@ public sealed class HddLayout {
 	/// <c>+0x1b</c>. Cases 13-14, XMIT and CANCEL, are momentary too and additionally re-font from
 	/// that same press byte.</para>
 	/// </summary>
+	/// <param name="widget">The widget.</param>
 	public static bool IsLatching(Widget widget) =>
 		widget is Widget.PageButton0 or Widget.PageButton1;
 
 	/// <summary>
-	/// Whether <paramref name="page"/> shows <paramref name="widget"/>, from the 2x15 byte table at
+	/// Whether a page shows a widget, from the 2x15 byte table at
 	/// <c>0049d24c</c> that <c>HddDisplay_SetPage</c> (<c>0044a5e4</c>) walks as <c>table[page][widget]</c>, setting a hidden
 	/// widget's state to 2 — the value its paint (<c>HddButton_Paint</c>, <c>0044bb38</c>) refuses to draw at.
 	///
@@ -382,6 +385,8 @@ public sealed class HddLayout {
 	/// for each slot a squadmate actually occupies. The boxes themselves are drawn by the display, not
 	/// by the widgets.</para>
 	/// </summary>
+	/// <param name="page">The page.</param>
+	/// <param name="widget">The widget.</param>
 	public static bool WidgetVisible(HddPage page, Widget widget) {
 		int index = (int)widget;
 		if (index < 0 || index >= WidgetCount) {
@@ -398,7 +403,7 @@ public sealed class HddLayout {
 	};
 
 	/// <summary>
-	/// The unlit frame <paramref name="widget"/> draws, or null when it has no art of its own. The lit
+	/// The unlit frame a widget draws, or null when it has no art of its own. The lit
 	/// frame is always the one after, which is the constructor's own <c>local_60</c> / <c>local_60+1</c>
 	/// pairing throughout.
 	///
@@ -408,6 +413,7 @@ public sealed class HddLayout {
 	/// one of those eight <c>hba\HDD.HBA</c> frames matches its herc's own widget rect to the pixel at
 	/// 2x, which is what confirms the mapping — the same check the MFD's button table passed.</para>
 	/// </summary>
+	/// <param name="widget">The widget.</param>
 	public int? UnlitFrame(Widget widget) => widget switch {
 		Widget.PageButton0 or Widget.PageButton1 => 25,
 		Widget.ArrowUp or Widget.ArrowDown or Widget.ArrowLeft or Widget.ArrowRight =>
@@ -427,10 +433,11 @@ public sealed class HddLayout {
 	public Rect MapViewport => new(Screen.X0 + 8, Screen.Y0 + 4, OrderColumn.X0 - 8, Screen.Y1 - 4);
 
 	/// <summary>
-	/// Row <paramref name="index"/> of the order column, 0 being the message row above the eight
+	/// A row of the order column, 0 being the message row above the eight
 	/// orders. The constructor divides the column's height by <see cref="OrderRowSlots"/> for the
 	/// pitch and gives each row a fixed 14 device-pixel height regardless.
 	/// </summary>
+	/// <param name="index">The row's index.</param>
 	public Rect OrderRow(int index) {
 		// The constructor's own (y1 - y0) / 9 — exclusive of the bottom edge, unlike Height.
 		int pitch = (OrderColumn.Y1 - OrderColumn.Y0) / OrderRowSlots;
@@ -449,7 +456,7 @@ public sealed class HddLayout {
 	public const int OrderTextMargin = 5;
 
 	/// <summary>
-	/// Damage row <paramref name="index"/>'s full extent. Rows start at the column's top and step 14
+	/// A damage row's full extent. Rows start at the column's top and step 14
 	/// device pixels; each is 8 tall and starts 60 pixels in from the column's left edge, which is the
 	/// constructor's <c>0x1e &lt;&lt; XCoordShift</c>.
 	///
@@ -458,6 +465,7 @@ public sealed class HddLayout {
 	/// right edge, leaving the rest to the component name. Callers with a font in hand do that split;
 	/// this reports the whole row.</para>
 	/// </summary>
+	/// <param name="index">The row's index.</param>
 	public Rect DamageRow(int index) {
 		int top = DamageColumn.Y0 + index * DamageRowHeight;
 		return new Rect(DamageColumn.X0 + 60, top, DamageColumn.X1, top + 8);
@@ -500,16 +508,18 @@ public sealed class HddLayout {
 	}
 
 	/// <summary>
-	/// Reads the block out of <paramref name="gau"/>'s undecoded remainder and re-bases it onto the
-	/// <c>.HB1</c> art. <paramref name="headsDownCanvasOriginY"/> is the herc's own <c>.VUE</c> view-1
-	/// canvas origin in device pixels (<see cref="CockpitViewGeometry.CanvasOriginY"/>) — the row the
-	/// art is blitted at, and therefore what has to come back off a canvas coordinate.
+	/// Reads the block out of a <c>.GAU</c>'s undecoded remainder and re-bases it onto the
+	/// <c>.HB1</c> art.
 	///
 	/// <para>Returns null when the remainder is too short to hold the block, which no retail file is.
 	/// The block is read out of <see cref="GAUFile.Remainder"/> rather than modelled as typed fields
 	/// for the same reason the gunsight's anchor points are: it is layout the renderer consumes, and
 	/// leaving it in the raw span keeps the file's byte-exact round-trip untouched.</para>
 	/// </summary>
+	/// <param name="gau">The <c>.GAU</c> file.</param>
+	/// <param name="headsDownCanvasOriginY">The herc's own <c>.VUE</c> view-1
+	/// canvas origin in device pixels (<see cref="CockpitViewGeometry.CanvasOriginY"/>) — the row the
+	/// art is blitted at, and therefore what has to come back off a canvas coordinate.</param>
 	public static HddLayout? Load(GAUFile gau, int headsDownCanvasOriginY) {
 		// GAUFile.Remainder starts at .GAU offset 1144, immediately past the reticle point.
 		const int RemainderStart = 1144;
@@ -568,17 +578,20 @@ public sealed class HddLayout {
 	}
 
 	/// <summary>
-	/// The title for <paramref name="page"/> — "MAP", or the damage view's own " STRUCT DAMAGE" /
+	/// The title for a page — "MAP", or the damage view's own " STRUCT DAMAGE" /
 	/// " INTERN DAMAGE" / " WEAPON DAMAGE". <c>HddDisplay_SetTitle</c> (<c>0044a6dc</c>) picks between the two groups on the
 	/// page and indexes the second by the damage screen's current category, not by page.
 	/// </summary>
+	/// <param name="strings">The string table.</param>
+	/// <param name="page">The page.</param>
+	/// <param name="view">The damage screen's current category.</param>
 	public static string? Title(StringFile? strings, HddPage page, HddDamageView view) =>
 		page == HddPage.CommandDisplay
 			? strings?.Text(PageTitleGroup, 0)
 			: strings?.Text(DamageTitleGroup, (int)view);
 
 	/// <summary>
-	/// The component names <paramref name="view"/> lists, in the group's own order, or an empty list
+	/// The component names a damage view lists, in the group's own order, or an empty list
 	/// when the string table is absent or the view is <see cref="HddDamageView.Weapons"/> —
 	/// whose rows are the mech's own fitted weapon names rather than a fixed table.
 	///
@@ -586,6 +599,9 @@ public sealed class HddLayout {
 	/// view's own region order and each region's id indexes here, which is why a pilotable chassis's internal page
 	/// lists its systems 0,1,2,5,6,7,8,3,4,9 (other chassis differ — docs/retail/simulation/heads-down-display.md#damage-detail--page-1).</para>
 	/// </summary>
+	/// <param name="strings">The string table.</param>
+	/// <param name="view">The damage view.</param>
+	/// <param name="flyer">Whether the machine is a flyer.</param>
 	public static IReadOnlyList<StringFile.Entry> ComponentNames(StringFile? strings, HddDamageView view,
 			bool flyer = false) =>
 		view switch {

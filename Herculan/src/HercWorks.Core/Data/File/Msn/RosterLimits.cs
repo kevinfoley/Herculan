@@ -16,14 +16,17 @@ public static class RosterLimits {
 	private const int FlyerRow = 13;
 	private const int BaseRow = 14;
 
-	/// <summary>The slots roster row <paramref name="row"/> (12 hercs, 13 flyers, 14 structures and ground vehicles) takes.</summary>
+	/// <summary>The slots a roster row (12 hercs, 13 flyers, 14 structures and ground vehicles) takes.</summary>
+	/// <param name="layout">The mission layout.</param>
+	/// <param name="row">The roster row.</param>
 	public static int Slots(MissionLayout layout, int row) => row switch {
 		MechRow => layout.Entries(MechRow).Count + SquadRoster.Positions(layout),
 		FlyerRow or BaseRow => layout.Entries(row).Count,
 		_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters."),
 	};
 
-	/// <summary>The slots DBSIM holds for roster row <paramref name="row"/>.</summary>
+	/// <summary>The slots DBSIM holds for a roster row.</summary>
+	/// <param name="row">The roster row.</param>
 	public static int Cap(int row) => row switch {
 		MechRow => ScriptDatLint.MechSlotCap,
 		FlyerRow => ScriptDatLint.FlyerSlotCap,
@@ -32,14 +35,18 @@ public static class RosterLimits {
 	};
 
 	/// <summary>
-	/// Why <paramref name="taking"/> more of roster row <paramref name="row"/>'s slots cannot be taken in
-	/// <paramref name="layout"/>, or null when they can: always null for a mission meant for HERCULAN alone
+	/// Why some more of a roster row's slots cannot be taken in
+	/// a layout, or null when they can: always null for a mission meant for HERCULAN alone
 	/// (<see cref="MissionLayout.HerculanOnly"/>), whose simulation has no slot arrays.
 	/// </summary>
+	/// <param name="layout">The mission layout.</param>
+	/// <param name="row">The roster row.</param>
+	/// <param name="taking">How many more slots are wanted.</param>
 	public static string? WhyNoRoom(MissionLayout layout, int row, int taking) =>
 		!layout.HerculanOnly && Slots(layout, row) + taking > Cap(row) ? $"At maximum {Noun(row)} limit ({Cap(row)})." : null;
 
-	/// <summary>What a slot of roster row <paramref name="row"/> holds, as the refusals name it: HERC, flyer or structure.</summary>
+	/// <summary>What a slot of a roster row holds, as the refusals name it: HERC, flyer or structure.</summary>
+	/// <param name="row">The roster row.</param>
 	public static string Noun(int row) => row switch {
 		MechRow => "HERC",
 		FlyerRow => "flyer",

@@ -172,10 +172,15 @@ public class GameContentMountTests : IDisposable {
 	}
 
 	/// <summary>
-	/// A one-folder (<c>DAT</c>) archive in <paramref name="root"/>\VOL, laid out as
+	/// A one-folder (<c>DAT</c>) archive under <c>VOL</c>, laid out as
 	/// docs/retail/formats/vol-archive.md describes: header, folder list, entry list, then each entry's
 	/// nine-byte prefix, content and trailer byte.
 	/// </summary>
+	/// <param name="root">The folder whose <c>VOL</c> subfolder holds the archive.</param>
+	/// <param name="fileName">The archive's file name.</param>
+	/// <param name="mask">The archive's mask.</param>
+	/// <param name="precedence">The archive's precedence byte.</param>
+	/// <param name="files">The entries, each a name and its text.</param>
 	private static void WriteVol(string root, string fileName, uint mask, byte precedence,
 			params (string Name, string Text)[] files) {
 		byte[] folders = Encoding.ASCII.GetBytes("DAT\\\0");

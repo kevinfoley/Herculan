@@ -97,7 +97,8 @@ public sealed class MissionWalkTests : IDisposable {
 		}
 	}
 
-	/// <summary>The practice mission on <paramref name="row"/>, its handoff written under <see cref="_root"/>, never the install.</summary>
+	/// <summary>The practice mission on a row, its handoff written under <see cref="_root"/>, never the install.</summary>
+	/// <param name="row">The practice row.</param>
 	private MissionScene? LoadTraining(int row) {
 		if (GameInstall.Locate(null) is not { } install) {
 			return null;

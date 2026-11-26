@@ -13,9 +13,10 @@ namespace HercWorks.Core.Io.Transform.Shell;
 /// </summary>
 public class Es1ShellLipSyncScriptTransformer : ByteTransformer<Es1ShellLipSyncScript> {
 	/// <summary>
-	/// Whether <paramref name="bytes"/> are in the shell's layout: an <c>int16</c> length that is the size less 2. A simulator
+	/// Whether some bytes are in the shell's layout: an <c>int16</c> length that is the size less 2. A simulator
 	/// script's <c>int32</c> length is its size less 4, so its low word never is.
 	/// </summary>
+	/// <param name="bytes">The bytes, or null.</param>
 	public static bool IsShellLayout(byte[]? bytes) =>
 		bytes is { Length: >= 2 } && BinaryPrimitives.ReadInt16LittleEndian(bytes) + 2 == bytes.Length;
 

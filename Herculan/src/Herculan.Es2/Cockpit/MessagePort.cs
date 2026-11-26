@@ -249,7 +249,7 @@ public sealed class MessagePort {
 	}
 
 	/// <summary>
-	/// Runs the port for one frame at <paramref name="coarseTicks"/> — <c>MessagePort_Tick</c> (<c>00435610</c>), plus the
+	/// Runs the port for one frame — <c>MessagePort_Tick</c> (<c>00435610</c>), plus the
 	/// latch its paint entry points set on the way in. Call once a frame, before anything reads
 	/// <see cref="Ticker"/>.
 	///
@@ -258,6 +258,7 @@ public sealed class MessagePort {
 	/// original's own pause pair (<c>MessagePort_Pause</c> (<c>00435b58</c>) / <c>MessagePort_Resume</c> (<c>00435b80</c>)) achieves by shifting every
 	/// deadline forward by the paused duration.</para>
 	/// </summary>
+	/// <param name="coarseTicks">The coarse tick time.</param>
 	public void Update(long coarseTicks) {
 		_now = coarseTicks;
 

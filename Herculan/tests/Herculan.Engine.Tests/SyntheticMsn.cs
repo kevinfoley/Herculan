@@ -36,18 +36,22 @@ internal sealed class SyntheticMsn {
 	}
 
 	/// <summary>
-	/// The <c>script.dat</c> index that row <paramref name="row"/>'s GUID <paramref name="guid"/> reached in
-	/// <paramref name="document"/>'s last generation, read from its provenance, or null when the generation dropped it: what a
-	/// test of an edit finds the generated record by.
+	/// The <c>script.dat</c> index that a row's GUID reached in a document's last generation, read from its provenance, or null
+	/// when the generation dropped it: what a test of an edit finds the generated record by.
 	/// </summary>
+	/// <param name="document">The document that was generated.</param>
+	/// <param name="row">The row the GUID is in.</param>
+	/// <param name="guid">The record's GUID.</param>
 	public static int? Exported(MissionDocument document, int row, short guid) =>
 		document.Provenance.Slots(row - 5).FirstOrDefault(slot => document.RecordAt(slot.Created)?.GUID == guid)?.Index;
 
 	/// <summary>
-	/// The GUID of the <c>.MSN</c> record that created record <paramref name="index"/> of <c>script.dat</c> block
-	/// <paramref name="block"/> (1 to 11) in <paramref name="document"/>'s generation, read from its provenance, or <c>-1</c>:
-	/// what a test finds the record a generated ref names by.
+	/// The GUID of the <c>.MSN</c> record that created a record of a <c>script.dat</c> block (1 to 11) in a document's
+	/// generation, read from its provenance, or <c>-1</c>: what a test finds the record a generated ref names by.
 	/// </summary>
+	/// <param name="document">The document that was generated.</param>
+	/// <param name="block">The <c>script.dat</c> block, 1 to 11.</param>
+	/// <param name="index">The record's index in the block.</param>
 	public static short GuidAt(MissionDocument document, int block, int index) =>
 		document.Provenance.Slot(block, index) is { } slot && document.RecordAt(slot.Created) is { } record ? record.GUID : (short)-1;
 
@@ -66,7 +70,12 @@ internal sealed class SyntheticMsn {
 	/// <summary>A row-4 text package with every line unset.</summary>
 	public static short[] Text() => Enumerable.Repeat((short)-1, 72).ToArray();
 
-	/// <summary>A row-6 point at (<paramref name="x"/>, <paramref name="y"/>, 0).</summary>
+	/// <summary>A row-6 point at (x, y, 0).</summary>
+	/// <param name="guid">The point's GUID.</param>
+	/// <param name="x">The point's X.</param>
+	/// <param name="y">The point's Y.</param>
+	/// <param name="condition">The point's condition, or -1 for none.</param>
+	/// <param name="tableKey">The point's table key, or -1 for none.</param>
 	public static short[] Point(short guid, int x, int y = 0, short condition = -1, short tableKey = -1) {
 		var words = new short[11];
 		words[MapObject.GUIDWord] = guid;
@@ -89,14 +98,21 @@ internal sealed class SyntheticMsn {
 		return words;
 	}
 
-	/// <summary>A row-8 route through the row-6 GUIDs <paramref name="points"/>.</summary>
+	/// <summary>A row-8 route through row-6 GUIDs.</summary>
+	/// <param name="guid">The route's GUID.</param>
+	/// <param name="points">The row-6 GUIDs the route passes through.</param>
 	public static short[] Route(short guid, params short[] points) =>
 		[guid, -1, -1, -1, (short)points.Length, .. points];
 
-	/// <summary>A row-9 circle trigger area about row-6 GUID <paramref name="point"/>.</summary>
+	/// <summary>A row-9 circle trigger area about a row-6 GUID.</summary>
+	/// <param name="guid">The area's GUID.</param>
+	/// <param name="point">The row-6 GUID the circle is about.</param>
 	public static short[] Circle(short guid, short point) => [guid, -1, -1, 1, point, 100];
 
-	/// <summary>A row-10 action of trigger type <paramref name="type"/> on target <paramref name="target"/>, testing no area and writing no counter.</summary>
+	/// <summary>A row-10 action of a trigger type on a target, testing no area and writing no counter.</summary>
+	/// <param name="guid">The action's GUID.</param>
+	/// <param name="type">The trigger type.</param>
+	/// <param name="target">The target, or -1 for none.</param>
 	public static short[] Action(short guid, short type, short target = -1) {
 		var words = Enumerable.Repeat((short)-1, 41).ToArray();
 		words[MapObject.GUIDWord] = guid;
@@ -109,9 +125,15 @@ internal sealed class SyntheticMsn {
 	}
 
 	/// <summary>
-	/// A row-12 herc of <paramref name="type"/>, its fit <paramref name="weapons"/> and <paramref name="ammo"/> from the first
+	/// A row-12 herc of a type, its fit weapons and ammo from the first
 	/// slot and the rest <c>-1</c> and the filler 5, every action and counter pair unset, pristine.
 	/// </summary>
+	/// <param name="guid">The herc's GUID.</param>
+	/// <param name="type">The herc's type.</param>
+	/// <param name="condition">The herc's condition, or -1 for none.</param>
+	/// <param name="tableKey">The herc's table key, or -1 for none.</param>
+	/// <param name="weapons">The weapons fitted from the first slot, or null for none.</param>
+	/// <param name="ammo">The ammo for those weapons, or null for none.</param>
 	public static short[] Mech(short guid, short type, short condition = -1, short tableKey = -1, short[]? weapons = null,
 			short[]? ammo = null) {
 		var words = Enumerable.Repeat((short)-1, 72).ToArray();
@@ -163,9 +185,14 @@ internal sealed class SyntheticMsn {
 	}
 
 	/// <summary>
-	/// A row-16 group of roster <paramref name="kind"/> (2 structures) on human side, with the roster GUIDs
-	/// <paramref name="members"/> in its first slots and everything else unset.
+	/// A row-16 group of a roster kind (2 structures) on human side, with the roster GUIDs
+	/// in its first slots and everything else unset.
 	/// </summary>
+	/// <param name="guid">The group's GUID.</param>
+	/// <param name="kind">The roster kind.</param>
+	/// <param name="position">The group's position, or -1 for none.</param>
+	/// <param name="condition">The group's condition, or -1 for none.</param>
+	/// <param name="members">The roster GUIDs of its members.</param>
 	public static short[] Group(short guid, short kind, short position = -1, short condition = -1, params short[] members) {
 		var words = Enumerable.Repeat((short)-1, 82).ToArray();
 		words[MapObject.GUIDWord] = guid;
@@ -183,7 +210,9 @@ internal sealed class SyntheticMsn {
 		return words;
 	}
 
-	/// <summary>A row-15 order whose subject is the row-16 GUID <paramref name="group"/>.</summary>
+	/// <summary>A row-15 order whose subject is a row-16 GUID.</summary>
+	/// <param name="guid">The order's GUID.</param>
+	/// <param name="group">The row-16 GUID of the subject.</param>
 	public static short[] GroupOrder(short guid, short group) {
 		var words = Enumerable.Repeat((short)-1, 11).ToArray();
 		words[MapObject.GUIDWord] = guid;
@@ -193,7 +222,10 @@ internal sealed class SyntheticMsn {
 		return words;
 	}
 
-	/// <summary>A row-17 objective on subject <paramref name="subject"/> of kind <paramref name="kind"/> (0 a group, 1 a mech).</summary>
+	/// <summary>A row-17 objective of a kind (0 a group, 1 a mech) on a subject.</summary>
+	/// <param name="condition">The objective's condition.</param>
+	/// <param name="kind">The kind of subject: 0 a group, 1 a mech.</param>
+	/// <param name="subject">The subject's GUID, or -1 for none.</param>
 	public static short[] Objective(short condition, short kind = 1, short subject = -1) {
 		var words = Enumerable.Repeat((short)-1, 29).ToArray();
 		words[MissionObjective58.ConditionRefWord] = condition;

@@ -41,7 +41,9 @@ public class Es1TtmPlayerTests {
 		Assert.Equal(((short)5, (short)4), (script.WaitReload, script.Wait));
 	}
 
-	/// <summary>A <c>.TTM</c> file holding <paramref name="words"/> as its script, packed as literal runs.</summary>
+	/// <summary>A <c>.TTM</c> file holding words as its script, packed as literal runs.</summary>
+	/// <param name="words">The script's words.</param>
+	/// <param name="pages">The file's page count.</param>
 	internal static byte[] File(ushort[] words, ushort pages) {
 		var script = new byte[words.Length * 2];
 		for (int i = 0; i < words.Length; i++) {

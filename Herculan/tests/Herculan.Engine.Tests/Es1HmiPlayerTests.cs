@@ -89,9 +89,10 @@ public class Es1HmiPlayerTests {
 	/// <summary>
 	/// A started song of three tracks on an <c>0xa002</c> driver in slot 0. Track 0 ends at once; track 1 (channel 1) plays
 	/// a note, then a tick later the loop controller of id 1, then ends; track 2 (channel 2) plays a note and ends 16 ticks
-	/// on. Tracks 1 and 2 hold an entry of id 1 landing on their note, with programs 5 and 7; track 1's has
-	/// <paramref name="loopCount"/>.
+	/// on. Tracks 1 and 2 hold an entry of id 1 landing on their note, with programs 5 and 7; track 1's has the given loop count.
 	/// </summary>
+	/// <param name="loopCount">The loop count of track 1's entry.</param>
+	/// <param name="end">The song's end callback, or null for none.</param>
 	private static (Es1HmiPlayer, Es1RecordingMidiDriver, Es1HmiSong) Play(byte loopCount, Action<int>? end = null) {
 		var drivers = new Es1MidiDrivers();
 		var driver = new Es1RecordingMidiDriver();
@@ -110,9 +111,11 @@ public class Es1HmiPlayerTests {
 	}
 
 	/// <summary>
-	/// A song of <paramref name="tracks"/>, each with its device ids, and branch entries landing at offset 0 of their track,
+	/// A song of tracks, each with its device ids, and branch entries landing at offset 0 of their track,
 	/// with no data: (track, id, program, loop count).
 	/// </summary>
+	/// <param name="tracks">The tracks, each with its device ids.</param>
+	/// <param name="branches">The branch entries, as (track, id, program, loop count).</param>
 	private static Es1HmpSong Song((Es1HmpTrack Track, int[] Devices)[] tracks, (int Track, byte Id, byte Program, byte Count)[] branches) {
 		const int branchTable = 0x1000;
 		int dataStart = branchTable + tracks.Length + branches.Length * 24;
@@ -129,7 +132,10 @@ public class Es1HmiPlayerTests {
 		};
 	}
 
-	/// <summary>A track on <paramref name="channel"/> listing <paramref name="devices"/>, with <paramref name="events"/>.</summary>
+	/// <summary>A track on a channel listing devices, with events.</summary>
+	/// <param name="channel">The track's channel.</param>
+	/// <param name="devices">The device ids the track lists.</param>
+	/// <param name="events">The track's event bytes.</param>
 	private static (Es1HmpTrack, int[]) Track(int channel, int[] devices, byte[] events) =>
 		(new Es1HmpTrack { Channel = channel, Events = events, Length = events.Length }, devices);
 }

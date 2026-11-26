@@ -16,10 +16,11 @@ public sealed class Es1Profile {
 	public IReadOnlyList<string> Lines => _lines;
 
 	/// <summary>
-	/// <c>Profile_Load</c>'s split of <paramref name="bytes"/>, or none for a file that does not open, which leaves the list
+	/// <c>Profile_Load</c>'s split of a file's bytes, or none for a file that does not open, which leaves the list
 	/// empty: bytes below <c>0x20</c> or above <c>0x7e</c> before a line are skipped, and a line runs while its bytes are
 	/// <c>0x20</c>–<c>0x7e</c>, so a tab ends a line and a CR LF ends one line and is skipped before the next.
 	/// </summary>
+	/// <param name="bytes">The file's bytes, or null for a file that does not open.</param>
 	public static Es1Profile Parse(byte[]? bytes) {
 		var lines = new List<string>();
 		int at = 0;
@@ -41,12 +42,14 @@ public sealed class Es1Profile {
 	}
 
 	/// <summary>
-	/// <c>Profile_GetString</c>(file, size, buffer, default, <paramref name="key"/>, <paramref name="section"/>)'s find:
+	/// <c>Profile_GetString</c>(file, size, buffer, default, key, section)'s find:
 	/// what follows the first <c>=</c> of the first line beginning <c>key=</c> in the section, which is the first line
 	/// beginning <c>[section]</c> and runs to the next line beginning <c>[</c>; none when the section or the key is missing,
 	/// where retail copies its default instead. Retail's buffer size holds only the section listing a null key asks for,
 	/// which is not ported.
 	/// </summary>
+	/// <param name="section">The section's name.</param>
+	/// <param name="key">The key.</param>
 	public string? GetString(string section, string key) {
 		string header = "[" + section + "]", prefix = key + "=";
 		int line = Array.FindIndex(_lines, l => l.StartsWith(header, StringComparison.OrdinalIgnoreCase));
@@ -64,10 +67,13 @@ public sealed class Es1Profile {
 	}
 
 	/// <summary>
-	/// <c>Profile_GetInt</c>(file, <paramref name="fallback"/>, <paramref name="key"/>, <paramref name="section"/>):
-	/// <see cref="Atol"/> of the value <see cref="GetString"/> finds, or <paramref name="fallback"/> when the section or
+	/// <c>Profile_GetInt</c>(file, fallback, key, section):
+	/// <see cref="Atol"/> of the value <see cref="GetString"/> finds, or the fallback when the section or
 	/// the key is missing.
 	/// </summary>
+	/// <param name="section">The section's name.</param>
+	/// <param name="key">The key.</param>
+	/// <param name="fallback">The value when the section or the key is missing.</param>
 	public int GetInt(string section, string key, int fallback) => GetString(section, key) is { } value ? Atol(value) : fallback;
 
 	/// <summary>
@@ -90,10 +96,12 @@ public sealed class Es1Profile {
 	}
 
 	/// <summary>
-	/// The C runtime's <c>sscanf</c>(<paramref name="text"/>, <c>"%X"</c>, &amp;value): leading whitespace, an optional
+	/// The C runtime's <c>sscanf</c>(text, <c>"%X"</c>, &amp;value): leading whitespace, an optional
 	/// sign, an optional <c>0x</c> or <c>0X</c>, then hexadecimal digits up to the first character that is not one,
 	/// wrapping as a 32-bit sum. False with no digit, where <c>sscanf</c> assigns nothing and the variable keeps what it held.
 	/// </summary>
+	/// <param name="text">The text to scan.</param>
+	/// <param name="value">The scanned value.</param>
 	public static bool TryScanHex(string text, out uint value) {
 		value = 0;
 		int at = SkipSpace(text, 0);

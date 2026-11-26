@@ -609,9 +609,11 @@ public class CockpitDamageShakeTests {
 	}
 
 	/// <summary>
-	/// Starts a shake with hit 1 and runs it until <see cref="CockpitHitShake.FlashActive"/> reads
-	/// <paramref name="flashActive"/>, inside the window. False if it never does.
+	/// Starts a shake with hit 1 and runs it until <see cref="CockpitHitShake.FlashActive"/> reads the wanted value, inside the
+	/// window. False if it never does.
 	/// </summary>
+	/// <param name="shake">The shake to start and run.</param>
+	/// <param name="flashActive">The value <see cref="CockpitHitShake.FlashActive"/> is to read.</param>
 	private static bool AdvanceToFlashPhase(CockpitHitShake shake, bool flashActive) {
 		shake.Update(Frame, cockpitHits: 1);
 		for (int frame = 0; frame < 30; frame++) {

@@ -100,9 +100,10 @@ public abstract class PropertiesPanelLayoutTests {
 	}
 
 	/// <summary>
-	/// Every mission of the install's archives whose place in their order falls to <paramref name="part"/>, the parts taking
+	/// Every mission of the install's archives whose place in their order falls to one part, the parts taking
 	/// turns so that each gets a share of every campaign; one case that skips without an install.
 	/// </summary>
+	/// <param name="part">The part's number.</param>
 	private static IEnumerable<object[]> MissionsOf(int part) =>
 		Opened[part].Value is { } install
 			? install.Archived.All.Where((_, index) => index % Parts == part).Select(mission => new object[] { mission.Name })

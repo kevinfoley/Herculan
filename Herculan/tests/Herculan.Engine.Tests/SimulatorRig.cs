@@ -185,14 +185,16 @@ sealed class SimulatorRig {
 		Keys.EndFrame();
 	}
 
-	/// <summary>Runs <paramref name="frames"/> frames.</summary>
+	/// <summary>Runs a number of frames.</summary>
+	/// <param name="frames">The number of frames.</param>
 	public void Run(int frames) {
 		for (int i = 0; i < frames; i++) {
 			Frame();
 		}
 	}
 
-	/// <summary>Holds <paramref name="keys"/> down for one frame, then lets them go for one.</summary>
+	/// <summary>Holds keys down for one frame, then lets them go for one.</summary>
+	/// <param name="keys">The keys to hold.</param>
 	public void Tap(params Key[] keys) {
 		Keys.Hold(keys);
 		Frame();
@@ -207,9 +209,11 @@ sealed class SimulatorRig {
 	}
 
 	/// <summary>
-	/// A left click on the first visible widget <paramref name="match"/> picks, at its centre, on this frame's
+	/// A click on the first visible widget a predicate picks, at its centre, on this frame's
 	/// layout: pressed and released before the next frame drains them. False when no such widget shows.
 	/// </summary>
+	/// <param name="match">Picks the widget to click.</param>
+	/// <param name="button">The button to click with.</param>
 	public bool Click(Func<CockpitWidgetId, bool> match, CockpitMouseButtons button = CockpitMouseButtons.Left) {
 		if (Art == null || CockpitWidgets.Visible(Art, Displays.Hud).Where(w => match(w.Id))
 				.Select(w => (CockpitWidget?)w).FirstOrDefault() is not { } found) {

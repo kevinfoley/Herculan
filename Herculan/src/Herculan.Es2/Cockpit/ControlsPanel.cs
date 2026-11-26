@@ -230,12 +230,13 @@ public sealed class ControlsPanel {
 	public int SelectedButtonRow { get; private set; } = -1;
 
 	/// <summary>
-	/// Widget state <paramref name="index"/>'s button paints in, which picks both its plate frame and
+	/// The widget state a button paints in, which picks both its plate frame and
 	/// its caption font. The twelve rows are built in state 3 and the bottom pair in state 0; a row
 	/// the capabilities have greyed is put into state 2, and the highlighted row into state 0. A button shows
 	/// pressed while the pointer holds it and while a press flash does, and a flash's end leaves it in 0
 	/// (<see cref="AlertPanelPresses.RestedByFlash"/>).
 	/// </summary>
+	/// <param name="index">The button's widget index.</param>
 	public int RowState(int index) {
 		if ((index == PressedButton && !_pressPopped) || _presses.IsLit(index)) {
 			return AlertPanelLayout.WidgetState.Pressed;
@@ -262,12 +263,13 @@ public sealed class ControlsPanel {
 			: index == ControlsPanelLayout.RecommendButton && ButtonRowsFixed;
 
 	/// <summary>
-	/// Whether row <paramref name="row"/> is live by <see cref="Capabilities"/>. Rows 0-3 are JOYSTICK, THROTTLE, RUDDER
+	/// Whether a row is live by <see cref="Capabilities"/>. Rows 0-3 are JOYSTICK, THROTTLE, RUDDER
 	/// and HAT, live with <see cref="JoystickCapabilities.HasThrottle"/>, <see cref="JoystickCapabilities.HasRudder"/> and
 	/// <see cref="JoystickCapabilities.HasHat"/>; 4-11 are BUTTON 1-8, live up to
 	/// <see cref="JoystickCapabilities.ButtonCount"/>. The JOYSTICK row has no capability byte of its own: once a stick is
 	/// present at all, it is always live. No row is live without a stick.
 	/// </summary>
+	/// <param name="row">The row, 0-11.</param>
 	private bool RowEnabled(int row) {
 		if (!Capabilities.Present) {
 			return false;
@@ -317,18 +319,22 @@ public sealed class ControlsPanel {
 		return rows;
 	}
 
-	/// <summary>The action codes button row <paramref name="row"/> (0-7) may be bound to.</summary>
+	/// <summary>The action codes a button row may be bound to.</summary>
+	/// <param name="row">The button row, 0-7.</param>
 	public byte[] ActionsFor(int row) =>
 		row >= 0 && row < _buttonActions.Length ? _buttonActions[row] : Array.Empty<byte>();
 
-	/// <summary>The name of action code <paramref name="code"/>, or empty when it is outside the group.</summary>
+	/// <summary>The name of an action code, or empty when it is outside the group.</summary>
+	/// <param name="code">The action code.</param>
 	public string ActionName(int code) =>
 		code >= 0 && code < _actionNames.Length ? _actionNames[code] : string.Empty;
 
 	/// <summary>
 	/// Reads the panel's text out of the mounted archives and resolves the twelve readouts against
-	/// <paramref name="preferences"/>. Returns null when the string table is missing.
+	/// the preferences. Returns null when the string table is missing.
 	/// </summary>
+	/// <param name="content">The mounted game content.</param>
+	/// <param name="preferences">The preferences the readouts are resolved against, or null for none.</param>
 	/// <param name="razor">
 	/// Whether the player's machine is the RAZOR — <c>PilotingRazor</c> (<c>004d25f5</c>). It picks both the title and
 	/// the axis word sets, and which twelve bytes of the file the bindings come from.
@@ -651,7 +657,7 @@ public sealed class ControlsPanel {
 	}
 
 	/// <summary>
-	/// A press of physical joystick button <paramref name="row"/> (0-7) while the panel is up, which
+	/// A press of a physical joystick button (0-7) while the panel is up, which
 	/// picks that button's row rather than pressing a widget — the first half of
 	/// <c>ControlsPanel_HandleEvent</c> (<c>00458f9c</c>), and why this panel has a handler of its own
 	/// (docs/retail/simulation/preferences.md, "What a joystick button does").
@@ -664,6 +670,7 @@ public sealed class ControlsPanel {
 	/// the post-binding set, in which the trigger's slot is zeroed — and owns the press-once latch.
 	/// See the host's <c>ReadControlsPanelJoystick</c>.</para>
 	/// </summary>
+	/// <param name="row">The button's row, 0-7.</param>
 	/// <param name="nowTicks"><c>Time_GetCoarseTicks</c>, on a clock that runs while the panel is up.</param>
 	public void PressButtonRow(int row, long nowTicks) {
 		if (!IsOpen || row < 0 || row >= JoystickCapabilities.MaxButtons || ButtonRowsFixed) {

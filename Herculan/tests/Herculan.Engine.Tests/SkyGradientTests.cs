@@ -21,9 +21,11 @@ public class SkyGradientTests {
 	private const int Height = 480;
 
 	/// <summary>
-	/// The retail fields: zenith 208, 6-row bands, a gap of 1, and <paramref name="bandCount"/>
-	/// bands, over a palette whose entry <c>i</c> has red <c>i</c> so a band's colour names its entry.
+	/// The retail fields: zenith 208, 6-row bands, a gap of 1, over a palette whose entry <c>i</c> has red <c>i</c> so a band's
+	/// colour names its entry.
 	/// </summary>
+	/// <param name="bandCount">The number of bands.</param>
+	/// <param name="offset">The value of the world header's field 7.</param>
 	private static SkyGradient RetailSky(short bandCount = 16, short offset = 0) {
 		var world = new WorldData { Header = new short[] { 2, 208, 6, bandCount, 239, 1, 1, offset, 233, 1, 47, 223, 6000, 7 } };
 		var palette = new DynamixPalette();

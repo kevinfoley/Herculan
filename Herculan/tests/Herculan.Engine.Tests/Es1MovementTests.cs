@@ -155,7 +155,8 @@ public class Es1MovementTests {
 		Assert.Same(Es1MechBehaviour.States[Es1MechBehaviour.Deciding], other.Behaviour.Descriptor);
 	}
 
-	/// <summary>Globals whose zone has one unrotated shape at <paramref name="zoneShape"/>, or none.</summary>
+	/// <summary>Globals whose zone has one unrotated shape, or none.</summary>
+	/// <param name="zoneShape">Where the shape is, or null for no shape.</param>
 	private static Es1SimGlobals Globals(Vec3i? zoneShape) {
 		var globals = new Es1SimGlobals();
 		if (zoneShape is { } at) {

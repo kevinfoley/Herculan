@@ -131,20 +131,24 @@ public enum ConsoleButton {
 /// <param name="Kind">Which family, and so how to read <paramref name="Index"/>.</param>
 /// <param name="Index">The widget's index within its own family's table.</param>
 public readonly record struct CockpitWidgetId(CockpitWidgetKind Kind, int Index) {
-	/// <summary>Multi-function display button <paramref name="index"/>.</summary>
+	/// <summary>A multi-function display button.</summary>
+	/// <param name="index">The button's index.</param>
 	public static CockpitWidgetId Mfd(int index) => new(CockpitWidgetKind.MfdButton, index);
 
-	/// <summary>Heads-Down Display widget <paramref name="widget"/>.</summary>
+	/// <summary>A Heads-Down Display widget.</summary>
+	/// <param name="widget">The widget.</param>
 	public static CockpitWidgetId Hdd(HddLayout.Widget widget) => new(CockpitWidgetKind.HddWidget, (int)widget);
 
 	/// <summary>The throttle slider.</summary>
 	public static CockpitWidgetId Throttle { get; } = new(CockpitWidgetKind.Throttle, 0);
 
-	/// <summary>Row <paramref name="row"/> of the MFD's FLASH COMM order list.</summary>
+	/// <summary>A row of the MFD's FLASH COMM order list.</summary>
+	/// <param name="row">The row.</param>
 	public static CockpitWidgetId MfdFlashCommRow(int row) =>
 		new(CockpitWidgetKind.MfdFlashCommRow, row);
 
-	/// <summary>Order row <paramref name="order"/> of the command display's list.</summary>
+	/// <summary>An order row of the command display's list.</summary>
+	/// <param name="order">The order.</param>
 	public static CockpitWidgetId HddOrder(HddOrder order) =>
 		new(CockpitWidgetKind.HddOrderRow, (int)order);
 
@@ -155,10 +159,12 @@ public readonly record struct CockpitWidgetId(CockpitWidgetKind Kind, int Index)
 	public static CockpitWidgetId ShieldFacing(ShieldFacing facing) =>
 		new(CockpitWidgetKind.ShieldFacing, (int)facing);
 
-	/// <summary>Weapon panel row <paramref name="gaugeSlot"/>, zero-based.</summary>
+	/// <summary>A weapon panel row.</summary>
+	/// <param name="gaugeSlot">The row, zero-based.</param>
 	public static CockpitWidgetId Weapon(int gaugeSlot) => new(CockpitWidgetKind.WeaponRow, gaugeSlot);
 
-	/// <summary>The charge bar of weapon panel row <paramref name="gaugeSlot"/>, zero-based.</summary>
+	/// <summary>The charge bar of a weapon panel row.</summary>
+	/// <param name="gaugeSlot">The row, zero-based.</param>
 	public static CockpitWidgetId ChargeBar(int gaugeSlot) => new(CockpitWidgetKind.WeaponChargeBar, gaugeSlot);
 
 	/// <summary>This id as the row index of a charge bar, or null when it is not one.</summary>

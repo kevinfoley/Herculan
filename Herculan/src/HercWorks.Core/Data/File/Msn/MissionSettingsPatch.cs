@@ -35,8 +35,9 @@ public class MissionSettingsPatch {
 	public const int ClearListStart = 11;
 
 	/// <summary>
-	/// Header word <paramref name="word"/>'s unset value, which a record leaves to change nothing and which the header
+	/// A header word's unset value, which a record leaves to change nothing and which the header
 	/// holds when no record sets the word: 1 for the theater, word 0, and 0 for the rest.
 	/// </summary>
+	/// <param name="word">The header word's index.</param>
 	public static short Unset(int word) => (short)(word == 0 ? 1 : 0);
 }

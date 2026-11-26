@@ -16,7 +16,8 @@ public class Es1OldBitmapArrayTransformer : ByteTransformer<Es1OldBitmapArray> {
 
 	private const int ItemHeaderLength = 20;
 
-	/// <summary>Whether <paramref name="bytes"/> open a bitmap array whose first item is an old-format bitmap.</summary>
+	/// <summary>Whether some bytes open a bitmap array whose first item is an old-format bitmap.</summary>
+	/// <param name="bytes">The bytes, or null.</param>
 	public static bool IsOldBitmapArray(byte[]? bytes) =>
 		bytes is { Length: >= 16 } && bytes.AsSpan(0, 4).SequenceEqual(ArrayTag) && bytes.AsSpan(12, 4).SequenceEqual(OldBitmapTag);
 

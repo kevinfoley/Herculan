@@ -18,9 +18,11 @@ public static class UnusedPoints {
 	private const int PointRow = 6;
 
 	/// <summary>
-	/// The GUIDs of <paramref name="document"/>'s row-6 points nothing uses, in layout order; with <paramref name="edges"/>, the
-	/// ones on the play area's edge too.
+	/// The GUIDs of a document's row-6 points nothing uses, in layout order; the
+	/// ones on the play area's edge too when asked.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="edges">Whether to include the points on the play area's edge.</param>
 	public static IReadOnlyList<short> Find(MissionDocument document, bool edges = false) {
 		var entries = document.Layout.Entries<MapPoint22>();
 		if (entries.Count == 0) {
@@ -43,9 +45,11 @@ public static class UnusedPoints {
 	}
 
 	/// <summary>
-	/// Removes every record of each point <see cref="Find"/> answers, with <paramref name="edges"/> as it takes it, as one
+	/// Removes every record of each point <see cref="Find"/> answers, as one
 	/// <see cref="MissionDocument.Change"/>. Throws <see cref="InvalidOperationException"/> when it answers none.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="edges">Passed to <see cref="Find"/>.</param>
 	public static MsnEdit Remove(MissionDocument document, bool edges = false) {
 		var unused = Find(document, edges);
 		if (unused.Count == 0) {

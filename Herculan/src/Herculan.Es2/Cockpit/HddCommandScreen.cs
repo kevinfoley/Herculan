@@ -201,9 +201,10 @@ public sealed class HddCommandScreen {
 		SelectedOrder is { } order && WantsPick(order) && ChosenUnit == null && ChosenPoint == null;
 
 	/// <summary>
-	/// What <paramref name="slot"/>'s pilot is currently doing, as a group-40 index —
+	/// What a slot's pilot is currently doing, as a group-40 index —
 	/// <c>Mech_SquadOrderLineIndex</c>, through <see cref="MechObject.SquadOrderLineIndex"/>.
 	/// </summary>
+	/// <param name="slot">The squad slot.</param>
 	public int Objective(int slot) =>
 		slot >= 0 && slot < Squad.Count && Squad[slot] is MechObject mate
 			? mate.SquadOrderLineIndex
@@ -282,11 +283,12 @@ public sealed class HddCommandScreen {
 	}
 
 	/// <summary>
-	/// Resolves a click in the map viewport, at <paramref name="artX"/>/<paramref name="artY"/> device
-	/// pixels inside it. With an order armed that wants a target this is the pick
+	/// Resolves a click in the map viewport, inside it. With an order armed that wants a target this is the pick
 	/// (<c>HddCommandScreen_PickTarget</c>, <c>0044d6b8</c>); otherwise it is a pilot selection, since clicking a squadmate's marker
 	/// is one of the three ways the manual gives for choosing who to talk to (<c>HddCommandScreen_PickPilot</c>, <c>0044d804</c>).
 	/// </summary>
+	/// <param name="artX">The click's X in device pixels inside the viewport.</param>
+	/// <param name="artY">The click's Y in device pixels inside the viewport.</param>
 	/// <param name="objects">Everything live, for the unit hit test.</param>
 	public HddMapClick ClickMap(float artX, float artY, IEnumerable<SimObject> objects) {
 		ArgumentNullException.ThrowIfNull(objects);

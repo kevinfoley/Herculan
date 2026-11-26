@@ -14,10 +14,12 @@ internal static class TestImages {
 	public static readonly DateTimeOffset RecordTime = new(1996, 9, 1, 12, 34, 56, TimeSpan.FromHours(1));
 
 	/// <summary>
-	/// A cooked image holding <paramref name="files"/> ('/'-separated paths), with each directory in one
-	/// sector. The primary tree's names are upper-cased; with <paramref name="joliet"/> a Joliet tree keeps
-	/// them as given.
+	/// A cooked image holding the given files, with each directory in one sector. The primary tree's names are upper-cased;
+	/// a Joliet tree, when asked for, keeps them as given.
 	/// </summary>
+	/// <param name="files">The files to hold, keyed by their '/'-separated paths.</param>
+	/// <param name="joliet">Whether to add a Joliet tree.</param>
+	/// <param name="volumeId">The volume identifier.</param>
 	public static byte[] BuildIso(IReadOnlyDictionary<string, byte[]> files, bool joliet = false, string volumeId = "TESTDISC") {
 		var primaryRoot = new Dir("", null);
 		var jolietRoot = new Dir("", null);
@@ -74,7 +76,10 @@ internal static class TestImages {
 		return image;
 	}
 
-	/// <summary>Re-frames a cooked image's sectors in <paramref name="format"/>, with sync and header where it has them.</summary>
+	/// <summary>Re-frames a cooked image's sectors in another track format, with sync and header where it has them.</summary>
+	/// <param name="cooked">The cooked image.</param>
+	/// <param name="format">The track format to frame the sectors in.</param>
+	/// <param name="firstLba">The logical block address of the first sector, which a header carries.</param>
 	public static byte[] ToFormat(byte[] cooked, TrackFormat format, int firstLba = 0) {
 		if (format == TrackFormat.Mode1Cooked) {
 			return cooked;
@@ -113,10 +118,11 @@ internal static class TestImages {
 	}
 
 	/// <summary>
-	/// <paramref name="sectors"/> of audio for track <paramref name="track"/>: each sample word encodes the
-	/// track and its index, so a read can be checked byte for byte. Sector 0 of a track's pattern is the
-	/// first sector the file holds for it.
+	/// Sectors of audio for a track: each sample word encodes the track and its index, so a read can be checked byte for byte.
+	/// Sector 0 of a track's pattern is the first sector the file holds for it.
 	/// </summary>
+	/// <param name="track">The track the audio is for.</param>
+	/// <param name="sectors">How many sectors to make.</param>
 	public static byte[] Audio(int track, int sectors) {
 		byte[] pcm = new byte[sectors * DiscImage.RawSectorSize];
 		for (int i = 0; i < pcm.Length; i += 2) {

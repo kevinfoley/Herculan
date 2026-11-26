@@ -8,14 +8,21 @@ public enum MissionTextList {
 }
 
 /// <summary>
-/// A record field that references <c>.ENG</c> text: <paramref name="Row"/> 4, 5, 10 or 17, the record's index in that
-/// row, <paramref name="List"/> for row 4, and the slot of the field's array (0 for row 17's one field).
+/// A record field that references <c>.ENG</c> text.
 /// </summary>
+/// <param name="Row">The row, 4, 5, 10 or 17.</param>
+/// <param name="Record">The record's index in that row.</param>
+/// <param name="List">The list, for row 4.</param>
+/// <param name="Slot">The slot of the field's array, 0 for row 17's one field.</param>
 public readonly record struct TextOwner(int Row, int Record, MissionTextList? List, int Slot) {
-	/// <summary>Row-17 objective <paramref name="record"/>'s failure text.</summary>
+	/// <summary>A row-17 objective's failure text.</summary>
+	/// <param name="record">The objective's index in row 17.</param>
 	public static TextOwner Objective(int record) => new(17, record, null, 0);
 
-	/// <summary>Slot <paramref name="slot"/> of <paramref name="list"/> in row-4 record <paramref name="record"/>.</summary>
+	/// <summary>A slot of a list in a row-4 record.</summary>
+	/// <param name="record">The record's index in row 4.</param>
+	/// <param name="list">The list.</param>
+	/// <param name="slot">The slot.</param>
 	public static TextOwner Package(int record, MissionTextList list, int slot) => new(4, record, list, slot);
 }
 
@@ -63,16 +70,20 @@ public static class MissionTextEditing {
 	/// </summary>
 	public static int Lines(MissionDocument document) => document.Layout.Lines.Count;
 
-	/// <summary>Why <paramref name="adding"/> more lines cannot be added to the mission's text, or null when they can.</summary>
+	/// <summary>Why more lines cannot be added to the mission's text, or null when they can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="adding">How many lines are to be added.</param>
 	public static string? WhyNoLines(MissionDocument document, int adding) {
 		int lines = Lines(document) + adding;
 		return lines > LineCap ? $"The mission's text would run to {lines} lines; the simulator reads only the first {LineCap}." : null;
 	}
 
 	/// <summary>
-	/// The ids an objective's failure text referencing <paramref name="first"/> spans: it and the next
+	/// The ids an objective's failure text spans: the first id it references and the next
 	/// <see cref="FailureLines"/> - 1 distinct ids in the <c>.ENG</c>'s order, as far as the file has them. Empty for no text.
 	/// </summary>
+	/// <param name="text">The mission's <c>.ENG</c>, or null for none.</param>
+	/// <param name="first">The first id the failure text references.</param>
 	public static IReadOnlyList<short> FailureIds(MissionStringFile? text, short first) {
 		if (first == -1) {
 			return [];
@@ -83,7 +94,9 @@ public static class MissionTextEditing {
 		return at < 0 ? [first] : order.Skip(at).Take(FailureLines).ToList();
 	}
 
-	/// <summary>The ids <paramref name="owner"/> references now: a failure text's (<see cref="FailureIds"/>), or the one id in the field.</summary>
+	/// <summary>The ids a text owner references now: a failure text's (<see cref="FailureIds"/>), or the one id in the field.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="owner">The text owner.</param>
 	public static IReadOnlyList<short> IdsOf(MissionDocument document, TextOwner owner) =>
 		References(document).Where(reference => reference.Owner == owner).Select(reference => reference.Id).ToList();
 
@@ -134,17 +147,21 @@ public static class MissionTextEditing {
 		}
 	}
 
-	/// <summary>Whether a field other than <paramref name="owner"/> references one of the ids <paramref name="owner"/> does.</summary>
+	/// <summary>Whether a field other than the owner references one of the ids the owner does.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="owner">The text owner.</param>
 	public static bool Shared(MissionDocument document, TextOwner owner) {
 		var ids = IdsOf(document, owner);
 		return References(document).Any(reference => reference.Owner != owner && ids.Contains(reference.Id));
 	}
 
 	/// <summary>
-	/// The first of <paramref name="count"/> consecutive new ids: one past the largest id any <c>.ENG</c> record has or any
+	/// The first of some consecutive new ids: one past the largest id any <c>.ENG</c> record has or any
 	/// field references, a failure text's last line counted as its id plus two, so a new id makes no field that referenced
 	/// nothing reference it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="count">How many consecutive ids are needed.</param>
 	public static short NewIds(MissionDocument document, int count) {
 		int largest = -1;
 		foreach (var entry in document.Text?.Strings ?? []) {
@@ -168,31 +185,41 @@ public static class MissionTextEditing {
 		return (short)(largest + 1);
 	}
 
-	/// <summary>An unconditioned <c>.ENG</c> record of <paramref name="id"/> holding <paramref name="text"/>, NUL-terminated as the files store it.</summary>
+	/// <summary>An unconditioned <c>.ENG</c> record of an id holding a text, NUL-terminated as the files store it.</summary>
+	/// <param name="id">The record's id.</param>
+	/// <param name="text">The text, without its NUL.</param>
 	public static MissionStringFile.StringEntry Entry(short id, string text) => new() {
 		Guid = id, ConditionRef = -1, ParentRef = -1, Len = (short)(text.Length + 1), Val = text + "\0",
 	};
 
 	/// <summary>
-	/// The index of the <c>.ENG</c> record whose text the line of <paramref name="id"/> shows (<see cref="LayoutLine.Supplier"/>),
+	/// The index of the <c>.ENG</c> record whose text an id's line shows (<see cref="LayoutLine.Supplier"/>),
 	/// or null when no record carries the id.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="id">The <c>.ENG</c> id.</param>
 	public static int? SupplierOf(MissionDocument document, short id) => document.Layout.Line(id)?.Supplier;
 
 	/// <summary>
-	/// The text <paramref name="id"/>'s line shows, without its NUL and the one trailing newline the simulator's load strips
+	/// The text an id's line shows, without its NUL and the one trailing newline the simulator's load strips
 	/// (docs/retail/formats/msn-mission-file.md#the-eng-string-table); null when no record carries the id.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="id">The <c>.ENG</c> id.</param>
 	public static string? LineText(MissionDocument document, short id) =>
 		SupplierOf(document, id) is { } record ? Shown(document.Text!.Strings![record].Val) : null;
 
 	/// <summary>
-	/// Sets the text of part <paramref name="part"/> of what <paramref name="owner"/> references — a failure text's line 0 to
-	/// 2, or a row-4 or row-5 slot's one line, part 0 — to <paramref name="text"/>, in the record its line holds, keeping that record's
+	/// Sets the text of a part of what a text owner references (a failure text's line 0 to
+	/// 2, or a row-4 or row-5 slot's one line, part 0), in the record its line holds, keeping that record's
 	/// trailing newline. A field shared with another (<see cref="Shared"/>) is first given its own copy. Throws
 	/// <see cref="InvalidOperationException"/> for a part with no line, and for a copy that would take the text past
 	/// <see cref="LineCap"/> lines.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="owner">The text owner.</param>
+	/// <param name="part">The part: a failure text's line 0 to 2, or 0 for a slot's one line.</param>
+	/// <param name="text">The text to set.</param>
 	public static MsnEdit SetLine(MissionDocument document, TextOwner owner, int part, string text) {
 		var ids = IdsOf(document, owner);
 		if (part < 0 || part >= ids.Count) {
@@ -207,10 +234,13 @@ public static class MissionTextEditing {
 	}
 
 	/// <summary>
-	/// The index of the <c>.ENG</c> record of <paramref name="id"/> carrying <paramref name="condition"/>, <c>-1</c> for none:
+	/// The index of the <c>.ENG</c> record of an id carrying a condition, <c>-1</c> for none:
 	/// the last such, as a later record of the id replaces an earlier one's text
 	/// (docs/retail/formats/msn-mission-file.md#the-eng-string-table); null when no record of the id carries it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="id">The <c>.ENG</c> id.</param>
+	/// <param name="condition">The condition the record carries.</param>
 	public static int? RecordUnder(MissionDocument document, short id, short condition) {
 		var strings = document.Text?.Strings ?? [];
 		for (int i = strings.Length - 1; i >= 0; i--) {
@@ -222,15 +252,23 @@ public static class MissionTextEditing {
 		return null;
 	}
 
-	/// <summary>The text <paramref name="id"/>'s record under <paramref name="condition"/> holds (<see cref="RecordUnder"/>), as <see cref="LineText"/> shows it; null for none.</summary>
+	/// <summary>The text an id's record under a condition holds (<see cref="RecordUnder"/>), as <see cref="LineText"/> shows it; null for none.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="id">The <c>.ENG</c> id.</param>
+	/// <param name="condition">The condition the record carries.</param>
 	public static string? TextUnder(MissionDocument document, short id, short condition) =>
 		RecordUnder(document, id, condition) is { } record ? Shown(document.Text!.Strings![record].Val) : null;
 
 	/// <summary>
-	/// <see cref="SetLine"/> for the record of the line carrying <paramref name="condition"/> (<see cref="RecordUnder"/>) in
+	/// <see cref="SetLine"/> for the record of the line carrying a condition (<see cref="RecordUnder"/>) in
 	/// place of its base, so a replacement under one condition is edited and the line's other records keep their text. Throws
 	/// <see cref="InvalidOperationException"/> when no record of the line carries the condition.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="owner">The text owner.</param>
+	/// <param name="part">The part, as <see cref="SetLine"/> takes it.</param>
+	/// <param name="condition">The condition the record carries.</param>
+	/// <param name="text">The text to set.</param>
 	public static MsnEdit SetLineUnder(MissionDocument document, TextOwner owner, int part, short condition, string text) {
 		var ids = IdsOf(document, owner);
 		if (part < 0 || part >= ids.Count) {
@@ -269,14 +307,18 @@ public static class MissionTextEditing {
 	/// </summary>
 	public static int? PackageRecord(MissionDocument document) => document.Mission.Texts is { Length: > 0 } ? 0 : null;
 
-	/// <summary><paramref name="list"/>'s slots in <paramref name="package"/>, its own array.</summary>
+	/// <summary>A list's slots in a package, its own array.</summary>
+	/// <param name="package">The text package.</param>
+	/// <param name="list">The list.</param>
 	public static short[] LinesOf(MissionText144 package, MissionTextList list) => list switch {
 		MissionTextList.Objectives => package.ObjectiveLines,
 		MissionTextList.Briefing => package.BriefingLines,
 		_ => package.IntelligenceLines,
 	};
 
-	/// <summary>The ids in <paramref name="list"/>'s filled slots of the mission's text package, in slot order, with each slot.</summary>
+	/// <summary>The ids in a list's filled slots of the mission's text package, in slot order, with each slot.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="list">The list.</param>
 	public static IReadOnlyList<(int Slot, short Id)> Filled(MissionDocument document, MissionTextList list) {
 		if (PackageRecord(document) is not { } record || document.Mission.Texts?[record] is not { } package) {
 			return [];
@@ -285,7 +327,9 @@ public static class MissionTextEditing {
 		return LinesOf(package, list).Select((id, slot) => (slot, id)).Where(entry => entry.id != -1).ToList();
 	}
 
-	/// <summary>Why no line can be added to <paramref name="list"/>, or null when one can.</summary>
+	/// <summary>Why no line can be added to a list, or null when one can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="list">The list.</param>
 	public static string? WhyNoAdd(MissionDocument document, MissionTextList list) {
 		var filled = Filled(document, list);
 		int next = filled.Count == 0 ? 0 : filled[^1].Slot + 1;
@@ -293,7 +337,7 @@ public static class MissionTextEditing {
 	}
 
 	/// <summary>
-	/// Adds an empty line to <paramref name="list"/> after its last filled slot, as a new unconditioned <c>.ENG</c> record with
+	/// Adds an empty line to a list after its last filled slot, as a new unconditioned <c>.ENG</c> record with
 	/// a new id, appending the mission's text package first when it has none: unconditioned, every slot empty and no briefing
 	/// movie, the shape and values of <c>TRAIN5.MSN</c>'s, as File &gt; New mission writes one (<see cref="NewMission"/>). Its
 	/// condition must be <c>-1</c>, as all 60 retail records' is (<c>HercWorks.Query values --row 4 --field ConditionRef</c>):
@@ -301,6 +345,9 @@ public static class MissionTextEditing {
 	/// (<c>MsnGen_ParseMsnFile</c> (<c>00417b67</c>)). A movie ref of <c>-1</c> is left <c>-1</c> by the load, as 8 of the 60 carry it.
 	/// Throws <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="list">The list to add the line to.</param>
+	/// <param name="id">The new line's id.</param>
 	public static MsnEdit AddLine(MissionDocument document, MissionTextList list, out short id) {
 		if (WhyNoAdd(document, list) is { } reason) {
 			throw new InvalidOperationException(reason);
@@ -327,9 +374,12 @@ public static class MissionTextEditing {
 	}
 
 	/// <summary>
-	/// Removes the line in <paramref name="list"/>'s slot <paramref name="slot"/>, moving every later slot up one, and the
+	/// Removes the line in a list's slot, moving every later slot up one, and the
 	/// <c>.ENG</c> records of its id when no field references the id any more.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="list">The list.</param>
+	/// <param name="slot">The slot to remove.</param>
 	public static MsnEdit RemoveLine(MissionDocument document, MissionTextList list, int slot) {
 		int record = PackageRecord(document) ?? throw new InvalidOperationException("The mission has no text package.");
 		var lines = LinesOf(document.Mission.Texts![record], list);
@@ -348,7 +398,11 @@ public static class MissionTextEditing {
 		});
 	}
 
-	/// <summary>Swaps the lines in <paramref name="list"/>'s slots <paramref name="slot"/> and <paramref name="to"/>, both filled.</summary>
+	/// <summary>Swaps the lines in two of a list's slots, both filled.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="list">The list.</param>
+	/// <param name="slot">The first slot.</param>
+	/// <param name="to">The second slot.</param>
 	public static MsnEdit MoveLine(MissionDocument document, MissionTextList list, int slot, int to) {
 		int record = PackageRecord(document) ?? throw new InvalidOperationException("The mission has no text package.");
 		var lines = LinesOf(document.Mission.Texts![record], list);
@@ -364,7 +418,9 @@ public static class MissionTextEditing {
 
 	// ---- Shared ------------------------------------------------------------------------------------
 
-	/// <summary>Removes every <c>.ENG</c> record of each of <paramref name="ids"/> that no field references any more.</summary>
+	/// <summary>Removes every <c>.ENG</c> record of each of some ids that no field references any more.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="ids">The ids to check.</param>
 	internal static void RemoveUnreferenced(MissionDocument document, IReadOnlyCollection<short> ids) {
 		var referenced = References(document).Select(reference => reference.Id).ToHashSet();
 		var gone = ids.Where(id => !referenced.Contains(id)).ToList();
@@ -373,7 +429,9 @@ public static class MissionTextEditing {
 		}
 	}
 
-	/// <summary>Throws when the text has grown past <see cref="LineCap"/> lines (<see cref="Lines"/>) from <paramref name="before"/>.</summary>
+	/// <summary>Throws when the text has grown past <see cref="LineCap"/> lines (<see cref="Lines"/>) from a starting count.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="before">The line count before the edit.</param>
 	internal static void CheckLines(MissionDocument document, int before) {
 		int lines = Lines(document);
 		if (lines > before && lines > LineCap) {

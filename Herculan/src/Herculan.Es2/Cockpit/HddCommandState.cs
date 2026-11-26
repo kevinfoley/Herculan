@@ -153,10 +153,11 @@ public readonly record struct HddCommandState(
 	public bool OrdersAvailable => SelectedPilot >= 0;
 
 	/// <summary>
-	/// Whether <paramref name="order"/> still wants a target picked before XMIT will send it. ATTACK
+	/// Whether an order still wants a target picked before XMIT will send it. ATTACK
 	/// ENEMY and DEFEND POSITION want a unit; PATROL and GOTO want a gridpoint. The screen's key
 	/// dispatch splits on exactly those two ranges.
 	/// </summary>
+	/// <param name="order">The order.</param>
 	public static bool NeedsUnit(HddOrder order) =>
 		order is HddOrder.AttackEnemy or HddOrder.DefendPosition;
 

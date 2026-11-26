@@ -56,9 +56,11 @@ public readonly struct ChargeBarSlider {
 	public int Travel => TrackRight - KnobWidth - Left;
 
 	/// <summary>
-	/// Row <paramref name="gaugeSlot"/>'s charge bar, or null when this herc's <c>.GAU</c> has no such
+	/// A gauge row's charge bar, or null when this herc's <c>.GAU</c> has no such
 	/// row. Whether the row holds an energy mount is the caller's question.
 	/// </summary>
+	/// <param name="art">The cockpit art.</param>
+	/// <param name="gaugeSlot">The gauge row.</param>
 	public static ChargeBarSlider? For(CockpitArt art, int gaugeSlot) {
 		ArgumentNullException.ThrowIfNull(art);
 		if (art.Gau.Weapons is not { } rows
@@ -88,10 +90,11 @@ public readonly struct ChargeBarSlider {
 			Left, Top, TrackRight + Scale - 1, Bottom + Scale - 1, Lit: false, Draggable: true);
 
 	/// <summary>
-	/// The position a pointer at <paramref name="deviceX"/> commits: the drag handler's clamp
+	/// The position a pointer commits: the drag handler's clamp
 	/// (<c>SliderWidget_DragToPointH</c>, <c>004524f8</c>), then the getter's arithmetic
 	/// (<c>SliderWidget_GetValueH</c>, <c>00452544</c>). A pointer past either end pins the slider there.
 	/// </summary>
+	/// <param name="deviceX">The pointer's X in device pixels.</param>
 	public int PositionAt(float deviceX) {
 		if (Travel <= 0) {
 			return 0;

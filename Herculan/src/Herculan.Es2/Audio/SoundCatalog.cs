@@ -141,7 +141,8 @@ public sealed class SoundCatalog {
 	/// <summary>Row <paramref name="id"/>, or null when the id is outside the table.</summary>
 	public Entry? this[int id] => id >= 0 && id < _entries.Length ? _entries[id] : null;
 
-	/// <summary>Whether <paramref name="id"/> falls in the music half of the catalog.</summary>
+	/// <summary>Whether an id falls in the music half of the catalog.</summary>
+	/// <param name="id">The sound id.</param>
 	public static bool IsMusic(int id) => id < SoundId.FirstEffect;
 
 	/// <summary>

@@ -21,10 +21,13 @@ internal static class ImGuiLayoutCheck {
 	public static readonly string FontFolder = Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "Open_Sans", "static");
 
 	/// <summary>
-	/// The current context as a 100% display's window sets it up, minus the GPU: the fonts in <see cref="FontFolder"/> named by
-	/// <paramref name="regular"/>, <paramref name="italic"/> and <paramref name="bold"/> added and the atlas built here, not
-	/// uploaded. Returns the atlas's glyphs, and the bold face.
+	/// The current context as a 100% display's window sets it up, minus the GPU: the fonts in <see cref="FontFolder"/> added
+	/// and the atlas built here, not uploaded. Returns the atlas's glyphs, and the bold face.
 	/// </summary>
+	/// <param name="screen">The display size.</param>
+	/// <param name="regular">The regular face's file name in <see cref="FontFolder"/>.</param>
+	/// <param name="italic">The italic face's file name, or null for none.</param>
+	/// <param name="bold">The bold face's file name, or null for none.</param>
 	public static unsafe (AtlasGlyphs Glyphs, ImFontPtr? Bold) SetUp(Vector2 screen, string regular, string? italic, string? bold) {
 		var io = ImGui.GetIO();
 		io.NativePtr->IniFilename = null;
@@ -56,9 +59,12 @@ internal static class ImGuiLayoutCheck {
 	}
 
 	/// <summary>
-	/// Draws <paramref name="draw"/> for <paramref name="frames"/> frames, then everything the last cut off and every window
+	/// Draws a callback for a number of frames, then everything the last cut off and every window
 	/// its content runs past, one line each; empty when everything fits.
 	/// </summary>
+	/// <param name="draw">Draws the frame.</param>
+	/// <param name="frames">The number of frames to draw.</param>
+	/// <param name="glyphs">The atlas's glyphs.</param>
 	public static List<string> CutOffs(Action draw, int frames, AtlasGlyphs glyphs) {
 		for (int frame = 0; frame < frames; frame++) {
 			ImGui.NewFrame();

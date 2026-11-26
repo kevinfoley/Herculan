@@ -8,9 +8,9 @@ namespace HercWorks.Video.Tests;
 /// </summary>
 internal static class RetailFiles {
 	/// <summary>
-	/// Walks up from this assembly looking for <c>ES2/<paramref name="relative"/></c>, and returns
-	/// its path or null.
+	/// Walks up from this assembly looking for the file under <c>ES2/</c>, and returns its path or null.
 	/// </summary>
+	/// <param name="relative">The file's path relative to the <c>ES2</c> folder.</param>
 	internal static string? Find(string relative) {
 		DirectoryInfo? at = new(AppContext.BaseDirectory);
 		while (at is not null) {

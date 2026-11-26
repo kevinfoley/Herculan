@@ -59,7 +59,7 @@ public sealed class CdMusic : IDisposable {
 
 	/// <summary>
 	/// The track a mission plays, from <c>Sim_InitMissionSession</c> (<c>004614fc</c>):
-	/// <c>select % 5 + 2</c>, so tracks 2 to 6. <paramref name="select"/> is the value of DBSIM's own
+	/// <c>select % 5 + 2</c>, so tracks 2 to 6. The selector is the value of DBSIM's own
 	/// <c>-R</c> command-line switch (<c>Music_TrackSelect</c> (<c>004d25f7</c>), parsed by <c>atol</c> at <c>0045e824</c>),
 	/// which is the only thing in DBSIM that chooses between the five. Retail's launcher passes a count of
 	/// the missions flown so far, so the track rotates; see <c>docs/retail/command-line.md</c>.
@@ -67,17 +67,22 @@ public sealed class CdMusic : IDisposable {
 	/// <para>The original's remainder is a signed <c>IDIV</c>, so a negative <c>-R</c> would give it
 	/// a track below 2 and <c>MCI_PLAY</c> an invalid one; the magnitude is taken here instead.</para>
 	///
-	/// <para>With <paramref name="allTracks"/> (<see cref="Settings.Es2TweakSettingDefinitions.PlayLastMusicTrack"/>,
+	/// <para>With all tracks (<see cref="Settings.Es2TweakSettingDefinitions.PlayLastMusicTrack"/>,
 	/// this engine's) the remainder is taken over <see cref="DiscMusicTrackCount"/>, so the rotation reaches track 7.</para>
 	/// </summary>
+	/// <param name="select">The value of the <c>-R</c> switch.</param>
+	/// <param name="allTracks">Whether the rotation reaches track 7.</param>
 	public static int MissionTrack(int select, bool allTracks = false) =>
 		System.Math.Abs(select % (allTracks ? DiscMusicTrackCount : MissionTrackCount)) + FirstMusicTrack;
 
 	/// <summary>
 	/// <see cref="Settings.Es2TweakSettingDefinitions.ShuffleMissionMusic"/>, this engine's: one of the
-	/// <paramref name="count"/> tracks from <see cref="FirstMusicTrack"/> up, drawn evenly from those that are not
-	/// <paramref name="previous"/>. A <paramref name="previous"/> outside that range excludes nothing.
+	/// tracks from <see cref="FirstMusicTrack"/> up, drawn evenly from those that are not
+	/// the previous one. A previous track outside that range excludes nothing.
 	/// </summary>
+	/// <param name="count">How many tracks there are from <see cref="FirstMusicTrack"/> up.</param>
+	/// <param name="previous">The track played last.</param>
+	/// <param name="random">The source of the draw.</param>
 	public static int ShuffledTrack(int count, int previous, Random random) {
 		bool excludes = previous >= FirstMusicTrack && previous < FirstMusicTrack + count;
 		int track = random.Next(FirstMusicTrack, FirstMusicTrack + count - (excludes ? 1 : 0));

@@ -106,9 +106,10 @@ public static class ScriptDatLint {
 	public const int SkipArrayBytes = 2000;
 
 	/// <summary>
-	/// The most records of <paramref name="block"/> the skip array holds (<see cref="SkipArrayBytes"/>): points, headings, one
+	/// The most records of a block the skip array holds (<see cref="SkipArrayBytes"/>): points, headings, one
 	/// route's waypoints or trigger areas; null for a block the spawn pass reads some other way.
 	/// </summary>
+	/// <param name="block">The block.</param>
 	public static int? SkipArrayCap(ScriptBlock block) => block switch {
 		ScriptBlock.Points => SkipArrayBytes / 12,
 		ScriptBlock.Headings or ScriptBlock.Routes => SkipArrayBytes / 2,
@@ -132,10 +133,11 @@ public static class ScriptDatLint {
 	public const int ObjectCap = 112;
 
 	/// <summary>
-	/// The markers <paramref name="script"/> puts on the heads-down map: one per waypoint of the squad's route after its first
+	/// The markers a script puts on the heads-down map: one per waypoint of the squad's route after its first
 	/// (slot 0's order of group 0, at most <see cref="RouteMarkerCap"/>), one per object (<see cref="Objects"/>), and the nav
 	/// marker's.
 	/// </summary>
+	/// <param name="script">The script.</param>
 	/// <param name="squadSize">The machines <c>player.mec</c> brings; 0 when unknown, which counts group 0's member refs instead.</param>
 	public static int MapMarkers(ScriptDat script, int squadSize = 0) {
 		var squad = script.Groups.FirstOrDefault();
@@ -150,9 +152,10 @@ public static class ScriptDatLint {
 	}
 
 	/// <summary>
-	/// The objects <paramref name="script"/> puts in the simulation: one per live roster slot — each slot a group past the first
+	/// The objects a script puts in the simulation: one per live roster slot — each slot a group past the first
 	/// names — and per squad machine.
 	/// </summary>
+	/// <param name="script">The script.</param>
 	/// <param name="squadSize"><inheritdoc cref="MapMarkers" path="/param[@name='squadSize']"/></param>
 	public static int Objects(ScriptDat script, int squadSize = 0) {
 		var live = new HashSet<(short Kind, short Slot)>();
@@ -169,7 +172,8 @@ public static class ScriptDatLint {
 		return live.Count + machines;
 	}
 
-	/// <summary>Runs every check over <paramref name="script"/>, in block order, then over <c>mission.str</c>'s length.</summary>
+	/// <summary>Runs every check over a script, in block order, then over <c>mission.str</c>'s length.</summary>
+	/// <param name="script">The script.</param>
 	/// <param name="squadSize">
 	/// How many machines <c>player.mec</c> brings, which share the block-7 slot cap; 0 when the
 	/// caller does not know, in which case that cap is checked against the roster alone.

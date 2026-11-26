@@ -86,8 +86,10 @@ public class HercDamageFileTransformer : ByteTransformer<HercSimDamage> {
 	/// <summary>
 	/// One piece record — <c>HercPiece_ReadRecord</c> (<c>0040cff8</c>) itself, which the sim
 	/// <c>WEAPONS.DAT</c> reader runs too (see <see cref="WeaponsSimTransformer"/>). Advances
-	/// <paramref name="offset"/> past everything it read.
+	/// the offset past everything it read.
 	/// </summary>
+	/// <param name="bytes">The buffer.</param>
+	/// <param name="offset">Where the record starts; advanced past it.</param>
 	public HercSimDamage.HercPiece ReadPiece(byte[] bytes, ref int offset) {
 		SetBytes(bytes);
 		Index = offset;

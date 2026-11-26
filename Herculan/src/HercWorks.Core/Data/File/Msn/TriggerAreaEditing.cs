@@ -43,24 +43,31 @@ public static class TriggerAreaEditing {
 	private const int ActionRow = 10;
 
 	/// <summary>
-	/// The stored radius for <paramref name="radius"/> world units: rounded to the nearest <see cref="RadiusScale"/>, halves
+	/// The stored radius for a radius in world units: rounded to the nearest <see cref="RadiusScale"/>, halves
 	/// up, and kept from 1, since a radius of 0 catches nothing, to <see cref="short.MaxValue"/>, since the load sign-extends
 	/// the stored word (<c>MOVSX</c> at <c>00423391</c>) and a larger one would read as negative. Retail stores 100 to 20000.
 	/// </summary>
+	/// <param name="radius">The radius in world units.</param>
 	public static short StoredRadius(int radius) =>
 		(short)Math.Clamp(((long)Math.Max(radius, 0) + RadiusScale / 2) / RadiusScale, 1, short.MaxValue);
 
-	/// <summary>The radius in world units a stored radius of <paramref name="stored"/> gives.</summary>
+	/// <summary>The radius in world units a stored radius gives.</summary>
+	/// <param name="stored">The stored radius.</param>
 	public static int Radius(short stored) => stored * RadiusScale;
 
-	/// <summary>Whether a record of shape <paramref name="shape"/> is a box: shape 0 is, and any other is a circle.</summary>
+	/// <summary>Whether a record of a shape is a box: shape 0 is, and any other is a circle.</summary>
+	/// <param name="shape">The record's shape.</param>
 	public static bool IsBox(short shape) => shape == Box;
 
 	/// <summary>
-	/// Appends a box from <paramref name="corner"/> to <paramref name="opposite"/>, as one <see cref="MissionDocument.Change"/>,
-	/// and answers its GUID in <paramref name="area"/>. Throws <see cref="InvalidOperationException"/> for a box with no width
+	/// Appends a box between two corners, as one <see cref="MissionDocument.Change"/>,
+	/// and answers its GUID. Throws <see cref="InvalidOperationException"/> for a box with no width
 	/// or no depth, which the strict test catches nothing in.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="corner">One corner.</param>
+	/// <param name="opposite">The opposite corner.</param>
+	/// <param name="area">The new area's GUID.</param>
 	public static MsnEdit CreateBox(MissionDocument document, (int X, int Y) corner, (int X, int Y) opposite, out short area) {
 		if (corner.X == opposite.X || corner.Y == opposite.Y) {
 			throw new InvalidOperationException("A box needs width and depth.");
@@ -77,10 +84,14 @@ public static class TriggerAreaEditing {
 	}
 
 	/// <summary>
-	/// Appends a circle of <paramref name="radius"/> world units about <paramref name="centre"/>, stored as
-	/// <see cref="StoredRadius"/> gives it, as one <see cref="MissionDocument.Change"/>, and answers its GUID in
-	/// <paramref name="area"/>. Throws <see cref="InvalidOperationException"/> for a radius of 0 or less.
+	/// Appends a circle of a radius in world units about a centre, stored as
+	/// <see cref="StoredRadius"/> gives it, as one <see cref="MissionDocument.Change"/>, and answers its GUID.
+	/// Throws <see cref="InvalidOperationException"/> for a radius of 0 or less.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="centre">The circle's centre.</param>
+	/// <param name="radius">The radius in world units.</param>
+	/// <param name="area">The new area's GUID.</param>
 	public static MsnEdit CreateCircle(MissionDocument document, (int X, int Y) centre, int radius, out short area) {
 		if (radius <= 0) {
 			throw new InvalidOperationException("A circle needs a radius.");
@@ -96,7 +107,7 @@ public static class TriggerAreaEditing {
 	}
 
 	/// <summary>
-	/// Makes area GUID <paramref name="area"/> a box (<paramref name="shape"/> <see cref="Box"/>) or a circle, as one
+	/// Makes an area a box (shape <see cref="Box"/>) or a circle, as one
 	/// <see cref="MissionDocument.Change"/>, from where its points stand. The editor's choice of what the
 	/// other shape is, not a retail rule: a box becomes the circle about its middle whose radius is half its longer side, and
 	/// a circle the square whose corners are its centre less and plus its radius on each axis. The first point is placed as
@@ -105,6 +116,9 @@ public static class TriggerAreaEditing {
 	/// removed. Throws <see cref="InvalidOperationException"/> when the area is that shape already, or when a point it names
 	/// is not in the mission.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="area">The area's GUID.</param>
+	/// <param name="shape">The shape to make it: <see cref="Box"/> or a circle.</param>
 	public static MsnEdit SetShape(MissionDocument document, short area, short shape) {
 		var record = document.AreaRecord(area);
 		bool toBox = IsBox(shape);
@@ -145,9 +159,12 @@ public static class TriggerAreaEditing {
 	}
 
 	/// <summary>
-	/// Sets circle GUID <paramref name="area"/>'s radius to <paramref name="radius"/> world units, stored as
+	/// Sets a circle's radius in world units, stored as
 	/// <see cref="StoredRadius"/> gives it. Throws <see cref="InvalidOperationException"/> for a box.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="area">The circle's GUID.</param>
+	/// <param name="radius">The radius in world units.</param>
 	public static MsnEdit SetRadius(MissionDocument document, short area, int radius) {
 		if (IsBox(document.AreaRecord(area).Shape)) {
 			throw new InvalidOperationException("A box has no radius.");
@@ -157,7 +174,9 @@ public static class TriggerAreaEditing {
 		return document.SetArea(area, written => written.SecondPointOrRadius = stored);
 	}
 
-	/// <summary>The row-10 actions that name area GUID <paramref name="area"/> in any of their eight area slots, every record whatever its condition.</summary>
+	/// <summary>The row-10 actions that name an area in any of their eight area slots, every record whatever its condition.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="area">The area's GUID.</param>
 	public static IReadOnlyList<MsnRecordId> Namers(MissionDocument document, short area) {
 		var namers = new List<MsnRecordId>();
 		if (area == -1) {
@@ -175,10 +194,12 @@ public static class TriggerAreaEditing {
 	}
 
 	/// <summary>
-	/// Deletes area GUID <paramref name="area"/>: every row-9 record of the GUID, whatever its condition, and the records of
+	/// Deletes an area: every row-9 record of the GUID, whatever its condition, and the records of
 	/// each point those named that is left named by nothing, as one <see cref="MissionDocument.Change"/>. Throws
 	/// <see cref="InvalidOperationException"/> while <see cref="Namers"/> finds an action.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="area">The area's GUID.</param>
 	public static MsnEdit Delete(MissionDocument document, short area) {
 		if (Namers(document, area).Count > 0) {
 			throw new InvalidOperationException($"Trigger area {area} is referenced by a trigger.");

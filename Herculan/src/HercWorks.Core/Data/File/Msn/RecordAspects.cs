@@ -50,11 +50,15 @@ public enum RecordAspect {
 /// changes (<see cref="LayoutVariation.Words"/>).
 /// </summary>
 public static class RecordAspects {
-	/// <summary>The aspects words <paramref name="words"/> of a row-<paramref name="row"/> record are, distinct, in <see cref="RecordAspect"/> order.</summary>
+	/// <summary>The aspects some words of a record of a row are, distinct, in <see cref="RecordAspect"/> order.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="words">The words' indices.</param>
 	public static IReadOnlyList<RecordAspect> Of(int row, IEnumerable<int> words) =>
 		words.Select(word => Of(row, word)).Distinct().Order().ToList();
 
-	/// <summary>What word <paramref name="word"/> of a row-<paramref name="row"/> record is; <see cref="RecordAspect.Other"/> for any other row.</summary>
+	/// <summary>What a word of a record of a row is; <see cref="RecordAspect.Other"/> for any other row.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="word">The word's index.</param>
 	public static RecordAspect Of(int row, int word) => row switch {
 		12 => Herc(word),
 		13 => Flyer(word),

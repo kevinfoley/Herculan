@@ -34,7 +34,9 @@ public abstract class Es1CareerDataTransformer<T> : Es1WalkedFileTransformer<T> 
 		return list;
 	}
 
-	/// <summary>Writes <paramref name="source"/> in <see cref="ReadHercList"/>'s layout, its count the HERCs it holds.</summary>
+	/// <summary>Writes a HERC list in <see cref="ReadHercList"/>'s layout, its count the HERCs it holds.</summary>
+	/// <param name="w">The writer.</param>
+	/// <param name="source">The HERC list.</param>
 	protected static void WriteHercList(BinaryWriter w, Es1HercList source) {
 		w.Write(source.SlotCount);
 		w.Write(source.Word1);
@@ -97,7 +99,9 @@ public abstract class Es1CareerDataTransformer<T> : Es1WalkedFileTransformer<T> 
 		return record;
 	}
 
-	/// <summary>Writes <paramref name="source"/> in <see cref="ReadCareerRecord"/>'s layout.</summary>
+	/// <summary>Writes a career record in <see cref="ReadCareerRecord"/>'s layout.</summary>
+	/// <param name="w">The writer.</param>
+	/// <param name="source">The career record.</param>
 	protected static void WriteCareerRecord(BinaryWriter w, Es1CareerRecord source) {
 		if (source.Pilots.Length != Es1CareerRecord.PilotCount || source.Flags.Length != Es1CareerRecord.FlagCount
 				|| source.Equipment.Chassis.Length != Es1EquipmentState.ChassisCount
@@ -171,7 +175,9 @@ public abstract class Es1CareerDataTransformer<T> : Es1WalkedFileTransformer<T> 
 		return new Es1Inventory { Records = records };
 	}
 
-	/// <summary>Writes <paramref name="source"/> in <see cref="ReadInventory"/>'s layout.</summary>
+	/// <summary>Writes an inventory in <see cref="ReadInventory"/>'s layout.</summary>
+	/// <param name="w">The writer.</param>
+	/// <param name="source">The inventory.</param>
 	protected static void WriteInventory(BinaryWriter w, Es1Inventory source) {
 		w.Write(checked((short)source.Records.Length));
 		foreach (var record in source.Records) {

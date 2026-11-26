@@ -200,9 +200,11 @@ public class Es1ViewChainTests {
 
 	private sealed record TestWorld(Es1Simulation Simulation, Es1FrameLoop Frames, Es1Mech Player, Es1Mech Squadmate) {
 		/// <summary>
-		/// Ticks with <paramref name="code"/> once and then none, each tick's controls and views followed by the frame's
-		/// end, until <paramref name="done"/>; fails after <see cref="MaxTicks"/>.
+		/// Ticks with a control code once and then none, each tick's controls and views followed by the frame's
+		/// end, until a condition holds; fails after <see cref="MaxTicks"/>.
 		/// </summary>
+		/// <param name="code">The control code of the first tick.</param>
+		/// <param name="done">The condition to stop on.</param>
 		public void TickUntil(ushort code, Func<bool> done) {
 			for (int tick = 0; tick < MaxTicks; tick++) {
 				Simulation.Poll(new Es1PlayerInputBlock { CommandWord = tick == 0 ? code : (ushort)0 });

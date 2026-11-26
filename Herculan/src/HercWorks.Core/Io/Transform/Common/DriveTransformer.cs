@@ -86,6 +86,7 @@ public class DriveTransformer : ByteTransformer<Drive> {
 			: [.. retail, .. Encoding.UTF8.GetBytes("\r\n" + ImagePrefix + source.DiscImage)];
 	}
 
-	/// <summary>Whether <paramref name="path"/> holds a character <c>fscanf("%s")</c> would stop at.</summary>
+	/// <summary>Whether a path holds a character <c>fscanf("%s")</c> would stop at.</summary>
+	/// <param name="path">The path, or null.</param>
 	public static bool HasWhitespace(string? path) => path != null && path.Any(char.IsWhiteSpace);
 }

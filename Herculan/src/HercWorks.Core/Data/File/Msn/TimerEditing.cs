@@ -35,10 +35,13 @@ public static class TimerEditing {
 	public const short NewDelay = 10;
 
 	/// <summary>
-	/// Appends a new timer, answering its GUID in <paramref name="guid"/>: unconditioned and its dead word <c>0x04</c>
-	/// <c>-1</c>, as all 72 retail records; <see cref="NewDelay"/>; started by row-10 action <paramref name="start"/>, or by
+	/// Appends a new timer: unconditioned and its dead word <c>0x04</c>
+	/// <c>-1</c>, as all 72 retail records; <see cref="NewDelay"/>; started by a row-10 action, or by
 	/// none for <c>-1</c>, so it runs from mission start; and firing nothing until an action is added, the editor's choice.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The new timer's GUID.</param>
+	/// <param name="start">The row-10 GUID of the action that starts it, or <c>-1</c> for none.</param>
 	public static MsnEdit Create(MissionDocument document, out short guid, short start = -1) {
 		CheckAction(document, start, none: true);
 		short created = -1;
@@ -53,32 +56,44 @@ public static class TimerEditing {
 		SequenceRefs = Enumerable.Repeat((short)-1, Slots).ToArray(),
 	};
 
-	/// <summary>Row-11 GUID <paramref name="timer"/>'s base fields (a copy), throwing for one no record carries.</summary>
+	/// <summary>A row-11 GUID's base fields (a copy), throwing for one no record carries.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
 	public static ActionTimer30 Fields(MissionDocument document, short timer) =>
 		document.Layout.Entry<ActionTimer30>(timer)?.Fields
 			?? throw new InvalidOperationException("That countdown is not in the mission.");
 
 	/// <summary>
-	/// The row-10 GUID of the action that starts <paramref name="timer"/>'s base, or <c>-1</c> when it runs from mission start
+	/// The row-10 GUID of the action that starts a timer's base, or <c>-1</c> when it runs from mission start
 	/// or names no action.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
 	public static short Start(MissionDocument document, short timer) => ActionGuid(document, Fields(document, timer).PrimaryActionRef);
 
-	/// <summary>The row-10 GUIDs in <paramref name="timer"/>'s base's ten fired slots, <c>-1</c> for an empty one or one naming no action.</summary>
+	/// <summary>The row-10 GUIDs in a timer's base's ten fired slots, <c>-1</c> for an empty one or one naming no action.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
 	public static short[] Fired(MissionDocument document, short timer) =>
 		Fields(document, timer).SequenceRefs.Select(action => ActionGuid(document, action)).ToArray();
 
 	/// <summary>How many fired slots are filled, from slot 0 to the last filled one.</summary>
 	public static int Filled(short[] fired) => Array.FindLastIndex(fired, action => action != -1) + 1;
 
-	/// <summary>Sets the action that starts <paramref name="timer"/>, a row-10 GUID, or <c>-1</c> for none: it then runs from mission start.</summary>
+	/// <summary>Sets the action that starts a timer, a row-10 GUID, or <c>-1</c> for none: it then runs from mission start.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
+	/// <param name="action">The action's row-10 GUID, or <c>-1</c> for none.</param>
 	public static MsnEdit SetStart(MissionDocument document, short timer, short action) {
 		Fields(document, timer);
 		CheckAction(document, action, none: true);
 		return document.Change(() => document.SetField(MsnField.TimerStart, timer, action));
 	}
 
-	/// <summary>Sets <paramref name="timer"/>'s delay to <paramref name="seconds"/>, 0 to <see cref="MaxDelay"/>.</summary>
+	/// <summary>Sets a timer's delay in seconds, 0 to <see cref="MaxDelay"/>.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
+	/// <param name="seconds">The delay in seconds.</param>
 	public static MsnEdit SetDelay(MissionDocument document, short timer, int seconds) {
 		if (seconds is < 0 or > MaxDelay) {
 			throw new ArgumentOutOfRangeException(nameof(seconds), seconds, $"A delay is 0 to {MaxDelay} seconds.");
@@ -88,7 +103,10 @@ public static class TimerEditing {
 		return document.Change(() => document.SetField(MsnField.TimerDelay, timer, (short)seconds));
 	}
 
-	/// <summary>Why <paramref name="action"/> cannot be added to <paramref name="timer"/>'s fired actions, or null when it can.</summary>
+	/// <summary>Why an action cannot be added to a timer's fired actions, or null when it can.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
+	/// <param name="action">The action's row-10 GUID, or <c>-1</c> to ask only whether a slot is free.</param>
 	public static string? WhyNoAddFired(MissionDocument document, short timer, short action = -1) {
 		var fired = Fired(document, timer);
 		return Filled(fired) >= Slots ? $"It already fires {Slots} triggers, the most it can hold."
@@ -96,7 +114,10 @@ public static class TimerEditing {
 			: null;
 	}
 
-	/// <summary>Adds row-10 action <paramref name="action"/> after <paramref name="timer"/>'s last fired one.</summary>
+	/// <summary>Adds a row-10 action after a timer's last fired one.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static MsnEdit AddFired(MissionDocument document, short timer, short action) {
 		CheckAction(document, action, none: false);
 		int slot = NextFiredSlot(document, timer, action);
@@ -113,7 +134,11 @@ public static class TimerEditing {
 		return Filled(Fired(document, timer));
 	}
 
-	/// <summary>Puts row-10 action <paramref name="action"/> in <paramref name="timer"/>'s filled slot <paramref name="slot"/>.</summary>
+	/// <summary>Puts a row-10 action in one of a timer's filled slots.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
+	/// <param name="slot">The filled slot.</param>
+	/// <param name="action">The action's row-10 GUID.</param>
 	public static MsnEdit SetFired(MissionDocument document, short timer, int slot, short action) {
 		var fired = Fired(document, timer);
 		if (slot < 0 || slot >= Filled(fired)) {
@@ -128,7 +153,10 @@ public static class TimerEditing {
 		return document.Change(() => document.SetField(MsnField.TimerFired(slot), timer, action));
 	}
 
-	/// <summary>Removes the action in <paramref name="timer"/>'s slot <paramref name="slot"/>, moving every later one up a slot.</summary>
+	/// <summary>Removes the action in one of a timer's slots, moving every later one up a slot.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
+	/// <param name="slot">The slot to empty.</param>
 	public static MsnEdit RemoveFired(MissionDocument document, short timer, int slot) {
 		var fired = Fired(document, timer);
 		int last = Filled(fired) - 1;
@@ -145,7 +173,9 @@ public static class TimerEditing {
 		});
 	}
 
-	/// <summary>Deletes row-11 GUID <paramref name="timer"/>: every record of the GUID, whatever its condition.</summary>
+	/// <summary>Deletes a row-11 GUID: every record of the GUID, whatever its condition.</summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="timer">The timer's row-11 GUID.</param>
 	public static MsnEdit Delete(MissionDocument document, short timer) => document.Change(() => document.Remove(TimerRow, timer));
 
 	// Row-10 GUID <action>, or -1 when no record carries it.

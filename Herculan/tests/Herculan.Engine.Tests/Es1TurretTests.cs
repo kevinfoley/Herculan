@@ -155,7 +155,9 @@ public class Es1TurretTests {
 		return ShapeAnimation.From(list)!;
 	}
 
-	/// <summary>An ECM on an invisible hardpoint at (<paramref name="x"/>, 0, <paramref name="z"/>), so no side offset applies.</summary>
+	/// <summary>An ECM on an invisible hardpoint at (x, 0, z), so no side offset applies.</summary>
+	/// <param name="x">The hardpoint's X.</param>
+	/// <param name="z">The hardpoint's Z.</param>
 	private static Es1WeaponMount Mount(short x, short z) {
 		var hardpoint = new GunLayout.HardpointEntry {
 			ConvergencePitchNode = -1,

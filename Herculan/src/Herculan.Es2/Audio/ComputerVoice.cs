@@ -24,12 +24,13 @@ namespace Herculan.Es2.Audio;
 /// </summary>
 public sealed class ComputerVoice {
 	/// <summary>
-	/// The voice archive's name for <paramref name="language"/>, without its extension, and the folder its clips live
+	/// The voice archive's name for a language, without its extension, and the folder its clips live
 	/// in: <c>Voice_ArchiveName</c> (<c>0045ef68</c>) patches the language letter over the last letter of
 	/// <c>simvoice</c>, and <c>Voice_FilePath</c> (<c>0045ef80</c>) puts that name in front of every clip
 	/// (docs/retail/simulation/audio.md, "File naming"). There is no English fallback: a v1.10 install copies its language's
 	/// archive at every size.
 	/// </summary>
+	/// <param name="language">The game's language.</param>
 	public static string VoiceFolder(GameLanguage language) => language switch {
 		GameLanguage.French => "SIMVOICF",
 		GameLanguage.German => "SIMVOICG",
@@ -76,11 +77,12 @@ public sealed class ComputerVoice {
 	/// <summary>The message currently being spoken, or null when the channel is silent.</summary>
 	public int? Speaking { get; private set; }
 
-	/// <summary>Whether a clip for <paramref name="messageId"/> could be found and opened.</summary>
+	/// <summary>Whether a clip for a message could be found and opened.</summary>
+	/// <param name="messageId">The message's id.</param>
 	public bool CanSpeak(int messageId) => Sample(messageId) >= 0;
 
 	/// <summary>
-	/// Reads message <paramref name="messageId"/> aloud — the flat <c>SYSTEM.STR</c> id its call sites
+	/// Reads a message aloud — the flat <c>SYSTEM.STR</c> id its call sites
 	/// pass, resolved here to the <c>CVM</c> clip its attribute byte names. The tail of
 	/// <c>MessagePort_Show</c> (<c>00436abc</c>), which is a bare "build the filename and play it": there is no queue and
 	/// nothing is checked, because the port has already decided this line is the one to say.
@@ -89,6 +91,7 @@ public sealed class ComputerVoice {
 	/// and would let two overlap, but its port never asks: a message speaks only as it goes up, and one
 	/// goes up only once the last has come down.</para>
 	/// </summary>
+	/// <param name="messageId">The flat <c>SYSTEM.STR</c> id.</param>
 	public void Speak(int messageId) {
 		int sample = Sample(messageId);
 		if (sample < 0) {

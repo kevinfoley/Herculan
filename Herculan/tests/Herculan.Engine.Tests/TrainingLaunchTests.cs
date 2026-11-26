@@ -83,9 +83,12 @@ public class TrainingLaunchTests {
 	}
 
 	/// <summary>
-	/// <c>Begin Mission</c> on the Strike Training Mission with the generator <paramref name="seed"/> steps past its
+	/// <c>Begin Mission</c> on the Strike Training Mission with the generator seed steps past its
 	/// table, or null without an install.
 	/// </summary>
+	/// <param name="seed">The generator seed steps.</param>
+	/// <param name="timeOfDay">The time of day.</param>
+	/// <param name="test">The calling test's name, which names its folder under the temp folder's <c>herculan-tests</c>.</param>
 	private static (string Directory, ShellTrainingHandoff Handoff)? Launch(int seed, byte timeOfDay, string test) {
 		if (GameInstall.Locate(null) is not { } root) {
 			return null;

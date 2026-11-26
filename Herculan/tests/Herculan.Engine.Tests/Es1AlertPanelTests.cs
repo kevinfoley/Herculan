@@ -292,7 +292,8 @@ public class Es1AlertPanelTests {
 		/// <summary>One host frame of 1/60 s; whether the mission ended.</summary>
 		public bool Advance() => Frames.Advance(TimeSpan.FromTicks(Second / 60), Pacer);
 
-		/// <summary>Host frames until <paramref name="done"/> or the mission ends, which it returns; fails after <see cref="MaxFrames"/>.</summary>
+		/// <summary>Host frames until a condition holds or the mission ends, which it returns; fails after <see cref="MaxFrames"/>.</summary>
+		/// <param name="done">The condition to stop on.</param>
 		public bool AdvanceUntil(Func<bool> done) {
 			for (int frame = 0; frame < MaxFrames; frame++) {
 				if (Advance()) {
@@ -328,7 +329,9 @@ public class Es1AlertPanelTests {
 		public void Hold(TimeSpan elapsed) => simulation.Globals.Clock.Hold(elapsed);
 	}
 
-	/// <summary>The cells of page <paramref name="page"/>, read as the page's source.</summary>
+	/// <summary>The cells of a page, read as the page's source.</summary>
+	/// <param name="display">The video memory to read.</param>
+	/// <param name="page">The page number.</param>
 	private static ushort[] Page(Es1VideoMemory display, int page) {
 		display.SourcePage = page;
 		return display.ReadRect(0, 0, Es1VideoMemory.PageWidth - 1, Es1VideoMemory.PageHeight - 1);

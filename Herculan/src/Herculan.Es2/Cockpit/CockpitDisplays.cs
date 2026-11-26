@@ -214,7 +214,7 @@ public sealed class CockpitDisplays {
 	public PressFlashes<CockpitWidgetId> PressFlashes { get; } = new();
 
 	/// <summary>
-	/// Shows <paramref name="id"/> pressed for the next <see cref="PressFlashes{TId}.FlashTicks"/> coarse ticks,
+	/// Shows a widget pressed for the next <see cref="PressFlashes{TId}.FlashTicks"/> coarse ticks,
 	/// as Widget_PressChild (00438d9c) does for every button it presses — a key, a joystick button, or a click on
 	/// a list that presses the display's XMIT.
 	///
@@ -223,6 +223,7 @@ public sealed class CockpitDisplays {
 	/// the callers here leave out the ones that draw nothing from it — the latching MFD and Heads-Down Display
 	/// buttons, the weapon rows and the shield facings.</para>
 	/// </summary>
+	/// <param name="id">The widget.</param>
 	public void FlashPress(CockpitWidgetId id) => PressFlashes.Flash(id, _ports.CoarseTicks);
 
 	/// <summary>

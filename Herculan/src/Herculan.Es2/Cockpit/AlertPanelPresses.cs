@@ -20,21 +20,24 @@ public sealed class AlertPanelPresses {
 	private bool _closeFlag;
 	private bool _closeHeld;
 
-	/// <summary>Whether a flash is holding <paramref name="widget"/> down.</summary>
+	/// <summary>Whether a flash is holding a widget down.</summary>
+	/// <param name="widget">The widget's index.</param>
 	public bool IsLit(int widget) => _flashes.Lit.Contains(widget);
 
 	/// <summary>
-	/// Whether a flash ending left <paramref name="widget"/> in state 0, the plain button's look, where a
+	/// Whether a flash ending left a widget in state 0, the plain button's look, where a
 	/// preferences or controls option row otherwise rests in state 3. The service writes 0 whatever the
 	/// widget's state was before, and only the panel's highlight logic writes another state over it — see
 	/// <see cref="Restate"/>.
 	/// </summary>
+	/// <param name="widget">The widget's index.</param>
 	public bool RestedByFlash(int widget) => _restedByFlash.Contains(widget);
 
 	/// <summary>
-	/// The panel's highlight logic has written <paramref name="widget"/>'s state itself, 0 or 3, over whatever
+	/// The panel's highlight logic has written a widget's state itself, 0 or 3, over whatever
 	/// a flash's end left there.
 	/// </summary>
+	/// <param name="widget">The widget's index.</param>
 	public void Restate(int widget) => _restedByFlash.Remove(widget);
 
 	/// <summary>

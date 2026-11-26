@@ -79,7 +79,8 @@ public sealed class MissionLayout {
 	/// <summary>Every <c>.ENG</c> id but <c>-1</c>, in the order of its first record; empty without a <c>.ENG</c>.</summary>
 	public IReadOnlyList<LayoutLine> Lines => _lines;
 
-	/// <summary>Row <paramref name="row"/>'s entries (6 to 16), in the order of each GUID's first record.</summary>
+	/// <summary>A row's entries (6 to 16), in the order of each GUID's first record.</summary>
+	/// <param name="row">The row.</param>
 	public IReadOnlyList<LayoutEntry> Entries(int row) =>
 		row is >= FirstGuidRow and <= LastGuidRow
 			? _rows[row]
@@ -89,19 +90,26 @@ public sealed class MissionLayout {
 	public IReadOnlyList<LayoutEntry<T>> Entries<T>() where T : MapObject =>
 		Entries(RowOf<T>()).Cast<LayoutEntry<T>>().ToList();
 
-	/// <summary>Row <paramref name="row"/>'s entry for <paramref name="guid"/>, or null when no record of the row carries it.</summary>
+	/// <summary>A row's entry for a GUID, or null when no record of the row carries it.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID.</param>
 	public LayoutEntry? Entry(int row, short guid) => _entries.GetValueOrDefault((row, guid));
 
-	/// <summary>The entry of <typeparamref name="T"/>'s row for <paramref name="guid"/>, or null when no record carries it.</summary>
+	/// <summary>The entry of <typeparamref name="T"/>'s row for a GUID, or null when no record carries it.</summary>
+	/// <param name="guid">The GUID.</param>
 	public LayoutEntry<T>? Entry<T>(short guid) where T : MapObject => (LayoutEntry<T>?)Entry(RowOf<T>(), guid);
 
-	/// <summary>Row-1 GUID <paramref name="guid"/>, or null when no record carries it.</summary>
+	/// <summary>A row-1 condition by its GUID, or null when no record carries it.</summary>
+	/// <param name="guid">The condition's GUID.</param>
 	public LayoutCondition? Condition(short guid) => _conditionOf.GetValueOrDefault(guid);
 
-	/// <summary>The line of <c>.ENG</c> id <paramref name="id"/>, or null when no record carries it.</summary>
+	/// <summary>The line of an <c>.ENG</c> id, or null when no record carries it.</summary>
+	/// <param name="id">The <c>.ENG</c> id.</param>
 	public LayoutLine? Line(short id) => _lineOf.GetValueOrDefault(id);
 
-	/// <summary>The layout of <paramref name="file"/>, with <paramref name="text"/>, its <c>.ENG</c>, for the lines.</summary>
+	/// <summary>The layout of a mission file, with its <c>.ENG</c> for the lines.</summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="text">The mission's <c>.ENG</c>, or null for none.</param>
 	public static MissionLayout Build(MissionFile file, MissionStringFile? text = null) {
 		var layout = new MissionLayout();
 		var conditions = file.Conditions ?? [];
@@ -139,10 +147,14 @@ public sealed class MissionLayout {
 	// ---- Rows 6 to 16 ---------------------------------------------------------------------------
 
 	/// <summary>
-	/// Row <paramref name="row"/>'s GUIDs, each merged: every record read as words, a keyed record with its shown option's
+	/// A row's GUIDs, each merged: every record read as words, a keyed record with its shown option's
 	/// spans copied in (its earlier records first, so a template that picks itself is copied as it then stands), then each
 	/// GUID's base merged in file order.
 	/// </summary>
+	/// <param name="file">The mission file.</param>
+	/// <param name="row">The row.</param>
+	/// <param name="conditions">The row-1 conditions.</param>
+	/// <param name="codec">The transformer that reads the file's records as words.</param>
 	private static List<Merged> Merge(MissionFile file, int row, MissionCondition14[] conditions, MissionFileTransformer codec) {
 		var records = MsnRows.Find(file, row) is { } found ? found.Cast<MapObject>().ToArray() : [];
 		var words = new short[records.Length][];
@@ -184,7 +196,12 @@ public sealed class MissionLayout {
 		return merged;
 	}
 
-	/// <summary>Copies the <see cref="MergeRules.TemplateCopy"/> spans of record <paramref name="source"/> into record <paramref name="target"/>, as the load copies a picked option's template.</summary>
+	/// <summary>Copies the <see cref="MergeRules.TemplateCopy"/> spans of one record into another, as the load copies a picked option's template.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="words">The row's records as words.</param>
+	/// <param name="origins">Where each word came from.</param>
+	/// <param name="source">The index of the record to copy from.</param>
+	/// <param name="target">The index of the record to copy into.</param>
 	private static void CopyOption(int row, short[][] words, WordSource[][] origins, int source, int target) {
 		var id = new MsnRecordId(row, target);
 		foreach (var span in MergeRules.TemplateCopy(row)) {
@@ -202,9 +219,13 @@ public sealed class MissionLayout {
 	}
 
 	/// <summary>
-	/// What record <paramref name="user"/> picks by <paramref name="key"/>: the first type-3 row-1 record of the key, and
+	/// What a record picks by a key: the first type-3 row-1 record of the key, and
 	/// each range over it in row-1 order with the first record of the user's row read before it that the range conditions.
 	/// </summary>
+	/// <param name="user">The record that picks.</param>
+	/// <param name="key">The random table key.</param>
+	/// <param name="conditions">The row-1 conditions.</param>
+	/// <param name="row">The user's row as words.</param>
 	private static LayoutPick Pick(MsnRecordId user, short key, MissionCondition14[] conditions, short[][] row) {
 		var table = conditions.FirstOrDefault(record => record.Type == TableType && record.FlagIndexOrRangeLower == key);
 		if (table == null) {
@@ -361,7 +382,10 @@ public sealed class MissionLayout {
 		}
 	}
 
-	/// <summary>A presence of <paramref name="condition"/> and, when one places it, <paramref name="group"/>'s; <c>-1</c> conditions are left out.</summary>
+	/// <summary>A presence of a condition and, when one places it, a group's; <c>-1</c> conditions are left out.</summary>
+	/// <param name="condition">The condition.</param>
+	/// <param name="group">The group that places it and that group's condition, or null for none.</param>
+	/// <param name="picks">The picks the record makes.</param>
 	private static LayoutPresence Presence(short condition, (short Group, short Condition)? group, IReadOnlyList<LayoutPick> picks) {
 		var conditions = new List<short>();
 		if (condition != -1) {
@@ -401,7 +425,11 @@ public sealed class MissionLayout {
 		/// <summary>The base's words as merged so far.</summary>
 		public short[] Words { get; private set; }
 
-		/// <summary>Adds the GUID's record <paramref name="index"/>: merged into the base when it carries the base's condition, else a variation.</summary>
+		/// <summary>Adds a record of the GUID: merged into the base when it carries the base's condition, else a variation.</summary>
+		/// <param name="index">The record's index in its row.</param>
+		/// <param name="words">The record as words.</param>
+		/// <param name="origins">Where each word came from.</param>
+		/// <param name="pick">The pick the record makes, or null for none.</param>
 		public void Add(int index, short[] words, WordSource[] origins, LayoutPick? pick) {
 			var id = new MsnRecordId(Row, index);
 			_records.Add(id);

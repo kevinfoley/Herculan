@@ -40,9 +40,11 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 	};
 
 	/// <summary>
-	/// The chord that transmits FLASH COMM's row <paramref name="row"/> from any screen while the row names
-	/// <paramref name="verb"/>; null when none does.
+	/// The chord that transmits one of FLASH COMM's rows from any screen while the row names
+	/// a verb; null when none does.
 	/// </summary>
+	/// <param name="row">The FLASH COMM row.</param>
+	/// <param name="verb">The verb the row names.</param>
 	public KeyChord? FlashCommKey(int row, int verb) {
 		foreach (var (_, send, keyRow, requiredVerb) in FlashCommKeys) {
 			if (keyRow == row && (requiredVerb < 0 || requiredVerb == verb)) {

@@ -284,7 +284,7 @@ public sealed class CockpitView {
 	/// <summary>
 	/// The view behind the [F12] preferences panel, once a frame: the camera taken out to circle the player's machine
 	/// as the panel goes up and given back as it comes down (<see cref="ExternalViewChain.BeginPanelOrbit"/>), and
-	/// turned while <paramref name="preferencesLoopRunning"/> — not while the CONTROLS panel is up, whose own loop
+	/// turned while the panel's loop is running — not while the CONTROLS panel is up, whose own loop
 	/// runs inside the preferences panel's and never reaches its draw hook. The observer camera is this engine's own,
 	/// and the orbit leaves it alone.
 	///
@@ -292,6 +292,9 @@ public sealed class CockpitView {
 	/// frame wait, so it turns as fast as the machine draws. Here it turns at the simulation's 25 steps a second, the rate retail's own frame loop
 	/// is capped at (<see cref="SimWorld.TicksPerSecond"/>), however fast the host draws.</para>
 	/// </summary>
+	/// <param name="preferencesUp">Whether the preferences panel is up.</param>
+	/// <param name="preferencesLoopRunning">Whether the preferences panel's own loop is running.</param>
+	/// <param name="deltaSeconds">The host time since the last frame, in seconds.</param>
 	public void AdvancePanelOrbit(bool preferencesUp, bool preferencesLoopRunning, double deltaSeconds) {
 		if (Chain is not { } chain) {
 			return;

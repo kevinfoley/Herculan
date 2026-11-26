@@ -202,13 +202,18 @@ public class ShellWeaponFittingTests {
 	}
 
 	/// <summary>
-	/// One machine in bay 0 with a mount per entry of <paramref name="mounts"/> (0 for empty), and each
+	/// One machine in bay 0 with a mount per entry of the mount list (0 for empty), and each
 	/// named weapon unlocked with one unit per condition listed, in file order.
 	/// </summary>
+	/// <param name="mounts">What each mount holds, 0 for empty.</param>
+	/// <param name="stock">The weapons unlocked, each with the condition of every unit.</param>
 	private static ShellHangar Hangar(int[] mounts, params (int Weapon, int[] Conditions)[] stock) =>
 		Hangar(mounts, MissileType.None, stock);
 
-	/// <summary>The same hangar, with every stock unit carrying <paramref name="stockGuidance"/> rather than none.</summary>
+	/// <summary>The same hangar, with every stock unit carrying a guidance rather than none.</summary>
+	/// <param name="mounts">What each mount holds, 0 for empty.</param>
+	/// <param name="stockGuidance">The guidance every stock unit carries.</param>
+	/// <param name="stock">The weapons unlocked, each with the condition of every unit.</param>
 	private static ShellHangar Hangar(int[] mounts, MissileType stockGuidance, params (int Weapon, int[] Conditions)[] stock) {
 		var save = new PlayerSave();
 		save.HercBay[0] = BayEntry(mounts);

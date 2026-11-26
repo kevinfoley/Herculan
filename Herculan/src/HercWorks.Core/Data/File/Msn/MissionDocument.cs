@@ -62,7 +62,10 @@ public sealed class MissionDocument {
 		Rebuild();
 	}
 
-	/// <summary>A document over the <c>.MSN</c> <paramref name="msn"/> and the <c>.ENG</c> <paramref name="text"/>, or none.</summary>
+	/// <summary>A document over a <c>.MSN</c> and its <c>.ENG</c>, or none.</summary>
+	/// <param name="msn">The <c>.MSN</c> file's bytes.</param>
+	/// <param name="text">The <c>.ENG</c> file's bytes, or null for none.</param>
+	/// <param name="generation">The inputs the generation runs with.</param>
 	public static MissionDocument Read(byte[] msn, byte[]? text, MissionGeneration generation) =>
 		new(new MissionFileTransformer().Parse(msn) ?? throw new InvalidDataException("Not a mission file."),
 			text == null ? null : new MissionStringFileTransformer().Parse(text), generation);
@@ -173,28 +176,33 @@ public sealed class MissionDocument {
 	// ---- Lookups ----------------------------------------------------------------------------------
 
 	/// <summary>
-	/// Whether a template supplies <paramref name="field"/> of GUID <paramref name="guid"/>, so that <see cref="SetField"/> writes
+	/// Whether a template supplies a field of a GUID, so that <see cref="SetField"/> writes
 	/// it in an overlay record, which cannot carry the field's unset value. Throws as <see cref="SetField"/> does for a GUID no
 	/// record carries.
 	/// </summary>
+	/// <param name="field">The field.</param>
+	/// <param name="guid">The GUID of the record.</param>
 	public bool SuppliedByTemplate(MsnField field, short guid) => EntryOf(field.Row, guid).Supplier(field.Word).CopiedFrom != null;
 
-	/// <summary>The GUID-keyed record <paramref name="id"/> names, or null for one of rows 4 and 17, which have no GUID.</summary>
+	/// <summary>The GUID-keyed record an id names, or null for one of rows 4 and 17, which have no GUID.</summary>
+	/// <param name="id">The record's id.</param>
 	public MapObject? RecordAt(MsnRecordId id) => MsnRows.Get(Mission, id.Row).GetValue(id.Index) as MapObject;
 
 	/// <summary>
-	/// How many fields name row-6 GUID <paramref name="point"/>: route waypoints, a trigger area's first corner or center
+	/// How many fields name a row-6 GUID: route waypoints, a trigger area's first corner or center
 	/// and a box's second corner, the three rosters' points, an order's point, a group's point and an objective's point.
 	/// Every record counts whatever its condition, since one that fails in the generation's state names the point in
 	/// another.
 	/// </summary>
+	/// <param name="point">The row-6 GUID.</param>
 	public int CountPointRefs(short point) => PointRefs(point).Count;
 
 	/// <summary>
-	/// Every field naming row-6 GUID <paramref name="point"/>, in row and file order, the fields <see cref="CountPointRefs"/>
+	/// Every field naming a row-6 GUID, in row and file order, the fields <see cref="CountPointRefs"/>
 	/// counts: each by its record and, for a route, the entry of its list, for a trigger area 0 its first corner or center and
 	/// 1 a box's second corner.
 	/// </summary>
+	/// <param name="point">The row-6 GUID.</param>
 	public IReadOnlyList<PointRef> PointRefs(short point) {
 		var refs = new List<PointRef>();
 		if (point == -1) {
@@ -239,9 +247,10 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// The first member slot of group GUID <paramref name="group"/> that no record of the GUID fills, whatever its
+	/// The first member slot of a group that no record of the GUID fills, whatever its
 	/// condition, so writing it fills it in every state; or <c>-1</c> when every slot is filled somewhere.
 	/// </summary>
+	/// <param name="group">The group's GUID.</param>
 	public int FreeMemberSlot(short group) {
 		for (int slot = 0; slot < 20; slot++) {
 			if (MemberSlotFree(group, slot)) {
@@ -253,16 +262,19 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Whether no record of group GUID <paramref name="group"/> fills member slot <paramref name="slot"/> (0 to 19), whatever
+	/// Whether no record of a group fills a member slot, whatever
 	/// its condition, so writing it fills it in every state.
 	/// </summary>
+	/// <param name="group">The group's GUID.</param>
+	/// <param name="slot">The member slot, 0 to 19.</param>
 	public bool MemberSlotFree(short group, int slot) =>
 		(Mission.Groups ?? []).Where(record => record.GUID == group).All(record => record.MemberRefs[slot] == -1);
 
 	/// <summary>
-	/// The GUID of a row-7 heading that reads <paramref name="degrees"/> and can be shared: the GUID's one record,
+	/// The GUID of a row-7 heading that reads a number of degrees and can be shared: the GUID's one record,
 	/// unconditioned and picking from no random table. <c>-1</c> when there is none.
 	/// </summary>
+	/// <param name="degrees">The heading, in degrees.</param>
 	public short ShareableHeading(short degrees) {
 		var headings = Mission.Headings ?? [];
 		foreach (var heading in headings) {
@@ -278,9 +290,10 @@ public sealed class MissionDocument {
 	// ---- Edits ------------------------------------------------------------------------------------
 
 	/// <summary>
-	/// Makes the edits <paramref name="edits"/> calls for as one: answers them combined, or, when one throws, puts back
+	/// Makes the edits a callback calls for as one: answers them combined, or, when one throws, puts back
 	/// every row they changed, builds the layout again and rethrows.
 	/// </summary>
+	/// <param name="edits">Makes the edits.</param>
 	public MsnEdit Change(Action edits) {
 		if (_change != null) {
 			throw new InvalidOperationException("A change is already under way.");
@@ -303,25 +316,31 @@ public sealed class MissionDocument {
 		return MsnEdit.Combine(made);
 	}
 
-	/// <summary>Puts back the rows and text <paramref name="edit"/> changed as it found them, and builds the layout again.</summary>
+	/// <summary>Puts back the rows and text an edit changed as it found them, and builds the layout again.</summary>
+	/// <param name="edit">The edit to undo.</param>
 	public void Undo(MsnEdit edit) {
 		WriteBack(edit, after: false);
 		Rebuild();
 	}
 
-	/// <summary>Puts back the rows and text <paramref name="edit"/> changed as it left them, and builds the layout again.</summary>
+	/// <summary>Puts back the rows and text an edit changed as it left them, and builds the layout again.</summary>
+	/// <param name="edit">The edit to redo.</param>
 	public void Redo(MsnEdit edit) {
 		WriteBack(edit, after: true);
 		Rebuild();
 	}
 
 	/// <summary>
-	/// Stands row-6 point <paramref name="point"/> at (<paramref name="x"/>, <paramref name="y"/>, <paramref name="z"/>),
+	/// Stands a row-6 point at a position,
 	/// writing the record that supplies its coordinates, the GUID's last base record, so everything naming the point moves
 	/// with it. Throws <see cref="InvalidOperationException"/> for a point no record carries, or whose coordinates are copied
 	/// from a template or summed from two other points, which no retail point is
 	/// (docs/retail/formats/msn-mission-file.md#row-6-field-decode--the-point-record-dat_0047064e-22-bytesrecord).
 	/// </summary>
+	/// <param name="point">The row-6 GUID.</param>
+	/// <param name="x">The X coordinate.</param>
+	/// <param name="y">The Y coordinate.</param>
+	/// <param name="z">The Z coordinate.</param>
 	public MsnEdit SetPoint(short point, int x, int y, int z) {
 		var source = EntryOf(PointRow, point).Supplier(MapPoint22.XWord);
 		var record = (MapPoint22)RecordAt(source.Record)!;
@@ -341,11 +360,16 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// The point <paramref name="moving"/> fields naming row-6 GUID <paramref name="point"/> should name to stand together
-	/// at (<paramref name="x"/>, <paramref name="y"/>, <paramref name="z"/>), as <paramref name="placed"/>: the same
+	/// The point the fields being moved should name to stand together at a position: the same
 	/// GUID, its record rewritten, when those fields are all that name it (<see cref="CountPointRefs"/>) and it has one
 	/// record of its own; otherwise a point appended with a new GUID (<see cref="Append"/>), which nothing else names.
 	/// </summary>
+	/// <param name="point">The row-6 GUID the fields name now.</param>
+	/// <param name="moving">How many of the fields naming it are being moved.</param>
+	/// <param name="x">The X coordinate.</param>
+	/// <param name="y">The Y coordinate.</param>
+	/// <param name="z">The Z coordinate.</param>
+	/// <param name="placed">The GUID the fields should name.</param>
 	public MsnEdit PlacePoint(short point, int moving, int x, int y, int z, out short placed) {
 		var points = Mission.Points ?? [];
 		if (point != -1 && points.Count(record => record.GUID == point) == 1 && CountPointRefs(point) == moving
@@ -362,10 +386,13 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Sets <paramref name="field"/> of the record of GUID <paramref name="guid"/> that supplies it to
-	/// <paramref name="value"/>, by the rules in the class summary. Throws <see cref="InvalidOperationException"/> for a
-	/// GUID no record carries, and for a field a template supplies being unset or outside rows 12 to 14.
+	/// Sets a field of the record of a GUID that supplies it, by the rules in the class summary. Throws
+	/// <see cref="InvalidOperationException"/> for a GUID no record carries, and for a field a template supplies being unset
+	/// or outside rows 12 to 14.
 	/// </summary>
+	/// <param name="field">The field to set.</param>
+	/// <param name="guid">The GUID of the record.</param>
+	/// <param name="value">The value to set it to.</param>
 	public MsnEdit SetField(MsnField field, short guid, short value) {
 		var source = EntryOf(field.Row, guid).Supplier(field.Word);
 		if (value == field.Unset) {
@@ -398,11 +425,13 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Unsets <paramref name="field"/> in every base record of GUID <paramref name="guid"/>, those carrying its first record's
+	/// Unsets a field in every base record of a GUID, those carrying its first record's
 	/// condition, leaving the records under other conditions setting it over the base where they hold, where
 	/// <see cref="SetField"/> unsets it in every record. Throws <see cref="InvalidOperationException"/> for a GUID no record
 	/// carries, and where a template the base picks then supplies another value, which no overlay can unset.
 	/// </summary>
+	/// <param name="field">The field to unset.</param>
+	/// <param name="guid">The GUID of the records.</param>
 	public MsnEdit UnsetBaseField(MsnField field, short guid) {
 		var before = Begin(field.Row);
 		foreach (var id in EntryOf(field.Row, guid).Base) {
@@ -420,14 +449,16 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Sets header word <paramref name="word"/> (<c>script.dat</c> offset <c>word * 2</c>) as row 2 patches it to
-	/// <paramref name="value"/>. Row 2 patches one header, so the record written is, as for an overlay field, the header's
+	/// Sets a header word (<c>script.dat</c> offset <c>word * 2</c>) as row 2 patches it. Row 2 patches one header, so the
+	/// record written is, as for an overlay field, the header's
 	/// supplier of the word (<see cref="LayoutHeader.Supplier"/>), the last base record that sets it, else the first
 	/// record; with no row-2 record, a record appended unconditioned that sets nothing else. The word's unset value
 	/// (<see cref="MissionSettingsPatch.Unset"/>) is written into every row-2 record that sets the word, whatever its
 	/// condition, since a record cannot carry it over another's. A launch that writes over the word
 	/// (<see cref="MissionGeneration"/>) still does.
 	/// </summary>
+	/// <param name="word">The header word's index.</param>
+	/// <param name="value">The value to set it to.</param>
 	public MsnEdit SetHeaderWord(int word, short value) {
 		if (word is < 0 or >= MissionGeneration.HeaderWords) {
 			throw new ArgumentOutOfRangeException(nameof(word), word, $"The header has {MissionGeneration.HeaderWords} words.");
@@ -483,10 +514,12 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Points entry <paramref name="entry"/> of route GUID <paramref name="route"/>'s waypoint list at row-6 GUID
-	/// <paramref name="point"/>, in the record whose list the route shows: its last base record, or, for a list a template
-	/// supplies, that template, which every route picking it shares.
+	/// Points an entry of a route's waypoint list at a row-6 GUID, in the record whose list the route shows: its last base
+	/// record, or, for a list a template supplies, that template, which every route picking it shares.
 	/// </summary>
+	/// <param name="route">The route's GUID.</param>
+	/// <param name="entry">The entry of the list.</param>
+	/// <param name="point">The row-6 GUID to point it at.</param>
 	public MsnEdit SetWaypoint(short route, int entry, short point) {
 		var record = ListRecord(route);
 		if (entry < 0 || entry >= record.Waypoints.Length) {
@@ -499,9 +532,11 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Replaces route GUID <paramref name="route"/>'s whole waypoint list with <paramref name="waypoints"/>, row-6 GUIDs in
-	/// route order, in the record whose list the route holds, as <see cref="SetWaypoint"/> chooses it.
+	/// Replaces a route's whole waypoint list, in the record whose list the route holds, as <see cref="SetWaypoint"/>
+	/// chooses it.
 	/// </summary>
+	/// <param name="route">The route's GUID.</param>
+	/// <param name="waypoints">The row-6 GUIDs in route order.</param>
 	public MsnEdit SetWaypoints(short route, short[] waypoints) {
 		var record = ListRecord(route);
 		var before = Begin(RouteRow);
@@ -510,26 +545,31 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// A copy of the waypoint list route GUID <paramref name="route"/> shows: the row-6 GUIDs of the record
+	/// A copy of the waypoint list a route shows: the row-6 GUIDs of the record
 	/// <see cref="SetWaypoints"/> writes, entry for entry.
 	/// </summary>
+	/// <param name="route">The route's GUID.</param>
 	public short[] Waypoints(short route) => (short[])ListRecord(route).Waypoints.Clone();
 
 	/// <summary>
-	/// Whether a template supplies route GUID <paramref name="route"/>'s list, so that the list is a GUID <c>-1</c>
+	/// Whether a template supplies a route's list, so that the list is a GUID <c>-1</c>
 	/// template every route picking it shares, and an edit of it changes them all.
 	/// </summary>
+	/// <param name="route">The route's GUID.</param>
 	public bool WaypointsShared(short route) => EntryOf(RouteRow, route).Supplier(MergeRules.RouteListWord).CopiedFrom != null;
 
 	/// <summary>
-	/// The row-9 record that supplies trigger area GUID <paramref name="area"/>: its last base record, which row 9's replace
+	/// The row-9 record that supplies a trigger area: its last base record, which row 9's replace
 	/// of a repeated GUID leaves the area holding whole. Row 9 has no random table key. Throws
 	/// <see cref="InvalidOperationException"/> for a GUID no record carries.
 	/// </summary>
+	/// <param name="area">The trigger area's GUID.</param>
 	public TriggerArea12 AreaRecord(short area) =>
 		(TriggerArea12)RecordAt(EntryOf(AreaRow, area).Supplier(TriggerArea12.ShapeWord).Record)!;
 
-	/// <summary>Rewrites, through <paramref name="write"/>, the row-9 record <see cref="AreaRecord"/> answers.</summary>
+	/// <summary>Rewrites, through a callback, the row-9 record <see cref="AreaRecord"/> answers.</summary>
+	/// <param name="area">The trigger area's GUID.</param>
+	/// <param name="write">Rewrites the record.</param>
 	public MsnEdit SetArea(short area, Action<TriggerArea12> write) {
 		var record = AreaRecord(area);
 		var before = Begin(AreaRow);
@@ -538,10 +578,13 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Appends <paramref name="record"/> to row <paramref name="row"/> under a new GUID, <paramref name="guid"/>: the row's
+	/// Appends a record to a row under a new GUID: the row's
 	/// largest plus one, since GUIDs are per row. A record with a new GUID merges with none, so once it survives it is
 	/// exported last in its block.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="record">The record to append.</param>
+	/// <param name="guid">The new GUID.</param>
 	public MsnEdit Append(int row, MapObject record, out short guid) {
 		short largest = Records(row).Select(existing => existing.GUID).DefaultIfEmpty((short)-1).Max();
 		if (largest == short.MaxValue) {
@@ -556,12 +599,15 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Appends a copy of every record of row <paramref name="row"/>'s GUID <paramref name="guid"/>, in file order and each
-	/// under its own condition, under one new GUID, <paramref name="copy"/>: the row's largest plus one. The copy survives
+	/// Appends a copy of every record of a row's GUID, in file order and each
+	/// under its own condition, under one new GUID: the row's largest plus one. The copy survives
 	/// and merges as the GUID does in every state. A copied record that picks from a random table picks again, which moves every later
 	/// draw (docs/herculan/editor-design.md#what-moves-the-random-draws);
 	/// row 15's records pick from none in retail.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID to copy.</param>
+	/// <param name="copy">The new GUID.</param>
 	public MsnEdit AppendCopy(int row, short guid, out short copy) {
 		var records = Records(row).Where(record => record.GUID == guid).ToList();
 		if (records.Count == 0) {
@@ -585,11 +631,13 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Removes every record of row <paramref name="row"/>'s GUID <paramref name="guid"/>, whatever its condition. Nothing
+	/// Removes every record of a row's GUID, whatever its condition. Nothing
 	/// is renumbered: <c>.MSN</c> refs name GUIDs, the generation resolves every index again, and a ref to the removed GUID
 	/// resolves to <c>-1</c> (<c>Msn_ResolveRow6Ref</c> (<c>00415b44</c>) and its siblings). Removing a record that picks from a
 	/// random table moves every later draw.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID to remove.</param>
 	public MsnEdit Remove(int row, short guid) {
 		var records = MsnRows.Get(Mission, row);
 		var kept = records.Cast<MapObject>().Where(record => record.GUID != guid).ToList();
@@ -622,19 +670,24 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// The template that supplies <paramref name="field"/> of GUID <paramref name="guid"/>'s base: the GUID
+	/// The template that supplies a field of a GUID's base: the GUID
 	/// <c>-1</c> record the supplier copied it from (<see cref="WordSource.CopiedFrom"/>), or null when the field is the
 	/// record's own or an overlay's. Throws as <see cref="SetField"/> does for a GUID no record carries.
 	/// </summary>
+	/// <param name="field">The field.</param>
+	/// <param name="guid">The GUID of the record.</param>
 	public MsnRecordId? TemplateOf(MsnField field, short guid) => EntryOf(field.Row, guid).Supplier(field.Word).CopiedFrom;
 
 	/// <summary>
-	/// Puts <paramref name="record"/> at <paramref name="index"/> of row <paramref name="row"/>, the records from there on
+	/// Puts a record at an index of a row, the records from there on
 	/// moving up one: for a template, a GUID <c>-1</c> record, which a record picks only when it is read before it
 	/// (docs/retail/formats/msn-mission-file.md#random-tables), or a row-1 condition that a later one must be able to require
 	/// (<see cref="PresenceRules"/>). A GUID <c>-1</c> record is never exported or merged, so no <c>script.dat</c> index
 	/// moves; a condition's GUID is the caller's.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="index">The index to put the record at.</param>
+	/// <param name="record">The record to insert.</param>
 	public MsnEdit Insert(int row, int index, MapObject record) {
 		var records = MsnRows.Get(Mission, row);
 		if (index < 0 || index > records.Length) {
@@ -651,9 +704,11 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Removes record <paramref name="index"/> of GUID-keyed row <paramref name="row"/> alone, for a template, which
+	/// Removes a record of a GUID-keyed row alone, for a template, which
 	/// has no GUID of its own to remove it by (<see cref="Remove"/>).
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="index">The record's index in the row.</param>
 	public MsnEdit RemoveAt(int row, int index) {
 		var records = MsnRows.Get(Mission, row);
 		if (index < 0 || index >= records.Length) {
@@ -684,9 +739,11 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Unsets every member slot naming roster GUID <paramref name="member"/> in every record of row-16 group GUID
-	/// <paramref name="group"/>, whatever its condition, since an overlay cannot carry an unset value.
+	/// Unsets every member slot naming a roster GUID in every record of a row-16 group, whatever its condition, since an overlay
+	/// cannot carry an unset value.
 	/// </summary>
+	/// <param name="group">The group's GUID.</param>
+	/// <param name="member">The roster GUID to unset.</param>
 	public MsnEdit ClearMember(short group, short member) {
 		var before = Begin(GroupRow);
 		foreach (var record in Records(GroupRow).Cast<MissionGroup164>().Where(record => record.GUID == group)) {
@@ -724,7 +781,9 @@ public sealed class MissionDocument {
 		return End(before);
 	}
 
-	/// <summary>Appends <paramref name="record"/> to row <paramref name="row"/>, 4 or 17, as its last record.</summary>
+	/// <summary>Appends a record to row 4 or 17 as its last record.</summary>
+	/// <param name="row">The row, 4 or 17.</param>
+	/// <param name="record">The record to append.</param>
 	public MsnEdit AppendUnkeyed(int row, object record) {
 		CheckUnkeyed(row);
 		var before = Begin(row);
@@ -733,9 +792,11 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Removes record <paramref name="index"/> of row <paramref name="row"/>, 4 or 17. Nothing names one of their records, so
+	/// Removes a record of row 4 or 17. Nothing names one of their records, so
 	/// the records after it moving down one changes no ref.
 	/// </summary>
+	/// <param name="row">The row, 4 or 17.</param>
+	/// <param name="index">The record's index in the row.</param>
 	public MsnEdit RemoveUnkeyed(int row, int index) {
 		CheckUnkeyed(row);
 		var records = MsnRows.Get(Mission, row);
@@ -752,10 +813,11 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Appends copies of <paramref name="entries"/> to the <c>.ENG</c>, in order, giving the mission an <c>.ENG</c> when it has
+	/// Appends copies of entries to the <c>.ENG</c>, in order, giving the mission an <c>.ENG</c> when it has
 	/// none. A record whose id no earlier surviving record has places a new <c>mission.str</c> line, after every other
 	/// (docs/retail/formats/msn-mission-file.md#the-eng-string-table).
 	/// </summary>
+	/// <param name="entries">The entries to append.</param>
 	public MsnEdit AppendText(IEnumerable<MissionStringFile.StringEntry> entries) {
 		var before = BeginText();
 		Text ??= new MissionStringFile { Strings = [] };
@@ -764,9 +826,10 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Sets the text of <c>.ENG</c> record <paramref name="record"/>, by its index in the file, to <paramref name="text"/>,
-	/// NUL-terminated as the files store it.
+	/// Sets the text of an <c>.ENG</c> record, NUL-terminated as the files store it.
 	/// </summary>
+	/// <param name="record">The record's index in the file.</param>
+	/// <param name="text">The text to set.</param>
 	public MsnEdit SetText(int record, string text) {
 		var strings = Text?.Strings ?? [];
 		if (record < 0 || record >= strings.Length) {
@@ -779,7 +842,8 @@ public sealed class MissionDocument {
 		return End(before);
 	}
 
-	/// <summary>Removes every <c>.ENG</c> record whose id is one of <paramref name="ids"/>, whatever its condition.</summary>
+	/// <summary>Removes every <c>.ENG</c> record whose id is one of those given, whatever its condition.</summary>
+	/// <param name="ids">The ids to remove.</param>
 	public MsnEdit RemoveText(IReadOnlyCollection<short> ids) {
 		var before = BeginText();
 		if (Text?.Strings is { } strings) {
@@ -790,10 +854,13 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// Points text slot <paramref name="slot"/> of row-5 debrief record <paramref name="record"/> at <c>.ENG</c> id
-	/// <paramref name="id"/>. Row 5 has no GUID and nothing names one of its records, so the record is the one that supplies
-	/// what it holds (docs/retail/formats/msn-mission-file.md#row-5--the-debrief); its layout is <see cref="DebriefText"/>'s.
+	/// Points a text slot of a row-5 debrief record at an <c>.ENG</c> id. Row 5 has no GUID and nothing names one of its
+	/// records, so the record is the one that supplies what it holds
+	/// (docs/retail/formats/msn-mission-file.md#row-5--the-debrief); its layout is <see cref="DebriefText"/>'s.
 	/// </summary>
+	/// <param name="record">The debrief record's index in row 5.</param>
+	/// <param name="slot">The text slot.</param>
+	/// <param name="id">The <c>.ENG</c> id to point it at.</param>
 	public MsnEdit SetDebriefLine(int record, int slot, short id) {
 		var bytes = Mission.DebriefBytes ?? [];
 		if (record < 0 || (record + 1) * DebriefText.RecordLength > bytes.Length || slot < 0 || slot >= DebriefText.Slots) {
@@ -882,11 +949,12 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
-	/// A roster record of <paramref name="asking"/>'s GUID and condition that sets no field: each field the generator's
+	/// A roster record of the asking record's GUID and condition that sets no field: each field the generator's
 	/// merge overlays at its unset value (<c>Msn_MergeRow12</c> (<c>00416864</c>), <c>Msn_MergeRow13</c> (<c>00416c17</c>),
 	/// <c>Msn_MergeRow14</c> (<c>00416e7a</c>)), and no random table key, so its refs are resolved as it is read. The words no
-	/// merge reads are <paramref name="asking"/>'s.
+	/// merge reads are the asking record's.
 	/// </summary>
+	/// <param name="asking">The record the overlay is for.</param>
 	private static MapObject OverlayRecord(MapObject asking) => asking switch {
 		MechRosterEntry144 mech => new MechRosterEntry144 {
 			GUID = mech.GUID, ConditionRef = mech.ConditionRef, RandomTableKey = -1,
@@ -909,11 +977,14 @@ public sealed class MissionDocument {
 	};
 
 	/// <summary>
-	/// The record of row <paramref name="row"/>'s GUID <paramref name="guid"/> that already overlays what
-	/// <paramref name="supplier"/> copies from a template, or null: the GUID's last record, when it comes after the supplier,
+	/// The record of a row's GUID that already overlays what
+	/// a supplier copies from a template, or null: the GUID's last record, when it comes after the supplier,
 	/// carries the base's condition and picks from no random table, such as the one an earlier field's edit appended. Writing a field
 	/// there merges as a record appended after it would, so the fields of one edit, a chassis and its mounts, share one record.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="guid">The GUID of the record.</param>
+	/// <param name="supplier">The record the template's words are copied into.</param>
 	private MapObject? LaterOverlay(int row, short guid, MsnRecordId supplier) {
 		var entry = EntryOf(row, guid);
 		var last = entry.Records[^1];
@@ -944,8 +1015,9 @@ public sealed class MissionDocument {
 }
 
 /// <summary>
-/// A field naming a row-6 point (<see cref="MissionDocument.PointRefs"/>): its <paramref name="Record"/>, and
-/// <paramref name="Field"/>, for a route the entry of its list, for a trigger area 0 its first corner or center and 1 a box's
-/// second corner, and 0 for any other record.
+/// A field naming a row-6 point (<see cref="MissionDocument.PointRefs"/>).
 /// </summary>
+/// <param name="Record">The record holding the field.</param>
+/// <param name="Field">Which field of the record: for a route the entry of its list, for a trigger area 0 its first corner or center and 1 a box's
+/// second corner, and 0 for any other record.</param>
 public readonly record struct PointRef(MsnRecordId Record, int Field);

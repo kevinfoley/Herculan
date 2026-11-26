@@ -444,9 +444,11 @@ internal static class ScriptActionRefs {
 		tail.Length >= offset + 2 ? BitConverter.ToInt16(tail, offset) : (short)-1;
 
 	/// <summary>
-	/// Reads ten shorts starting at <paramref name="offset"/>, answering an empty array for a tail too
+	/// Reads ten shorts, answering an empty array for a tail too
 	/// short to hold them.
 	/// </summary>
+	/// <param name="tail">The bytes to read from.</param>
+	/// <param name="offset">The offset the ten shorts start at.</param>
 	public static short[] ReadSlots(byte[] tail, int offset) {
 		if (tail.Length < offset + CounterSlots * 2) {
 			return [];
@@ -499,7 +501,9 @@ public class ScriptBaseRecord {
 	/// <summary>Exported offset <c>0x1a</c> — the operation of each of those pairs, slot for slot with <see cref="CounterRefs"/>. The file always carries the row's own operations; the briefing map reuses the first two slots in its own copy of the block (docs/retail/shell/mission-map.md#what-it-reads).</summary>
 	public short[] CounterOps => ScriptActionRefs.ReadSlots(TailBytes, ScriptActionRefs.CounterOps);
 
-	/// <summary>Sets the operation of counter pair <paramref name="slot"/> (0-9) of <see cref="CounterOps"/>.</summary>
+	/// <summary>Sets the operation of a counter pair of <see cref="CounterOps"/>.</summary>
+	/// <param name="slot">The pair's slot, 0 to 9.</param>
+	/// <param name="operation">The operation.</param>
 	public void SetCounterOp(int slot, short operation) {
 		ArgumentOutOfRangeException.ThrowIfNegative(slot);
 		ArgumentOutOfRangeException.ThrowIfGreaterThan(slot, 9);

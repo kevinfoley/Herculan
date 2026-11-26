@@ -30,10 +30,13 @@ public static class RosterFit {
 	public const short Filler = 5;
 
 	/// <summary>
-	/// The fields a herc's chassis change writes: its type <paramref name="type"/>, and in each of the ten slots
-	/// <paramref name="weapons"/>' weapon and <paramref name="ammo"/>'s ammunition type, the whole fit a new herc of the type
+	/// The fields a herc's chassis change writes: its type, and in each of the ten slots a
+	/// weapon and an ammunition type, the whole fit a new herc of the type
 	/// gets, so no slot keeps the old chassis's weapon.
 	/// </summary>
+	/// <param name="type">The new chassis's type.</param>
+	/// <param name="weapons">The weapon in each slot.</param>
+	/// <param name="ammo">The ammunition type in each slot.</param>
 	public static IReadOnlyList<(MsnField Field, short Value)> Chassis(short type, short[] weapons, short[] ammo) {
 		var fields = new List<(MsnField, short)> { (MsnField.MechType, type) };
 		for (int slot = 0; slot < Slots; slot++) {
@@ -45,11 +48,15 @@ public static class RosterFit {
 	}
 
 	/// <summary>
-	/// The value of <paramref name="field"/> (a type, a weapon or an ammunition type) in roster GUID <paramref name="guid"/>'s
-	/// base (<see cref="MissionDocument.Layout"/>), the option it shows copied in; given <paramref name="option"/>, a template
+	/// The value of a field (a type, a weapon or an ammunition type) in a roster GUID's
+	/// base (<see cref="MissionDocument.Layout"/>), the option it shows copied in; given an option, a template
 	/// of its table, as a load picking that option makes it: the template's value where a template supplies the field, the
 	/// base's where the record supplies it itself. Throws <see cref="InvalidOperationException"/> for a GUID no record carries.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="field">The field.</param>
+	/// <param name="guid">The roster GUID.</param>
+	/// <param name="option">The template of a table option, or null for the option the layout shows.</param>
 	public static short Current(MissionDocument document, MsnField field, short guid, MsnRecordId? option = null) {
 		bool typeOrFit = field.Row switch {
 			12 => field.Word == MechRosterEntry144.TypeIndexWord
@@ -71,29 +78,40 @@ public static class RosterFit {
 	}
 
 	/// <summary>
-	/// Whether any of <paramref name="fields"/> of GUID <paramref name="guid"/> is other than its value in the base, or with
-	/// <paramref name="option"/> as a load picking that option makes it (<see cref="Current"/>).
+	/// Whether any of some fields of a GUID is other than its value in the base, or with
+	/// an option as a load picking that option makes it (<see cref="Current"/>).
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The roster GUID.</param>
+	/// <param name="fields">The fields and the values to compare.</param>
+	/// <param name="option">The template of a table option, or null for the option the layout shows.</param>
 	public static bool Differs(MissionDocument document, short guid, IReadOnlyList<(MsnField Field, short Value)> fields,
 			MsnRecordId? option = null) =>
 		fields.Any(field => Current(document, field.Field, guid, option) != field.Value);
 
 	/// <summary>
-	/// The template of the option the layout shows GUID <paramref name="guid"/> with that the first of <paramref name="fields"/>
+	/// The template of the option the layout shows a GUID with that the first of some fields
 	/// <see cref="RandomTableEditing.WhyNoTemplateField"/> passes is copied from; null when none is.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The roster GUID.</param>
+	/// <param name="fields">The fields.</param>
 	public static MsnRecordId? PickedTemplate(MissionDocument document, short guid, IEnumerable<MsnField> fields) =>
 		fields.Where(field => RandomTableEditing.WhyNoTemplateField(document, field, guid) == null)
 			.Select(field => document.TemplateOf(field, guid)).FirstOrDefault();
 
 	/// <summary>
-	/// Writes each of <paramref name="fields"/> of roster GUID <paramref name="guid"/> whose value differs
+	/// Writes each of some fields of a roster GUID whose value differs
 	/// (<see cref="Current"/>), by the rules in the class summary, as one <see cref="MissionDocument.Change"/>: a field a
-	/// template supplies in <paramref name="option"/>, the template of the option being edited, when one is given, else in the
-	/// record that supplies it. <paramref name="takesGuidance"/> says whether a weapon id takes a guidance kind, which a
-	/// launcher's ammunition type falls back to SARH for. Throws <see cref="InvalidOperationException"/> for an option
+	/// template supplies in the option being edited when one is given, else in the
+	/// record that supplies it. Throws <see cref="InvalidOperationException"/> for an option
 	/// <see cref="RandomTableEditing.WhyNoOptionEdit"/> refuses.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="guid">The roster GUID.</param>
+	/// <param name="fields">The fields and the values to write.</param>
+	/// <param name="option">The template of the option being edited, or null for none.</param>
+	/// <param name="takesGuidance">Whether a weapon id takes a guidance kind, which a launcher's ammunition type falls back to SARH for.</param>
 	public static MsnEdit Write(MissionDocument document, short guid, IReadOnlyList<(MsnField Field, short Value)> fields,
 			MsnRecordId? option, Func<short, bool> takesGuidance) {
 		if (option is { } given && fields.Count > 0

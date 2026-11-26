@@ -266,10 +266,11 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	}
 
 	/// <summary>
-	/// Attaches this as <paramref name="world"/>'s sink, so everything the simulation does is heard,
+	/// Attaches this as a world's sink, so everything the simulation does is heard,
 	/// and remembers the world so <see cref="SetListener"/> can keep
 	/// <see cref="SimWorld.ListenerPosition"/> in step with the director's.
 	/// </summary>
+	/// <param name="world">The world to attach to.</param>
 	public void Attach(SimWorld world) {
 		_world = world;
 		world.Sounds = Sink;

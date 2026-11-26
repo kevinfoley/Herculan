@@ -122,14 +122,16 @@ public static class ControlsPanelLayout {
 	/// <summary>The pitch between option rows, <c>7</c> doubled. The first row sits one pitch below the title.</summary>
 	public const int OptionRowPitch = 14;
 
-	/// <summary>The rect of button <paramref name="index"/>.</summary>
+	/// <summary>The rect of a button.</summary>
+	/// <param name="index">The button's index.</param>
 	public static AlertPanelLayout.Rect Button(int index) {
 		int i = Math.Clamp(index, 0, ButtonCount - 1);
 		return new AlertPanelLayout.Rect(ButtonX[i], ButtonY[i],
 			ButtonX[i] + ButtonWidth[i], ButtonY[i] + ButtonHeight);
 	}
 
-	/// <summary>The rect of row <paramref name="index"/>'s value readout.</summary>
+	/// <summary>The rect of a row's value readout.</summary>
+	/// <param name="index">The row's index.</param>
 	public static AlertPanelLayout.Rect Value(int index) {
 		int i = Math.Clamp(index, 0, RowCount - 1);
 		return new AlertPanelLayout.Rect(ValueX[i], ValueY[i],
@@ -141,16 +143,19 @@ public static class ControlsPanelLayout {
 		new(OptionsLeft, OptionsTitleY, OptionsRight, OptionsTitleY + OptionsTitleHeight);
 
 	/// <summary>
-	/// The rect of option row <paramref name="index"/>. The constructor advances its running rect
+	/// The rect of an option row. The constructor advances its running rect
 	/// <i>before</i> each <c>Label_SetRect</c> rather than after, so row 0 sits one whole pitch below
 	/// the title rather than directly under it.
 	/// </summary>
+	/// <param name="index">The row's index.</param>
 	public static AlertPanelLayout.Rect OptionRow(int index) {
 		int y = OptionsTitleY + OptionRowPitch * (Math.Clamp(index, 0, OptionRowCount - 1) + 1);
 		return new AlertPanelLayout.Rect(OptionsLeft, y, OptionsRight, y + OptionsTitleHeight);
 	}
 
-	/// <summary>The plate frame button <paramref name="index"/> draws in widget state <paramref name="state"/>.</summary>
+	/// <summary>The plate frame a button draws in a widget state.</summary>
+	/// <param name="index">The button's index.</param>
+	/// <param name="state">The widget state.</param>
 	public static int ButtonFrame(int index, int state) =>
 		ButtonFirstFrame[Math.Clamp(index, 0, ButtonCount - 1)] + Math.Clamp(state, 0, 3);
 

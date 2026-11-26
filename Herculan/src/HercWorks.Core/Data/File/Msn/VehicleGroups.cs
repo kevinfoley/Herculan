@@ -54,26 +54,35 @@ public static class VehicleGroups {
 	private const short StartingCondition = 100;
 
 	/// <summary>
-	/// A ground vehicle of <c>BASES.DAT</c> type <paramref name="type"/>, as a GUID-only record
+	/// A ground vehicle of a <c>BASES.DAT</c> type, as a GUID-only record
 	/// (<see cref="MissionDocument.Append"/> gives it one), unconditioned and picking from no random table (108 of 108): no point or
 	/// heading of its own (105 of 108 name neither), firing no action (no engaged or defeated action in 108) and writing no
 	/// counter (53 of 108; each of the other 55 writes a counter of its own mission's), its word at <c>0x06</c> <c>-1</c> (108).
 	/// </summary>
+	/// <param name="type">The <c>BASES.DAT</c> type.</param>
 	public static BaseRosterEntry62 Machine(short type) => new() {
 		GUID = -1, ConditionRef = -1, RandomTableKey = -1, Unk06 = -1, TypeIndex = type, PositionRef = -1, HeadingRef = -1,
 		PairCount = 0, OutOfActionReport = NewGroups.Unset(20), EngagementActionRef = -1, DefeatActionRef = -1,
 		StartingCondition = StartingCondition,
 	};
 
-	/// <summary>Why no ground vehicle can be added to <paramref name="document"/>, or null when one can.</summary>
+	/// <summary>Why no ground vehicle can be added to a document, or null when one can.</summary>
+	/// <param name="document">The mission document.</param>
 	public static string? WhyNoAdd(MissionDocument document) => RosterLimits.WhyNoRoom(document.Layout, BaseRow, 1);
 
 	/// <summary>
-	/// Adds <paramref name="vehicle"/> in a new convoy on <paramref name="side"/> (0 human, 1 Cybrid), standing on a route of
-	/// one waypoint at (<paramref name="x"/>, <paramref name="y"/>) and travelling it, as one
+	/// Adds a vehicle in a new convoy on a side (0 human, 1 Cybrid), standing on a route of
+	/// one waypoint at (x, y) and travelling it, as one
 	/// <see cref="MissionDocument.Change"/>; answers the vehicle's row-14 GUID and the group's row-16 GUID. Throws
 	/// <see cref="InvalidOperationException"/> when <see cref="WhyNoAdd"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="vehicle">The vehicle.</param>
+	/// <param name="side">The side: 0 human, 1 Cybrid.</param>
+	/// <param name="x">The waypoint's X.</param>
+	/// <param name="y">The waypoint's Y.</param>
+	/// <param name="guid">The vehicle's row-14 GUID.</param>
+	/// <param name="group">The group's row-16 GUID.</param>
 	public static MsnEdit Create(MissionDocument document, BaseRosterEntry62 vehicle, short side, int x, int y,
 			out short guid, out short group) {
 		if (WhyNoAdd(document) is { } reason) {
@@ -85,9 +94,12 @@ public static class VehicleGroups {
 	}
 
 	/// <summary>
-	/// Whether row-16 group <paramref name="group"/> is a convoy: a structure group whose base's first member a record carries
-	/// is, in its own base, of a type <paramref name="isGroundVehicle"/> answers true for.
+	/// Whether a row-16 group is a convoy: a structure group whose base's first member a record carries
+	/// is, in its own base, of a type the predicate answers true for.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's GUID.</param>
+	/// <param name="isGroundVehicle">Whether a type is a ground vehicle's.</param>
 	public static bool IsConvoy(MissionDocument document, short group, Func<int, bool> isGroundVehicle) {
 		if (document.Layout.Entry<MissionGroup164>(group)?.Fields is not { MemberKind: BaseRoster } record) {
 			return false;
@@ -98,20 +110,28 @@ public static class VehicleGroups {
 	}
 
 	/// <summary>
-	/// Why a ground vehicle cannot join row-16 group <paramref name="group"/> of <paramref name="document"/> as a convoy
+	/// Why a ground vehicle cannot join a row-16 group of a document as a convoy
 	/// member, or null when it can: a convoy (<see cref="IsConvoy"/>) with a member slot up to <see cref="LastJoinSlot"/>
 	/// that no record of it fills.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The group's GUID.</param>
+	/// <param name="isGroundVehicle">Whether a type is a ground vehicle's.</param>
 	public static string? WhyNoJoin(MissionDocument document, short group, Func<int, bool> isGroundVehicle) =>
 		!IsConvoy(document, group, isGroundVehicle) ? "It is not a convoy."
 			: NewGroups.WhyNoJoin(document, group, BaseRoster, LastJoinSlot, "It is not a convoy.",
 				$"The convoy has places for {LastJoinSlot + 1} ground vehicles, and each is taken.");
 
 	/// <summary>
-	/// Adds <paramref name="vehicle"/> to convoy <paramref name="group"/> in its first free member slot, as one
+	/// Adds a vehicle to a convoy in its first free member slot, as one
 	/// <see cref="MissionDocument.Change"/>; answers the vehicle's row-14 GUID. Throws <see cref="InvalidOperationException"/>
 	/// when <see cref="WhyNoAdd"/> or <see cref="WhyNoJoin"/> refuses it.
 	/// </summary>
+	/// <param name="document">The mission document.</param>
+	/// <param name="group">The convoy's row-16 GUID.</param>
+	/// <param name="vehicle">The vehicle.</param>
+	/// <param name="isGroundVehicle">Whether a type is a ground vehicle's.</param>
+	/// <param name="guid">The vehicle's row-14 GUID.</param>
 	public static MsnEdit Join(MissionDocument document, short group, BaseRosterEntry62 vehicle,
 			Func<int, bool> isGroundVehicle, out short guid) {
 		if ((WhyNoAdd(document) ?? WhyNoJoin(document, group, isGroundVehicle)) is { } reason) {

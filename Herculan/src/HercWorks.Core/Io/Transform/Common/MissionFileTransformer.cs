@@ -616,7 +616,9 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 		return words;
 	}
 
-	/// <summary>A record of row <paramref name="row"/> (6 to 16) read from <paramref name="words"/>, as <see cref="Words"/> gives them.</summary>
+	/// <summary>A record of a row (6 to 16) read from words, as <see cref="Words"/> gives them.</summary>
+	/// <param name="row">The row, 6 to 16.</param>
+	/// <param name="words">The record's words.</param>
 	internal MapObject Record(int row, short[] words) {
 		var bytes = new byte[words.Length * 2];
 		for (int i = 0; i < words.Length; i++) {

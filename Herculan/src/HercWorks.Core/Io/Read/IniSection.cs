@@ -8,9 +8,11 @@ namespace HercWorks.Core.Io.Read;
 /// </summary>
 public static class IniSection {
 	/// <summary>
-	/// <paramref name="section"/>'s <c>key = value</c> pairs, keys case-insensitive: <c>;</c> starts a
+	/// A section's <c>key = value</c> pairs, keys case-insensitive: <c>;</c> starts a
 	/// comment, whitespace around both halves is dropped, and a repeated key keeps the first.
 	/// </summary>
+	/// <param name="lines">The file's lines.</param>
+	/// <param name="section">The section's name.</param>
 	public static Dictionary<string, string> Read(IEnumerable<string> lines, string section) {
 		var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		bool inSection = false;
@@ -72,7 +74,10 @@ public static class IniSection {
 	public static string[] Lines(byte[] bytes) =>
 		System.Text.Encoding.Latin1.GetString(bytes).Split(["\r\n", "\n", "\r"], StringSplitOptions.None);
 
-	/// <summary>An integer setting, or <paramref name="fallback"/> when it is absent or unparseable.</summary>
+	/// <summary>An integer setting, or a fallback when it is absent or unparseable.</summary>
+	/// <param name="values">The section's pairs.</param>
+	/// <param name="key">The setting's key.</param>
+	/// <param name="fallback">The value when the setting is absent or unparseable.</param>
 	public static int IntValue(Dictionary<string, string> values, string key, int fallback) =>
 		values.TryGetValue(key, out string? value)
 		&& int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed)

@@ -86,10 +86,11 @@ public sealed class MessagePorts {
 
 	/// <summary>
 	/// <c>Cockpit_PowerUpSound</c> (<c>004328cc</c>)'s message half: the player takes
-	/// <paramref name="pilot"/>, whose destruction disables the ports, and a walking machine's power-up
+	/// a machine, whose destruction disables the ports, and a walking machine's power-up
 	/// announces itself <see cref="PowerUpAnnounceDelay"/> later. A flyer's does not; see
 	/// <see cref="Audio.GameAudio.PowerUp"/>.
 	/// </summary>
+	/// <param name="pilot">The player's machine.</param>
 	public void PowerUp(MechObject pilot) {
 		_pilot = pilot;
 		_powerUpAnnounceIn = pilot.Type.IsFlyer ? TimeSpan.MinValue : PowerUpAnnounceDelay;

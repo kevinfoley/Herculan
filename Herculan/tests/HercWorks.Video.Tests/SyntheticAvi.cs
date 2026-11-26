@@ -64,7 +64,9 @@ internal sealed class SyntheticAvi {
 		return this;
 	}
 
-	/// <summary>Adds a video packet wrapped in <paramref name="depth"/> nested <c>rec </c> lists.</summary>
+	/// <summary>Adds a video packet wrapped in nested <c>rec </c> lists.</summary>
+	/// <param name="depth">How many <c>rec </c> lists wrap the packet.</param>
+	/// <param name="data">The packet's bytes.</param>
 	internal SyntheticAvi AddNestedVideo(int depth, params byte[] data) {
 		var payload = new List<byte>();
 		AddChunk(payload, "00dc", data);

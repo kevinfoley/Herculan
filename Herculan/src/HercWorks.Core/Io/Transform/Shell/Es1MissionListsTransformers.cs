@@ -26,7 +26,9 @@ public abstract class Es1NameListFileTransformer<T> : Es1WalkedFileTransformer<T
 		return new Es1NameList { Names = names };
 	}
 
-	/// <summary>Writes <paramref name="list"/> as <see cref="ReadNameList"/> reads it.</summary>
+	/// <summary>Writes a name list as <see cref="ReadNameList"/> reads it.</summary>
+	/// <param name="w">The writer.</param>
+	/// <param name="list">The name list.</param>
 	protected static void WriteNameList(BinaryWriter w, Es1NameList list) {
 		w.Write(checked((byte)list.Names.Length));
 		if (list.Names.Length == 0) {
@@ -52,7 +54,9 @@ public abstract class Es1NameListFileTransformer<T> : Es1WalkedFileTransformer<T
 		return lists;
 	}
 
-	/// <summary>Writes <paramref name="lists"/> as <see cref="ReadNameLists"/> reads them.</summary>
+	/// <summary>Writes name lists as <see cref="ReadNameLists"/> reads them.</summary>
+	/// <param name="w">The writer.</param>
+	/// <param name="lists">The name lists.</param>
 	protected static void WriteNameLists(BinaryWriter w, IReadOnlyList<Es1NameList> lists) {
 		w.Write(checked((byte)lists.Count));
 		foreach (var list in lists) {

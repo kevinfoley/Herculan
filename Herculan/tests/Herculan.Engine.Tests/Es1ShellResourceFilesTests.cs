@@ -118,7 +118,9 @@ public class Es1ShellResourceFilesTests {
 		}
 	}
 
-	/// <summary>Parses and writes back <paramref name="bytes"/> through whichever of this file's readers <paramref name="reader"/> is.</summary>
+	/// <summary>Parses and writes back bytes through whichever of this file's readers is given.</summary>
+	/// <param name="reader">The reader to use.</param>
+	/// <param name="bytes">The bytes to parse.</param>
 	private static byte[]? RoundTrip(ThreeSpaceByteTransformer reader, byte[] bytes) => reader switch {
 		Es1ShellMainBndTransformer t => t.Write(t.Parse(bytes)!),
 		Es1ShellTuningFileTransformer t => t.Write(t.Parse(bytes)!),

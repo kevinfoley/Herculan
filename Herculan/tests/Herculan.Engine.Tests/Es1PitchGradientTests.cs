@@ -39,7 +39,9 @@ public class Es1PitchGradientTests {
 		Assert.Equal(grey / 2 * 0x10101u, atFirst[1].Entries[^1] & 0xffffff);
 	}
 
-	/// <summary>256 black entries but <paramref name="entry"/>, grey <paramref name="grey"/> in every channel.</summary>
+	/// <summary>256 black entries but one, grey in every channel.</summary>
+	/// <param name="entry">The one entry that is not black.</param>
+	/// <param name="grey">The value of every channel of that entry.</param>
 	private static DynamixPalette Palette(int entry, int grey) {
 		var palette = new DynamixPalette { ColorCount = 256 };
 		for (int i = 0; i < 256; i++) {
@@ -50,7 +52,10 @@ public class Es1PitchGradientTests {
 		return palette;
 	}
 
-	/// <summary>A new palette with <paramref name="entries"/> from <paramref name="first"/>, as the presenter sends one.</summary>
+	/// <summary>A new palette with entries from a first index, as the presenter sends one.</summary>
+	/// <param name="live">The palette to start from.</param>
+	/// <param name="first">The index of the first entry replaced.</param>
+	/// <param name="entries">The replacement entries.</param>
 	private static DynamixPalette Installed(DynamixPalette live, int first, IReadOnlyList<uint> entries) {
 		var palette = new DynamixPalette { ColorCount = live.ColorCount, Colors = new Dictionary<int, ColorBytes>(live.Colors) };
 		for (int i = 0; i < entries.Count; i++) {

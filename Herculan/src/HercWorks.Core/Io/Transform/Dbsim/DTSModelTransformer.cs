@@ -45,13 +45,15 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 	}
 
 	/// <summary>
-	/// Reads exactly one TSObject chunk starting at <paramref name="index"/> within an arbitrary
-	/// buffer, advancing <paramref name="index"/> past it. Used by
+	/// Reads exactly one TSObject chunk within an arbitrary
+	/// buffer, advancing the index past it. Used by
 	/// <see cref="BasesDgsTransformer"/> to parse the DTS subtree a <c>dgs\BASES.DGS</c>/
 	/// <c>BHULKS.DGS</c> structure record wraps — confirmed to be an ordinary TSObjectHeader-family
 	/// chunk, byte-identical in format to a plain <c>.DTS</c> file's own chunks (see
 	/// docs/retail/formats/dgs-hd0-notes.md), so it reuses this same reader rather than a new one.
 	/// </summary>
+	/// <param name="bytes">The buffer.</param>
+	/// <param name="index">The chunk's start in the buffer; advanced past it.</param>
 	public TSObject? ReadOneObject(byte[] bytes, ref int index) {
 		Bytes = bytes;
 		Index = index;
@@ -63,11 +65,12 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 
 	/// <summary>
 	/// Reads the part of a <see cref="TSShape"/> that follows its part list — the per-sequence frame
-	/// counts and the node transforms — starting at <paramref name="index"/>, and advances
-	/// <paramref name="index"/> past it. Used by <see cref="BasesDgsTransformer"/>, whose
+	/// counts and the node transforms — and advances the index past it. Used by <see cref="BasesDgsTransformer"/>, whose
 	/// <c>GridShape</c> records are <c>TSShape</c>s that keep their part list and this tail in the
 	/// record itself (see docs/retail/formats/dgs-hd0-notes.md).
 	/// </summary>
+	/// <param name="bytes">The buffer.</param>
+	/// <param name="index">Where the tail starts; advanced past it.</param>
 	public (short[] Sequences, TSShapeNodeTransform[] Transforms) ReadShapeTail(byte[] bytes, ref int index) {
 		Bytes = bytes;
 		Index = index;

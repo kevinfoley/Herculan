@@ -50,9 +50,13 @@ public static class NewMission {
 	private const short ObjectiveText = 4;
 
 	/// <summary>
-	/// A new mission on <paramref name="theater"/> and <paramref name="zone"/>, by day or by <paramref name="night"/>,
-	/// for a zone <paramref name="zoneWidth"/> by <paramref name="zoneHeight"/> world units.
+	/// A new mission on a theater and zone, by day or by night, for a zone of a width by a height in world units.
 	/// </summary>
+	/// <param name="theater">The theater.</param>
+	/// <param name="zone">The zone.</param>
+	/// <param name="night">Whether the mission is by night.</param>
+	/// <param name="zoneWidth">The zone's width in world units.</param>
+	/// <param name="zoneHeight">The zone's height in world units.</param>
 	public static (MissionFile Mission, MissionStringFile Text) Build(short theater, short zone, bool night, int zoneWidth, int zoneHeight) {
 		const short mech = 0, heading = 0, route = 0, order = 0, group = 0;
 

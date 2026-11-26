@@ -42,22 +42,26 @@ public sealed class MissionProvenance {
 	public IReadOnlyList<MsnRecordId> HeaderPatches => _headerPatches;
 
 	/// <summary>
-	/// The row-2 record whose write header word <paramref name="word"/> (<c>script.dat</c> offset <c>word * 2</c>) holds:
+	/// The row-2 record whose write a header word (<c>script.dat</c> offset <c>word * 2</c>) holds:
 	/// the last of <see cref="HeaderPatches"/> that sets it, or null when none does and the word keeps its unset value. A
 	/// launch that writes over the word after the load (<see cref="Data.File.Msn.MissionGeneration"/>) is not one.
 	/// </summary>
+	/// <param name="word">The header word's index.</param>
 	public MsnRecordId? HeaderWord(int word) => _headerWords.TryGetValue(word, out var record) ? record : null;
 
 	/// <summary>
-	/// The exported record at <paramref name="index"/> of <c>script.dat</c> block <paramref name="block"/>
+	/// The exported record at an index of a <c>script.dat</c> block
 	/// (1 to 13), or null past the block's end. Block 13 is one record, row 4's slot 0, at index 0.
 	/// </summary>
+	/// <param name="block">The <c>script.dat</c> block, 1 to 13.</param>
+	/// <param name="index">The record's index in the block.</param>
 	public SlotProvenance? Slot(int block, int index) {
 		var slots = Slots(block);
 		return index >= 0 && index < slots.Count ? slots[index] : null;
 	}
 
-	/// <summary>Block <paramref name="block"/>'s exported records in <c>script.dat</c> order.</summary>
+	/// <summary>A block's exported records in <c>script.dat</c> order.</summary>
+	/// <param name="block">The <c>script.dat</c> block.</param>
 	public IReadOnlyList<SlotProvenance> Slots(int block) {
 		if (block is < 1 or > 13) {
 			throw new ArgumentOutOfRangeException(nameof(block), block, "script.dat has blocks 1 to 13.");
@@ -71,11 +75,12 @@ public sealed class MissionProvenance {
 	}
 
 	/// <summary>
-	/// The exported record <paramref name="record"/> created or was merged into, or null when it reaches no
+	/// The exported record a record created or was merged into, or null when it reaches no
 	/// <c>script.dat</c> record: its condition failed, its GUID is <c>-1</c>, its row is not exported, or
 	/// it is a row-4 record other than the one block 13 is written from. A template reaches the
 	/// records that copy from it only through <see cref="SlotProvenance.Word"/>.
 	/// </summary>
+	/// <param name="record">The record.</param>
 	public ScriptDatSlot? ExportedSlot(MsnRecordId record) {
 		if (record.Row == 4) {
 			return _textPackage?.Created == record ? new ScriptDatSlot(13, 0) : null;
@@ -87,18 +92,25 @@ public sealed class MissionProvenance {
 	/// <summary>The <c>mission.str</c> lines in written order.</summary>
 	public IReadOnlyList<TextLineProvenance> Lines => _lines;
 
-	/// <summary>The <c>mission.str</c> line <paramref name="engRecord"/> placed or replaced the text of, or null for none.</summary>
+	/// <summary>The <c>mission.str</c> line an <c>.ENG</c> record placed or replaced the text of, or null for none.</summary>
+	/// <param name="engRecord">The <c>.ENG</c> record's index.</param>
 	public int? LineOf(int engRecord) => _lineOf.TryGetValue(engRecord, out int line) ? line : null;
 
 	// ---- What the generator reports ------------------------------------------------------------
 
 	/// <summary>
-	/// A template copy of <paramref name="count"/> words from <paramref name="source"/>, a slot of the row
+	/// A template copy of some words from a slot of the row
 	/// being read, into the record about to be added or merged.
 	/// </summary>
+	/// <param name="source">The slot of the row being read.</param>
+	/// <param name="first">The first word copied.</param>
+	/// <param name="count">How many words are copied.</param>
 	internal void CopiedFromTemplate(int source, int first, int count) => _pendingCopies.Add((source, first, count));
 
-	/// <summary>Record <paramref name="index"/> of <paramref name="row"/> added as a new slot.</summary>
+	/// <summary>A record of a row added as a new slot.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="index">The record's index in the row.</param>
+	/// <param name="words">The record's words.</param>
 	internal void Added(int row, int index, short[] words) {
 		var record = new MsnRecordId(row, index);
 		var slots = SlotsOfRow(row);
@@ -122,7 +134,10 @@ public sealed class MissionProvenance {
 		_slotOf[record] = slot;
 	}
 
-	/// <summary>Record <paramref name="index"/> of <paramref name="row"/> about to be merged into slot <paramref name="slot"/>; <see cref="Wrote"/> follows for each word it writes.</summary>
+	/// <summary>A record of a row about to be merged into a slot; <see cref="Wrote"/> follows for each word it writes.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="slot">The slot it is merged into.</param>
+	/// <param name="index">The record's index in the row.</param>
 	internal void Merging(int row, int slot, int index) {
 		var record = new MsnRecordId(row, index);
 		_mergeTarget = SlotsOfRow(row)[slot];
@@ -131,32 +146,42 @@ public sealed class MissionProvenance {
 		_slotOf[record] = _mergeTarget;
 	}
 
-	/// <summary>The merge under way wrote <paramref name="count"/> words from <paramref name="first"/> into its slot.</summary>
+	/// <summary>The merge under way wrote some words into its slot.</summary>
+	/// <param name="first">The first word written.</param>
+	/// <param name="count">How many words were written.</param>
 	internal void Wrote(int first, int count) {
 		for (int word = first; word < first + count; word++) {
 			_mergeTarget!.SetWord(word, _mergeWords[word]);
 		}
 	}
 
-	/// <summary>Row-4 record <paramref name="index"/> read into slot 0, the slot block 13 is written from.</summary>
+	/// <summary>A row-4 record read into slot 0, the slot block 13 is written from.</summary>
+	/// <param name="index">The record's index in row 4.</param>
+	/// <param name="wordCount">The record's length in words.</param>
 	internal void TextPackage(int index, int wordCount) {
 		var record = new MsnRecordId(4, index);
 		_textPackage = new SlotProvenance(13, 0, record, Own(record, wordCount));
 	}
 
-	/// <summary>Row-2 record <paramref name="index"/> passed its condition and patches the header.</summary>
+	/// <summary>A row-2 record passed its condition and patches the header.</summary>
+	/// <param name="index">The record's index in row 2.</param>
 	internal void HeaderPatched(int index) => _headerPatches.Add(new MsnRecordId(2, index));
 
-	/// <summary>Row-2 record <paramref name="index"/> wrote header word <paramref name="word"/>.</summary>
+	/// <summary>A row-2 record wrote a header word.</summary>
+	/// <param name="word">The header word's index.</param>
+	/// <param name="index">The record's index in row 2.</param>
 	internal void HeaderWordWritten(int word, int index) => _headerWords[word] = new MsnRecordId(2, index);
 
-	/// <summary><c>.ENG</c> record <paramref name="engRecord"/> added as a new <c>mission.str</c> line.</summary>
+	/// <summary>An <c>.ENG</c> record added as a new <c>mission.str</c> line.</summary>
+	/// <param name="engRecord">The <c>.ENG</c> record's index.</param>
 	internal void LineAdded(int engRecord) {
 		_lineOf[engRecord] = _lines.Count;
 		_lines.Add(new TextLineProvenance(_lines.Count, engRecord, engRecord));
 	}
 
-	/// <summary><c>.ENG</c> record <paramref name="engRecord"/> replaced the text of line <paramref name="line"/>.</summary>
+	/// <summary>An <c>.ENG</c> record replaced the text of a line.</summary>
+	/// <param name="line">The <c>mission.str</c> line.</param>
+	/// <param name="engRecord">The <c>.ENG</c> record's index.</param>
 	internal void LineReplaced(int line, int engRecord) {
 		_lineOf[engRecord] = line;
 		_lines[line] = _lines[line] with { Supplier = engRecord };
@@ -211,24 +236,30 @@ public readonly record struct MsnRecordId(int Row, int Index);
 public readonly record struct ScriptDatSlot(int Block, int Index);
 
 /// <summary>
-/// Where one word of an exported record came from. <paramref name="Record"/> is the record whose write the
-/// slot holds: the slot's creator, or the merged record that last wrote the word. <paramref name="CopiedFrom"/>
-/// is set when that record took the word from a template, and names the source record the value was
-/// authored in.
+/// Where one word of an exported record came from.
 /// </summary>
+/// <param name="Record">The record whose write the
+/// slot holds: the slot's creator, or the merged record that last wrote the word.</param>
+/// <param name="CopiedFrom">Set when that record took the word from a template, and names the source record the value was
+/// authored in.</param>
 public readonly record struct WordSource(MsnRecordId Record, MsnRecordId? CopiedFrom);
 
 /// <summary>
-/// A template copy made into <paramref name="Record"/> before it was added or merged: <paramref name="Source"/>,
-/// the record of the same row it copied from, and the <c>.MSN</c> words it covered.
+/// A template copy made into a record before it was added or merged.
 /// </summary>
+/// <param name="Record">The record the copy was made into.</param>
+/// <param name="Source">The record of the same row it copied from.</param>
+/// <param name="Words">The <c>.MSN</c> words it covered.</param>
 public sealed record TemplateCopy(MsnRecordId Record, MsnRecordId Source, IReadOnlyList<int> Words);
 
 /// <summary>
-/// A <c>mission.str</c> line: <paramref name="Created"/>, the <c>.ENG</c> record (its index in the file)
-/// that placed the line, and <paramref name="Supplier"/>, the one whose text it holds — a later record of
-/// the same id replaces the text and keeps the line.
+/// A <c>mission.str</c> line.
 /// </summary>
+/// <param name="Line">The line's index.</param>
+/// <param name="Created">The <c>.ENG</c> record (its index in the file)
+/// that placed the line.</param>
+/// <param name="Supplier">The <c>.ENG</c> record whose text the line holds — a later record of
+/// the same id replaces the text and keeps the line.</param>
 public sealed record TextLineProvenance(int Line, int Created, int Supplier);
 
 /// <summary>
@@ -271,9 +302,10 @@ public sealed class SlotProvenance {
 	public IReadOnlyList<TemplateCopy> TemplateCopies => _copies;
 
 	/// <summary>
-	/// Where <c>.MSN</c> word <paramref name="word"/> of the record came from. For row 8, word 4 and every
+	/// Where a <c>.MSN</c> word of the record came from. For row 8, word 4 and every
 	/// word after it, its waypoint count and list, are one entry.
 	/// </summary>
+	/// <param name="word">The word's index.</param>
 	public WordSource Word(int word) {
 		if (Created.Row == 8) {
 			word = Math.Min(word, RouteListWord);
