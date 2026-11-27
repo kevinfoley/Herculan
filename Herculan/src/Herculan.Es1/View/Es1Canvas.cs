@@ -151,6 +151,21 @@ public sealed class Es1Canvas {
 	}
 
 	/// <summary>
+	/// Every page of the canvas filled with <paramref name="color"/>, all <see cref="Rows"/> of it, the draw page left as
+	/// it was: the canvas cleared where the screen's pages are, so a palette installed after shows no frame left in it.
+	/// </summary>
+	/// <param name="color">The palette index filled with.</param>
+	internal void Clear(byte color) {
+		int kept = Memory.DrawPage;
+		foreach (int view in (ReadOnlySpan<int>)[3, 0, 2]) {
+			Memory.DrawPage = Page(view);
+			Memory.FillRect(0, 0, Es1VideoMemory.PageWidth - 1, Rows - 1, color);
+		}
+
+		Memory.DrawPage = kept;
+	}
+
+	/// <summary>
 	/// Makes view 0's page the draw, source, shown and drawn page of <see cref="Memory"/>, so an instrument's repaint that
 	/// switches between the display's pages stays on that page.
 	/// </summary>

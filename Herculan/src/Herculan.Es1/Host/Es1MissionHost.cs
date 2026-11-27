@@ -121,7 +121,7 @@ public static class Es1MissionHost {
 	/// The flag at <c>000b5b68</c>, which is 1 in the image and which <c>-s</c> toggles. When it is clear, starting the mission creates
 	/// no sound manager (<see cref="Es1Sound.MissionStartDevices"/>).
 	/// </param>
-	/// <param name="silent">The host's <c>--no-sound</c>. It opens no audio device, so the sound manager plays into nothing.</param>
+	/// <param name="silent">The host's <c>--no-sound</c>.</param>
 	/// <param name="disc">
 	/// The disc standing in for the CD drive whose <c>vol\</c> the simulator mounts after the install's, as it does under
 	/// <c>-c</c>, and a named mission's load with it; null for the install alone.

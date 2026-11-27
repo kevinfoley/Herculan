@@ -82,7 +82,8 @@ public static class ControllerActions {
 		.. Range(KeyAction.RazorThrottleUp, KeyAction.DiagonalBackRight),
 		KeyAction.ThrottleStepUp, KeyAction.ThrottleStepDown,
 		.. Range(KeyAction.WeaponRow1, KeyAction.WeaponRow10),
-		.. Range(KeyAction.MfdStatus, KeyAction.DamageDetail),
+		.. Range(KeyAction.MfdStatus, KeyAction.MfdMissileCam),
+		KeyAction.CommandDisplay, KeyAction.DamageDetail,
 		KeyAction.OtherHercsStatus, KeyAction.OnlineManual,
 	];
 

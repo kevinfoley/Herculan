@@ -59,6 +59,9 @@ internal static class Es1DeathFlash {
 	/// as retail's whole screen does. Under <see cref="Engine.Settings.A11ySettingDefinitions.DisableDamageShake"/>, this
 	/// engine's own, the shake's steps are drawn but not taken (<see cref="Es1HitShake.ShakeHidden"/>); the fades are not
 	/// the damage flash, and run as retail's whatever that setting says.</para>
+	/// <para><b>This engine's own:</b> step 6 clears the cockpit's canvas (<see cref="Es1Canvas.Clear"/>) along with the
+	/// pages. No frame is drawn after it, so the canvas would otherwise keep the fade's last frame beside the cleared
+	/// screen, and its cockpit art would show through <c>world0</c>'s colors.</para>
 	/// </summary>
 	public static IEnumerable<Es1Wait> Run(Es1Simulation simulation) {
 		if (simulation.Frame is not { } frame || simulation.ViewChain.Manager is not { } views || simulation.Panels is not { } panels) {
@@ -120,6 +123,7 @@ internal static class Es1DeathFlash {
 		var display = views.Display;
 		display.ClearPage(display.PairVisible, 0);
 		display.ClearPage(display.PairDrawn, 0);
+		views.Canvas?.Clear(0);
 		Install(frame, world0);
 		foreach (var wait in EndFrame(simulation, frame)) {
 			yield return wait;
