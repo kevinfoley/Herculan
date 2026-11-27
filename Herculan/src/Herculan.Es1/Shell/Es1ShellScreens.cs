@@ -346,6 +346,7 @@ public sealed class Es1ShellScreens {
 		Bay = bay;
 		_backdrop.AssignHangarScripts = bay.AssignScripts;
 		Globals.HangarSelectedType = () => bay.SelectedHercType;
+		Globals.HangarFootLine = bay.Diagrams.FootLine;
 		switch (exitCode) {
 			case 3:
 			case 4:
@@ -817,6 +818,24 @@ public sealed class Es1ShellScreens {
 		}
 
 		WaitAfterDraw = true;
+	}
+
+	/// <summary>
+	/// The current menu's window drawn again as <see cref="DrawMenu"/> draws it, on page 2 and then on the draw page, so a
+	/// redraw of the bay's HERC (<see cref="Hangar.Es1HangarBay.RedrawForSquash"/>) does not leave the HERC over it.
+	/// Nothing while the message box is up. <b>This engine's own.</b>
+	/// </summary>
+	public void RedrawMenuWindow() {
+		if (Globals.MessageBox.Up || CurrentMenu?.Window is not { } window) {
+			return;
+		}
+
+		var display = _devices.Display;
+		int keptDraw = display.DrawPage;
+		display.DrawPage = Es1ShellBackdrop.BackgroundPage;
+		window.Draw();
+		display.DrawPage = keptDraw;
+		window.Draw();
 	}
 
 	/// <summary>

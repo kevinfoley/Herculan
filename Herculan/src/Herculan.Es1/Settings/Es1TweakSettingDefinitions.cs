@@ -100,6 +100,13 @@ public static class Es1TweakSettingDefinitions {
 	/// <see cref="View.Es1ViewManager.ForwardCursorAfterGlance"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixGlanceCursor = new("tweak.es1_fix_glance_cursor", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// The HERC on the service bay, arming and repair screens is drawn at 5/6 of its height about its feet, the shape its
+	/// art has at 320 × 200 shown square, matching its 3D model. This engine's invention. See
+	/// <see cref="Shell.Hangar.Es1HercSquash"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> SquashBayHercs = new("tweak.es1_herc_bay_aspect", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -171,7 +178,7 @@ public static class Es1TweakSettingDefinitions {
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixUnresponsiveSquadmates, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
+		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, SquashBayHercs, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixUnresponsiveSquadmates, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 
 	/// <summary>
@@ -186,6 +193,6 @@ public static class Es1TweakSettingDefinitions {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming, TweakSettingDefinitions.MouseOutsideView,
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixUnresponsiveSquadmates, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
+		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, SquashBayHercs, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixUnresponsiveSquadmates, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 }

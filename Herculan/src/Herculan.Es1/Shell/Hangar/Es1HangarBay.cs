@@ -345,6 +345,8 @@ public sealed class Es1HangarBay {
 			Diagrams.RefreshMountPictures(herc);
 		}
 
+		_inBay = (herc, slot);
+		_drawnSquashed = Es1HercSquash.On;
 		diagram?.Body.Draw(_surface);
 		Diagrams.DrawDamageMarks(herc, _surface);
 		foreach (var wait in Run(Handle(1))) {
@@ -368,6 +370,40 @@ public sealed class Es1HangarBay {
 		var diagram = Hangar is { } hangar ? Diagrams.Of(hangar, slot, herc) : null;
 		Diagrams.EraseMounts(herc, _surface);
 		diagram?.Body.Erase(_surface);
+		_inBay = null;
+	}
+
+	/// <summary>The HERC <see cref="DrawInBay"/> last drew and its slot, until <see cref="EraseFromBay"/> takes it out. <b>This engine's own.</b></summary>
+	private (Es1HercRecord Herc, short Slot)? _inBay;
+
+	/// <summary>Whether <see cref="Es1HercSquash.On"/> was set when the HERC in the bay was drawn. <b>This engine's own.</b></summary>
+	private bool _drawnSquashed;
+
+	/// <summary>
+	/// The HERC in the bay drawn again when <see cref="Es1HercSquash.On"/> has changed since it was drawn, so the tweak
+	/// shows at once: its mounts and body erased, then its body, damage marks and mounts drawn, without the run of
+	/// script 1 that <see cref="DrawInBay"/> puts between them. Nothing on a backdrop outside group 4000, which keeps the
+	/// HERC drawn before it on a page since replaced, or while the message box is up over the bay. <b>This engine's
+	/// own</b>; the shell's frame loop runs it once a pass, and draws the menu's window again after a redraw, since the
+	/// HERC is drawn under it and reaches into it (<see cref="Es1ShellScreens.RedrawMenuWindow"/>).
+	/// </summary>
+	/// <param name="messageBoxUp">Whether the message box is up.</param>
+	/// <returns>Whether the HERC was drawn again.</returns>
+	public bool RedrawForSquash(bool messageBoxUp) {
+		bool on = Es1HercSquash.On;
+		if (on == _drawnSquashed || _inBay is not var (herc, slot) || Hangar is not { } hangar
+				|| _backdropId() / 1000 * 1000 != 4000 || messageBoxUp) {
+			return false;
+		}
+
+		_drawnSquashed = on;
+		var diagram = Diagrams.Of(hangar, slot, herc);
+		Diagrams.EraseMounts(herc, _surface);
+		diagram.Body.Erase(_surface);
+		diagram.Body.Draw(_surface);
+		Diagrams.DrawDamageMarks(herc, _surface);
+		Diagrams.DrawMounts(herc, _surface);
+		return true;
 	}
 
 	/// <summary><c>Hangar_LeaveSelectedHerc</c> (<c>000295e7</c>): the selected HERC, when there is one, taken out of the bay (<see cref="EraseFromBay"/>).</summary>

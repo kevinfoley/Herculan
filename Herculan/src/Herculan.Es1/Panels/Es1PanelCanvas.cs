@@ -468,6 +468,29 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
+	/// Row <paramref name="sourceRow"/> of <paramref name="bitmap"/> alone, at the panel's (<paramref name="x"/>,
+	/// <paramref name="y"/>), each pixel as <see cref="Blit"/> with no flags draws it; nothing for a row outside the bitmap.
+	/// <b>This engine's own</b>, for <see cref="Shell.Hangar.Es1HercSquash.Blit"/>.
+	/// </summary>
+	/// <param name="bitmap">The picture, or null.</param>
+	/// <param name="sourceRow">The bitmap's row.</param>
+	/// <param name="x">The x of the row's left end.</param>
+	/// <param name="y">The y of the row.</param>
+	public void BlitRow(DynamixBitmap? bitmap, int sourceRow, int x, int y) {
+		if (bitmap?.ImageData is not { } pixels || sourceRow < 0 || sourceRow >= bitmap.Rows) {
+			return;
+		}
+
+		bool opaque = (bitmap.Flags & OpaqueFlag) != 0;
+		for (int column = 0; column < bitmap.Cols; column++) {
+			int source = sourceRow * bitmap.Cols + column;
+			if (source < pixels.Length && (opaque || pixels[source] != 0)) {
+				Plot(x + column, y, pixels[source]);
+			}
+		}
+	}
+
+	/// <summary>
 	/// <c>Bitmap_BlitScaled</c>(bitmap, size, flags, point) in clip mode 1: the point
 	/// translated and the bitmap stretched over width × height pixels from it, cut to
 	/// <see cref="ClipRect"/>, a 0 byte not written. Retail's two programs share the dispatch but not <c>VGA_8</c>'s slot 29:

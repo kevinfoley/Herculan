@@ -131,6 +131,13 @@ public sealed class Es1MenuGlobals {
 	/// </summary>
 	public Func<short> HangarSelectedType { get; set; } = () => -1;
 
+	/// <summary>
+	/// The foot line of a chassis (<see cref="Hangar.Es1HercDiagrams.FootLine"/>) the hangar's press test maps a press
+	/// through while <see cref="Hangar.Es1HercSquash"/> is on; set by the screens once the bay exists, null before.
+	/// <b>This engine's own.</b>
+	/// </summary>
+	public Func<short, int?> HangarFootLine { get; set; } = _ => null;
+
 	/// <summary>The word <c>0007ff92</c>, −1 in the image: the area the hangar's press test last found, −1 for none.</summary>
 	public short HangarArea { get; set; } = -1;
 

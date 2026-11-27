@@ -239,9 +239,15 @@ public sealed class Es1ShellFrame {
 	/// scripts' tick), the screen's work: <c>Shell_TickScreen</c>, the message box's loop (<c>MessageBox_Run</c>
 	/// (<c>000382f6</c>)(<c>Shell_MessageBox</c>, <see cref="InputBlock"/>), <see cref="MessageBox.Es1MessageBox.Run"/>) and the
 	/// text box drawn (<c>Dialog_Draw</c>(<c>Shell_Dialog</c>)); the quit question, and the frame-time scale. The scripts and
-	/// the message box exist from the first screen on, before the first pass; the tests for them are engine guards.
+	/// the message box exist from the first screen on, before the first pass; the tests for them are engine guards. Each
+	/// pass first redraws the bay's HERC when its squash tweak has changed (<see cref="Hangar.Es1HangarBay.RedrawForSquash"/>),
+	/// and the menu's window over it (<see cref="Es1ShellScreens.RedrawMenuWindow"/>), an engine addition.
 	/// </summary>
 	public IEnumerable<Es1ShellWait> Pass() {
+		if (_screens.Bay?.RedrawForSquash(_screens.Globals.MessageBox.Up) == true) {
+			_screens.RedrawMenuWindow();
+		}
+
 		foreach (var wait in PresentFrame()) {
 			yield return wait;
 		}

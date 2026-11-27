@@ -99,6 +99,8 @@ tweak.es1_fix_scramble_lights.display_name  Falschen Alarmstart-Alarm beheben
 tweak.es1_fix_scramble_lights.description  Die Alarmleuchten der HERC-Bucht leuchten nur, wenn der nächste Einsatz deiner Karriere ein Alarmstart ist. Im Originalspiel können sie an bleiben, nachdem du eine Karriere fortsetzt oder wiederherstellst, deren nächster Einsatz kein Alarmstart ist, weil sich das Spiel den zuletzt geladenen Einsatz merkt statt den der Karriere.
 tweak.es1_fix_glance_cursor.display_name  Mauszeiger nach Seitenblick beheben
 tweak.es1_fix_glance_cursor.description  Behebt im Simulator, dass der Mauszeiger nach einem Blick nach links oder rechts als Fadenkreuz hängen bleibt.
+tweak.es1_herc_bay_aspect.display_name  Seitenverhältnis in der HERC-Bucht korrigieren
+tweak.es1_herc_bay_aspect.description  Fügt eine Seitenverhältniskorrektur für die HERCs in der HERC-Bucht hinzu. Das Originalspiel wurde in 320x200 (16:10) gerendert, auf einem Monitor jener Zeit aber auf 4:3 gestreckt. Die Grafiker haben dies bei den Bildern der HERCs in der Bucht nicht berücksichtigt.
 tweak.es1_no_free_repair_level.display_name  Keine kostenlose Reparaturstufe
 tweak.es1_no_free_repair_level.description  Im Bildschirm SYSTEM REPAIR behält PROCEED nur die Reparaturen, die Sie mit + und − bezahlt haben. Das Originalspiel repariert das Teil bis zu der Stufe, die die Liste STATUS zeigt, und die ist nach einem + eine Stufe höher als bezahlt.
 tweak.es1_real_time_round_life.display_name  Volle Kanonenreichweite

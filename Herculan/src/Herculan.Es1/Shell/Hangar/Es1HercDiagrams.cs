@@ -127,7 +127,8 @@ public sealed class Es1HercDiagrams {
 	/// <c>OUTL</c> bank at <see cref="Es1HercArt.FindSecondPoint"/>), the picture (<see cref="SetMountPicture"/> with the
 	/// mount's status word) and, on chassis 7 with mount 2 or 3 not empty, the shoulder piece at its point and
 	/// <see cref="ColossusTopShown"/> set; last, with a shoulder piece and the byte clear, the piece set to no bitmap at
-	/// (0, 0). Every sprite keeps its background in a buffer of its own.
+	/// (0, 0). Every sprite keeps its background in a buffer of its own. Last, each sprite is given the chassis'
+	/// <see cref="FootLine"/>, which only <see cref="Es1HercSquash"/> reads.
 	/// </summary>
 	/// <param name="herc">The HERC.</param>
 	/// <param name="remaining">The remaining build stage, as <see cref="SetBodyPicture"/> takes it.</param>
@@ -166,6 +167,47 @@ public sealed class Es1HercDiagrams {
 		if (diagram.ColossusTop is { } top && !ColossusTopShown) {
 			top.Set(0, 0, 0, null);
 		}
+
+		int? foot = FootLine(chassis);
+		diagram.Body.FootLine = foot;
+		foreach (var sprite in (diagram.Mounts ?? []).Select(picture => picture.Sprite).Concat(diagram.Outlines ?? [])) {
+			sprite.FootLine = foot;
+		}
+
+		if (diagram.ColossusTop is { } shoulders) {
+			shoulders.FootLine = foot;
+		}
+	}
+
+	private readonly int?[] _footLines = new int?[Es1HercArt.ChassisCount];
+
+	/// <summary>
+	/// The row below the feet of <paramref name="chassis"/>: its body point's y plus the rows of its <c>WEP1</c> frame 0 down
+	/// to the last that holds a pixel, kept once found. A body being built stands on the same line. Null for a chassis
+	/// outside the eight or with no frame 0. <b>This engine's own</b>, for <see cref="Es1HercSquash"/>.
+	/// </summary>
+	/// <param name="chassis">The chassis.</param>
+	public int? FootLine(short chassis) {
+		if (chassis is < 0 or >= Es1HercArt.ChassisCount) {
+			return null;
+		}
+
+		if (_footLines[chassis] is { } kept) {
+			return kept;
+		}
+
+		if (Es1HercArt.Frame(Art.Need(Es1HercArt.Bank.Weapons, chassis), 0) is not { ImageData: { } pixels } body) {
+			return null;
+		}
+
+		int rows = body.Rows;
+		while (rows > 0 && RowEmpty((rows - 1) * body.Cols)) {
+			rows--;
+		}
+
+		return _footLines[chassis] = BodyPositions[chassis].Y + rows;
+
+		bool RowEmpty(int start) => start >= pixels.Length || !pixels.AsSpan(start, Math.Min(body.Cols, pixels.Length - start)).ContainsAnyExcept((byte)0);
 	}
 
 	/// <summary>
@@ -375,7 +417,8 @@ public sealed class Es1HercDiagrams {
 	/// level blitted at its point twice: with the display's draw page <c>+0x38</c> set to page 2, then with it put back, so
 	/// the marks land on the background and on the draw page. Retail reads before the lists for a negative level, and the
 	/// bank's frames with no bounds test; such a level draws nothing, and a frame outside the bank is not drawn, engine
-	/// guards.
+	/// guards. With <see cref="Es1HercSquash.On"/> each mark is blitted squashed about the chassis'
+	/// <see cref="FootLine"/>.
 	/// </summary>
 	/// <param name="herc">The HERC.</param>
 	/// <param name="surface">The sprite surface drawn to.</param>
@@ -383,8 +426,17 @@ public sealed class Es1HercDiagrams {
 		short chassis = herc.Chassis;
 		var bank = Art.Need(Es1HercArt.Bank.DamageMarks, chassis);
 		var marks = chassis is >= 0 and < Es1HercArt.ChassisCount ? Art.DamageMarks[chassis] : null;
+		int? foot = Es1HercSquash.On ? FootLine(chassis) : null;
 		var display = surface.Display;
 		var canvas = new Es1PanelCanvas(display, Es1ShellScreens.FullScreen);
+		void Blit(HercWorks.Core.Data.File.Dyn.DynamixBitmap? bitmap, int x, int y) {
+			if (foot is { } line) {
+				Es1HercSquash.Blit(canvas, bitmap, x, y, line);
+			} else {
+				canvas.Blit(bitmap, x, y);
+			}
+		}
+
 		for (int group = 0; group < Es1HercDamageMarks.GroupCount; group++) {
 			short level = Es1RepairCosts.LevelForCondition(herc.ExternalAverage(group));
 			if (level is < 1 or > Es1HercDamageMarks.LevelCount || marks == null || group >= marks.Groups.Length) {
@@ -395,9 +447,9 @@ public sealed class Es1HercDiagrams {
 				var bitmap = Es1HercArt.Frame(bank, mark.Frame);
 				int kept = display.DrawPage;
 				display.DrawPage = Es1ShellBackdrop.BackgroundPage;
-				canvas.Blit(bitmap, mark.X, mark.Y);
+				Blit(bitmap, mark.X, mark.Y);
 				display.DrawPage = kept;
-				canvas.Blit(bitmap, mark.X, mark.Y);
+				Blit(bitmap, mark.X, mark.Y);
 			}
 		}
 	}

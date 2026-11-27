@@ -35,6 +35,15 @@ public sealed class Es1Sprite {
 	public ushort[]? Background { get; private set; }
 
 	/// <summary>
+	/// The foot line <see cref="Es1HercSquash"/> squashes the sprite about while its tweak is on, which a HERC's diagram
+	/// gives each of its sprites; null for none. <see cref="Set"/> leaves it. <b>This engine's own.</b>
+	/// </summary>
+	public int? FootLine { get; set; }
+
+	/// <summary>The region <see cref="Draw"/> last used, <see cref="Rect"/> or its squash, which <see cref="Erase"/> puts back. <b>This engine's own.</b></summary>
+	private Es1Rect _drawnRect;
+
+	/// <summary>
 	/// <c>Sprite_Set</c> (<c>000216e0</c>)(sprite, <paramref name="keep"/>, <paramref name="x"/>, <paramref name="y"/>,
 	/// <paramref name="bitmap"/>): the bitmap and <paramref name="keep"/> stored, the rect's corner (<i>x</i>, <i>y</i>), the
 	/// buffer freed; with a bitmap the far corner (<i>x</i> + its width <c>+6</c>, <i>y</i> + its height <c>+4</c>) and, for
@@ -69,32 +78,41 @@ public sealed class Es1Sprite {
 	/// <see cref="KeepPage"/>; the bitmap blitted at the corner on page 2; the region copied from page 2 onto the draw page
 	/// the display held; a dirty box of delay 0 of the bitmap's size at the corner; the source page put back and the drawn
 	/// byte set. The raster's routines draw in the full-screen render context, as <see cref="Menus.Es1Menu.SaveBackground"/>
-	/// takes it.
+	/// takes it. With <see cref="Es1HercSquash.On"/> and a <see cref="FootLine"/>, the region, the blit and the dirty box are
+	/// squashed (<see cref="Es1HercSquash"/>).
 	/// </summary>
 	public void Draw(Es1SpriteSurface surface) {
 		if (Bitmap is not { } bitmap) {
 			return;
 		}
 
+		int? foot = Es1HercSquash.On ? FootLine : null;
+		var rect = foot is { } line ? Es1HercSquash.Rect(Rect, line) : Rect;
+		_drawnRect = rect;
 		var display = surface.Display;
 		int keptSource = display.SourcePage, keptDraw = display.DrawPage;
 		var canvas = new Es1PanelCanvas(display, Es1ShellScreens.FullScreen);
 		display.SourcePage = Es1ShellBackdrop.BackgroundPage;
 		if (Keep == 0) {
 			if (Background is { } buffer) {
-				var cells = canvas.SaveRegion(Rect);
+				var cells = canvas.SaveRegion(rect);
 				Array.Copy(cells, buffer, Math.Min(cells.Length, buffer.Length));
 			}
 		} else {
 			display.DrawPage = KeepPage;
-			canvas.CopyRegion(Rect, 0, 0);
+			canvas.CopyRegion(rect, 0, 0);
 		}
 
 		display.DrawPage = Es1ShellBackdrop.BackgroundPage;
-		canvas.Blit(bitmap, Rect.X0, Rect.Y0);
+		if (foot is { } squashFoot) {
+			Es1HercSquash.Blit(canvas, bitmap, Rect.X0, Rect.Y0, squashFoot);
+		} else {
+			canvas.Blit(bitmap, Rect.X0, Rect.Y0);
+		}
+
 		display.DrawPage = keptDraw;
-		canvas.CopyRegion(Rect, 0, 0);
-		surface.Dirty.Add(Rect.X0, Rect.Y0, bitmap.Cols, bitmap.Rows, 0);
+		canvas.CopyRegion(rect, 0, 0);
+		surface.Dirty.Add(rect.X0, rect.Y0, bitmap.Cols, rect.Y1 - rect.Y0, 0);
 		display.SourcePage = keptSource;
 		Drawn = true;
 	}
@@ -103,30 +121,32 @@ public sealed class Es1Sprite {
 	/// <c>Sprite_Erase</c> (<c>00021a6e</c>)(sprite), with a bitmap and the drawn byte set: the draw page set to page 2 and
 	/// the background put back there, from <see cref="Background"/> with <c>Region_Restore</c> at the corner for
 	/// <see cref="Keep"/> 0, otherwise copied from <see cref="KeepPage"/>; the region copied from page 2 onto the draw page
-	/// the display held; the dirty box <see cref="Draw"/> adds; the source page put back. The drawn byte stays set.
+	/// the display held; the dirty box <see cref="Draw"/> adds; the source page put back. The drawn byte stays set. The
+	/// region is the one <see cref="Draw"/> used, squashed or not, whatever the tweak now says.
 	/// </summary>
 	public void Erase(Es1SpriteSurface surface) {
 		if (Bitmap is not { } bitmap || !Drawn) {
 			return;
 		}
 
+		var rect = _drawnRect;
 		var display = surface.Display;
 		int keptSource = display.SourcePage, keptDraw = display.DrawPage;
 		var canvas = new Es1PanelCanvas(display, Es1ShellScreens.FullScreen);
 		display.DrawPage = Es1ShellBackdrop.BackgroundPage;
 		if (Keep == 0) {
 			if (Background is { } buffer) {
-				canvas.RestoreRegion(Rect, Rect.X0, Rect.Y0, buffer);
+				canvas.RestoreRegion(rect, rect.X0, rect.Y0, buffer);
 			}
 		} else {
 			display.SourcePage = KeepPage;
-			canvas.CopyRegion(Rect, 0, 0);
+			canvas.CopyRegion(rect, 0, 0);
 		}
 
 		display.SourcePage = Es1ShellBackdrop.BackgroundPage;
 		display.DrawPage = keptDraw;
-		canvas.CopyRegion(Rect, 0, 0);
-		surface.Dirty.Add(Rect.X0, Rect.Y0, bitmap.Cols, bitmap.Rows, 0);
+		canvas.CopyRegion(rect, 0, 0);
+		surface.Dirty.Add(rect.X0, rect.Y0, bitmap.Cols, rect.Y1 - rect.Y0, 0);
 		display.SourcePage = keptSource;
 	}
 

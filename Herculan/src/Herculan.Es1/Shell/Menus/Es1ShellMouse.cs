@@ -110,10 +110,15 @@ public sealed class Es1ShellMouse {
 	/// (<see cref="Hangar.Es1HercArt.MountCounts"/>), to the first holding the point, edges included, and becomes −1 when
 	/// none does; the message (0, −1, that index, 1702) is posted. Retail reads the count before the table (8) and the list
 	/// before the arrays for type −1, and past a list shorter than the count; such a list holds no rect here, engine
-	/// guards, so the press posts −1.
+	/// guards, so the press posts −1. With <see cref="Hangar.Es1HercSquash.On"/> the press is tested at the row the
+	/// squashed HERC shows there (<see cref="Hangar.Es1HercSquash.SourceRow"/>).
 	/// </summary>
 	private static void TestHangarAreas(Es1MenuGlobals globals, View.Es1Rect[][] areas, int x, int y) {
 		short type = globals.HangarSelectedType();
+		if (Hangar.Es1HercSquash.On && globals.HangarFootLine(type) is { } foot) {
+			y = Hangar.Es1HercSquash.SourceRow(y, foot);
+		}
+
 		short count = type is >= 0 and < Hangar.Es1HercArt.ChassisCount ? Hangar.Es1HercArt.MountCounts[type] : (short)0;
 		var list = type >= 0 && type < areas.Length ? areas[type] : [];
 		short area = 0;
