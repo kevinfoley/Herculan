@@ -49,7 +49,7 @@ public static class Es1DiscPrompt {
 		return chosen;
 	}
 
-	/// <summary>Why <paramref name="path"/> cannot be the disc, in the player's language, or null when it can.</summary>
+	/// <summary>Why the path cannot be the disc, in the player's language, or null when it can.</summary>
 	/// <param name="localization">The table the reason is read from.</param>
 	/// <param name="path">The folder or image chosen.</param>
 	public static string? Refusal(LocalizationTable localization, string path) => Es1Disc.Check(path, out string? detail) switch {

@@ -24,10 +24,12 @@ public static class Es1TakingFire {
 	public const int RetargetInterval = 10000;
 
 	/// <summary>
-	/// <c>Mech_AiFriendlyFireComplaint</c>(<paramref name="mech"/>): with the complaint countdown at 0, it is reloaded with
+	/// <c>Mech_AiFriendlyFireComplaint</c>: with the complaint countdown at 0, it is reloaded with
 	/// <see cref="ComplaintInterval"/> and <see cref="FriendlyFireMessage"/> posted on the pilot channel
 	/// (<see cref="Messages.Es1PilotChannel.PostSquadMessage"/>, not forced).
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void FriendlyFireComplaint(Es1Mech mech, Es1SimGlobals globals) {
 		if (mech.Countdowns.Complaint == 0) {
 			mech.Countdowns.Complaint = ComplaintInterval;
@@ -36,7 +38,7 @@ public static class Es1TakingFire {
 	}
 
 	/// <summary>
-	/// <c>Mech_AiOnTakingFire</c>(<paramref name="mech"/>, <paramref name="damage"/>, <paramref name="attacker"/>), in order:
+	/// <c>Mech_AiOnTakingFire</c>, in order:
 	/// <list type="number">
 	/// <item>the complaint (<see cref="FriendlyFireComplaint"/>) when the attacker is <c>PlayerMech</c> and the machine is in
 	/// its group;</item>
@@ -59,6 +61,10 @@ public static class Es1TakingFire {
 	/// <see cref="Es1CombatReassess.EnterCombat"/>.</item>
 	/// </list>
 	/// </summary>
+	/// <param name="mech">The machine hit.</param>
+	/// <param name="damage">The damage dealt.</param>
+	/// <param name="attacker">The attacker.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void OnTakingFire(Es1Mech mech, short damage, IEs1SimObject attacker, Es1SimGlobals globals) {
 		// Retail reads PlayerMech's group unchecked; with no PlayerMech the machine is in no player's group here.
 		var player = globals.PlayerMech;

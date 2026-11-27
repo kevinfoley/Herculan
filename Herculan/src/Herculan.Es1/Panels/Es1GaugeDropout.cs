@@ -36,13 +36,14 @@ public sealed class Es1GaugeDropout {
 	public byte Repaint { get; set; }
 
 	/// <summary>
-	/// <c>PanelGauge_TickDropout</c> (<c>ES1DBSIM 00031400</c>)(gauge) at the clock <paramref name="now"/>: at
+	/// <c>PanelGauge_TickDropout</c> (<c>ES1DBSIM 00031400</c>)(gauge) at the given clock: at
 	/// <see cref="DarkCondition"/> dark and nothing more; otherwise, while the clock is past <see cref="BurstStart"/> and
 	/// short of its end, each time it passes <see cref="NextFlip"/> the state flipped, the repaint byte set and the next
 	/// flip 1 to 30 counts on, and on going dark <see cref="Sound.Es1Sound.StaticRow"/> played; once the clock reaches the end the next burst scheduled
 	/// (<see cref="ScheduleDropout"/>), dark for a condition of 2 or more and shown below, and the repaint byte set. The
 	/// comparisons are unsigned, as retail's.
 	/// </summary>
+	/// <param name="now">The clock count now.</param>
 	/// <param name="random"><c>Math_RandomNext</c>'s state at <c>000b5c48</c>, of which the low word is read.</param>
 	/// <param name="sound">The simulator's sound file.</param>
 	public void Tick(uint now, SimRandom random, Sound.Es1Sound sound) {

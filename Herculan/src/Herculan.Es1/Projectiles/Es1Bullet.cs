@@ -56,9 +56,11 @@ public sealed class Es1Bullet : Es1Projectile {
 	public short Power { get; private set; }
 
 	/// <summary>
-	/// <c>Bullet_Construct</c>'s shape: the root <c>+0</c> of the type record of <paramref name="subtype"/>. A subtype past
+	/// <c>Bullet_Construct</c>'s shape: the root <c>+0</c> of the type record of the subtype. A subtype past
 	/// the table, or a root past the shapes, where retail reads past them, builds none.
 	/// </summary>
+	/// <param name="pool">The projectile pool.</param>
+	/// <param name="subtype">The projectile subtype.</param>
 	private static HercWorks.Core.Data.File.Dts.TSObject? Root(Es1ProjectilePool pool, short subtype) =>
 		subtype >= 0 && subtype < pool.BulletTypes.Count && pool.BulletTypes[subtype].ModelId is var root
 			&& root >= 0 && root < pool.BulletShapes.Count
@@ -69,13 +71,18 @@ public sealed class Es1Bullet : Es1Projectile {
 	private Es1BulletType? TypeRecord(Es1ProjectilePool pool) => Subtype < pool.BulletTypes.Count ? pool.BulletTypes[Subtype] : null;
 
 	/// <summary>
-	/// <c>Bullet_Fire</c>(<paramref name="machine"/>, <paramref name="angles"/>, <paramref name="muzzle"/>,
-	/// <paramref name="subtype"/>) (docs/es1/simulation/projectiles.md#firing--bullet_fire-00008134): <c>Bullet_Construct</c>
+	/// <c>Bullet_Fire</c>(machine, angles, muzzle,
+	/// subtype) (docs/es1/simulation/projectiles.md#firing--bullet_fire-00008134): <c>Bullet_Construct</c>
 	/// from the pool; the position, the angles, the frame word 0, the owner, the power and the age 0, and the speed the
 	/// projectile record's <c>+0xa</c>; then the type record's sound <c>+8</c> + 10 at the muzzle
 	/// (<see cref="Sound.Es1Sound.PlayAt"/>). Answers the round, or null with the pool full, where retail writes its fields
 	/// through the null pointer; with no round or no type record no sound plays, an engine guard.
 	/// </summary>
+	/// <param name="globals">The simulation's globals.</param>
+	/// <param name="machine">The firing machine.</param>
+	/// <param name="angles">The shot's angles.</param>
+	/// <param name="muzzle">The muzzle's position.</param>
+	/// <param name="subtype">The projectile subtype.</param>
 	public static Es1Bullet? Fire(Es1SimGlobals globals, IEs1SimObject machine, (short Pitch, short Roll, short Heading) angles,
 			Vec3i muzzle, short subtype) {
 		var round = Construct(globals.Projectiles, subtype);
@@ -97,9 +104,15 @@ public sealed class Es1Bullet : Es1Projectile {
 	}
 
 	/// <summary>
-	/// <c>Bullet_FirePowered</c>(<paramref name="power"/>, <paramref name="machine"/>, <paramref name="angles"/>,
-	/// <paramref name="muzzle"/>, <paramref name="subtype"/>): <see cref="Fire"/> with the power stored after it.
+	/// <c>Bullet_FirePowered</c>(power, machine, angles,
+	/// muzzle, subtype): <see cref="Fire"/> with the power stored after it.
 	/// </summary>
+	/// <param name="globals">The simulation's globals.</param>
+	/// <param name="power">The shot's power.</param>
+	/// <param name="machine">The firing machine.</param>
+	/// <param name="angles">The shot's angles.</param>
+	/// <param name="muzzle">The muzzle's position.</param>
+	/// <param name="subtype">The projectile subtype.</param>
 	public static Es1Bullet? FirePowered(Es1SimGlobals globals, short power, IEs1SimObject machine,
 			(short Pitch, short Roll, short Heading) angles, Vec3i muzzle, short subtype) {
 		var round = Fire(globals, machine, angles, muzzle, subtype);
@@ -111,10 +124,12 @@ public sealed class Es1Bullet : Es1Projectile {
 	}
 
 	/// <summary>
-	/// <c>Bullet_Construct</c>(0, <paramref name="subtype"/>) (docs/es1/formats/bullets-skimmer-dat.md#the-load): an element
+	/// <c>Bullet_Construct</c>(0, subtype) (docs/es1/formats/bullets-skimmer-dat.md#the-load): an element
 	/// of the pool, none when it is full; the shape, the subtype byte, the record <c>Proj_LookupRecord</c>(
-	/// <paramref name="subtype"/>, 2) and the frame countdown at the type record's interval <c>+6</c>.
+	/// subtype, 2) and the frame countdown at the type record's interval <c>+6</c>.
 	/// </summary>
+	/// <param name="pool">The projectile pool.</param>
+	/// <param name="subtype">The projectile subtype.</param>
 	private static Es1Bullet? Construct(Es1ProjectilePool pool, short subtype) {
 		if (!pool.CanAllocate) {
 			return null;

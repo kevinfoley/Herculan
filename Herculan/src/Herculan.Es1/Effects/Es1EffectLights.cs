@@ -29,11 +29,13 @@ public sealed class Es1EffectLights : IEffectLightSlots {
 	public int SlotCount => SlotTotal;
 
 	/// <summary>
-	/// <c>EffectLight_Construct</c> (<c>000054b0</c>)(0, <paramref name="intensity"/>, <paramref name="point"/>): a handle
+	/// <c>EffectLight_Construct</c> (<c>000054b0</c>)(0, intensity, point): a handle
 	/// from the pool, then <c>LightManager_ClaimSlot</c> (<c>00004dfc</c>), the first free slot at the point, and
 	/// <c>LightManager_SetSlotIntensity</c> (<c>00004f34</c>). Answers the slot, or −1 with every handle out, the ones
 	/// queued since the last flush included. Three handles never fill twenty slots.
 	/// </summary>
+	/// <param name="intensity">The light's intensity.</param>
+	/// <param name="point">The light's position.</param>
 	public int Construct(short intensity, Vec3i point) {
 		if (_handlesOut >= HandleTotal) {
 			return -1;
@@ -53,9 +55,10 @@ public sealed class Es1EffectLights : IEffectLightSlots {
 	}
 
 	/// <summary>
-	/// <c>EffectLight_Destruct</c>(<paramref name="handle"/>, 3): <c>LightManager_ReleaseSlot</c> (<c>00004e84</c>) now,
+	/// <c>EffectLight_Destruct</c>(handle, 3): <c>LightManager_ReleaseSlot</c> (<c>00004e84</c>) now,
 	/// the handle queued; nothing for −1.
 	/// </summary>
+	/// <param name="handle">The slot <see cref="Construct"/> answered.</param>
 	public void Destruct(int handle) {
 		if (handle >= 0) {
 			_slots[handle] = default;

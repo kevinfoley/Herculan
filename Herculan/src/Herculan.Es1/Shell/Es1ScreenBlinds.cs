@@ -26,9 +26,9 @@ public sealed class Es1ScreenBlinds {
 
 	/// <summary>
 	/// <c>Screen_BlindsCopy</c> (<c>0004bc0d</c>): the render context <c>0007fcd8</c> installed as it stands, the display's
-	/// source page set to <paramref name="from"/> and its draw page to <paramref name="to"/>; for each pass <i>i</i> below
-	/// <paramref name="passes"/>, the region of rows <i>r</i> to <i>r</i> + 1, columns 0 to <c>0x13f</c>, copied for
-	/// <i>r</i> = <i>i</i>, <i>i</i> + <paramref name="passes"/>, … below <see cref="RowCount"/>
+	/// source page set to from and its draw page to to; for each pass <i>i</i> below
+	/// passes, the region of rows <i>r</i> to <i>r</i> + 1, columns 0 to <c>0x13f</c>, copied for
+	/// <i>r</i> = <i>i</i>, <i>i</i> + passes, … below <see cref="RowCount"/>
 	/// (<c>Region_CopyBetweenPages</c>), then a tick waited (<c>Shell_WaitTicks</c>(1)); then both pages and the context
 	/// put back. The flag is not read. With a menu open, <c>Shell_DrawScreen</c> leaves the context in clip mode 2 around
 	/// the window (docs/es1/shell/menus.md#drawing-a-screen), so each band is copied in the parts that lie above, left of,

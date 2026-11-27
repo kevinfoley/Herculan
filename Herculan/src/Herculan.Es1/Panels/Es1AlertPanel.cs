@@ -41,11 +41,14 @@ public abstract class Es1AlertPanel {
 	private readonly List<Es1Widget> _widgets = new(MaxWidgets);
 
 	/// <summary>
-	/// <c>AlertPanel_CtorBase</c>(panel, <paramref name="rect"/>, <paramref name="keepsScreen"/>): the rect, the region's
+	/// <c>AlertPanel_CtorBase</c>(panel, rect, keepsScreen): the rect, the region's
 	/// rect (0, 0, <i>x1</i> − <i>x0</i>, <i>y1</i> − <i>y0</i>), a buffer for the screen under the panel with
-	/// <paramref name="keepsScreen"/>, the root the mouse works on now kept, a root of the panel's own on its rect, the
+	/// keepsScreen, the root the mouse works on now kept, a root of the panel's own on its rect, the
 	/// display's draw page kept, no cancel widget and the cursor to be put back on leaving.
 	/// </summary>
+	/// <param name="globals">The alert globals.</param>
+	/// <param name="rect">The panel's rectangle.</param>
+	/// <param name="keepsScreen">Whether a buffer keeps the screen under the panel.</param>
 	protected Es1AlertPanel(Es1AlertGlobals globals, Es1Rect rect, bool keepsScreen) {
 		Globals = globals;
 		Rect = rect;
@@ -148,7 +151,8 @@ public abstract class Es1AlertPanel {
 	/// <summary>Slot <c>+4</c>, the paint, which <see cref="Enter"/> calls; the base's is 0.</summary>
 	protected abstract void Paint();
 
-	/// <summary>Slot <c>+0xc</c>, the run: the member's loop, its answer in <paramref name="answer"/>; the base's is 0.</summary>
+	/// <summary>Slot <c>+0xc</c>, the run: the member's loop, its answer in the answer box; the base's is 0.</summary>
+	/// <param name="answer">Receives the answer.</param>
 	public abstract IEnumerable<Es1Wait> Run(StrongBox<int> answer);
 
 	/// <summary>Slot <c>+0x18</c>, the caption a button's paint asks its owner for; the base's is 0.</summary>
@@ -162,8 +166,9 @@ public abstract class Es1AlertPanel {
 	/// Slot <c>+8</c>, <c>AlertPanel_SetTitleText</c> (<c>000461ec</c>): <see cref="TitleBar"/> framed, its top and left
 	/// edges in <c>0x10</c>, its right edge in <c>0x1b</c> and its bottom edge in <c>0x1c</c>; corner frames 0, 1, 2 and
 	/// 3 of <c>WidgetCorners</c> blitted with flags 0 at (<i>x0</i>, <i>y0</i>), (<i>x1</i> − 4, <i>y0</i>), (<i>x0</i>,
-	/// <i>y1</i> − 4) and (<i>x1</i> − 4, <i>y1</i> − 4); then <paramref name="text"/> on the title label.
+	/// <i>y1</i> − 4) and (<i>x1</i> − 4, <i>y1</i> − 4); then the text on the title label.
 	/// </summary>
+	/// <param name="text">The title text, or null.</param>
 	public virtual void SetTitleText(string? text) {
 		var bar = TitleBar;
 		Canvas.DrawLine(bar.X0, bar.Y0, bar.X1, bar.Y0, TitleLightEdge);
@@ -179,7 +184,7 @@ public abstract class Es1AlertPanel {
 	}
 
 	/// <summary>
-	/// Slot <c>+0x14</c>, <c>AlertPanel_HandleEvent</c> (<c>00046670</c>)(panel, <paramref name="block"/>)
+	/// Slot <c>+0x14</c>, <c>AlertPanel_HandleEvent</c> (<c>00046670</c>)(panel, block)
 	/// (docs/es1/simulation/alert-panels.md#keys--alertpanel_handleevent-00046670): button 0 presses the focused widget,
 	/// or focuses widget 0 with none, and latches the button; button 1 focuses the next and latches it; then the command
 	/// word: [Esc] presses the cancel widget when there is one, [Tab] focuses the next, [Alt+Tab] the previous, [Return]
@@ -188,6 +193,7 @@ public abstract class Es1AlertPanel {
 	/// whether or not it acted, and 0 for any other code. The shell's reads its block's buttons at <c>+0x1d</c> and
 	/// <c>+0x1e</c>, which its input (<see cref="Es1AlertGlobals.Input"/>) hands over as buttons 0 and 1.
 	/// </summary>
+	/// <param name="block">The input block.</param>
 	public virtual int HandleEvent(Es1PlayerInputBlock block) {
 		var input = Globals.Input;
 		if (block.Buttons[0] != 0) {
@@ -232,10 +238,12 @@ public abstract class Es1AlertPanel {
 		}
 	}
 
-	/// <summary>The index of <paramref name="widget"/> in the list, as the panels' walks over it find it; −1 for one not in it.</summary>
+	/// <summary>The index of the widget in the list, as the panels' walks over it find it; −1 for one not in it.</summary>
+	/// <param name="widget">The widget.</param>
 	public int IndexOf(Es1Widget widget) => _widgets.IndexOf(widget);
 
-	/// <summary>Adds <paramref name="widget"/> to the list, as a member's constructor does after registering it with <see cref="Root"/>.</summary>
+	/// <summary>Adds the widget to the list, as a member's constructor does after registering it with <see cref="Root"/>.</summary>
+	/// <param name="widget">The widget.</param>
 	protected void AddWidget(Es1Widget widget) {
 		if (_widgets.Count >= MaxWidgets) {
 			throw new InvalidOperationException($"A panel holds {MaxWidgets} widgets.");
@@ -325,9 +333,10 @@ public abstract class Es1AlertPanel {
 	}
 
 	/// <summary>
-	/// <c>AlertPanel_LoadCursor</c> (<c>000463c0</c>)(panel, <paramref name="cursor"/>): the cursor that is up kept, the
-	/// panel's kept, and <paramref name="cursor"/> made the drawn one (<c>Cursor_SetImage</c>).
+	/// <c>AlertPanel_LoadCursor</c> (<c>000463c0</c>)(panel, the cursor): the cursor that is up kept, the
+	/// panel's kept, and the cursor made the drawn one (<c>Cursor_SetImage</c>).
 	/// </summary>
+	/// <param name="cursor">The cursor image, or null.</param>
 	public void LoadCursor(Es1CursorImage? cursor) {
 		var drawn = Globals.Display.Cursor;
 		SavedCursor = drawn.Image;
@@ -343,13 +352,14 @@ public abstract class Es1AlertPanel {
 	}
 
 	/// <summary>
-	/// <c>AlertPanel_SetFocus</c> (<c>00046470</c>)(panel, <paramref name="index"/>) (docs/es1/simulation/alert-panels.md#focus):
+	/// <c>AlertPanel_SetFocus</c> (<c>00046470</c>)(panel, index) (docs/es1/simulation/alert-panels.md#focus):
 	/// for −1, with a mouse device, an input read, and the first widget whose rect holds the block's pointer, the
 	/// pointer in the screen's pixels and the rect in the panel's, edges included; −1 when none does or there is no mouse
 	/// device. For any other index the pointer goes to the widget's center plus the panel's corner, the driver's with a
 	/// mouse device and the drawn cursor's either way. The index becomes the focus. An index past the list, where retail
 	/// reads past it, moves nothing, an engine guard.
 	/// </summary>
+	/// <param name="index">The widget's index.</param>
 	public void SetFocus(int index) {
 		var globals = Globals;
 		var mouse = globals.MouseDevice;
@@ -374,7 +384,8 @@ public abstract class Es1AlertPanel {
 		Focus = index;
 	}
 
-	/// <summary><c>AlertPanel_FocusChild</c> (<c>00046584</c>)(panel, <paramref name="widget"/>): the widget's index focused; nothing for one not in the list.</summary>
+	/// <summary><c>AlertPanel_FocusChild</c> (<c>00046584</c>)(panel, widget): the widget's index focused; nothing for one not in the list.</summary>
+	/// <param name="widget">The widget.</param>
 	public void FocusChild(Es1Widget widget) {
 		int index = IndexOf(widget);
 		if (index != -1) {
@@ -395,10 +406,12 @@ public abstract class Es1AlertPanel {
 	}
 
 	/// <summary>
-	/// <c>AlertPanel_PressWidget</c> (<c>0004662c</c>)(panel, <paramref name="flags"/>, <paramref name="index"/>): the
+	/// <c>AlertPanel_PressWidget</c> (<c>0004662c</c>)(panel, flags, index): the
 	/// widget's click with the flags, unless it is in state 2 or 3; its state is not changed, so a key's press shows no
 	/// pressed look. An index past the list, where retail reads past it, presses nothing, an engine guard.
 	/// </summary>
+	/// <param name="flags">The click's button bits.</param>
+	/// <param name="index">The widget's index.</param>
 	public void PressWidget(short flags, int index) {
 		if (index < 0 || index >= _widgets.Count) {
 			return;

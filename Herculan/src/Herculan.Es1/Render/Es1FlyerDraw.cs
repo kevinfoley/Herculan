@@ -26,7 +26,10 @@ public sealed class Es1FlyerDraw : IDisposable {
 	private readonly List<IDisposable> _owned = new();
 	private readonly List<FlyerItems> _flyers = new();
 
-	/// <summary>Uploads each flyer type's shape and lists an item set for each flyer of <paramref name="flyers"/>.</summary>
+	/// <summary>Uploads each flyer type's shape and lists an item set for each flyer of the flyers.</summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="scene">The zone scene.</param>
+	/// <param name="flyers">The flyers.</param>
 	/// <param name="detail">The detail setting the flyers are drawn at, read on every <see cref="Update"/>.</param>
 	public Es1FlyerDraw(GL gl, Es1ZoneScene scene, IEnumerable<Es1Flyer> flyers, Es1AppliedDetail detail) {
 		_scene = scene;
@@ -50,10 +53,13 @@ public sealed class Es1FlyerDraw : IDisposable {
 		_flyers.Select(flyer => ((object)flyer.Flyer, flyer.Items));
 
 	/// <summary>
-	/// Every flyer placed and culled for <paramref name="camera"/>, each detail level picked under a focal length of
-	/// 2^<paramref name="focalShift"/>; with <paramref name="flatRamps"/> each takes <c>WorldShades_ResetRamps</c>' ramps
+	/// Every flyer placed and culled for the camera, each detail level picked under a focal length of
+	/// 2^focalShift; with the flat-ramps flag each takes <c>WorldShades_ResetRamps</c>' ramps
 	/// (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="focalShift">The focal length's shift.</param>
+	/// <param name="flatRamps">Whether each flyer takes the flat ramps.</param>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		foreach (var flyer in _flyers) {
 			flyer.Update(camera, _scene.Shading, _detail.Setting.ObjectBias, focalShift, flatRamps);
@@ -135,8 +141,12 @@ public sealed class Es1FlyerDraw : IDisposable {
 
 		/// <summary>
 		/// Whether a piece's cell is cell 0, the one each sequence of the static instance shows, and its
-		/// <c>TSDetailPart</c>, if any, picks its level with <paramref name="bias"/> from the eye's distance in its node.
+		/// <c>TSDetailPart</c>, if any, picks its level with the bias from the eye's distance in its node.
 		/// </summary>
+		/// <param name="gate">The cell gate.</param>
+		/// <param name="camera">The camera.</param>
+		/// <param name="focalShift">The focal length's shift.</param>
+		/// <param name="bias">The detail bias.</param>
 		private bool OnScreen(CellGate gate, Camera camera, int focalShift, int bias) {
 			if (gate.IsGated && gate.Frame != 0) {
 				return false;

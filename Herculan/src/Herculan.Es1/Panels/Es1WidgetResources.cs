@@ -41,11 +41,13 @@ public sealed class Es1WidgetResources {
 	/// <summary><c>WidgetCorners</c>, the frames of <c>dba\corners</c>.</summary>
 	public IReadOnlyList<DynamixBitmap>? Corners { get; init; }
 
-	/// <summary>Style record <paramref name="index"/>; none when the table or the record is missing.</summary>
+	/// <summary>A style record by index; none when the table or the record is missing.</summary>
+	/// <param name="index">The record's index.</param>
 	public Es1WidgetStyle? Style(int index) =>
 		Styles?.Styles is { } styles && index >= 0 && index < styles.Length ? styles[index] : null;
 
-	/// <summary><c>Widget_LoadStylesAndFonts</c> from <paramref name="content"/>.</summary>
+	/// <summary><c>Widget_LoadStylesAndFonts</c> from the content.</summary>
+	/// <param name="content">The game's content.</param>
 	public static Es1WidgetResources Load(GameContent content) => new() {
 		Styles = content.Read("dat", "STYLES.DAT") is { } styles ? new Es1WidgetStylesTransformer().Parse(styles) : null,
 		Title = HudFont.Load(content, "TITLE", "dfn"),

@@ -50,8 +50,8 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	private readonly Es1Label _message;
 
 	/// <summary>
-	/// <c>HddCommandScreen_Ctor</c> (<c>ES1DBSIM 0003ee58</c>)(0, <paramref name="display"/>, <paramref name="orderColumn"/>,
-	/// <paramref name="screen"/>) (docs/es1/simulation/hdd-command-screen.md#building-it--hddcommandscreen_ctor-0003ee58):
+	/// <c>HddCommandScreen_Ctor</c> (<c>ES1DBSIM 0003ee58</c>)(0, display, orderColumn,
+	/// screen) (docs/es1/simulation/hdd-command-screen.md#building-it--hddcommandscreen_ctor-0003ee58):
 	/// the page base; the three pick records; the blink deadline the clock + 30; the map (<see cref="Es1HddMap"/>) on the
 	/// map viewport, the screen rect with its <i>x1</i> the order column's <i>x0</i> − 2; the two click regions over the
 	/// order column and the map viewport, registered in that order on the cockpit's root; the message row, a
@@ -61,6 +61,9 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	/// no order armed; the bar's <i>x</i> from the column's <i>x0</i> + 1 to <i>x0</i> + 3; the map clean and the blink
 	/// phase set; and no squadmate selected.
 	/// </summary>
+	/// <param name="display">The display the screen belongs to.</param>
+	/// <param name="orderColumn">The order column's rectangle.</param>
+	/// <param name="screen">The screen's rectangle.</param>
 	internal Es1HddCommandScreen(Es1HddDisplay display, Es1Rect orderColumn, Es1Rect screen)
 		: base(display, orderColumn, screen) {
 		var cockpit = display.Cockpit;
@@ -337,7 +340,7 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	public override void Show() => SetShown(Es1Widget.Up, Es1CockpitCursors.MapPick);
 
 	/// <summary>
-	/// Slot <c>+0x14</c>, <c>HddCommandScreen_KeyDispatch</c> (<c>0003f938</c>)(screen, <paramref name="code"/>)
+	/// Slot <c>+0x14</c>, <c>HddCommandScreen_KeyDispatch</c> (<c>0003f938</c>)(screen, code)
 	/// (docs/es1/simulation/hdd-command-screen.md#clicks-and-keys): one of <see cref="KeyCodes"/> acts and answers 1, any
 	/// other code 0. <c>D</c>, <c>A</c>, <c>F</c>, <c>T</c>, <c>G</c>, <c>O</c>, <c>C</c> and <c>E</c> click order rows 10
 	/// to 17 (<see cref="SynthesizeListClick"/>); <c>X</c> and Backspace press <c>XMIT</c> and <c>CANCEL</c>
@@ -345,6 +348,7 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	/// <see cref="PreviousOrder"/>; <c>Enter</c> and <c>Tab</c> with a pick wanted, <see cref="PickByEnter"/> and
 	/// <see cref="CycleChosenUnit"/>; keypad 5 the pan offsets 0.
 	/// </summary>
+	/// <param name="code">The key code.</param>
 	public override short KeyDispatch(ushort code) {
 		int key = Array.IndexOf(KeyCodes, code);
 		switch (key) {
@@ -386,8 +390,9 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	/// <c>HddCommandScreen_RefreshOrders</c> (<c>00040948</c>)(screen) (docs/es1/simulation/hdd-command-screen.md#the-order-list):
 	/// each order row's fonts, wholly <c>ColorSchemePanels</c>[0] while unavailable or while the display is dark, else
 	/// <c>cpylw</c> for the armed order and <c>cpgreen</c> for any other, each with its hotkey in <c>cpred</c>; its order
-	/// written on <paramref name="canvas"/>; and the list clean. It copies nothing to the page on the screen.
+	/// written on the canvas; and the list clean. It copies nothing to the page on the screen.
 	/// </summary>
+	/// <param name="canvas">The canvas the orders are written on.</param>
 	public void RefreshOrders(Es1PanelCanvas canvas) {
 		bool dark = Display.Dropout.Dark;
 		for (int row = 0; row < RowCount; row++) {
@@ -435,7 +440,7 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	}
 
 	/// <summary>
-	/// <c>HddCommandScreen_SetMessageRow</c> (<c>00040834</c>)(screen, <paramref name="flag"/>, <paramref name="text"/>)
+	/// <c>HddCommandScreen_SetMessageRow</c> (<c>00040834</c>)(screen, flag, text)
 	/// (docs/es1/simulation/hdd-command-screen.md#orders-and-picks): given no text, <c>SELECT PILOT</c> or
 	/// <c>SELECT COMMAND</c> while no pick is wanted, by whether a squadmate is selected, and while one is
 	/// <c>DESIGNATE TARGET</c> for <see cref="AttackOrder"/> and <c>DESIGNATE LOCATION</c> for any other;
@@ -444,6 +449,8 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	/// 11 to 14 armed (<see cref="SelectOrder"/>), so the other orders, for which retail's register is stale, never reach
 	/// the choice.
 	/// </summary>
+	/// <param name="flag">1 to set the countdown.</param>
+	/// <param name="text">The text, or null for the default.</param>
 	public void SetMessageRow(int flag, string? text) {
 		text ??= Display.Text(MessageGroup, !WantsPick
 			? SelectedSlot == None ? SelectPilotText : SelectCommandText
@@ -460,10 +467,12 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	// ---- Clicks and keys.
 
 	/// <summary>
-	/// <c>HddCommandScreen_QueueListClick</c> (<c>0003fed8</c>)(screen, <paramref name="point"/>, <paramref name="region"/>)
+	/// <c>HddCommandScreen_QueueListClick</c> (<c>0003fed8</c>)(screen, point, region)
 	/// (docs/es1/simulation/hdd-command-screen.md#clicks-and-keys): the click queued with the mouse's double-click flag,
 	/// the region and the point, and the display's page 0 update flag and paint stage 2.
 	/// </summary>
+	/// <param name="point">The click's point.</param>
+	/// <param name="region">The region clicked.</param>
 	public void QueueListClick((int X, int Y) point, Es1HddListGadget region) {
 		ListClickWaiting = true;
 		ListClickDouble = Cockpit.MouseDoubleClick;
@@ -524,13 +533,15 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	}
 
 	/// <summary>
-	/// <c>HddCommandScreen_SynthesizeListClick</c> (<c>00040114</c>)(screen, <paramref name="pick"/>,
-	/// <paramref name="region"/>), the keys' way in: the key flag set; for the order column, row <paramref name="pick"/> −
+	/// <c>HddCommandScreen_SynthesizeListClick</c> (<c>00040114</c>)(screen, pick,
+	/// region), the keys' way in: the key flag set; for the order column, row pick −
 	/// 10's top-left plus (1, 1); for the map, pick 0 the pointer's position on the canvas (<c>Cursor_GetPosition</c>, less
 	/// the canvas context's rect corner, plus its origin) and pick 1 the chosen unit's position projected through the
 	/// camera and <see cref="Es1HddMap.ToViewport"/>; each to <see cref="QueueListClick"/>. Pick 1 with no chosen unit, where retail
 	/// reads through a null pointer, queues nothing, an engine guard.
 	/// </summary>
+	/// <param name="pick">The pick: the row for the order column, 0 or 1 for the map.</param>
+	/// <param name="region">The region clicked.</param>
 	public void SynthesizeListClick(int pick, Es1HddListGadget region) {
 		KeyClick = true;
 		if (ReferenceEquals(region, OrderRegion)) {
@@ -551,7 +562,7 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	// ---- Orders and picks.
 
 	/// <summary>
-	/// <c>HddCommandScreen_SelectOrder</c> (<c>000405ac</c>)(screen, <paramref name="order"/>)
+	/// <c>HddCommandScreen_SelectOrder</c> (<c>000405ac</c>)(screen, order)
 	/// (docs/es1/simulation/hdd-command-screen.md#orders-and-picks): for 11 to 14 the map-pick cursor, <c>MCURSOR</c>, in
 	/// the other views' slot, <see cref="SetMessageRow"/>(0, <c>DESIGNATE TARGET</c> for 11 and <c>DESIGNATE LOCATION</c>
 	/// for the rest), a pick wanted, the pick cursor up and not ready to send; for any other order, <see cref="None"/>
@@ -559,6 +570,7 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	/// order is armed, the old one kept as <see cref="PreviousArmed"/>, with the display's page 0 update flag and paint
 	/// stage 2.
 	/// </summary>
+	/// <param name="order">The order.</param>
 	public void SelectOrder(int order) {
 		if (order is >= AttackOrder and <= GotoOrder) {
 			Cockpit.Cursors.SetOffForwardCursor(Es1CockpitCursors.MapPick);
@@ -582,13 +594,14 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	}
 
 	/// <summary>
-	/// <c>HddCommandScreen_SelectPilot</c> (<c>00040664</c>)(screen, <paramref name="slot"/>), from
+	/// <c>HddCommandScreen_SelectPilot</c> (<c>00040664</c>)(screen, slot), from
 	/// <see cref="Es1HddDisplay.SelectPilot"/> and <see cref="CancelTransmission"/>: with a squadmate selected, its
 	/// <see cref="TogglePilotButton"/>, and with an order armed <see cref="SelectOrder"/>(<see cref="None"/>), its current
 	/// pick dropped, not ready, no squadmate, no chosen unit, no pick wanted and a message clear pending; then the slot
 	/// stored; for <see cref="None"/> <see cref="DisableOrders"/>, otherwise its <see cref="TogglePilotButton"/>,
 	/// <see cref="EnableOrders"/> and a squadmate selected; the display's page 0 update flag and paint stage 2.
 	/// </summary>
+	/// <param name="slot">The squadmate's slot, or <see cref="None"/>.</param>
 	public void SelectPilot(int slot) {
 		if (SelectedSlot != None) {
 			TogglePilotButton(SelectedSlot);
@@ -616,10 +629,11 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	}
 
 	/// <summary>
-	/// <c>HddCommandScreen_FillOrderRecord</c> (<c>0004070c</c>)(screen, <paramref name="order"/>): with a squadmate
+	/// <c>HddCommandScreen_FillOrderRecord</c> (<c>0004070c</c>)(screen, order): with a squadmate
 	/// selected, its saved pick into the record, a unit into the subject <c>+0x12</c> and a point into <c>+6</c>; the
 	/// record's other field is left as it was.
 	/// </summary>
+	/// <param name="order">The order record to fill.</param>
 	public void FillOrderRecord(Es1SquadOrder order) {
 		if (SelectedPick is not { } pick) {
 			return;
@@ -685,10 +699,11 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	public void DisableOrders() => SetAvailable(false);
 
 	/// <summary>
-	/// <c>HddCommandScreen_TogglePilotButton</c> (<c>00041884</c>)(screen, <paramref name="slot"/>): the marker in that
+	/// <c>HddCommandScreen_TogglePilotButton</c> (<c>00041884</c>)(screen, slot): the marker in that
 	/// place's <see cref="Es1HddMarker.Toggled"/> flipped and its <see cref="Es1HddMarker.Invalidate"/>. A marker past
 	/// the count, which retail has freed, is left, an engine guard.
 	/// </summary>
+	/// <param name="slot">The squadmate's slot.</param>
 	public void TogglePilotButton(int slot) {
 		if (Map.LiveMarker(slot) is { } marker) {
 			marker.Toggled = !marker.Toggled;
@@ -771,13 +786,14 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	}
 
 	/// <summary>
-	/// <c>HddCommandScreen_CycleUnit</c> (<c>000419f4</c>)(screen, <paramref name="side"/>), through
+	/// <c>HddCommandScreen_CycleUnit</c> (<c>000419f4</c>)(screen, side), through
 	/// <c>HddCommandScreen_CycleHostileUnit</c> (<c>000419cc</c>) for 1 and <c>HddCommandScreen_CycleFriendlyUnit</c>
 	/// (<c>000419e0</c>) for 0 (docs/es1/simulation/hdd-command-screen.md#tabs-step): from after the chosen unit in the
 	/// live object list when it is set and on that side, else from the list's head, which is tried first, wrapping, the
 	/// first object <see cref="IsEligibleUnit"/> passes, or none after a full lap. A chosen unit no longer in the list,
 	/// whose search never ends in retail, starts from the head, an engine guard.
 	/// </summary>
+	/// <param name="side">The side: 1 for hostile, 0 for friendly.</param>
 	public IEs1SimObject? CycleUnit(int side) {
 		var list = Cockpit.Globals.LiveObjects;
 		int index;
@@ -816,13 +832,15 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	}
 
 	/// <summary>
-	/// <c>HddCommandScreen_IsEligibleUnit</c> (<c>00041b1c</c>)(screen, <paramref name="side"/>, <paramref name="simObject"/>)
+	/// <c>HddCommandScreen_IsEligibleUnit</c> (<c>00041b1c</c>)(screen, side, simObject)
 	/// (docs/es1/simulation/sim-object-base.md#the-live-object-list): its group's side is the side asked for, it is not
 	/// destroyed, <see cref="Es1HddMap.IsOnMap"/> passes its position, its <c>+0x92</c> is set, and on a side other than 0 the
 	/// cockpit's machine knows it (<see cref="Es1SensorModel.KnowsObject"/>). Every HERC, flyer and structure constructor
 	/// sets <c>+0x92</c>, and no clear of it is known, so it holds for every object here. No object, no group or no
 	/// machine, through which retail reads, answers false, engine guards.
 	/// </summary>
+	/// <param name="side">The side asked for.</param>
+	/// <param name="simObject">The object, or null.</param>
 	public bool IsEligibleUnit(int side, IEs1SimObject? simObject) =>
 		simObject is { Group: { } group } && (sbyte)group.Side == side && !simObject.Destroyed && Map.IsOnMap(simObject.Position)
 		&& (side == 0 || Cockpit.Machine is { } machine && Es1SensorModel.KnowsObject(machine, simObject));
@@ -848,10 +866,14 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 		OrdersDirty = true;
 	}
 
-	/// <summary>The bar moved to <paramref name="row"/>'s <i>y0</i> + 3 to its <i>y1</i>.</summary>
+	/// <summary>The bar moved to the row's <i>y0</i> + 3 to its <i>y1</i>.</summary>
+	/// <param name="row">The row.</param>
 	private void MoveBar(Es1Label row) => Bar = Bar with { Y0 = row.Rect.Y0 + 3, Y1 = row.Rect.Y1 };
 
-	/// <summary>The update's row fonts: wholly <c>ColorSchemePanels</c>[0] while the order is unavailable, else <paramref name="font"/> with the hotkey in <c>cpred</c>.</summary>
+	/// <summary>The update's row fonts: wholly <c>ColorSchemePanels</c>[0] while the order is unavailable, else the font with the hotkey in <c>cpred</c>.</summary>
+	/// <param name="row">The row.</param>
+	/// <param name="order">The order.</param>
+	/// <param name="font">The font index.</param>
 	private void SetRowFonts(Es1Label row, int order, int font) {
 		if (!_available[order - FirstOrder]) {
 			row.Font = Display.Font(Es1CockpitViews.CpBlue);
@@ -864,9 +886,12 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 
 	/// <summary>
 	/// <c>Label_SetTextWithHotkey</c>(the row, the order's <c>SquadOrderAttributes</c> byte, its <c>SquadOrderStrings</c>
-	/// text) on <paramref name="canvas"/>. An order with no attribute byte, where retail reads one through its pointer,
+	/// text) on the canvas. An order with no attribute byte, where retail reads one through its pointer,
 	/// draws no hotkey here, an engine guard.
 	/// </summary>
+	/// <param name="canvas">The canvas written on.</param>
+	/// <param name="row">The row.</param>
+	/// <param name="order">The order.</param>
 	private void WriteOrder(Es1PanelCanvas canvas, Es1Label row, int order) {
 		var orders = Display.Strings?.Group(OrderGroup) ?? [];
 		if (order >= orders.Count) {
@@ -934,9 +959,11 @@ public sealed class Es1HddCommandScreen : Es1HddPage {
 	private const int PickSound = 0x14;
 
 	/// <summary>
-	/// A map pick taken into the selected squadmate's current pick: <paramref name="unit"/>, or for none
+	/// A map pick taken into the selected squadmate's current pick: the unit, or for none
 	/// <see cref="Es1HddMap.MapCursor"/> as a point; held, ready to send, the pick's sound and <see cref="ClearMessageRow"/>.
 	/// </summary>
+	/// <param name="pick">The squadmate's current pick.</param>
+	/// <param name="unit">The unit picked, or null for a point.</param>
 	private void TakePick(Es1HddPickRecord? pick, IEs1SimObject? unit) {
 		if (pick != null) {
 			if (unit != null) {

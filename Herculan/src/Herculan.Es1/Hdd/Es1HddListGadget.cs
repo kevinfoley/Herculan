@@ -10,9 +10,11 @@ namespace Herculan.Es1.Hdd;
 /// </summary>
 public sealed class Es1HddListGadget : Es1ButtonWidget {
 	/// <summary>
-	/// <c>HDDListGadget_Ctor</c> (<c>ES1DBSIM 00041fcc</c>)(0, <paramref name="screen"/>, <paramref name="rect"/>): the
+	/// <c>HDDListGadget_Ctor</c> (<c>ES1DBSIM 00041fcc</c>)(0, screen, rect): the
 	/// widget on the rect, the drag flag 0, the state 0 and the screen <c>+0x28</c>.
 	/// </summary>
+	/// <param name="screen">The command screen the gadget belongs to.</param>
+	/// <param name="rect">The gadget's rectangle.</param>
 	internal Es1HddListGadget(Es1HddCommandScreen screen, Es1Rect rect) {
 		Screen = screen;
 		Rect = rect;
@@ -22,9 +24,10 @@ public sealed class Es1HddListGadget : Es1ButtonWidget {
 	public Es1HddCommandScreen Screen { get; }
 
 	/// <summary>
-	/// Slot <c>+0xc</c>, <c>HDDListGadget_OnClick</c> (<c>0004208c</c>)(gadget, <paramref name="value"/>): with bit 0 set,
+	/// Slot <c>+0xc</c>, <c>HDDListGadget_OnClick</c> (<c>0004208c</c>)(gadget, value): with bit 0 set,
 	/// <see cref="Es1HddCommandScreen.QueueListClick"/>(the pointer's canvas point, the gadget), with no sound.
 	/// </summary>
+	/// <param name="value">The click's button bits.</param>
 	public override void OnClick(short value) {
 		if ((value & 1) == 0) {
 			return;

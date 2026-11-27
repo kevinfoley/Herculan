@@ -53,13 +53,15 @@ public sealed class Es1HddMap {
 	/// <summary>
 	/// The map's part of <c>HddCommandScreen_Ctor</c> (<c>ES1DBSIM 0003ee58</c>)
 	/// (docs/es1/simulation/hdd-command-screen.md#building-it--hddcommandscreen_ctor-0003ee58): the map viewport
-	/// <paramref name="viewport"/>; its render context's origin minus half the viewport, so (0, 0) is its center; the
+	/// as given; its render context's origin minus half the viewport, so (0, 0) is its center; the
 	/// center (0, 0); the grown mission box and the full zoom-out scale 2 × max((((<i>x1</i> − <i>x0</i>) &gt;&gt; 1)
 	/// &lt;&lt; 7) / <i>w</i>, the same on <i>y</i>) on it, <i>w</i> and <i>h</i> the origin's halves doubled;
 	/// <see cref="RecomputePanStep"/>; and, which retail does after the screen's click regions and order rows, the 75
 	/// markers, nothing built and the grid dirty. A viewport under two pixels wide or tall, where retail divides by zero,
 	/// takes a width of 1, an engine guard.
 	/// </summary>
+	/// <param name="screen">The command screen the map belongs to.</param>
+	/// <param name="viewport">The map viewport.</param>
 	internal Es1HddMap(Es1HddCommandScreen screen, Es1Rect viewport) {
 		Screen = screen;
 		var display = screen.Display;
@@ -139,7 +141,8 @@ public sealed class Es1HddMap {
 	/// <summary><c>HddMarker_Icons</c> (<c>00094870</c>), a global: the frames of <c>DBA\ICONS.DBA</c>; none when the file is missing.</summary>
 	public IReadOnlyList<DynamixBitmap>? Icons => _icons;
 
-	/// <summary>Frame <paramref name="index"/> of <see cref="Icons"/>, or none.</summary>
+	/// <summary>The frame of <see cref="Icons"/> at an index, or none.</summary>
+	/// <param name="index">The frame's index.</param>
 	internal DynamixBitmap? Icon(int index) => _icons != null && index >= 0 && index < _icons.Count ? _icons[index] : null;
 
 	private Es1HddDisplay Display => Screen.Display;
@@ -207,22 +210,25 @@ public sealed class Es1HddMap {
 	/// </summary>
 	public void RecomputePanStep() => PanStep = unchecked(((Scale - MinScale) >> 3) * 11875) / 118750 * 8 + 5000;
 
-	/// <summary><c>HddMap_ToViewport</c> (<c>0003fd84</c>)(screen, out, <paramref name="point"/>): the point plus the viewport's corner and its half-extent.</summary>
+	/// <summary><c>HddMap_ToViewport</c> (<c>0003fd84</c>)(screen, out, point): the point plus the viewport's corner and its half-extent.</summary>
+	/// <param name="point">The point.</param>
 	public (int X, int Y) ToViewport((int X, int Y) point) =>
 		(point.X + MapViewport.X0 + ((MapViewport.X1 - MapViewport.X0) >> 1),
 			point.Y + MapViewport.Y0 + ((MapViewport.Y1 - MapViewport.Y0) >> 1));
 
-	/// <summary><c>HddMap_FromViewport</c> (<c>0003fdc4</c>)(screen, out, <paramref name="point"/>): the point less the viewport's corner and its half-extent.</summary>
+	/// <summary><c>HddMap_FromViewport</c> (<c>0003fdc4</c>)(screen, out, point): the point less the viewport's corner and its half-extent.</summary>
+	/// <param name="point">The point.</param>
 	public (int X, int Y) FromViewport((int X, int Y) point) =>
 		(point.X - MapViewport.X0 - ((MapViewport.X1 - MapViewport.X0) >> 1),
 			point.Y - MapViewport.Y0 - ((MapViewport.Y1 - MapViewport.Y0) >> 1));
 
 	/// <summary>
 	/// <c>HddCommandScreen_InstallMapContext</c> (<c>0003fe04</c>)(screen): the map's render context, its rect the map
-	/// viewport less <paramref name="installed"/>'s origin, its origin <see cref="MapOrigin"/>, clip mode 1 and the
+	/// viewport less the installed context's origin, its origin <see cref="MapOrigin"/>, clip mode 1 and the
 	/// translation set, so (0, 0) draws at the viewport's center. The context is handed to what draws rather than
 	/// installed (<see cref="Es1PanelCanvas"/>).
 	/// </summary>
+	/// <param name="installed">The context installed.</param>
 	public Es1PanelCanvas InstallMapContext(Es1PanelCanvas installed) {
 		var origin = installed.Origin;
 		return new Es1PanelCanvas(installed.Display, new Es1Rect(MapViewport.X0 - origin.X, MapViewport.Y0 - origin.Y,
@@ -230,13 +236,14 @@ public sealed class Es1HddMap {
 	}
 
 	/// <summary>
-	/// <c>HddCommandScreen_HitTestMarker</c> (<c>00040410</c>)(screen, <paramref name="point"/>)
+	/// <c>HddCommandScreen_HitTestMarker</c> (<c>00040410</c>)(screen, point)
 	/// (docs/es1/simulation/hdd-command-screen.md#the-map): the camera installed (<see cref="InstallCamera"/>); the point
 	/// back through <see cref="FromViewport"/> with <i>y</i> negated, (<i>x</i> × scale &gt;&gt; 7, scale, <i>y</i> ×
 	/// scale &gt;&gt; 7) put through the camera's frame into <see cref="MapCursor"/>; the same for (<i>x</i> − 5,
 	/// <i>y</i> − 5), and <i>h</i> the cursor's <i>x</i> less that point's. Answers the first object of the live object
 	/// list whose <i>x</i> and <i>y</i> both lie strictly within <i>h</i> of the cursor's, or none.
 	/// </summary>
+	/// <param name="point">The point in the map viewport.</param>
 	public IEs1SimObject? HitTestMarker((int X, int Y) point) {
 		InstallCamera();
 		var (x, y) = FromViewport(point);
@@ -255,10 +262,11 @@ public sealed class Es1HddMap {
 	}
 
 	/// <summary>
-	/// <c>HddCommandScreen_IsOnMap</c> (<c>00041bb8</c>)(screen, <paramref name="point"/>)
+	/// <c>HddCommandScreen_IsOnMap</c> (<c>00041bb8</c>)(screen, point)
 	/// (docs/es1/simulation/hdd-command-screen.md#tabs-step): the camera installed, and whether the point, projected and
 	/// through <see cref="ToViewport"/>, lies in the map viewport, edges included.
 	/// </summary>
+	/// <param name="point">The point in the world.</param>
 	public bool IsOnMap(Vec3i point) {
 		InstallCamera();
 		var (x, y) = ToViewport(Project(point));
@@ -388,7 +396,8 @@ public sealed class Es1HddMap {
 
 	// ---- Internals.
 
-	/// <summary>The marker at <paramref name="index"/>, unless retail has freed it: past the count once the markers are built.</summary>
+	/// <summary>The marker at an index, unless retail has freed it: past the count once the markers are built.</summary>
+	/// <param name="index">The marker's index.</param>
 	internal Es1HddMarker? LiveMarker(int index) =>
 		index >= 0 && index < MarkerCount && (!MarkersBuilt || index < MarkerTotal) ? _markers[index] : null;
 
@@ -455,7 +464,7 @@ public sealed class Es1HddMap {
 	}
 
 	/// <summary>
-	/// Places and paints <paramref name="marker"/>, one step of <see cref="DrawMap"/>'s walk
+	/// Places and paints the marker, one step of <see cref="DrawMap"/>'s walk
 	/// (docs/es1/simulation/hdd-command-screen.md#drawing-the-map). Returns whether the marker's object is the chosen unit.
 	/// <para>Where the marker goes:</para>
 	/// <list type="bullet">
@@ -476,6 +485,8 @@ public sealed class Es1HddMap {
 	/// <c>Math_FastMagnitude3D</c> of its point from the camera.</para>
 	/// <para>Engine guard: an object with no group is skipped, where retail reads through a null pointer.</para>
 	/// </summary>
+	/// <param name="map">The map's canvas.</param>
+	/// <param name="marker">The marker.</param>
 	private bool PlaceMarker(Es1PanelCanvas map, Es1HddMarker marker) {
 		Vec3i point;
 		bool chosen = false;
@@ -521,13 +532,15 @@ public sealed class Es1HddMap {
 	}
 
 	/// <summary>
-	/// Draws the line from <paramref name="marker"/>'s center to the selected squadmate's pick, for
+	/// Draws the line from the marker's center to the selected squadmate's pick, for
 	/// <see cref="PlaceMarker"/>. The pick is the current one while it is held, in <c>HudColorTable_Get</c>(slot); else
 	/// the saved one while it is held, in that color less 1; else nothing is drawn. The line ends at the pick's point, or
 	/// at its unit's position, projected at its own height. A color of 0 draws nothing.
 	/// <para>Engine guard: a pick whose kind is neither a point nor a unit, or whose unit is missing, draws nothing, where
 	/// retail draws to a stale point or reads through a null pointer.</para>
 	/// </summary>
+	/// <param name="map">The map's canvas.</param>
+	/// <param name="marker">The marker.</param>
 	private void DrawLinkLine(Es1PanelCanvas map, Es1HddMarker marker) {
 		int slot = Screen.SelectedSlot;
 		var pick = Screen.Picks[slot];
@@ -555,9 +568,11 @@ public sealed class Es1HddMap {
 	}
 
 	/// <summary>
-	/// What <see cref="BuildMapMarkers"/> gives <paramref name="simObject"/>: its frame, size, whether it is ranged and the
+	/// What <see cref="BuildMapMarkers"/> gives the object: its frame, size, whether it is ranged and the
 	/// ranged pixel's color, or none.
 	/// </summary>
+	/// <param name="simObject">The object.</param>
+	/// <param name="machine">The cockpit's machine, or null.</param>
 	private (short Frame, int Size, bool Ranged, short PixelColor)? MarkerFor(IEs1SimObject simObject, Es1Mech? machine) {
 		switch (simObject.TargetClass) {
 			case Es1MfdStatusScreen.HercClass:
@@ -593,10 +608,12 @@ public sealed class Es1HddMap {
 	}
 
 	/// <summary>
-	/// (<paramref name="x"/> × scale &gt;&gt; 7, scale, <paramref name="y"/> × scale &gt;&gt; 7) through
+	/// (x × scale &gt;&gt; 7, scale, y × scale &gt;&gt; 7) through
 	/// <c>Transform_ApplyToPoint</c> with <c>g_ViewToModel</c>, the camera's frame: a point of the map's context on the
 	/// ground.
 	/// </summary>
+	/// <param name="x">The point's x on the map.</param>
+	/// <param name="y">The point's y on the map.</param>
 	private Vec3i ViewToWorld(int x, int y) =>
 		_cameraFrame.TransformPoint(unchecked(x * Scale) >> FocalShift, Scale, unchecked(y * Scale) >> FocalShift);
 }

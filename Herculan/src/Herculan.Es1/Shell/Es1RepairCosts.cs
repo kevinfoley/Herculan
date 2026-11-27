@@ -57,12 +57,13 @@ public sealed class Es1RepairCosts {
 
 	/// <summary>
 	/// <c>LoadDamageDat_Shell</c> (<c>000387a8</c>), from <c>Shell_LoadData</c>: <c>cfg\damage.dat</c> from
-	/// <paramref name="content"/>, and for each chassis <i>s</i>, its price <see cref="ChassisPrices"/>[<i>s</i>] × 1000,
+	/// the content, and for each chassis <i>s</i>, its price <see cref="ChassisPrices"/>[<i>s</i>] × 1000,
 	/// the six external words and the ten internal words from word 13 of row <i>s</i> each
 	/// <c>Math_Q10Multiply</c>(<c>Math_Q10Multiply</c>(price, percentage), chassis scale), and each weapon value
 	/// <c>Math_Q10Multiply</c>(value, weapon scale). Retail reads what a missing file's stream gives; here a file that is
 	/// missing or does not read is reported and leaves the tables zero, an engine guard.
 	/// </summary>
+	/// <param name="content">The game's content.</param>
 	public static Es1RepairCosts Load(GameContent content) {
 		var costs = new Es1RepairCosts();
 		Es1DamageRepairCost? file = null;
@@ -99,17 +100,20 @@ public sealed class Es1RepairCosts {
 	}
 
 	/// <summary>
-	/// Word <paramref name="word"/> of <paramref name="chassis"/>' row. Retail indexes with no bounds test, reading rows 8 to
+	/// A word of a chassis' row. Retail indexes with no bounds test, reading rows 8 to
 	/// 15 of the 16 <c>00038e2f</c> builds and past them, and past a row's words; a chassis outside 0 to 7 or a word
 	/// outside the row reads 0 here, an engine guard.
 	/// </summary>
+	/// <param name="chassis">The chassis.</param>
+	/// <param name="word">The word's index.</param>
 	private short Row(short chassis, int word) =>
 		chassis is >= 0 and < ChassisCount && word is >= 0 and < RowWords ? _rows[chassis, word] : (short)0;
 
 	/// <summary>
-	/// The word of <c>000ab332</c> for <paramref name="weapon"/>. Retail reads past the 18 for a weapon past them; such a
+	/// The word of <c>000ab332</c> for the weapon. Retail reads past the 18 for a weapon past them; such a
 	/// weapon is worth 0 here, an engine guard.
 	/// </summary>
+	/// <param name="weapon">The weapon.</param>
 	public short WeaponValue(short weapon) => weapon >= 0 && weapon < _weapons.Length ? _weapons[weapon] : (short)0;
 
 	/// <summary>
@@ -182,8 +186,8 @@ public sealed class Es1RepairCosts {
 
 	/// <summary>
 	/// <c>Repair_UnitValueCost</c> (<c>00038bb9</c>) (docs/es1/shell/repair-and-build.md#system-repair--screen-1920): <see cref="LevelStepCost"/> priced with the
-	/// chassis row's internal word <paramref name="index"/> for <c>0x784</c>, its word <paramref name="index"/> for
-	/// <c>0x785</c>, and <see cref="WeaponValue"/>(<paramref name="index"/>) for <c>0x786</c>, so a weapon is priced by its
+	/// chassis row's internal word index for <c>0x784</c>, its word index for
+	/// <c>0x785</c>, and <see cref="WeaponValue"/>(index) for <c>0x786</c>, so a weapon is priced by its
 	/// mount's number, not by the weapon it carries; any other kind answers the kind.
 	/// </summary>
 	/// <param name="up">Whether the step is up a level, otherwise down.</param>
@@ -239,11 +243,12 @@ public sealed class Es1RepairCosts {
 	}
 
 	/// <summary>
-	/// <c>00038d6c</c>(<paramref name="herc"/>), what the HERC's frame is worth: over the six external areas, the row's word ×
+	/// <c>00038d6c</c>(herc), what the HERC's frame is worth: over the six external areas, the row's word ×
 	/// the area's average (<see cref="Es1HercRecord.ExternalAverage"/>) / 100, and over internal words 0 to 8, the row's word
 	/// from 13 × the internal word / 100, each term truncated; the mounts are not counted. <c>Herc_ScrapToSalvage</c> adds it
 	/// to <c>Career_Salvage</c> when it is given no value, and <c>Hangar_FormatScrapValue</c> (<see cref="Menus.Es1ScrapAlert.FormatValue"/>) prints it in tons.
 	/// </summary>
+	/// <param name="herc">The HERC.</param>
 	public int ScrapValue(Es1HercRecord herc) {
 		int sum = 0;
 		for (int area = 0; area < ExternalAreas; area++) {

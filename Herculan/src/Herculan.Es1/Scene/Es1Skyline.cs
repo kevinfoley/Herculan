@@ -26,9 +26,10 @@ public sealed class Es1Skyline {
 	}
 
 	/// <summary>
-	/// Every frame as RGBA8 shown in <paramref name="palette"/>, laid out as the indices are. The alpha is 0 where the
-	/// frame holds palette index 0 or an entry <paramref name="palette"/> lacks.
+	/// Every frame as RGBA8 shown in the palette, laid out as the indices are. The alpha is 0 where the
+	/// frame holds palette index 0 or an entry the palette lacks.
 	/// </summary>
+	/// <param name="palette">The palette.</param>
 	public byte[] PixelsIn(DynamixPalette palette) {
 		var pixels = new byte[_indices.Length * 4];
 		for (int i = 0; i < _indices.Length; i++) {
@@ -63,9 +64,11 @@ public sealed class Es1Skyline {
 	public int Height => SlotRows * FrameCount;
 
 	/// <summary>
-	/// <c>Hzline_LoadBitmapBank</c>(<c>dba\</c><paramref name="bank"/>) (<c>ES1DBSIM 00026dc8</c>); null when the install
+	/// <c>Hzline_LoadBitmapBank</c>(<c>dba\</c>bank) (<c>ES1DBSIM 00026dc8</c>); null when the install
 	/// lacks the bank or it has no frame to draw.
 	/// </summary>
+	/// <param name="content">The game's content.</param>
+	/// <param name="bank">The bank's name.</param>
 	public static Es1Skyline? Load(GameContent content, string bank) =>
 		content.Read("dba", bank + ".DBA") is { } bytes ? From(new DynamixBitmapArrayTransformer().Parse(bytes)) : null;
 

@@ -8,7 +8,9 @@ namespace Herculan.Es1.Gunsight;
 /// (docs/es1/simulation/cockpit-gunsight-hud.md#building-the-gunsight).
 /// </summary>
 public abstract class Es1GunsightChild {
-	/// <summary><c>GunsightChild_CtorBase</c>(child, <paramref name="rect"/>): the rect copied to <c>+0</c>.</summary>
+	/// <summary><c>GunsightChild_CtorBase</c>(child, rect): the rect copied to <c>+0</c>.</summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="rect">The child's rectangle.</param>
 	protected Es1GunsightChild(Es1Cockpit cockpit, Es1Rect rect) {
 		Cockpit = cockpit;
 		Rect = rect;
@@ -35,9 +37,11 @@ public abstract class Es1GunsightChild {
 /// </summary>
 public abstract class Es1HudSlideBar : Es1GunsightChild {
 	/// <summary>
-	/// <c>HudSlideBar_CtorBase</c> (<c>0003385c</c>)(bar, <paramref name="rect"/>): the limits −<c>0x4800</c> and
+	/// <c>HudSlideBar_CtorBase</c> (<c>0003385c</c>)(bar, rect): the limits −<c>0x4800</c> and
 	/// <c>0x4800</c>, the range their difference and the value their middle (<see cref="SetLimitsOnly"/>).
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="rect">The bar's rectangle.</param>
 	protected Es1HudSlideBar(Es1Cockpit cockpit, Es1Rect rect) : base(cockpit, rect) {
 		SetLimitsOnly(0x4800, -0x4800);
 	}
@@ -64,40 +68,46 @@ public abstract class Es1HudSlideBar : Es1GunsightChild {
 	public abstract void Recompute();
 
 	/// <summary>
-	/// Slot <c>+0x10</c>, <c>HudSlideBar_AddDelta</c> (<c>00033910</c>)(bar, <paramref name="delta"/>): the value less the
+	/// Slot <c>+0x10</c>, <c>HudSlideBar_AddDelta</c> (<c>00033910</c>)(bar, delta): the value less the
 	/// delta, held to the limits, so the bar tracks an angle <c>Gunsight_SetValues</c> hands it old − new.
 	/// </summary>
+	/// <param name="delta">The delta.</param>
 	public virtual void AddDelta(short delta) {
 		short value = (short)(Value - delta);
 		Value = value < Min ? Min : value > Max ? Max : value;
 	}
 
 	/// <summary>
-	/// Slot <c>+0x14</c>, <c>HudSlideBar_SetLimits</c> (<c>000338cc</c>)(bar, <paramref name="max"/>, <paramref name="min"/>):
+	/// Slot <c>+0x14</c>, <c>HudSlideBar_SetLimits</c> (<c>000338cc</c>)(bar, max, min):
 	/// the limits, range and value of <see cref="SetLimitsOnly"/>, then the recompute.
 	/// </summary>
+	/// <param name="max">The upper limit.</param>
+	/// <param name="min">The lower limit.</param>
 	public virtual void SetLimits(short max, short min) {
 		SetLimitsOnly(max, min);
 		Recompute();
 	}
 
-	/// <summary>The limits moved by <paramref name="delta"/> each, the range and value left: <c>HudWaypointIndicator_ShiftLimits</c>'s body.</summary>
+	/// <summary>The limits moved by the delta each, the range and value left: <c>HudWaypointIndicator_ShiftLimits</c>'s body.</summary>
+	/// <param name="delta">The delta added to both limits.</param>
 	protected void ShiftLimits(short delta) {
 		Min = (short)(Min + delta);
 		Max = (short)(Max + delta);
 	}
 
 	/// <summary>
-	/// The place along the travel that <paramref name="angle"/> maps to: ((<paramref name="angle"/> − <see cref="Min"/>)
+	/// The place along the travel that the angle maps to: ((the angle − <see cref="Min"/>)
 	/// &amp; <c>0xffff</c>) × <see cref="Travel"/> / <see cref="Range"/>, unsigned, as the paints compute it.
 	/// </summary>
+	/// <param name="angle">The angle.</param>
 	protected int Map(short angle) =>
 		(int)((uint)(((ushort)angle - (ushort)Min) & 0xffff) * (uint)Travel / (ushort)Range);
 
 	/// <summary>
-	/// <see cref="Map"/> of the value from <paramref name="start"/>, plus 1 when the value is negative: the bar's place
+	/// <see cref="Map"/> of the value from the start, plus 1 when the value is negative: the bar's place
 	/// before its own offset (docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars).
 	/// </summary>
+	/// <param name="start">The place the bar starts from.</param>
 	protected int BarPosition(int start) => start + Map(Value) + (Value < 0 ? 1 : 0);
 
 	/// <summary>The limits stored, the range their difference and the value their middle, <c>int16</c> sum shifted right as unsigned.</summary>

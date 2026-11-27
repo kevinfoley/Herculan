@@ -26,20 +26,28 @@ public sealed class Es1BitmapBarGraph {
 	}
 
 	/// <summary>
-	/// <c>LedBmBarGraphH_Ctor</c> (<c>ES1DBSIM 000324e4</c>)(0, <paramref name="unlit"/>, <paramref name="lit"/>,
-	/// <paramref name="range"/>, <paramref name="rect"/>), through <c>BarGraphH_Ctor</c> (<c>00031740</c>): the span
+	/// <c>LedBmBarGraphH_Ctor</c> (<c>ES1DBSIM 000324e4</c>)(0, unlit, lit,
+	/// range, rect), through <c>BarGraphH_Ctor</c> (<c>00031740</c>): the span
 	/// (<i>x1</i> − <i>x0</i>) · <c>0x10000</c> / range, start <i>x0</i>, end <i>x1</i>, the position at the end for a
 	/// span below 1 and at the start otherwise; the unlit picture at <c>+0x64</c> and the lit at <c>+0x60</c>.
 	/// </summary>
+	/// <param name="unlit">The unlit picture, or null.</param>
+	/// <param name="lit">The lit picture, or null.</param>
+	/// <param name="range">The range.</param>
+	/// <param name="rect">The bar's rectangle.</param>
 	public static Es1BitmapBarGraph Horizontal(DynamixBitmap? unlit, DynamixBitmap? lit, short range, Es1Rect rect) =>
 		new(false, range, rect, lit, unlit);
 
 	/// <summary>
-	/// <c>LedBmBarGraphV_Ctor</c> (<c>00032a18</c>)(0, <paramref name="lit"/>, <paramref name="unlit"/>,
-	/// <paramref name="range"/>, <paramref name="rect"/>), through <c>BarGraphV_Ctor</c> (<c>00031aac</c>): the same on
+	/// <c>LedBmBarGraphV_Ctor</c> (<c>00032a18</c>)(0, lit, unlit,
+	/// range, rect), through <c>BarGraphV_Ctor</c> (<c>00031aac</c>): the same on
 	/// <i>y</i>, the position at the start for a span below 1 and at the end otherwise; the lit picture at <c>+0x64</c>
 	/// and the unlit at <c>+0x60</c>.
 	/// </summary>
+	/// <param name="lit">The lit picture, or null.</param>
+	/// <param name="unlit">The unlit picture, or null.</param>
+	/// <param name="range">The range.</param>
+	/// <param name="rect">The bar's rectangle.</param>
 	public static Es1BitmapBarGraph VerticalBar(DynamixBitmap? lit, DynamixBitmap? unlit, short range, Es1Rect rect) =>
 		new(true, range, rect, lit, unlit);
 
@@ -83,12 +91,14 @@ public sealed class Es1BitmapBarGraph {
 
 	/// <summary>
 	/// Slot <c>+4</c>, <c>LedBmBarGraphH_PaintToValue</c> (<c>00032764</c>) or <c>LedBmBarGraphV_PaintToValue</c>
-	/// (<c>00032c1c</c>), (bar, <paramref name="value"/>): the new position <i>p</i>, start + (value · span ≫ 16) for a
+	/// (<c>00032c1c</c>), (bar, value): the new position <i>p</i>, start + (value · span ≫ 16) for a
 	/// bar filling from its start and end − (value · span ≫ 16) for one filling from its end, held to at most the end and
 	/// then to at least the start; when it differs from the stored <i>q</i>, the strip between them, both ends included,
 	/// is drawn from the lit picture when the bar grows and the unlit one when it shrinks
 	/// (<see cref="DrawBitmapSpan"/>), and <i>p</i> stored.
 	/// </summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="value">The new value.</param>
 	public void PaintToValue(Es1PanelCanvas canvas, short value) {
 		bool fromStart = FillsFromStart;
 		int step = value * Span >> 16;
@@ -115,7 +125,7 @@ public sealed class Es1BitmapBarGraph {
 
 	/// <summary>
 	/// <c>LedBmBarGraphH_DrawBitmapSpan</c> (<c>00032838</c>) or <c>LedBmBarGraphV_DrawBitmapSpan</c> (<c>00032cf4</c>),
-	/// (bar, <paramref name="bitmap"/>): the strip now in <see cref="Rect"/> takes the same columns (rows) of the picture
+	/// (bar, bitmap): the strip now in <see cref="Rect"/> takes the same columns (rows) of the picture
 	/// as it covers of the bar. With (<i>ox</i>, <i>oy</i>) the canvas origin: the display's draw page made its source
 	/// page; the screen saved under the region {2<i>ox</i>, 2<i>oy</i>, 2<i>ox</i> + <i>w</i>, 2<i>oy</i> + <i>h</i>},
 	/// <i>w</i> and <i>h</i> the columns and rows of the picture at <c>+0x64</c>; the picture blitted at the origin; the
@@ -129,6 +139,8 @@ public sealed class Es1BitmapBarGraph {
 	/// <para>With no picture at <c>+0x64</c> or none to draw, which a missing <c>dba\</c> file leaves, nothing is drawn,
 	/// an engine guard: retail's load has no such case.</para>
 	/// </summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="bitmap">The picture, or null.</param>
 	private void DrawBitmapSpan(Es1PanelCanvas canvas, DynamixBitmap? bitmap) {
 		var sized = Vertical ? Lit : Unlit;
 		if (sized == null || bitmap == null) {

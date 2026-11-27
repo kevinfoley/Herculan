@@ -31,9 +31,11 @@ internal sealed class Es1WorldPick : IDisposable {
 	}
 
 	/// <summary>
-	/// The object the last world pass, drawn from <paramref name="camera"/> in <paramref name="viewport"/>, drew at the
+	/// The object the last world pass, drawn from the camera in the viewport, drew at the
 	/// pixel the bound world layer's scissor holds, or null for none. The objects stand placed as that pass placed them.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="viewport">The viewport.</param>
 	public object? ObjectAt(Camera camera, (int X, int Y, int Width, int Height) viewport) {
 		var drawn = new List<(object Object, uint Query)>();
 		_gl.GetInteger(GetPName.DepthFunc, out int depthFunc);

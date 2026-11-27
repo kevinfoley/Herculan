@@ -30,7 +30,10 @@ public sealed class Es1BaseDraw : IDisposable {
 	private readonly Dictionary<DynamixBitmapArray, (TextureAtlas Atlas, uint Handle)> _banks = new();
 	private readonly List<StructureItems> _structures = new();
 
-	/// <summary>Uploads each shape a structure of <paramref name="structures"/> stands or falls as, and lists an item set for each structure.</summary>
+	/// <summary>Uploads each shape a structure of the structures stands or falls as, and lists an item set for each structure.</summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="scene">The zone scene.</param>
+	/// <param name="structures">The structures.</param>
 	/// <param name="types">The structures' tables, whose wrecks a standing structure can fall to; none uploads no wreck.</param>
 	/// <param name="detail">The detail setting the structures are drawn at, read on every <see cref="Update"/>.</param>
 	public Es1BaseDraw(GL gl, Es1ZoneScene scene, IEnumerable<Es1Base> structures, Es1BaseTypes? types, Es1AppliedDetail detail) {
@@ -55,10 +58,13 @@ public sealed class Es1BaseDraw : IDisposable {
 		_structures.Select(structure => ((object)structure.Structure, structure.Items));
 
 	/// <summary>
-	/// Every structure placed and culled for <paramref name="camera"/>, each detail level picked under a focal length of
-	/// 2^<paramref name="focalShift"/>; with <paramref name="flatRamps"/> each takes <c>WorldShades_ResetRamps</c>' ramps
+	/// Every structure placed and culled for the camera, each detail level picked under a focal length of
+	/// 2^focalShift; with flatRamps each takes <c>WorldShades_ResetRamps</c>' ramps
 	/// (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="focalShift">The focal length's shift.</param>
+	/// <param name="flatRamps">Whether each structure takes the flat ramps.</param>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		foreach (var structure in _structures) {
 			structure.Update(camera, _scene.Shading, _detail.Setting.ObjectBias, focalShift, flatRamps);
@@ -153,9 +159,14 @@ public sealed class Es1BaseDraw : IDisposable {
 
 		/// <summary>
 		/// Whether a piece's cell is the cell its sequence stands on in the instance's cell array, which the wreck shares,
-		/// and its <c>TSDetailPart</c>, if any, picks its level with <paramref name="bias"/> from the eye's distance in its
+		/// and its <c>TSDetailPart</c>, if any, picks its level with the bias from the eye's distance in its
 		/// node.
 		/// </summary>
+		/// <param name="shape">The shape.</param>
+		/// <param name="gate">The cell gate.</param>
+		/// <param name="camera">The camera.</param>
+		/// <param name="focalShift">The focal length's shift.</param>
+		/// <param name="bias">The detail bias.</param>
 		private bool OnScreen(Es1BaseShape shape, CellGate gate, Camera camera, int focalShift, int bias) {
 			if (gate.IsGated && gate.Frame != Structure.CellFrame(gate.Sequence)) {
 				return false;

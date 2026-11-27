@@ -23,8 +23,9 @@ public sealed class Es1ShellRandom {
 
 	/// <summary>
 	/// <c>Math_RandomSeedAndSkip</c> (<c>ES1GO 000386f4</c>) as <c>00020630</c> calls it: the seed table, then
-	/// <paramref name="secondsSince1970"/> % 128 draws discarded.
+	/// secondsSince1970 % 128 draws discarded.
 	/// </summary>
+	/// <param name="secondsSince1970">The time, in seconds since 1970.</param>
 	public static Es1ShellRandom AtStartup(long secondsSince1970) {
 		var random = new Es1ShellRandom();
 		long skip = ((secondsSince1970 % StartStates) + StartStates) % StartStates;

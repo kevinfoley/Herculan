@@ -25,7 +25,11 @@ public sealed class Es1DebrisDraw : IDisposable {
 	private readonly List<IDisposable> _owned = new();
 	private readonly List<SceneItem> _items = new();
 
-	/// <summary>Uploads every root of <c>dts\debris</c> and <c>dts\mechwpn2</c>, the second from <paramref name="models"/>' <c>dba\wpntex</c>.</summary>
+	/// <summary>Uploads every root of <c>dts\debris</c> and <c>dts\mechwpn2</c>, the second from the models' <c>dba\wpntex</c>.</summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="scene">The zone scene.</param>
+	/// <param name="pool">The debris pool.</param>
+	/// <param name="models">The mech models.</param>
 	public Es1DebrisDraw(GL gl, Es1ZoneScene scene, Es1DebrisPool pool, Es1MechModels models) {
 		_scene = scene;
 		_pool = pool;
@@ -71,10 +75,13 @@ public sealed class Es1DebrisDraw : IDisposable {
 	}
 
 	/// <summary>
-	/// The pool's pieces placed for <paramref name="camera"/>, walked as <c>ObjList_RebuildFrame</c> adds them, each
-	/// detail level picked under a focal length of 2^<paramref name="focalShift"/>. With <paramref name="flatRamps"/> each
+	/// The pool's pieces placed for the camera, walked as <c>ObjList_RebuildFrame</c> adds them, each
+	/// detail level picked under a focal length of 2^focalShift. With the flat-ramps flag each
 	/// takes <c>WorldShades_ResetRamps</c>' ramps (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="focalShift">The focal length's shift.</param>
+	/// <param name="flatRamps">Whether each piece takes the flat ramps.</param>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		_items.Clear();
 		var shading = _scene.Shading;

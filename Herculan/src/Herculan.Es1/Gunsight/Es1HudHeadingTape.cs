@@ -35,10 +35,12 @@ public sealed class Es1HudHeadingTape : Es1HudRotationIndicator {
 	public override void Recompute() => RecomputeTape();
 
 	/// <summary>
-	/// <c>HudHeadingTape_SetLimits</c> (<c>00033eac</c>)(tape, <paramref name="max"/>, <paramref name="min"/>): (max − min) /
+	/// <c>HudHeadingTape_SetLimits</c> (<c>00033eac</c>)(tape, max, min): (max − min) /
 	/// width at <c>+0x40</c>, then the bar's set-limits, whose recompute writes <i>P</i> back. With a width of 0, where
 	/// retail divides by zero, the store is skipped: an engine guard no retail layout reaches.
 	/// </summary>
+	/// <param name="max">The upper limit.</param>
+	/// <param name="min">The lower limit.</param>
 	public override void SetLimits(short max, short min) {
 		if (Travel != 0) {
 			FramePixels = (max - min) / Travel;
@@ -48,7 +50,7 @@ public sealed class Es1HudHeadingTape : Es1HudRotationIndicator {
 	}
 
 	/// <summary>
-	/// <c>HudHeadingTape_SetHeading</c> (<c>00033d08</c>), the add-delta slot: <paramref name="delta"/> unread, the strip
+	/// <c>HudHeadingTape_SetHeading</c> (<c>00033d08</c>), the add-delta slot: the delta unread, the strip
 	/// placed for the cockpit's machine's heading <i>h</i> = −<c>+0xa</c> as an unsigned 16-bit value, with <i>W</i> the
 	/// width and <i>F</i> the frame count: <i>q</i> = (<i>h</i> × <i>P</i>) &gt;&gt; 10, the frame <i>q</i> / <i>W</i> and
 	/// the offset <i>q</i> mod <i>W</i> plus ((<i>h</i> &gt;&gt; 8) × ((<i>P</i> × <c>0xe39</c>) &gt;&gt; 10)) &gt;&gt; 8;
@@ -56,6 +58,7 @@ public sealed class Es1HudHeadingTape : Es1HudRotationIndicator {
 	/// <i>x0</i> − the offset, the frame and the one after it, wrapped at <i>F</i>. With no machine, width or bank
 	/// nothing moves, an engine guard.
 	/// </summary>
+	/// <param name="delta">The delta, unread.</param>
 	public override void AddDelta(short delta) {
 		if (Cockpit.Machine is not { } machine || Travel == 0 || FrameCount == 0) {
 			return;

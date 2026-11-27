@@ -48,10 +48,11 @@ public sealed class Es1GunsightGadget : Es1ButtonWidget {
 	}
 
 	/// <summary>
-	/// <c>Gunsight_ClickGadget_OnClick</c>(gadget, <paramref name="value"/>): with bit 0, the left button, set,
+	/// <c>Gunsight_ClickGadget_OnClick</c>(gadget, value): with bit 0, the left button, set,
 	/// <see cref="Es1Gunsight.PickArmed"/> set and <c>ObjPick_Arm</c> at <c>CockpitMouse_CanvasPoint</c>
 	/// (<c>000b16d4</c>), the click's point as the widget input code stores it (<see cref="Es1ObjectPick.Arm"/>).
 	/// </summary>
+	/// <param name="value">The click's button bits.</param>
 	public override void OnClick(short value) {
 		if ((value & 1) != 0) {
 			_gunsight.PickArmed = true;

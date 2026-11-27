@@ -46,7 +46,7 @@ public sealed class Es1MfdScannerScreen : Es1MfdScreen {
 	private readonly Es1Label _legend, _distanceCaption, _distance, _rangeCaption, _range;
 
 	/// <summary>
-	/// <c>MfdRadarScreen_Ctor</c> (<c>ES1DBSIM 00035298</c>)(0, <paramref name="rect"/>)
+	/// <c>MfdRadarScreen_Ctor</c> (<c>ES1DBSIM 00035298</c>)(0, rect)
 	/// (docs/es1/simulation/mfd-scanner.md#the-screen-object): the base; frame 0 of <c>dba\radar</c>; the center
 	/// (<see cref="CenterX"/>, <see cref="CenterY"/>) from the rect's top-left; the scale 1, the range it was computed for
 	/// 0 and the legend passive; and the five labels in <c>cpblue</c> with no plate, each placed from the top-left:
@@ -54,6 +54,11 @@ public sealed class Es1MfdScannerScreen : Es1MfdScreen {
 	/// from the left, <c>DST:</c> (<c>0x36</c>, <c>0x21</c>)–(<c>0x42</c>, <c>0x26</c>) and the distance (<c>0x32</c>,
 	/// <c>0x26</c>)–(<c>0x42</c>, <c>0x2b</c>) to the right, and the legend (1, 2)–(<c>0xf</c>, 7) centered.
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="rect">The screen's rectangle.</param>
+	/// <param name="shared">The shared block.</param>
+	/// <param name="fonts">The label fonts.</param>
+	/// <param name="strings">The strings file, or null.</param>
 	/// <param name="radar"><c>MfdRadar_RadarBank</c> (<c>0009385c</c>), the frames of <c>dba\radar</c>, which the constructor loads once; no picture when null or empty.</param>
 	internal Es1MfdScannerScreen(Es1Cockpit cockpit, Es1Rect rect, Es1MfdSharedBlock shared, IReadOnlyList<HudFont?> fonts,
 			StringFile? strings, IReadOnlyList<DynamixBitmap>? radar)
@@ -152,12 +157,16 @@ public sealed class Es1MfdScannerScreen : Es1MfdScreen {
 	/// from its own position. With
 	/// <i>d</i> its <c>Math_FastMagnitude2D</c> distance from the machine, 1 for 0, it is plotted only within
 	/// <see cref="ScaledRange"/>: <i>d</i> negated when the offset's <i>y</i> is positive, <i>a</i> = <c>0x4000</c> −
-	/// <c>Math_AsinBam</c>((<i>dx</i> &lt;&lt; 14) / <i>d</i>) + <paramref name="heading"/>, and the pixel at the
+	/// <c>Math_AsinBam</c>((<i>dx</i> &lt;&lt; 14) / <i>d</i>) + the heading, and the pixel at the
 	/// center plus <c>Math_Q14Multiply</c>(<i>d</i>, <c>Math_CosBam</c>(<i>a</i>)) and (<i>d</i>,
 	/// <c>Math_CosBam</c>(<i>a</i> − <c>0x4000</c>)), each over <see cref="Scale"/>, truncated; its pen
 	/// <see cref="FriendColor"/> for side 0, else by its class. Answers the pixel and the signed <i>d</i>, or null. An
 	/// object with no group, through which retail reads, is not plotted, an engine guard.
 	/// </summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="machine">The cockpit's machine.</param>
+	/// <param name="other">The object plotted.</param>
+	/// <param name="heading">The machine's heading.</param>
 	private (int X, int Y, int Distance)? Plot(Es1PanelCanvas canvas, Es1Mech machine, IEs1SimObject other, short heading) {
 		if (other.Group is not { } group || other.Immobilized || other.Destroyed || group.Action != null) {
 			return null;

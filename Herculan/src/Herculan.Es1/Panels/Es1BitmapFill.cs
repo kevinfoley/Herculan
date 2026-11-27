@@ -14,17 +14,24 @@ namespace Herculan.Es1.Panels;
 /// </summary>
 public static class Es1BitmapFill {
 	/// <summary>
-	/// <c>Bitmap_BlitRotatedUnpacked</c>(<paramref name="bitmap"/>, <paramref name="angle"/>, <paramref name="size"/>,
-	/// <paramref name="flip"/>, <paramref name="position"/>) and the <c>Bitmap_BlitRotatedScaled</c> it calls
+	/// <c>Bitmap_BlitRotatedUnpacked</c>(bitmap, angle, size,
+	/// flip, position) and the <c>Bitmap_BlitRotatedScaled</c> it calls
 	/// (docs/es1/shell/map.md#the-shapes): the brush {5, 4, source quad, the bitmap} filled over the destination quad
 	/// (0, 0), (<i>w</i>, 0), (<i>w</i>, <i>h</i>), (0, <i>h</i>), each corner turned by <see cref="Rotation2D"/> through
 	/// <see cref="Rotate2DPoint"/> and moved by the position. The source quad is (0, 0), (<i>c</i>, 0), (<i>c</i>,
-	/// <i>r</i>), (0, <i>r</i>): with <paramref name="shell"/>, the shell's <c>00065ce4</c>, <i>c</i> and <i>r</i> are the
+	/// <i>r</i>), (0, <i>r</i>): with shell, the shell's <c>00065ce4</c>, <i>c</i> and <i>r</i> are the
 	/// bitmap's columns and rows; otherwise, <c>ES1DBSIM</c>'s <c>00076630</c>, one less each. Flip bit 2 swaps corners 0
 	/// and 1 and corners 2 and 3 of the source, then bit 1 swaps 0 and 3 and 1 and 2. The bitmap's pixels are those its
 	/// load decoded, where retail unpacks a packed bitmap for the call with <c>Bitmap_UnpackToScratch</c> (the shell's
 	/// <c>00050544</c>, <c>ES1DBSIM</c>'s <c>000672cc</c>).
 	/// </summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="bitmap">The picture, or null.</param>
+	/// <param name="angle">The angle.</param>
+	/// <param name="size">The size.</param>
+	/// <param name="flip">The flip flags.</param>
+	/// <param name="position">The position.</param>
+	/// <param name="shell">Whether the shell's trigonometry applies.</param>
 	public static void BlitRotatedScaled(Es1PanelCanvas canvas, DynamixBitmap? bitmap, short angle, (int W, int H) size,
 			int flip, (int X, int Y) position, bool shell) {
 		if (bitmap == null) {
@@ -53,10 +60,12 @@ public static class Es1BitmapFill {
 	}
 
 	/// <summary>
-	/// <c>Math_BuildRotation2D</c>(<paramref name="angle"/>): with <paramref name="shell"/> the shell's
+	/// <c>Math_BuildRotation2D</c>(angle): with shell the shell's
 	/// (<see cref="Es1ShellTrig.Rotation2D"/>), otherwise <c>ES1DBSIM</c>'s (<c>000694b8</c>), {cos <i>a</i>, sin <i>a</i>,
 	/// −sin <i>a</i>, cos <i>a</i>} through <see cref="SimTrig.Cos"/>.
 	/// </summary>
+	/// <param name="angle">The angle.</param>
+	/// <param name="shell">Whether the shell's trigonometry applies.</param>
 	public static (short M0, short M1, short M2, short M3) Rotation2D(short angle, bool shell) {
 		if (shell) {
 			return Es1ShellTrig.Rotation2D(angle);
@@ -76,12 +85,17 @@ public static class Es1BitmapFill {
 		unchecked((int)(((long)point.X * m.M1 + (long)point.Y * m.M3 + 0x2000) >> 14)));
 
 	/// <summary>
-	/// <c>Raster_DrawPolygonDispatch</c> of <paramref name="points"/> under a brush of mode 5 (no
-	/// <paramref name="table"/>) or 7, which hands the points, moved by the canvas's translation, to the driver's
-	/// <c>VGA8_FillBitmapPolygon</c> with <paramref name="texture"/>, one texture point in texels for each point
+	/// <c>Raster_DrawPolygonDispatch</c> of points under a brush of mode 5 (no
+	/// table) or 7, which hands the points, moved by the canvas's translation, to the driver's
+	/// <c>VGA8_FillBitmapPolygon</c> with texture, one texture point in texels for each point
 	/// (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7). A texel the walk reads outside the
 	/// bitmap, where retail reads past its pixels, leaves the pixel as it was, an engine guard.
 	/// </summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="points">The polygon's points.</param>
+	/// <param name="texture">The texture points, in texels.</param>
+	/// <param name="bitmap">The picture, or null.</param>
+	/// <param name="table">The shade table, or null.</param>
 	public static void FillPolygon(Es1PanelCanvas canvas, IReadOnlyList<(int X, int Y)> points,
 			IReadOnlyList<(int U, int V)> texture, DynamixBitmap? bitmap, byte[]? table) {
 		if (bitmap?.ImageData is not { } pixels || points.Count < 3 || texture.Count < points.Count) {
@@ -164,10 +178,12 @@ public static class Es1BitmapFill {
 		}
 
 		/// <summary>
-		/// The two edges from <paramref name="start"/>, by columns A forward and B backward, by rows A backward and B
-		/// forward; from <paramref name="first"/>, each line not before the rect's near side drawn from A's other coordinate
+		/// The two edges from start, by columns A forward and B backward, by rows A backward and B
+		/// forward; from first, each line not before the rect's near side drawn from A's other coordinate
 		/// to B's, then both edges stepped, until an edge ends, the line passes the rect's far side, or B is before A.
 		/// </summary>
+		/// <param name="start">The vertex the edges start from.</param>
+		/// <param name="first">The first line.</param>
 		private void Walk(int start, int first) {
 			var rect = canvas.Rect;
 			var a = new Edge { Direction = _byColumns ? 1 : -1 };
@@ -194,20 +210,24 @@ public static class Es1BitmapFill {
 			}
 		}
 
-		/// <summary>The walked coordinate of vertex <paramref name="i"/>: <i>x</i> by columns, <i>y</i> by rows.</summary>
+		/// <summary>The walked coordinate of vertex i: <i>x</i> by columns, <i>y</i> by rows.</summary>
+		/// <param name="i">The vertex's index.</param>
 		private int Walked(int i) => _byColumns ? _points[i].X : _points[i].Y;
 
-		/// <summary>The other coordinate of vertex <paramref name="i"/>.</summary>
+		/// <summary>The other coordinate of vertex i.</summary>
+		/// <param name="i">The vertex's index.</param>
 		private int Other(int i) => _byColumns ? _points[i].Y : _points[i].X;
 
 		/// <summary>
 		/// <c>VGA8_BitmapEdgeSetupColumns</c> (<c>000757cc</c>) or <c>VGA8_BitmapEdgeSetupRows</c> (<c>00075648</c>): from
-		/// <paramref name="vertex"/>, the next vertex in the edge's direction, wrapping round the ring, past those with the
+		/// vertex, the next vertex in the edge's direction, wrapping round the ring, past those with the
 		/// same walked coordinate; false on reaching the far vertex. Otherwise the steps are the walked difference,
 		/// <i>u</i> and <i>v</i> start at the vertex's texture point in 16.16 and step by <c>Math_Q16Divide</c> of their
 		/// differences over the steps, and the other coordinate steps by the quotient with a carry when the error turns
 		/// positive, so step <i>k</i> is at its start plus ⌈<i>k</i> · difference / steps⌉.
 		/// </summary>
+		/// <param name="vertex">The vertex.</param>
+		/// <param name="edge">The edge.</param>
 		private bool Setup(int vertex, Edge edge) {
 			unchecked {
 				while (vertex != _far) {
@@ -270,9 +290,12 @@ public static class Es1BitmapFill {
 		}
 
 		/// <summary>
-		/// <c>VGA8_SpanBitmapColumn</c> (<c>0007bd6e</c>): column <paramref name="x"/> from A's <i>y</i> to B's, both
+		/// <c>VGA8_SpanBitmapColumn</c> (<c>0007bd6e</c>): column x from A's <i>y</i> to B's, both
 		/// included, cut to the rect's rows, the pixels cut off at the top still stepping.
 		/// </summary>
+		/// <param name="x">The column.</param>
+		/// <param name="a">The edge A.</param>
+		/// <param name="b">The edge B.</param>
 		private void SpanColumn(int x, Edge a, Edge b) {
 			var rect = canvas.Rect;
 			if (a.S > rect.Y1 || b.S < rect.Y0) {
@@ -295,12 +318,15 @@ public static class Es1BitmapFill {
 		}
 
 		/// <summary>
-		/// <c>VGA8_SpanBitmapRow</c> (<c>0007b9c8</c>) in clip mode 2: row <paramref name="y"/> from A's <i>x</i> to B's,
+		/// <c>VGA8_SpanBitmapRow</c> (<c>0007b9c8</c>) in clip mode 2: row y from A's <i>x</i> to B's,
 		/// when that run meets the rect's columns, each pixel drawn when a region of the list holds it. Retail draws the
 		/// run's cut to each region holding the row in turn; a cut to an empty run, as a rect region with no columns gives,
 		/// is a 16-bit count of 0 that its loop takes as 65,536 pixels, which this per-pixel test does not draw, an engine
 		/// guard.
 		/// </summary>
+		/// <param name="y">The row.</param>
+		/// <param name="a">The edge A.</param>
+		/// <param name="b">The edge B.</param>
 		private void SpanRow(int y, Edge a, Edge b) {
 			var rect = canvas.Rect;
 			if (a.S > rect.X1 || b.S < rect.X0) {
@@ -352,9 +378,12 @@ public static class Es1BitmapFill {
 
 		/// <summary>
 		/// <c>VGA8_BitmapPolyClipTop</c> (<c>00075434</c>): the ring from vertex 0, each vertex with <i>y</i> at or below
-		/// <paramref name="top"/> kept, and for each edge crossing it the crossing of <i>x</i>, <i>u</i> and <i>v</i> from
+		/// top kept, and for each edge crossing it the crossing of <i>x</i>, <i>u</i> and <i>v</i> from
 		/// the vertex the edge leaves, each division truncating.
 		/// </summary>
+		/// <param name="top">The top row.</param>
+		/// <param name="points">The polygon's points.</param>
+		/// <param name="texture">The texture points.</param>
 		private static ((int X, int Y)[] Points, (int U, int V)[] Texture) ClipTop(int top, (int X, int Y)[] points,
 				(int U, int V)[] texture) {
 			var outPoints = new List<(int X, int Y)>();

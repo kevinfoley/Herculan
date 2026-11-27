@@ -17,25 +17,35 @@ public abstract class Es1AlertInput {
 	/// </summary>
 	public abstract Es1PlayerInputBlock Read();
 
-	/// <summary><c>AlertPanel_HandleEvent</c>'s latch of <paramref name="button"/>, 1 to 4, with the value 1.</summary>
+	/// <summary><c>AlertPanel_HandleEvent</c>'s latch of the button, 1 to 4, with the value 1.</summary>
+	/// <param name="button">The button, 1 to 4.</param>
 	public abstract void LatchButton(int button);
 
 	/// <summary><c>AlertPanel_Enter</c>'s step on the input: the block kept, which <see cref="PutBack"/> gets back.</summary>
 	public abstract Es1PlayerInputBlock? Keep();
 
-	/// <summary><c>AlertPanel_Leave</c>'s step on the input: <paramref name="kept"/>, what <see cref="Keep"/> answered, put back.</summary>
+	/// <summary><c>AlertPanel_Leave</c>'s step on the input: the kept block, what <see cref="Keep"/> answered, put back.</summary>
+	/// <param name="globals">The simulation's globals.</param>
+	/// <param name="kept">The block <see cref="Keep"/> answered, or null.</param>
 	public abstract void PutBack(Es1AlertGlobals globals, Es1PlayerInputBlock? kept);
 
-	/// <summary><c>Prefs_SetOption</c>(1, <paramref name="value"/>, <paramref name="index"/>).</summary>
+	/// <summary><c>Prefs_SetOption</c>(1, value, index).</summary>
+	/// <param name="value">The new value.</param>
+	/// <param name="index">The option's index.</param>
 	public abstract void SetOption(byte value, int index);
 
-	/// <summary><c>Prefs_ToggleOption</c>(1, <paramref name="index"/>); returns the value.</summary>
+	/// <summary><c>Prefs_ToggleOption</c>(1, index); returns the value.</summary>
+	/// <param name="index">The option's index.</param>
 	public abstract byte ToggleOption(int index);
 
-	/// <summary><c>Prefs_StepOption</c>(1, <paramref name="modulus"/>, <paramref name="index"/>); returns the value.</summary>
+	/// <summary><c>Prefs_StepOption</c>(1, modulus, index); returns the value.</summary>
+	/// <param name="modulus">The modulus.</param>
+	/// <param name="index">The option's index.</param>
 	public abstract byte StepOption(int modulus, int index);
 
-	/// <summary><c>Prefs_StepOptionBack</c>(1, <paramref name="modulus"/>, <paramref name="index"/>); returns the value.</summary>
+	/// <summary><c>Prefs_StepOptionBack</c>(1, modulus, index); returns the value.</summary>
+	/// <param name="modulus">The modulus.</param>
+	/// <param name="index">The option's index.</param>
 	public abstract byte StepOptionBack(int modulus, int index);
 
 	/// <summary>The controls panel's DONE commit, with the handlers applied.</summary>

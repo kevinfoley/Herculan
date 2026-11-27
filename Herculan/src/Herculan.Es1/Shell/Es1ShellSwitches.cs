@@ -35,11 +35,12 @@ public sealed class Es1ShellSwitches {
 	public bool DebugMode { get; private set; }
 
 	/// <summary>
-	/// <c>Shell_ParseCommandLine</c> on <paramref name="arguments"/>, the arguments after the program's path, which retail
+	/// <c>Shell_ParseCommandLine</c> on the arguments, the arguments after the program's path, which retail
 	/// does not look at: from the last to the first, an argument opening with <c>/</c> or <c>-</c> is <c>-eggplant</c> when
 	/// it is that exactly, and is otherwise looked up by its second character, upper-cased, among the five dwords at
 	/// <c>0007e76c</c>; an argument matching none is passed over.
 	/// </summary>
+	/// <param name="arguments">The arguments after the program's path.</param>
 	public static Es1ShellSwitches Parse(IReadOnlyList<string> arguments) {
 		var switches = new Es1ShellSwitches();
 		for (int i = arguments.Count - 1; i >= 0; i--) {

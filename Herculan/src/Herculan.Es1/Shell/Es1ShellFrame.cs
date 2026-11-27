@@ -102,18 +102,20 @@ public sealed class Es1ShellFrame {
 	/// <summary>Whether the shell's work has run to its end, the frame loop left.</summary>
 	public bool Ended => _work == null;
 
-	/// <summary>Starts <paramref name="work"/>, which <see cref="AdvanceHostFrame"/> runs on.</summary>
+	/// <summary>Starts the work, which <see cref="AdvanceHostFrame"/> runs on.</summary>
+	/// <param name="work">The work to run.</param>
 	public void Start(IEnumerable<Es1ShellWait> work) {
 		_work = work.GetEnumerator();
 		Resume();
 	}
 
 	/// <summary>
-	/// One host frame of <paramref name="elapsed"/>: a next-host-frame wait the last one ended at is over; while the work
+	/// One host frame of the elapsed time: a next-host-frame wait the last one ended at is over; while the work
 	/// stands at a wait, the PC timer runs on an interrupt at a time until a timer wait is met, or to a retrace wait's
 	/// retrace, and the work goes on from there, up to a next-host-frame wait; at the host frame's end the timer runs on
 	/// to it.
 	/// </summary>
+	/// <param name="elapsed">The host time elapsed.</param>
 	public void AdvanceHostFrame(TimeSpan elapsed) {
 		long end = _hostTime + Math.Max(0, elapsed.Ticks);
 		var timer = _devices.Timer;
@@ -149,7 +151,8 @@ public sealed class Es1ShellFrame {
 		Hold(end);
 	}
 
-	/// <summary>The host time up to <paramref name="until"/> held: the PC timer runs on.</summary>
+	/// <summary>The host time up to a given time held: the PC timer runs on.</summary>
+	/// <param name="until">The host time to hold up to.</param>
 	private void Hold(long until) {
 		if (until > _hostTime) {
 			_devices.Timer.Hold(TimeSpan.FromTicks(until - _hostTime));
@@ -372,11 +375,12 @@ public sealed class Es1ShellFrame {
 	}
 
 	/// <summary>
-	/// <c>Shell_HandleInput</c> (<c>00012be8</c>) on <paramref name="block"/> (docs/es1/shell/startup.md#the-input): for a
+	/// <c>Shell_HandleInput</c> (<c>00012be8</c>) on the block (docs/es1/shell/startup.md#the-input): for a
 	/// keyboard word without <c>0x4000</c>, Num Lock's bit cleared, the 15 words at <c>0007e880</c> and then <c>Q</c>,
 	/// <c>X</c> and <c>C</c>; then the first two latched buttons as <c>Enter</c> and <c>Tab</c>; last, unless <c>-X</c>, a
 	/// typed character to the menu.
 	/// </summary>
+	/// <param name="block">The live input block, or null.</param>
 	public void HandleInput(Es1LiveBlock? block) {
 		if (block == null) {
 			return;

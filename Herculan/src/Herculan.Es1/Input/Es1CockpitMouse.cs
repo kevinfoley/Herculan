@@ -104,7 +104,7 @@ public sealed class Es1CockpitMouse {
 	public int QueueLimit { get; private set; } = SimQueueSize - 1;
 
 	/// <summary>
-	/// <c>CockpitMouse_Init</c> (<c>000441cc</c>): <see cref="OnEvent"/> registered with <paramref name="driver"/> for
+	/// <c>CockpitMouse_Init</c> (<c>000441cc</c>): <see cref="OnEvent"/> registered with the driver for
 	/// <see cref="EventMask"/>; the last point, the held bytes and the last buttons cleared; both queues empty; the
 	/// double-click window from the timer's divisor; no active root and nothing pressed.
 	/// </summary>

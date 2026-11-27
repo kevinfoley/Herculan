@@ -214,14 +214,17 @@ public sealed class Es1PreferencesPanel : Es1AlertPanel {
 		answer.Value = Close & 1;
 	}
 
-	/// <summary><c>PreferencesPanel_GetButtonCaption</c> (<c>00048168</c>)(panel, <paramref name="index"/>): the caption <c>+0x34c</c>[index].</summary>
+	/// <summary><c>PreferencesPanel_GetButtonCaption</c> (<c>00048168</c>)(panel, index): the caption <c>+0x34c</c>[index].</summary>
+	/// <param name="index">The button's index.</param>
 	public override string? GetButtonCaption(int index) => Strings?.Text(CaptionGroup, index);
 
 	/// <summary>
-	/// Slot <c>+0x10</c>, <c>PreferencesPanel_OnClick</c> (<c>000480f4</c>)(panel, <paramref name="flags"/>,
-	/// <paramref name="child"/>): bit 1 of the flags, the right button, kept; the child's index in the widget list made
+	/// Slot <c>+0x10</c>, <c>PreferencesPanel_OnClick</c> (<c>000480f4</c>)(panel, flags,
+	/// child): bit 1 of the flags, the right button, kept; the child's index in the widget list made
 	/// the action, when it is in the list.
 	/// </summary>
+	/// <param name="flags">The click's button bits.</param>
+	/// <param name="child">The widget clicked.</param>
 	public override void OnChildClick(short flags, Es1Widget child) {
 		RightButton = (flags & 2) != 0;
 		int index = IndexOf(child);
@@ -231,11 +234,12 @@ public sealed class Es1PreferencesPanel : Es1AlertPanel {
 	}
 
 	/// <summary>
-	/// Slot <c>+0x14</c>, <c>PreferencesPanel_HandleEvent</c> (<c>00048078</c>)(panel, <paramref name="block"/>): the
+	/// Slot <c>+0x14</c>, <c>PreferencesPanel_HandleEvent</c> (<c>00048078</c>)(panel, block): the
 	/// family's keys first (<see cref="Es1AlertPanel.HandleEvent"/>), answering 1 when they act; otherwise [=] and keypad
 	/// [+] press the focused widget with the flags 1, and [-] and keypad [-] with the flags 2, only while the focus is
 	/// SKY, GROUND or SHAPES; any of the four answers 1, any other code 0.
 	/// </summary>
+	/// <param name="block">The input block.</param>
 	public override int HandleEvent(Es1PlayerInputBlock block) {
 		if (base.HandleEvent(block) != 0) {
 			return 1;
@@ -277,11 +281,12 @@ public sealed class Es1PreferencesPanel : Es1AlertPanel {
 	}
 
 	/// <summary>
-	/// <c>PreferencesPanel_RefreshRow</c> (<c>00047f84</c>)(panel, <paramref name="row"/>): rows 0, 1 and 3 put
+	/// <c>PreferencesPanel_RefreshRow</c> (<c>00047f84</c>)(panel, row): rows 0, 1 and 3 put
 	/// <c>OFF</c> or <c>ON</c> by their option on their readout, row 2 the message word by option 2 on readout 2, and rows
 	/// 4, 5 and 6 hand option 4, 5 or 6 to their bar's slot <c>+8</c>. An option past its words, where retail reads past
 	/// the table, draws no text, an engine guard.
 	/// </summary>
+	/// <param name="row">The row.</param>
 	public void RefreshRow(int row) {
 		var options = Options;
 		switch (row) {

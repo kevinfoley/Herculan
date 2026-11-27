@@ -62,12 +62,15 @@ public sealed class Es1DebrisPool {
 			: [];
 
 	/// <summary>
-	/// <c>Debris_ThrowGroup</c> (<c>00005fb8</c>)(group <paramref name="group"/>, <paramref name="point"/>,
-	/// <c>g_DebrisShapes</c>) (docs/es1/formats/debris-dat.md#throwing-a-group): <c>Math_RandomBelow</c> of the throw
+	/// <c>Debris_ThrowGroup</c> (<c>00005fb8</c>), over <c>g_DebrisShapes</c>
+	/// (docs/es1/formats/debris-dat.md#throwing-a-group): <c>Math_RandomBelow</c> of the throw
 	/// count pieces, each drawn by weight and thrown on a random bearing (<see cref="ThrowRandomBearing"/>), on
-	/// <paramref name="random"/>, the generator <c>000b5bd4</c>. A group past the table, where retail reads past it,
+	/// the generator <c>000b5bd4</c>. A group past the table, where retail reads past it,
 	/// throws none, an engine guard; a throw count of 0, where retail divides by 0, throws none too.
 	/// </summary>
+	/// <param name="group">The debris group.</param>
+	/// <param name="point">Where the pieces are thrown from.</param>
+	/// <param name="random">The simulation generator.</param>
 	public void ThrowGroup(int group, Vec3i point, SimRandom random) {
 		if (group < 0 || group >= Groups.Count || Groups[group] is not { Pieces.Length: > 0 } entry) {
 			return;
@@ -95,9 +98,11 @@ public sealed class Es1DebrisPool {
 	}
 
 	/// <summary>
-	/// <c>Debris_Construct</c> (<c>00006168</c>)(null, <paramref name="point"/>, <paramref name="shape"/>): a piece from
+	/// <c>Debris_Construct</c> (<c>00006168</c>)(null, point, shape): a piece from
 	/// the pool, or null with the pool full, the pieces queued for delete still holding their places.
 	/// </summary>
+	/// <param name="point">The piece's starting position.</param>
+	/// <param name="shape">The piece's root shape, or null.</param>
 	public Es1Debris? Construct(Vec3i point, TSObject? shape) {
 		if (_live.Count + _deleteQueue.Count >= Capacity) {
 			return null;

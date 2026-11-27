@@ -55,7 +55,8 @@ public sealed class Es1BiosKeyBuffer {
 		}
 	}
 
-	/// <summary>A host key-down of the key whose make byte is <paramref name="make"/>, before its byte is sent: the key's last character forgotten.</summary>
+	/// <summary>A host key-down of the key with a make byte, before its byte is sent: the key's last character forgotten.</summary>
+	/// <param name="make">The key's make byte.</param>
 	public void HostKeyDown(byte make) {
 		_lastDown = make;
 		_typed.Remove(make);

@@ -38,12 +38,16 @@ public static class Es1FlicHost {
 	public const long MaxFileBytes = 64L << 20;
 
 	/// <summary>
-	/// Plays the flic at <paramref name="path"/> with <paramref name="switches"/>, <c>PLAYFLIC.EXE</c>'s arguments after the
-	/// flic's name, in <paramref name="window"/>. Returns <c>Flic_Play</c>'s answer (<see cref="Es1FlicPlayer.Result"/>), or
+	/// Plays a flic with <c>PLAYFLIC.EXE</c>'s arguments after the
+	/// flic's name. Returns <c>Flic_Play</c>'s answer (<see cref="Es1FlicPlayer.Result"/>), or
 	/// the open's error. The install folder stands in for DOS's current folder, where <c>RESOURCE.CFG</c> is read
-	/// (<see cref="ReadPathFlic"/>); <paramref name="altDrive"/> is <c>ALT_DRIVE</c>, under whose path a sound's path on a
-	/// drive is taken (<see cref="ReadSound"/>).
+	/// (<see cref="ReadPathFlic"/>); a sound's path on a drive is taken under <c>ALT_DRIVE</c> (<see cref="ReadSound"/>).
 	/// </summary>
+	/// <param name="path">The flic's path.</param>
+	/// <param name="switches">The switches that follow the flic's name.</param>
+	/// <param name="window">The window the flic plays in.</param>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="altDrive"><c>ALT_DRIVE</c>, or null.</param>
 	/// <param name="silent">The host's <c>--no-sound</c>: no audio device is opened, and the sounds are not heard.</param>
 	public static int Run(string path, IReadOnlyList<string> switches, HostWindow window, string installRoot, string? altDrive,
 			bool silent) =>
@@ -51,10 +55,16 @@ public static class Es1FlicHost {
 			string.IsNullOrEmpty(altDrive) ? null : relative => ReadFile(CaseInsensitivePath.Combine(altDrive, relative)), silent);
 
 	/// <summary>
-	/// Plays the flic at <paramref name="relativePath"/> on <paramref name="disc"/>, the CD the Settings window names
+	/// Plays a flic from a disc, the CD the Settings window names
 	/// (<see cref="Install.Es1Disc"/>), as <see cref="Run(string, IReadOnlyList{string}, HostWindow, string, string?, bool)"/>
 	/// plays one on <c>ALT_DRIVE</c>, a sound's path on a drive taken on the disc.
 	/// </summary>
+	/// <param name="disc">The disc.</param>
+	/// <param name="relativePath">The flic's path on the disc.</param>
+	/// <param name="switches">The switches that follow the flic's name.</param>
+	/// <param name="window">The window the flic plays in.</param>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="silent">The host's <c>--no-sound</c>: no audio device is opened, and the sounds are not heard.</param>
 	public static int Run(GameDisc disc, string relativePath, IReadOnlyList<string> switches, HostWindow window,
 			string installRoot, bool silent) =>
 		Run(disc.Describe(relativePath), () => disc.ReadAllBytes(relativePath, MaxFileBytes)
@@ -160,11 +170,14 @@ public static class Es1FlicHost {
 
 	/// <summary>
 	/// The file a sound's DOS path names. A path on a drive, as <c>RESOURCE.CFG</c>'s <c>pathFlic</c> names the CD's, is
-	/// taken on the CD by <paramref name="readOnCd"/>, which stands for the CD as <c>ES.BAT</c>'s <c>ALT_DRIVE=D:</c> does,
+	/// taken on the CD by the CD reader, which stands for the CD as <c>ES.BAT</c>'s <c>ALT_DRIVE=D:</c> does,
 	/// and failing that in the install folder, the CD's copy; a path with no drive is taken in the install folder, DOS's
 	/// current folder here. This mapping is the user's choice: retail opens the path as DOS resolves it. Null when no
 	/// candidate opens.
 	/// </summary>
+	/// <param name="dosPath">The sound's DOS path.</param>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="readOnCd">Reads a file on the CD, or null for none.</param>
 	private static byte[]? ReadSound(string dosPath, string installRoot, Func<string, byte[]?>? readOnCd) {
 		bool onDrive = dosPath.Length > 1 && dosPath[1] == ':';
 		string[] names = (onDrive ? dosPath[2..] : dosPath).Split('\\', '/').Where(n => n is not ("" or ".")).ToArray();
@@ -176,7 +189,8 @@ public static class Es1FlicHost {
 		return (onDrive ? readOnCd?.Invoke(relative) : null) ?? ReadFile(CaseInsensitivePath.Combine(installRoot, relative));
 	}
 
-	/// <summary>The file at <paramref name="path"/>, or null when it is not there or does not open.</summary>
+	/// <summary>The file at a path, or null when it is not there or does not open.</summary>
+	/// <param name="path">The file's path.</param>
 	private static byte[]? ReadFile(string path) {
 		try {
 			return File.Exists(path) ? File.ReadAllBytes(path) : null;
@@ -185,7 +199,9 @@ public static class Es1FlicHost {
 		}
 	}
 
-	/// <summary><paramref name="relative"/> on <paramref name="disc"/>, or null when it is not there, too long or does not read.</summary>
+	/// <summary>A file on a disc, or null when it is not there, too long or does not read.</summary>
+	/// <param name="disc">The disc.</param>
+	/// <param name="relative">The file's path on the disc.</param>
 	private static byte[]? ReadDiscFile(GameDisc disc, string relative) {
 		try {
 			return disc.ReadAllBytes(relative, MaxFileBytes);

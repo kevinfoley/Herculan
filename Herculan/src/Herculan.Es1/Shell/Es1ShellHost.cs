@@ -39,10 +39,12 @@ public static class Es1ShellHost {
 	public const int AssertExitStatus = 1;
 
 	/// <summary>
-	/// Runs the shell on <paramref name="installRoot"/> with <paramref name="arguments"/>, <c>GO.EXE</c>'s own switches
+	/// Runs the shell on the install folder with the arguments given, <c>GO.EXE</c>'s own switches
 	/// (<see cref="Es1ShellSwitches"/>). Returns <c>Shell_ExitCode</c>, or <see cref="AssertExitStatus"/> when a start-up
 	/// step asserts.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="arguments"><c>GO.EXE</c>'s own switches.</param>
 	/// <param name="imguiFontPath">The faces the frame's ImGui draws in (<see cref="FrontEndWindow"/>).</param>
 	/// <param name="menus">
 	/// HERCULAN's menu bar and its windows over the shell, which the window disposes once the turn has run. [Shift+Esc]
@@ -211,11 +213,12 @@ public static class Es1ShellHost {
 		}
 
 		/// <summary>
-		/// Runs <paramref name="step"/>; a fatal assert it raises (<see cref="Es1FatalAssertException"/>) takes
+		/// Runs the step; a fatal assert it raises (<see cref="Es1FatalAssertException"/>) takes
 		/// <c>Assert_Report</c>'s fatal path (docs/es1/shell/startup.md#a-fatal-assert): the message,
 		/// <c>Shell_AssertCleanupHook</c> (<see cref="Es1ShellDevices.AssertCleanup"/>, and <c>Shell_ExitCode</c> 0 written to
 		/// <c>data\exit.cfg</c>), then <c>__exit</c>(1), here the window's close with <see cref="AssertExitStatus"/>.
 		/// </summary>
+		/// <param name="step">The step to run.</param>
 		private void Guard(Action step) {
 			try {
 				step();
@@ -233,10 +236,14 @@ public static class Es1ShellHost {
 
 		/// <summary>
 		/// The window's load: the window full screen or not as ES1 last ran (<see cref="Es1FullScreen"/>), unless
-		/// <paramref name="keepWindow"/>; the presenter on the display, then the start-up's steps 7 on and the frame loop
+		/// the keep-window flag; the presenter on the display, then the start-up's steps 7 on and the frame loop
 		/// started, which run until the first wait for the timer; then the host's mouse and keys taken, the cursor standing
 		/// in for the host's pointer over the window.
 		/// </summary>
+		/// <param name="window">The front-end window.</param>
+		/// <param name="gl">The GL context.</param>
+		/// <param name="input">The input context.</param>
+		/// <param name="keepWindow">Whether to leave the window as it is.</param>
 		private void OnLoad(FrontEndWindow window, GL gl, IInputContext input, bool keepWindow) {
 			window.Attach(gl, input);
 			var fullScreenKey = Es1FullScreen.Start(window, keepWindow);
@@ -410,10 +417,12 @@ public static class Es1ExitCfg {
 	}
 
 	/// <summary>
-	/// The launcher's read, <c>Launcher_ReadExitCfg</c> (<c>00000448</c> in <c>ES1ESCD</c>): <paramref name="path"/> opened
-	/// for reading and writing, as <c>r+b</c> opens it, and up to its first 4 bytes laid over <paramref name="dword"/>'s
+	/// The launcher's read, <c>Launcher_ReadExitCfg</c> (<c>00000448</c> in <c>ES1ESCD</c>): the path opened
+	/// for reading and writing, as <c>r+b</c> opens it, and up to its first 4 bytes laid over the dword's
 	/// low bytes, the bytes past the file's end keeping their value. Null when the file does not open, where retail asserts.
 	/// </summary>
+	/// <param name="path">The file's path.</param>
+	/// <param name="dword">The value laid over.</param>
 	public static int? ReadOver(string path, int dword) {
 		Span<byte> bytes = stackalloc byte[4];
 		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(bytes, dword);

@@ -47,7 +47,7 @@ public sealed class Es1ShieldDisplay {
 	private readonly Es1ShieldButton[] _facings;
 
 	/// <summary>
-	/// <c>ShieldsGauge_Ctor</c> (<c>ES1DBSIM 00038f34</c>)(0, <paramref name="cockpit"/>, <paramref name="block"/>): the
+	/// <c>ShieldsGauge_Ctor</c> (<c>ES1DBSIM 00038f34</c>)(0, cockpit, block): the
 	/// gauge base's rect, the block's first 16 bytes; then, with (<i>x</i>, <i>y</i>) the block's first pair, for the front
 	/// and then the rear: the button on its rect moved by (<i>x</i>, <i>y</i>), registered on the cockpit's root
 	/// (<c>Widget_RegisterClickable</c>), with <c>pbuttons</c>' frames <see cref="FirstFrame"/> + 3<i>i</i> to
@@ -55,6 +55,8 @@ public sealed class Es1ShieldDisplay {
 	/// (<i>x</i>, <i>y</i>) with the fill <see cref="ReadoutFill"/>. Then the state block cleared and the rings installed
 	/// (<see cref="UpdateRingPalette"/>).
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="block">The gauge's <c>.GAU</c> block.</param>
 	/// <param name="fonts"><c>ColorSchemePanels</c>.</param>
 	/// <param name="pushButtons"><c>CockpitPButtonsBank</c>, the frames of <c>dba\pbuttons</c>; no picture is blitted when it or a frame is missing.</param>
 	internal Es1ShieldDisplay(Es1Cockpit cockpit, Es1GauShieldDisplayBlock block, IReadOnlyList<HudFont?> fonts,
@@ -117,9 +119,10 @@ public sealed class Es1ShieldDisplay {
 	public Es1ShieldState GetStateBlock() => State;
 
 	/// <summary>
-	/// <c>ShieldsGauge_SetStateBlock</c> (<c>000392d0</c>)(gauge, <paramref name="block"/>): the block copied over the
+	/// <c>ShieldsGauge_SetStateBlock</c> (<c>000392d0</c>)(gauge, block): the block copied over the
 	/// state block, and the paint count set to 2 when the readings or the balance changed.
 	/// </summary>
+	/// <param name="block">The new state block.</param>
 	public void SetStateBlock(Es1ShieldState block) {
 		bool changed = block.FrontReading != State.FrontReading || block.RearReading != State.RearReading
 			|| block.Balance != State.Balance;
@@ -130,11 +133,13 @@ public sealed class Es1ShieldDisplay {
 	}
 
 	/// <summary>
-	/// Slot <c>+4</c>, <c>ShieldsGauge_OnClick</c> (<c>00039254</c>)(gauge, <paramref name="value"/>,
-	/// <paramref name="child"/>), which a button's click calls: for the front button the front press flag set and the rear
+	/// Slot <c>+4</c>, <c>ShieldsGauge_OnClick</c> (<c>00039254</c>)(gauge, value,
+	/// child), which a button's click calls: for the front button the front press flag set and the rear
 	/// cleared, for the rear the reverse, the value not tested; for another child nothing. The next
 	/// <see cref="Sim.Es1Shields.BalanceInputRead"/> takes the flag and moves the balance.
 	/// </summary>
+	/// <param name="value">The click's button bits.</param>
+	/// <param name="child">The button clicked.</param>
 	public void OnChildClick(short value, Es1Widget child) {
 		_ = value;
 		if (ReferenceEquals(child, _facings[0])) {

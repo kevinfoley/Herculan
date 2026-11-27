@@ -20,7 +20,7 @@ public static class Es1Build {
 	/// <summary>The archive only an install with the expansion holds.</summary>
 	public const string ExpansionArchiveName = "PZONES1.VOL";
 
-	/// <summary>Whether the expansion is installed in <paramref name="installRoot"/>: whether its <c>VOL</c> folder holds <see cref="ExpansionArchiveName"/>.</summary>
+	/// <summary>Whether the expansion is installed in the install folder: whether its <c>VOL</c> folder holds <see cref="ExpansionArchiveName"/>.</summary>
 	/// <param name="installRoot">The install's root folder.</param>
 	public static bool IsExpansion(string installRoot) {
 		string archives = GameContent.ArchiveDirectory(installRoot);
@@ -29,7 +29,7 @@ public static class Es1Build {
 	}
 
 	/// <summary>
-	/// <see cref="Host.Es1GameModule.Identity"/>'s install refusal: why <paramref name="installRoot"/> cannot be used when it
+	/// <see cref="Host.Es1GameModule.Identity"/>'s install refusal: why the install folder cannot be used when it
 	/// holds the expansion (<see cref="IsExpansion"/>), in the player's language, otherwise null.
 	/// </summary>
 	/// <param name="localization">The table the reason is read from.</param>

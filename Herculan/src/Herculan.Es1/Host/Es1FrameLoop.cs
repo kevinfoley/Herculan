@@ -84,7 +84,7 @@ public sealed class Es1FrameLoop : IEs1Frame {
 	private IEs1FramePacer? _pacer;
 	private Es1SimulationRunner? _wired;
 
-	/// <summary>A frame loop on <paramref name="views"/>, its first retrace at host time 0.</summary>
+	/// <summary>A frame loop on the view manager, its first retrace at host time 0.</summary>
 	/// <param name="views">The view manager, on the display it flips.</param>
 	/// <param name="camUpdate"><c>Cam_Update</c>(<c>ViewObjectPtr</c>): the current camera (<see cref="Es1ViewChain.Camera"/>) placed.</param>
 	/// <param name="beginWorldPass">

@@ -43,7 +43,7 @@ public sealed class Es1ShellResults {
 	private const short AfterMissionScreen = 1710;
 
 	/// <summary>
-	/// <c>Shell_ProcessMissionResults</c> on <paramref name="mission"/>, after <see cref="Es1ShellMission.ReadRestore"/>:
+	/// <c>Shell_ProcessMissionResults</c> on the mission, after <see cref="Es1ShellMission.ReadRestore"/>:
 	/// <list type="number">
 	/// <item>in <c>Shell_Mode</c> 1 <c>Career_LoadCurrent</c> (<see cref="Es1CareerRoster.LoadCurrent"/>), otherwise
 	/// <c>SingleMission_RestoreRecord</c> (<c>00014fd6</c>): <c>car\sm_play.gam</c> into the record and
@@ -61,6 +61,9 @@ public sealed class Es1ShellResults {
 	/// reported and read as empty, and every field past a file's end reads 0, engine guards. A career whose load left no
 	/// hangar is read over an empty one, an engine guard.
 	/// </summary>
+	/// <param name="mission">The mission.</param>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="data">The shell's data.</param>
 	public void Process(Es1ShellMission mission, string installRoot, Es1ShellData data) {
 		if (mission.Mode == 1) {
 			mission.Roster.LoadCurrent();
@@ -151,9 +154,9 @@ public sealed class Es1ShellResults {
 
 	/// <summary>
 	/// <c>CareerRecord_ReadPilotResults</c> (<c>0001568d</c>): <see cref="Totals"/> zeroed; then for each entry 0 to 3 of
-	/// <paramref name="record"/> on strength with a slot, in entry order, its condition and its gains:
+	/// the record on strength with a slot, in entry order, its condition and its gains:
 	/// <list type="bullet">
-	/// <item>for entry 0, or every entry outside <paramref name="mode"/> 0: <c>Hangar_ReadStatusBlock</c>
+	/// <item>for entry 0, or every entry outside mode 0: <c>Hangar_ReadStatusBlock</c>
 	/// (<c>00028e50</c>)(stream, slot), which, when the slot holds a HERC, frees its diagram
 	/// (<see cref="Hangar.Es1HercDiagrams.Free"/>), reads the 66-byte block over its status block and builds the diagram
 	/// again with 0 (<see cref="Hangar.Es1HercDiagrams.Build"/>), whatever <c>Shell_LowMemory</c> holds, and reads nothing
@@ -164,6 +167,11 @@ public sealed class Es1ShellResults {
 	/// then <c>PilotEntry_ReadGains</c> (<c>000153d8</c>): 6 bytes into the gains, and <see cref="Es1PilotEntry.ApplyGains"/>
 	/// with <see cref="Totals"/>.
 	/// </summary>
+	/// <param name="record">The career record.</param>
+	/// <param name="hangar">The hangar.</param>
+	/// <param name="mode">The shell mode.</param>
+	/// <param name="results">The results file's cursor.</param>
+	/// <param name="diagrams">The HERC diagrams.</param>
 	private void ReadPilotResults(Es1CareerRecord record, Es1Hangar hangar, short mode, Cursor results, Hangar.Es1HercDiagrams diagrams) {
 		Array.Clear(Totals);
 		for (int i = 0; i < Es1CareerRecord.PilotCount; i++) {
@@ -191,7 +199,10 @@ public sealed class Es1ShellResults {
 		}
 	}
 
-	/// <summary>The install's <c>data\</c><paramref name="name"/>, or no bytes, reported, when it does not open.</summary>
+	/// <summary>The install's <c>data\</c>name, or no bytes, reported, when it does not open.</summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="name">The file's name.</param>
+	/// <param name="assert">The assert text.</param>
 	private static byte[] ReadData(string installRoot, string name, string assert) {
 		try {
 			return File.ReadAllBytes(Es1MissionFiles.DataPath(installRoot, name));

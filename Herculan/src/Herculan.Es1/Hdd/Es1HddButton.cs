@@ -18,10 +18,13 @@ public sealed class Es1HddButton : Es1ButtonWidget {
 	public const byte MarkerLit = 0x3b, MarkerUnlit = 0x39, CaptionHeld = 0x3b;
 
 	/// <summary>
-	/// <c>HddButton_Ctor</c> (<c>ES1DBSIM 0003ea5c</c>)(0, <paramref name="index"/>, <paramref name="display"/>,
-	/// <paramref name="rect"/>): the widget on the rect, the drag flag 0, the display <c>+0x20</c>, the index
+	/// <c>HddButton_Ctor</c> (<c>ES1DBSIM 0003ea5c</c>)(0, index, display,
+	/// rect): the widget on the rect, the drag flag 0, the display <c>+0x20</c>, the index
 	/// <c>+0x28</c>, the state 0 and the lamp out; with the pictures and the caption <c>HddDisplay_Ctor</c> gives it after.
 	/// </summary>
+	/// <param name="index">The button's index.</param>
+	/// <param name="display">The display the button belongs to.</param>
+	/// <param name="rect">The button's rectangle.</param>
 	/// <param name="unlit"><c>+0x30</c>, the frame at state 0; null blits nothing.</param>
 	/// <param name="lit"><c>+0x34</c>, the frame at any other state.</param>
 	internal Es1HddButton(int index, Es1HddDisplay display, Es1Rect rect, DynamixBitmap? unlit, DynamixBitmap? lit) {
@@ -99,10 +102,11 @@ public sealed class Es1HddButton : Es1ButtonWidget {
 	public override void Invalidate() => PaintCounter = 2;
 
 	/// <summary>
-	/// Slot <c>+0xc</c>, <c>HddButton_OnClick</c> (<c>0003ed2c</c>)(button, <paramref name="value"/>): with no test of
+	/// Slot <c>+0xc</c>, <c>HddButton_OnClick</c> (<c>0003ed2c</c>)(button, value): with no test of
 	/// the value, the display's <see cref="Es1HddDisplay.OnChildClick"/>, then the button invalidated and the mixin's
 	/// click sound.
 	/// </summary>
+	/// <param name="value">The click's button bits.</param>
 	public override void OnClick(short value) {
 		_ = value;
 		Display.OnChildClick(this);

@@ -108,11 +108,15 @@ public sealed class Es1ShellDevices {
 	public Es1Preferences? Preferences { get; private set; }
 
 	/// <summary>
-	/// <c>Shell_InitDevices</c>, in its order; <paramref name="debugMode"/> is <c>-X</c>'s <c>Shell_DebugMode</c>, which
-	/// with the keyboard is handed to the menus' <paramref name="globals"/>, whose dialog key handler
+	/// <c>Shell_InitDevices</c>, in its order; debugMode is <c>-X</c>'s <c>Shell_DebugMode</c>, which
+	/// with the keyboard is handed to the menus' globals, whose dialog key handler
 	/// <c>Shell_NavKeySubscriber</c> calls.
 	/// </summary>
+	/// <param name="content">The game's content.</param>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="debugMode">Whether <c>-X</c> was given.</param>
 	/// <param name="biosShiftFlags">The host's lock and shift state, <see cref="Es1HostKeyboard.ReadBiosShiftFlags"/>.</param>
+	/// <param name="globals">The menus' globals.</param>
 	/// <param name="audio">The host's audio device the sound manager plays through.</param>
 	/// <exception cref="Sim.Es1FatalAssertException"><c>ShellSound_Init</c>'s assert: <c>resource.cfg</c> does not open.</exception>
 	public void Init(GameContent content, string installRoot, bool debugMode, byte biosShiftFlags, Es1MenuGlobals globals,
@@ -205,12 +209,13 @@ public sealed class Es1ShellDevices {
 
 	/// <summary>
 	/// <c>Input_CreateJoystickDevices</c> (<c>000087ff</c>), the simulator's statements (<see cref="Es1JoystickDevices.Create"/>)
-	/// on <paramref name="port"/>, for <see cref="Preferences"/>' options 7 and 9; nothing before <see cref="Init"/>.
+	/// on the port, for <see cref="Preferences"/>' options 7 and 9; nothing before <see cref="Init"/>.
 	/// <para><b>This engine's departure:</b> retail builds the devices at the end of <c>Prefs_Init</c>, inside
 	/// <see cref="Init"/>. The host builds them once the controller can be detected, a few frames later, as the
 	/// simulator's start does (<see cref="Host.Es1SimulationStart"/>); a device built sooner would find no axis answering
 	/// and read no buttons. The calibration files are not read (plan decision 9).</para>
 	/// </summary>
+	/// <param name="port">The game port.</param>
 	public void CreateJoysticks(IEs1GamePort port) {
 		if (Preferences is { } preferences) {
 			Joysticks = Es1JoystickDevices.Create(preferences, port);
@@ -231,10 +236,11 @@ public sealed class Es1ShellDevices {
 
 	/// <summary>
 	/// <c>Prefs_ApplyMouseOption</c> (<c>0000868c</c>), option 11's handler, the simulator's statements (<see cref="Es1PlayerInputReader.ApplyMouseOption"/>):
-	/// when <paramref name="value"/> differs from <see cref="MouseOptionApplied"/>, it is kept there and, with the mouse
+	/// when the value differs from <see cref="MouseOptionApplied"/>, it is kept there and, with the mouse
 	/// device the shell always builds, the driver turned off for 0 (<c>Mouse_DisableDriver</c>) and on otherwise
 	/// (<c>Mouse_EnableDriver</c>). CONTROLS' MOUSE runs it at each click.
 	/// </summary>
+	/// <param name="value">The option's new value.</param>
 	public void ApplyMouseOption(byte value) {
 		if (value == MouseOptionApplied) {
 			return;

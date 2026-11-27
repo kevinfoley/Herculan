@@ -26,11 +26,14 @@ public abstract class Es1MessagePort {
 	public const byte CommandIdBase = 0x32;
 
 	/// <summary>
-	/// <c>MessagePort_CtorBase</c> (<c>ES1DBSIM 0002eb80</c>)(port, <paramref name="rect"/>)
+	/// <c>MessagePort_CtorBase</c> (<c>ES1DBSIM 0002eb80</c>)(port, rect)
 	/// (docs/es1/simulation/cockpit-messages.md#building-the-two-ports): the queue built, the box a type-0 rectangle region
 	/// holding the rect, and the current message, the line, the callback counts and the latches clear; then, while
-	/// <paramref name="tables"/>' system table is empty, <see cref="SystemMessagesIndex"/>(0, <see cref="SystemFile"/>).
+	/// the tables' system table is empty, <see cref="SystemMessagesIndex"/>(0, <see cref="SystemFile"/>).
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="rect">The port's rectangle.</param>
+	/// <param name="tables">The message tables.</param>
 	protected Es1MessagePort(Es1Cockpit cockpit, Es1Rect rect, Es1MessageTables tables) {
 		Cockpit = cockpit;
 		Box = rect;
@@ -74,7 +77,7 @@ public abstract class Es1MessagePort {
 	protected uint Now => Cockpit.Globals.Clock.Clock;
 
 	/// <summary>
-	/// <c>MessagePort_Post</c> (<c>0002ed94</c>)(port, {<paramref name="id"/>, <paramref name="subject"/>})
+	/// <c>MessagePort_Post</c> (<c>0002ed94</c>)(port, {id, subject})
 	/// (docs/es1/simulation/cockpit-messages.md#posting): with no subject the id's slot in the system index. With one, the
 	/// squadmate slot <see cref="Es1Cockpit.SquadIndexOf"/> as a byte, and above 3 the first squadmate
 	/// (<see cref="Es1Cockpit.SquadmateMachines"/>) as the subject and the slot 0; then, for an id below
@@ -84,6 +87,8 @@ public abstract class Es1MessagePort {
 	/// other than 0 goes through <see cref="Es1MessageTable.StepToVariant"/>; and a slot with a text and attributes is
 	/// queued (<see cref="Es1MessageQueue.Enqueue"/>) at now with the subject.
 	/// </summary>
+	/// <param name="id">The message id.</param>
+	/// <param name="subject">The message's subject, or null.</param>
 	public void Post(byte id, IEs1SimObject? subject) {
 		Es1MessageTable table;
 		Es1MessageSlot slot;
@@ -117,15 +122,17 @@ public abstract class Es1MessagePort {
 	}
 
 	/// <summary>
-	/// <c>SystemMessages_Index</c> (<c>0002f1ec</c>)(port, <paramref name="digit"/>, <paramref name="which"/>)
+	/// <c>SystemMessages_Index</c> (<c>0002f1ec</c>)(port, digit, which)
 	/// (docs/es1/simulation/cockpit-messages.md#the-string-files): <see cref="SystemFile"/> loads <c>system</c> into the
 	/// system table, <see cref="CommandFile"/> <c>commandr</c> into the command table, and a squadmate slot 0 to 2 first,
 	/// when that slot's squadmate leads its group (<see cref="LeadsGroup"/>), <c>commandr</c> with
 	/// <see cref="CommandFile"/>, then <c>pilot&lt;digit&gt;</c> into the slot's pilot table; each indexed by
 	/// <see cref="Es1MessageTable.Index"/>. The Heads-Down Display's <c>HddGauge_LoadPilotFrames</c> (<c>0003dab4</c>,
-	/// <see cref="Hdd.Es1HddCommBox.Load"/>) calls it for each squadmate with <c>Pilot_VoiceBankOf</c> of the portrait. Retail is never handed another <paramref name="which"/>; one indexes nothing here, an
+	/// <see cref="Hdd.Es1HddCommBox.Load"/>) calls it for each squadmate with <c>Pilot_VoiceBankOf</c> of the portrait. Retail is never handed another which; one indexes nothing here, an
 	/// engine guard.
 	/// </summary>
+	/// <param name="digit">The digit.</param>
+	/// <param name="which">The table selector.</param>
 	public void SystemMessagesIndex(byte digit, sbyte which) {
 		Es1MessageTable table;
 		string name;
@@ -151,10 +158,11 @@ public abstract class Es1MessagePort {
 	}
 
 	/// <summary>
-	/// Whether <paramref name="machine"/> is entry 0 of its group's (<c>+0x3f</c>) member array <c>+0xe</c>, the test
+	/// Whether the machine is entry 0 of its group's (<c>+0x3f</c>) member array <c>+0xe</c>, the test
 	/// <see cref="Post"/> and <see cref="SystemMessagesIndex"/> make. Retail reads through a null machine or group; none
 	/// leads here, an engine guard.
 	/// </summary>
+	/// <param name="machine">The machine, or null.</param>
 	public static bool LeadsGroup(IEs1SimObject? machine) =>
 		machine?.Group is { Members: [var first, ..] } && ReferenceEquals(first, machine);
 
@@ -165,22 +173,26 @@ public abstract class Es1MessagePort {
 	public void ShiftRect(int dx, int dy) => Box = Box.Offset(-dx, -dy);
 
 	/// <summary>
-	/// <c>MessagePort_AddBeginCallback</c> (<c>0002eed8</c>)(port, <paramref name="callback"/>): the callback in the
+	/// <c>MessagePort_AddBeginCallback</c> (<c>0002eed8</c>)(port, callback): the callback in the
 	/// next of two slots, answering true; false when both are taken.
 	/// </summary>
+	/// <param name="callback">The callback.</param>
 	public bool AddBeginCallback(Action<Es1QueuedMessage> callback) => Add(_beginCallbacks, callback);
 
-	/// <summary><c>MessagePort_AddEndCallback</c> (<c>0002ef18</c>)(port, <paramref name="callback"/>): as <see cref="AddBeginCallback"/>.</summary>
+	/// <summary><c>MessagePort_AddEndCallback</c> (<c>0002ef18</c>)(port, callback): as <see cref="AddBeginCallback"/>.</summary>
+	/// <param name="callback">The callback.</param>
 	public bool AddEndCallback(Action<Es1QueuedMessage> callback) => Add(_endCallbacks, callback);
 
 	/// <summary>The end callbacks, which the pilot channel's take-down runs (<see cref="Es1PilotChannel.Erase"/>).</summary>
 	protected IReadOnlyList<Action<Es1QueuedMessage>> EndCallbacks => _endCallbacks;
 
 	/// <summary>
-	/// <c>MessagePort_Withdraw</c> (<c>0002f370</c>)(port, <paramref name="id"/>, <paramref name="subject"/>): when the
+	/// <c>MessagePort_Withdraw</c> (<c>0002f370</c>)(port, id, subject): when the
 	/// current message has both, the cancelled latch set and true, unless it is due, which is left and answers false;
 	/// otherwise <see cref="Es1MessageQueue.RemoveMatch"/>.
 	/// </summary>
+	/// <param name="id">The message id.</param>
+	/// <param name="subject">The message's subject, or null.</param>
 	public bool Withdraw(short id, IEs1SimObject? subject) {
 		if (Current is { } current && current.Id == id && ReferenceEquals(current.Subject, subject)) {
 			if (Due) {
@@ -263,7 +275,8 @@ public abstract class Es1MessagePort {
 	/// <summary>Slot <c>+4</c>, show the current message; answers whether it went up.</summary>
 	protected abstract bool Show();
 
-	/// <summary>Slot <c>+8</c>, the line's text for <paramref name="record"/>.</summary>
+	/// <summary>Slot <c>+8</c>, the line's text for the record.</summary>
+	/// <param name="record">The message, or null.</param>
 	protected abstract string SetText(Es1QueuedMessage? record);
 
 	/// <summary>Slot <c>+0xc</c>, take the line down; answers whether it came down.</summary>
@@ -281,13 +294,14 @@ public abstract class Es1MessagePort {
 	}
 
 	/// <summary>
-	/// <c>MessagePort_CopyBoxBetweenPages</c> (<c>0002fcd4</c>)(port, <paramref name="direction"/>), while a line is up:
+	/// <c>MessagePort_CopyBoxBetweenPages</c> (<c>0002fcd4</c>)(port, direction), while a line is up:
 	/// inside the canvas push, the display's <c>+0x88</c> made its source page and <c>+0x8c</c> its draw page for
 	/// direction 0, the other way for 1; the box copied between them as a type-0 region at the offset (0, 0) with the
 	/// cursor taken off; the cursor drawn again unless the current view is 4 and no panel is up
 	/// (<c>AlertPanel_OpenCount</c>, <c>00094d78</c>), the test the decompile at <c>0002fcd4</c> reads; and the draw page
 	/// put back. The source page stays the one it set. The view changes call it on the pilot channel after a slide.
 	/// </summary>
+	/// <param name="direction">The direction of the copy.</param>
 	internal void CopyBoxBetweenPages(int direction) {
 		if (!LineUp) {
 			return;

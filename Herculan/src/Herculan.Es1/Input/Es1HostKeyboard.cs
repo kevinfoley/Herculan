@@ -43,9 +43,10 @@ public sealed class Es1HostKeyboard {
 	}
 
 	/// <summary>
-	/// Sends to <paramref name="keyboard"/>'s interrupt handler at the host's own repeat delay and rate, with the
+	/// Sends to the keyboard's interrupt handler at the host's own repeat delay and rate, with the
 	/// <c>E0</c> prefix when the keyboard is in <see cref="Es1Keyboard.Int15Mode"/>.
 	/// </summary>
+	/// <param name="keyboard">The keyboard.</param>
 	public Es1HostKeyboard(Es1Keyboard keyboard) : this(keyboard.Interrupt, KeyRepeat.SystemTypematic()) {
 		SendsExtendedPrefix = keyboard.Mode == Es1Keyboard.Int15Mode;
 	}
@@ -79,10 +80,11 @@ public sealed class Es1HostKeyboard {
 	public Func<bool>? HostHasKeyboard { get; set; }
 
 	/// <summary>
-	/// <b>This engine's own:</b> makes HERCULAN's menu bar over <paramref name="window"/> the host's layer
+	/// <b>This engine's own:</b> makes HERCULAN's menu bar over the window the host's layer
 	/// (<see cref="HostTakes"/>, <see cref="HostHasKeyboard"/>), in the shell and in a mission alike: the bar takes the
 	/// keys <see cref="MenuBarTakes"/> gives it, and the keyboard while a field of its windows is typed into.
 	/// </summary>
+	/// <param name="window">The front-end window.</param>
 	public void GiveMenuBarItsKeys(FrontEndWindow window) {
 		HostTakes = key => MenuBarTakes(window, key);
 		HostHasKeyboard = () => window.ImGuiWantsKeyboard;
@@ -116,7 +118,8 @@ public sealed class Es1HostKeyboard {
 	/// </summary>
 	public Es1FullScreenKey? FullScreenKey { get; set; }
 
-	/// <summary>The set-1 make byte <paramref name="key"/> sends, or null for a key with none.</summary>
+	/// <summary>The set-1 make byte a key sends, or null for a key with none.</summary>
+	/// <param name="key">The key.</param>
 	public static byte? MakeCodeOf(Key key) => MakeCodes.TryGetValue(key, out byte code) ? code : null;
 
 	/// <summary>Takes the device's key events until <see cref="Detach"/>.</summary>
@@ -171,10 +174,11 @@ public sealed class Es1HostKeyboard {
 	}
 
 	/// <summary>
-	/// <b>This engine's own:</b> <paramref name="chord"/> pressed and let go at once, its modifiers down around it, past the
+	/// <b>This engine's own:</b> the chord pressed and let go at once, its modifiers down around it, past the
 	/// host's layer (<see cref="HostTakes"/>), for an item of the host's own menus that sends a key: the menu's focus
 	/// would otherwise take it. It holds nothing and starts no typematic.
 	/// </summary>
+	/// <param name="chord">The chord.</param>
 	public void Tap(KeyChord chord) {
 		var modifiers = ModifierKeys(chord).ToList();
 		foreach (var modifier in modifiers) {
@@ -190,7 +194,8 @@ public sealed class Es1HostKeyboard {
 		}
 	}
 
-	/// <summary>The left-hand modifier keys <paramref name="chord"/> holds: <c>Ctrl</c>, <c>Alt</c>, <c>Shift</c>, in that order.</summary>
+	/// <summary>The left-hand modifier keys the chord holds: <c>Ctrl</c>, <c>Alt</c>, <c>Shift</c>, in that order.</summary>
+	/// <param name="chord">The chord.</param>
 	internal static IEnumerable<Key> ModifierKeys(KeyChord chord) {
 		if (chord.Modifiers.HasFlag(KeyModifiers.Ctrl)) {
 			yield return Key.ControlLeft;
@@ -223,9 +228,10 @@ public sealed class Es1HostKeyboard {
 	/// The shift-flag byte <c>INT 16h</c> function 2 would answer, which <c>Keyboard_SetMode</c> seeds the modifiers
 	/// from: right and left <c>Shift</c> 1 and 2, <c>Ctrl</c> 4, <c>Alt</c> 8, and the <c>Scroll Lock</c>,
 	/// <c>Num Lock</c>, <c>Caps Lock</c> and <c>Insert</c> toggles <c>0x10</c>, <c>0x20</c>, <c>0x40</c> and
-	/// <c>0x80</c>. On Windows from <c>GetKeyState</c>; elsewhere the held keys from <paramref name="device"/> and no
+	/// <c>0x80</c>. On Windows from <c>GetKeyState</c>; elsewhere the held keys from the device and no
 	/// toggle, which the host's input does not expose.
 	/// </summary>
+	/// <param name="device">The keyboard device, or null.</param>
 	public static byte ReadBiosShiftFlags(IKeyboard? device) {
 		if (OperatingSystem.IsWindows()) {
 			return (byte)((Down(VkRightShift) ? 0x01 : 0) | (Down(VkLeftShift) ? 0x02 : 0) | (Down(VkControl) ? 0x04 : 0)

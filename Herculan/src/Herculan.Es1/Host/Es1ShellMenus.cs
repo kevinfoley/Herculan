@@ -36,8 +36,10 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 
 	/// <summary>
 	/// The Tweaks window edits <see cref="TweakSettings.Current"/>, which the host has loaded with ES1's catalog; the
-	/// Settings window shows <paramref name="installRoot"/>, the install the turn runs on.
+	/// Settings window shows the install root, the install the turn runs on.
 	/// </summary>
+	/// <param name="localization">The language table.</param>
+	/// <param name="installRoot">The install folder.</param>
 	/// <param name="games">Every game the host runs, which the "Game" menu offers a switch to (<see cref="GameMenu"/>).</param>
 	/// <param name="inMission">Whether the bar is over a mission rather than the shell (the class summary).</param>
 	public Es1ShellMenus(LocalizationTable localization, string installRoot, IReadOnlyList<GameIdentity> games,
@@ -91,7 +93,10 @@ public sealed class Es1ShellMenus : IFrontEndMenus {
 	public void OfferWelcome() {
 	}
 
-	/// <summary>The menu bar and its windows. <paramref name="revealOnHover"/> is <see cref="HostMenuBar.ShowOnHover"/>.</summary>
+	/// <summary>The menu bar and its windows.</summary>
+	/// <param name="owner">The owner window.</param>
+	/// <param name="fullScreen">Whether the window is full screen.</param>
+	/// <param name="revealOnHover"><see cref="HostMenuBar.ShowOnHover"/>.</param>
 	public void Draw(nint owner, bool fullScreen, bool revealOnHover) {
 		if (revealOnHover) {
 			_menuBar.ShowOnHover();

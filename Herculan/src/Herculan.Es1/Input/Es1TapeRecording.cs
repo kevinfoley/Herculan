@@ -46,12 +46,15 @@ public sealed class Es1TapeRecording {
 	public Func<short>? TickDelta { get; set; }
 
 	/// <summary>
-	/// <c>-r</c> on the host's flag: the tape <paramref name="stem"/> names, with its extension made
+	/// <c>-r</c> on the host's flag: the tape the stem names, with its extension made
 	/// <see cref="Es1TapePlayback.Extension"/>, created and the bundle packed into it from <see cref="PackPaths"/> in
-	/// <paramref name="installRoot"/>, matched ignoring case, each file as <c>Tape_PackFile</c> packs it
-	/// (<see cref="Pack"/>). Answers none, with <paramref name="error"/>, when the tape does not open for writing: an
+	/// the install folder, matched ignoring case, each file as <c>Tape_PackFile</c> packs it
+	/// (<see cref="Pack"/>). Answers none, with an error message, when the tape does not open for writing: an
 	/// engine guard, since retail packs into a stream it never checks opened.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="stem">The tape's name.</param>
+	/// <param name="error">The reason the tape did not open, or null.</param>
 	public static Es1TapeRecording? Start(string installRoot, string stem, out string? error) {
 		error = null;
 		string path = Path.ChangeExtension(stem, Es1TapePlayback.Extension);
@@ -79,14 +82,16 @@ public sealed class Es1TapeRecording {
 	}
 
 	/// <summary>
-	/// The input read's step 8: <paramref name="block"/>'s command word and four axes, <see cref="TickDelta"/>, the
-	/// button word (<see cref="ButtonWord"/>), the count of <paramref name="mouseEvents"/>, what
+	/// The input read's step 8: the block's command word and four axes, <see cref="TickDelta"/>, the
+	/// button word (<see cref="ButtonWord"/>), the count of the mouse events, what
 	/// <c>CockpitMouse_ProcessQueue</c> returned, and the events, appended to the tape, which is opened in mode
 	/// <c>ab</c> and closed again. A tape that does not open is retail's severity-5 assert (<see cref="AppendAssertLine"/>),
 	/// which ends the program (docs/es1/simulation/asserts.md): thrown as <see cref="Es1FatalAssertException"/>, nothing
 	/// after it running.
 	/// </summary>
+	/// <param name="block">The frame's input block.</param>
 	/// <param name="sourceButtons">The four source buttons the read took: the live block's <c>+0x1d</c>–<c>+0x20</c>, or the playing tape's bits 8–11.</param>
+	/// <param name="mouseEvents">The frame's mouse events.</param>
 	public void Append(Es1PlayerInputBlock block, IReadOnlyList<byte> sourceButtons, IReadOnlyList<Es1MouseEvent> mouseEvents) {
 		var frame = new Es1InputTape.Frame {
 			CommandWord = (short)block.CommandWord,
@@ -112,8 +117,10 @@ public sealed class Es1TapeRecording {
 
 	/// <summary>
 	/// The frame's button word as step 8 builds it: bit <i>i</i> for each of the block's buttons 0–7 that is not 0, and
-	/// bits 8–11 for each of the four <paramref name="sourceButtons"/> that is not 0; bits 12–15 clear.
+	/// bits 8–11 for each of the four source buttons that is not 0; bits 12–15 clear.
 	/// </summary>
+	/// <param name="buttons">The block's buttons.</param>
+	/// <param name="sourceButtons">The four source buttons.</param>
 	public static Es1InputTape.Button ButtonWord(IReadOnlyList<byte> buttons, IReadOnlyList<byte> sourceButtons) {
 		int word = 0;
 		for (int i = 0; i < 8; i++) {

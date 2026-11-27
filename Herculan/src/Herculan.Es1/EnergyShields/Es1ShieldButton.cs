@@ -11,10 +11,12 @@ namespace Herculan.Es1.EnergyShields;
 /// </summary>
 public sealed class Es1ShieldButton : Es1ButtonWidget {
 	/// <summary>
-	/// <c>ShieldsGauge_FacingCtor</c> (<c>ES1DBSIM 000396ac</c>)(0, <paramref name="display"/>, <paramref name="rect"/>):
+	/// <c>ShieldsGauge_FacingCtor</c> (<c>ES1DBSIM 000396ac</c>)(0, display, rect):
 	/// the widget on the rect, the drag flag 0, the display <c>+0x20</c> and the state 0; and the three pictures
 	/// <c>ShieldsGauge_Ctor</c> gives it at <c>+0x30</c>, <c>+0x34</c> and <c>+0x38</c>.
 	/// </summary>
+	/// <param name="display">The shields display the button belongs to.</param>
+	/// <param name="rect">The button's rectangle.</param>
 	/// <param name="pictures">The pictures for the states 0, 1 and 2; a null entry blits nothing.</param>
 	internal Es1ShieldButton(Es1ShieldDisplay display, Es1Rect rect, DynamixBitmap?[] pictures) {
 		Display = display;
@@ -50,10 +52,11 @@ public sealed class Es1ShieldButton : Es1ButtonWidget {
 	public override void Invalidate() => PaintCount = 2;
 
 	/// <summary>
-	/// Slot <c>+0xc</c>, <c>Widget_ForwardClickToOwner</c> (<c>000314ac</c>)(button, <paramref name="value"/>): with bit 0
+	/// Slot <c>+0xc</c>, <c>Widget_ForwardClickToOwner</c> (<c>000314ac</c>)(button, value): with bit 0
 	/// of the value set, the left button, the display's <see cref="Es1ShieldDisplay.OnChildClick"/>, then the button
 	/// invalidated and the mixin's click sound.
 	/// </summary>
+	/// <param name="value">The click's button bits.</param>
 	public override void OnClick(short value) {
 		if ((value & 1) == 0) {
 			return;

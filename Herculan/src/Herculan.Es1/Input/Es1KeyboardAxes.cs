@@ -12,7 +12,8 @@ namespace Herculan.Es1.Input;
 /// <param name="Space"><c>+0x10</c>: <c>Space</c> held.</param>
 /// <param name="Enter"><c>+0x11</c>: <c>Enter</c> held.</param>
 public readonly record struct Es1KeyboardAxesBlock(int FirstX, int FirstY, int SecondX, int SecondY, bool Space, bool Enter) {
-	/// <summary>The source button <paramref name="index"/>, 0–3: <c>Space</c>, <c>Enter</c>, then the two zero bytes.</summary>
+	/// <summary>The source button at an index, 0–3: <c>Space</c>, <c>Enter</c>, then the two zero bytes.</summary>
+	/// <param name="index">The button's index.</param>
 	public byte Button(int index) => index switch {
 		0 => (byte)(Space ? 1 : 0),
 		1 => (byte)(Enter ? 1 : 0),
@@ -42,19 +43,23 @@ public static class Es1KeyboardAxes {
 
 	/// <summary>
 	/// One build: each held key of 0–11 is marked seen and adds its entry, a quarter, or the whole while
-	/// <see cref="Es1AxisKeys.AltHeld"/> is set and, for keys 0–7, whenever <paramref name="slow"/> is false. Keys 0–7
+	/// <see cref="Es1AxisKeys.AltHeld"/> is set and, for keys 0–7, whenever the slow flag is false. Keys 0–7
 	/// add into the first pair, a held diagonal zeroing it, adding its own and ending the group; the first held of keys
 	/// 8–11 adds into the second and ends the loop. Then <c>Space</c> and <c>Enter</c> held, and every key both held and
 	/// release-pending has its held and seen bytes cleared, so a key pressed and released between two reads counts
 	/// for one.
 	///
-	/// <para>With <paramref name="aimAtStickRate"/>, the core's faster keyboard aiming tweak
+	/// <para>With the aim-at-stick-rate flag, the core's faster keyboard aiming tweak
 	/// (<see cref="Engine.Settings.TweakSettingDefinitions.FasterKeyboardAiming"/>), every key that aims the turret adds the whole of its entry, as
-	/// it does with <c>Alt</c> held: keys 8–11, and keys 0–7 when <paramref name="firstPairAims"/>, the input read moving
+	/// it does with <c>Alt</c> held: keys 8–11, and keys 0–7 when the first-pair flag, the input read moving
 	/// the first pair onto the second. The whole of <c>0x100</c> is the travel a stick pushed all the way reaches under the
 	/// squared response every device is built with (docs/es1/simulation/joystick.md#the-record). This engine's own; off,
 	/// the read is retail's.</para>
 	/// </summary>
+	/// <param name="keys">The axis keys.</param>
+	/// <param name="slow">Whether the slow rate applies.</param>
+	/// <param name="aimAtStickRate">Whether the faster aiming tweak is on.</param>
+	/// <param name="firstPairAims">Whether keys 0–7 aim.</param>
 	internal static Es1KeyboardAxesBlock Build(Es1AxisKeys keys, bool slow, bool aimAtStickRate = false, bool firstPairAims = false) {
 		byte[] held = keys.Held, seen = keys.Seen, releasePending = keys.ReleasePending;
 		int firstX = 0, firstY = 0, secondX = 0, secondY = 0;

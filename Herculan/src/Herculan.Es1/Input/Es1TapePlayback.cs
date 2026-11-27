@@ -111,14 +111,19 @@ public sealed class Es1TapePlayback {
 
 	/// <summary>
 	/// <c>Sim_ParseCommandLine</c>'s <c>-p</c> and <c>-D</c> on the host's flags, the tape opened, read and unpacked into
-	/// <paramref name="installRoot"/>. With <paramref name="demo"/> and no <paramref name="stem"/>, <c>-D</c>: the name
+	/// the install folder. With demo and no stem, <c>-D</c>: the name
 	/// from <see cref="PickDemo"/> and the tape <c>tapes\&lt;name&gt;.tap</c>; when there is no name or the tape does not
-	/// open, <paramref name="tape"/> is none and the run goes on with no tape, both flags cleared, as retail's does. With
-	/// <paramref name="stem"/>, <c>-p</c>, in demo mode with <paramref name="demo"/>: the tape <see cref="Resolve"/> finds.
-	/// Answers false, with <paramref name="error"/>, when a named tape is not found or a tape does not read: an engine
+	/// open, the tape is none and the run goes on with no tape, both flags cleared, as retail's does. With
+	/// stem, <c>-p</c>, in demo mode with demo: the tape <see cref="Resolve"/> finds.
+	/// Answers false, with an error message, when a named tape is not found or a tape does not read: an engine
 	/// guard, since retail's <c>-p</c> reads its bundle from a tape it never checks opened, and <c>Tape_UnpackFile</c>
 	/// unpacks whatever a short tape's reads leave.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="stem">The tape's name, or null.</param>
+	/// <param name="demo">Whether the run is a demo.</param>
+	/// <param name="tape">The tape found, or null.</param>
+	/// <param name="error">The reason a tape was not found or read, or null.</param>
 	public static bool FromCommandLine(string installRoot, string? stem, bool demo, out Es1TapePlayback? tape, out string? error) {
 		tape = null;
 		error = null;
@@ -152,10 +157,12 @@ public sealed class Es1TapePlayback {
 
 	/// <summary>
 	/// Where the host finds <c>--play</c>'s tape, as ES2's <c>--play</c> does (ES2's <c>InputTapePlayer</c>):
-	/// the first that exists of <paramref name="stem"/> as given, with the extension forced to <see cref="Extension"/>,
-	/// and that name in <paramref name="installRoot"/>, where retail's <c>-p</c> opens <c>&lt;name&gt;.tap</c> from the
+	/// the first that exists of the stem as given, with the extension forced to <see cref="Extension"/>,
+	/// and that name in the install folder, where retail's <c>-p</c> opens <c>&lt;name&gt;.tap</c> from the
 	/// simulator's own folder, and in its <see cref="TapesFolder"/>, matched ignoring case. None when none exists.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="stem">The tape's name.</param>
 	public static string? Resolve(string installRoot, string stem) {
 		string named = WithExtension(stem);
 		string[] candidates = [
@@ -166,11 +173,13 @@ public sealed class Es1TapePlayback {
 
 	/// <summary>
 	/// <c>DemoTape_PickRandom</c>: group 0 of <c>tapes\demolist.str</c>, read through HercWorks.Core; none when the list
-	/// does not open or the group is empty. Otherwise <paramref name="now"/> modulo the count, drawn again while it equals
-	/// <paramref name="lastPick"/> (<c>DemoTape_LastPick</c>, <c>00096c42</c>, 0 at the start) and the count is above 1;
-	/// the draw becomes <paramref name="lastPick"/> and its name is the answer. Retail's redraw spins until
+	/// does not open or the group is empty. Otherwise now modulo the count, drawn again while it equals
+	/// the last pick (<c>DemoTape_LastPick</c>, <c>00096c42</c>, 0 at the start) and the count is above 1;
+	/// the draw becomes the last pick and its name is the answer. Retail's redraw spins until
 	/// <c>time</c> reaches the next second; this one sleeps 10 ms between draws, the same draws, an engine choice.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="lastPick">The last demo tape picked, updated.</param>
 	/// <param name="now"><c>time</c>: whole seconds, <see cref="RetailTime"/> in the host.</param>
 	public static string? PickDemo(string installRoot, ref short lastPick, Func<long> now) {
 		string listPath = CaseInsensitivePath.Combine(installRoot, TapesFolder, DemoListName);
@@ -202,10 +211,11 @@ public sealed class Es1TapePlayback {
 
 	/// <summary>
 	/// The seven <c>Tape_UnpackFile</c> (<c>0005756c</c>) calls: each bundle file written over its
-	/// <see cref="BundlePaths"/> destination in <paramref name="installRoot"/>, matched ignoring case. A destination that
+	/// <see cref="BundlePaths"/> destination in the install folder, matched ignoring case. A destination that
 	/// does not open for writing, such as one in a folder the install lacks, is skipped, as <c>Tape_UnpackFile</c> reads a
 	/// file it has no destination for and writes nothing.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
 	public void Unpack(string installRoot) {
 		for (int i = 0; i < BundlePaths.Count; i++) {
 			string path = CaseInsensitivePath.Combine(installRoot, BundlePaths[i]);
@@ -218,9 +228,10 @@ public sealed class Es1TapePlayback {
 	}
 
 	/// <summary>
-	/// <paramref name="name"/> with its extension made <see cref="Extension"/>, as <c>Path_WithExtension</c>
+	/// The name with its extension made <see cref="Extension"/>, as <c>Path_WithExtension</c>
 	/// (<c>00060644</c>) forces it; retail's cuts the name at its first <c>.</c>, this the host's at the last one in the
 	/// file name, so a host path through a folder with a <c>.</c> in its name keeps its folders.
 	/// </summary>
+	/// <param name="name">The name.</param>
 	private static string WithExtension(string name) => Path.ChangeExtension(name, Extension);
 }

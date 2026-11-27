@@ -48,7 +48,7 @@ public sealed class Es1ObjectivesPanel : Es1AlertPanel {
 	private readonly Es1Label[] _lines = new Es1Label[MaxLines];
 
 	/// <summary>
-	/// <c>ObjectivesPanel_Ctor</c>(panel, <paramref name="rect"/>, <paramref name="keepsScreen"/>): 315 × 109, centered
+	/// <c>ObjectivesPanel_Ctor</c>(panel, rect, keepsScreen): 315 × 109, centered
 	/// with no rect given and at the rect's corner with one; the plate; the title and the caption from
 	/// <c>str\obj_alrt</c>; the objectives from <c>data\object.str</c> (<see cref="Objectives"/>); the title label in
 	/// <c>green6x8</c>, centered with the margin (0, −1) on a rect as wide as the title at <i>y</i> 3 to 13, and the title
@@ -57,6 +57,9 @@ public sealed class Es1ObjectivesPanel : Es1AlertPanel {
 	/// (0, −1), registered with the panel's root and made widget 0 and the cancel widget; and the seven line labels in
 	/// <c>cpylw</c>, left-aligned.
 	/// </summary>
+	/// <param name="globals">The alert globals.</param>
+	/// <param name="rect">The panel's rectangle, or null to center it.</param>
+	/// <param name="keepsScreen">Whether a buffer keeps the screen under the panel.</param>
 	public Es1ObjectivesPanel(Es1AlertGlobals globals, Es1Rect? rect = null, bool keepsScreen = true)
 		: base(globals, rect is { } at ? SetRect(Height, Width, at.Y0, at.X0) : CenterRect(Height, Width), keepsScreen) {
 		var content = globals.Content;
@@ -107,9 +110,10 @@ public sealed class Es1ObjectivesPanel : Es1AlertPanel {
 	public IReadOnlyList<Es1Label> LineLabels => _lines;
 
 	/// <summary>
-	/// What <c>ObjectivesPanel_Paint</c> puts on the line labels, in their order: each of <paramref name="objectives"/>
+	/// What <c>ObjectivesPanel_Paint</c> puts on the line labels, in their order: each of the objectives
 	/// that is not empty, until seven are set, so an empty line leaves no gap and an eighth is not shown.
 	/// </summary>
+	/// <param name="objectives">The mission's objectives.</param>
 	public static IReadOnlyList<string> LinesShown(IReadOnlyList<string> objectives) =>
 		objectives.Where(line => line.Length != 0).Take(MaxLines).ToArray();
 
@@ -120,9 +124,11 @@ public sealed class Es1ObjectivesPanel : Es1AlertPanel {
 	public override string? GetButtonCaption(int index) => Caption;
 
 	/// <summary>
-	/// <c>ObjectivesPanel_OnChildClick</c> (<c>0004a6a0</c>)(panel, flags, <paramref name="child"/>): the close byte 1 for
+	/// <c>ObjectivesPanel_OnChildClick</c> (<c>0004a6a0</c>)(panel, flags, child): the close byte 1 for
 	/// widget 0, so the loop answers 1.
 	/// </summary>
+	/// <param name="flags">The click's button bits.</param>
+	/// <param name="child">The widget clicked.</param>
 	public override void OnChildClick(short flags, Es1Widget child) {
 		if (IndexOf(child) == 0) {
 			Close = 1;

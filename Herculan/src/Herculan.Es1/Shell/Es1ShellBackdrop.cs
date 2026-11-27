@@ -75,11 +75,12 @@ public sealed class Es1ShellBackdrop {
 	public bool MusicDue { get; set; }
 
 	/// <summary>
-	/// <c>ShellBackdrop_Show</c> (<c>000395a0</c>)(backdrop, <paramref name="group"/>): the group's track, flagged for the
+	/// <c>ShellBackdrop_Show</c> (<c>000395a0</c>)(backdrop, group): the group's track, flagged for the
 	/// next frame when it differs from the last; the previous picture released; the palette <c>res32\regn&lt;group&gt;.dpl</c>
 	/// (<see cref="LoadPalette"/>); the picture <c>res32\regn&lt;group&gt;.dbm</c> drawn at (0, 0) on page 2
 	/// (<see cref="SetPicture"/>).
 	/// </summary>
+	/// <param name="group">The group.</param>
 	public void Show(short group) {
 		MusicTrack = GroupTracks[group / 1000 - 1];
 		if (MusicTrack != LastTrack) {
@@ -173,10 +174,11 @@ public sealed class Es1ShellBackdrop {
 	}
 
 	/// <summary>
-	/// <c>ShellBackdrop_LoadPalette</c> (<c>0003950a</c>)(backdrop, <paramref name="group"/>): the palette released, then
+	/// <c>ShellBackdrop_LoadPalette</c> (<c>0003950a</c>)(backdrop, group): the palette released, then
 	/// <c>res32\regn&lt;group&gt;.dpl</c> loaded into it, group 3000 taking 3000 plus <see cref="CampaignWord"/>, and
 	/// <see cref="PaletteDue"/> set.
 	/// </summary>
+	/// <param name="group">The group.</param>
 	public void LoadPalette(short group) {
 		Palette = null;
 		string name = $"REGN{(group == 3000 ? group + CampaignWord : group)}.DPL";
@@ -189,10 +191,13 @@ public sealed class Es1ShellBackdrop {
 	}
 
 	/// <summary>
-	/// <c>ShellBackdrop_SetPicture</c> (<c>00021334</c>)(region, <paramref name="x"/>, <paramref name="y"/>,
-	/// <paramref name="bitmap"/>): with a bitmap, drawn at the point on page 2 with the draw page put back after, and the
+	/// <c>ShellBackdrop_SetPicture</c> (<c>00021334</c>)(region, x, y,
+	/// bitmap): with a bitmap, drawn at the point on page 2 with the draw page put back after, and the
 	/// rect (<i>x</i>, <i>y</i>)–(<i>x</i> + columns − 1, <i>y</i> + rows − 1); with none, the right edge zeroed.
 	/// </summary>
+	/// <param name="x">The picture's x.</param>
+	/// <param name="y">The picture's y.</param>
+	/// <param name="bitmap">The picture, or null.</param>
 	public void SetPicture(int x, int y, DynamixBitmap? bitmap) {
 		if (bitmap == null) {
 			Rect = (x, y, 0, Rect.Y1);
@@ -223,7 +228,7 @@ public sealed class Es1ShellBackdrop {
 
 	/// <summary>
 	/// <c>Shell_BackdropForScreen</c> (<c>00040afa</c>): the group
-	/// of the screen among the 20 numbers at <c>000821a8</c>, and <paramref name="current"/> for any other.
+	/// of the screen among the 20 numbers at <c>000821a8</c>, and the current group for any other.
 	/// </summary>
 	/// <param name="current">The current backdrop group.</param>
 	/// <param name="screen">The screen number.</param>

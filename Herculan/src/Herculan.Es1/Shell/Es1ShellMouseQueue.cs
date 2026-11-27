@@ -53,7 +53,7 @@ public sealed class Es1ShellMouseQueue {
 	/// <summary>
 	/// <c>MouseEventQueue_Start</c> (<c>00010559</c>), <c>CockpitMouse_Init</c>'s statements (<see cref="Es1CockpitMouse.Init"/>):
 	/// the callback <c>00010900</c> registered with the shell's mouse, its slot kept at <c>0007e5d4</c>; the queues of
-	/// <paramref name="queueSize"/> records, one less taken; no active root and nothing pressed.
+	/// queueSize records, one less taken; no active root and nothing pressed.
 	/// </summary>
 	/// <param name="queueSize"><c>CtlMgr_QueueSize</c>, <see cref="HercWorks.Core.Data.File.Bnd.Es1CtlMgrBnd.QueueSize"/>.</param>
 	public void Start(int queueSize) => _queue.Init(_driver, queueSize);

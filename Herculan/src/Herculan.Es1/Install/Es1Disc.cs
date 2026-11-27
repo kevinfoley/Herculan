@@ -49,7 +49,8 @@ public static class Es1Disc {
 		}
 	}
 
-	/// <summary>Keeps <paramref name="path"/> as the disc. False when the write failed, which has been logged.</summary>
+	/// <summary>Keeps the path as the disc. False when the write failed, which has been logged.</summary>
+	/// <param name="path">The disc's folder or image.</param>
 	public static bool Remember(string path) => UserConfig.Write(PathFile, Path.GetFullPath(path));
 
 	/// <summary>Forgets the disc. False when the file could not be deleted, which has been logged.</summary>
@@ -63,13 +64,16 @@ public static class Es1Disc {
 		}
 	}
 
-	/// <summary>Whether <paramref name="path"/> names a disc image rather than a folder.</summary>
+	/// <summary>Whether the path names a disc image rather than a folder.</summary>
+	/// <param name="path">The folder or image.</param>
 	public static bool IsImage(string path) => !Directory.Exists(path) && File.Exists(path);
 
 	/// <summary>
-	/// Why <paramref name="path"/> cannot be the disc, or null when it can; <paramref name="detail"/> is the reader's
+	/// Why the path cannot be the disc, or null when it can; the detail output is the reader's
 	/// message for <see cref="Problem.Unreadable"/>.
 	/// </summary>
+	/// <param name="path">The folder or image chosen.</param>
+	/// <param name="detail">The reader's message when the problem is <see cref="Problem.Unreadable"/>.</param>
 	public static Problem? Check(string path, out string? detail) {
 		detail = null;
 		if (!Directory.Exists(path) && !File.Exists(path)) {

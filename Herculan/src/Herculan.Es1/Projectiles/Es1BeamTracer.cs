@@ -64,10 +64,11 @@ public sealed class Es1BeamTracer : Es1Projectile {
 	public Vec3i[] Points { get; private set; } = [];
 
 	/// <summary>
-	/// The four points of quad <paramref name="quad"/>, in the table's order from the offset <paramref name="quad"/> &lt;&lt;
+	/// The four points of a quad, in the table's order from the offset the quad's index &lt;&lt;
 	/// (3 − the jagged flag): quad <i>k</i> of a chain is points 2<i>k</i> + 1, 2<i>k</i>, 2<i>k</i> + 2, 2<i>k</i> + 3, and
 	/// the two quads of a straight beam points 1, 0, 2, 3 and 5, 4, 6, 7.
 	/// </summary>
+	/// <param name="quad">The quad's index.</param>
 	public (Vec3i A, Vec3i B, Vec3i C, Vec3i D) Quad(int quad) {
 		int offset = quad << (Jagged ? 2 : 3);
 		return (Points[QuadIndexTable[offset]], Points[QuadIndexTable[offset + 1]], Points[QuadIndexTable[offset + 2]],
@@ -87,14 +88,20 @@ public sealed class Es1BeamTracer : Es1Projectile {
 	}
 
 	/// <summary>
-	/// <c>Bullet_FireBurst</c>(<paramref name="power"/>, <paramref name="machine"/>, <paramref name="range"/>,
-	/// <paramref name="shotTransform"/>, <paramref name="subtype"/>) (docs/es1/simulation/projectiles.md#firing--bullet_fireburst-000088cc):
-	/// the ray along <paramref name="shotTransform"/>'s Y for <paramref name="range"/> with <see cref="Slack"/>, the shot
-	/// of <c>Proj_LookupRecord</c>(<paramref name="subtype"/>, 4)'s armor and shield each <c>Math_Q10Multiply</c>'d by the
+	/// <c>Bullet_FireBurst</c>(power, machine, range,
+	/// shotTransform, subtype) (docs/es1/simulation/projectiles.md#firing--bullet_fireburst-000088cc):
+	/// the ray along shotTransform's Y for range with <see cref="Slack"/>, the shot
+	/// of <c>Proj_LookupRecord</c>(subtype, 4)'s armor and shield each <c>Math_Q10Multiply</c>'d by the
 	/// power, its splash factor and effects, with <see cref="ShotKind"/>; the sweep, whose answer, or the range for none,
 	/// is how far the beam goes; one tracer from the transform's translation to there; and <see cref="FireSound"/> at the
 	/// translation (<see cref="Sound.Es1Sound.PlayAt"/>). Answers the tracer, or null with the pool full.
 	/// </summary>
+	/// <param name="globals">The simulation's globals.</param>
+	/// <param name="power">The shot's power.</param>
+	/// <param name="machine">The firing machine.</param>
+	/// <param name="range">The beam's range.</param>
+	/// <param name="shotTransform">The shot's frame.</param>
+	/// <param name="subtype">The projectile subtype.</param>
 	public static Es1BeamTracer? FireBurst(Es1SimGlobals globals, short power, IEs1SimObject machine, int range,
 			Transform3 shotTransform, short subtype) {
 		var record = globals.Projectiles.LookupRecord(subtype, RecordType);
@@ -119,8 +126,8 @@ public sealed class Es1BeamTracer : Es1Projectile {
 	}
 
 	/// <summary>
-	/// <c>BeamTracer_Ctor</c>(0, <paramref name="owner"/>, <paramref name="farEnd"/>, <paramref name="muzzle"/>,
-	/// <paramref name="subtype"/>) (docs/es1/simulation/projectiles.md#the-tracer--beamtracer_ctor-00008268): an element of
+	/// <c>BeamTracer_Ctor</c>(0, owner, farEnd, muzzle,
+	/// subtype) (docs/es1/simulation/projectiles.md#the-tracer--beamtracer_ctor-00008268): an element of
 	/// the pool, none when it is full, with no shape; the subtype, the owner and the position at the muzzle, and the life
 	/// countdown at 0. The <c>ELF</c>'s chain: (<c>Math_DistanceBetweenPoints</c> &gt;&gt; 10) + 1 quads, a node a
 	/// <see cref="NodeStep"/> on from the muzzle each, the last the far end, every node after the first raised by
@@ -129,6 +136,11 @@ public sealed class Es1BeamTracer : Es1Projectile {
 	/// and 5 the muzzle and 2, 3, 6 and 7 the far end, with the half-width added to and taken from the Z of 0 and 1, of 2
 	/// and 3, and of 6 and 7, and the X of 4 and 5.
 	/// </summary>
+	/// <param name="globals">The simulation's globals.</param>
+	/// <param name="owner">The firing object.</param>
+	/// <param name="farEnd">The beam's far end.</param>
+	/// <param name="muzzle">The muzzle's position.</param>
+	/// <param name="subtype">The projectile subtype.</param>
 	/// <remarks>
 	/// The subtype byte <c>+0x3b</c> takes the element's word <c>+0x4c</c> as it stood before the constructor, which is
 	/// whatever the element last held (docs/es1/simulation/projectiles.md#open); here it is 0.

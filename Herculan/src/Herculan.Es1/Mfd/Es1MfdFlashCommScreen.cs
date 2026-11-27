@@ -39,13 +39,19 @@ public sealed class Es1MfdFlashCommScreen : Es1MfdScreen {
 	private readonly StringFile? _strings;
 
 	/// <summary>
-	/// <c>MfdFlashCommScreen_Ctor</c> (<c>ES1DBSIM 00035c04</c>)(0, <paramref name="display"/>, <paramref name="rect"/>)
+	/// <c>MfdFlashCommScreen_Ctor</c> (<c>ES1DBSIM 00035c04</c>)(0, display, rect)
 	/// (docs/es1/simulation/mfd-flash-comm.md#the-screen-object): the base and the display; with <i>s</i> = (<i>y1</i> −
 	/// <i>y0</i>) / 6, truncated, and <i>h</i> the cell height of <c>cpgreen</c>, row <i>i</i> a label in <c>cpgreen</c>
 	/// whose hotkey font is <c>cpred</c> and fill <see cref="Fill"/>, left-aligned with the margin (1, 0) over
 	/// (<i>x0</i>, <i>y0</i> + <i>i s</i>)–(<i>x1</i>, <i>y0</i> + <i>i s</i> + <i>h</i>); the state bytes and the force
 	/// byte clear, and the previous row −1.
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="display">The display the screen belongs to.</param>
+	/// <param name="rect">The screen's rectangle.</param>
+	/// <param name="shared">The shared block.</param>
+	/// <param name="fonts">The label fonts.</param>
+	/// <param name="strings">The strings file, or null.</param>
 	internal Es1MfdFlashCommScreen(Es1Cockpit cockpit, Es1MfdDisplay display, Es1Rect rect, Es1MfdSharedBlock shared,
 			IReadOnlyList<HudFont?> fonts, StringFile? strings)
 		: base(cockpit, rect, shared) {
@@ -126,13 +132,15 @@ public sealed class Es1MfdFlashCommScreen : Es1MfdScreen {
 	/// <summary><c>MfdFlashComm_SelectedVerb</c> (<c>00035f4c</c>)(screen): <see cref="ScreenRow"/>'s order, the row + 3 while it shows its second.</summary>
 	public int SelectedVerb() => OrderOf(ScreenRow);
 
-	/// <summary>The order <paramref name="row"/> shows: the row, + 3 while it shows its second (<see cref="SecondOrder"/>).</summary>
+	/// <summary>The order a row shows: the row, + 3 while it shows its second (<see cref="SecondOrder"/>).</summary>
+	/// <param name="row">The row.</param>
 	public int OrderOf(int row) => (_states[row] & SecondOrder) != 0 ? row + SecondOrderOffset : row;
 
 	/// <summary>
-	/// <c>MfdFlashComm_SetScreenRow</c> (<c>00035f80</c>)(screen, <paramref name="row"/>): <see cref="ScreenRow"/>'s low
+	/// <c>MfdFlashComm_SetScreenRow</c> (<c>00035f80</c>)(screen, row): <see cref="ScreenRow"/>'s low
 	/// word into <see cref="PreviousRow"/> and the row into <see cref="ScreenRow"/>.
 	/// </summary>
+	/// <param name="row">The row.</param>
 	public void SetScreenRow(int row) {
 		PreviousRow = (short)ScreenRow;
 		ScreenRow = row;
@@ -150,19 +158,21 @@ public sealed class Es1MfdFlashCommScreen : Es1MfdScreen {
 	}
 
 	/// <summary>
-	/// <c>MfdFlashComm_ResetRow</c> (<c>00035fcc</c>)(screen, <paramref name="row"/>): the state byte cut to its
+	/// <c>MfdFlashComm_ResetRow</c> (<c>00035fcc</c>)(screen, row): the state byte cut to its
 	/// <see cref="Unavailable"/> bit and the row's hotkey font <c>cpred</c>. Nothing is known to call it
 	/// (docs/es1/simulation/mfd-flash-comm.md#open).
 	/// </summary>
+	/// <param name="row">The row.</param>
 	public void ResetRow(int row) {
 		_states[row] &= Unavailable;
 		_rows[row].HotkeyFont = Font(Es1CockpitViews.CpRed);
 	}
 
 	/// <summary>
-	/// <c>MfdFlashComm_DisableRow</c> (<c>00035ff8</c>)(screen, <paramref name="row"/>): <see cref="Unavailable"/> set and
+	/// <c>MfdFlashComm_DisableRow</c> (<c>00035ff8</c>)(screen, row): <see cref="Unavailable"/> set and
 	/// the row's hotkey font <c>cpoff</c>. Nothing is known to call it (docs/es1/simulation/mfd-flash-comm.md#open).
 	/// </summary>
+	/// <param name="row">The row.</param>
 	public void DisableRow(int row) {
 		_states[row] |= Unavailable;
 		_rows[row].HotkeyFont = Font(Es1CockpitViews.CpOff);
@@ -170,9 +180,11 @@ public sealed class Es1MfdFlashCommScreen : Es1MfdScreen {
 
 	/// <summary>
 	/// <c>Label_SetTextWithHotkey</c>(the row's label, its order's attribute byte, its order's text) on
-	/// <paramref name="canvas"/>, the order picked as <see cref="SelectedVerb"/> picks it. An order with no attribute byte,
+	/// the canvas, the order picked as <see cref="SelectedVerb"/> picks it. An order with no attribute byte,
 	/// where retail reads one through its pointer, draws no hotkey here, an engine guard.
 	/// </summary>
+	/// <param name="canvas">The canvas written on.</param>
+	/// <param name="row">The row.</param>
 	private void WriteRow(Es1PanelCanvas canvas, int row) {
 		var orders = _strings?.Group(OrderGroup) ?? [];
 		int order = OrderOf(row);

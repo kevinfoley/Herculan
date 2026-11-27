@@ -71,15 +71,18 @@ public sealed class Es1ShellSound {
 	public Es1SoundObject? ButtonSound { get; private set; }
 
 	/// <summary>
-	/// <c>ShellSound_Init</c> (<c>00046235</c>): nothing under <paramref name="debugMode"/> (<c>Shell_DebugMode</c>,
+	/// <c>ShellSound_Init</c> (<c>00046235</c>): nothing under debugMode (<c>Shell_DebugMode</c>,
 	/// <c>-X</c>); a fatal assert when the install's <c>resource.cfg</c> does not open; the six values read
 	/// (<see cref="Es1Sound.ReadDevices"/>), and with a digital device 0 no manager. Otherwise the manager over
-	/// <paramref name="backend"/> with the six values stored, <see cref="Es1SoundManager.LoadDrivers"/>, whose answer is
+	/// backend with the six values stored, <see cref="Es1SoundManager.LoadDrivers"/>, whose answer is
 	/// not read, <see cref="MasterVolume"/>, <see cref="MemoryLimit"/>, <see cref="Names"/>, and the click made with
 	/// <see cref="Es1SoundManager.CreateObject"/>(2, 0, <see cref="ButtonIndex"/>) and loaded. It sets no hearing range.
 	/// A click not made is not loaded, an engine guard where retail loads through a null object.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="debugMode">Whether <c>-X</c> was given.</param>
 	/// <param name="read">The shell's volumes' reader, (folder, file name) to a file's bytes, which the manager reads through.</param>
+	/// <param name="backend">The audio backend.</param>
 	/// <param name="timer">The shell's PC timer, which the manager's drivers put the songs' tick on.</param>
 	/// <exception cref="Es1FatalAssertException"><c>resource.cfg</c> does not open.</exception>
 	public void Init(string installRoot, bool debugMode, Func<string, string, byte[]?> read, IAudioBackend backend,
@@ -110,9 +113,10 @@ public sealed class Es1ShellSound {
 
 	/// <summary>
 	/// A menu button's click, <c>MTButton_Draw</c>'s in state 1 (docs/es1/shell/menu-controls.md#drawing-a-control): while
-	/// <paramref name="soundOption"/> (<c>Shell_SoundOption</c>) and <see cref="ButtonSound"/> are set, the click stopped
+	/// soundOption (<c>Shell_SoundOption</c>) and <see cref="ButtonSound"/> are set, the click stopped
 	/// when its slot <c>+0x30</c> answers that it plays (slot <c>+0x14</c>), and played (slot <c>+0x10</c>).
 	/// </summary>
+	/// <param name="soundOption">The shell's sound option.</param>
 	public void ClickButton(byte soundOption) {
 		if (soundOption == 0 || ButtonSound is not { } click) {
 			return;
@@ -197,11 +201,12 @@ public sealed class Es1ShellSound {
 	private short? _pendingTrack;
 
 	/// <summary>
-	/// <see cref="PlayMusic"/> under <see cref="SkipPause"/>: <paramref name="track"/> left to start once no song fades;
+	/// <see cref="PlayMusic"/> under <see cref="SkipPause"/>: the track left to start once no song fades;
 	/// <see cref="MusicObject"/>, when set, faded in the background to be stopped and destroyed, and cleared. With no song
 	/// to fade and none fading the track starts now. A track asked for while the last still fades replaces any left
 	/// waiting.
 	/// </summary>
+	/// <param name="track">The track.</param>
 	private void PlayMusicAfterFade(short track) {
 		_pendingTrack = track;
 		if (MusicObject is { } music) {
@@ -213,11 +218,13 @@ public sealed class Es1ShellSound {
 	}
 
 	/// <summary>
-	/// A background fade of <paramref name="sound"/> begun, its first step, the volume it has, set now as
+	/// A background fade of the sound begun, its first step, the volume it has, set now as
 	/// <see cref="FadeOut"/>'s first is. A fade of another song is ended first (<see cref="EndBackgroundFade"/>); a fade of
-	/// this one goes on, now to stop it when <paramref name="stopAfter"/> is set. A song at volume 0 or less ends its fade
+	/// this one goes on, now to stop it when the stop-after flag is set. A song at volume 0 or less ends its fade
 	/// at once, as retail's loop sets nothing for it.
 	/// </summary>
+	/// <param name="sound">The song fading.</param>
+	/// <param name="stopAfter">Whether the song stops when its fade ends.</param>
 	private void BeginBackgroundFade(Es1SoundObject sound, bool stopAfter) {
 		if (_fading == sound) {
 			_fadingStops |= stopAfter;
@@ -345,9 +352,10 @@ public sealed class Es1ShellSound {
 
 	/// <summary>
 	/// The MUSIC box's and CANCEL's step in <c>PrefsMenu_OnMessage</c> (docs/es1/shell/options.md#the-buttons--prefsmenu_onmessage-0002b82b):
-	/// with <see cref="MusicObject"/> set, its slot <c>+0x10</c> (play) for a <paramref name="setting"/> of 1 and
+	/// with <see cref="MusicObject"/> set, its slot <c>+0x10</c> (play) for a the setting of 1 and
 	/// <c>+0x14</c> (stop) for 0.
 	/// </summary>
+	/// <param name="setting">The MUSIC setting, 1 to play and 0 to stop.</param>
 	public void SetMusicPlaying(byte setting) {
 		if (MusicObject is not { } music) {
 			return;

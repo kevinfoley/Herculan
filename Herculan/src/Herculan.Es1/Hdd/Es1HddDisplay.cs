@@ -88,7 +88,7 @@ public sealed class Es1HddDisplay {
 	private readonly IReadOnlyList<HudFont?> _fonts;
 
 	/// <summary>
-	/// <c>HddDisplay_Ctor</c> (<c>ES1DBSIM 0003c258</c>)(0, <paramref name="cockpit"/>, <paramref name="block"/>)
+	/// <c>HddDisplay_Ctor</c> (<c>ES1DBSIM 0003c258</c>)(0, cockpit, block)
 	/// (docs/es1/simulation/heads-down-display.md#the-display-object--hdddisplay_ctor-0003c258): the gauge base's rect, the
 	/// block's first 16 bytes; the three comm boxes; with (<i>x</i>, <i>y</i>) its first pair, the screen rect, the damage
 	/// column and the order column moved by it, and the page −1; the command screen and then the damage screen; the
@@ -106,6 +106,8 @@ public sealed class Es1HddDisplay {
 	/// <c>str\pilots</c>, which retail loads into their globals the first time, are loaded with the display, of which
 	/// the simulator builds one.
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="block">The display's <c>.GAU</c> block.</param>
 	/// <param name="fonts"><c>ColorSchemePanels</c>, whose <c>cpred</c> and <c>cpblue</c> the labels take.</param>
 	/// <param name="pushButtons"><c>CockpitPButtonsBank</c>, the frames of <c>dba\pbuttons</c>; no frame is blitted when it or a frame is missing.</param>
 	/// <param name="strings"><c>STRINGS0.STR</c>; no text is written when null.</param>
@@ -309,16 +311,19 @@ public sealed class Es1HddDisplay {
 	/// <summary>The current page, or none before the first <see cref="SetPage"/>.</summary>
 	private Es1HddPage? CurrentPage => Page is >= 0 and < PageCount ? _pages[Page] : null;
 
-	/// <summary><c>STRINGS0.STR</c> group 8's entry <paramref name="entry"/>: <c>XMIT</c> for 0, <c>CANCEL</c> for 1.</summary>
+	/// <summary><c>STRINGS0.STR</c> group 8's caption entry: <c>XMIT</c> for 0, <c>CANCEL</c> for 1.</summary>
+	/// <param name="entry">The entry.</param>
 	public string? ButtonCaption(int entry) => Text(CaptionGroup, entry);
 
 	/// <summary>
-	/// <c>HddGauge_LoadPilotFrames</c> (<c>0003dab4</c>)(display, <paramref name="pilot"/>, <paramref name="slot"/>),
+	/// <c>HddGauge_LoadPilotFrames</c> (<c>0003dab4</c>)(display, pilot, slot),
 	/// from <see cref="Es1Cockpit.LoadSquadmatePilots"/>
 	/// (docs/es1/simulation/hdd-comm-boxes.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4): for slot 0 the pilot
 	/// <see cref="CommBox0PilotOverride"/> when that is not negative; the slot's box loaded
 	/// (<see cref="Es1HddCommBox.Load"/>); and the slot's squadmate and the box's name put in subject slot 1 + slot.
 	/// </summary>
+	/// <param name="pilot">The pilot.</param>
+	/// <param name="slot">The squadmate's slot.</param>
 	public void LoadPilotFrames(short pilot, int slot) {
 		var box = _commBoxes[slot];
 		box.Load(slot == 0 && CommBox0PilotOverride >= 0 ? CommBox0PilotOverride : pilot);
@@ -342,12 +347,13 @@ public sealed class Es1HddDisplay {
 	}
 
 	/// <summary>
-	/// <c>HddDisplay_SetPage</c> (<c>0003d8b4</c>)(display, <paramref name="page"/>)
+	/// <c>HddDisplay_SetPage</c> (<c>0003d8b4</c>)(display, page)
 	/// (docs/es1/simulation/heads-down-display.md#pages-and-visibility): for a page other than the current one, the old
 	/// page's hide unless there was none, the page stored, its show, and each button the page shows put from
 	/// <see cref="Es1Widget.Hidden"/> to up and each it does not from up to hidden, either change invalidating it; then,
 	/// either way, the page's full-repaint flag and the paint stage 2.
 	/// </summary>
+	/// <param name="page">The page.</param>
 	public void SetPage(int page) {
 		if (Page != page) {
 			CurrentPage?.Hide();
@@ -501,10 +507,11 @@ public sealed class Es1HddDisplay {
 	}
 
 	/// <summary>
-	/// Slot <c>+4</c>, <c>HddDisplay_OnChildClick</c> (<c>0003d430</c>)(display, value, <paramref name="child"/>): the
+	/// Slot <c>+4</c>, <c>HddDisplay_OnChildClick</c> (<c>0003d430</c>)(display, value, child): the
 	/// child's index among the buttons stored as <see cref="PressedButton"/>, for <see cref="HandleWidgetPress"/> to act
 	/// on; a child not among them leaves it.
 	/// </summary>
+	/// <param name="child">The button clicked.</param>
 	public void OnChildClick(Es1Widget child) {
 		int index = Array.IndexOf(_buttons, child as Es1HddButton);
 		if (index >= 0) {
@@ -625,12 +632,13 @@ public sealed class Es1HddDisplay {
 	}
 
 	/// <summary>
-	/// <c>HddDisplay_SelectPilot</c> (<c>0003da08</c>)(display, <paramref name="slot"/>): the selected box's lamp put out
+	/// <c>HddDisplay_SelectPilot</c> (<c>0003da08</c>)(display, slot): the selected box's lamp put out
 	/// and the box invalidated when it was lit; the selection kept as <see cref="PreviousSlot"/> and
-	/// <paramref name="slot"/> stored; for a slot other than −1, its box's lamp lit and the box invalidated when it was
+	/// slot stored; for a slot other than −1, its box's lamp lit and the box invalidated when it was
 	/// out, and message <see cref="PilotSelectedMessage"/> posted to the pilot channel about the slot's squadmate; last,
 	/// for any slot, the command screen's <see cref="Es1HddCommandScreen.SelectPilot"/> of the selection.
 	/// </summary>
+	/// <param name="slot">The slot, or −1 for none.</param>
 	public void SelectPilot(int slot) {
 		if (SelectedSlot != -1) {
 			var selected = _buttons[FirstCommBoxButton + SelectedSlot];
@@ -686,13 +694,14 @@ public sealed class Es1HddDisplay {
 	}
 
 	/// <summary>
-	/// Slot <c>+0x10</c>, <c>HddDisplay_KeyDispatch</c> (<c>0003d12c</c>)(display, <paramref name="code"/>)
+	/// Slot <c>+0x10</c>, <c>HddDisplay_KeyDispatch</c> (<c>0003d12c</c>)(display, code)
 	/// (docs/es1/simulation/heads-down-display.md#keys): one of <see cref="KeyCodes"/> acts and answers 1: the arrows
 	/// press buttons 2 to 5, <c>1</c> to <c>3</c> buttons 10 to 12, <c>-</c> and keypad <c>-</c> button 6, <c>=</c> and
 	/// keypad <c>+</c> button 7 (<see cref="PressButton"/>); <c>S</c>, <c>I</c> and <c>W</c> <see cref="SetPage"/> 1 and
 	/// the damage screen's <see cref="Es1HddDamageScreen.SetView"/> with 0, 1 and 2; [Ctrl]+[Alt] with keypad 4, keypad 6 and <c>\</c> <see cref="PostDebugMessage"/>. Any
 	/// other code goes to the current page's key slot, whose answer it returns.
 	/// </summary>
+	/// <param name="code">The key code.</param>
 	public short KeyDispatch(ushort code) {
 		switch (code) {
 			case 0x64b:
@@ -741,10 +750,11 @@ public sealed class Es1HddDisplay {
 	}
 
 	/// <summary>
-	/// A press of button <paramref name="index"/>, as <see cref="KeyDispatch"/> and the cockpit's <c>F7</c> and <c>F8</c>
+	/// A press of a button, as <see cref="KeyDispatch"/> and the cockpit's <c>F7</c> and <c>F8</c>
 	/// make it (docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device): unless its state is
 	/// <see cref="Es1Widget.Hidden"/> or 3, its click with the left button.
 	/// </summary>
+	/// <param name="index">The button's index.</param>
 	public void PressButton(int index) {
 		var button = _buttons[index];
 		if (button.State is not (Es1Widget.Hidden or 3)) {
@@ -754,9 +764,10 @@ public sealed class Es1HddDisplay {
 
 	/// <summary>
 	/// The developer keys' case: <see cref="DebugMessageId"/> made 1 when negative, then less 1 while above 0 for a
-	/// <paramref name="step"/> of −1 or plus 1 while below <see cref="LastDebugMessage"/> for 1, and {that id, the first
+	/// step of −1 or plus 1 while below <see cref="LastDebugMessage"/> for 1, and {that id, the first
 	/// squadmate} posted to the pilot channel, the post reading the id's low byte.
 	/// </summary>
+	/// <param name="step">−1 or 1.</param>
 	private void PostDebugMessage(int step) {
 		if (DebugMessageId < 0) {
 			DebugMessageId = 1;
@@ -802,12 +813,14 @@ public sealed class Es1HddDisplay {
 	}
 
 	/// <summary>
-	/// <c>HddDamageScreen_SetSubjectCaption</c> (<c>0003e9b8</c>)(display, <paramref name="label"/>)
+	/// <c>HddDamageScreen_SetSubjectCaption</c> (<c>0003e9b8</c>)(display, label)
 	/// (docs/es1/simulation/heads-down-display.md#subject-stepping), from the damage screen's update: by
 	/// <see cref="Selector"/>, the label's font and fill <c>cpylw</c> on <c>0x32</c> for the player, <c>cpred</c> on
 	/// <c>0x3b</c> for the target and <c>cpred</c> on the slot's color (<see cref="Es1Cockpit.SquadSlotColor"/> of
 	/// selector − 1) for a squadmate; then the label written with the subject's name, <see cref="SubjectNames"/>[selector].
 	/// </summary>
+	/// <param name="canvas">The canvas written on.</param>
+	/// <param name="label">The caption label.</param>
 	internal void SetSubjectCaption(Es1PanelCanvas canvas, Es1Label label) {
 		(label.Font, label.FillColor) = Selector switch {
 			PlayerSubject => (Font(Es1CockpitViews.CpYellow), 0x32),
@@ -957,13 +970,16 @@ public sealed class Es1HddDisplay {
 		Dropout.Repaint = Es1GaugeDropout.RepaintPasses;
 	}
 
-	/// <summary><c>STRINGS0.STR</c> group <paramref name="group"/>'s entry <paramref name="entry"/>, or none.</summary>
+	/// <summary>A group's entry of <c>STRINGS0.STR</c>, or none.</summary>
+	/// <param name="group">The group.</param>
+	/// <param name="entry">The entry.</param>
 	internal string? Text(int group, int entry) => _strings?.Text(group, entry);
 
 	/// <summary><c>STRINGS0.STR</c>, whose group 0 the command screen's order rows read with their hotkey bytes; none when missing.</summary>
 	internal StringFile? Strings => _strings;
 
-	/// <summary><c>ColorSchemePanels</c>[<paramref name="index"/>], or none when its file is missing.</summary>
+	/// <summary><c>ColorSchemePanels</c>[index], or none when its file is missing.</summary>
+	/// <param name="index">The scheme's index.</param>
 	internal HudFont? Font(int index) => index < _fonts.Count ? _fonts[index] : null;
 
 	private static bool[] Shows(params int[] buttons) {

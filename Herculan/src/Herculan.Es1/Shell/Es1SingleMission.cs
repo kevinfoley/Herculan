@@ -33,12 +33,14 @@ public static class Es1SingleMission {
 	/// <summary><c>car\sm_play.gam</c>, entry 9: <c>SingleMission_Record</c>.</summary>
 	public const string SavedRecordName = "sm_play.gam";
 
-	/// <summary><paramref name="name"/> in the install's <c>car\</c>.</summary>
+	/// <summary>The name in the install's <c>car\</c>.</summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="name">The file's name.</param>
 	public static string CarPath(string installRoot, string name) => CaseInsensitivePath.Combine(installRoot, CarFolder, name);
 
 	/// <summary>
 	/// The shell's resources, from the archives its program mask mounts: the install's, then those of
-	/// <paramref name="disc"/> the install's have not named. Nothing ES1 reads takes the content's language, so it is
+	/// the disc the install's have not named. Nothing ES1 reads takes the content's language, so it is
 	/// English.
 	/// </summary>
 	/// <param name="installRoot">The install's root folder.</param>
@@ -50,10 +52,15 @@ public static class Es1SingleMission {
 		GameContent.MountInstall(installRoot, disc, Voln.VshellProgram, GameLanguage.English);
 
 	/// <summary>
-	/// Loads <paramref name="missionName"/> (with or without <c>.MSN</c>) from <c>msn\</c> and writes the five files.
-	/// Returns null with the reason in <paramref name="error"/> when the mission or one of the shell's files is missing or
+	/// Loads the mission (with or without <c>.MSN</c>) from <c>msn\</c> and writes the five files.
+	/// Returns null with the reason in the error output when the mission or one of the shell's files is missing or
 	/// unreadable.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="shell">The shell's content.</param>
+	/// <param name="missionName">The mission's name.</param>
+	/// <param name="random">The shell's generator.</param>
+	/// <param name="error">The reason it failed, or null.</param>
 	public static Es1MissionLoadResult? Start(string installRoot, GameContent shell, string missionName,
 			Es1ShellRandom random, out string? error) {
 		string prefsPath = Es1MissionFiles.DataPath(installRoot, "prefs.cfg");
@@ -63,10 +70,17 @@ public static class Es1SingleMission {
 
 	/// <summary>
 	/// <see cref="Start(string, GameContent, string, Es1ShellRandom, out string?)"/> with the MISSION PARAMS words
-	/// <paramref name="missionParams"/>, as the shell holds them from its start-up (<see cref="Es1ShellData.MissionParams"/>),
-	/// and <paramref name="record"/>, <c>SingleMission_Record</c> as the shell holds it, which the load sets up in place
+	/// missionParams, as the shell holds them from its start-up (<see cref="Es1ShellData.MissionParams"/>),
+	/// and the record, <c>SingleMission_Record</c> as the shell holds it, which the load sets up in place
 	/// (a new one when null).
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="shell">The shell's content.</param>
+	/// <param name="missionName">The mission's name.</param>
+	/// <param name="missionParams">The MISSION PARAMS words.</param>
+	/// <param name="random">The shell's generator.</param>
+	/// <param name="record">The record the load sets up, or null for a new one.</param>
+	/// <param name="error">The reason it failed, or null.</param>
 	public static Es1MissionLoadResult? Start(string installRoot, GameContent shell, string missionName,
 			Es1MissionParams missionParams, Es1ShellRandom random, Es1CareerRecord? record, out string? error) {
 		string fileName = MissionFileName(missionName);
@@ -99,14 +113,19 @@ public static class Es1SingleMission {
 		return result;
 	}
 
-	/// <summary><paramref name="missionName"/> with <c>.MSN</c> after it when it has no extension.</summary>
+	/// <summary>The mission name with <c>.MSN</c> after it when it has no extension.</summary>
+	/// <param name="missionName">The mission's name.</param>
 	private static string MissionFileName(string missionName) => Path.HasExtension(missionName) ? missionName : missionName + ".MSN";
 
 	/// <summary>
-	/// <c>MsnGen_LoadMission</c>'s step 1, which both modes share: <paramref name="missionName"/> (with or without
-	/// <c>.MSN</c>) read from <c>msn\</c> and parsed; null with the reason in <paramref name="error"/> when it is missing or
+	/// <c>MsnGen_LoadMission</c>'s step 1, which both modes share: the mission name (with or without
+	/// <c>.MSN</c>) read from <c>msn\</c> and parsed; null with the reason in the error output when it is missing or
 	/// does not parse.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="shell">The shell's content.</param>
+	/// <param name="missionName">The mission's name.</param>
+	/// <param name="error">The reason it failed, or null.</param>
 	public static Es1MissionFile? ReadMission(string installRoot, GameContent shell, string missionName, out string? error) {
 		string fileName = MissionFileName(missionName);
 		if (shell.Read(Es1MissionFiles.MissionFolder, fileName) is not { } missionBytes
@@ -155,10 +174,12 @@ public static class Es1SingleMission {
 	}
 
 	/// <summary>
-	/// <c>SingleMission_SaveRecord</c> (<c>00014f54</c>): <paramref name="record"/> written to <c>car\sm_play.gam</c> through
+	/// <c>SingleMission_SaveRecord</c> (<c>00014f54</c>): the record written to <c>car\sm_play.gam</c> through
 	/// a <c>FileWStream</c>. Retail asserts at <c>career.cpp</c> line <c>0x58</c> when the record's file does not open; here
 	/// the exception reaches the caller.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="record">The record.</param>
 	public static void SaveRecord(string installRoot, Es1CareerRecord record) {
 		Directory.CreateDirectory(CaseInsensitivePath.Combine(installRoot, CarFolder));
 		File.WriteAllBytes(CarPath(installRoot, SavedRecordName), new Es1CareerRecordTransformer().Write(record)!);
@@ -166,8 +187,10 @@ public static class Es1SingleMission {
 
 	/// <summary>
 	/// <c>PlayerMec_Write</c>'s own file in either mode: <c>data\player.mec</c> deleted and written again with
-	/// <paramref name="player"/> (docs/es1/formats/career-log-and-player-mec.md#the-player-file).
+	/// the player data (docs/es1/formats/career-log-and-player-mec.md#the-player-file).
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="player">The player data.</param>
 	public static void WritePlayerFile(string installRoot, Es1PlayerMec player) {
 		string playerPath = Es1MissionFiles.DataPath(installRoot, Es1MissionFiles.PlayerName);
 		File.Delete(playerPath);
@@ -178,17 +201,22 @@ public static class Es1SingleMission {
 	public const string InitHangarName = "sm_init.dat";
 
 	/// <summary>
-	/// <c>Hangar_SaveFile</c> (<c>0002909c</c>)(<c>car\</c><paramref name="name"/>) in <c>Shell_Mode</c> 0: <paramref name="hangar"/>
+	/// <c>Hangar_SaveFile</c> (<c>0002909c</c>)(<c>car\</c>name) in <c>Shell_Mode</c> 0: the hangar
 	/// as <c>Hangar_Write</c> writes it (<see cref="Es1Hangar.SingleMissionSave"/>) through a <c>FileRWStream</c>. Retail
 	/// asserts at severity 5 (<c>mechman.cpp</c> line <c>0x132</c>) when the file does not open; here the exception reaches
 	/// the caller.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="name">The file's name.</param>
+	/// <param name="hangar">The hangar.</param>
 	public static void SaveHangar(string installRoot, string name, Es1Hangar hangar) {
 		Directory.CreateDirectory(CaseInsensitivePath.Combine(installRoot, CarFolder));
 		WriteOver(CarPath(installRoot, name), new Es1HercListTransformer().Write(hangar.SingleMissionSave())!);
 	}
 
-	/// <summary><paramref name="bytes"/> written over <paramref name="path"/> from its start, its tail past them kept, as a <c>FileRWStream</c> writes.</summary>
+	/// <summary>The bytes written over the path from its start, its tail past them kept, as a <c>FileRWStream</c> writes.</summary>
+	/// <param name="path">The file's path.</param>
+	/// <param name="bytes">The bytes.</param>
 	private static void WriteOver(string path, byte[] bytes) {
 		using var stream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
 		stream.Write(bytes);

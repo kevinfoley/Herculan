@@ -35,7 +35,7 @@ public sealed class Es1AnmPlayer {
 	/// <c>Anm_Play</c> (<c>000132d8</c>) (docs/es1/formats/anm-animation.md#playing): the source page set to the draw page and the draw page to the visible
 	/// one; in a mode other than 0 the source page's screen grabbed as the background; with a sound index other than −1
 	/// and a sound manager, <see cref="Sound"/> destroyed and made anew on the index, and, while
-	/// <paramref name="soundOption"/> (<c>Shell_SoundOption</c>) is set and it was made, the song faded
+	/// soundOption (<c>Shell_SoundOption</c>) is set and it was made, the song faded
 	/// (<see cref="Es1ShellSound.FadeOut"/>) and the sound played; the file's frames 0 to its frame count − 2 drawn; the
 	/// source page set to the visible page and the draw page put back, the whole screen copied between them, and the
 	/// source page put back.
@@ -89,9 +89,10 @@ public sealed class Es1AnmPlayer {
 	}
 
 	/// <summary>
-	/// <c>Anm_Load</c> (<c>00013aa8</c>): the file at <paramref name="path"/>, a folder and a name, when it opens and
+	/// <c>Anm_Load</c> (<c>00013aa8</c>): the file at the path, a folder and a name, when it opens and
 	/// holds the two ids; none otherwise.
 	/// </summary>
+	/// <param name="path">The animation file's folder and name.</param>
 	private Es1DeluxePaintAnimation? Load(string path) {
 		int cut = path.LastIndexOf('\\');
 		string folder = cut < 0 ? "" : path[..cut], name = path[(cut + 1)..].ToUpperInvariant();
@@ -104,10 +105,12 @@ public sealed class Es1AnmPlayer {
 	}
 
 	/// <summary>
-	/// <c>Anm_FindFrameRecord</c> (<c>00013d9e</c>): the operations of <paramref name="frame"/>'s record, in the last
+	/// <c>Anm_FindFrameRecord</c> (<c>00013d9e</c>): the operations of the frame's record, in the last
 	/// page whose table entry holds the frame; none when no page does. A record past the page's own is none, an engine
 	/// guard.
 	/// </summary>
+	/// <param name="file">The animation file.</param>
+	/// <param name="frame">The frame.</param>
 	private static byte[]? FindFrameRecord(Es1DeluxePaintAnimation file, int frame) {
 		Es1AnimationPage? found = null;
 		foreach (var page in file.Pages) {
@@ -122,10 +125,13 @@ public sealed class Es1AnmPlayer {
 
 	/// <summary>
 	/// <c>Anm_DrawFrame</c> (<c>00013c46</c>): the frame's operations run from pixel offset 0 of the draw page
-	/// (docs/es1/formats/anm-animation.md#the-draw-operations), a 0 pixel taking <paramref name="background"/>'s at its
+	/// (docs/es1/formats/anm-animation.md#the-draw-operations), a 0 pixel taking the background's at its
 	/// offset when there is one. The operations stop at the record's end and a pixel past the page is not written,
 	/// engine guards.
 	/// </summary>
+	/// <param name="file">The animation file.</param>
+	/// <param name="frame">The frame.</param>
+	/// <param name="background">The background cells, or null.</param>
 	private void DrawFrame(Es1DeluxePaintAnimation file, int frame, ushort[]? background) {
 		if (FindFrameRecord(file, frame) is not { } ops) {
 			return;
@@ -169,21 +175,33 @@ public sealed class Es1AnmPlayer {
 		}
 	}
 
-	/// <summary><c>VgaPlanar_FillRun</c> (<c>0001320f</c>): <paramref name="count"/> pixels of <paramref name="color"/> from <paramref name="offset"/>.</summary>
+	/// <summary><c>VgaPlanar_FillRun</c> (<c>0001320f</c>): count pixels of color from offset.</summary>
+	/// <param name="offset">The pixel offset, advanced.</param>
+	/// <param name="count">The pixel count.</param>
+	/// <param name="color">The color.</param>
+	/// <param name="background">The background cells, or null.</param>
 	private void Fill(ref int offset, int count, byte color, ushort[]? background) {
 		for (int i = 0; i < count; i++) {
 			Put(offset++, color, background);
 		}
 	}
 
-	/// <summary><c>VgaPlanar_CopyRun</c> (<c>00013270</c>): the next <paramref name="count"/> bytes of <paramref name="ops"/> to the pixels from <paramref name="offset"/>.</summary>
+	/// <summary><c>VgaPlanar_CopyRun</c> (<c>00013270</c>): the next count bytes of ops to the pixels from offset.</summary>
+	/// <param name="ops">The operation bytes.</param>
+	/// <param name="at">The position in the operation bytes, advanced.</param>
+	/// <param name="offset">The pixel offset, advanced.</param>
+	/// <param name="count">The byte count.</param>
+	/// <param name="background">The background cells, or null.</param>
 	private void Copy(byte[] ops, ref int at, ref int offset, int count, ushort[]? background) {
 		for (int i = 0; i < count && at < ops.Length; i++) {
 			Put(offset++, ops[at++], background);
 		}
 	}
 
-	/// <summary>The pixel at <paramref name="offset"/> of the draw page set to <paramref name="color"/>, or for color 0 with a background to the background's cell there.</summary>
+	/// <summary>The pixel at offset of the draw page set to color, or for color 0 with a background to the background's cell there.</summary>
+	/// <param name="offset">The pixel offset.</param>
+	/// <param name="color">The color.</param>
+	/// <param name="background">The background cells, or null.</param>
 	private void Put(int offset, byte color, ushort[]? background) {
 		if (offset < 0 || offset >= Es1VideoMemory.PageWidth * Es1VideoMemory.PageHeight) {
 			return;

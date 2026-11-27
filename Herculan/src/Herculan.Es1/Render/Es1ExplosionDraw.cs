@@ -39,8 +39,13 @@ public sealed class Es1ExplosionDraw : IDisposable {
 	/// <summary>
 	/// Uploads <c>dba\explo0</c> to <c>dba\explo8</c>, every cell of every root of <c>dts\explos</c> and the ground
 	/// shapes' root of the flat set (<see cref="Es1FlatObjPool.Shapes"/>), and pulls each root's billboards, which are
-	/// shown through <paramref name="palette"/>, the live palette; with none no bank is uploaded.
+	/// shown through the palette, the live palette; with none no bank is uploaded.
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="content">The game's content.</param>
+	/// <param name="scene">The zone scene.</param>
+	/// <param name="pool">The explosion pool.</param>
+	/// <param name="palette">The live palette, or null.</param>
 	public Es1ExplosionDraw(GL gl, GameContent content, Es1ZoneScene scene, Es1ExplosionPool pool, PaletteTexture? palette) {
 		_gl = gl;
 		_scene = scene;
@@ -83,7 +88,9 @@ public sealed class Es1ExplosionDraw : IDisposable {
 	private (TextureAtlas Atlas, uint Texture)? Bank(int root) =>
 		root < _pool.RootBanks.Count && _pool.RootBanks[root] is { } bank && bank >= 0 && bank < _banks.Length ? _banks[bank] : null;
 
-	/// <summary>One mesh per cell frame of <paramref name="root"/>, as many as its longest sequence holds; null for a cell with no faces.</summary>
+	/// <summary>One mesh per cell frame of a root, as many as its longest sequence holds; null for a cell with no faces.</summary>
+	/// <param name="root">The root.</param>
+	/// <param name="atlas">The texture atlas, or null.</param>
 	private GpuMesh?[] UploadCells(TSObject root, TextureAtlas? atlas) {
 		int frames = Math.Max(1, (root as TSShape)?.SequenceList?.Select(count => (int)(ushort)count).DefaultIfEmpty(1).Max() ?? 1);
 		var cells = new GpuMesh?[frames];
@@ -100,10 +107,13 @@ public sealed class Es1ExplosionDraw : IDisposable {
 	}
 
 	/// <summary>
-	/// The pool's effects placed for <paramref name="camera"/>, walked as <c>ObjList_RebuildFrame</c> adds them, under a
-	/// projection whose <c>Raster_FocalShift</c> is <paramref name="focalShift"/>. With <paramref name="flatRamps"/> each
+	/// The pool's effects placed for the camera, walked as <c>ObjList_RebuildFrame</c> adds them, under a
+	/// projection whose <c>Raster_FocalShift</c> is focalShift. With the flat-ramps flag each
 	/// takes <c>WorldShades_ResetRamps</c>' ramps (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="focalShift">The focal length's shift.</param>
+	/// <param name="flatRamps">Whether each effect takes the flat ramps.</param>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		_items.Clear();
 		_groundItems.Clear();

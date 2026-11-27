@@ -69,7 +69,10 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// </summary>
 	public Es1ClipBlock? Regions { get; init; }
 
-	/// <summary>One pixel at the context's (<paramref name="x"/>, <paramref name="y"/>), unless it lies outside <see cref="ClipRect"/> or <see cref="Regions"/> once translated.</summary>
+	/// <summary>One pixel at the context's (x, y), unless it lies outside <see cref="ClipRect"/> or <see cref="Regions"/> once translated.</summary>
+	/// <param name="x">The x.</param>
+	/// <param name="y">The y.</param>
+	/// <param name="color">The color.</param>
 	public void Plot(int x, int y, byte color) {
 		int screenX = x + Translation.X, screenY = y + Translation.Y;
 		if (ClipRect.Contains(screenX, screenY)) {
@@ -86,13 +89,15 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 
 	/// <summary>
 	/// <c>Raster_DrawPolygonDispatch</c> (<c>00068be0</c>) of three points or more under the brush {0,
-	/// <paramref name="color"/>} in clip mode 1, the points wound clockwise on screen as its callers list them: the
+	/// color} in clip mode 1, the points wound clockwise on screen as its callers list them: the
 	/// points translated, cut to <see cref="ClipRect"/> by <c>Poly_ClipToRect</c> (<c>000788e4</c>), scan-converted by
 	/// <c>00076f54</c> and each span filled, both ends included, a span whose ends come out reversed skipped. Both
 	/// routines are ES2's (docs/retail/rendering/polygon-fill.md#clipping-to-a-rectangle,
 	/// docs/retail/rendering/polygon-fill.md#scan-conversion): <c>es2_naming.py diff</c> finds the clipper identical
 	/// to DBSIM's <c>0048422c</c> and the scan converter DBSIM's <c>00484614</c> but for its table of unrolled stores.
 	/// </summary>
+	/// <param name="points">The polygon's points.</param>
+	/// <param name="color">The color.</param>
 	public void FillPolygon(IReadOnlyList<(int X, int Y)> points, byte color) {
 		if (points.Count < 3) {
 			throw new ArgumentException("A filled polygon has three points or more.", nameof(points));
@@ -114,10 +119,12 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Poly_ClipToRect</c>: Sutherland–Hodgman against the inclusive <paramref name="rect"/>, every <i>x</i> bound first
+	/// <c>Poly_ClipToRect</c>: Sutherland–Hodgman against the inclusive the rect, every <i>x</i> bound first
 	/// and then every <i>y</i> bound, each crossing computed from the outside end toward the other in 64 bits, the
 	/// division truncating; a single point the <i>x</i> pass leaves is kept only when its <i>y</i> is inside.
 	/// </summary>
+	/// <param name="points">The polygon's points.</param>
+	/// <param name="rect">The clip rectangle.</param>
 	internal static List<(int X, int Y)> ClipToRect(List<(int X, int Y)> points, Es1Rect rect) {
 		var xs = ClipAxis(points, rect.X0, rect.X1, vertical: true);
 		if (xs.Count == 1) {
@@ -163,7 +170,12 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 		}
 	}
 
-	/// <summary><c>Raster_FillRect</c> under the brush {0, <paramref name="color"/>}: the inclusive rect filled.</summary>
+	/// <summary><c>Raster_FillRect</c> under the brush {0, the color}: the inclusive rect filled.</summary>
+	/// <param name="x0">The left.</param>
+	/// <param name="y0">The top.</param>
+	/// <param name="x1">The right.</param>
+	/// <param name="y1">The bottom.</param>
+	/// <param name="color">The color.</param>
 	public void FillRect(int x0, int y0, int x1, int y1, byte color) {
 		for (int y = y0; y <= y1; y++) {
 			for (int x = x0; x <= x1; x++) {
@@ -220,11 +232,14 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Line_ClipToRect</c>: the segment cut, in place, to the inclusive <paramref name="rect"/>, the bounds taken in the
+	/// <c>Line_ClipToRect</c>: the segment cut, in place, to the inclusive the rect, the bounds taken in the
 	/// order <i>y0</i>, <i>x0</i>, <i>y1</i>, <i>x1</i>: both ends beyond one, false; one end beyond, that end moved onto
 	/// it at the crossing computed from it toward the other in 64 bits, truncating. The ends may come back swapped, which
 	/// the walk does not show.
 	/// </summary>
+	/// <param name="a">The segment's first end.</param>
+	/// <param name="b">The segment's second end.</param>
+	/// <param name="rect">The clip rectangle.</param>
 	internal static bool ClipLine(ref (int X, int Y) a, ref (int X, int Y) b, Es1Rect rect) {
 		return Cut(ref a, ref b, rect.Y0, vertical: false, below: true)
 			&& Cut(ref a, ref b, rect.X0, vertical: true, below: true)
@@ -257,11 +272,16 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Raster_FillRect</c> (<c>ES2 DBSIM 004865f8</c>) under the brush {4, <paramref name="color"/>}: the inclusive rect's
+	/// <c>Raster_FillRect</c> (<c>ES2 DBSIM 004865f8</c>) under the brush {4, the color}: the inclusive rect's
 	/// four edges as lines, (<i>x1</i>, <i>y0</i>) to (<i>x0</i>, <i>y0</i>), (<i>x0</i>, <i>y1</i>) to (<i>x0</i>,
 	/// <i>y0</i>), (<i>x0</i>, <i>y1</i>) to (<i>x1</i>, <i>y1</i>) and (<i>x1</i>, <i>y0</i>) to (<i>x1</i>, <i>y1</i>)
 	/// (docs/retail/rendering/polygon-fill.md#rectangles).
 	/// </summary>
+	/// <param name="x0">The left.</param>
+	/// <param name="y0">The top.</param>
+	/// <param name="x1">The right.</param>
+	/// <param name="y1">The bottom.</param>
+	/// <param name="color">The color.</param>
 	public void OutlineRect(int x0, int y0, int x1, int y1, byte color) {
 		DrawLine(x1, y0, x0, y0, color);
 		DrawLine(x0, y1, x0, y0, color);
@@ -270,14 +290,17 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Raster_DrawEllipse</c> (<c>000831f4</c>) of <paramref name="rect"/> under the brush {0 or 4,
-	/// <paramref name="color"/>}: ES2's walk (docs/retail/rendering/polygon-fill.md#ellipses) with the simulator's one
+	/// <c>Raster_DrawEllipse</c> (<c>000831f4</c>) of rect under the brush {0 or 4,
+	/// color}: ES2's walk (docs/retail/rendering/polygon-fill.md#ellipses) with the simulator's one
 	/// difference, a span list of the rows on the display alone, from row −min(<i>b</i>, <i>cy</i>) to before
 	/// min(<i>b</i>, 199 − <i>cy</i>) about the centre, <i>cy</i> before the translation
 	/// (docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps); each list filled at the centre,
 	/// translated and cut to <see cref="ClipRect"/> as <c>Raster_FillSpanList</c> (<c>0008f68c</c>) does in clip mode 1.
-	/// <paramref name="outline"/> draws the one-pixel ring, mode 4.
+	/// outline draws the one-pixel ring, mode 4.
 	/// </summary>
+	/// <param name="rect">The ellipse's bounding rectangle.</param>
+	/// <param name="color">The color.</param>
+	/// <param name="outline">Whether to draw the one-pixel ring rather than fill.</param>
 	public void DrawEllipse(Es1Rect rect, byte color, bool outline) {
 		int cx = (rect.X0 + rect.X1) >> 1, cy = (rect.Y0 + rect.Y1) >> 1;
 		int a = Math.Abs(rect.X1 - rect.X0) >> 1, b = Math.Abs(rect.Y1 - rect.Y0) >> 1;
@@ -359,13 +382,16 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Raster_DrawPolygonEitherWinding</c> of <paramref name="points"/> under the brush {0 or 4, <paramref name="color"/>}
+	/// <c>Raster_DrawPolygonEitherWinding</c> of points under the brush {0 or 4, color}
 	/// (docs/retail/rendering/polygon-fill.md#filling-a-polygon): an outline of three points or more whose
 	/// <c>x[i]·y[i+1] − x[i+1]·y[i]</c> sum is 0 or less taken in reverse order; then <c>Raster_DrawPolygonDispatch</c>
 	/// (<c>00068be0</c>) on the translated points, the translation flag cleared for the call: one point a pixel, two a line,
-	/// and with <paramref name="outline"/>, mode 4, the line loop round the points, each under the pen {0, color};
+	/// and with outline, mode 4, the line loop round the points, each under the pen {0, color};
 	/// otherwise the fill (<see cref="FillPolygon"/>).
 	/// </summary>
+	/// <param name="points">The polygon's points.</param>
+	/// <param name="color">The color.</param>
+	/// <param name="outline">Whether to draw the outline rather than fill.</param>
 	public void DrawPolygon(IReadOnlyList<(int X, int Y)> points, byte color, bool outline) {
 		if (points.Count == 0) {
 			return;
@@ -413,12 +439,16 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Bitmap_Blit</c>(<paramref name="bitmap"/>, <paramref name="flags"/>, point): the bitmap with its top-left at the
-	/// panel's (<paramref name="x"/>, <paramref name="y"/>), cut to <see cref="ClipRect"/>, a 0 byte leaving the pixel unless
+	/// <c>Bitmap_Blit</c>(bitmap, flags, point): the bitmap with its top-left at the
+	/// panel's (x, y), cut to <see cref="ClipRect"/>, a 0 byte leaving the pixel unless
 	/// the bitmap's flags have bit 4 (docs/es1/rendering/screen-pages.md#the-cursor, "Index 0"). Flag 1 runs the rows from
 	/// the bottom and flag 2 the columns from the right, as the blits read them
 	/// (docs/es1/rendering/2d-drawing.md#ellipses-outlines-and-scaled-bitmaps).
 	/// </summary>
+	/// <param name="bitmap">The picture, or null.</param>
+	/// <param name="x">The x of the top-left.</param>
+	/// <param name="y">The y of the top-left.</param>
+	/// <param name="flags">The blit flags.</param>
 	public void Blit(DynamixBitmap? bitmap, int x, int y, int flags = 0) {
 		if (bitmap?.ImageData is not { } pixels) {
 			return;
@@ -438,13 +468,20 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Bitmap_BlitScaled</c>(<paramref name="bitmap"/>, size, <paramref name="flags"/>, point) in clip mode 1: the point
-	/// translated and the bitmap stretched over <paramref name="width"/> × <paramref name="height"/> pixels from it, cut to
+	/// <c>Bitmap_BlitScaled</c>(bitmap, size, flags, point) in clip mode 1: the point
+	/// translated and the bitmap stretched over width × height pixels from it, cut to
 	/// <see cref="ClipRect"/>, a 0 byte not written. Retail's two programs share the dispatch but not <c>VGA_8</c>'s slot 29:
-	/// with <paramref name="shell"/> the bitmap is walked as the shell's <c>VGA8_BlitBitmapScaled</c> (<c>00074b18</c>)
+	/// with shell the bitmap is walked as the shell's <c>VGA8_BlitBitmapScaled</c> (<c>00074b18</c>)
 	/// walks it (<see cref="WalkShell"/>), otherwise as <c>ES1DBSIM</c>'s (<c>0008c744</c>) does
 	/// (<see cref="WalkSimulator"/>).
 	/// </summary>
+	/// <param name="bitmap">The picture, or null.</param>
+	/// <param name="width">The stretched width.</param>
+	/// <param name="height">The stretched height.</param>
+	/// <param name="flags">The blit flags.</param>
+	/// <param name="x">The x of the top-left.</param>
+	/// <param name="y">The y of the top-left.</param>
+	/// <param name="shell">Whether the shell's walk applies.</param>
 	public void BlitScaled(DynamixBitmap? bitmap, int width, int height, int flags, int x, int y, bool shell) {
 		if (bitmap?.ImageData is not { } pixels || bitmap.Cols <= 0 || bitmap.Rows <= 0 || width <= 0 || height <= 0) {
 			return;
@@ -575,7 +612,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Region_Save</c> of a type-0 region whose rect is <paramref name="region"/>, in clip mode 1 with the translation
+	/// <c>Region_Save</c> of a type-0 region whose rect is region, in clip mode 1 with the translation
 	/// flag set: <c>Region_SaveRect</c> (<c>00066470</c>) moves the rect by the translation and
 	/// <c>Bitmap_GrabClipDispatch</c> (<c>0006aa70</c>) moves it again (docs/es1/rendering/2d-drawing.md#lines-and-clipped-bitmaps),
 	/// so the grab reads the display's source page under the rect moved twice, cut to <see cref="ClipRect"/>. The cells come
@@ -583,6 +620,7 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// buffer first, and <c>VGA8_ReadBitmap</c> (<c>0008be88</c>) reads the cut rect into the buffer at the cut's row and
 	/// column.
 	/// </summary>
+	/// <param name="region">The region's rectangle.</param>
 	public ushort[] SaveRegion(Es1Rect region) {
 		var (dx, dy) = Translation;
 		int width = region.X1 - region.X0 + 1, rows = region.Y1 - region.Y0 + 1;
@@ -601,11 +639,15 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Region_Restore</c> of a type-0 region whose rect is <paramref name="region"/> at the point (<paramref name="x"/>,
-	/// <paramref name="y"/>): <c>Region_RestoreRect</c> (<c>00066354</c>) blits <paramref name="cells"/> as a bitmap of
+	/// <c>Region_Restore</c> of a type-0 region whose rect is region at the point (x,
+	/// y): <c>Region_RestoreRect</c> (<c>00066354</c>) blits cells as a bitmap of
 	/// the rect's size with the opaque flag <c>0x10</c> through <c>Raster_BlitDispatch</c>, which moves the point by the
 	/// translation once and cuts the blit to <see cref="ClipRect"/>; every cell is written, on the draw page.
 	/// </summary>
+	/// <param name="region">The region's rectangle.</param>
+	/// <param name="x">The point's x.</param>
+	/// <param name="y">The point's y.</param>
+	/// <param name="cells">The saved cells.</param>
 	public void RestoreRegion(Es1Rect region, int x, int y, ushort[] cells) {
 		var (dx, dy) = Translation;
 		int width = region.X1 - region.X0 + 1, rows = region.Y1 - region.Y0 + 1;
@@ -620,8 +662,8 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Region_CopyBetweenPages</c> (<c>00066914</c>) of a type-0 region whose rect is <paramref name="region"/> at the
-	/// offset (<paramref name="offsetX"/>, <paramref name="offsetY"/>): <c>Region_CopyRectBetweenPages</c>
+	/// <c>Region_CopyBetweenPages</c> (<c>00066914</c>) of a type-0 region whose rect is region at the
+	/// offset (offsetX, offsetY): <c>Region_CopyRectBetweenPages</c>
 	/// (<c>00066690</c>) moves the rect by the offset and the translation and hands each part it keeps, with the offset, to
 	/// the driver's slot 20, which copies the source page's rect moved back by the offset onto the draw page's rect
 	/// (docs/es1/rendering/screen-pages.md#copying-between-pages). In clip mode 1 the part is the rect cut to
@@ -630,6 +672,9 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	/// Retail also cuts a span region's spans to the rect and copies them through slot 19; this engine has no slot 19, and
 	/// passes a span region over. The canvases that hold span regions, the energy meter's, copy nothing.
 	/// </summary>
+	/// <param name="region">The region's rectangle.</param>
+	/// <param name="offsetX">The offset's x.</param>
+	/// <param name="offsetY">The offset's y.</param>
 	public void CopyRegion(Es1Rect region, int offsetX, int offsetY) {
 		var (dx, dy) = Translation;
 		var moved = (region.X0 + offsetX + dx, region.Y0 + offsetY + dy, region.X1 + offsetX + dx, region.Y1 + offsetY + dy);
@@ -644,10 +689,14 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>Rect_Intersect</c> (<c>00073dc4</c>) of the moved rect <paramref name="rect"/> and <paramref name="clip"/>, the
+	/// <c>Rect_Intersect</c> (<c>00073dc4</c>) of the moved rect and the clip, the
 	/// greater of their two left and top edges and the lesser of their right and bottom ones, and the part copied through
 	/// slot 20 unless it is empty.
 	/// </summary>
+	/// <param name="rect">The rectangle to copy.</param>
+	/// <param name="clip">The clip rectangle.</param>
+	/// <param name="offsetX">The offset's x.</param>
+	/// <param name="offsetY">The offset's y.</param>
 	private void CopyPart((int X0, int Y0, int X1, int Y1) rect, (int X0, int Y0, int X1, int Y1) clip, int offsetX, int offsetY) {
 		int x0 = Math.Max(rect.X0, clip.X0), y0 = Math.Max(rect.Y0, clip.Y0);
 		int x1 = Math.Min(rect.X1, clip.X1), y1 = Math.Min(rect.Y1, clip.Y1);
@@ -659,10 +708,14 @@ public sealed class Es1PanelCanvas : IEs1LabelSurface {
 	}
 
 	/// <summary>
-	/// <c>HudFont_DrawString</c> (<c>00069e38</c>) from the pen (<paramref name="x"/>, <paramref name="y"/>): each glyph
-	/// with its top row at <paramref name="y"/> less the font's ink height, its 0 bytes left, the pen moving right by its
+	/// <c>HudFont_DrawString</c> (<c>00069e38</c>) from the pen (x, y): each glyph
+	/// with its top row at y less the font's ink height, its 0 bytes left, the pen moving right by its
 	/// width (docs/es1/simulation/cockpit-widgets.md#labels).
 	/// </summary>
+	/// <param name="font">The font, or null.</param>
+	/// <param name="text">The text, or null.</param>
+	/// <param name="x">The pen's x.</param>
+	/// <param name="y">The pen's y.</param>
 	public void DrawString(HudFont? font, string? text, int x, int y) {
 		if (font == null || text == null) {
 			return;

@@ -13,17 +13,19 @@ namespace Herculan.Es1.Input;
 /// </summary>
 public interface IEs1GamePort {
 	/// <summary>
-	/// Axis <paramref name="axis"/>, 0–3, answers detection: <c>DVJoystick_DetectGamePort</c> (<c>0006bf4d</c>) counts
+	/// An axis, 0–3, answers detection: <c>DVJoystick_DetectGamePort</c> (<c>0006bf4d</c>) counts
 	/// an axis whose line drops within 4,000 port reads (docs/es1/simulation/joystick.md#construction-and-detection).
 	/// Read once, when a joystick object is initialised.
 	/// </summary>
+	/// <param name="axis">The axis, 0–3.</param>
 	bool AxisAnswers(int axis);
 
 	/// <summary>
-	/// Axis <paramref name="axis"/>'s calibrated value, −128 to +128; read for each axis the poll times, once a tick.
+	/// An axis's calibrated value, −128 to +128; read for each axis the poll times, once a tick.
 	/// Axes 0 and 1 are the stick's X and Y, 2 and 3 the port's second X and Y (a throttle, rudder or hat on the
 	/// one-stick models, docs/es1/simulation/joystick.md#the-classes).
 	/// </summary>
+	/// <param name="axis">The axis, 0–3.</param>
 	int ReadAxis(int axis);
 
 	/// <summary>
@@ -33,10 +35,11 @@ public interface IEs1GamePort {
 	byte Buttons { get; }
 
 	/// <summary>
-	/// <b>This engine's own:</b> which stick option 7 (<paramref name="stickConfiguration"/>) says is on the port, so a
+	/// <b>This engine's own:</b> which stick option 7 (the stick configuration) says is on the port, so a
 	/// modern controller's hat can arrive on the lines that stick used for it. Called before the devices are built, so
 	/// detection sees the wiring. A port with no hat to wire ignores it.
 	/// </summary>
+	/// <param name="stickConfiguration">Option 7.</param>
 	void Wire(byte stickConfiguration) {
 	}
 }

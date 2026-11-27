@@ -53,7 +53,7 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 	private readonly Es1Label[] _readouts;
 
 	/// <summary>
-	/// <c>ControlsPanel_Ctor</c>(panel, <paramref name="rect"/>, <paramref name="keepsScreen"/>): the variant's size,
+	/// <c>ControlsPanel_Ctor</c>(panel, rect, keepsScreen): the variant's size,
 	/// centered (<c>AlertPanel_CenterRect</c>, at (48, 45)) with no rect given and at the rect's corner with one; the
 	/// plate; the string table's six groups; the buttons, each with its caption label in <c>cpylw</c> centered with the
 	/// margin (0, the button's caption <i>y</i>), registered with the panel's root and added to the list; the title label
@@ -61,6 +61,9 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 	/// <i>y</i>); the readouts left-aligned with the variant's margin on its fill, in its font; the action cleared; the
 	/// last widget, DONE, the cancel widget. The preferences panel builds it with no rect, keeping the screen under itself.
 	/// </summary>
+	/// <param name="globals">The alert globals.</param>
+	/// <param name="rect">The panel's rectangle, or null for the variant's.</param>
+	/// <param name="keepsScreen">Whether a buffer keeps the screen under the panel.</param>
 	/// <param name="variant">The binary's numbers and readouts; none is the simulator's (<see cref="Es1ControlsVariant.Simulator"/>).</param>
 	public Es1ControlsPanel(Es1AlertGlobals globals, Es1Rect? rect = null, bool keepsScreen = true, Es1ControlsVariant? variant = null)
 		: base(globals, PanelRect(rect, variant ?? Es1ControlsVariant.Simulator), keepsScreen) {
@@ -208,14 +211,17 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 		answer.Value = Close & 1;
 	}
 
-	/// <summary><c>ControlsPanel_GetButtonCaption</c> (<c>00048e80</c>)(panel, <paramref name="index"/>): the caption <c>+0x31c</c>[index].</summary>
+	/// <summary><c>ControlsPanel_GetButtonCaption</c> (<c>00048e80</c>)(panel, index): the caption <c>+0x31c</c>[index].</summary>
+	/// <param name="index">The button's index.</param>
 	public override string? GetButtonCaption(int index) => Strings?.Text(CaptionGroup, index);
 
 	/// <summary>
-	/// Slot <c>+0x10</c>, <c>ControlsPanel_OnClick</c> (<c>00048db0</c>)(panel, <paramref name="flags"/>,
-	/// <paramref name="child"/>): bit 1 of the flags, the right button, kept; the child's index in the widget list plus 1
+	/// Slot <c>+0x10</c>, <c>ControlsPanel_OnClick</c> (<c>00048db0</c>)(panel, flags,
+	/// child): bit 1 of the flags, the right button, kept; the child's index in the widget list plus 1
 	/// made the action, and for DONE the close byte 3.
 	/// </summary>
+	/// <param name="flags">The click's button bits.</param>
+	/// <param name="child">The widget clicked.</param>
 	public override void OnChildClick(short flags, Es1Widget child) {
 		RightButton = (flags & 2) != 0;
 		int index = IndexOf(child);
@@ -246,7 +252,7 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 	}
 
 	/// <summary>
-	/// <c>ControlsPanel_RefreshRow</c> (<c>00048ce4</c>)(panel, <paramref name="row"/>), between the cursor's hide and
+	/// <c>ControlsPanel_RefreshRow</c> (<c>00048ce4</c>)(panel, row), between the cursor's hide and
 	/// show: row 1 puts the stick model's name by <see cref="StickModel"/> on readout 0, row 2 the stick control by
 	/// <see cref="StickControl"/> on readout 1, rows 3 and 4 <c>NO</c> or <c>YES</c> by <see cref="ThrottleKeys"/> and
 	/// <see cref="Rudder"/> on readouts 2 and 3, and row 5 <c>OFF</c> or <c>ON</c> by <see cref="MouseOn"/> on readout
@@ -254,6 +260,7 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 	/// lacks, where retail reads past the panel's five, draws nothing: engine guards. Rows 1, 2 and 4 show no word while
 	/// <see cref="StickRowsLocked"/>.
 	/// </summary>
+	/// <param name="row">The row.</param>
 	public void RefreshRow(int row) {
 		var cursor = Globals.Display.Cursor;
 		cursor.Hide();
@@ -311,10 +318,12 @@ public sealed class Es1ControlsPanel : Es1AlertPanel {
 	}
 
 	/// <summary>
-	/// The action's case of <c>ControlsPanel_Run</c>'s pass, with the pass's input <paramref name="block"/>
+	/// The action's case of <c>ControlsPanel_Run</c>'s pass, with the pass's input the block
 	/// (docs/es1/simulation/preferences.md#its-loop--controlspanel_run-00048810). Every write applies the option's
 	/// handler.
 	/// </summary>
+	/// <param name="action">The action.</param>
+	/// <param name="block">The pass's input block.</param>
 	private void TakeAction(int action, Es1PlayerInputBlock block) {
 		var input = Globals.Input;
 		switch (action - 1) {
@@ -464,11 +473,13 @@ public sealed record Es1ControlsVariant(int Width, int Height, int TitleBarMargi
 	public const byte ShellReadoutFill = 0x1f;
 
 	/// <summary>
-	/// The shell's (<c>ES1GO 00006050</c>): every number from <paramref name="bnd"/>, <c>CtlAlert_Bnd</c>; each rect
+	/// The shell's (<c>ES1GO 00006050</c>): every number from bnd, <c>CtlAlert_Bnd</c>; each rect
 	/// (<i>x</i>, <i>y</i>, <i>x</i> + width, <i>y</i> + height) and the title bar from its top to its top plus its height;
-	/// the readouts in <paramref name="readoutFont"/>, <c>Shell_Fonts</c> entry 5, <c>nm_green</c>, on
+	/// the readouts in the readout font, <c>Shell_Fonts</c> entry 5, <c>nm_green</c>, on
 	/// <see cref="ShellReadoutFill"/>. Retail's file gives the simulator's numbers.
 	/// </summary>
+	/// <param name="bnd">The panel's numbers.</param>
+	/// <param name="readoutFont">The readout font, or null.</param>
 	public static Es1ControlsVariant Shell(Es1CtlAlertBnd bnd, HudFont? readoutFont) {
 		var buttons = new Es1Rect[bnd.ButtonCount];
 		var captions = new int[buttons.Length];

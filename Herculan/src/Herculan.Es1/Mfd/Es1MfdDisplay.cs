@@ -83,7 +83,7 @@ public sealed class Es1MfdDisplay {
 	private readonly StringFile? _strings;
 
 	/// <summary>
-	/// <c>MfdDisplay_Ctor</c> (<c>ES1DBSIM 00039c64</c>)(0, <paramref name="cockpit"/>, <paramref name="block"/>)
+	/// <c>MfdDisplay_Ctor</c> (<c>ES1DBSIM 00039c64</c>)(0, cockpit, block)
 	/// (docs/es1/simulation/mfd-display.md#building-it): the gauge base's rect, the block's first 16 bytes; with
 	/// (<i>x</i>, <i>y</i>) its first pair, the 13 buttons each on its rect moved by them, given its pictures and its
 	/// caption label in <c>cpred</c> centered over the rect with no plate, and registered on the cockpit's root; the title,
@@ -93,6 +93,8 @@ public sealed class Es1MfdDisplay {
 	/// refresh deadline the clock + 30; and the <c>OFFLINE</c> label, centered over the screen's rect on
 	/// <see cref="LabelFill"/>.
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="block">The display's <c>.GAU</c> block.</param>
 	/// <param name="fonts"><c>ColorSchemePanels</c>.</param>
 	/// <param name="pushButtons"><c>CockpitPButtonsBank</c>, the frames of <c>dba\pbuttons</c>; no picture is blitted when it or a frame is missing.</param>
 	/// <param name="strings"><c>STRINGS0.STR</c>; nothing is written when null.</param>
@@ -214,16 +216,18 @@ public sealed class Es1MfdDisplay {
 	/// <summary><c>g_MfdMissileCamSavedMode</c> (<c>00093f5a</c>), a global <c>int16</c>, 0 in the image: the mode the switch gives back.</summary>
 	public short MissileCamSavedMode { get; private set; }
 
-	/// <summary><c>STRINGS0.STR</c> group 5's entry <paramref name="entry"/>: a mode's title for 0 to 5, a button's caption for 7 to 10.</summary>
+	/// <summary><c>STRINGS0.STR</c> group 5's caption entry: a mode's title for 0 to 5, a button's caption for 7 to 10.</summary>
+	/// <param name="entry">The entry.</param>
 	public string? Caption(int entry) => _strings?.Text(CaptionGroup, entry);
 
 	/// <summary>
-	/// <c>MfdDisplay_SetMode</c> (<c>0003a9ec</c>)(display, <paramref name="mode"/>)
+	/// <c>MfdDisplay_SetMode</c> (<c>0003a9ec</c>)(display, mode)
 	/// (docs/es1/simulation/mfd-display.md#modes): nothing for the mode already set. Otherwise the mode stored and, while
 	/// the missile camera switch holds, the switch cleared and its armed flag with it; each of buttons 6 to 12 the mode
 	/// uses put from <see cref="Es1Widget.Hidden"/> to up and each it does not from up to hidden, either change
 	/// invalidating it; the repaint byte and the title's paint counter set to 2; and the subject stored for modes 0 and 4.
 	/// </summary>
+	/// <param name="mode">The mode.</param>
 	public void SetMode(int mode) {
 		if (Mode == mode) {
 			return;
@@ -259,9 +263,10 @@ public sealed class Es1MfdDisplay {
 	public void CycleScannerRange() => SetScannerRange(RangeIndex + 1 == ScannerRanges.Length ? 0 : RangeIndex + 1);
 
 	/// <summary>
-	/// <c>MfdDisplay_SetScannerRange</c> (<c>0003ab44</c>)(display, <paramref name="index"/>): for an index other than the
+	/// <c>MfdDisplay_SetScannerRange</c> (<c>0003ab44</c>)(display, index): for an index other than the
 	/// one set, the index stored and its range put in the shared block.
 	/// </summary>
+	/// <param name="index">The scanner range's index.</param>
 	public void SetScannerRange(int index) {
 		if (RangeIndex == index) {
 			return;
@@ -272,10 +277,11 @@ public sealed class Es1MfdDisplay {
 	}
 
 	/// <summary>
-	/// <c>MfdDisplay_InScannerRange</c> (<c>0003ae00</c>)(display, <paramref name="target"/>): whether the object's
+	/// <c>MfdDisplay_InScannerRange</c> (<c>0003ae00</c>)(display, target): whether the object's
 	/// distance to the cockpit's machine (<c>Math_DistanceBetweenPoints</c>) is less than the shared block's range. With
 	/// no machine, where retail reads through a null pointer, false, an engine guard.
 	/// </summary>
+	/// <param name="target">The object.</param>
 	public bool InScannerRange(IEs1SimObject target) =>
 		Cockpit.Machine is { } machine && target.Position.ApproxDistanceTo(machine.Position) < Shared.ScannerRange;
 
@@ -383,13 +389,14 @@ public sealed class Es1MfdDisplay {
 	}
 
 	/// <summary>
-	/// Slot <c>+4</c>, <c>MfdButton_OnClick</c> (<c>0003a46c</c>)(display, flags, <paramref name="child"/>), a button's
+	/// Slot <c>+4</c>, <c>MfdButton_OnClick</c> (<c>0003a46c</c>)(display, flags, child), a button's
 	/// click (docs/es1/simulation/mfd-display.md#clicks-and-keys), by its index: 0 to 5 <see cref="SetMode"/>; 6
 	/// <see cref="CycleMode"/>; 7 in mode 3 <c>Mech_ToggleRadarMode</c> on the cockpit's machine; 8
 	/// <see cref="CycleScannerRange"/> and 9 <c>Cockpit_CycleTarget</c> in any mode; 10 in mode 1, unless the release was
 	/// a double click, the order transmit; 11 and 12 in mode 1 the previous and the next available row. Each of 8 to 12
 	/// that acts then sets the mode's byte. A child not among the buttons does nothing.
 	/// </summary>
+	/// <param name="child">The button clicked.</param>
 	public void OnChildClick(Es1Widget child) {
 		int index = Array.IndexOf(_buttons, child as Es1MfdButton);
 		switch (index) {
@@ -444,12 +451,13 @@ public sealed class Es1MfdDisplay {
 	public void CycleTarget() => Cockpit.Targets.Cycle();
 
 	/// <summary>
-	/// Slot <c>+0x10</c>, <c>MfdDisplay_KeyDispatch</c> (<c>0003a5e8</c>)(display, <paramref name="code"/>), the end of the
+	/// Slot <c>+0x10</c>, <c>MfdDisplay_KeyDispatch</c> (<c>0003a5e8</c>)(display, code), the end of the
 	/// cockpit's key chain: 0 while <c>CockpitView_RectCornerVisible</c> refuses the screen's rect. One of
 	/// <see cref="ButtonKeys"/> presses its button, 7 to 12, when the mode uses it (<see cref="PressButton"/>), [Alt]+R
 	/// stepping the range itself when the mode does not use <c>RANGE</c>, and answers 1 either way. In mode 1 one of
 	/// <see cref="RowKeys"/> selects its row and answers 1. Any other code answers 0.
 	/// </summary>
+	/// <param name="code">The key code.</param>
 	public short KeyDispatch(ushort code) {
 		if (!Cockpit.RectCornerVisible(ScreenRect)) {
 			return 0;
@@ -477,10 +485,11 @@ public sealed class Es1MfdDisplay {
 	}
 
 	/// <summary>
-	/// A press of button <paramref name="index"/>, as <c>CockpitWidgets_HandleCommand</c>'s F-keys and
+	/// A press of a button, as <c>CockpitWidgets_HandleCommand</c>'s F-keys and
 	/// <see cref="KeyDispatch"/> make it (docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device): unless its state
 	/// is <see cref="Es1Widget.Hidden"/> or 3, its click with the left button.
 	/// </summary>
+	/// <param name="index">The button's index.</param>
 	public void PressButton(int index) {
 		var button = _buttons[index];
 		if (button.State is not (Es1Widget.Hidden or 3)) {
@@ -489,13 +498,14 @@ public sealed class Es1MfdDisplay {
 	}
 
 	/// <summary>
-	/// <c>MfdFlashComm_HandleAltKey</c> (<c>0003a890</c>)(display, <paramref name="code"/>), which the cockpit asks first
+	/// <c>MfdFlashComm_HandleAltKey</c> (<c>0003a890</c>)(display, code), which the cockpit asks first
 	/// with every code its own cases do not take (docs/es1/simulation/mfd-flash-comm.md#the-order-helpers): one of
 	/// <see cref="AltRowKeys"/>, from any screen, puts its row in FLASH COMM's
 	/// <see cref="Es1MfdFlashCommScreen.SetScreenRow"/>, transmits it and selects it (<see cref="SelectRow"/>, which acts in
 	/// mode 1 alone), and answers 1; [Alt]+C and [Alt]+E, both row 4, transmit and select only when the screen's verb is
 	/// then 4 and 7, the order the row shows. Any other code answers 0.
 	/// </summary>
+	/// <param name="code">The key code.</param>
 	public short HandleAltKey(ushort code) {
 		int key = Array.IndexOf(AltRowKeys, code);
 		if (key < 0) {
@@ -513,7 +523,7 @@ public sealed class Es1MfdDisplay {
 	}
 
 	/// <summary>
-	/// <c>MfdFlashComm_HandleListClick</c> (<c>0003ac04</c>)(display, <paramref name="point"/>, <paramref name="surface"/>),
+	/// <c>MfdFlashComm_HandleListClick</c> (<c>0003ac04</c>)(display, point, surface),
 	/// the click surface's left click (docs/es1/simulation/mfd-flash-comm.md#picking-a-row): in mode 1 alone, the first
 	/// of FLASH COMM's row labels, in row order, whose rect holds the point, all four edges inclusive. A hit on another row
 	/// than the selected one, or any hit without a double click, selects it (<see cref="SetSharedRow"/>) and sets the
@@ -521,6 +531,8 @@ public sealed class Es1MfdDisplay {
 	/// transmits nothing while the double click is set (<see cref="OnChildClick"/>), so it sends no order. That is the
 	/// code as it reads; whether retail's double click transmits is docs/es1/simulation/mfd-flash-comm.md#open.
 	/// </summary>
+	/// <param name="point">The click's point.</param>
+	/// <param name="surface">The click surface.</param>
 	public void HandleListClick((int X, int Y) point, Es1MfdClickSurface surface) {
 		_ = surface;
 		if (Mode != FlashComm) {
@@ -571,10 +583,12 @@ public sealed class Es1MfdDisplay {
 	public void NextAvailableRow() => StepAvailableRow(1);
 
 	/// <summary>
-	/// <c>MfdFlashComm_SelectRow</c> (<c>0003acd4</c>)(display, <paramref name="row"/>, <paramref name="surface"/>), a row
+	/// <c>MfdFlashComm_SelectRow</c> (<c>0003acd4</c>)(display, row, surface), a row
 	/// key's pick (docs/es1/simulation/mfd-flash-comm.md#picking-a-row): only for the display's own click surface and in
 	/// mode 1, <see cref="SetSharedRow"/> and the mode's byte set.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="surface">The click surface.</param>
 	public void SelectRow(int row, Es1MfdClickSurface surface) {
 		if (!ReferenceEquals(surface, ClickSurface) || Mode != FlashComm) {
 			return;
@@ -585,9 +599,10 @@ public sealed class Es1MfdDisplay {
 	}
 
 	/// <summary>
-	/// <c>MfdDisplay_SetSharedRow</c> (<c>0003abe8</c>)(display, <paramref name="row"/>): the row stored as the shared
+	/// <c>MfdDisplay_SetSharedRow</c> (<c>0003abe8</c>)(display, row): the row stored as the shared
 	/// block's <see cref="Es1MfdSharedBlock.FlashCommRow"/> when it differs.
 	/// </summary>
+	/// <param name="row">The row.</param>
 	public void SetSharedRow(int row) {
 		if (Shared.FlashCommRow != row) {
 			Shared.FlashCommRow = row;
@@ -595,10 +610,11 @@ public sealed class Es1MfdDisplay {
 	}
 
 	/// <summary>
-	/// The two arrows' step: from the shared block's row, by <paramref name="step"/>, wrapping within the six, past every
+	/// The two arrows' step: from the shared block's row, by the step, wrapping within the six, past every
 	/// row whose state has <see cref="Es1MfdFlashCommScreen.Unavailable"/> set, then <see cref="SetSharedRow"/>. With all
 	/// six unavailable retail steps forever; here it stops after six steps, on the row it started from, an engine guard.
 	/// </summary>
+	/// <param name="step">The step, −1 or 1.</param>
 	private void StepAvailableRow(int step) {
 		int row = Shared.FlashCommRow;
 		for (int i = 0; i < Es1MfdFlashCommScreen.RowCount; i++) {

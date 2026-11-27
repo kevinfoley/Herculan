@@ -61,7 +61,11 @@ public sealed class Es1MechModels : IDisposable {
 	/// <summary>The texture handle of <c>dba\wpntex</c>, which <c>WeaponMount_ShapeForMountingCode</c> gives every weapon model; null when the install lacks it.</summary>
 	public uint? WeaponTexture { get; private set; }
 
-	/// <summary>Uploads the pieces of every type in <paramref name="types"/> and the flat set the theater's world file selects.</summary>
+	/// <summary>Uploads the pieces of every type in the types and the flat set the theater's world file selects.</summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="content">The game's content.</param>
+	/// <param name="types">The mech types.</param>
+	/// <param name="scene">The zone scene.</param>
 	public static Es1MechModels Upload(GL gl, GameContent content, IEnumerable<Es1MechType> types, Es1ZoneScene scene) {
 		var models = new Es1MechModels();
 		foreach (var type in types) {
@@ -96,13 +100,17 @@ public sealed class Es1MechModels : IDisposable {
 		return models;
 	}
 
-	/// <summary>The pieces of each of <paramref name="type"/>'s roots, by root; empty for a type that did not upload.</summary>
+	/// <summary>The pieces of each of the type's roots, by root; empty for a type that did not upload.</summary>
+	/// <param name="type">The mech type.</param>
 	public IReadOnlyList<IReadOnlyList<Es1MechPiece>> PiecesOf(short type) => _pieces.GetValueOrDefault(type) ?? [];
 
 	/// <summary>
-	/// The pieces of <paramref name="mount"/>'s model, built and uploaded on the first call; empty for a mount with no
+	/// The pieces of the mount's model, built and uploaded on the first call; empty for a mount with no
 	/// model. Each mount's model is its own moved copy, so its pieces are its own.
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="mount">The weapon mount.</param>
+	/// <param name="scene">The zone scene.</param>
 	public IReadOnlyList<Es1MechPiece> PiecesOfMount(GL gl, Es1WeaponMount mount, Es1ZoneScene scene) {
 		if (_mountPieces.TryGetValue(mount, out var known)) {
 			return known;
@@ -137,9 +145,12 @@ public sealed class Es1MechModels : IDisposable {
 	}
 
 	/// <summary>
-	/// A piece for each of <paramref name="segments"/> with geometry, its walk table built whenever it has textured faces;
-	/// the GPU objects go into <paramref name="owned"/>. The HERCs', the flyers' and the structures' pieces are all built here.
+	/// A piece for each of the segments with geometry, its walk table built whenever it has textured faces;
+	/// the GPU objects go into the owned list. The HERCs', the flyers' and the structures' pieces are all built here.
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="segments">The mesh segments.</param>
+	/// <param name="owned">Receives the GPU objects.</param>
 	internal static IReadOnlyList<Es1MechPiece> UploadPieces(GL gl, IEnumerable<MeshSegment> segments, List<IDisposable> owned) {
 		var pieces = new List<Es1MechPiece>();
 		foreach (var segment in segments) {
@@ -163,9 +174,11 @@ public sealed class Es1MechModels : IDisposable {
 	}
 
 	/// <summary>
-	/// The walk table an item drawing <paramref name="piece"/> takes this frame: the piece's own, or null for the mesh's own
-	/// mapping while <paramref name="perspective"/> (<see cref="PerspectiveTextureMapping"/>, read once per placement).
+	/// The walk table an item drawing the piece takes this frame: the piece's own, or null for the mesh's own
+	/// mapping while perspective (<see cref="PerspectiveTextureMapping"/>, read once per placement).
 	/// </summary>
+	/// <param name="piece">The piece.</param>
+	/// <param name="perspective">Whether perspective texture mapping is on.</param>
 	internal static GpuTextureWalkTable? WalkOf(Es1MechPiece piece, bool perspective) => perspective ? null : piece.TextureWalk;
 
 	public void Dispose() {

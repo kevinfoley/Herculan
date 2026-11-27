@@ -67,10 +67,12 @@ public sealed class Es1HangarBay {
 
 	private Es1TtmEntry[]? Entries => _backdrop.GroupTtms;
 
-	/// <summary><c>Math_RandomBelow</c>(<c>Shell_RandomState</c>, <paramref name="bound"/>); a draw with no generator, before the data's load, is 0, an engine guard.</summary>
+	/// <summary><c>Math_RandomBelow</c>(<c>Shell_RandomState</c>, bound); a draw with no generator, before the data's load, is 0, an engine guard.</summary>
+	/// <param name="bound">The bound.</param>
 	private short RandomBelow(short bound) => (short)(_data.Random?.Below(bound) ?? 0);
 
-	/// <summary>The handle of group script <paramref name="entry"/>; retail reads past the entries unchecked, none here, an engine guard.</summary>
+	/// <summary>The handle of group script entry; retail reads past the entries unchecked, none here, an engine guard.</summary>
+	/// <param name="entry">The entry.</param>
 	public byte Handle(int entry) => Entries is { } entries && entry >= 0 && entry < entries.Length ? entries[entry].Handle : Es1TtmManager.NoHandle;
 
 	/// <summary>The HERC in the selected slot <c>Hangar_SelectedSlot</c> (<c>00080894</c>), or null for −1, an empty slot or no hangar.</summary>
@@ -232,7 +234,8 @@ public sealed class Es1HangarBay {
 	public static bool ScrambleLightsFollowCareer =>
 		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixScrambleLights);
 
-	/// <summary>The slot <c>+8</c> of <paramref name="record"/>'s player entry <c>+0xe</c>; −1 for an entry past the four, an engine guard.</summary>
+	/// <summary>The slot <c>+8</c> of the record's player entry <c>+0xe</c>; −1 for an entry past the four, an engine guard.</summary>
+	/// <param name="record">The career record.</param>
 	private static short PlayerSlot(Es1CareerRecord record) =>
 		record.PlayerEntry is >= 0 and < Es1CareerRecord.PilotCount ? record.Pilots[record.PlayerEntry].Slot : (short)-1;
 
@@ -319,14 +322,15 @@ public sealed class Es1HangarBay {
 		}
 	}
 
-	/// <summary><c>Ttm_RunScript</c>(<paramref name="handle"/>), nothing without the scripts.</summary>
+	/// <summary><c>Ttm_RunScript</c>(handle), nothing without the scripts.</summary>
+	/// <param name="handle">The script's handle.</param>
 	private IEnumerable<Es1ShellWait> Run(byte handle) => _scripts()?.RunScript(handle) ?? [];
 
 	/// <summary>
 	/// <c>Herc_DrawInBay</c> (<c>000241f9</c>) (docs/es1/shell/hangar.md#drawing-the-herc-into-its-bay): the body drawn, the damage marks
 	/// (<see cref="Es1HercDiagrams.DrawDamageMarks"/>), one run of group script 1, the mounts
 	/// (<see cref="Es1HercDiagrams.DrawMounts"/>), and one run each of scripts 0 and 2. With <c>Shell_LowMemory</c>
-	/// (<c>0007fd09</c>) set it first builds the diagram with <paramref name="remaining"/>; this engine never sets that
+	/// (<c>0007fd09</c>) set it first builds the diagram with remaining; this engine never sets that
 	/// byte, so the diagram drawn is the one the hangar keeps (<see cref="Es1HercDiagrams.Of"/>). With
 	/// <see cref="Es1HercDiagrams.RefreshWeaponArt"/> the mount pictures are set again from the HERC's status first
 	/// (<see cref="Es1HercDiagrams.RefreshMountPictures"/>).
@@ -519,13 +523,15 @@ public sealed class Es1HangarBay {
 
 	/// <summary>
 	/// <c>Shell_DrawScreen</c>'s HERC diagram (docs/es1/shell/menus.md#drawing-a-screen): for a new backdrop 4000
-	/// (<paramref name="newBackdrop"/>), <see cref="PlayAllScripts"/> and the player's slot shown
+	/// (newBackdrop), <see cref="PlayAllScripts"/> and the player's slot shown
 	/// (<see cref="ShowSlot"/>); on screens 1700 and 1710 with no new backdrop the same slot shown, between
 	/// <c>Screen_BlindsClear</c>(8, 0, 1) and <c>Screen_BlindsCopy</c>(8, the visible page, the draw page, 1) when the
 	/// record's current pilot <c>+0x12</c> is not its player entry <c>+0xe</c> and the message box is not up
-	/// (<paramref name="messageBoxUp"/>); then, either way, the player's entry made the current pilot
+	/// (messageBoxUp); then, either way, the player's entry made the current pilot
 	/// (<see cref="Es1CareerRecord.SelectPilot"/>). With no record nothing is drawn here, an engine guard.
 	/// </summary>
+	/// <param name="newBackdrop">Whether the backdrop is new.</param>
+	/// <param name="messageBoxUp">Whether the message box is up.</param>
 	public IEnumerable<Es1ShellWait> ShowPlayerBay(bool newBackdrop, bool messageBoxUp) {
 		if (newBackdrop) {
 			foreach (var wait in PlayAllScripts()) {

@@ -30,12 +30,15 @@ public sealed class Es1MfdNavMapScreen : Es1MfdScreen {
 	private static readonly (int X, int Y)[] Cross = [(0, -1), (0, 0), (0, 1), (-1, 0), (1, 0)];
 
 	/// <summary>
-	/// <c>MfdMapScreen_Ctor</c> (<c>ES1DBSIM 00036b18</c>)(0, <paramref name="rect"/>)
+	/// <c>MfdMapScreen_Ctor</c> (<c>ES1DBSIM 00036b18</c>)(0, rect)
 	/// (docs/es1/simulation/mfd-nav-map.md#the-screen-object): the base; the viewport, clip mode 1, its origin
 	/// −((<i>x1</i> − <i>x0</i>) &gt;&gt; 1), −((<i>y1</i> − <i>y0</i>) &gt;&gt; 1), so its (0, 0) is the rect's
 	/// center; the rect's copy <c>+0x14</c>, the same as <see cref="Es1MfdScreen.Rect"/>, which is not kept apart; and
 	/// the camera at (0, 0, 0) with <see cref="Pitch"/> and no roll or heading.
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="rect">The screen's rectangle.</param>
+	/// <param name="shared">The shared block.</param>
 	internal Es1MfdNavMapScreen(Es1Cockpit cockpit, Es1Rect rect, Es1MfdSharedBlock shared)
 		: base(cockpit, rect, shared) {
 		ViewportOrigin = (-((rect.X1 - rect.X0) >> 1), -((rect.Y1 - rect.Y0) >> 1));

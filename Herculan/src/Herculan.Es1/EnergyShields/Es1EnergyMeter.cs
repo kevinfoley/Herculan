@@ -29,7 +29,7 @@ public sealed class Es1EnergyMeter {
 	public static readonly IReadOnlyList<string> ClipFileNames = ["", "ENG_CLP1", "ENG_CLP2", "ENG_CLP3", "ENG_CLP4"];
 
 	/// <summary>
-	/// <c>EnergyPoolGauge_Ctor</c> (<c>ES1DBSIM 00039818</c>)(0, <paramref name="cockpit"/>, <paramref name="block"/>): the
+	/// <c>EnergyPoolGauge_Ctor</c> (<c>ES1DBSIM 00039818</c>)(0, cockpit, block): the
 	/// rect the bar's moved by the block's origin; the value 0; with <see cref="Es1GauEnergyMeterBlock.ClipFile"/> 0 no clip
 	/// shape, otherwise <c>edg\ENG_CLP</c><i>n</i> loaded (<c>CockpitClipRegions_Load</c>) and shifted by the rect's
 	/// top-left (<see cref="Es1ClipBlock.Shifted"/>); and for <see cref="Horizontal"/> an <see cref="Es1LedBarGraph"/>, for
@@ -41,6 +41,8 @@ public sealed class Es1EnergyMeter {
 	/// past the table's four, or one missing or not a clip file, gives no clip shape, an engine guard; no retail
 	/// <c>.GAU</c> names one.</para>
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="block">The meter's <c>.GAU</c> block.</param>
 	/// <param name="read">The volumes' reader, (folder, file name) to a file's bytes, through which the clip file is loaded; none when null.</param>
 	internal Es1EnergyMeter(Es1Cockpit cockpit, Es1GauEnergyMeterBlock block, Func<string, string, byte[]?>? read) {
 		Cockpit = cockpit;
@@ -78,9 +80,10 @@ public sealed class Es1EnergyMeter {
 	public byte PaintCount { get; private set; }
 
 	/// <summary>
-	/// <c>EnergyMeter_SetValue</c> (<c>00039b78</c>)(gauge, &amp;<paramref name="value"/>): the value stored, and the paint
+	/// <c>EnergyMeter_SetValue</c> (<c>00039b78</c>)(gauge, &amp;value): the value stored, and the paint
 	/// count set to 2 when it differs from the one there.
 	/// </summary>
+	/// <param name="value">The new value.</param>
 	public void SetValue(int value) {
 		int old = Value;
 		Value = value;

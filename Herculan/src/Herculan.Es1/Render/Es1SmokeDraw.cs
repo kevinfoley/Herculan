@@ -32,8 +32,13 @@ public sealed class Es1SmokeDraw : IDisposable {
 
 	/// <summary>
 	/// Uploads <c>dba\smoke</c> and every cell of every root of <c>dts\smoke</c>, and pulls each root's billboards, which
-	/// are shown through <paramref name="palette"/>, the live palette; with none the bank is not uploaded.
+	/// are shown through the palette, the live palette; with none the bank is not uploaded.
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="content">The game's content.</param>
+	/// <param name="scene">The zone scene.</param>
+	/// <param name="pool">The smoke pool.</param>
+	/// <param name="palette">The live palette, or null.</param>
 	public Es1SmokeDraw(GL gl, GameContent content, Es1ZoneScene scene, Es1SmokePool pool, PaletteTexture? palette) {
 		_gl = gl;
 		_scene = scene;
@@ -62,7 +67,9 @@ public sealed class Es1SmokeDraw : IDisposable {
 	/// <summary>The balls' billboards the last <see cref="Update"/> placed.</summary>
 	public IReadOnlyList<SpriteBatch> Sprites => _batches;
 
-	/// <summary>One mesh per cell frame of <paramref name="root"/>, as many as its longest sequence holds; null for a cell with no faces.</summary>
+	/// <summary>One mesh per cell frame of a root, as many as its longest sequence holds; null for a cell with no faces.</summary>
+	/// <param name="root">The root.</param>
+	/// <param name="atlas">The texture atlas, or null.</param>
 	private GpuMesh?[] UploadCells(TSObject root, TextureAtlas? atlas) {
 		int frames = Math.Max(1, (root as TSShape)?.SequenceList?.Select(count => (int)(ushort)count).DefaultIfEmpty(1).Max() ?? 1);
 		var cells = new GpuMesh?[frames];
@@ -79,10 +86,13 @@ public sealed class Es1SmokeDraw : IDisposable {
 	}
 
 	/// <summary>
-	/// The pool's balls placed for <paramref name="camera"/>, walked as <c>ObjList_RebuildFrame</c> adds them, under a
-	/// projection whose <c>Raster_FocalShift</c> is <paramref name="focalShift"/>. With <paramref name="flatRamps"/> each
+	/// The pool's balls placed for the camera, walked as <c>ObjList_RebuildFrame</c> adds them, under a
+	/// projection whose <c>Raster_FocalShift</c> is focalShift. With the flat-ramps flag each
 	/// takes <c>WorldShades_ResetRamps</c>' ramps (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="focalShift">The focal length's shift.</param>
+	/// <param name="flatRamps">Whether each ball takes the flat ramps.</param>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		_items.Clear();
 		_batches.Clear();

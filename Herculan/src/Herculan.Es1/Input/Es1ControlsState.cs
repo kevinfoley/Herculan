@@ -10,10 +10,11 @@ public sealed class Es1ControlsState {
 	private readonly Es1Preferences _preferences;
 
 	/// <summary>
-	/// Options 8's and 10's handlers registered with <paramref name="preferences"/>, as <c>Prefs_Init</c> registers them,
+	/// Options 8's and 10's handlers registered with the preferences, as <c>Prefs_Init</c> registers them,
 	/// and run with the options as loaded, as <c>Prefs_Load</c> runs them: <see cref="SetStickMode"/> and
 	/// <see cref="SetThrottleLeverMode"/>.
 	/// </summary>
+	/// <param name="preferences">The options.</param>
 	public Es1ControlsState(Es1Preferences preferences) {
 		_preferences = preferences;
 		preferences.SetHandler(Es1Preferences.StickModeOption, SetStickMode);
@@ -91,8 +92,10 @@ public sealed class Es1ButtonLatches {
 
 	/// <summary>
 	/// <c>Input_LatchButton</c> (<c>0004d8c8</c>)(state, button 1–4): latches the button with
-	/// <paramref name="state"/> (docs/es1/simulation/input.md#small-functions).
+	/// the state (docs/es1/simulation/input.md#small-functions).
 	/// </summary>
+	/// <param name="state">The state to latch with.</param>
+	/// <param name="button">The button, 1–4.</param>
 	public void Latch(byte state, int button) {
 		_latched[button - 1] = true;
 		_state[button - 1] = state;
@@ -104,7 +107,8 @@ public sealed class Es1ButtonLatches {
 		Array.Clear(_state);
 	}
 
-	/// <summary>Button <paramref name="index"/>, 0–3, is latched.</summary>
+	/// <summary>Whether a button, 0–3, is latched.</summary>
+	/// <param name="index">The button's index.</param>
 	public bool IsLatched(int index) => _latched[index];
 
 	/// <summary>Button 0 is latched with a state that is not 0, the test that zeroes the camera's axes.</summary>

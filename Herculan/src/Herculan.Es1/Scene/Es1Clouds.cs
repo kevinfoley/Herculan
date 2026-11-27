@@ -66,10 +66,13 @@ public sealed class Es1Clouds {
 	public void Advance(double seconds) => _pendingSeconds += seconds;
 
 	/// <summary>
-	/// One frame of <c>Clouds_DriftAndDraw</c> seen from <paramref name="camera"/>: sets the layer up the first time,
-	/// moves the first (count · (<paramref name="detail"/> + 1)) &gt;&gt; 8 clouds by the wind steps due, carries over
+	/// One frame of <c>Clouds_DriftAndDraw</c> seen from the camera: sets the layer up the first time,
+	/// moves the first (count · (the detail + 1)) &gt;&gt; 8 clouds by the wind steps due, carries over
 	/// every cloud, and returns the positions of those drawn.
 	/// </summary>
+	/// <param name="camera">The camera's position.</param>
+	/// <param name="detail">The detail preference.</param>
+	/// <param name="random">The random generator.</param>
 	public ReadOnlySpan<Vec3i> Frame(Vec3i camera, int detail, Random random) {
 		if (!_setUp) {
 			SetUp(camera, random);

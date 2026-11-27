@@ -61,8 +61,8 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 	private readonly int[] _weaponNames = new int[WeaponNameCount];
 
 	/// <summary>
-	/// <c>HddDamageScreen_Ctor</c> (<c>ES1DBSIM 00042164</c>)(0, <paramref name="display"/>, <paramref name="damageColumn"/>,
-	/// <paramref name="screen"/>) (docs/es1/simulation/hdd-damage-screen.md#building-it--hdddamagescreen_ctor-00042164):
+	/// <c>HddDamageScreen_Ctor</c> (<c>ES1DBSIM 00042164</c>)(0, display, damageColumn,
+	/// screen) (docs/es1/simulation/hdd-damage-screen.md#building-it--hdddamagescreen_ctor-00042164):
 	/// the page base; with <i>c</i> <c>cpgreen</c>'s cell height and <i>w</i> the width of <see cref="WidestValue"/> in
 	/// it, for row <i>i</i> from the column's <i>y0</i> + <i>i</i> <i>c</i> to that + 4, a name label over the column's
 	/// <i>x0</i> + 12 to <i>x1</i> − <i>w</i> and a value label over <i>x1</i> − <i>w</i> to <i>x1</i>, each
@@ -74,6 +74,9 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 	/// <see cref="NoSubjectFill"/>, over 40 pixels either side of the screen rect's middle <i>x</i> and from its middle
 	/// <i>y</i> to that + 10.
 	/// </summary>
+	/// <param name="display">The display the screen belongs to.</param>
+	/// <param name="damageColumn">The damage column's rectangle.</param>
+	/// <param name="screen">The screen's rectangle.</param>
 	internal Es1HddDamageScreen(Es1HddDisplay display, Es1Rect damageColumn, Es1Rect screen)
 		: base(display, damageColumn, screen) {
 		var green = display.Font(Es1CockpitViews.CpGreen);
@@ -158,10 +161,11 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 	public int Dword16B0 { get; private set; }
 
 	/// <summary>
-	/// <c>HddDamage_WeaponNames</c> (<c>000b160c</c>)[<paramref name="index"/>]: the string at the slot of
+	/// <c>HddDamage_WeaponNames</c> (<c>000b160c</c>)[index]: the string at the slot of
 	/// <c>HddDamage_WeaponNameBuffer</c> (<c>000b1634</c>) the entry points at, up to its terminating zero; none for an
 	/// entry no update has set or an index outside the ten.
 	/// </summary>
+	/// <param name="index">The weapon's index.</param>
 	public string? WeaponName(int index) {
 		if (index < 0 || index >= WeaponNameCount || _weaponNames[index] < 0) {
 			return null;
@@ -208,12 +212,13 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 	// ---- The views.
 
 	/// <summary>
-	/// <c>HddDamageScreen_SetView</c> (<c>000423d8</c>)(screen, <paramref name="view"/>)
+	/// <c>HddDamageScreen_SetView</c> (<c>000423d8</c>)(screen, view)
 	/// (docs/es1/simulation/hdd-damage-screen.md#views): the view stored, the row offset 0 and the offset drawn −1; then
 	/// for view 0 the name list group 12 and <see cref="StructuralRows"/> rows, for 1 group 13 and
 	/// <see cref="InternalRows"/>, for 2 the weapon names and the subject's mount count, 0 with no subject; another view
 	/// sets neither. A HERC with no mount manager, which retail reads through, counts 0, an engine guard.
 	/// </summary>
+	/// <param name="view">The view.</param>
 	public void SetView(int view) {
 		View = view;
 		RowOffset = 0;
@@ -263,9 +268,9 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 	// ---- Drawing.
 
 	/// <summary>
-	/// <c>HddDamageScreen_Update</c> (<c>000424f8</c>)(screen, <paramref name="copy"/>)
+	/// <c>HddDamageScreen_Update</c> (<c>000424f8</c>)(screen, copy)
 	/// (docs/es1/simulation/hdd-damage-screen.md#drawing-it--hdddamagescreen_update-000424f8), where every copy is
-	/// <see cref="Es1Cockpit.DrawToCockpit"/> with 1 and made only with <paramref name="copy"/>:
+	/// <see cref="Es1Cockpit.DrawToCockpit"/> with 1 and made only with the copy flag:
 	///
 	/// <list type="number">
 	/// <item>While the display is dark, the screen rect filled <see cref="PageFill"/> and copied, and nothing more.</item>
@@ -291,6 +296,7 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 	/// second step, and a chassis with no <c>.PDG</c> or no such view, where retail reads through a null record, draws no
 	/// doll and no region rows: engine guards.</para>
 	/// </summary>
+	/// <param name="copy">Whether to copy the drawn rects to the page on the screen.</param>
 	private void Draw(bool copy) {
 		if (Display.Dropout.Dark) {
 			Cockpit.PushCanvasContext().FillRect(Screen.X0, Screen.Y0, Screen.X1, Screen.Y1, PageFill);
@@ -460,11 +466,11 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 	}
 
 	/// <summary>
-	/// Row <paramref name="row"/> (docs/es1/simulation/hdd-damage-screen.md#the-rows), shown while the offset ≤ the row &lt;
-	/// the rows' end, on label pair row − offset. In views 0 and 1 it is region <paramref name="row"/> of the view, whose
+	/// The row (docs/es1/simulation/hdd-damage-screen.md#the-rows), shown while the offset ≤ the row &lt;
+	/// the rows' end, on label pair row − offset. In views 0 and 1 it is region row of the view, whose
 	/// index <i>k</i> picks the name, entry <i>k</i> of the view's group, and the reading, readout first + <i>k</i>; its rect,
 	/// <c>colorId</c> and <c>recolorMode</c> the tint. In view 0 a region with index 0 or 2 tints on the mean of its
-	/// reading and the next index's, and one with index 1 or 3 tints nothing. In view 2 it is icon <paramref name="row"/>:
+	/// reading and the next index's, and one with index 1 or 3 tints nothing. In view 2 it is icon row:
 	/// its rect, the key <see cref="DollKey"/> and mode 0 for the tint, whose color the view's first region picks; readout
 	/// 32 + the row; and the name <see cref="WeaponName"/>(the icon's mount index).
 	///
@@ -485,6 +491,12 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 	/// outside the readouts reads 0, a group entry missing from the strings gives no name, and view 2 with no region tints
 	/// nothing: engine guards.</para>
 	/// </summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="data">The view's data.</param>
+	/// <param name="readings">The readouts.</param>
+	/// <param name="row">The row.</param>
+	/// <param name="full">Whether this is a full redraw.</param>
+	/// <param name="copy">Whether to copy the drawn rects to the page on the screen.</param>
 	private void DrawRow(Es1PanelCanvas canvas, ViewData data, short[] readings, int row, bool full, bool copy) {
 		bool shown = RowOffset <= row && row < data.End, tints = true;
 		short tintNew, tintDrawn, nameNew, nameDrawn;
@@ -572,9 +584,12 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 	}
 
 	/// <summary>
-	/// <c>HddDamageScreen_BlitWeaponIcons</c> (<c>000432b0</c>)(screen, <paramref name="origin"/>, <paramref name="icons"/>):
+	/// <c>HddDamageScreen_BlitWeaponIcons</c> (<c>000432b0</c>)(screen, origin, icons):
 	/// each icon with a bitmap blitted with its flags at its point plus the origin.
 	/// </summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="origin">The doll's origin.</param>
+	/// <param name="icons">The weapon icons.</param>
 	private static void BlitWeaponIcons(Es1PanelCanvas canvas, (int X, int Y) origin, IReadOnlyList<Es1WeaponIcon> icons) {
 		foreach (var icon in icons) {
 			if (icon.Bitmap != null) {
@@ -583,7 +598,10 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 		}
 	}
 
-	/// <summary>Whether entries <paramref name="first"/> to <paramref name="first"/> + <paramref name="count"/> of the readouts equal the drawn ones, retail's <c>memcmp</c>; entries past the 42 are not compared.</summary>
+	/// <summary>Whether entries first to first + count of the readouts equal the drawn ones, retail's <c>memcmp</c>; entries past the 42 are not compared.</summary>
+	/// <param name="readings">The readouts.</param>
+	/// <param name="first">The first entry.</param>
+	/// <param name="count">The number of entries.</param>
 	private bool Same(short[] readings, int first, int count) {
 		for (int i = first; i < first + count && i < readings.Length; i++) {
 			if (readings[i] != _drawnReadings[i]) {
@@ -594,7 +612,9 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 		return true;
 	}
 
-	/// <summary>The damage state <see cref="Es1PaperDoll.PickRegionTint"/> gives on <paramref name="region"/>, or <see cref="Es1PaperDoll.ToConditionState"/> with none.</summary>
+	/// <summary>The damage state <see cref="Es1PaperDoll.PickRegionTint"/> gives on the region, or <see cref="Es1PaperDoll.ToConditionState"/> with none.</summary>
+	/// <param name="region">The region, or null.</param>
+	/// <param name="reading">The reading.</param>
 	private static short State(PaperDollGraphic.ViewRegion? region, short reading) =>
 		region != null ? Es1PaperDoll.PickRegionTint(region, reading).State : Es1PaperDoll.ToConditionState(reading);
 
@@ -603,7 +623,9 @@ public sealed class Es1HddDamageScreen : Es1HddPage {
 	private static Es1Rect RegionRect(PaperDollGraphic.ViewRegion region) =>
 		new(region.TopLeft.X, region.TopLeft.Y, region.BottomRight.X, region.BottomRight.Y);
 
-	/// <summary><see cref="Es1Cockpit.DrawToCockpit"/> of <paramref name="rect"/> with 1 when <paramref name="copy"/> is set.</summary>
+	/// <summary><see cref="Es1Cockpit.DrawToCockpit"/> of the rect with 1 when the copy flag is set.</summary>
+	/// <param name="rect">The rect.</param>
+	/// <param name="copy">Whether to copy.</param>
 	private void Copy(Es1Rect rect, bool copy) {
 		if (copy) {
 			Cockpit.DrawToCockpit(rect);

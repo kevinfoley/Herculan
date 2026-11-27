@@ -146,7 +146,7 @@ public sealed class Es1ShellData {
 	public string? CareersLogPath { get; private set; }
 
 	/// <summary>
-	/// <c>FileNames_Load</c> (<c>0002094d</c>), the start-up's step 7: <c>cfg\filename.bin</c> from <paramref name="content"/>.
+	/// <c>FileNames_Load</c> (<c>0002094d</c>), the start-up's step 7: <c>cfg\filename.bin</c> from the content.
 	/// </summary>
 	/// <param name="content">The shell's volumes.</param>
 	/// <param name="tuning">The <c>bnd\</c> files step 5 read.</param>
@@ -163,7 +163,7 @@ public sealed class Es1ShellData {
 	public void LoadMapResources(GameContent content, Es1SimClock timer) => MapResources = Es1ShellMapResources.Load(content, timer);
 
 	/// <summary>
-	/// <c>Shell_LoadData</c> (<c>00020630</c>), the start-up's step 11, on <paramref name="preferences"/>, the options as the
+	/// <c>Shell_LoadData</c> (<c>00020630</c>), the start-up's step 11, on preferences, the options as the
 	/// devices left them: options 12–16 into <see cref="MissionParams"/>, 0 and 1 into <see cref="MusicOption"/> and
 	/// <see cref="SoundOption"/>, 2 into <see cref="RadioOption"/>, <see cref="DetailOption"/>; the 14 font slots; the generator seeded with <c>time()</c>
 	/// % 128 draws; <c>eng\watext.bin</c>; the value tables (<see cref="Es1RepairCosts.Load"/>); the careers log, with <see cref="SelectedEntry"/> from it; and
@@ -171,6 +171,10 @@ public sealed class Es1ShellData {
 	/// 0 in the image and set by nothing before this load. <c>00027c4c</c>, which makes the 41 weapon stocks, follows; they
 	/// are the roster's here (<see cref="Es1CareerRoster.Stocks"/>).
 	/// </summary>
+	/// <param name="content">The game's content.</param>
+	/// <param name="preferences">The options.</param>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="secondsSince1970">The time, in seconds since 1970.</param>
 	public void Load(GameContent content, Es1Preferences preferences, string installRoot, long secondsSince1970) {
 		for (int i = 0; i < MissionParams.Length; i++) {
 			MissionParams[i] = preferences[12 + i];
@@ -204,9 +208,11 @@ public sealed class Es1ShellData {
 	}
 
 	/// <summary>
-	/// <paramref name="retailPath"/>, a path the shell opens relative to its directory, in <paramref name="installRoot"/>:
+	/// The retail path, a path the shell opens relative to its directory, in the install folder:
 	/// where <c>Path_ApplyAltDrive</c> (<c>00020989</c>) leaves it with no alternative drive.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="retailPath">The path the shell opens, relative to its directory.</param>
 	public static string InstallPath(string installRoot, string retailPath) =>
 		CaseInsensitivePath.Combine(installRoot, retailPath.Split('\\', StringSplitOptions.RemoveEmptyEntries));
 
@@ -220,13 +226,15 @@ public sealed class Es1ShellData {
 	public Es1PilotNames? PilotNames { get; private set; }
 
 	/// <summary>
-	/// <c>BattleSet_Load</c> (<c>00013f01</c>)(<c>g_BattleSet</c>, <paramref name="index"/>)
-	/// (docs/es1/formats/bst-battle-sets.md#battle-sets): <c>bst\batlsets.bin</c>'s entry <paramref name="index"/> names the
+	/// <c>BattleSet_Load</c> (<c>00013f01</c>)(<c>g_BattleSet</c>, index)
+	/// (docs/es1/formats/bst-battle-sets.md#battle-sets): <c>bst\batlsets.bin</c>'s entry index names the
 	/// file <c>BattleSet_ReadFile</c> (<c>00013fad</c>) reads from <c>bst\</c> into <see cref="BattleSet"/>; then
 	/// <c>SingleMissions_Load</c> (<see cref="SingleMissions"/>) and <c>PilotNames_Load</c> (<see cref="PilotNames"/>).
 	/// Retail reads whatever a missing name or file gives; here either is reported and leaves no battle set, and a names
 	/// file that does not read leaves the names as they were, engine guards.
 	/// </summary>
+	/// <param name="content">The game's content.</param>
+	/// <param name="index">The battle set's index.</param>
 	public void LoadBattleSet(GameContent content, short index) {
 		string[]? sets = content.Read("bst", "BATLSETS.BIN") is { } table ? new BinStringFileTransformer().Parse(table)?.Values : null;
 		if (sets == null || index < 0 || index >= sets.Length) {
@@ -342,11 +350,12 @@ public sealed class Es1ShellData {
 	public void WriteCareersLog() => WriteCareersLog(-1);
 
 	/// <summary>
-	/// <c>CareerLog_Write</c> (<c>00017f5f</c>)(log, <paramref name="skip"/>): the file deleted and written with the count,
+	/// <c>CareerLog_Write</c> (<c>00017f5f</c>)(log, skip): the file deleted and written with the count,
 	/// one less when an entry is left out, and when that is not 0 the current entry and every entry but
-	/// <paramref name="skip"/>. Retail asserts at severity 5 (<c>career.cpp</c> line <c>0x51b</c>) when it does not open;
+	/// skip. Retail asserts at severity 5 (<c>career.cpp</c> line <c>0x51b</c>) when it does not open;
 	/// here that is reported and the caller goes on, an engine guard.
 	/// </summary>
+	/// <param name="skip">The entry left out, or −1.</param>
 	private void WriteCareersLog(short skip) {
 		if (CareerLog is not { } log || CareersLogPath is not { } path) {
 			return;
@@ -366,7 +375,7 @@ public sealed class Es1ShellData {
 	private const int UntitledLine = 0x16;
 
 	/// <summary>
-	/// <c>CareerLog_FindOrAdd</c> (<c>00018099</c>)(log, <paramref name="word"/>, <paramref name="name"/>)
+	/// <c>CareerLog_FindOrAdd</c> (<c>00018099</c>)(log, word, name)
 	/// (docs/es1/formats/career-log-and-player-mec.md#adding-a-career): an empty name taken as <c>UNTITLED</c>; with no
 	/// entries, entry 0 filled with the name, the word and <c>CAR\CAR_0.CAR</c> and <c>CAR\CAR_0.MEC</c>; otherwise the first
 	/// entry whose name equals the name, ignoring case, and whose word equals the word; with none and no entry added since
@@ -441,7 +450,7 @@ public sealed class Es1ShellData {
 
 	/// <summary>
 	/// <b>This engine's own:</b> the least <c>n</c> from 0 whose <c>CAR\CAR_</c><c>n</c><c>.CAR</c> and
-	/// <c>CAR\CAR_</c><c>n</c><c>.MEC</c> no entry of <paramref name="entries"/> names, ignoring case.
+	/// <c>CAR\CAR_</c><c>n</c><c>.MEC</c> no entry of the entries names, ignoring case.
 	/// </summary>
 	/// <param name="entries">The log's entries.</param>
 	/// <returns>The number for a new career's files.</returns>
@@ -461,9 +470,11 @@ public sealed class Es1ShellData {
 	}
 
 	/// <summary>
-	/// <paramref name="text"/> and its NUL copied over the start of <paramref name="buffer"/>, cut to the buffer where
+	/// The text and its NUL copied over the start of the buffer, cut to the buffer where
 	/// retail's copy runs past it, an engine guard.
 	/// </summary>
+	/// <param name="buffer">The buffer.</param>
+	/// <param name="text">The text.</param>
 	private static void CopyText(byte[] buffer, string text) {
 		byte[] bytes = Encoding.Latin1.GetBytes(text);
 		int length = Math.Min(bytes.Length, buffer.Length - 1);
@@ -472,12 +483,14 @@ public sealed class Es1ShellData {
 	}
 
 	/// <summary>
-	/// <c>CareerLog_Delete</c> (<c>0001828e</c>)(log, <paramref name="index"/>)
+	/// <c>CareerLog_Delete</c> (<c>0001828e</c>)(log, index)
 	/// (docs/es1/formats/career-log-and-player-mec.md#writing): for an index below the count, the entry's two files deleted
 	/// by their paths as the entry holds them, the current entry less 1 when it is not 0, the log written without the entry
 	/// (<see cref="WriteCareersLog(short)"/>) and loaded again. Retail's test is signed, so a negative index reads before the
 	/// entries; here it does nothing, an engine guard.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="index">The entry's index.</param>
 	public void DeleteCareer(string installRoot, short index) {
 		if (CareerLog is not { } log || index < 0 || index >= log.Entries.Length) {
 			return;

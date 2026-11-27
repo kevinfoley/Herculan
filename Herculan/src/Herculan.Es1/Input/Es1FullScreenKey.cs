@@ -19,9 +19,11 @@ public sealed class Es1FullScreenKey {
 	public Es1FullScreenKey(Action toggle) => _toggle = toggle;
 
 	/// <summary>
-	/// A host key-down, <paramref name="held"/> answering whether a modifier key is down. True when the key is the
+	/// A host key-down, the held test answering whether a modifier key is down. True when the key is the
 	/// toggle's, which then toggled unless this is the host's repeat of the key it already took.
 	/// </summary>
+	/// <param name="key">The key pressed.</param>
+	/// <param name="held">Answers whether a modifier key is down.</param>
 	public bool KeyDown(Key key, Func<Key, bool> held) {
 		if (key == _down) {
 			return true;

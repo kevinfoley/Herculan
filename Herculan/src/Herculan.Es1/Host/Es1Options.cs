@@ -27,10 +27,11 @@ public sealed class Es1Options {
 	public List<string> ShellArguments { get; } = [];
 
 	/// <summary>
-	/// Whether <paramref name="argument"/> is one of <c>GO.EXE</c>'s switches as the host takes them: a single <c>-</c>
+	/// Whether the argument is one of <c>GO.EXE</c>'s switches as the host takes them: a single <c>-</c>
 	/// and a letter (<c>--</c> opens the host's own flags), or <c>/</c> and a letter alone, since a longer <c>/</c> argument
 	/// is a path. Retail's parser reads only the letter after either (<c>Es1ShellSwitches</c>).
 	/// </summary>
+	/// <param name="argument">The command-line argument.</param>
 	public static bool IsShellSwitch(string argument) =>
 		(argument.Length >= 2 && argument[0] == '-' && argument[1] != '-' && char.IsLetter(argument[1]))
 		|| (argument.Length == 2 && argument[0] == '/' && char.IsLetter(argument[1]));
@@ -42,9 +43,10 @@ public sealed class Es1Options {
 	public Es1HeaderOverrides ToOverrides() => new(Theater, WorldVariant, WorldDetail);
 
 	/// <summary>
-	/// Whether a launch with these flags and <paramref name="common"/>'s runs the simulator rather than the launcher: a named
+	/// Whether a launch with these flags and the common options' runs the simulator rather than the launcher: a named
 	/// mission, a tape to play, record or demo, or <see cref="SimulatorFlag"/>.
 	/// </summary>
+	/// <param name="common">The options common to every game.</param>
 	public bool RunsSimulator(CommonOptions common) =>
 		common.MissionPath != null || common.PlayTape != null || common.DemoTape || common.RecordTape != null || Simulator;
 

@@ -23,9 +23,11 @@ public sealed class Es1Debris {
 	public const short Rebound = 450, RestSpeed = 100;
 
 	/// <summary>
-	/// <c>Debris_Construct</c> (<c>00006168</c>)'s fields: the root <paramref name="shape"/>, the type tag, the point as
+	/// <c>Debris_Construct</c> (<c>00006168</c>)'s fields: the root shape, the type tag, the point as
 	/// the position and the detail bias 0. It writes no velocity: every caller launches the piece.
 	/// </summary>
+	/// <param name="shape">The piece's root shape, or null.</param>
+	/// <param name="point">The piece's starting position.</param>
 	internal Es1Debris(TSObject? shape, Vec3i point) {
 		Shape = shape;
 		Position = point;
@@ -58,11 +60,13 @@ public sealed class Es1Debris {
 	}
 
 	/// <summary>
-	/// <c>Debris_Launch</c> (<c>00006378</c>)(piece, <paramref name="heading"/>, <paramref name="pitch"/>)
+	/// <c>Debris_Launch</c> (<c>00006378</c>)
 	/// (docs/es1/simulation/destruction-effects.md#the-launch--debris_launch-00006378): the angles (0, 0, heading) and
 	/// <see cref="LaunchSpeed"/> split along the heading and the pitch, each product <c>Math_Q14Multiply</c>'s, as an
 	/// <c>int16</c>.
 	/// </summary>
+	/// <param name="heading">The launch heading.</param>
+	/// <param name="pitch">The launch pitch.</param>
 	public void Launch(short heading, short pitch) {
 		short horizontal = (short)SimMath.Q14MultiplyRounded(LaunchSpeed, SimTrig.Cos(pitch));
 		Rotation = (0, 0, heading);

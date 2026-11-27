@@ -291,8 +291,8 @@ public static class Es1Launcher {
 	}
 
 	/// <summary>
-	/// <c>Launcher_BuildArgs</c> (<c>00000518</c>): the launcher's own <paramref name="arguments"/>, then by
-	/// <paramref name="state"/> <c>-a</c> and <c>-c</c> for the shell's states and <c>-c</c> for the simulator's with the
+	/// <c>Launcher_BuildArgs</c> (<c>00000518</c>): the launcher's own the arguments given, then by
+	/// state <c>-a</c> and <c>-c</c> for the shell's states and <c>-c</c> for the simulator's with the
 	/// flic player found, <c>-D</c> first for state 5, and last <c>-eggplant</c>. Retail's vector opens with the
 	/// launcher's <c>argv[0]</c>; this one leaves it out, as both hosts take a command line after the program's path.
 	/// </summary>
@@ -327,7 +327,7 @@ public static class Es1Launcher {
 	}
 
 	/// <summary>
-	/// <c>Launcher_HasDiskSpace</c> (<c>000003bc</c>), (<paramref name="bytes"/>, <c>Launcher_PreferredPrefix</c>)
+	/// <c>Launcher_HasDiskSpace</c> (<c>000003bc</c>), (bytes, <c>Launcher_PreferredPrefix</c>)
 	/// (docs/es1/shell/launcher.md#the-disk-check--launcher_hasdiskspace-000003bc): the drive is the install's with an
 	/// empty prefix, standing in for DOS's current drive, and otherwise the prefix's first character's.
 	/// </summary>
@@ -361,7 +361,7 @@ public static class Es1Launcher {
 	/// <summary>
 	/// <c>Launcher_ReadExitCfg</c> (<c>00000448</c>): <c>data\exit.cfg</c> opened <c>r+b</c> through
 	/// <c>Launcher_PreferredPrefix</c> and <c>fread</c>(<c>Launcher_State</c>, 4, 1) from it: up to 4 bytes over
-	/// <paramref name="state"/>'s low bytes, the bytes past the file's end keeping their value, so the programs' 2-byte
+	/// state's low bytes, the bytes past the file's end keeping their value, so the programs' 2-byte
 	/// code lands in the low word (docs/es1/shell/launcher.md#the-loop).
 	/// </summary>
 	/// <param name="prefixes">The prefixes, whose preferred one the file is read through.</param>
@@ -378,7 +378,7 @@ public static class Es1Launcher {
 	/// <returns>False for a null path, otherwise whether <paramref name="path"/> opens <c>rb</c>.</returns>
 	private static bool FileReadable(string? path) => path != null && Opens(path);
 
-	/// <summary>Opens <paramref name="path"/> for reading and closes it.</summary>
+	/// <summary>Opens the path for reading and closes it.</summary>
 	/// <param name="path">The file to open.</param>
 	/// <returns>Whether it opened.</returns>
 	private static bool Opens(string path) {
@@ -402,18 +402,18 @@ public static class Es1Launcher {
 		public string Preferred { get; } = preferred.ToUpperInvariant();
 		public string Other { get; } = other.ToUpperInvariant();
 
-		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_PreferredPrefix</c>, <paramref name="path"/>).</summary>
+		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_PreferredPrefix</c>, path).</summary>
 		/// <param name="path">The DOS path, a drive of its own dropped.</param>
 		/// <returns>The host path.</returns>
 		public string Path(string path) => PrefixPath(Preferred, path);
 
-		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_OtherPrefix</c>, <paramref name="path"/>).</summary>
+		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_OtherPrefix</c>, path).</summary>
 		/// <param name="path">The DOS path, a drive of its own dropped.</param>
 		/// <returns>The host path.</returns>
 		public string OtherPath(string path) => PrefixPath(Other, path);
 
 		/// <summary>
-		/// <c>Launcher_PrefixPath</c> (<c>00000304</c>): <paramref name="prefix"/> followed by <paramref name="path"/> less
+		/// <c>Launcher_PrefixPath</c> (<c>00000304</c>): the prefix followed by the path less
 		/// a drive letter of its own. With an empty prefix the path is relative to the install folder, which stands in for
 		/// DOS's current folder, matched ignoring case; with a prefix it is taken as the host's file system resolves it, a
 		/// drive-relative one against the process's current folder on that drive, as DOS's does.
@@ -465,7 +465,7 @@ public static class Es1Launcher {
 		}
 
 		/// <summary>
-		/// The flics on <paramref name="disc"/>: the paths are the same names on the disc's root, with no drive.
+		/// The flics on the disc: the paths are the same names on the disc's root, with no drive.
 		/// </summary>
 		/// <param name="prefixes">The launcher's prefixes.</param>
 		/// <param name="disc">The disc standing for the CD drive, a full install's <c>ALT_DRIVE</c> or a minimum or medium install's current folder.</param>
@@ -481,7 +481,7 @@ public static class Es1Launcher {
 		/// <summary><c>Launcher_FileReadable</c>(the probe path), the probe taken on the disc when there is one.</summary>
 		public bool PlayerFound() => _disc != null ? _disc.FileExists(Probe) : FileReadable(Probe);
 
-		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_OtherPrefix</c>, <paramref name="path"/>), or where it is on the disc, for a message.</summary>
+		/// <summary><c>Launcher_PrefixPath</c>(<c>Launcher_OtherPrefix</c>, path), or where it is on the disc, for a message.</summary>
 		/// <param name="path">The DOS path.</param>
 		/// <returns>The path as a message shows it.</returns>
 		public string OtherPath(string path) => _disc != null ? _disc.Describe(path) : _prefixes.OtherPath(path);
@@ -511,7 +511,7 @@ public static class Es1Launcher {
 		}
 
 		/// <summary>
-		/// <c>Launcher_DrivePath</c> (<c>00000360</c>): the drive's letter and <c>:</c> followed by <paramref name="path"/>
+		/// <c>Launcher_DrivePath</c> (<c>00000360</c>): the drive's letter and <c>:</c> followed by the path
 		/// less a drive letter of its own; with no drive, the path alone.
 		/// </summary>
 		/// <param name="drive">The drive's letter, or null for none.</param>

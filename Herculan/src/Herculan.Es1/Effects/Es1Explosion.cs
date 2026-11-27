@@ -22,14 +22,20 @@ public sealed class Es1Explosion {
 
 	/// <summary>
 	/// <c>Explosion_Construct</c> (<c>00005af0</c>)'s fields (docs/es1/simulation/impact-effects.md#construction--explosion_construct-00005af0):
-	/// the root <paramref name="shape"/>, the type byte, the type tag, the frame countdown from the row's <c>+0x06</c>,
-	/// the turn about the second axis (<see cref="Roll"/>), a draw of <paramref name="random"/>, the point, the ground
+	/// the root shape, the type byte, the type tag, the frame countdown from the row's <c>+0x06</c>,
+	/// the turn about the second axis (<see cref="Roll"/>), a draw of the generator, the point, the ground
 	/// shape when the row's <c>+0x08</c> is not 0 and the light when its <c>+0x0a</c> is not 0; then the row's sound
 	/// <see cref="Es1ExplosionTypeEntry.SoundId"/> + 10 at the point (<see cref="Sound.Es1Sound.PlayAt"/>).
 	/// A new instance's cell frames are 0, so the row's sequence starts on 0. The ground shape takes a place of
 	/// <see cref="Es1FlatObjPool"/>; with the pool full retail writes the shape's position through the null it gets, and
 	/// here no ground shape is built, an engine guard.
 	/// </summary>
+	/// <param name="pool">The pool the effect belongs to.</param>
+	/// <param name="typeId">The effect type's row.</param>
+	/// <param name="shape">The effect's root shape, or null.</param>
+	/// <param name="point">The effect's position.</param>
+	/// <param name="random">The simulation generator.</param>
+	/// <param name="sound">The sound file the row's sound plays through.</param>
 	internal Es1Explosion(Es1ExplosionPool pool, sbyte typeId, TSObject? shape, Vec3i point, SimRandom random,
 			Sound.Es1Sound sound) {
 		_pool = pool;
@@ -134,11 +140,12 @@ public sealed class Es1Explosion {
 	}
 
 	/// <summary>
-	/// <c>Explosion_ProximityTest</c> (<c>00005d2c</c>)(effect, <paramref name="point"/>)
+	/// <c>Explosion_ProximityTest</c> (<c>00005d2c</c>)
 	/// (docs/es1/simulation/impact-effects.md#the-proximity-test--explosion_proximitytest-00005d2c): whether the row's
 	/// light mode is 2 and <c>Math_DistanceBetweenPoints</c> from the point to the position is under the row's
 	/// <c>int32</c> <c>+0x24</c>. No caller is known (docs/es1/simulation/impact-effects.md#open).
 	/// </summary>
+	/// <param name="point">The point tested.</param>
 	public bool ProximityTest(Vec3i point) => Row.LightMode == 2 && point.ApproxDistanceTo(Position) < Row.ProximityRadius;
 }
 
@@ -146,8 +153,10 @@ public sealed class Es1Explosion {
 /// An impact effect's ground shape, a <c>FlatObj</c> of <c>g_FlatObjPool</c> on root
 /// <see cref="Es1ExplosionPool.GroundShapeRoot"/> of the flat shape set, built at the effect's point with no angles
 /// (docs/es1/simulation/impact-effects.md#construction--explosion_construct-00005af0). <c>FlatObjVtableExploCopy</c>
-/// (<c>000908a2</c>)'s. It holds a place of <paramref name="pool"/> until it is destroyed and flushed.
+/// (<c>000908a2</c>)'s. It holds a place of the pool until it is destroyed and flushed.
 /// </summary>
+/// <param name="point">The effect's point.</param>
+/// <param name="pool">The pool whose place it holds.</param>
 public sealed class Es1GroundShape(Vec3i point, Es1FlatObjPool pool) {
 	/// <summary><c>+0x20</c>, the position; <see cref="PlaceForDraw"/> sets its Z to 0.</summary>
 	public Vec3i Position { get; private set; } = point;
@@ -172,9 +181,10 @@ public sealed class Es1GroundShape(Vec3i point, Es1FlatObjPool pool) {
 	}
 
 	/// <summary>
-	/// The tick's step: sequence 0 one on, modulo <paramref name="frameCount"/>; a count of 0, where retail divides by
+	/// The tick's step: sequence 0 one on, modulo the frame count; a count of 0, where retail divides by
 	/// 0, leaves it standing, an engine guard.
 	/// </summary>
+	/// <param name="frameCount">The frame count of sequence 0.</param>
 	internal void Step(int frameCount) {
 		if (frameCount > 0) {
 			CellFrame = (short)(((ushort)CellFrame + 1) % frameCount);

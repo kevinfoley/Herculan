@@ -63,7 +63,8 @@ public sealed record Es1EsBat(string? AltDrive, bool PreferAlt) {
 		return Parse(text);
 	}
 
-	/// <summary><see cref="Read"/> on a batch file's <paramref name="text"/>.</summary>
+	/// <summary><see cref="Read"/> on a batch file's text.</summary>
+	/// <param name="text">The batch file's text.</param>
 	public static Es1EsBat Parse(string text) {
 		var variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		foreach (string raw in text.Replace("\r\n", "\n").Split('\n')) {
@@ -95,7 +96,7 @@ public sealed record Es1EsBat(string? AltDrive, bool PreferAlt) {
 		return new Es1EsBat(variables.GetValueOrDefault("ALT_DRIVE"), variables.ContainsKey("PREFER_ALT"));
 	}
 
-	/// <summary>The layout of <paramref name="installRoot"/>'s <see cref="FileName"/> (<see cref="Read"/>).</summary>
+	/// <summary>The layout of the install folder's <see cref="FileName"/> (<see cref="Read"/>).</summary>
 	/// <param name="installRoot">The install's root folder.</param>
 	public static Es1Layout LayoutOf(string installRoot) => Read(installRoot)?.Layout ?? Es1Layout.Full;
 }

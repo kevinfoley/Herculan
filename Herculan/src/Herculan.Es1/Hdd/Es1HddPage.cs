@@ -11,10 +11,13 @@ namespace Herculan.Es1.Hdd;
 /// </summary>
 public abstract class Es1HddPage {
 	/// <summary>
-	/// The page's constructor (display, <paramref name="column"/>, <paramref name="screen"/>) as the display calls it,
+	/// The page's constructor (display, column, screen) as the display calls it,
 	/// with what it is handed kept. What the constructor passes on to <c>HDDisplay_Ctor</c> is
 	/// docs/es1/simulation/heads-down-display.md#open.
 	/// </summary>
+	/// <param name="display">The display the page belongs to.</param>
+	/// <param name="column">The page's column rectangle.</param>
+	/// <param name="screen">The page's screen rectangle.</param>
 	protected Es1HddPage(Es1HddDisplay display, Es1Rect column, Es1Rect screen) {
 		Display = display;
 		Column = column;

@@ -35,7 +35,9 @@ public sealed class Es1FlicDecoder {
 	private int _remaining, _steps, _direction;
 	private readonly byte[] _color = new byte[3];
 
-	/// <summary>A decoder for a flic of <paramref name="width"/> × <paramref name="height"/>, centred on the screen as <c>Flic_CenterOnScreen</c> (<c>00000510</c>) centres it.</summary>
+	/// <summary>A decoder for a flic of a given size, centred on the screen as <c>Flic_CenterOnScreen</c> (<c>00000510</c>) centres it.</summary>
+	/// <param name="width">The flic's width.</param>
+	/// <param name="height">The flic's height.</param>
 	public Es1FlicDecoder(int width, int height) {
 		_width = width;
 		_height = height;
@@ -65,12 +67,13 @@ public sealed class Es1FlicDecoder {
 	public bool Fading => _remaining != 0;
 
 	/// <summary>
-	/// <c>Flic_DecodeFrame</c> (<c>000031d0</c>): <paramref name="frame"/>'s subchunks dispatched by type. Each fade that
+	/// <c>Flic_DecodeFrame</c> (<c>000031d0</c>): a frame's subchunks dispatched by type. Each fade that
 	/// writes its palettes at once is yielded before it is written, for the caller to time its steps
 	/// (<see cref="Es1FlicFadeAtOnce"/>); the frame's decoding goes on when the enumeration is resumed, which writes the
 	/// fade's last palettes. The sound and the sync chunks, whose handlers act on the sound and the clock, are yielded
 	/// for the caller to run (<see cref="Es1FlicMachineChunk"/>).
 	/// </summary>
+	/// <param name="frame">The frame.</param>
 	public IEnumerable<Es1FlicStep> DecodeFrame(Es1FlicFrame frame) {
 		foreach (var chunk in frame.Chunks) {
 			switch (chunk.Type) {
@@ -255,9 +258,11 @@ public sealed class Es1FlicDecoder {
 	}
 
 	/// <summary>
-	/// The DAC written whole with every entry <i>P</i> + (<i>C</i> − <i>P</i>) × <paramref name="k"/> / <paramref name="n"/>
+	/// The DAC written whole with every entry <i>P</i> + (<i>C</i> − <i>P</i>) × <i>k</i> / <i>n</i>
 	/// in each channel, signed and truncated, through <c>Vga_SetDac8</c> (<c>00001af0</c>).
 	/// </summary>
+	/// <param name="k">The fade's step weight.</param>
+	/// <param name="n">The fade's step count.</param>
 	internal void SetFadePalette(int k, int n) {
 		for (int i = 0; i < _palette.Length; i++) {
 			int p = _palette[i];
@@ -326,7 +331,8 @@ public sealed class Es1FlicFadeAtOnce : Es1FlicStep {
 	/// <summary>The palettes the fade writes.</summary>
 	public int Steps { get; }
 
-	/// <summary>The fade's palette number <paramref name="step"/>, from 0, to the DAC: <i>k</i> = <see cref="Steps"/> − step from the color, step + 1 to it.</summary>
+	/// <summary>The fade's palette number, from 0, to the DAC: <i>k</i> = <see cref="Steps"/> − the number from the color, the number + 1 to it.</summary>
+	/// <param name="step">The palette number, from 0.</param>
 	public void ShowStep(int step) => _decoder.SetFadePalette(_toColor ? step + 1 : Steps - step, Steps);
 
 	/// <summary>The fade's last palette, then the palette itself after a fade from the color; the running fade ended.</summary>

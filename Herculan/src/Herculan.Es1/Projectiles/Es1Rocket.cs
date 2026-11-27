@@ -68,16 +68,22 @@ public sealed class Es1Rocket : Es1Projectile {
 	private RocketType? TypeRecord(Es1ProjectilePool pool) => Subtype < pool.RocketTypes.Count ? pool.RocketTypes[Subtype] : null;
 
 	/// <summary>
-	/// <c>Rocket_Fire</c>(<paramref name="speed"/>, <paramref name="machine"/>, <paramref name="angles"/>,
-	/// <paramref name="muzzle"/>, <paramref name="subtype"/>) (docs/es1/simulation/rockets.md#launching--rocket_fire-00007748):
+	/// <c>Rocket_Fire</c>(speed, machine, angles,
+	/// muzzle, subtype) (docs/es1/simulation/rockets.md#launching--rocket_fire-00007748):
 	/// <c>Rocket_Construct</c> from the pool; the position, the angles, the frame word 0, the owner, the speed
-	/// <paramref name="speed"/> + <see cref="LaunchSpeed"/> and the age 0; the target, the machine's own, when a machine
+	/// speed + <see cref="LaunchSpeed"/> and the age 0; the target, the machine's own, when a machine
 	/// that is not the player's fires subtype 3 or the machine's slot <c>+0x70</c> answers lock, and with one the
 	/// component its slot <c>+0x58</c> names; the player's machine's missile into <see cref="Es1ProjectilePool.TrackedMissile"/>;
 	/// then the type record's sound <see cref="RocketType.FireSoundId"/> + 10 at the muzzle
 	/// (<see cref="Sound.Es1Sound.PlayAt"/>). Answers the missile, or null with the pool full, where retail writes its
 	/// fields through the null pointer; with no missile or no type record no sound plays, an engine guard.
 	/// </summary>
+	/// <param name="globals">The simulation's globals.</param>
+	/// <param name="speed">The launch speed added to the machine's.</param>
+	/// <param name="machine">The firing machine.</param>
+	/// <param name="angles">The launch angles.</param>
+	/// <param name="muzzle">The muzzle's position.</param>
+	/// <param name="subtype">The projectile subtype.</param>
 	public static Es1Rocket? Fire(Es1SimGlobals globals, short speed, IEs1SimObject machine,
 			(short Pitch, short Roll, short Heading) angles, Vec3i muzzle, short subtype) {
 		var pool = globals.Projectiles;
@@ -108,11 +114,13 @@ public sealed class Es1Rocket : Es1Projectile {
 	}
 
 	/// <summary>
-	/// <c>Rocket_Construct</c>(0, <paramref name="subtype"/>): an element of the pool, none when it is full; the shape, the
-	/// subtype byte, no target and the record <c>Proj_LookupRecord</c>(<paramref name="subtype"/>, 0). The flame's
+	/// <c>Rocket_Construct</c>(0, subtype): an element of the pool, none when it is full; the shape, the
+	/// subtype byte, no target and the record <c>Proj_LookupRecord</c>(subtype, 0). The flame's
 	/// countdown <c>+0x56</c> is not written, so it holds what the element last held, or what the allocator's block held
 	/// for an element never used (docs/es1/simulation/rockets.md#launching--rocket_fire-00007748); here it starts at 0.
 	/// </summary>
+	/// <param name="pool">The projectile pool.</param>
+	/// <param name="subtype">The projectile subtype.</param>
 	private static Es1Rocket? Construct(Es1ProjectilePool pool, short subtype) {
 		if (!pool.CanAllocate) {
 			return null;
@@ -253,12 +261,14 @@ public sealed class Es1Rocket : Es1Projectile {
 		(uint)(error + SpoofWobble) < 2 * SpoofWobble ? (short)(error < 0 ? error + SpoofWobble : error - SpoofWobble) : error;
 
 	/// <summary>
-	/// <c>Rocket_PlayerSteer</c> (<c>000070dc</c>)(missile, <paramref name="block"/>)
+	/// <c>Rocket_PlayerSteer</c> (<c>000070dc</c>)(missile, block)
 	/// (docs/es1/simulation/rockets.md#the-flown-missile--rocket_playersteer-000070dc): with the trigger clear, the target
 	/// dropped and the subtype 0; held, <c>Math_IntegrateRateOverTick</c>(<c>Math_Q8Multiply</c>(<see cref="TurnRate"/>,
 	/// <i>axis</i>)) of the axis <c>+0x1d</c> addresses off the heading and of the axis <c>+0x21</c> addresses onto the
 	/// pitch, the frame word cleared, and the trigger and both axes zeroed.
 	/// </summary>
+	/// <param name="block">The input block.</param>
+	/// <param name="clock">The simulation clock.</param>
 	private void PlayerSteer(Es1PlayerInputBlock block, Es1SimClock clock) {
 		if (block.Buttons[0] == 0) {
 			Target = null;

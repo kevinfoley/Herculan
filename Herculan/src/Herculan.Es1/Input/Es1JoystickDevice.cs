@@ -14,11 +14,16 @@ public class Es1JoystickDevice {
 
 	/// <summary>
 	/// <c>JoystickDevice_Ctor</c> (<c>ES1DBSIM 0004b6c0</c>)(this, mode, mask, port, kind): builds the joystick object
-	/// with the mask, registers the device as input device <paramref name="kind"/>, disabled, and claims each axis of
+	/// with the mask, registers the device as input device its kind, disabled, and claims each axis of
 	/// the mask's low byte that answered and no earlier device claimed, so the object's <c>+0x73</c> counts only those;
 	/// then the object's mask becomes the mask's low byte whether its axes answered or not
 	/// (docs/es1/simulation/joystick.md#the-device-object).
 	/// </summary>
+	/// <param name="mode">The device's mode.</param>
+	/// <param name="mask">The axes mask.</param>
+	/// <param name="port">The game port.</param>
+	/// <param name="kind">The input device kind.</param>
+	/// <param name="globals">The joystick globals.</param>
 	protected Es1JoystickDevice(int mode, int mask, IEs1GamePort port, int kind, Es1JoystickGlobals globals) {
 		_globals = globals;
 		Joystick.Init(mask, port);

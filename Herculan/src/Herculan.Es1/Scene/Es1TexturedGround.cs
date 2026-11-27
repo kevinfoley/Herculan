@@ -86,11 +86,13 @@ public sealed class Es1TexturedGround {
 	}
 
 	/// <summary>
-	/// The table a row draws with, from its number <paramref name="row"/> counted from the ground's first and its
-	/// forward distance <paramref name="distance"/>: the last for the first <see cref="FullFadeRows"/>, otherwise how
+	/// The table a row draws with, from its number row counted from the ground's first and its
+	/// forward distance distance: the last for the first <see cref="FullFadeRows"/>, otherwise how
 	/// many of the first <see cref="ComparedDistances"/> distances it reaches, stopping at the first it does not.
 	/// The fragment shader runs the same rule.
 	/// </summary>
+	/// <param name="row">The row's number, counted from the ground's first.</param>
+	/// <param name="distance">The row's forward distance.</param>
 	public int TableFor(int row, float distance) {
 		if (row < FullFadeRows) {
 			return TableCount - 1;
@@ -114,7 +116,7 @@ public sealed class Es1TexturedGround {
 	/// <summary>
 	/// The first row <c>GndTex_BuildRowTable</c> (<c>00028fbc</c>) last built the row table from, which is what this
 	/// frame's rows read: the table is rebuilt only when the camera's height, its pitch or the canvas origin's x
-	/// differs from the last build's, or the frame has more rows than it holds, and <paramref name="first"/> does
+	/// differs from the last build's, or the frame has more rows than it holds, and first does
 	/// not enter the test. The canvas origin is always 0 here.
 	/// </summary>
 	/// <param name="z">The camera's height, <i>z</i>.</param>
@@ -133,7 +135,7 @@ public sealed class Es1TexturedGround {
 	/// <summary>
 	/// A rolled frame's span width, which <c>GndTex_Draw</c> stores at <c>00092c80</c> and so keeps for later frames,
 	/// and the roll-free row <i>d</i> the ground starts at (docs/es1/rendering/ground-and-sky.md#the-textured-ground).
-	/// A level frame leaves the width as it is and starts at <paramref name="startBelowCentre"/>.
+	/// A level frame leaves the width as it is and starts at the given start.
 	/// </summary>
 	/// <param name="roll">The camera's roll, as a binary angle.</param>
 	/// <param name="startBelowCentre"><i>start</i> − <i>cy</i>: the ground's first screen row below the projection centre.</param>

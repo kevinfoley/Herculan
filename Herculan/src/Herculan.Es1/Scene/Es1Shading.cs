@@ -146,7 +146,9 @@ public sealed class Es1Shading {
 			Capped(flat), Capped(hddMap));
 	}
 
-	/// <summary>Puts <paramref name="run"/> in <paramref name="ramps"/>, in place of an earlier run on its ramp.</summary>
+	/// <summary>Puts the run in the ramps, in place of an earlier run on its ramp.</summary>
+	/// <param name="ramps">The ramps.</param>
+	/// <param name="run">The run.</param>
 	private static void Repoint(List<BandRamp> ramps, BandRamp run) {
 		int at = ramps.FindIndex(r => r.Ramp == run.Ramp);
 		if (at >= 0) {
@@ -157,9 +159,10 @@ public sealed class Es1Shading {
 	}
 
 	/// <summary>
-	/// <paramref name="ramps"/> as an item carries them: the first <see cref="BandRamp.MaxPerItem"/>, which every retail
+	/// The ramps as an item carries them: the first <see cref="BandRamp.MaxPerItem"/>, which every retail
 	/// list is within (at most six, and <see cref="ResetRampNumbers"/>' eight); a ramp past them keeps the palette's own.
 	/// </summary>
+	/// <param name="ramps">The ramps.</param>
 	private static IReadOnlyList<BandRamp> Capped(List<BandRamp> ramps) =>
 		ramps.Count == 0 ? None : ramps.Take(BandRamp.MaxPerItem).ToArray();
 
@@ -184,20 +187,26 @@ public sealed class Es1Shading {
 	private const short HddMapEntry = 0x38;
 
 	/// <summary>
-	/// The ramps an object of <paramref name="tag"/> at <paramref name="distance"/> draws with re-pointed, a tag-5 object's
-	/// by its slot <c>+0x14</c> <paramref name="radius"/> as well: its tag's list at its band, or none for a tag with no
+	/// The ramps an object of tag at distance draws with re-pointed, a tag-5 object's
+	/// by its slot <c>+0x14</c> radius as well: its tag's list at its band, or none for a tag with no
 	/// list (docs/es1/rendering/polygon-shading.md#the-shades-file) and without a table.
 	/// </summary>
+	/// <param name="tag">The object's tag.</param>
+	/// <param name="distance">The object's distance.</param>
+	/// <param name="radius">The slot <c>+0x14</c> radius of a tag-5 object.</param>
 	public IReadOnlyList<BandRamp> RampsFor(byte tag, int distance, int radius = 0) =>
 		_bandRamps.TryGetValue(tag, out var perBand)
 			? perBand[Math.Min(Band(tag, distance, radius), perBand.Length - 1)]
 			: None;
 
 	/// <summary>
-	/// The distance a tag-5 object, a structure, is banded and culled at: <paramref name="distance"/> plus
+	/// The distance a tag-5 object, a structure, is banded and culled at: distance plus
 	/// <c>WorldShades_DistanceOffsets</c> (<c>000bc5c6</c>) entry 0, or entry 1 when its slot <c>+0x14</c> radius
-	/// <paramref name="radius"/> is 5000 or more, clamped at 0; any other tag's distance unchanged.
+	/// radius is 5000 or more, clamped at 0; any other tag's distance unchanged.
 	/// </summary>
+	/// <param name="tag">The object's tag.</param>
+	/// <param name="distance">The object's distance.</param>
+	/// <param name="radius">The slot <c>+0x14</c> radius.</param>
 	private int StructureDistance(byte tag, int distance, int radius) =>
 		tag == StructureTag ? Math.Max(distance + (radius >= LargeStructureRadius ? _largeOffset : _cullOffset), 0) : distance;
 
@@ -210,8 +219,11 @@ public sealed class Es1Shading {
 	/// <summary>
 	/// <c>WorldShades_DistanceBand</c> (<c>00025cb4</c>): how many of the tag's thresholds the distance has reached,
 	/// unsigned, at most one fewer than there are; tag 0 reads <c>WorldShades_BandsTag0</c> and any other tag
-	/// <c>WorldShades_BandsTagged</c>, a tag-5 object at <see cref="StructureDistance"/> with its <paramref name="radius"/>.
+	/// <c>WorldShades_BandsTagged</c>, a tag-5 object at <see cref="StructureDistance"/> with its radius.
 	/// </summary>
+	/// <param name="tag">The object's tag.</param>
+	/// <param name="distance">The object's distance.</param>
+	/// <param name="radius">The slot <c>+0x14</c> radius of a tag-5 object.</param>
 	public int Band(byte tag, int distance, int radius = 0) {
 		distance = StructureDistance(tag, distance, radius);
 		var thresholds = tag == ZoneShapeTag ? _tag0Thresholds : _taggedThresholds;
@@ -227,8 +239,11 @@ public sealed class Es1Shading {
 	/// <c>WorldShades_IsBeyondLastBand</c> (<c>00025f38</c>): whether the distance exceeds the tag's table's last threshold,
 	/// unsigned, which leaves the object undrawn; for tag 8, an impact effect's, the distance first takes the world file's
 	/// first distance offset (<c>WorldShades_DistanceOffsets</c> entry 0), clamped at 0, and a tag-5 object's is
-	/// <see cref="StructureDistance"/> with its <paramref name="radius"/>.
+	/// <see cref="StructureDistance"/> with its radius.
 	/// </summary>
+	/// <param name="tag">The object's tag.</param>
+	/// <param name="distance">The object's distance.</param>
+	/// <param name="radius">The slot <c>+0x14</c> radius of a tag-5 object.</param>
 	public bool IsBeyondLastBand(byte tag, int distance, int radius = 0) {
 		if (tag == OffsetCullTag) {
 			distance = Math.Max(distance + _cullOffset, 0);

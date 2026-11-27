@@ -20,10 +20,11 @@ public sealed class Es1DirtyList {
 	private readonly List<Box> _boxes = [];
 
 	/// <summary>
-	/// <c>DirtyList_CreateContext</c> (<c>00040d54</c>) on <paramref name="display"/>: the flush's render context, clip mode 1
+	/// <c>DirtyList_CreateContext</c> (<c>00040d54</c>) on the display: the flush's render context, clip mode 1
 	/// to (0, 0)–(319, 199) with the translation flag set and the origin (0, 0), so a copy is cut to the screen
 	/// (<see cref="ClipRight"/>, <see cref="ClipBottom"/>).
 	/// </summary>
+	/// <param name="display">The video memory.</param>
 	public Es1DirtyList(Es1VideoMemory display) {
 		_display = display;
 	}

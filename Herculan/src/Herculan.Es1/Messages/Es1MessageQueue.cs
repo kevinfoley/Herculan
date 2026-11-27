@@ -66,10 +66,10 @@ public sealed class Es1MessageQueue {
 	public short Count { get; private set; }
 
 	/// <summary>
-	/// <c>MessagePort_Enqueue</c> (<c>0002e59c</c>)(queue, <paramref name="slot"/>, record): with ten queued,
-	/// <see cref="DropLast"/> first. The first record not in use is marked and filled: <paramref name="subject"/>, the
+	/// <c>MessagePort_Enqueue</c> (<c>0002e59c</c>)(queue, slot, record): with ten queued,
+	/// <see cref="DropLast"/> first. The first record not in use is marked and filled: subject, the
 	/// slot's text, and from its attribute bytes the id (byte 0), byte 1, the priority (byte 2), bytes 3 and 4 times
-	/// <c>0x3c</c> and bytes 5 and 6 times <c>0x3c</c> plus <paramref name="now"/>. Its index goes into the order
+	/// <c>0x3c</c> and bytes 5 and 6 times <c>0x3c</c> plus now. Its index goes into the order
 	/// before the first queued message whose priority is strictly greater, the entries from there to the one before the
 	/// last moving up one, or at the end; and the count goes up by 1. With no record free nothing is queued.
 	///
@@ -80,6 +80,10 @@ public sealed class Es1MessageQueue {
 	/// <para>An attribute byte past the ones the string carries reads 0 here; retail reads on into the file's next
 	/// bytes. Every retail <c>system.str</c> line carries the seven read.</para>
 	/// </summary>
+	/// <param name="text">The message text, or null.</param>
+	/// <param name="attributes">The attribute bytes.</param>
+	/// <param name="subject">The message's subject, or null.</param>
+	/// <param name="now">The clock count now.</param>
 	public void Enqueue(string? text, byte[] attributes, IEs1SimObject? subject, uint now) {
 		if (Count == Capacity) {
 			DropLast();
@@ -122,13 +126,15 @@ public sealed class Es1MessageQueue {
 	/// <summary><c>MessagePort_QueueFront</c> (<c>0002e768</c>): the record the order's first entry names, or none with none queued.</summary>
 	public Es1QueuedMessage? Front() => Count == 0 ? null : _records[_order[0]];
 
-	/// <summary><c>MessagePort_QueueAt</c> (<c>0002e790</c>): the record order entry <paramref name="index"/> names, or none past the count.</summary>
+	/// <summary><c>MessagePort_QueueAt</c> (<c>0002e790</c>): the record order entry an index names, or none past the count.</summary>
+	/// <param name="index">The order entry's index.</param>
 	public Es1QueuedMessage? At(int index) => index < Count ? _records[_order[index]] : null;
 
 	/// <summary>
-	/// <c>MessagePort_RemoveAt</c> (<c>0002e7c8</c>)(queue, <paramref name="index"/>): with any queued, the record order
-	/// entry <paramref name="index"/> names freed, the later entries moved down one and the count less 1.
+	/// <c>MessagePort_RemoveAt</c> (<c>0002e7c8</c>)(queue, index): with any queued, the record order
+	/// entry the index names freed, the later entries moved down one and the count less 1.
 	/// </summary>
+	/// <param name="index">The order entry's index.</param>
 	public void RemoveAt(int index) {
 		if (Count == 0) {
 			return;
@@ -155,8 +161,9 @@ public sealed class Es1MessageQueue {
 
 	/// <summary>
 	/// <c>MessagePort_QueueExpire</c> (<c>0002e898</c>): from the last order entry down to entry 1, each whose
-	/// <see cref="Es1QueuedMessage.MaxWait"/> is before <paramref name="now"/> removed; the front never is.
+	/// <see cref="Es1QueuedMessage.MaxWait"/> is before now removed; the front never is.
 	/// </summary>
+	/// <param name="now">The clock count now.</param>
 	public void Expire(uint now) {
 		for (int i = Count - 1; i > 0; i--) {
 			if (_records[_order[i]].MaxWait < now) {
@@ -166,9 +173,11 @@ public sealed class Es1MessageQueue {
 	}
 
 	/// <summary>
-	/// <c>MessagePort_QueueRemoveMatch</c> (<c>0002e908</c>)(queue, <paramref name="id"/>, <paramref name="subject"/>):
+	/// <c>MessagePort_QueueRemoveMatch</c> (<c>0002e908</c>)(queue, id, subject):
 	/// the first queued message with both removed, answering true; false when none has.
 	/// </summary>
+	/// <param name="id">The message id.</param>
+	/// <param name="subject">The message's subject, or null.</param>
 	public bool RemoveMatch(short id, IEs1SimObject? subject) {
 		for (int i = 0; i < Count; i++) {
 			var record = _records[_order[i]];

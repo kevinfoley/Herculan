@@ -102,9 +102,10 @@ public sealed class Es1CareerRoster {
 		record.PlayerEntry is >= 0 and < Es1CareerRecord.PilotCount ? record.Pilots[record.PlayerEntry].Condition : (short)0;
 
 	/// <summary>
-	/// <c>Roster_NthUsedRecord</c> (<c>00016845</c>)(roster, <paramref name="n"/>): 0 for an <paramref name="n"/> of 0;
-	/// otherwise the index of the <paramref name="n"/>-th of records 1 to 40 in use, or 0 when there are fewer.
+	/// <c>Roster_NthUsedRecord</c> (<c>00016845</c>)(roster, n): 0 for an n of 0;
+	/// otherwise the index of the n-th of records 1 to 40 in use, or 0 when there are fewer.
 	/// </summary>
+	/// <param name="n">The count.</param>
 	public short NthUsedRecord(short n) {
 		if (n == 0) {
 			return 0;
@@ -193,10 +194,11 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <c>Roster_RestoreBackup</c> (<c>00016817</c>)(roster, <paramref name="n"/>) (docs/es1/shell/career.md#restore):
-	/// <see cref="Current"/> set to <see cref="NthUsedRecord"/>(<paramref name="n"/>), that record made the career with
+	/// <c>Roster_RestoreBackup</c> (<c>00016817</c>)(roster, n) (docs/es1/shell/career.md#restore):
+	/// <see cref="Current"/> set to <see cref="NthUsedRecord"/>(n), that record made the career with
 	/// <see cref="ActivateRecord"/>, and <see cref="Current"/> 0 again.
 	/// </summary>
+	/// <param name="n">The count.</param>
 	public void RestoreBackup(short n) {
 		Current = NthUsedRecord(n);
 		ActivateRecord();
@@ -222,8 +224,8 @@ public sealed class Es1CareerRoster {
 
 	/// <summary>
 	/// <c>Words_RandomPermutation</c> (<c>000162f4</c>): the words set to −1, then for <i>i</i>
-	/// from 0 to <paramref name="n"/> − 1, <i>i</i> put in the (<i>k</i> + 1)-th word still −1, <i>k</i> a draw below
-	/// <paramref name="n"/> − <i>i</i> on <paramref name="randomBelow"/>: a random order of 0 to <paramref name="n"/> − 1.
+	/// from 0 to n − 1, <i>i</i> put in the (<i>k</i> + 1)-th word still −1, <i>k</i> a draw below
+	/// n − <i>i</i> on randomBelow: a random order of 0 to n − 1.
 	/// </summary>
 	/// <param name="n">The number of words permuted.</param>
 	/// <param name="randomBelow">The draw below a bound.</param>
@@ -282,7 +284,7 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <c>Career_New</c> (<c>000163ac</c>)(roster, <paramref name="word"/>, <paramref name="name"/>)
+	/// <c>Career_New</c> (<c>000163ac</c>)(roster, word, name)
 	/// (docs/es1/shell/career.md#career_new): the careers-log entry <see cref="Es1ShellData.FindOrAdd"/> gives; the battle
 	/// set the word <c>0007fcec</c> (<see cref="Es1ShellData.NewCareerBattleSet"/>), <see cref="Current"/> and
 	/// <see cref="Word9"/> 0, <see cref="Byte0"/> 1 and <see cref="Salvage"/> 60000; the name groups shuffled; stock 0 loaded
@@ -296,6 +298,8 @@ public sealed class Es1CareerRoster {
 	/// file's stream gives; here either is reported and the career goes on, a missing stock or hangar left empty, engine
 	/// guards.
 	/// </summary>
+	/// <param name="word">The career word.</param>
+	/// <param name="name">The career's name.</param>
 	public void New(short word, string name) {
 		var entry = _data.FindOrAdd(word, name);
 		LogEntry = entry;
@@ -419,17 +423,18 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <c>Career_Save</c> (<c>000168b0</c>)(roster, <paramref name="slot"/>) (docs/es1/shell/career.md#saving--career_save-000168b0):
+	/// <c>Career_Save</c> (<c>000168b0</c>)(roster, slot) (docs/es1/shell/career.md#saving--career_save-000168b0):
 	/// with no careers-log entry, nothing. Otherwise the flags to <c>data\mission.var</c>; the career file deleted and
 	/// written with the header; record 0 updated (in use, <c>+2</c> from <see cref="Word9"/>, the salvage, the flags,
-	/// <see cref="AutoRepairMode"/>) and, for a slot other than 0, copied over record <paramref name="slot"/> with its stock;
+	/// <see cref="AutoRepairMode"/>) and, for a slot other than 0, copied over record slot with its stock;
 	/// the 41 records and their stocks written; then the hangar file written again through <c>car\temp.mec</c>, list
-	/// <paramref name="slot"/> the hangar as it stands and every other list copied from the old file
+	/// slot the hangar as it stands and every other list copied from the old file
 	/// (<c>HercList_Copy</c>, <see cref="CopyHercList"/>), and <c>temp.mec</c> renamed over it. Retail asserts at severity 5
 	/// when a file does not open (lines <c>0x346</c>, <c>0x350</c>) or the rename fails (line <c>0x382</c>), and copies
 	/// whatever an old hangar file that does not open gives; here each is reported and the save goes on, a list the old file
 	/// lacks written as a list of zeros, and a slot outside the records copies nothing, engine guards.
 	/// </summary>
+	/// <param name="slot">The slot.</param>
 	public void Save(short slot) {
 		if (LogEntry is not { } entry) {
 			return;
@@ -538,14 +543,15 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <c>Career_StartMission</c> (<c>00016e93</c>)(roster, <paramref name="b"/>) (docs/es1/shell/career.md#a-careers-next-mission):
-	/// <see cref="Current"/> set to <see cref="NthUsedRecord"/>(<paramref name="b"/>); the battle set <see cref="BattleSet"/>
+	/// <c>Career_StartMission</c> (<c>00016e93</c>)(roster, b) (docs/es1/shell/career.md#a-careers-next-mission):
+	/// <see cref="Current"/> set to <see cref="NthUsedRecord"/>(b); the battle set <see cref="BattleSet"/>
 	/// loaded again (<see cref="Es1ShellData.LoadBattleSet"/>); the mission's path built from the record <see cref="Current"/>
 	/// names (<see cref="BuildMissionPath"/>); the mission loaded in mode 1 (<see cref="Es1ShellMission.LoadCareerMission"/>);
 	/// the record's pilots marked by <c>Squad_MemberCount</c> (<see cref="Es1CareerRecord.MarkTopPilots"/>); the record's
 	/// <c>+0xc</c> set to <c>Mission_Kind</c>; and the paths saved (<see cref="Es1ShellMission.WriteRestore"/>). A path that
 	/// is not built loads nothing, an engine guard (<see cref="GetMissionName"/>).
 	/// </summary>
+	/// <param name="b">The count.</param>
 	public void StartMission(short b) {
 		Current = NthUsedRecord(b);
 		_data.LoadBattleSet(_content, BattleSet);
@@ -577,10 +583,10 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <c>BattleSet_GetMissionName</c> (<c>000140a5</c>)(<c>g_BattleSet</c>, <paramref name="outcome"/>,
-	/// <paramref name="position"/>, <paramref name="campaign"/>): the position's name for the outcome,
+	/// <c>BattleSet_GetMissionName</c> (<c>000140a5</c>)(<c>g_BattleSet</c>, outcome,
+	/// position, campaign): the position's name for the outcome,
 	/// <c>Campaign_GetPositionName</c> (<c>000142f6</c>) through <c>StrList_Get</c> (<c>00020254</c>), which takes the
-	/// list's only name when it holds one and name <paramref name="outcome"/> otherwise. A name holding <c>.MSN</c>
+	/// list's only name when it holds one and name outcome otherwise. A name holding <c>.MSN</c>
 	/// (<c>Str_FindBoyerMoore</c>, case kept) is returned as it is; any other names a list, <c>bst\&lt;name&gt;</c>, read as
 	/// one name list (<c>StrList_Read</c>), and the name <c>StrList_PickRandom</c> (<see cref="Es1ShellRandom.PickRandom"/>)
 	/// draws from it is copied over the position's name and returned. Retail reads past its arrays for a campaign, position
@@ -588,6 +594,9 @@ public sealed class Es1CareerRoster {
 	/// guards. A career moved past its end, campaign 99 or −1, takes that path (docs/es1/shell/between-missions.md#moving-on),
 	/// so its mission path stays the last mission's and that mission loads again.
 	/// </summary>
+	/// <param name="outcome">The outcome.</param>
+	/// <param name="position">The position.</param>
+	/// <param name="campaign">The campaign.</param>
 	private string? GetMissionName(int outcome, short position, short campaign) {
 		if (_data.BattleSet is not { } set || campaign < 0 || campaign >= set.Campaigns.Length
 				|| position < 0 || position >= set.Campaigns[campaign].Positions.Length) {
@@ -626,7 +635,7 @@ public sealed class Es1CareerRoster {
 
 	/// <summary>
 	/// <c>Inventory_CopyThroughScratch</c> (<c>00027cb3</c>): the stock
-	/// <paramref name="from"/> written as <c>car\scratch.arm</c> and read into the stock <paramref name="to"/>, which reverses
+	/// from written as <c>car\scratch.arm</c> and read into the stock to, which reverses
 	/// each slot's words; the file is deleted after. Here the write and the read are made in memory, to the same result, and
 	/// no file is written.
 	/// </summary>
@@ -640,7 +649,8 @@ public sealed class Es1CareerRoster {
 		return transformer.Parse(transformer.Write(record))!;
 	}
 
-	/// <summary><c>Hangar_Write</c> (<c>00029107</c>) of <paramref name="hangar"/> in the mode: a single mission's form in mode 0, a career's otherwise.</summary>
+	/// <summary><c>Hangar_Write</c> (<c>00029107</c>) of the hangar in the mode: a single mission's form in mode 0, a career's otherwise.</summary>
+	/// <param name="hangar">The hangar.</param>
 	private Es1HercList HangarWrite(Es1Hangar hangar) => _mission.Mode == 0 ? hangar.SingleMissionSave() : hangar.CareerSave();
 
 	/// <summary>
@@ -658,7 +668,7 @@ public sealed class Es1CareerRoster {
 
 	/// <summary>
 	/// <c>Hangar_ReadFromSave</c> (<c>00028bd6</c>): the file's lists before
-	/// <paramref name="list"/> passed over (<c>HercList_Skip</c>) and the next read into a hangar (<see cref="Es1Hangar.Read"/>).
+	/// list passed over (<c>HercList_Skip</c>) and the next read into a hangar (<see cref="Es1Hangar.Read"/>).
 	/// Retail reads whatever a file that does not open gives; here such a file, or a list outside the 41, gives an empty
 	/// hangar, reported, an engine guard.
 	/// </summary>
@@ -689,7 +699,8 @@ public sealed class Es1CareerRoster {
 	/// <summary>The hangar file's path in the install, the log entry's <c>+0x53</c>.</summary>
 	private string HangarFilePath(Es1CareerLogEntry entry) => Es1ShellData.InstallPath(_installRoot, Es1CareerLogEntry.Text(entry.HangarFile));
 
-	/// <summary>The file-name table's entry <paramref name="entry"/> in the install; none, reported, without the table.</summary>
+	/// <summary>An entry of the file-name table in the install; none, reported, without the table.</summary>
+	/// <param name="entry">The entry.</param>
 	private string? DataFile(int entry) {
 		if (_data.FileNames is { } names && entry < names.Length) {
 			return Es1ShellData.InstallPath(_installRoot, names[entry]);
@@ -700,14 +711,18 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <c>Inventory_LoadFile</c> (<c>00027e02</c>)(the stock the dword <c>000aad62</c> points to, <c>car\</c><paramref name="name"/>)
+	/// <c>Inventory_LoadFile</c> (<c>00027e02</c>)(the stock the dword <c>000aad62</c> points to, <c>car\</c>name)
 	/// (docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock): the file read into stock 0 (<see cref="Es1WeaponStock.Read"/>).
 	/// A file that is missing or does not read is reported and read as no records, so the stock is left empty, an engine guard.
 	/// </summary>
+	/// <param name="name">The file's name.</param>
 	public void LoadStock(string name) =>
 		Stocks[0].Read(ReadShellFile(Es1SingleMission.CarFolder, name, new Es1InventoryTransformer()) ?? new Es1Inventory());
 
-	/// <summary>A starting file from the shell's archives through <paramref name="transformer"/>; none, reported, when it is missing or does not read.</summary>
+	/// <summary>A starting file from the shell's archives through the transformer; none, reported, when it is missing or does not read.</summary>
+	/// <param name="folder">The archive folder.</param>
+	/// <param name="name">The file's name.</param>
+	/// <param name="transformer">Reads the file's bytes.</param>
 	private T? ReadShellFile<T>(string folder, string name, HercWorks.Core.Io.Transform.ByteTransformer<T> transformer) where T : class {
 		try {
 			if (_content.Read(folder, name) is { } bytes && transformer.Parse(bytes) is { } file) {
@@ -723,10 +738,14 @@ public sealed class Es1CareerRoster {
 	}
 
 	/// <summary>
-	/// <paramref name="bytes"/> written to <paramref name="path"/>: truncated as a <c>FileWStream</c> writes, or over the
+	/// The bytes written to the path: truncated as a <c>FileWStream</c> writes, or over the
 	/// file from its start with its tail kept as a <c>FileRWStream</c> writes. A file that does not open is reported with
 	/// the assert retail makes there, an engine guard.
 	/// </summary>
+	/// <param name="path">The file's path.</param>
+	/// <param name="bytes">The bytes.</param>
+	/// <param name="truncate">Whether the file is truncated rather than written over from its start.</param>
+	/// <param name="assert">The assert text.</param>
 	private static void WriteFile(string path, byte[] bytes, bool truncate, string assert) {
 		try {
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);

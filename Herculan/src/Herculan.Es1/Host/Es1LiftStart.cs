@@ -107,7 +107,7 @@ internal static class Es1LiftStart {
 
 	/// <summary>
 	/// <c>LiftStart_Rise</c> (docs/es1/simulation/lift-start.md#the-ride--liftstart_rise-00057ffc) on
-	/// <paramref name="loop"/>'s frames, the jolt at its top included. Each pass's drawing stands <see cref="PassDrawTime"/>
+	/// the loop's frames, the jolt at its top included. Each pass's drawing stands <see cref="PassDrawTime"/>
 	/// before its frame's end. A jolt pass stands at the waits its page moves owe, which <c>Sim_RenderFrame</c> pays
 	/// before it draws, or, with none, until the next host frame (plan decision 11).
 	/// <para><b>This engine's own</b> (plan decision 30): the canvas's side panels draw each pass's cut, art and fills too

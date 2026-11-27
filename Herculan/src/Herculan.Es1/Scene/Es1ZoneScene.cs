@@ -104,12 +104,16 @@ public sealed class Es1ZoneScene {
 	public Es1ZoneShapes ZoneShapes { get; private init; } = Es1ZoneShapes.Empty;
 
 	/// <summary>
-	/// Loads the scene for <paramref name="zone"/> in <paramref name="theater"/>, with <paramref name="scheme"/> installed
+	/// Loads the scene for the zone in the theater, with the scheme installed
 	/// in the live palette when there is one.
 	///
 	/// <para>The simulator builds an object for every record whatever its shape index, which it does not check against
 	/// the library's count; a record past the library is kept here and has no model to draw.</para>
 	/// </summary>
+	/// <param name="content">The game's content.</param>
+	/// <param name="theater">The theater.</param>
+	/// <param name="zone">The zone.</param>
+	/// <param name="scheme">The cockpit scheme, or null.</param>
 	/// <exception cref="FileNotFoundException">The zone file is missing, which retail asserts on (<c>terrain.cpp</c> line <c>0x32</c>).</exception>
 	public static Es1ZoneScene Load(GameContent content, Es1Theater theater, short zone, Es1CockpitScheme? scheme = null) {
 		var theaterPalette = content.Read("dpl", theater.PaletteName + ".DPL") is { } paletteBytes

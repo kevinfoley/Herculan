@@ -41,10 +41,13 @@ public sealed class Es1GroundSpecks {
 		world.PointCount > 0 ? new Es1GroundSpecks(world.PointCount, world.PointColor) : null;
 
 	/// <summary>
-	/// <c>PointScatter_Update</c> for a frame: scatters the points round <paramref name="camera"/> the first time, and
-	/// while <paramref name="detail"/> is below <see cref="DetailLimit"/> carries the first count × detail / 240 of them
+	/// <c>PointScatter_Update</c> for a frame: scatters the points round the camera the first time, and
+	/// while the detail is below <see cref="DetailLimit"/> carries the first count × detail / 240 of them
 	/// over as <c>PointScatter_Draw</c> does and returns them; otherwise returns none and leaves them where they are.
 	/// </summary>
+	/// <param name="camera">The camera's position.</param>
+	/// <param name="detail">The detail preference.</param>
+	/// <param name="random">The random generator.</param>
 	public ReadOnlySpan<Speck> Update(Vec3i camera, int detail, Random random) {
 		if (!_scattered) {
 			Scatter(camera, random);

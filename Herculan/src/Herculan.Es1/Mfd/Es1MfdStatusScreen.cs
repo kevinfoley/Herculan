@@ -52,10 +52,15 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 	private readonly IReadOnlyList<DynamixBitmap>? _bases;
 
 	/// <summary>
-	/// <c>MfdStatusScreen_Ctor</c> (<c>ES1DBSIM 00032f74</c>)(0, <paramref name="rect"/>): the base, then the five labels
+	/// <c>MfdStatusScreen_Ctor</c> (<c>ES1DBSIM 00032f74</c>)(0, rect): the base, then the five labels
 	/// in <c>cpred</c> with no plate, each centered in {<i>x0</i> + 30, <i>y0</i> + top, <i>x0</i> + 60, <i>y0</i> + top
 	/// + 10}, the tops 0, 8, 21, 28 and 35.
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="rect">The screen's rectangle.</param>
+	/// <param name="shared">The shared block.</param>
+	/// <param name="fonts">The label fonts.</param>
+	/// <param name="strings">The strings file, or null.</param>
 	/// <param name="flyers"><c>MfdStatus_FlyersBank</c> (<c>000935f8</c>), the frames of <c>dba\flyers</c>, which the constructor loads once with <c>dba\bases</c>; none when null.</param>
 	/// <param name="bases"><c>MfdStatus_BasesBank</c> (<c>000935f4</c>), the frames of <c>dba\bases</c>; none when null.</param>
 	internal Es1MfdStatusScreen(Es1Cockpit cockpit, Es1Rect rect, Es1MfdSharedBlock shared, IReadOnlyList<HudFont?> fonts,
@@ -140,11 +145,15 @@ public sealed class Es1MfdStatusScreen : Es1MfdScreen {
 	}
 
 	/// <summary>
-	/// <c>MfdStatusScreen_SetCondition</c> (<c>000336b0</c>)(screen, <paramref name="state"/>, <paramref name="friendly"/>,
-	/// <paramref name="damage"/>) (docs/es1/simulation/mfd-status-screen.md#the-condition-line): a state of −1 taken from
+	/// <c>MfdStatusScreen_SetCondition</c> (<c>000336b0</c>)(screen, state, friendly,
+	/// damage) (docs/es1/simulation/mfd-status-screen.md#the-condition-line): a state of −1 taken from
 	/// the damage (<see cref="Es1PaperDoll.ToConditionState"/>); label 3 group 24's entry for it; for a friend, label 4
 	/// <c>[ </c>, (256 − damage) × 100 &gt;&gt; 8 in base 10, and <c>% ]</c>.
 	/// </summary>
+	/// <param name="canvas">The canvas written on.</param>
+	/// <param name="state">The condition state, or −1 to take it from the damage.</param>
+	/// <param name="friendly">Whether the object is a friend.</param>
+	/// <param name="damage">The damage reading.</param>
 	public void SetCondition(Es1PanelCanvas canvas, short state, bool friendly, int damage) {
 		if (state == -1) {
 			state = Es1PaperDoll.ToConditionState(damage);

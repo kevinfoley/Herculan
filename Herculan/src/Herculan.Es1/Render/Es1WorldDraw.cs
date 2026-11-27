@@ -142,21 +142,26 @@ public sealed class Es1WorldDraw {
 			.Concat(_mechs.Select(mech => ((object)mech.Mech, mech.Items)))
 			.Concat(Flyers?.FrameObjects ?? []).Concat(Structures?.FrameObjects ?? []);
 
-	/// <summary>Places and culls every item for <paramref name="camera"/>; <paramref name="ridden"/> is the machine the camera rides in, or null.</summary>
+	/// <summary>Places and culls every item for the camera.</summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="ridden">The machine the camera rides in, or null.</param>
 	public void Update(Camera camera, Es1Mech? ridden) {
 		_placedFor = (camera, ridden);
 		Place(camera, ridden, Es1ShapeDetail.FocalShift, flat: false);
 	}
 
 	/// <summary>
-	/// A second view of the frame's objects, <c>ObjList_DrawFrameObjects</c>(0, <paramref name="camera"/>) while
+	/// A second view of the frame's objects, <c>ObjList_DrawFrameObjects</c>(0, the camera) while
 	/// <c>000928ea</c> is set (docs/es1/rendering/polygon-shading.md#the-distance-bands): every item placed and culled
-	/// for <paramref name="camera"/> as <see cref="Update"/> places them, with no machine ridden, each detail level
-	/// picked under a focal length of 2^<paramref name="focalShift"/>, and every object on <c>WorldShades_ResetRamps</c>'
-	/// ramps (<see cref="Es1Shading.FlatRamps"/>) in place of its band's; then <paramref name="draw"/>; then every item
+	/// for the camera as <see cref="Update"/> places them, with no machine ridden, each detail level
+	/// picked under a focal length of 2^focalShift, and every object on <c>WorldShades_ResetRamps</c>'
+	/// ramps (<see cref="Es1Shading.FlatRamps"/>) in place of its band's; then the callback; then every item
 	/// placed again for the camera and machine of the last <see cref="Update"/>, so the items stand as the frame's own
 	/// pass placed them, which the pick reads (<see cref="Es1WorldPick"/>).
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="focalShift">The focal length's shift.</param>
+	/// <param name="draw">Draws while the flat view stands.</param>
 	public void DrawFlatView(Camera camera, int focalShift, Action draw) {
 		Place(camera, null, focalShift, flat: true);
 		draw();
@@ -298,10 +303,16 @@ public sealed class Es1WorldDraw {
 		}
 
 		/// <summary>
-		/// Whether a piece's cell is cell <paramref name="cell"/> and its <c>TSDetailPart</c>, if any, picks its level with
-		/// <paramref name="bias"/> under a focal length of 2^<paramref name="focalShift"/> from the eye's distance in the
-		/// part's node, <paramref name="node"/> when given (a mount's model, whose parts all carry the stamped node).
+		/// Whether a piece's cell is the given cell and its <c>TSDetailPart</c>, if any, picks its level with
+		/// the bias under a focal length of 2^focalShift from the eye's distance in the
+		/// part's node, the node when given (a mount's model, whose parts all carry the stamped node).
 		/// </summary>
+		/// <param name="gate">The cell gate.</param>
+		/// <param name="camera">The camera.</param>
+		/// <param name="focalShift">The focal length's shift.</param>
+		/// <param name="bias">The detail bias.</param>
+		/// <param name="node">The node stamped on a mount's parts, or null.</param>
+		/// <param name="cell">The cell the piece must be on.</param>
 		private bool OnScreen(CellGate gate, Camera camera, int focalShift, int bias, int? node = null, int cell = 0) {
 			if (gate.IsGated && gate.Frame != cell) {
 				return false;

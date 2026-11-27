@@ -66,10 +66,11 @@ public sealed class Es1CustomControls {
 	}
 
 	/// <summary>
-	/// The key ES1 gives <paramref name="action"/>, its first where it has several, or null for an action ES1 sends no key
+	/// The key ES1 gives the action, its first where it has several, or null for an action ES1 sends no key
 	/// for: one Earthsiege 2 alone has, and <see cref="KeyAction.MfdNextScreen"/>, which is the MFD's own step button.
 	/// Most are Earthsiege 2's (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8); these differ.
 	/// </summary>
+	/// <param name="action">The action.</param>
 	public static KeyChord? ChordOf(KeyAction action) => action switch {
 		_ when ControllerActions.Es2Only.Contains(action) => null,
 		KeyAction.MfdNextScreen => null,
@@ -83,7 +84,8 @@ public sealed class Es1CustomControls {
 		_ => KeyMap.Default.Chords(action) is { Length: > 0 } chords ? chords[0] : null,
 	};
 
-	/// <summary>The profile's axes, Fire and views on <paramref name="device"/> this frame.</summary>
+	/// <summary>The profile's axes, Fire and views on the device this frame.</summary>
+	/// <param name="device">The controller's state.</param>
 	public Es1CustomFrame Read(ControllerState device) {
 		var held = _profile.Held(device, razor: false);
 		int? lever = LeverTarget(device);
@@ -122,11 +124,14 @@ public sealed class Es1CustomControls {
 		return Math.Abs(setting) < LeverDeadband ? 0 : setting;
 	}
 
-	/// <summary>The actions held on <paramref name="device"/> that go in as a key (<see cref="ChordOf"/>).</summary>
+	/// <summary>The actions held on the device that go in as a key (<see cref="ChordOf"/>).</summary>
+	/// <param name="device">The controller's state.</param>
 	public IEnumerable<KeyAction> KeyActions(ControllerState device) =>
 		_profile.Held(device, razor: false).Where(action => ChordOf(action) != null);
 
-	/// <summary>The first input bound to <paramref name="action"/> held on <paramref name="device"/>, or null for none.</summary>
+	/// <summary>The first input bound to the action held on the device, or null for none.</summary>
+	/// <param name="device">The controller's state.</param>
+	/// <param name="action">The action.</param>
 	public ControllerInput? HeldInput(ControllerState device, KeyAction action) => _profile.HeldInput(device, action, razor: false);
 
 	// A function's axis under the squared response every retail device is built with, mode 1 of Joystick_ReadWithResponse

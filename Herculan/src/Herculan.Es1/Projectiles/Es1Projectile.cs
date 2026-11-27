@@ -15,9 +15,12 @@ public abstract class Es1Projectile {
 	public const byte TypeTag = 3;
 
 	/// <summary>
-	/// <c>TSObj_Ctor</c> on <paramref name="shape"/>, none for a beam tracer; the subtype byte <c>+0x3b</c> and the
+	/// <c>TSObj_Ctor</c> on the shape, none for a beam tracer; the subtype byte <c>+0x3b</c> and the
 	/// projectile record <c>+0x48</c>.
 	/// </summary>
+	/// <param name="shape">The shape, or null.</param>
+	/// <param name="subtype">The projectile subtype.</param>
+	/// <param name="record">The projectile record, or null.</param>
 	protected Es1Projectile(TSObject? shape, byte subtype, ProjectileData.Projectile? record) {
 		Shape = shape;
 		CellFrames = new short[(shape as TSShape)?.SequenceList?.Length ?? 0];
@@ -71,10 +74,11 @@ public abstract class Es1Projectile {
 	}
 
 	/// <summary>
-	/// The cell step the missile's and the gun round's ticks share: cell frame <paramref name="sequence"/> one on, modulo
+	/// The cell step the missile's and the gun round's ticks share: the cell frame of a sequence one on, modulo
 	/// the shape's frame count for it (its <c>+0x20</c> table). Retail divides by a count of 0, which no retail shape
 	/// holds; here such a sequence stands.
 	/// </summary>
+	/// <param name="sequence">The sequence.</param>
 	protected void StepCellFrame(int sequence) {
 		var counts = (Shape as TSShape)?.SequenceList;
 		if (counts == null || sequence < 0 || sequence >= counts.Length || sequence >= CellFrames.Length
@@ -86,11 +90,15 @@ public abstract class Es1Projectile {
 	}
 
 	/// <summary>
-	/// The sweep a missile's and a gun round's ticks run over the step <paramref name="step"/> along the frame's Y axis
-	/// (<c>Transform_ApplyToShortPoint</c>), with the type record's <paramref name="slack"/> as the ray's clearance:
-	/// <see cref="Es1ShotSweep.Raycast"/> of the shot <paramref name="shot"/> builds on the ray; a strike answers true,
+	/// The sweep a missile's and a gun round's ticks run over the step along the frame's Y axis
+	/// (<c>Transform_ApplyToShortPoint</c>), with the type record's slack as the ray's clearance:
+	/// <see cref="Es1ShotSweep.Raycast"/> of the shot the delegate builds on the ray; a strike answers true,
 	/// otherwise the position takes the step's end.
 	/// </summary>
+	/// <param name="tick">The tick.</param>
+	/// <param name="step">The step.</param>
+	/// <param name="slack">The ray's clearance.</param>
+	/// <param name="shot">Builds the shot from the ray.</param>
 	protected bool SweepStep(Es1ProjectileTick tick, short step, short slack, Func<Es1Ray, Es1Shot> shot) {
 		var frame = Frame;
 		var stepEnd = frame.TransformPoint(0, step, 0);

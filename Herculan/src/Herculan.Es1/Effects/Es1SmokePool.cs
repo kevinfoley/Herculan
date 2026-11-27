@@ -48,11 +48,16 @@ public sealed class Es1SmokePool {
 	};
 
 	/// <summary>
-	/// <c>Smoke_Construct</c> (<c>000069ec</c>)(null, <paramref name="kind"/>, <paramref name="point"/>,
-	/// <paramref name="partId"/>, <paramref name="owner"/>): an emitter from the pool, or null with the pool full, the
+	/// <c>Smoke_Construct</c> (<c>000069ec</c>)(null, kind, point,
+	/// partId, owner): an emitter from the pool, or null with the pool full, the
 	/// emitters queued for delete still holding their places. Its first shape draws <c>Math_RandomNext</c> on
-	/// <paramref name="random"/>, the generator <c>000b5c48</c>.
+	/// the generator <c>000b5c48</c>.
 	/// </summary>
+	/// <param name="kind">The smoke kind.</param>
+	/// <param name="point">The emitter's position, or null for none.</param>
+	/// <param name="partId">The part id.</param>
+	/// <param name="owner">The object the emitter follows.</param>
+	/// <param name="random">The generator the first shape draws on.</param>
 	public Es1Smoke? Construct(short kind, (short X, short Y, short Z)? point, short partId, IEs1SimObject owner, SimRandom random) {
 		if (_emitters.Count + _emitterQueue.Count >= EmitterCapacity) {
 			return null;
@@ -64,10 +69,12 @@ public sealed class Es1SmokePool {
 	}
 
 	/// <summary>
-	/// <c>SmokeBall_Construct</c> (<c>00006704</c>)(null, <paramref name="shape"/>, <paramref name="point"/>): a ball from
-	/// the pool on root <paramref name="shape"/> of <see cref="Shapes"/>, or none with the pool full. A root past the
+	/// <c>SmokeBall_Construct</c> (<c>00006704</c>)(null, shape, point): a ball from
+	/// the pool on that root of <see cref="Shapes"/>, or none with the pool full. A root past the
 	/// shapes, which retail reads past, builds a ball with no shape, an engine guard.
 	/// </summary>
+	/// <param name="shape">The root shape's index.</param>
+	/// <param name="point">The ball's position.</param>
 	internal void ConstructBall(short shape, Vec3i point) {
 		if (_balls.Count + _ballQueue.Count >= BallCapacity) {
 			return;

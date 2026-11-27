@@ -38,9 +38,10 @@ public readonly record struct Es1DetailSetting(int SizeScaleQ10, int RootBias, i
 	private static readonly int[] ObjectBiasValues = [2, 2, 1, 1, 0];
 
 	/// <summary>
-	/// The outputs for option value <paramref name="value"/>: the first key it is at most picks the slot. A byte is never
+	/// The outputs for an option value: the first key it is at most picks the slot. A byte is never
 	/// above the last key, 300, so every value picks one.
 	/// </summary>
+	/// <param name="value">The option's value.</param>
 	public static Es1DetailSetting FromOption(byte value) {
 		int slot = Array.FindIndex(Keys, key => value <= key);
 		return new Es1DetailSetting(ScaleValues[slot], RootBiasValues[slot], MountBiasValues[slot], ObjectBiasValues[slot]);
@@ -61,7 +62,7 @@ public sealed class Es1AppliedDetail {
 	/// <summary><c>000b5b74</c>: the option as last applied.</summary>
 	private byte _applied;
 
-	/// <summary><c>Sim_StartMission</c>'s apply, on the option as <paramref name="options"/> holds it now.</summary>
+	/// <summary><c>Sim_StartMission</c>'s apply, on the option as the preferences holds it now.</summary>
 	/// <param name="options">The simulator's options, which the preferences panel writes.</param>
 	public Es1AppliedDetail(Es1Preferences options) {
 		_options = options;
@@ -102,11 +103,16 @@ public static class Es1ShapeDetail {
 		TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.ExtendedDetailRange) ? 3 : 1;
 
 	/// <summary>
-	/// The root drawn for a shape of root-0 radius <paramref name="radius"/> whose eye is <paramref name="distance"/>
+	/// The root drawn for a shape of root-0 radius radius whose eye is distance
 	/// away (<see cref="EyeDistance"/> in the model's frame): the projected size, ES1's rounding multiply by the scale, and
 	/// the walk from the bias down the thresholds. The threshold cursor is also bounded by the table, which retail's is
 	/// not; no retail root count reaches past it.
 	/// </summary>
+	/// <param name="rootCount">The number of roots.</param>
+	/// <param name="radius">The root-0 radius.</param>
+	/// <param name="distance">The eye's distance.</param>
+	/// <param name="setting">The detail setting.</param>
+	/// <param name="thresholds">The switch thresholds.</param>
 	/// <param name="focalShift">The installed projection's <c>Raster_FocalShift</c>, the main view's unless given.</param>
 	/// <param name="rangeFactor">The scale's multiplier, <see cref="RangeFactor"/> for a drawn frame.</param>
 	public static int SelectRoot(int rootCount, int radius, int distance, Es1DetailSetting setting,
@@ -127,19 +133,25 @@ public static class Es1ShapeDetail {
 	}
 
 	/// <summary>
-	/// The level <paramref name="detail"/> draws with <paramref name="bias"/> for an eye <paramref name="eye"/> away in its
-	/// node (<see cref="EyeDistance"/>) under a focal length of 2^<paramref name="focalShift"/>, its switches moved out by
+	/// The level the detail draws with the bias for an eye distance away in its
+	/// node (<see cref="EyeDistance"/>) under a focal length of 2^focalShift, its switches moved out by
 	/// <see cref="RangeFactor"/>.
 	/// </summary>
+	/// <param name="detail">The detail part.</param>
+	/// <param name="eye">The eye's distance in the part's node.</param>
+	/// <param name="focalShift">The focal length's shift.</param>
+	/// <param name="bias">The detail bias.</param>
 	public static int SelectLevel(PartDetail detail, int eye, int focalShift, int bias) =>
 		detail.Select(eye, 1 << focalShift, bias, PartDetail.SizeScaleQ10 * RangeFactor);
 
 	/// <summary>
-	/// <c>Math_FastMagnitude3D</c> of the eye in the space <paramref name="node"/> places in the world: what the LOD root
+	/// <c>Math_FastMagnitude3D</c> of the eye in the space the node places in the world: what the LOD root
 	/// measures in the model's frame, and a <c>TSDetailPart</c> in its own node's
 	/// (docs/retail/rendering/dts-texture-binding.md#tsdetailpart-level-selection-and-structure-detail, which ES1's
 	/// <c>TSDetailPart_Render</c>, <c>000530b0</c>, follows).
 	/// </summary>
+	/// <param name="node">The node's transform.</param>
+	/// <param name="eye">The eye's position.</param>
 	public static int EyeDistance(in Transform3 node, Vec3i eye) {
 		var local = node.Inverted().TransformPoint(eye.X, eye.Y, eye.Z);
 		return SimMath.FastMagnitude3D(local.X, local.Y, local.Z);

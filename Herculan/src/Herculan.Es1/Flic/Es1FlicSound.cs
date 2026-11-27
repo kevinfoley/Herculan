@@ -83,7 +83,7 @@ public sealed class Es1FlicSound : IDisposable {
 	}
 
 	/// <summary>
-	/// <c>DigiSample_Position</c> (<c>00008814</c>) of the first sound of <paramref name="number"/> in the list: the bytes of
+	/// <c>DigiSample_Position</c> (<c>00008814</c>) of the first sound of a number in the list: the bytes of
 	/// it heard since its last start; null with no sound of that number, where the sync's waits do not wait.
 	///
 	/// <para>Retail adds the DMA transfer's place in the driver's buffer to the driver's count, which is 0 once the voice is
@@ -92,9 +92,11 @@ public sealed class Es1FlicSound : IDisposable {
 	/// the position without pause and so meets each byte of the sound; here it is read once a host frame, and a sound heard
 	/// to its end answers its length, so that the last frames' waits cannot pass it by between two reads.</para>
 	/// </summary>
+	/// <param name="number">The sound's number.</param>
 	public uint? Position(int number) => Find(number) is { } sound ? sound.Voice?.Position(_seconds, sound.Data.Length) ?? 0 : null;
 
-	/// <summary>The clock moved on to <paramref name="seconds"/>, and every playing stream kept fed.</summary>
+	/// <summary>The clock moved on to the new time, and every playing stream kept fed.</summary>
+	/// <param name="seconds">The new time, in seconds.</param>
 	public void Update(double seconds) {
 		_seconds = seconds;
 		foreach (var sound in _list) {

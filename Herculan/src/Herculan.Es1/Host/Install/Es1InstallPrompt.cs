@@ -14,9 +14,12 @@ public static class Es1InstallPrompt {
 
 	/// <summary>
 	/// Shows the prompt until the player picks an install, makes one from a disc, or gives up. Returns the install root,
-	/// or null when the player gave up or closed the window. <paramref name="refused"/> and <paramref name="dismissKey"/>
-	/// are <see cref="InstallPromptWindow.Run"/>'s.
+	/// or null when the player gave up or closed the window.
 	/// </summary>
+	/// <param name="localization">The table the texts are read from.</param>
+	/// <param name="fontPath">The font file.</param>
+	/// <param name="refused">As in <see cref="InstallPromptWindow.Run"/>.</param>
+	/// <param name="dismissKey">As in <see cref="InstallPromptWindow.Run"/>.</param>
 	public static string? Run(LocalizationTable localization, string fontPath, string? refused, string dismissKey) {
 		while (true) {
 			var (chosen, install) = InstallPromptWindow.Run(localization, fontPath, Es1GameModule.Identity, refused, dismissKey,

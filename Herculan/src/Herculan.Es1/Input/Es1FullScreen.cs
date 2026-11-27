@@ -36,10 +36,12 @@ public static class Es1FullScreen {
 	}
 
 	/// <summary>
-	/// A turn's start in <paramref name="window"/>: the window taken to <see cref="Setting"/>, the pointer
-	/// <paramref name="pointer"/> answers confined and centred as <see cref="EngineWindow.StartFullScreen"/> does, and the
+	/// A turn's start in the window: the window taken to <see cref="Setting"/>, the pointer
+	/// the delegate answers confined and centred as <see cref="EngineWindow.StartFullScreen"/> does, and the
 	/// turn's [Alt+Enter], which keeps what it leaves.
 	/// </summary>
+	/// <param name="window">The window.</param>
+	/// <param name="pointer">Answers the host's pointer, or null for none.</param>
 	public static Es1FullScreenKey Start(EngineWindow window, Func<IMouse?> pointer) {
 		window.StartFullScreen(Setting, pointer());
 		return Toggle(() => window.ToggleFullScreen(pointer()), () => window.FullScreen);

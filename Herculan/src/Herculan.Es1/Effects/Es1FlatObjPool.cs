@@ -29,16 +29,19 @@ public sealed class Es1FlatObjPool {
 	public int InUse => _live + _queued;
 
 	/// <summary>
-	/// <c>FlatObj_LoadResources</c>(<paramref name="selector"/>)'s shapes, <c>dts\flat</c> for a selector of 0 and
+	/// <c>FlatObj_LoadResources</c>'s shapes, <c>dts\flat</c> for a selector of 0 and
 	/// <c>dts\flat2</c> otherwise.
 	/// </summary>
+	/// <param name="content">The game's content.</param>
+	/// <param name="selector">The shape set's selector.</param>
 	public void LoadShapes(GameContent content, int selector) =>
 		Shapes = content.Read("dts", selector == 0 ? "FLAT.DTS" : "FLAT2.DTS") is { } bytes
 			&& new DTSModelTransformer().Parse(bytes) is DynamixThreeSpaceModel { Roots: { } roots }
 				? roots
 				: [];
 
-	/// <summary>The frame count of sequence 0 of root <paramref name="root"/>, 0 without one.</summary>
+	/// <summary>The frame count of sequence 0 of a root, 0 without one.</summary>
+	/// <param name="root">The root shape.</param>
 	public int FrameCount(int root) =>
 		root >= 0 && root < Shapes.Count && Shapes[root] is TSShape { SequenceList: [var count, ..] } ? (ushort)count : 0;
 

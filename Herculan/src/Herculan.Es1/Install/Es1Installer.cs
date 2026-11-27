@@ -66,12 +66,13 @@ public sealed class Es1Installer {
 		(Es1ResourceCfg.Music, Es1ResourceCfg.Port, "388"),
 	];
 
-	/// <summary>An installer for <paramref name="source"/>, or null when it holds no <see cref="ScriptPath"/> or no <c>GO.EXE</c>.</summary>
+	/// <summary>An installer for the source disc, or null when it holds no <see cref="ScriptPath"/> or no <c>GO.EXE</c>.</summary>
+	/// <param name="source">The disc.</param>
 	public static Es1Installer? Identify(GameDisc source) =>
 		source.FileExists(ScriptPath) && source.FileExists(RetailGameDetector.Es1Marker) ? new Es1Installer(source) : null;
 
 	/// <summary>
-	/// What <paramref name="size"/>'s branch copies, each file's path on the disc and under the install: every file of
+	/// What a size's branch copies, each file's path on the disc and under the install: every file of
 	/// <c>CAR</c>, <c>DATA</c>, <c>SOS</c>, <c>SSET</c> and <c>TAPES</c>; of <c>VOL</c>, <c>SIMSOUND.VOL</c> and
 	/// <c>SIMVOICE.VOL</c>, with <c>SIMVOL0.VOL</c> for the medium size, and every <c>.VOL</c> file for the full one; the
 	/// files of <c>INSTALL</c> and then <c>INSTALL\HDSTUFF</c> into <c>INSTALL</c>; those of <c>STUFF</c> into the root;
@@ -122,12 +123,12 @@ public sealed class Es1Installer {
 		return files;
 	}
 
-	/// <summary>The bytes <see cref="Plan"/> copies for <paramref name="size"/> (<see cref="DiscCopy.PlanBytes"/>).</summary>
+	/// <summary>The bytes <see cref="Plan"/> copies for a size (<see cref="DiscCopy.PlanBytes"/>).</summary>
 	/// <param name="size">The size chosen.</param>
 	public long PlanBytes(Size size) => DiscCopy.PlanBytes(_source, Plan(size));
 
 	/// <summary>
-	/// Copies <paramref name="size"/>'s <see cref="Plan"/> into <paramref name="destination"/> (<see cref="DiscCopy.Copy"/>),
+	/// Copies a size's <see cref="Plan"/> into the destination folder (<see cref="DiscCopy.Copy"/>),
 	/// then writes its <c>ES.BAT</c> (<see cref="EsBat"/>) and <see cref="AddrBatPath"/> (<see cref="AddrBat"/>), and turns
 	/// the copied <c>RESOURCE.CFG</c> into what <c>SOUNDSET</c> and <c>ADDRES</c> leave (<see cref="ResourceCfg"/>). A
 	/// failure or a cancellation removes what this wrote and rethrows.
@@ -142,7 +143,7 @@ public sealed class Es1Installer {
 		DiscCopy.Copy(_source, destination, Plan(size), (root, written) => WriteConfiguration(root, size, written), progress, cancellation);
 
 	/// <summary>
-	/// The <c>ES.BAT</c> <paramref name="size"/>'s branch writes, each <c>echo</c> line ending CR LF. The minimum and medium
+	/// The <c>ES.BAT</c> that a size's branch writes, each <c>echo</c> line ending CR LF. The minimum and medium
 	/// sizes' sets <c>ALT_DRIVE</c> to the hard drive and <c>PREFER_ALT</c>, changes to the CD drive, runs <c>escd</c>
 	/// there and changes back; the full size's sets <c>ALT_DRIVE</c> to the CD drive, clears <c>PREFER_ALT</c> and runs
 	/// <c>escd</c> in the install.
@@ -174,10 +175,11 @@ public sealed class Es1Installer {
 	}
 
 	/// <summary>
-	/// The disc's <c>STUFF\RESOURCE.CFG</c>, <paramref name="text"/>, as the install leaves it: its DOS end-of-file
+	/// The disc's <c>STUFF\RESOURCE.CFG</c>, the text, as the install leaves it: its DOS end-of-file
 	/// marks and trailing blank lines dropped, each <see cref="SoundSettings"/> value in its section, and <c>ADDRES</c>'s
 	/// <c>[FlicPlayer]</c> <c>pathFlic=</c><see cref="CdDrive"/><c>\flic\</c> after a blank line, every line ending CR LF.
 	/// </summary>
+	/// <param name="text">The disc's <c>RESOURCE.CFG</c>.</param>
 	public static string ResourceCfg(string text) {
 		var lines = text.Replace("\x1a", "").Replace("\r\n", "\n").Split('\n').ToList();
 		while (lines.Count > 0 && lines[^1].Trim().Length == 0) {

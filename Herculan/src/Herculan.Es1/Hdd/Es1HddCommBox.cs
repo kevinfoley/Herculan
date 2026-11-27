@@ -144,7 +144,7 @@ public sealed class Es1HddCommBox {
 	public (byte Phase, byte Previous) Scream { get; private set; }
 
 	/// <summary>
-	/// <c>HddGauge_LoadPilotFrames</c> (<c>0003dab4</c>)'s gauge, on <paramref name="pilot"/>, the pilot after the first
+	/// <c>HddGauge_LoadPilotFrames</c> (<c>0003dab4</c>)'s gauge, on the pilot, the pilot after the first
 	/// box's override (docs/es1/simulation/hdd-comm-boxes.md#who-is-in-it--hddgauge_loadpilotframes-0003dab4): the
 	/// portrait <i>p</i> (<see cref="Es1Cockpit.PilotPortraitOf"/>) and the name, entry <i>p</i> of
 	/// <see cref="Es1HddDisplay.PilotNames"/>; the pilot channel's table for the slot,
@@ -164,6 +164,7 @@ public sealed class Es1HddCommBox {
 	/// retail writes past them, is not taken, an engine guard. A portrait past the names' first group gives no name,
 	/// where retail's walk goes on into the next group's header (docs/es1/simulation/cockpit-messages.md#the-string-files).</para>
 	/// </summary>
+	/// <param name="pilot">The pilot.</param>
 	internal void Load(short pilot) {
 		var cockpit = Display.Cockpit;
 		short portrait = (short)Es1Cockpit.PilotPortraitOf(pilot);
@@ -264,7 +265,7 @@ public sealed class Es1HddCommBox {
 	}
 
 	/// <summary>
-	/// <c>CommBox_BeginMessage</c> (<c>0003e060</c>)(display, gauge, <paramref name="record"/>)
+	/// <c>CommBox_BeginMessage</c> (<c>0003e060</c>)(display, gauge, the record)
 	/// (docs/es1/simulation/hdd-comm-boxes.md#starting-a-line): the id's low byte into <see cref="MessageId"/>; the
 	/// suffix <c>_</c>, the id in decimal with a 0 before it below 10, and the attribute byte 1 in decimal, unsigned,
 	/// with a 0 before it below 100 and another below 10; and <see cref="Es1VoiceLines.LoadLine"/> with the script
@@ -272,6 +273,7 @@ public sealed class Es1HddCommBox {
 	/// of the portrait + suffix, so <c>PA_01000</c> and <c>P1_01000</c> for line 1, byte 0, of portrait 0. The slot goes
 	/// to <see cref="SpeechSlot"/>; answers whether there is one.
 	/// </summary>
+	/// <param name="record">The queued message.</param>
 	internal bool BeginMessage(Es1QueuedMessage record) {
 		ushort id = (ushort)record.Id;
 		MessageId = (byte)id;
@@ -287,7 +289,7 @@ public sealed class Es1HddCommBox {
 	}
 
 	/// <summary>
-	/// The box's step of <c>HddDisplay_ServiceCommBoxes</c> (<c>0003e574</c>) on the clock count <paramref name="now"/>
+	/// The box's step of <c>HddDisplay_ServiceCommBoxes</c> (<c>0003e574</c>) on a clock count
 	/// (docs/es1/simulation/hdd-comm-boxes.md#the-state-machine--hdddisplay_servicecommboxes-0003e574), then
 	/// <see cref="PreviousState"/> = the state:
 	///
@@ -295,16 +297,16 @@ public sealed class Es1HddCommBox {
 	/// <item><see cref="Idle"/>: while the previous state is not idle or <see cref="Es1HddDisplay.IdleRepaintPending"/>
 	/// is set, <see cref="PaintIdle"/> and the video rect copied to the page on the screen
 	/// (<see cref="Es1Cockpit.DrawToCockpit"/> with 1), the flag set when that copied nothing.</item>
-	/// <item><see cref="StaticBefore"/>: <see cref="PaintStatic"/> until <paramref name="now"/> reaches
+	/// <item><see cref="StaticBefore"/>: <see cref="PaintStatic"/> until that count reaches
 	/// <see cref="Deadline"/> with the comms-out latch clear, then <see cref="Talking"/> at once.</item>
 	/// <item><see cref="Talking"/>: on entry the pilot channel's ready latch and <see cref="Es1VoiceLines.Start"/> of the
 	/// slot, the frame −1 when that answers false and otherwise the slot's, and for <see cref="ScreamMessage"/> the
-	/// deadline <paramref name="now"/> + <see cref="ScreamFirstCounts"/>; after entry the slot's frame. At −1 the
+	/// deadline that count + <see cref="ScreamFirstCounts"/>; after entry the slot's frame. At −1 the
 	/// channel's cancelled latch; then for the scream the latch and <see cref="StaticBefore"/>, and otherwise
-	/// <see cref="StaticAfter"/> with the deadline <paramref name="now"/> + <see cref="StaticCounts"/> and the latch
+	/// <see cref="StaticAfter"/> with the deadline that count + <see cref="StaticCounts"/> and the latch
 	/// when the squadmate is destroyed; and <see cref="PaintStatic"/>. Otherwise <see cref="PaintScream"/> for the
 	/// scream and <see cref="PaintPilotFrame"/> of the frame for any other line.</item>
-	/// <item><see cref="StaticAfter"/>: <see cref="PaintStatic"/> until <paramref name="now"/> reaches the deadline,
+	/// <item><see cref="StaticAfter"/>: <see cref="PaintStatic"/> until that count reaches the deadline,
 	/// then idle at once.</item>
 	/// </list>
 	///
@@ -312,6 +314,7 @@ public sealed class Es1HddCommBox {
 	/// a box only talks with once its load succeeded, or no squadmate in the slot, which retail reads unchecked, the
 	/// frame is −1 and the latch is left, engine guards.</para>
 	/// </summary>
+	/// <param name="now">The clock count.</param>
 	internal void Service(uint now) {
 		switch (State) {
 			case Idle:
@@ -344,7 +347,7 @@ public sealed class Es1HddCommBox {
 	}
 
 	/// <summary>
-	/// <c>HddGauge_PaintPilotFrame</c> (<c>0003e1cc</c>)(display, <paramref name="frame"/>, gauge)
+	/// <c>HddGauge_PaintPilotFrame</c> (<c>0003e1cc</c>)(display, frame, gauge)
 	/// (docs/es1/simulation/hdd-comm-boxes.md#the-three-paints): while the display's screen rect is visible, the
 	/// video rect filled <see cref="IdleFill"/>; in the box's clip (<see cref="PushVideoClip"/>), with
 	/// <see cref="FullBank"/> the bank's frame <see cref="FirstHeadFrame"/> + the presentation generator's draw
@@ -354,6 +357,7 @@ public sealed class Es1HddCommBox {
 	/// name written again. A frame or pair past the bank, the pairs or the map, which retail reads unchecked, blits
 	/// nothing, an engine guard.
 	/// </summary>
+	/// <param name="frame">The pilot frame.</param>
 	public void PaintPilotFrame(short frame) {
 		var cockpit = Display.Cockpit;
 		if (!cockpit.RectCornerVisible(Display.ScreenRect)) {
@@ -375,14 +379,15 @@ public sealed class Es1HddCommBox {
 	}
 
 	/// <summary>
-	/// <c>HddGauge_PaintScream</c> (<c>0003e348</c>)(display, gauge), on the clock count <paramref name="now"/>
+	/// <c>HddGauge_PaintScream</c> (<c>0003e348</c>)(display, gauge), on a clock count
 	/// (docs/es1/simulation/hdd-comm-boxes.md#the-three-paints): while the display's screen rect is visible, at phase
-	/// 0 <see cref="PaintPilotFrame"/> of <see cref="ScreamFrame"/>, the phase 1 once <paramref name="now"/> is past
+	/// 0 <see cref="PaintPilotFrame"/> of <see cref="ScreamFrame"/>, the phase 1 once that count is past
 	/// <see cref="Deadline"/>; at phase 1 <see cref="PaintStatic"/>, the phase back to 0 once past it; on a phase change
-	/// the deadline <paramref name="now"/> + the greater of <see cref="ScreamLeastCounts"/> and the presentation
+	/// the deadline that count + the greater of <see cref="ScreamLeastCounts"/> and the presentation
 	/// generator's draw below <see cref="ScreamCountsBound"/> (<c>Math_RandomBelow</c> on <c>000b5c48</c>); and the phase
 	/// kept as the previous one.
 	/// </summary>
+	/// <param name="now">The clock count.</param>
 	public void PaintScream(uint now) {
 		if (!Display.Cockpit.RectCornerVisible(Display.ScreenRect)) {
 			return;
@@ -457,7 +462,10 @@ public sealed class Es1HddCommBox {
 		}
 	}
 
-	/// <summary>Frame <paramref name="index"/> of the bank at offset pair <paramref name="pair"/> in <paramref name="clip"/>, or nothing past either.</summary>
+	/// <summary>A frame of the bank at an offset pair in a clip, or nothing past either.</summary>
+	/// <param name="clip">The clip to blit in.</param>
+	/// <param name="index">The frame's index.</param>
+	/// <param name="pair">The offset pair's index.</param>
 	private void Blit(Es1PanelCanvas clip, int index, int pair) {
 		if (Bank is { } bank && index >= 0 && index < bank.Count && pair >= 0 && pair < OffsetPairs) {
 			clip.Blit(bank[index], _offsets[pair].X, _offsets[pair].Y);
@@ -465,11 +473,12 @@ public sealed class Es1HddCommBox {
 	}
 
 	/// <summary>
-	/// <c>HddGauge_ConditionIndex</c> (<c>0003ded8</c>)(display, <paramref name="machine"/>): of
+	/// <c>HddGauge_ConditionIndex</c> (<c>0003ded8</c>)(display, machine): of
 	/// <see cref="Es1Mech.ReadDamageReadouts"/>, the mean <i>m</i> of readings 1 to 19, truncating, and
 	/// (<c>0x100</c> − <i>m</i>) × 100 ≫ 8: 90 or more 0 (<c>OK</c>), 74 or more 1, 51 or more 2, 1 or more 3, else 4
 	/// (<c>DESTROYED</c>), an entry of group 24.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
 	public static int ConditionIndex(Es1Mech machine) {
 		var readings = machine.ReadDamageReadouts();
 		int sum = 0;

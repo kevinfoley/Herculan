@@ -8,10 +8,19 @@ namespace Herculan.Es1.Panels;
 /// cockpit's canvas context (<see cref="Es1PanelCanvas"/>), or the scene's (<see cref="Es1SceneCanvas"/>).
 /// </summary>
 public interface IEs1LabelSurface {
-	/// <summary><c>Raster_FillRect</c> under the brush {0, <paramref name="color"/>}: the inclusive rect filled.</summary>
+	/// <summary><c>Raster_FillRect</c> under the brush {0, the color}: the inclusive rect filled.</summary>
+	/// <param name="x0">The left.</param>
+	/// <param name="y0">The top.</param>
+	/// <param name="x1">The right.</param>
+	/// <param name="y1">The bottom.</param>
+	/// <param name="color">The color.</param>
 	void FillRect(int x0, int y0, int x1, int y1, byte color);
 
-	/// <summary><c>HudFont_DrawString</c> (<c>00069e38</c>) from the pen (<paramref name="x"/>, <paramref name="y"/>).</summary>
+	/// <summary><c>HudFont_DrawString</c> (<c>00069e38</c>) from the pen (x, y).</summary>
+	/// <param name="font">The font, or null.</param>
+	/// <param name="text">The text, or null.</param>
+	/// <param name="x">The pen's x.</param>
+	/// <param name="y">The pen's y.</param>
 	void DrawString(HudFont? font, string? text, int x, int y);
 }
 
@@ -26,7 +35,8 @@ public sealed class Es1Label {
 	/// <summary>The flags that center and right-align.</summary>
 	public const int Centered = 2, RightAligned = 4;
 
-	/// <summary><c>Label_Ctor</c>(0, <paramref name="font"/>).</summary>
+	/// <summary><c>Label_Ctor</c>(0, font).</summary>
+	/// <param name="font">The font, or null.</param>
 	public Es1Label(HudFont? font) {
 		Font = font;
 	}
@@ -53,13 +63,17 @@ public sealed class Es1Label {
 	public HudFont? HotkeyFont { get; set; }
 
 	/// <summary>
-	/// <c>Label_SetRect</c>(label, <paramref name="flags"/>, <paramref name="rect"/>, margin): the rect kept; the
-	/// anchor's x at the rect's middle, ((<i>x1</i> − <i>x0</i>) &gt;&gt; 1) + <i>x0</i> + <paramref name="marginX"/>,
-	/// for flags 2, at <i>x1</i> − <paramref name="marginX"/> + 1 for flags 4, and at <i>x0</i> +
-	/// <paramref name="marginX"/> otherwise; its y at ((<i>y1</i> − <i>y0</i> + the font's cell height) &gt;&gt; 1) +
-	/// <i>y0</i> + <paramref name="marginY"/>; the flags kept. The margin is a point, of which the function reads the
+	/// <c>Label_SetRect</c>(label, flags, rect, margin): the rect kept; the
+	/// anchor's x at the rect's middle, ((<i>x1</i> − <i>x0</i>) &gt;&gt; 1) + <i>x0</i> + marginX,
+	/// for flags 2, at <i>x1</i> − marginX + 1 for flags 4, and at <i>x0</i> +
+	/// marginX otherwise; its y at ((<i>y1</i> − <i>y0</i> + the font's cell height) &gt;&gt; 1) +
+	/// <i>y0</i> + marginY; the flags kept. The margin is a point, of which the function reads the
 	/// low words of x and y; the font's cell height is <c>HudFont_CellHeight</c>(font, <c>'0'</c>).
 	/// </summary>
+	/// <param name="flags">The alignment flags.</param>
+	/// <param name="rect">The label's rectangle.</param>
+	/// <param name="marginX">The margin's x.</param>
+	/// <param name="marginY">The margin's y.</param>
 	public void SetRect(int flags, Es1Rect rect, int marginX = 0, int marginY = 0) {
 		Rect = rect;
 		short x = (flags & Centered) != 0
@@ -74,11 +88,13 @@ public sealed class Es1Label {
 	}
 
 	/// <summary>
-	/// <c>Label_SetText</c>(label, <paramref name="text"/>) on <paramref name="canvas"/>: the pen at the anchor, moved
+	/// <c>Label_SetText</c>(label, text) on the canvas: the pen at the anchor, moved
 	/// left by (<i>w</i> − 1) &gt;&gt; 1 for flags 2 and by <i>w</i> − 1 for flags 4, <i>w</i> the text's width
 	/// (<c>HudFont_MeasureString</c>); the rect filled in the fill color when it is not 0; then the text drawn from the
 	/// pen. With no font nothing is drawn.
 	/// </summary>
+	/// <param name="canvas">The surface written on.</param>
+	/// <param name="text">The text, or null.</param>
 	public void SetText(IEs1LabelSurface canvas, string? text) {
 		if (Font == null || text == null) {
 			return;
@@ -92,12 +108,15 @@ public sealed class Es1Label {
 	}
 
 	/// <summary>
-	/// <c>Label_SetTextWithHotkey</c> (<c>00031294</c>)(label, <paramref name="index"/>, <paramref name="text"/>)
-	/// (docs/es1/simulation/cockpit-widgets.md#labels): <see cref="SetText"/>, then character <paramref name="index"/>
+	/// <c>Label_SetTextWithHotkey</c> (<c>00031294</c>)(label, index, text)
+	/// (docs/es1/simulation/cockpit-widgets.md#labels): <see cref="SetText"/>, then character index
 	/// drawn again in <see cref="HotkeyFont"/> with the pen moved right by the width of the characters before it. For an
 	/// index at the text's length retail draws the terminating NUL, which no font has a glyph for, and past it a character
 	/// and width from two stack locals it never wrote; nothing is drawn here for either, an engine guard.
 	/// </summary>
+	/// <param name="canvas">The surface written on.</param>
+	/// <param name="index">The hotkey character's index.</param>
+	/// <param name="text">The text, or null.</param>
 	public void SetTextWithHotkey(IEs1LabelSurface canvas, int index, string? text) {
 		SetText(canvas, text);
 		if (Font == null || text == null || index >= text.Length) {

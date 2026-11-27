@@ -49,9 +49,10 @@ public sealed class Es1ShellScreens {
 	private readonly Es1AnmPlayer _anm;
 
 	/// <summary>
-	/// <c>Anm_Play</c>(1, <paramref name="soundIndex"/>, <see cref="AnmName"/>) (<see cref="Es1AnmPlayer.Play"/>) with
+	/// <c>Anm_Play</c>(1, soundIndex, <see cref="AnmName"/>) (<see cref="Es1AnmPlayer.Play"/>) with
 	/// <c>Shell_SoundOption</c>, which reads 0 before the first screen, an engine guard, as does a name not set.
 	/// </summary>
+	/// <param name="soundIndex">The sound's index.</param>
 	private IEnumerable<Es1ShellWait> PlayAnm(short soundIndex) =>
 		AnmName is { } name ? _anm.Play(1, soundIndex, name, _menuContext?.Data.SoundOption ?? 0) : [];
 
@@ -300,7 +301,7 @@ public sealed class Es1ShellScreens {
 	/// (<see cref="Es1ShellMission.ProcessResults"/>), <see cref="PreviousScreen"/> 999, and in mode 0
 	/// <see cref="OpenAfterSingleMission"/>, in mode 1 <see cref="OpenAfterCareerMission"/>; for any
 	/// other, the intro and then the main menu over the backdrop 1000: a <see cref="Es1MainMenu"/> made the current menu
-	/// and opened as 1000. The intro, any code but 3, 4 and 6 while <paramref name="playIntro"/> is set, plays <c>intro\dynamix.ttm</c>,
+	/// and opened as 1000. The intro, any code but 3, 4 and 6 while playIntro is set, plays <c>intro\dynamix.ttm</c>,
 	/// <c>intro\lead_in.ttm</c> unless the first was cut short, <c>intro\iintro.ttm</c> and <c>intro\earth_w.ttm</c>
 	/// (<see cref="PlayTtm"/>); the prefix goes back to <c>res32\</c> as the main menu's case begins.
 	/// </summary>
@@ -463,10 +464,10 @@ public sealed class Es1ShellScreens {
 	/// <see cref="OpenFirstScreen"/>'s codes 3 and 4 in <c>Shell_Mode</c> 1, after the results' read
 	/// (docs/es1/shell/between-missions.md#back-at-the-shell, disassembly <c>0003bc6f</c>–<c>0003bdd5</c>), on the roster's
 	/// record its word <c>+7</c> names, <c>CareerRecord_Current</c>'s in mode 1: with the player's pilot lost
-	/// (<see cref="Es1CareerRoster.PlayerCondition"/> 0), <see cref="LostScript"/> while <paramref name="playIntro"/> is set,
+	/// (<see cref="Es1CareerRoster.PlayerCondition"/> 0), <see cref="LostScript"/> while playIntro is set,
 	/// then the home menu (<see cref="OpenHomeMenu"/>). Otherwise by <c>Career_PeekNextCampaign</c>'s low byte, compared
 	/// sign-extended: 99, the career won, <see cref="WonScripts"/>, and −1, the career lost, <see cref="FailedScripts"/>, each
-	/// played whatever <paramref name="playIntro"/>, then <see cref="EarthScript"/> with the prefix <c>intro\</c> and the
+	/// played whatever playIntro, then <see cref="EarthScript"/> with the prefix <c>intro\</c> and the
 	/// prefix back to <c>res32\</c>, then the home menu; any other, the message box's kind 7, the lines after the mission
 	/// (<see cref="Es1MessageBox"/>, whose answer posts 1520), <c>MessageBox_Line</c> set to
 	/// <see cref="Es1MessageBox.PickT1Line"/>(7) after the kind, the backdrop group 4000 shown and no menu. The scripts play
@@ -475,6 +476,11 @@ public sealed class Es1ShellScreens {
 	/// its word <c>+7</c>) (<see cref="Es1CareerRoster.Save"/>). The message box exists from the first screen on; the test
 	/// for it, and for the hangar the repair walks, are engine guards.
 	/// </summary>
+	/// <param name="mission">The mission.</param>
+	/// <param name="data">The shell's data.</param>
+	/// <param name="playIntro">Whether the intro plays.</param>
+	/// <param name="presentFrame">Presents a frame.</param>
+	/// <param name="pollDeviceBlock">Polls the device block.</param>
 	private IEnumerable<Es1ShellWait> OpenAfterCareerMission(Es1ShellMission mission, Es1ShellData data, bool playIntro,
 			Func<IEnumerable<Es1ShellWait>> presentFrame, Func<Es1LiveBlock> pollDeviceBlock) {
 		var roster = mission.Roster;
@@ -533,10 +539,14 @@ public sealed class Es1ShellScreens {
 	}
 
 	/// <summary>
-	/// A career's ending (<c>0003bce6</c>, <c>0003bd30</c>): <paramref name="scripts"/> played with the prefix as it stands,
+	/// A career's ending (<c>0003bce6</c>, <c>0003bd30</c>): the scripts played with the prefix as it stands,
 	/// <c>res32\</c>; the prefix <c>intro\</c>, <see cref="EarthScript"/> played and the prefix <c>res32\</c> again; then the
 	/// home menu (<see cref="OpenHomeMenu"/>).
 	/// </summary>
+	/// <param name="mission">The mission.</param>
+	/// <param name="scripts">The scripts' names.</param>
+	/// <param name="presentFrame">Presents a frame.</param>
+	/// <param name="pollDeviceBlock">Polls the device block.</param>
 	private IEnumerable<Es1ShellWait> PlayCareerEnding(Es1ShellMission mission, string[] scripts,
 			Func<IEnumerable<Es1ShellWait>> presentFrame, Func<Es1LiveBlock> pollDeviceBlock) {
 		foreach (string name in scripts) {
@@ -812,10 +822,11 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_DrawScreen</c>'s step 4 while <see cref="MapDrawCount"/> is not 0 (docs/es1/shell/menus.md#drawing-a-screen):
 	/// the war map's briefing kept behind the next screen. With page 2 the draw page, the mission map's slot <c>+4</c> and
-	/// the text box drawn (<see cref="Es1ShellDialog.Draw"/>); then the same on <paramref name="keptDraw"/>, the draw page
+	/// the text box drawn (<see cref="Es1ShellDialog.Draw"/>); then the same on the kept draw page, the draw page
 	/// the screen's draw found; the draw page set back to page 2 and the count lowered by 1. Retail calls the slot with no
 	/// test that the map is set; with none here the map draws nothing, an engine guard.
 	/// </summary>
+	/// <param name="keptDraw">The draw page the screen's draw found.</param>
 	private IEnumerable<Es1ShellWait> DrawBriefingUnder(int keptDraw) {
 		var display = _devices.Display;
 		foreach (var wait in PaintMissionMap()) {
@@ -862,8 +873,12 @@ public sealed class Es1ShellScreens {
 	/// <summary>
 	/// <c>Shell_HandleMessage</c>'s step 7 (docs/es1/shell/menus.md#changing-screens--shell_handlemessage-0003c7d8): the
 	/// prefix <c>intro\</c> (<c>Ttm_SetPathPrefix</c>), track <c>0xd</c> with <c>ShellMusic_Play</c> when
-	/// <paramref name="music"/> is set, <paramref name="names"/> played (<see cref="PlayTtm"/>), and the prefix <c>res32\</c>.
+	/// music is set, the names played (<see cref="PlayTtm"/>), and the prefix <c>res32\</c>.
 	/// </summary>
+	/// <param name="names">The scripts' names.</param>
+	/// <param name="music">Whether the track plays.</param>
+	/// <param name="presentFrame">Presents a frame.</param>
+	/// <param name="pollDeviceBlock">Polls the device block.</param>
 	private IEnumerable<Es1ShellWait> PlayIntroScripts(string[] names, bool music, Func<IEnumerable<Es1ShellWait>> presentFrame,
 			Func<Es1LiveBlock> pollDeviceBlock) {
 		if (Scripts is not { } scripts) {
@@ -909,7 +924,7 @@ public sealed class Es1ShellScreens {
 	/// for the code −1; the current menu's handler given the message, which it may change; a <i>back</i> target resolved;
 	/// nothing more for a target not in <c>Shell_ScreenIds</c>; otherwise the current menu closed and destroyed, the
 	/// scripts <see cref="ScriptsToPlay"/> names, a new backdrop when the target's group differs (after a frame of its own
-	/// when the old one was 1000, <paramref name="presentFrame"/>), the target's case, the new menu opened, the screens
+	/// when the old one was 1000, presentFrame), the target's case, the new menu opened, the screens
 	/// moved on and the screen drawn. The answer is <see cref="MessageChangedScreen"/>.
 	/// </summary>
 	/// <param name="message">The message handled.</param>
@@ -1018,7 +1033,7 @@ public sealed class Es1ShellScreens {
 
 	/// <summary>
 	/// <c>Shell_HandleMessage</c>'s step 9, the case of the table at <c>00082060</c> (targets at <c>00082104</c>) for
-	/// <paramref name="target"/>: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
+	/// The target: most make the screen's object the current menu (docs/es1/shell/menus.md#the-screens).
 	/// The main menu's, SINGLE MISSION's, MISSION PARAMS', the war map's, its two alerts', the debriefing's in either mode, the
 	/// career menu's and its REGISTRATION, backups, stats and overwrite warning, the KIA warnings', TECH RELEASE's, the delete
 	/// warning's, the disk-space warning's, the options menu's and its battle-set picker's, the service bay's, its three
@@ -1028,6 +1043,7 @@ public sealed class Es1ShellScreens {
 	/// backdrop shown with no window. The waits are the war map's and the debriefing's, whose constructors delete the box
 	/// the text box held, ARMING's and REPAIR's step to a HERC, and CONTROLS' page swap and panel loop.
 	/// </summary>
+	/// <param name="target">The target screen.</param>
 	private IEnumerable<Es1ShellWait> OpenScreenCase(short target) {
 		switch (target) {
 			case MainMenuScreen:
@@ -1331,11 +1347,12 @@ public sealed class Es1ShellScreens {
 	}
 
 	/// <summary>
-	/// Screen 9999's <c>Display_CopyRectToPage</c> (<c>0004c17c</c>)(the draw page, the visible page, <paramref name="rect"/>)
+	/// Screen 9999's <c>Display_CopyRectToPage</c> (<c>0004c17c</c>)(the draw page, the visible page, rect)
 	/// (docs/es1/rendering/screen-pages.md#fixing-a-rect): the source page set to the visible page, the rect copied from it
 	/// onto the draw page at the offset (0, 0), the rect added as dirty with delay 0 (<c>DirtyBox_AddRect</c>), and both
 	/// pages put back. The copy is <see cref="Es1VideoMemory.CopyRect"/> uncut, as <see cref="Es1ShellBackdrop.Draw"/>'s is.
 	/// </summary>
+	/// <param name="rect">The rect copied.</param>
 	private void CopyVisibleToDraw(Es1Rect rect) {
 		var display = _devices.Display;
 		int keptSource = display.SourcePage;

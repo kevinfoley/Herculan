@@ -20,14 +20,17 @@ public sealed class Es1GunsightBanks {
 	/// <summary><c>HudHTickBank</c> (<c>000936d0</c>), <c>dba\hudhtick</c>: the heading tape's strip, frame by frame.</summary>
 	public IReadOnlyList<DynamixBitmap>? HTick { get; init; }
 
-	/// <summary>The three banks from <paramref name="content"/>.</summary>
+	/// <summary>The three banks from the content.</summary>
+	/// <param name="content">The game's content.</param>
 	public static Es1GunsightBanks Load(GameContent content) => new() {
 		HSlid = Es1WidgetResources.LoadFrames(content, "HUDHSLID"),
 		VSlid = Es1WidgetResources.LoadFrames(content, "HUDVSLID"),
 		HTick = Es1WidgetResources.LoadFrames(content, "HUDHTICK"),
 	};
 
-	/// <summary>Frame <paramref name="index"/> of <paramref name="bank"/>; null when the bank or the frame is missing.</summary>
+	/// <summary>The frame at an index of a bank; null when the bank or the frame is missing.</summary>
+	/// <param name="bank">The bank, or null.</param>
+	/// <param name="index">The frame's index.</param>
 	internal static DynamixBitmap? Frame(IReadOnlyList<DynamixBitmap>? bank, int index) =>
 		bank != null && index >= 0 && index < bank.Count ? bank[index] : null;
 }

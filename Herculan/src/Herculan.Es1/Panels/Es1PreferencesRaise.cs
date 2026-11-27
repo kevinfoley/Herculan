@@ -27,7 +27,7 @@ internal static class Es1PreferencesRaise {
 	private const short OrbitSteer = unchecked((short)0xffc0);
 
 	/// <summary>
-	/// <c>PreferencesPanel_Raise</c> on <paramref name="simulation"/>, in its order:
+	/// <c>PreferencesPanel_Raise</c> on the simulation, in its order:
 	/// <list type="number">
 	/// <item>the panel built (<see cref="Es1PreferencesPanel"/>);</item>
 	/// <item><c>Sim_Frozen</c> kept and set, and <c>Display_FlipWithoutPan</c> cleared;</item>
@@ -48,6 +48,7 @@ internal static class Es1PreferencesRaise {
 	/// The two loops of step 5 and the attach on the first staged frame are <c>00057820</c>'s statements. With no panels,
 	/// no frame loop or no view manager, which retail always has, nothing is raised, an engine guard.
 	/// </summary>
+	/// <param name="simulation">The simulation.</param>
 	public static IEnumerable<Es1Wait> Run(Es1Simulation simulation) {
 		var chain = simulation.ViewChain;
 		if (simulation.Panels is not { } globals || simulation.Frame is not { } frame || chain.Manager is not { } views) {

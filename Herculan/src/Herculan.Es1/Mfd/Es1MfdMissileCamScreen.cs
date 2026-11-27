@@ -68,7 +68,7 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	private readonly StringFile? _strings;
 
 	/// <summary>
-	/// <c>MfdMissileViewScreen_Ctor</c> (<c>ES1DBSIM 000360c0</c>)(0, <paramref name="rect"/>)
+	/// <c>MfdMissileViewScreen_Ctor</c> (<c>ES1DBSIM 000360c0</c>)(0, rect)
 	/// (docs/es1/simulation/mfd-missile-camera.md#the-screen-object): the base; the viewport over the rect, clip mode 2,
 	/// its origin −((<i>x1</i> − <i>x0</i>) &gt;&gt; 1), −((<i>y1</i> − <i>y0</i>) &gt;&gt; 1), so its (0, 0) is the
 	/// rect's center, and its rect the same as <see cref="Es1MfdScreen.Rect"/>, which is not kept apart; the camera at
@@ -77,6 +77,11 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	/// <see cref="Label2Fill"/>. The other fields are the heap's zeros. The horizon is the view's (<see cref="Horizon"/>,
 	/// <see cref="SkylineBank"/>).
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="rect">The screen's rectangle.</param>
+	/// <param name="shared">The shared block.</param>
+	/// <param name="fonts">The label fonts.</param>
+	/// <param name="strings">The strings file, or null.</param>
 	internal Es1MfdMissileCamScreen(Es1Cockpit cockpit, Es1Rect rect, Es1MfdSharedBlock shared, IReadOnlyList<HudFont?> fonts,
 			StringFile? strings)
 		: base(cockpit, rect, shared) {
@@ -248,11 +253,13 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 	}
 
 	/// <summary>
-	/// The pose the view takes beside a missile at <paramref name="position"/> turned by <paramref name="angles"/>: its
+	/// The pose the view takes beside a missile at the position turned by the angles: its
 	/// angles, and its position with <c>Math_Q14Multiply</c>(<see cref="CameraOffset"/>, <c>Math_CosBam</c>(<i>h</i>))
 	/// added to <i>x</i> and <c>Math_Q14Multiply</c>(<see cref="CameraOffset"/>, <c>Math_CosBam</c>(<i>h</i> −
 	/// <c>0x4000</c>)) to <i>y</i>, <i>h</i> the heading.
 	/// </summary>
+	/// <param name="position">The missile's position.</param>
+	/// <param name="angles">The missile's angles.</param>
 	public static (Vec3i Position, (short Pitch, short Roll, short Heading) Angles) PoseBeside(Vec3i position,
 			(short Pitch, short Roll, short Heading) angles) {
 		short heading = angles.Heading;
@@ -263,12 +270,13 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 
 	/// <summary>
 	/// The horizon <c>Hzline_Ctor</c>(0) builds and the constructor sets up, its colours from
-	/// <paramref name="palette"/>: <see cref="SkyBandHeight"/>, <see cref="SkyBandCount"/>,
+	/// the palette: <see cref="SkyBandHeight"/>, <see cref="SkyBandCount"/>,
 	/// <see cref="GroundBandHeight"/> and <see cref="GroundBandCount"/>, <see cref="LineOffset"/>,
 	/// <see cref="GroundColor"/> and <see cref="ZenithColor"/>, and <c>Hzline_Ctor</c>'s <c>+0x6c</c>; its skyline is
 	/// <see cref="SkylineBank"/>, and with <c>+0x70</c> cleared the ground is banded. Null as
 	/// <see cref="Es1Horizon.From(int, int, int, int, int, int, int, int, DynamixPalette?)"/> answers.
 	/// </summary>
+	/// <param name="palette">The palette, or null.</param>
 	public static Es1Horizon? Horizon(DynamixPalette? palette) => Es1Horizon.From(ZenithColor, SkyBandHeight, SkyBandCount,
 		GroundColor, GroundBandHeight, GroundBandCount, Es1Horizon.CtorGapField, LineOffset, palette);
 
@@ -310,20 +318,23 @@ public sealed class Es1MfdMissileCamScreen : Es1MfdScreen {
 		lockLabel.SetText(canvas, Text(LockEntry));
 	}
 
-	/// <summary><c>Pool_Prev</c>'s walk of <c>g_ExplosionPool</c> for <paramref name="explosion"/>.</summary>
+	/// <summary><c>Pool_Prev</c>'s walk of <c>g_ExplosionPool</c> for the explosion.</summary>
+	/// <param name="explosion">The explosion.</param>
 	private bool InExplosionPool(Effects.Es1Explosion explosion) => Cockpit.Globals.Explosions.Contains(explosion);
 
 	/// <summary>
-	/// <c>Pool_Prev</c>'s walk of the projectile pool <c>000af0b4</c> for <paramref name="missile"/>, and, found, its
+	/// <c>Pool_Prev</c>'s walk of the projectile pool <c>000af0b4</c> for the missile, and, found, its
 	/// position <c>+0x20</c>–<c>+0x28</c> and its pitch, roll and heading <c>+6</c>–<c>+0xa</c>.
 	/// </summary>
+	/// <param name="missile">The missile.</param>
 	private (Vec3i Position, (short Pitch, short Roll, short Heading) Angles)? MissilePose(Es1Projectile missile) =>
 		Cockpit.Globals.Projectiles.Contains(missile) ? (missile.Position, missile.Angles) : null;
 
 	/// <summary>
 	/// <c>Pool_Prev</c>'s walk of <c>g_ExplosionPool</c>, oldest first, for the first explosion whose position
-	/// <c>+0x20</c> lies within <see cref="FlashReach"/> of <paramref name="position"/> (<c>Point3I_DistanceBetween</c>).
+	/// <c>+0x20</c> lies within <see cref="FlashReach"/> of the position (<c>Point3I_DistanceBetween</c>).
 	/// </summary>
+	/// <param name="position">The position.</param>
 	private Effects.Es1Explosion? ExplosionNear(Vec3i position) =>
 		Cockpit.Globals.Explosions.Live.FirstOrDefault(explosion => explosion.Position.ApproxDistanceTo(position) < FlashReach);
 

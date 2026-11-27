@@ -99,23 +99,27 @@ public sealed class Es1ExplosionPool {
 			: [];
 
 	/// <summary>
-	/// The <c>int16</c> at <paramref name="offset"/> from row <paramref name="typeId"/>'s start, read on into the rows
+	/// The <c>int16</c> at a byte offset from the start of a type's row, read on into the rows
 	/// after it as retail reads the table's memory; 0 past the table's end, where retail reads the heap, an engine guard.
 	/// </summary>
+	/// <param name="typeId">The type's row.</param>
+	/// <param name="offset">The byte offset from the row's start.</param>
 	public short RowWord(int typeId, int offset) {
 		int at = typeId * RowLength + offset;
 		return at >= 0 && at + 2 <= _table.Length ? BitConverter.ToInt16(_table, at) : (short)0;
 	}
 
 	/// <summary>
-	/// <c>Explosion_Construct</c> (<c>00005af0</c>)(null, <paramref name="point"/>, <paramref name="typeId"/>)
+	/// <c>Explosion_Construct</c> (<c>00005af0</c>)(null, point, typeId)
 	/// (docs/es1/simulation/impact-effects.md#construction--explosion_construct-00005af0): an effect from the pool, or
 	/// null with the pool full, the effects queued for delete still holding their places. The type byte is the id's low
 	/// byte, read signed; a type past the table, where retail reads past it, builds none, an engine guard, as does a
-	/// root past the shapes build an effect with no shape. <paramref name="random"/> is the simulation generator
-	/// <c>000b5bd4</c>, which the effect draws its turn from, and <paramref name="sound"/> the sound file it plays its row's
-	/// sound through.
+	/// root past the shapes build an effect with no shape.
 	/// </summary>
+	/// <param name="point">The effect's position.</param>
+	/// <param name="typeId">The effect type's id.</param>
+	/// <param name="random">The simulation generator <c>000b5bd4</c>, which the effect draws its turn from.</param>
+	/// <param name="sound">The sound file the effect plays its row's sound through.</param>
 	public Es1Explosion? Construct(Vec3i point, short typeId, SimRandom random, Sound.Es1Sound sound) {
 		sbyte type = unchecked((sbyte)typeId);
 		if (_live.Count + _deleteQueue.Count >= Capacity || type < 0 || type >= Types.Count) {
@@ -128,7 +132,8 @@ public sealed class Es1ExplosionPool {
 		return effect;
 	}
 
-	/// <summary>Whether <paramref name="effect"/> is live, <c>Pool_Prev</c>'s walk for it.</summary>
+	/// <summary>Whether the effect is live, <c>Pool_Prev</c>'s walk for it.</summary>
+	/// <param name="effect">The effect.</param>
 	public bool Contains(Es1Explosion? effect) => effect != null && _live.Contains(effect);
 
 	/// <summary>
@@ -164,7 +169,8 @@ public sealed class Es1ExplosionPool {
 		}
 	}
 
-	/// <summary>The effect at <paramref name="index"/> destroyed and queued.</summary>
+	/// <summary>The effect at an index destroyed and queued.</summary>
+	/// <param name="index">The effect's index.</param>
 	private void Destroy(int index) {
 		var effect = _live[index];
 		effect.Destroy();

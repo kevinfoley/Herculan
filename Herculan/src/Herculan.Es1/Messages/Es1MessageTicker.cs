@@ -23,8 +23,11 @@ public sealed class Es1MessageTicker : Es1MessagePort {
 
 	/// <summary>
 	/// <c>Cockpit_LoadPanel</c>'s inline build (docs/es1/simulation/cockpit-panel.md#building-it): <c>MessagePort_CtorBase</c>
-	/// on <paramref name="rect"/>, the <c>.GAU</c> record + 1684, the table <c>00092f0a</c>, and the blink latch clear.
+	/// on the rect, the <c>.GAU</c> record + 1684, the table <c>00092f0a</c>, and the blink latch clear.
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="rect">The ticker's rectangle.</param>
+	/// <param name="tables">The message tables.</param>
 	/// <param name="font"><c>ColorSchemePanels</c>[2], <c>cpred</c> (<c>00092d48</c>), the line's font; none draws no text.</param>
 	internal Es1MessageTicker(Es1Cockpit cockpit, Es1Rect rect, Es1MessageTables tables, HudFont? font)
 		: base(cockpit, rect, tables) {
@@ -48,11 +51,12 @@ public sealed class Es1MessageTicker : Es1MessagePort {
 		globals.CockpitViewInstance?.Ticker.Post((byte)id, null);
 
 	/// <summary>
-	/// The tone <c>MessagePort_Show</c> plays for <paramref name="id"/> through <c>MessagePort_ToneTable</c>
+	/// The tone <c>MessagePort_Show</c> plays for an id through <c>MessagePort_ToneTable</c>
 	/// (<c>000931e4</c>), a <c>Sound_Play</c> id: <c>0x17</c> for <c>0x10</c>, <c>0x12</c>, <c>0x1b</c> and <c>0x1c</c>;
 	/// <c>0x18</c> for 8, <c>0xb</c>–<c>0xd</c>, <c>0xf</c>, <c>0x11</c>, <c>0x13</c> and <c>0x14</c>; <c>0x19</c> for 6
 	/// and <c>0xe</c>; <c>0x1a</c> for every other id up to <c>0x21</c>; none above.
 	/// </summary>
+	/// <param name="id">The message id.</param>
 	public static short? ToneFor(short id) => id switch {
 		0x10 or 0x12 or 0x1b or 0x1c => 0x17,
 		8 or 0xb or 0xc or 0xd or 0xf or 0x11 or 0x13 or 0x14 => 0x18,
@@ -87,9 +91,10 @@ public sealed class Es1MessageTicker : Es1MessagePort {
 	}
 
 	/// <summary>
-	/// Slot <c>+8</c>, <c>MessagePort_SetText</c> (<c>0002f934</c>)(port, <paramref name="record"/>): <see cref="TextBuffer"/>
+	/// Slot <c>+8</c>, <c>MessagePort_SetText</c> (<c>0002f934</c>)(port, record): <see cref="TextBuffer"/>
 	/// emptied with no record, otherwise the record's text, its first <see cref="TextLimit"/> characters; answers it.
 	/// </summary>
+	/// <param name="record">The message, or null.</param>
 	protected override string SetText(Es1QueuedMessage? record) {
 		string text = record?.Text ?? string.Empty;
 		TextBuffer = text.Length > TextLimit ? text[..TextLimit] : text;

@@ -29,7 +29,10 @@ public sealed class Es1CloudLayer : IDisposable {
 	private readonly GpuTexture?[] _frames;
 	private readonly Vector2[] _frameTexels;
 
-	/// <summary>Uploads the cloud bank's frames in <paramref name="palette"/>, the live one, index 0 left transparent.</summary>
+	/// <summary>Uploads the cloud bank's frames in the palette, the live one, index 0 left transparent.</summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="clouds">The clouds.</param>
+	/// <param name="palette">The live palette.</param>
 	public Es1CloudLayer(GL gl, Es1Clouds clouds, DynamixPalette palette) {
 		_gl = gl;
 		_clouds = clouds;
@@ -51,7 +54,8 @@ public sealed class Es1CloudLayer : IDisposable {
 		}
 	}
 
-	/// <summary>The frames shown in <paramref name="palette"/>, the live palette after it changed.</summary>
+	/// <summary>The frames shown in the palette, the live palette after it changed.</summary>
+	/// <param name="palette">The live palette.</param>
 	public void ShowIn(DynamixPalette palette) {
 		var images = _clouds.Bank.Images ?? [];
 		for (int f = 0; f < _frames.Length; f++) {
@@ -61,13 +65,16 @@ public sealed class Es1CloudLayer : IDisposable {
 		}
 	}
 
-	/// <summary><paramref name="image"/> when it has the pixels to draw, otherwise null.</summary>
+	/// <summary>The image when it has the pixels to draw, otherwise null.</summary>
+	/// <param name="image">The image, or null.</param>
 	private static DynamixBitmap? Drawable(DynamixBitmap? image) =>
 		image?.ImageData is { } data && image.Cols >= 1 && image.Rows >= 1 && data.Length >= image.Cols * image.Rows
 			? image
 			: null;
 
-	/// <summary>A drawable frame's pixels as RGBA8 in <paramref name="palette"/>, index 0 and missing entries transparent.</summary>
+	/// <summary>A drawable frame's pixels as RGBA8 in the palette, index 0 and missing entries transparent.</summary>
+	/// <param name="image">The frame's image.</param>
+	/// <param name="palette">The palette.</param>
 	private static byte[] Colors(DynamixBitmap image, DynamixPalette palette) {
 		var data = image.ImageData!;
 		var rgba = new byte[image.Cols * image.Rows * 4];
@@ -84,9 +91,18 @@ public sealed class Es1CloudLayer : IDisposable {
 	}
 
 	/// <summary>
-	/// The clouds for this frame, after the skyline and before the scattered points. <paramref name="detail"/> is the
+	/// The clouds for this frame, after the skyline and before the scattered points. The detail is the
 	/// preferences byte <c>000bd566</c> the number drawn scales by.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="detail">The detail preference.</param>
+	/// <param name="random">The random generator.</param>
+	/// <param name="centre">The viewport's centre.</param>
+	/// <param name="focal">The focal length.</param>
+	/// <param name="viewportX">The viewport's x.</param>
+	/// <param name="viewportY">The viewport's y.</param>
+	/// <param name="viewportWidth">The viewport's width.</param>
+	/// <param name="viewportHeight">The viewport's height.</param>
 	public void Draw(Camera camera, int detail, Random random, Vector2 centre, float focal, int viewportX,
 			int viewportY, int viewportWidth, int viewportHeight) {
 		var positions = _clouds.Frame(camera.Position, detail, random);

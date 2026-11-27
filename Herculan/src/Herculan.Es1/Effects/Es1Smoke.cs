@@ -24,11 +24,16 @@ public sealed class Es1Smoke {
 	private short _countdown;
 
 	/// <summary>
-	/// <c>Smoke_Construct</c> (<c>000069ec</c>)(null, <paramref name="kind"/>, <paramref name="point"/>,
-	/// <paramref name="partId"/>, <paramref name="owner"/>)'s fields: the kind, its puff count, the countdown 0, the owner,
+	/// <c>Smoke_Construct</c> (<c>000069ec</c>)'s fields: the kind, its puff count, the countdown 0, the owner,
 	/// the part id, the first shape kind × <see cref="ShapesPerKind"/> + the generator's draw &amp; 3, and the point, or
 	/// with none <see cref="NoPoint"/> set. A kind past the table, where retail reads past it, puffs none, an engine guard.
 	/// </summary>
+	/// <param name="pool">The pool the emitter belongs to.</param>
+	/// <param name="kind">The smoke kind.</param>
+	/// <param name="point">The emitter's position, or null for none.</param>
+	/// <param name="partId">The part id.</param>
+	/// <param name="owner">The object the emitter follows.</param>
+	/// <param name="draw">The generator's draw for the first shape.</param>
 	internal Es1Smoke(Es1SmokePool pool, short kind, (short X, short Y, short Z)? point, short partId, IEs1SimObject owner,
 			short draw) {
 		_pool = pool;
@@ -116,7 +121,9 @@ public sealed class Es1SmokeBall {
 
 	private int _countdown = CellInterval;
 
-	/// <summary><c>SmokeBall_Construct</c> (<c>00006704</c>)'s fields: the root <paramref name="shape"/>, the type tag, the point and the countdown.</summary>
+	/// <summary><c>SmokeBall_Construct</c> (<c>00006704</c>)'s fields: the root shape, the type tag, the point and the countdown.</summary>
+	/// <param name="shape">The ball's root shape, or null.</param>
+	/// <param name="point">The ball's position.</param>
 	internal Es1SmokeBall(TSObject? shape, Vec3i point) {
 		Shape = shape;
 		Position = point;

@@ -110,17 +110,18 @@ public sealed class Es1Preferences {
 	}
 
 	/// <summary>
-	/// <c>Prefs_Init</c>'s steps on the options from <paramref name="file"/>, as far as this type keeps them
+	/// <c>Prefs_Init</c>'s steps on the options from the file, as far as this type keeps them
 	/// (docs/es1/simulation/input.md#the-preferences-start-up): <c>PrefsInitInProgress</c> set; <c>Prefs_Load</c>(1),
 	/// which runs each registered handler with its option; <c>VoiceArchivePresent</c> from
-	/// <paramref name="voiceArchivePresent"/>, and option 2 set to 0 (<c>Prefs_SetOption</c>(1, 0, 2)) when it is clear;
+	/// voiceArchivePresent, and option 2 set to 0 (<c>Prefs_SetOption</c>(1, 0, 2)) when it is clear;
 	/// <c>PrefsInitInProgress</c> cleared. The handlers of options 8 and 10 run when <see cref="Es1ControlsState"/>
 	/// registers them, and the joystick devices are built by the input read (<see cref="Es1PlayerInputReader"/>). Under
-	/// <paramref name="demoMode"/> the load runs twice, <c>Prefs_Load</c>(1) and then <c>Prefs_Load</c>(0), and
+	/// demoMode the load runs twice, <c>Prefs_Load</c>(1) and then <c>Prefs_Load</c>(0), and
 	/// <c>Prefs_RevertSelectedOptions</c> (<c>0004aaf0</c>) puts options 0–6, the list at <c>0009570c</c>, back to their
 	/// loaded values. Both loads read <c>data\prefs.cfg</c>, whatever a tape plays, so the second reads the bytes the first
 	/// did.
 	/// </summary>
+	/// <param name="file">The options file's bytes, or null.</param>
 	/// <param name="path"><c>data\prefs.cfg</c> in the install, which <see cref="SaveSelectedOptions"/> writes.</param>
 	/// <param name="voiceArchivePresent">What <see cref="VoiceArchiveExists"/> answers for the install.</param>
 	/// <param name="demoMode"><c>DemoMode</c> (<c>000b5bd0</c>), which <c>-D</c> sets.</param>
@@ -161,8 +162,9 @@ public sealed class Es1Preferences {
 
 	/// <summary>
 	/// <c>Voice_ArchiveExists</c> (<c>0004aed8</c>): whether <c>vol\simvoice.vol</c> opens, from the directory the
-	/// simulator runs in, <paramref name="installRoot"/>.
+	/// simulator runs in, the install root.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
 	public static bool VoiceArchiveExists(string installRoot) =>
 		File.Exists(CaseInsensitivePath.Combine(installRoot, VoiceArchivePath));
 
@@ -180,9 +182,10 @@ public sealed class Es1Preferences {
 
 	/// <summary>
 	/// The shell's <c>Speech_ArchivePresent</c> (<c>ES1GO 000087ce</c>): whether <c>vol\speech.vol</c> opens with
-	/// <c>fopen</c>(<c>rb</c>), from the directory the shell runs in, <paramref name="installRoot"/>
+	/// <c>fopen</c>(<c>rb</c>), from the directory the shell runs in, the install root
 	/// (docs/es1/shell/options.md#the-buttons--prefsmenu_onmessage-0002b82b).
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
 	public static bool SpeechArchiveExists(string installRoot) =>
 		File.Exists(CaseInsensitivePath.Combine(installRoot, SpeechArchivePath));
 
@@ -202,13 +205,16 @@ public sealed class Es1Preferences {
 	/// </summary>
 	public bool LowMemory => false;
 
-	/// <summary>Option <paramref name="index"/>, 0–16.</summary>
+	/// <summary>An option, 0–16.</summary>
+	/// <param name="index">The option's index.</param>
 	public byte this[int index] => _options[index];
 
-	/// <summary><c>Prefs_LoadedOptions</c>[<paramref name="index"/>]: the option as loaded or last committed.</summary>
+	/// <summary><c>Prefs_LoadedOptions</c>[index]: the option as loaded or last committed.</summary>
+	/// <param name="index">The option's index.</param>
 	public byte Loaded(int index) => _loaded[index];
 
-	/// <summary><c>Prefs_PreviousOptions</c>[<paramref name="index"/>]: the option before its last write.</summary>
+	/// <summary><c>Prefs_PreviousOptions</c>[index]: the option before its last write.</summary>
+	/// <param name="index">The option's index.</param>
 	public byte Previous(int index) => _previous[index];
 
 	/// <summary>Option 7, <see cref="StickConfigurationOption"/>.</summary>
@@ -237,7 +243,7 @@ public sealed class Es1Preferences {
 
 	/// <summary>
 	/// <c>Prefs_SetOption</c> (<c>0004a914</c>): the old value kept in <c>Prefs_PreviousOptions</c>, the new one stored, and with
-	/// <paramref name="apply"/> the option's handler, when it has one, called with it.
+	/// apply the option's handler, when it has one, called with it.
 	/// </summary>
 	/// <param name="apply">Whether the option's handler is called.</param>
 	/// <param name="value">The new value.</param>
@@ -298,7 +304,7 @@ public sealed class Es1Preferences {
 
 	/// <summary>
 	/// <c>Prefs_CommitOptions</c> (<c>0004a83c</c>): for each option that differs from its
-	/// load-time copy, its handler called with it when <paramref name="apply"/> is set and it has one, then the copy made
+	/// load-time copy, its handler called with it when apply is set and it has one, then the copy made
 	/// current; every option copied to <c>Prefs_PreviousOptions</c> (docs/es1/simulation/preferences.md#the-option-array).
 	/// </summary>
 	/// <param name="apply">Whether the option's handler is called.</param>
@@ -352,7 +358,7 @@ public sealed class Es1Preferences {
 
 	/// <summary>
 	/// <c>Prefs_SaveSelectedOptions</c> (<c>0004ab6c</c>): the 17 bytes of
-	/// <see cref="FilePath"/> read, the options <paramref name="indices"/> names copied over them, or all 17 options
+	/// <see cref="FilePath"/> read, the options the index list names copied over them, or all 17 options
 	/// taken when the file does not open; then the 17 written back when the file opens for writing. Bytes past a short
 	/// file's end read 0, as in <see cref="FromFile"/>. With no <see cref="FilePath"/> nothing is saved.
 	/// </summary>
@@ -390,7 +396,7 @@ public sealed class Es1Preferences {
 	/// <summary>
 	/// The shell's <c>Prefs_SetOption</c> (<c>ES1GO 00008378</c>) (docs/es1/shell/single-mission.md#the-mission-params-menu): <see cref="SetOption"/>
 	/// without the old value kept in <c>Prefs_PreviousOptions</c>, a copy the shell does not have; the value stored and,
-	/// with <paramref name="apply"/>, the option's handler, when it has one, called with it.
+	/// with apply, the option's handler, when it has one, called with it.
 	/// </summary>
 	/// <param name="apply">Whether the option's handler is called.</param>
 	/// <param name="value">The new value.</param>
@@ -440,7 +446,7 @@ public sealed class Es1Preferences {
 	/// The shell's <c>Prefs_CommitAll</c> (<c>ES1GO 000082b0</c>) (docs/es1/shell/single-mission.md#the-mission-params-menu): <see cref="CommitOptions"/> without the copy of every
 	/// option into <c>Prefs_PreviousOptions</c>. For each option that differs from its committed copy
 	/// <c>Prefs_Committed</c> (<c>000aa260</c>), held as <see cref="Loaded"/>, its handler called with it when
-	/// <paramref name="apply"/> is set and it has one, then the copy made current.
+	/// apply is set and it has one, then the copy made current.
 	/// </summary>
 	/// <param name="apply">Whether the option's handler is called.</param>
 	public void ShellCommitAll(bool apply) {
@@ -458,7 +464,7 @@ public sealed class Es1Preferences {
 	/// <summary>
 	/// The shell's <c>Prefs_RevertAll</c> (<c>ES1GO 00008316</c>) (docs/es1/shell/single-mission.md#the-mission-params-menu), the same statements as the simulator's <c>0004a8a8</c>,
 	/// which this type has no other use for: each option that differs from its committed copy (<see cref="Loaded"/>) set
-	/// back to it, and its handler called with it when <paramref name="apply"/> is set and it has one.
+	/// back to it, and its handler called with it when apply is set and it has one.
 	/// </summary>
 	/// <param name="apply">Whether the option's handler is called.</param>
 	public void ShellRevertAll(bool apply) {

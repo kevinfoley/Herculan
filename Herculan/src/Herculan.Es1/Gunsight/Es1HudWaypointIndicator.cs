@@ -21,9 +21,13 @@ public sealed class Es1HudWaypointIndicator : Es1HudRotationIndicator {
 
 	/// <summary>
 	/// The constructor: the rotation indicator, the bytes <c>+0x49</c> and <c>+0x4a</c> cleared, and the caption
-	/// <c>+0x4b</c>, <c>Label_Ctor</c> with <paramref name="font"/>, <c>ColorSchemePanels</c>' <c>cpgreen</c>
+	/// <c>+0x4b</c>, <c>Label_Ctor</c> with the font, <c>ColorSchemePanels</c>' <c>cpgreen</c>
 	/// (<c>00092d44</c>), and <c>Label_SetRect</c>(label, 2, the rect, {0, 6}).
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="banks">The gunsight's bitmap banks.</param>
+	/// <param name="rect">The indicator's rectangle.</param>
+	/// <param name="font">The caption's font, or null.</param>
 	public Es1HudWaypointIndicator(Es1Cockpit cockpit, Es1GunsightBanks banks, Es1Rect rect, HudFont? font)
 			: base(cockpit, banks, rect) {
 		Caption = new Es1Label(font);

@@ -27,11 +27,17 @@ public sealed class Es1PlayerInputReader {
 	/// <summary>
 	/// <c>Input_BuildSourceTable</c>'s part from the joystick devices on: option 11's handler,
 	/// <see cref="ApplyMouseOption"/>, registered and run with the option as loaded, as <c>Prefs_Init</c> registers it
-	/// and <c>Prefs_Load</c> runs it; the devices built on <paramref name="port"/> (<c>Input_CreateJoystickDevices</c>,
+	/// and <c>Prefs_Load</c> runs it; the devices built on the port (<c>Input_CreateJoystickDevices</c>,
 	/// which <c>Prefs_Init</c> runs last); the live block polled once; the four latches cleared; and
-	/// <paramref name="keyjoy"/>, <c>Keyjoy_LoadConfig</c>'s read. The axis keys read option 10 from
-	/// <paramref name="preferences"/> for <c>Ctrl+I</c> and <c>Ctrl+M</c>.
+	/// the keyjoy configuration, <c>Keyjoy_LoadConfig</c>'s read. The axis keys read option 10 from
+	/// the options for <c>Ctrl+I</c> and <c>Ctrl+M</c>.
 	/// </summary>
+	/// <param name="keyboard">The keyboard.</param>
+	/// <param name="mouse">The host mouse.</param>
+	/// <param name="preferences">The options.</param>
+	/// <param name="keyjoy">The keyjoy configuration.</param>
+	/// <param name="controls">The controls state.</param>
+	/// <param name="port">The game port.</param>
 	public Es1PlayerInputReader(Es1KeyboardInput keyboard, Es1HostMouse mouse, Es1Preferences preferences,
 		Es1KeyjoyConfig keyjoy, Es1ControlsState controls, IEs1GamePort port) {
 		_keyboard = keyboard;
@@ -304,9 +310,15 @@ public sealed class Es1PlayerInputReader {
 	/// configuration: each of the profile's four functions on its own axis whatever the stick mode, the keyboard's pair
 	/// where the function reads 0, as every configuration takes the keyboard's; option 10 keeps the throttle on the keys
 	/// as it does there. Button 0 is the profile's trigger or <c>Space</c>, and buttons 1–3 the keyboard's. A lever's
-	/// <paramref name="leverAxis"/> is the throttle axis alone, the keyboard's throttle keys dropped, as Earthsiege 2's
+	/// the lever axis is the throttle axis alone, the keyboard's throttle keys dropped, as Earthsiege 2's
 	/// lever zeroes its axis; option 10 turns the lever off as it turns a stick's throttle off.
 	/// </summary>
+	/// <param name="kb">The keyboard's axes.</param>
+	/// <param name="stick">The stick's axes.</param>
+	/// <param name="keyButtons">The keyboard's buttons.</param>
+	/// <param name="trigger">The trigger button's state.</param>
+	/// <param name="throttleKeys">Whether the keyboard's throttle keys count.</param>
+	/// <param name="leverAxis">The throttle lever's axis, or null.</param>
 	private static (short[] Axes, byte[] Buttons) ChooseCustom(int[] kb, int[] stick, byte[] keyButtons, byte trigger,
 			bool throttleKeys, short? leverAxis) {
 		static int Or(int stick, int keyboard) => stick != 0 ? stick : keyboard;
@@ -378,10 +390,11 @@ public sealed class Es1PlayerInputReader {
 
 	/// <summary>
 	/// <c>Prefs_ApplyMouseOption</c> (<c>0004ad54</c>), option 11's handler (docs/es1/simulation/preferences.md#the-option-array):
-	/// when <paramref name="value"/> differs from <see cref="MouseOptionApplied"/>, it is kept there and, with the mouse
+	/// when the value differs from <see cref="MouseOptionApplied"/>, it is kept there and, with the mouse
 	/// device <c>Input_BuildSourceTable</c> always builds, the driver turned off for 0 (<c>Mouse_DisableDriver</c>) and
 	/// on otherwise (<c>Mouse_EnableDriver</c>).
 	/// </summary>
+	/// <param name="value">The option's new value.</param>
 	public void ApplyMouseOption(byte value) {
 		if (value == MouseOptionApplied) {
 			return;

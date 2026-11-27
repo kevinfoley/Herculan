@@ -43,11 +43,14 @@ public sealed class Es1PilotChannel : Es1MessagePort {
 	private ushort[]? _painted;
 
 	/// <summary>
-	/// <c>DialogPort_Ctor</c> (<c>0002f3d8</c>)(0, <paramref name="rect"/>), the <c>.GAU</c> record + 1668
+	/// <c>DialogPort_Ctor</c> (<c>0002f3d8</c>)(0, rect), the <c>.GAU</c> record + 1668
 	/// (docs/es1/simulation/cockpit-messages.md#building-the-two-ports): <c>MessagePort_CtorBase</c> and the table
 	/// <c>000931b6</c>. Retail's two buffers are <c>Region_PixelCount</c> of the rect each; here each is the size of the
 	/// box it last saved.
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="rect">The channel's rectangle.</param>
+	/// <param name="tables">The message tables.</param>
 	/// <param name="font"><c>ColorSchemePanels</c>[2], <c>cpred</c> (<c>00092d48</c>), the line's font; none draws no text and measures 0.</param>
 	internal Es1PilotChannel(Es1Cockpit cockpit, Es1Rect rect, Es1MessageTables tables, HudFont? font)
 		: base(cockpit, rect, tables) {
@@ -59,7 +62,7 @@ public sealed class Es1PilotChannel : Es1MessagePort {
 
 	/// <summary>
 	/// <c>Ai_PostSquadMessage</c> (<c>0001a188</c>) (docs/es1/simulation/cockpit-messages.md#posting): unless the machine is destroyed
-	/// (<see cref="Es1Mech.Destroyed"/>, <c>+0x93</c>) and <paramref name="force"/> is clear, {id, machine} posted to the
+	/// (<see cref="Es1Mech.Destroyed"/>, <c>+0x93</c>) and force is clear, {id, machine} posted to the
 	/// pilot channel of <c>CockpitViewInstance</c> (<c>CockpitView_GetSquadMessagePort</c>, <c>0002d614</c>), the post
 	/// reading the id's low byte. With no cockpit built, which retail always has, nothing.
 	/// </summary>
@@ -121,13 +124,14 @@ public sealed class Es1PilotChannel : Es1MessagePort {
 	}
 
 	/// <summary>
-	/// Slot <c>+8</c>, <c>PilotMessagePort_ComposeLine</c> (<c>0002f454</c>)(port, <paramref name="record"/>):
+	/// Slot <c>+8</c>, <c>PilotMessagePort_ComposeLine</c> (<c>0002f454</c>)(port, record):
 	/// <see cref="LineBuffer"/> emptied with no record; otherwise the speaker's name, <c>Squad_PilotName</c> of the
 	/// subject's squadmate slot (<see cref="Es1Cockpit.SquadPilotName"/>) or <see cref="NoSpeaker"/> for a subject in no
 	/// slot, a null one included, then <see cref="NameSeparator"/> and the first <see cref="TextLimit"/> characters of the
 	/// record's text; answers it. A slot whose name is not set, which retail's squadmates never are, reads as empty, an
 	/// engine guard.
 	/// </summary>
+	/// <param name="record">The message, or null.</param>
 	protected override string SetText(Es1QueuedMessage? record) {
 		if (record == null) {
 			LineBuffer = string.Empty;
@@ -207,7 +211,9 @@ public sealed class Es1PilotChannel : Es1MessagePort {
 		Restore(canvas, _painted);
 	}
 
-	/// <summary><c>Region_Restore</c>(the box's region, its corner, <paramref name="cells"/>): the cells put back at the box's top-left; none puts back nothing.</summary>
+	/// <summary><c>Region_Restore</c>(the box's region, its corner, cells): the cells put back at the box's top-left; none puts back nothing.</summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="cells">The saved cells, or null.</param>
 	private void Restore(Es1PanelCanvas canvas, ushort[]? cells) {
 		if (cells != null) {
 			canvas.RestoreRegion(Box, Box.X0, Box.Y0, cells);

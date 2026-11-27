@@ -43,8 +43,9 @@ public sealed class Es1BackdropOptions {
 	public int GroundDetail => _live?[Es1Preferences.GroundOption] ?? ViewerDetail;
 
 	/// <summary>
-	/// Whether the ground is textured: <c>Hzline_FillGround</c>'s test, a ground texture loaded (<paramref name="hasTexture"/>,
+	/// Whether the ground is textured: <c>Hzline_FillGround</c>'s test, a ground texture loaded (hasTexture,
 	/// the <c>hzline</c>'s <c>+0x70</c>) and <see cref="GroundDetail"/> above 240.
 	/// </summary>
+	/// <param name="hasTexture">Whether a ground texture is loaded.</param>
 	public bool Textured(bool hasTexture) => hasTexture && GroundDetail > Es1GroundSpecks.DetailLimit;
 }

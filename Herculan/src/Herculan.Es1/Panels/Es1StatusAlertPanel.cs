@@ -40,13 +40,17 @@ public sealed class Es1StatusAlertPanel : Es1AlertPanel {
 	private readonly Es1Label[] _body = new Es1Label[BodyLines];
 
 	/// <summary>
-	/// <c>StatusAlertPanel_Ctor</c>(panel, <paramref name="rect"/>, <paramref name="keepsScreen"/>,
-	/// <paramref name="status"/>): 222 × 109, centered with no rect given and at the rect's corner with one; the string
+	/// <c>StatusAlertPanel_Ctor</c>(panel, rect, keepsScreen,
+	/// status): 222 × 109, centered with no rect given and at the rect's corner with one; the string
 	/// table's three groups; the buttons for the status (<see cref="ButtonColumns"/>), each with its caption label in
 	/// <c>cpylw</c>, centered on it with the margin (0, −3), registered with the panel's root; the plate; the title label
 	/// in <c>title</c> on a bar 20 pixels wider than the title, centered with the margin (0, −11); the four body labels in
 	/// <c>green6x8</c>, centered; widget 0 the cancel widget; and for status 2 the alert cursor left up on leaving.
 	/// </summary>
+	/// <param name="globals">The alert globals.</param>
+	/// <param name="status">The status.</param>
+	/// <param name="rect">The panel's rectangle, or null to center it.</param>
+	/// <param name="keepsScreen">Whether a buffer keeps the screen under the panel.</param>
 	public Es1StatusAlertPanel(Es1AlertGlobals globals, int status, Es1Rect? rect = null, bool keepsScreen = true)
 		: base(globals, rect is { } at ? SetRect(Height, Width, at.Y0, at.X0) : CenterRect(Height, Width), keepsScreen) {
 		Status = status;
@@ -98,10 +102,11 @@ public sealed class Es1StatusAlertPanel : Es1AlertPanel {
 	public IReadOnlyList<Es1Label> BodyLabels => _body;
 
 	/// <summary>
-	/// The buttons' left columns for <paramref name="status"/>, the jump table <c>000950c0</c> behind an unsigned bound
+	/// The buttons' left columns for the status, the jump table <c>000950c0</c> behind an unsigned bound
 	/// against <c>0x12</c>: one at <i>x</i> 71 for 0, 2, 3, 7, 8, <c>0x11</c> and <c>0x12</c>; two at 22 and 120 for 1, 4
 	/// to 6, 9, 10 and <c>0xb</c> to <c>0x10</c>; none for any other.
 	/// </summary>
+	/// <param name="status">The status.</param>
 	public static int[] ButtonColumns(int status) => (uint)status switch {
 		0 or 2 or 3 or 7 or 8 or 0x11 or 0x12 => [71],
 		1 or 4 or 5 or 6 or 9 or 10 or (>= 0xb and <= 0x10) => [22, 120],
@@ -111,16 +116,20 @@ public sealed class Es1StatusAlertPanel : Es1AlertPanel {
 	/// <summary>Slot <c>+0xc</c>, <c>StatusAlertPanel_RunModal</c> (<c>0004730c</c>): the base's loop.</summary>
 	public override IEnumerable<Es1Wait> Run(StrongBox<int> answer) => RunModal(answer);
 
-	/// <summary><c>StatusAlertPanel_GetButtonCaption</c> (<c>0004755c</c>)(panel, <paramref name="index"/>): the status's caption <paramref name="index"/>, <c>+0x31c</c>[index].</summary>
+	/// <summary><c>StatusAlertPanel_GetButtonCaption</c> (<c>0004755c</c>)(panel, index): the status's caption index, <c>+0x31c</c>[index].</summary>
+	/// <param name="index">The button's index.</param>
 	public override string? GetButtonCaption(int index) => Text(CaptionGroup, 2 * Status + index);
 
-	/// <summary>The status's body line <paramref name="line"/>, of <c>+0x320</c>.</summary>
+	/// <summary>A line of the status's body, of <c>+0x320</c>.</summary>
+	/// <param name="line">The line's index.</param>
 	public string? BodyLine(int line) => Text(BodyGroup, BodyLines * Status + line);
 
 	/// <summary>
-	/// <c>StatusAlertPanel_OnChildClick</c> (<c>000474e4</c>)(panel, flags, <paramref name="child"/>): the close byte 2
+	/// <c>StatusAlertPanel_OnChildClick</c> (<c>000474e4</c>)(panel, flags, child): the close byte 2
 	/// for widget 0 and 3 for widget 1, so the loop answers 0 for the left button and 1 for the right.
 	/// </summary>
+	/// <param name="flags">The click's button bits.</param>
+	/// <param name="child">The widget clicked.</param>
 	public override void OnChildClick(short flags, Es1Widget child) {
 		switch (IndexOf(child)) {
 			case 0:
@@ -156,6 +165,8 @@ public sealed class Es1StatusAlertPanel : Es1AlertPanel {
 		}
 	}
 
-	/// <summary>String <paramref name="index"/> of the table's group <paramref name="group"/>; none when the table or the string is missing.</summary>
+	/// <summary>A string of the table's group; none when the table or the string is missing.</summary>
+	/// <param name="group">The group.</param>
+	/// <param name="index">The string's index.</param>
 	private string? Text(int group, int index) => Strings?.Text(group, index);
 }

@@ -73,7 +73,8 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 		_controller = controller;
 	}
 
-	/// <summary>The port over <paramref name="controller"/>'s device and map, and its Custom profile.</summary>
+	/// <summary>The port over the controller's device and map, and its Custom profile.</summary>
+	/// <param name="controller">The controller.</param>
 	public static Es1ControllerPort Over(MappedController controller) => new(
 		() => controller.Map,
 		index => controller.Device?.Axis(index) ?? 0f,
@@ -106,19 +107,21 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	}
 
 	/// <summary>
-	/// Reads through <paramref name="file"/>'s maps from now on, as the Controller window saves them: the device and its map
+	/// Reads through the file's maps from now on, as the Controller window saves them: the device and its map
 	/// are picked again (<see cref="MappedController.Reset"/>), and its Custom profile read again. The joystick devices keep
 	/// the axes they detected as they were built (<see cref="AxisAnswers"/>), as retail's do until they are built again.
 	/// </summary>
+	/// <param name="file">The saved joystick maps.</param>
 	public void Configure(JoystickMapFile file) {
 		_controller?.Reset(file);
 		_custom = null;
 	}
 
 	/// <summary>
-	/// Whether <paramref name="controller"/> has a device with a known map that is in Custom mode: what <see cref="Custom"/>
+	/// Whether the controller has a device with a known map that is in Custom mode: what <see cref="Custom"/>
 	/// answers a profile for, and what the shell's CONTROLS panel asks of the device the next mission would read.
 	/// </summary>
+	/// <param name="controller">The controller.</param>
 	public static bool InCustomMode(MappedController controller) =>
 		controller is { Device: { } device, Map: not null }
 		&& controller.File.ModeFor(device.IsGamepad, device.Guid) == ControllerMode.Custom;
@@ -140,9 +143,10 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 		Custom is { } custom && _controller?.Device is { } device && !Quiet() ? custom.KeyActions(ControllerState.Of(device)) : [];
 
 	/// <summary>
-	/// The input holding <paramref name="action"/> in the Custom profile, whether or not the port is quiet, for the host's
+	/// The input holding the action in the Custom profile, whether or not the port is quiet, for the host's
 	/// own actions, which work the menus that quiet it; null in Original mode or with none held.
 	/// </summary>
+	/// <param name="action">The action.</param>
 	public ControllerInput? HostActionInput(KeyAction action) =>
 		Custom is { } custom && _controller?.Device is { } device ? custom.HeldInput(ControllerState.Of(device), action) : null;
 
@@ -154,9 +158,11 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 		_controller?.Device is { IsGamepad: false } ? HostActionInput(KeyAction.MenuBar) : null;
 
 	/// <summary>
-	/// Whether <paramref name="device"/> is the port's controller and holds <paramref name="action"/> in its Custom profile
+	/// Whether the device is the port's controller and holds the action in its Custom profile
 	/// (<see cref="HostActionInput"/>): what opens a radial (<see cref="Engine.Menus.PadRadial.Update"/>).
 	/// </summary>
+	/// <param name="device">The device.</param>
+	/// <param name="action">The action.</param>
 	public bool HostActionHeldOn(ControllerDevice device, KeyAction action) =>
 		_controller?.Device is { } read && read.Slot == device.Slot && HostActionInput(action) != null;
 
@@ -219,7 +225,7 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 	}
 
 	/// <summary>
-	/// What the port reads through <paramref name="map"/>: each role's axis in <see cref="JoystickReading.RawFull"/> units,
+	/// What the port reads through the map: each role's axis in <see cref="JoystickReading.RawFull"/> units,
 	/// the hat at one of its four directions or centred, and buttons 0–3, the map's logical buttons 1–4. Which line the
 	/// hat goes on is the wiring's (<see cref="Wire"/>).
 	/// </summary>
@@ -258,7 +264,9 @@ public sealed class Es1ControllerPort : IEs1GamePort {
 		return false;
 	}
 
-	/// <summary>The device axis the map gives the role port axis <paramref name="axis"/> carries.</summary>
+	/// <summary>The device axis the map gives to a role port axis.</summary>
+	/// <param name="map">The device map.</param>
+	/// <param name="axis">The role port axis.</param>
 	private static int RoleAxis(JoystickDeviceMap map, int axis) => axis switch {
 		0 => map.StickXAxis,
 		1 => map.StickYAxis,

@@ -14,11 +14,13 @@ public sealed class Es1LedBarGraphV : IEs1LedBarGraph {
 	private int _drawnY0, _drawnY1;
 
 	/// <summary>
-	/// <c>LEDBarGraphV_Ctor</c> (<c>ES1DBSIM 0003216c</c>)(0, <paramref name="range"/>, <paramref name="rect"/>), through
+	/// <c>LEDBarGraphV_Ctor</c> (<c>ES1DBSIM 0003216c</c>)(0, range, rect), through
 	/// <c>BarGraphV_Ctor</c> (<c>00031aac</c>): the rect; the span (<i>y1</i> − <i>y0</i>) · <c>0x10000</c> / range; the
 	/// start <i>y0</i> and the end <i>y1</i>; and the position at the start for a span below 1 and at the end otherwise.
 	/// No color is set.
 	/// </summary>
+	/// <param name="range">The range.</param>
+	/// <param name="rect">The bar's rectangle.</param>
 	public Es1LedBarGraphV(short range, Es1Rect rect) {
 		Rect = rect;
 		Span = (rect.Y1 - rect.Y0) * 0x10000 / range;
@@ -56,13 +58,15 @@ public sealed class Es1LedBarGraphV : IEs1LedBarGraph {
 	public Es1Rect GetRect() => Rect with { Y0 = _drawnY0, Y1 = _drawnY1 };
 
 	/// <summary>
-	/// Slot <c>+4</c>, <c>LedBarGraphV_PaintToValue</c> (<c>000321a0</c>)(bar, <paramref name="value"/>): the new position
+	/// Slot <c>+4</c>, <c>LedBarGraphV_PaintToValue</c> (<c>000321a0</c>)(bar, value): the new position
 	/// <i>p</i>, start + (value · span &gt;&gt; 16) for a span below 1 and end − (value · span &gt;&gt; 16) otherwise;
 	/// nothing when it is the stored <i>q</i>. Otherwise, filling from the start, <i>q</i> to <i>p</i> drawn through
 	/// <see cref="FillPinstripe"/> as the bar grows and <i>p</i> to <i>q</i> filled in <see cref="UnlitColor"/> as it
 	/// shrinks; filling from the end, <i>p</i> to <i>q</i> through the pinstripe as it grows and <i>q</i> to <i>p</i>
 	/// unlit as it shrinks; both ends included; then <i>p</i> stored.
 	/// </summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="value">The new value.</param>
 	public void PaintToValue(Es1PanelCanvas canvas, short value) {
 		if (Span < 1) {
 			int p = (value * Span >> 16) + Start;
@@ -109,18 +113,24 @@ public sealed class Es1LedBarGraphV : IEs1LedBarGraph {
 		}
 	}
 
-	/// <summary>The rows <paramref name="y0"/> to <paramref name="y1"/> of the rect's columns filled through a temporary brush {0, <see cref="UnlitColor"/>}, written into the rect's <i>y0</i> and <i>y1</i>.</summary>
+	/// <summary>The rows y0 to y1 of the rect's columns filled through a temporary brush {0, <see cref="UnlitColor"/>}, written into the rect's <i>y0</i> and <i>y1</i>.</summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="y0">The first row.</param>
+	/// <param name="y1">The last row.</param>
 	private void FillUnlit(Es1PanelCanvas canvas, int y0, int y1) {
 		(_drawnY0, _drawnY1) = (y0, y1);
 		canvas.FillRect(Rect.X0, y0, Rect.X1, y1, UnlitColor);
 	}
 
 	/// <summary>
-	/// <c>LedBarGraphV_FillPinstripe</c> (<c>000323f0</c>)(bar, rect) on the rows <paramref name="y0"/> to
-	/// <paramref name="y1"/> of the rect's columns, which its callers first write into the rect's <i>y0</i> and <i>y1</i>:
+	/// <c>LedBarGraphV_FillPinstripe</c> (<c>000323f0</c>)(bar, rect) on the rows y0 to
+	/// y1 of the rect's columns, which its callers first write into the rect's <i>y0</i> and <i>y1</i>:
 	/// a line from (<i>x0</i>, <i>y</i>) to (<i>x1</i>, <i>y</i>) at each even row <i>y</i> in <see cref="EvenShade"/>,
 	/// then at each odd one in <see cref="OddShade"/>, the row's parity its own.
 	/// </summary>
+	/// <param name="canvas">The canvas drawn on.</param>
+	/// <param name="y0">The first row.</param>
+	/// <param name="y1">The last row.</param>
 	private void FillPinstripe(Es1PanelCanvas canvas, int y0, int y1) {
 		(_drawnY0, _drawnY1) = (y0, y1);
 		for (int y = (y0 & 1) != 0 ? y0 + 1 : y0; y <= y1; y += 2) {

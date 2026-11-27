@@ -56,11 +56,14 @@ public sealed class Es1FlicPlayer {
 	private bool _keyWaiting;
 
 	/// <summary>
-	/// A player for <paramref name="flic"/> with <paramref name="switches"/>, its sounds in <paramref name="sound"/>: at
+	/// A player for the flic with the switches, its sounds in the sound list: at
 	/// <see cref="Es1FlicSwitches.Speed"/> milliseconds a frame when it is not 0, and otherwise at the header's, which a
 	/// <c>.FLI</c> gives in 70ths of a second (<c>Flic_Open</c>, <c>000030f0</c>). The clock starts at 0, <c>Flic_Play</c>'s
 	/// start, with the sync on it and the frame count at 1.
 	/// </summary>
+	/// <param name="flic">The flic.</param>
+	/// <param name="switches">The playback switches.</param>
+	/// <param name="sound">The flic's sounds.</param>
 	public Es1FlicPlayer(Es1Flic flic, Es1FlicSwitches switches, Es1FlicSound sound) {
 		_flic = flic;
 		_switches = switches;
@@ -88,7 +91,8 @@ public sealed class Es1FlicPlayer {
 	/// </summary>
 	public void KeyPressed() => _keyWaiting = true;
 
-	/// <summary>The clock moved on by <paramref name="seconds"/>, and the loop run as far as it and the sound have reached.</summary>
+	/// <summary>The clock moved on by a number of seconds, and the loop run as far as it and the sound have reached.</summary>
+	/// <param name="seconds">The seconds to move on by.</param>
 	public void Advance(double seconds) {
 		_seconds += seconds;
 		_sound.Update(_seconds);
@@ -191,9 +195,10 @@ public sealed class Es1FlicPlayer {
 	private uint Clock(double seconds) => unchecked((uint)(long)(seconds * ClockRate));
 
 	/// <summary>
-	/// Whether the clock, or the sound the sync is on, has reached <paramref name="time"/>, unsigned; with it reached, the
+	/// Whether the clock, or the sound the sync is on, has reached the time, unsigned; with it reached, the
 	/// loop's time moved on to the moment it was, as near as the host frame tells.
 	/// </summary>
+	/// <param name="time">The time, in the clock's units.</param>
 	private bool Reached(uint time) {
 		if (_sync == ClockSync) {
 			if (Clock(_seconds) < time) {

@@ -26,7 +26,10 @@ public sealed class Es1MfdSharedBlock {
 /// shared block <c>+4</c>; its table at <c>+8</c> holds the paint and the update.
 /// </summary>
 public abstract class Es1MfdScreen {
-	/// <summary><c>MFDisplay_Ctor</c>(screen, <paramref name="rect"/>), with <c>+4</c> pointed at <paramref name="shared"/> as the display does after.</summary>
+	/// <summary><c>MFDisplay_Ctor</c>(screen, rect), with <c>+4</c> pointed at shared as the display does after.</summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="rect">The screen's rectangle.</param>
+	/// <param name="shared">The shared block.</param>
 	protected Es1MfdScreen(Es1Cockpit cockpit, Es1Rect rect, Es1MfdSharedBlock shared) {
 		Cockpit = cockpit;
 		Rect = rect;

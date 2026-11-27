@@ -111,9 +111,10 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	public Func<IEnumerable<Engine.Input.KeyAction>>? CustomKeyActions { get; set; }
 
 	/// <summary>
-	/// One host frame of <paramref name="elapsed"/> where nothing shows the screen, as with no display: the clock and,
+	/// One host frame of the elapsed time where nothing shows the screen, as with no display: the clock and,
 	/// when a tick is due, the whole tick. With no display no panel is raised, so the tick never waits.
 	/// </summary>
+	/// <param name="elapsed">The host time elapsed.</param>
 	/// <exception cref="InvalidOperationException">The tick waited, which only a panel's loop does.</exception>
 	public Frame AdvanceHostFrame(TimeSpan elapsed) {
 		if (!AdvanceClock(elapsed)) {
@@ -129,7 +130,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	}
 
 	/// <summary>
-	/// Host time of <paramref name="elapsed"/> with nothing waiting: the keyboard's typematic, then the frame's steps
+	/// The elapsed host time with nothing waiting: the keyboard's typematic, then the frame's steps
 	/// before the draw, the frame's sounds and the clock. Returns whether a tick is due; never while <see cref="HostHeld"/>.
 	///
 	/// <para>While a tape plays <c>Sim_Main</c> skips <c>Time_BeginSimTick</c>, so the PC timer runs on and the clock
@@ -140,6 +141,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	/// tape's end, whose short read ends it. The user's choice, plan decision 20 (docs/herculan/plan-es1-first-mission.md#decisions);
 	/// a frame a panel's loop reads is not held, the loop running one pass a host frame (decision 11).</para>
 	/// </summary>
+	/// <param name="elapsed">The host time elapsed.</param>
 	public bool AdvanceClock(TimeSpan elapsed) {
 		if (HostHeld) {
 			Hold(elapsed);
@@ -233,10 +235,11 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 	}
 
 	/// <summary>
-	/// Host time of <paramref name="elapsed"/> while the frame stands waiting, for the monitor or in a panel's loop: the
+	/// The elapsed host time while the frame stands waiting, for the monitor or in a panel's loop: the
 	/// keyboard's typematic and the PC timer run on, and no tick runs (<see cref="Es1SimClock.Hold"/>); a playing tape
 	/// holds the time towards its next frame (<see cref="AdvanceClock"/>).
 	/// </summary>
+	/// <param name="elapsed">The host time elapsed.</param>
 	public void Hold(TimeSpan elapsed) {
 		AdvanceKeyboard(elapsed);
 		Simulation.Globals.Clock.Hold(elapsed);

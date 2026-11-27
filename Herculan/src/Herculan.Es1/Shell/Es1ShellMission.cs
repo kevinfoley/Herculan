@@ -175,7 +175,7 @@ public sealed class Es1ShellMission {
 	}
 
 	/// <summary>
-	/// <c>SingleMission_BuildPath</c> (<c>00036649</c>): the list <paramref name="index"/> of
+	/// <c>SingleMission_BuildPath</c> (<c>00036649</c>): the list the index of
 	/// <see cref="Es1ShellData.SingleMissions"/>, or for −1 the list <c>Math_RandomBelow</c>(the count) draws; a name drawn
 	/// from it (<see cref="Es1ShellRandom.PickRandom"/>) as <c>msn\%s</c> into <see cref="Path"/>; and
 	/// <see cref="TextPath"/> set. Returns the name, or null when there is no list or name to take, where retail reads past
@@ -204,9 +204,10 @@ public sealed class Es1ShellMission {
 	}
 
 	/// <summary>
-	/// The path both modes' builds make: <paramref name="name"/> formatted as <c>msn\%s</c> into <see cref="Path"/>, and
+	/// The path both modes' builds make: the name formatted as <c>msn\%s</c> into <see cref="Path"/>, and
 	/// <see cref="TextPath"/> set with <c>Mission_SetTextPath</c>.
 	/// </summary>
+	/// <param name="name">The mission's name.</param>
 	public void SetPath(string name) {
 		Path = $"{Es1MissionFiles.MissionFolder}\\{name}";
 		SetTextPath();
@@ -228,8 +229,8 @@ public sealed class Es1ShellMission {
 
 	/// <summary>
 	/// <c>MsnGen_LoadMission</c> (<c>00035873</c>)(<see cref="Path"/>) in <see cref="Mode"/> 1, a career's
-	/// (docs/es1/formats/msn-mission-file.md#loading-a-mission): the mission <paramref name="name"/> read from <c>msn\</c>
-	/// and loaded on <paramref name="record"/>, the roster's current record, and <see cref="Hangar"/>, the career's
+	/// (docs/es1/formats/msn-mission-file.md#loading-a-mission): the mission name read from <c>msn\</c>
+	/// and loaded on the record, the roster's current record, and <see cref="Hangar"/>, the career's
 	/// (<see cref="Es1MissionLoad.LoadCareer"/>), with <see cref="Flags"/> as they stand, TIME OF DAY from
 	/// <see cref="Es1ShellData.MissionParams"/> and the roster's careers-log entry's word <c>+0x40</c>;
 	/// <c>data\mission.var</c> and <c>data\script.dat</c> written (<see cref="Es1SingleMission.WriteDataFiles"/>); the load's
@@ -239,6 +240,8 @@ public sealed class Es1ShellMission {
 	/// gives; here a missing entry's word reads 0, and a mission that is missing or does not load, no generator or no
 	/// hangar is reported and loads nothing, engine guards.
 	/// </summary>
+	/// <param name="name">The mission's name.</param>
+	/// <param name="record">The roster's current record.</param>
 	public void LoadCareerMission(string name, Es1CareerRecord record) {
 		if (_data.Random is not { } random || Hangar is not { } hangar) {
 			Console.Error.WriteLine($"No generator or no career hangar: {name} is not loaded.");

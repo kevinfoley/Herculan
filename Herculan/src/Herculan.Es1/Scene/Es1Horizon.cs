@@ -103,21 +103,26 @@ public sealed class Es1Horizon {
 	}
 
 	/// <summary>
-	/// <see cref="SkyColors"/>' entries shown in <paramref name="palette"/>, or null when it lacks one of them, which
+	/// <see cref="SkyColors"/>' entries shown in the palette, or null when it lacks one of them, which
 	/// <see cref="From(Es1WorldData, DynamixPalette?)"/> would not have built the horizon on.
 	/// </summary>
+	/// <param name="palette">The palette.</param>
 	public Vector3[]? SkyColorsIn(DynamixPalette palette) => BandColors(palette, _horizonColor, SkyColors.Length);
 
 	/// <summary>
-	/// <see cref="GroundColors"/>' entries shown in <paramref name="palette"/>, or null when it lacks one of them, which
+	/// <see cref="GroundColors"/>' entries shown in the palette, or null when it lacks one of them, which
 	/// <see cref="From(Es1WorldData, DynamixPalette?)"/> would not have built the horizon on.
 	/// </summary>
+	/// <param name="palette">The palette.</param>
 	public Vector3[]? GroundColorsIn(DynamixPalette palette) => BandColors(palette, _groundTop, GroundColors.Length);
 
 	/// <summary>
-	/// The colors of <paramref name="count"/> bands, from entry <paramref name="first"/> down one entry a band, or null when
-	/// <paramref name="palette"/> lacks one of them.
+	/// The colors of a number of bands, from a first entry down one entry a band, or null when
+	/// the palette lacks one of them.
 	/// </summary>
+	/// <param name="palette">The palette.</param>
+	/// <param name="first">The first entry.</param>
+	/// <param name="count">The number of bands.</param>
 	private static Vector3[]? BandColors(DynamixPalette palette, int first, int count) {
 		var colors = new Vector3[count];
 		for (int k = 0; k < count; k++) {
@@ -148,7 +153,9 @@ public sealed class Es1Horizon {
 		return focalPixels * SimTrig.Sin(pitch) / cos;
 	}
 
-	/// <summary>Palette entry <paramref name="index"/> as a colour, or null when the palette lacks it.</summary>
+	/// <summary>A palette entry as a colour, or null when the palette lacks it.</summary>
+	/// <param name="palette">The palette.</param>
+	/// <param name="index">The entry's index.</param>
 	internal static Vector3? ColorOf(DynamixPalette palette, int index) {
 		if (!palette.Colors.TryGetValue(index, out var entry)) {
 			return null;

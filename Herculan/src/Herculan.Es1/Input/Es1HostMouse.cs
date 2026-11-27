@@ -169,11 +169,15 @@ public sealed class Es1HostMouse {
 
 	/// <summary>
 	/// <c>Mouse_PostEvent</c> (<c>00055bc2</c>)(event, mask): <c>Mouse_EventHandler</c> run as the driver would run it,
-	/// with the event's point and buttons and <paramref name="mask"/>.
+	/// with the event's point and buttons and the mask.
 	/// </summary>
+	/// <param name="record">The event's record.</param>
+	/// <param name="mask">The event mask.</param>
 	public void PostEvent(Es1MouseRecord record, byte mask) => HandleEvent(mask, record.X, record.Y, record.Buttons);
 
-	/// <summary>One host move to the client position (<paramref name="clientX"/>, <paramref name="clientY"/>): a move event at the screen pixel under it.</summary>
+	/// <summary>One host move to the client position (clientX, clientY): a move event at the screen pixel under it.</summary>
+	/// <param name="clientX">The client x.</param>
+	/// <param name="clientY">The client y.</param>
 	internal void OnMove(float clientX, float clientY) {
 		if (Pointer == null || !DriverEnabled) {
 			return;
@@ -227,8 +231,12 @@ public sealed class Es1HostMouse {
 
 	/// <summary>
 	/// <c>Mouse_EventHandler</c>: the buttons, x and y stored, and each callback whose mask shares a bit with
-	/// <paramref name="mask"/> called with the record.
+	/// the mask called with the record.
 	/// </summary>
+	/// <param name="mask">The event mask.</param>
+	/// <param name="x">The point's x.</param>
+	/// <param name="y">The point's y.</param>
+	/// <param name="buttons">The buttons held.</param>
 	private void HandleEvent(byte mask, int x, int y, ushort buttons) {
 		Buttons = buttons;
 		X = x;

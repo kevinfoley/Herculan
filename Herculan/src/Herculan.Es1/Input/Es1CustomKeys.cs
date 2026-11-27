@@ -15,7 +15,8 @@ public sealed class Es1CustomKeys(Es1HostKeyboard keyboard) {
 	private readonly HashSet<KeyAction> _down = [];
 	private readonly HashSet<Key> _modifiers = [];
 
-	/// <summary>Once a host frame, before the tick: presses the actions newly in <paramref name="held"/> and lets go of the rest.</summary>
+	/// <summary>Once a host frame, before the tick: presses the actions newly in the held actions and lets go of the rest.</summary>
+	/// <param name="held">The actions held this frame.</param>
 	public void Update(IEnumerable<KeyAction> held) {
 		var now = held.Where(action => Es1CustomControls.ChordOf(action) != null).ToHashSet();
 		foreach (var action in _down.Except(now).ToList()) {

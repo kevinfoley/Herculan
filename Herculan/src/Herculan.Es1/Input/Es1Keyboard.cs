@@ -51,8 +51,8 @@ public sealed class Es1Keyboard {
 	public const ushort ExtendedBit = 0x8000;
 
 	/// <summary>
-	/// <c>Keyboard_Ctor</c> (<c>0006c600</c>) with <paramref name="mode"/>: <c>Keyboard_SetMode</c>'s seed of the
-	/// modifiers from <paramref name="biosShiftFlags"/>, its prefix count cleared, then <see cref="Queue"/>'s subscriber
+	/// <c>Keyboard_Ctor</c> (<c>0006c600</c>) with the mode: <c>Keyboard_SetMode</c>'s seed of the
+	/// modifiers from the BIOS shift flags, its prefix count cleared, then <see cref="Queue"/>'s subscriber
 	/// as the first, wanting no codes yet.
 	/// </summary>
 	/// <param name="biosShiftFlags">The shift-flag byte the BIOS's <c>INT 16h</c> function 2 answers.</param>
@@ -82,11 +82,12 @@ public sealed class Es1Keyboard {
 	/// <summary>
 	/// <c>KeyboardInputDevice_SetMode</c> (<c>ES1GO 00025ce6</c>) with <c>Keyboard_SetMode</c> (<c>0006c0e8</c>,
 	/// <c>ES1GO 0001fd10</c>): the modifiers seeded again from <see cref="BiosShiftFlags"/> (<see cref="SeedModifiers"/>)
-	/// and <paramref name="mode"/> kept. The hooks the two modes take are <see cref="Interrupt"/>'s, which follows
+	/// and the mode kept. The hooks the two modes take are <see cref="Interrupt"/>'s, which follows
 	/// <see cref="Mode"/>; the host's <c>E0</c> prefix (<see cref="Es1HostKeyboard.SendsExtendedPrefix"/>) stays as the
 	/// installed mode set it, and the shell sets only the mode it installed. Any other mode returns false with nothing
 	/// changed, where retail has already unhooked the old mode and seeded the modifiers.
 	/// </summary>
+	/// <param name="mode">The keyboard mode.</param>
 	public bool SetMode(int mode) {
 		if (mode is not (Int9Mode or Int15Mode)) {
 			return false;

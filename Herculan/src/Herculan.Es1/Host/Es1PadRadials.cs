@@ -43,10 +43,12 @@ internal sealed class Es1PadRadials(Func<Es1SimulationRunner?> runner, Func<Es1C
 	public bool MutesStick => _orders.MutesStick || _screens.MutesStick;
 
 	/// <summary>
-	/// Once a host frame, before the frame's ticks: reads the radials, each opening only while <paramref name="allowed"/>
+	/// Once a host frame, before the frame's ticks: reads the radials, each opening only while allowed
 	/// and the other is down, and taps a choice's key. With no Custom profile, as a joystick in Original mode has, neither
 	/// opens.
 	/// </summary>
+	/// <param name="input">The input context.</param>
+	/// <param name="allowed">Whether the radials may open.</param>
 	public void Update(IInputContext input, bool allowed) {
 		var read = port();
 		var mfd = runner()?.Simulation.Cockpit?.Mfd;
@@ -66,7 +68,8 @@ internal sealed class Es1PadRadials(Func<Es1SimulationRunner?> runner, Func<Es1C
 		_screens.Cancel();
 	}
 
-	/// <summary>Draws whichever radial is up, in <paramref name="font"/>. Call once per frame inside the ImGui frame.</summary>
+	/// <summary>Draws whichever radial is up, in the font. Call once per frame inside the ImGui frame.</summary>
+	/// <param name="font">The font.</param>
 	public void Draw(ImFontPtr font) {
 		_orders.Draw(OrderLabel, font);
 		_screens.Draw(ScreenLabel, font);

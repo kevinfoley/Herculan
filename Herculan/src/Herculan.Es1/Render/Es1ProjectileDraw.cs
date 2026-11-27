@@ -40,8 +40,13 @@ public sealed class Es1ProjectileDraw : IDisposable {
 	/// <summary>
 	/// Uploads every cell of every root of <c>dts\rockets</c> and <c>dts\bullets</c>, the second textured from
 	/// <c>dba\bullets</c>, the bank <c>Bullet_LoadResources</c> stores in each of its roots, and pulls each bullet root's
-	/// billboards, which are shown through <paramref name="palette"/>, the live palette; with none the bank is not uploaded.
+	/// billboards, which are shown through the palette, the live palette; with none the bank is not uploaded.
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="content">The game's content.</param>
+	/// <param name="scene">The zone scene.</param>
+	/// <param name="pool">The projectile pool.</param>
+	/// <param name="palette">The live palette, or null.</param>
 	public Es1ProjectileDraw(GL gl, GameContent content, Es1ZoneScene scene, Es1ProjectilePool pool, PaletteTexture? palette) {
 		_gl = gl;
 		_scene = scene;
@@ -75,9 +80,11 @@ public sealed class Es1ProjectileDraw : IDisposable {
 	public IReadOnlyList<SpriteBatch> Sprites => _batches;
 
 	/// <summary>
-	/// One mesh per cell frame of <paramref name="root"/>, as many as its longest sequence holds; a cell with no geometry
+	/// One mesh per cell frame of a root, as many as its longest sequence holds; a cell with no geometry
 	/// is null.
 	/// </summary>
+	/// <param name="root">The root.</param>
+	/// <param name="atlas">The texture atlas, or null.</param>
 	private void UploadCells(TSObject root, TextureAtlas? atlas) {
 		if (_meshes.ContainsKey(root)) {
 			return;
@@ -98,12 +105,15 @@ public sealed class Es1ProjectileDraw : IDisposable {
 	}
 
 	/// <summary>
-	/// The pool's elements placed for <paramref name="camera"/>, walked back from the end as <c>ObjList_RebuildFrame</c>
-	/// adds them, under a projection whose <c>Raster_FocalShift</c> is <paramref name="focalShift"/>: each missile and gun
+	/// The pool's elements placed for the camera, walked back from the end as <c>ObjList_RebuildFrame</c>
+	/// adds them, under a projection whose <c>Raster_FocalShift</c> is focalShift: each missile and gun
 	/// round an item on its shape's cell and a gun round its billboards, each beam tracer one of its quads
-	/// (<see cref="BeamItem"/>). With <paramref name="flatRamps"/> each takes <c>WorldShades_ResetRamps</c>' ramps
+	/// (<see cref="BeamItem"/>). With the flat-ramps flag each takes <c>WorldShades_ResetRamps</c>' ramps
 	/// (<see cref="Es1Shading.FlatRamps"/>) rather than its distance band's.
 	/// </summary>
+	/// <param name="camera">The camera.</param>
+	/// <param name="focalShift">The focal length's shift.</param>
+	/// <param name="flatRamps">Whether each element takes the flat ramps.</param>
 	public void Update(Camera camera, int focalShift, bool flatRamps = false) {
 		_items.Clear();
 		_batches.Clear();

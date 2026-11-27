@@ -88,9 +88,11 @@ public static class Es1TextureShades {
 	/// The renderer's palette-by-row table over 256 shade rows, one per light the shader can pick: the scene shader takes
 	/// row <c>floor(light × 255 / 256)</c>, so row <c>r</c> stands for light <c>r</c> + 1 and holds table
 	/// (8 − 1) · (<c>r</c> + 1) / 255, <c>TSTexture4Poly_Render</c>'s pick (docs/es1/rendering/polygon-shading.md#the-four-poly-types).
-	/// The tables are built from <paramref name="first"/>, the first palette made active, and their entries shown in
-	/// <paramref name="live"/>'s colours.
+	/// The tables are built from first, the first palette made active, and their entries shown in
+	/// the live palette's colours.
 	/// </summary>
+	/// <param name="first">The first palette made active.</param>
+	/// <param name="live">The live palette.</param>
 	public static PaletteRampTable? RampTable(DynamixPalette first, DynamixPalette live) {
 		var tables = Build(first);
 		const int rows = 256;

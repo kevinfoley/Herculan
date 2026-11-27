@@ -27,20 +27,22 @@ public sealed class Es1CockpitClock {
 	private readonly char[] _minutes = ['0', '0'];
 
 	/// <summary>
-	/// <c>CockpitClock_Ctor</c>(0, <paramref name="cockpit"/>, <paramref name="block"/>): the gauge base's rect, the
+	/// <c>CockpitClock_Ctor</c>(0, cockpit, block): the gauge base's rect, the
 	/// block's rect at 1620 (<c>PanelGauge_Ctor</c>, <c>00031318</c>); <c>ttm\</c> and the first eight characters of
 	/// the chassis' cockpit name, the type record <c>+0x58</c> of <c>CockpitViewInstance</c>'s machine, with <c>.ttm</c>
 	/// opened with <c>Ttm_Open</c>(manager, 0, 0, path), playing and not looping, and <c>CockpitViewInstance</c>'s
 	/// canvas context stored as the script's render context <c>+0x1bd</c>; the digits 00, 00
 	/// and the colon; the hour, minute and colon labels <c>+0x7a</c>, <c>+0x7e</c> and <c>+0x82</c> in
-	/// <paramref name="font"/> on the rect, the hour's left-aligned with the margin (1, 0) and filled in <c>0x3f</c>, the
+	/// font on the rect, the hour's left-aligned with the margin (1, 0) and filled in <c>0x3f</c>, the
 	/// minute's right-aligned with (1, 0) and the colon's centred, neither filled; and the next advance
-	/// <see cref="AdvanceInterval"/> counts from <paramref name="now"/>.
+	/// <see cref="AdvanceInterval"/> counts from now.
 	///
 	/// <para>A failed open leaves no script. Retail then reads the dword before the handle table as the script and stores
 	/// the context through it when it is not 0 (docs/es1/simulation/cockpit-clock.md); here nothing is stored.</para>
 	/// </summary>
 	/// <param name="cockpit">The cockpit, the gauge base's <c>+0x10</c>; <c>CockpitViewInstance</c> is its globals' cockpit, or it when that is none. A cockpit without a machine opens no script, an engine guard.</param>
+	/// <param name="block">The clock's <c>.GAU</c> block.</param>
+	/// <param name="scripts">The script manager.</param>
 	/// <param name="font"><c>ColorSchemePanels</c>' first font, <c>cpblue</c>.</param>
 	/// <param name="now">The clock <c>000981c4</c>.</param>
 	internal Es1CockpitClock(Es1Cockpit cockpit, Es1GauClockBlock block, Es1TtmManager scripts, HudFont? font, uint now) {
@@ -97,9 +99,10 @@ public sealed class Es1CockpitClock {
 	/// Slot <c>+0xc</c>, <c>CockpitClock_Tick</c> (<c>000435c0</c>), from <c>Cockpit_DrawFrame</c> each frame: marked
 	/// while a view change is staged; while marked, the rect from the hour label's first corner to the minute label's
 	/// second copied from the page on the screen to the page drawn (<c>Widget_DrawToCockpit</c>(0, rect, 0)) and the mark
-	/// cleared; and once <paramref name="now"/> has passed <see cref="NextAdvance"/>, <see cref="Advance"/>, the next
+	/// cleared; and once the clock count has passed <see cref="NextAdvance"/>, <see cref="Advance"/>, the next
 	/// advance <see cref="AdvanceInterval"/> counts on and the mark set.
 	/// </summary>
+	/// <param name="now">The clock count now.</param>
 	public void Tick(uint now) {
 		if (_cockpit.ViewChangeStaged) {
 			Mark = 2;

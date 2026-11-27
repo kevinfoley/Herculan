@@ -22,11 +22,12 @@ public sealed class Es1HddMarker : Es1ButtonWidget {
 	private static readonly sbyte[] OctantNudge = [0, 0, 0, 0, 0, -2, -4, -2];
 
 	/// <summary>
-	/// <c>HddMarker_Ctor</c> (<c>ES1DBSIM 00041c50</c>)(0, <paramref name="screen"/>, the rect (0, 0, 0, 0)): the
+	/// <c>HddMarker_Ctor</c> (<c>ES1DBSIM 00041c50</c>)(0, screen, the rect (0, 0, 0, 0)): the
 	/// gadget base on the rect with the screen <c>+0x20</c>, and <see cref="Toggled"/> clear. Retail loads
 	/// <c>DBA\ICONS.DBA</c> into <c>HddMarker_Icons</c> (<c>00094870</c>) the first time; this engine loads it with the
 	/// screen's map (<see cref="Es1HddMap.Icons"/>), of which the simulator builds one.
 	/// </summary>
+	/// <param name="screen">The command screen the marker belongs to.</param>
 	internal Es1HddMarker(Es1HddCommandScreen screen) {
 		Screen = screen;
 		Rect = new Es1Rect(0, 0, 0, 0);
@@ -87,18 +88,20 @@ public sealed class Es1HddMarker : Es1ButtonWidget {
 	public int ApparentReference { get; set; }
 
 	/// <summary>
-	/// <c>HddMarker_SetSize</c> (<c>00041fac</c>)(marker, <paramref name="size"/>): the rect's <i>x1</i> <c>+8</c> and
+	/// <c>HddMarker_SetSize</c> (<c>00041fac</c>)(marker, size): the rect's <i>x1</i> <c>+8</c> and
 	/// <i>y1</i> <c>+0xc</c> = the size, and <see cref="HalfSize"/> = size &gt;&gt; 1 on both axes.
 	/// </summary>
+	/// <param name="size">The size.</param>
 	public void SetSize(int size) {
 		Rect = Rect with { X1 = size, Y1 = size };
 		HalfSize = (size >> 1, size >> 1);
 	}
 
 	/// <summary>
-	/// <c>Widget_MoveTo</c> (<c>000438a4</c>)(the rect, <paramref name="point"/>) (docs/es1/simulation/cockpit-mouse.md#hit-testing):
+	/// <c>Widget_MoveTo</c> (<c>000438a4</c>)(the rect, point) (docs/es1/simulation/cockpit-mouse.md#hit-testing):
 	/// the rect moved so its top-left is the point, its width and height kept.
 	/// </summary>
+	/// <param name="point">The new top-left.</param>
 	public void MoveTo((int X, int Y) point) =>
 		Rect = new Es1Rect(point.X, point.Y, point.X + (Rect.X1 - Rect.X0), point.Y + (Rect.Y1 - Rect.Y0));
 
@@ -166,7 +169,8 @@ public sealed class Es1HddMarker : Es1ButtonWidget {
 		Screen.Display.ScheduleUpdate(Es1HddDisplay.CommandPage);
 	}
 
-	/// <summary>Slot <c>+0xc</c>, <c>HddMarker_OnClick</c> (<c>00041f78</c>)(marker, <paramref name="value"/>): with bit 0 set, <see cref="Painting"/> cleared.</summary>
+	/// <summary>Slot <c>+0xc</c>, <c>HddMarker_OnClick</c> (<c>00041f78</c>)(marker, value): with bit 0 set, <see cref="Painting"/> cleared.</summary>
+	/// <param name="value">The click's button bits.</param>
 	public override void OnClick(short value) {
 		if ((value & 1) != 0) {
 			Painting = false;

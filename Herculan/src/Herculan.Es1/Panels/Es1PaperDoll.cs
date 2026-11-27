@@ -38,12 +38,14 @@ public static class Es1PaperDoll {
 	public static short ToConditionState(int damage) => Band((0x100 - damage) * 100 >> 8);
 
 	/// <summary>
-	/// <c>Damage_PickRegionTint</c> (<c>00030dc4</c>)(out, <paramref name="region"/>, <paramref name="damage"/>): the
+	/// <c>Damage_PickRegionTint</c> (<c>00030dc4</c>)(out, region, damage): the
 	/// state of <see cref="ToConditionState"/>'s bands and the palette index the region is tinted with: for modes 0, 2
 	/// and 3, 54, 57, 92, 51 and 62 by state; for mode 1 the region's <c>colorId</c> for state 0, <c>colorId</c> less the
 	/// state for states 1 and 2 (60 plus the state when <c>colorId</c> is 60), and 48 and 62 for states 3 and 4. A mode
 	/// above 3, where retail writes what two registers held, gives state 0 and the region's <c>colorId</c>, an engine guard.
 	/// </summary>
+	/// <param name="region">The region.</param>
+	/// <param name="damage">The damage reading.</param>
 	public static (short State, int Tint) PickRegionTint(PaperDollGraphic.ViewRegion region, int damage) {
 		short state = ToConditionState(damage);
 		switch (region.RecolorMode) {
@@ -64,7 +66,7 @@ public static class Es1PaperDoll {
 
 	/// <summary>
 	/// <c>PaperDoll_RecolorRect</c> (<c>00030818</c>): the display's draw page made its source page, and the rect moved
-	/// by <paramref name="canvas"/>'s translation walked a row at a time, left to right, each pixel of the draw page read
+	/// by the canvas's translation walked a row at a time, left to right, each pixel of the draw page read
 	/// and rewritten as <see cref="RecolorMode"/> says, with no clip. A pixel the world was drawn into, which retail
 	/// reads as the world's own index, is left, an engine guard.
 	/// </summary>
@@ -107,7 +109,7 @@ public static class Es1PaperDoll {
 	/// rather than the screen's and walks even when tint = key. The art's pixel for a screen pixel (<i>x</i>,
 	/// <i>y</i>) of the rect is the byte at (<i>y</i> − the origin's <i>y</i>) × the art's width + (<i>x</i> − the
 	/// origin's <i>x</i>), with no bounds, so an offset past the width reads on into the next row; a pixel of
-	/// <paramref name="key"/> to <paramref name="key"/> + 2 writes itself + (tint − key) to the draw page. An offset
+	/// key to key + 2 writes itself + (tint − key) to the draw page. An offset
 	/// outside the art's bytes, which retail reads unchecked, writes nothing, an engine guard.
 	/// </summary>
 	/// <param name="canvas">The canvas whose draw page is recolored.</param>
@@ -152,8 +154,8 @@ public static class Es1PaperDoll {
 	/// <i>n</i>, or the layout's count when none is, and its mount the mount array's entry there. With no mount, or a
 	/// template whose damage icon (<c>+0x50</c>) is −1, the icon has no bitmap, and its point, rect and flags, which retail
 	/// leaves as the allocation held and the damage screen's recolor passes then walk, are 0 here, an engine guard. Otherwise its frame is the icon number × 2
-	/// plus the hardpoint's <c>frameOffset</c>, as an <c>int16</c>, its bitmap that frame of <paramref name="bank"/> and its
-	/// size that entry of <paramref name="sizes"/>; its point the hardpoint's, moved left by the width (alignment bits 0–2
+	/// plus the hardpoint's <c>frameOffset</c>, as an <c>int16</c>, its bitmap that frame of the bank and its
+	/// size that entry of the sizes; its point the hardpoint's, moved left by the width (alignment bits 0–2
 	/// = 2) or half of it (4) and up by the height (the other bits = <c>0x10</c>) or half of it (<c>0x20</c>); its rect
 	/// from that point to it plus the size; its blit flags the hardpoint's, and for flags 2 the point moved left again by
 	/// the bitmap's width less the size's. A frame past the bank or the sizes, and a position past the mount array, which
@@ -220,12 +222,14 @@ public static class Es1PaperDoll {
 
 	/// <summary>
 	/// <c>Sim_StartMission</c>'s step 13 for the weapon icons (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc):
-	/// <see cref="Es1Mech.WeaponIcons"/> = <see cref="BuildWeaponIcons"/> for every machine of <paramref name="pool"/>. The
+	/// <see cref="Es1Mech.WeaponIcons"/> = <see cref="BuildWeaponIcons"/> for every machine of the pool. The
 	/// bank, <c>PaperDoll_WeaponIconBank</c> (<c>000b0f14</c>), <c>dba\weapons</c>, and the sizes,
 	/// <c>WeaponIconSizes</c> (<c>000b0f18</c>), <c>pdg\weapons</c>, which retail's <c>PaperDoll_InitTables</c>
-	/// (<c>00030288</c>) loads with the chassis types, are read here through <paramref name="resources"/>, as nothing else
+	/// (<c>00030288</c>) loads with the chassis types, are read here through the resources reader, as nothing else
 	/// reads them; a missing file gives none.
 	/// </summary>
+	/// <param name="pool">The machines.</param>
+	/// <param name="resources">The volumes' reader, (folder, file name) to a file's bytes; none when null.</param>
 	public static void BuildWeaponIconsForPool(IEnumerable<Es1Mech> pool, Func<string, string, byte[]?>? resources) {
 		var bank = resources?.Invoke("dba", "WEAPONS.DBA") is { } bankBytes
 			? new DynamixBitmapArrayTransformer().Parse(bankBytes)?.Images

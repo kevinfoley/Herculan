@@ -39,11 +39,14 @@ public sealed class Es1Gunsight {
 	private readonly List<Es1GunsightChild> _children = new(ChildCapacity);
 
 	/// <summary>
-	/// <c>Gau_RovingGunsightWidget</c>(0, <paramref name="cockpit"/>, <paramref name="block"/>): <c>PanelGauge_Ctor</c>'s
+	/// <c>Gau_RovingGunsightWidget</c>(0, cockpit, block): <c>PanelGauge_Ctor</c>'s
 	/// rect, the block's first 16 bytes; the children in order, each rect but the reticle's centre moved by the block's
 	/// origin <i>o</i>, with the pointer put on the reticle's centre <i>p</i> between children 0 and 1; the <c>ATT</c>
 	/// label; and the state block and the condition zeroed.
 	/// </summary>
+	/// <param name="cockpit">The cockpit.</param>
+	/// <param name="block">The gunsight's <c>.GAU</c> block.</param>
+	/// <param name="banks">The gunsight's bitmap banks.</param>
 	/// <param name="fonts"><c>ColorSchemePanels</c> (<c>00092d40</c>), whose <c>cpgreen</c> captions the waypoint and <c>cpblack</c> writes <c>ATT</c>.</param>
 	/// <param name="mouse">The cockpit's mouse, whose cursor and driver the pointer's move reaches.</param>
 	/// <param name="attText"><c>STRINGS0.STR</c> group 33's <c>ATT</c>; nothing is written when null.</param>
@@ -150,11 +153,12 @@ public sealed class Es1Gunsight {
 	public Es1GunsightState GetStateBlock() => State;
 
 	/// <summary>
-	/// <c>Gunsight_SetValues</c> (<c>00035090</c>)(gunsight, <paramref name="block"/>): for each of offsets 0, 2 and 4
+	/// <c>Gunsight_SetValues</c> (<c>00035090</c>)(gunsight, block): for each of offsets 0, 2 and 4
 	/// that differs from the gunsight's, the new value kept and its delta handed to the add-delta slot <c>+0x10</c>:
 	/// offset 0's new − old to the heading tape and the waypoint indicator, offset 2's old − new to the rotation
 	/// indicator, offset 4's old − new to the vertical bar; then the block copied over the gunsight's.
 	/// </summary>
+	/// <param name="block">The new state block.</param>
 	public void SetValues(Es1GunsightState block) {
 		if (block.Heading != State.Heading) {
 			short delta = (short)(block.Heading - State.Heading);

@@ -33,14 +33,16 @@ public sealed class Es1MessageTable {
 	/// <summary><c>StrTable_FirstString</c> (<c>00045114</c>) answering nonzero: a file is loaded.</summary>
 	public bool Loaded => _file != null;
 
-	/// <summary>The index slot of message <paramref name="id"/>.</summary>
+	/// <summary>The index slot of a message id.</summary>
+	/// <param name="id">The message id.</param>
 	public Es1MessageSlot this[byte id] => _index[id];
 
-	/// <summary>The text of <paramref name="text"/>, or none.</summary>
+	/// <summary>The text of a string reference, or none.</summary>
+	/// <param name="text">The string reference, or null.</param>
 	public string? Text(Es1StringRef? text) => text is { } at ? _file?.Group(at.Group)[at.Entry].Text : null;
 
 	/// <summary>
-	/// <c>SystemMessages_Index</c>'s load and walk for this table: <paramref name="file"/>, read through Core, held as
+	/// <c>SystemMessages_Index</c>'s load and walk for this table: the file, read through Core, held as
 	/// <c>StringTable_LoadFromFile</c> loads it; then each string <c>StringTable_ReadNext</c> (<c>00045004</c>) gives,
 	/// which stops at the first group's end, so only group 0 is indexed: the slot of its attribute byte 0 takes the text
 	/// and the attributes while its count is 0, and its count goes up by 1. A file that is missing or does not parse
@@ -49,6 +51,7 @@ public sealed class Es1MessageTable {
 	/// <para>An entry with no attribute bytes is indexed under id 0 here; retail reads the byte after its count, the next
 	/// entry's. No retail entry has none.</para>
 	/// </summary>
+	/// <param name="file">The string file, or null.</param>
 	public void Index(StringFile? file) {
 		if (file == null) {
 			return;
@@ -69,7 +72,7 @@ public sealed class Es1MessageTable {
 	}
 
 	/// <summary>
-	/// <c>MessagePort_StepToVariant</c> (<c>0002f31c</c>)(port, <paramref name="variant"/>, <paramref name="slot"/>,
+	/// <c>MessagePort_StepToVariant</c> (<c>0002f31c</c>)(port, variant, slot,
 	/// table): for variant 0 the slot; otherwise <c>StrTable_NextString</c> (<c>0004513c</c>) of the slot's own text,
 	/// called once a step but always on that text, so every variant from 1 on is the string after the slot's first; and
 	/// the slot <c>000bd21e</c> built from it, a count of 0 and its attributes, none when it has no attribute bytes
@@ -78,6 +81,8 @@ public sealed class Es1MessageTable {
 	/// <para>Past its group's last string this gives none; retail's walk reads the next group's header as a string, and
 	/// past the file's end answers 0.</para>
 	/// </summary>
+	/// <param name="slot">The message's index slot.</param>
+	/// <param name="variant">The variant.</param>
 	public Es1MessageSlot StepToVariant(Es1MessageSlot slot, byte variant) {
 		if (variant == 0) {
 			return slot;
@@ -117,6 +122,7 @@ public sealed class Es1MessageTables(Func<string, StringFile?>? strings = null) 
 	/// </summary>
 	public IReadOnlyList<Es1MessageTable> Pilots { get; } = [new(), new(), new()];
 
-	/// <summary><c>ResourcePath_BuildFolderName</c>(<c>str</c>, <paramref name="name"/>) and <c>StringTable_LoadFromFile</c>: the file, or null.</summary>
+	/// <summary><c>ResourcePath_BuildFolderName</c>(<c>str</c>, name) and <c>StringTable_LoadFromFile</c>: the file, or null.</summary>
+	/// <param name="name">The file's name.</param>
 	public StringFile? Load(string name) => strings?.Invoke(name);
 }

@@ -22,10 +22,13 @@ public sealed class Es1MfdButton : Es1ButtonWidget {
 	private readonly IReadOnlyList<HudFont?> _fonts;
 
 	/// <summary>
-	/// <c>MFDSelectGadget_Ctor</c> (<c>ES1DBSIM 0003ae50</c>)(0, <paramref name="index"/>, <paramref name="display"/>,
-	/// <paramref name="rect"/>): the widget on the rect, the drag flag 0, the display <c>+0x20</c>, the index
+	/// <c>MFDSelectGadget_Ctor</c> (<c>ES1DBSIM 0003ae50</c>)(0, index, display,
+	/// rect): the widget on the rect, the drag flag 0, the display <c>+0x20</c>, the index
 	/// <c>+0x28</c> and the state 0; with the pictures and the caption label <c>MfdDisplay_Ctor</c> gives it after.
 	/// </summary>
+	/// <param name="index">The button's index.</param>
+	/// <param name="display">The display the button belongs to.</param>
+	/// <param name="rect">The button's rectangle.</param>
 	/// <param name="pictures">The pictures <c>+0x30</c>–<c>+0x38</c> for the states 0, 1 and 2; a null entry blits nothing.</param>
 	/// <param name="caption">The caption label <c>+0x2c</c>, or none.</param>
 	/// <param name="fonts"><c>ColorSchemePanels</c>, whose <c>cpon</c>, <c>cppress</c> and <c>cpoff</c> the caption takes by state.</param>
@@ -80,10 +83,11 @@ public sealed class Es1MfdButton : Es1ButtonWidget {
 	public override void Invalidate() => PaintCounter = 2;
 
 	/// <summary>
-	/// Slot <c>+0xc</c>, <c>Widget_ForwardClickToOwner</c> (<c>000314ac</c>)(button, <paramref name="value"/>): with bit 0
+	/// Slot <c>+0xc</c>, <c>Widget_ForwardClickToOwner</c> (<c>000314ac</c>)(button, value): with bit 0
 	/// of the value set, the left button, the display's <see cref="Es1MfdDisplay.OnChildClick"/>, then the button
 	/// invalidated and the mixin's click sound.
 	/// </summary>
+	/// <param name="value">The click's button bits.</param>
 	public override void OnClick(short value) {
 		if ((value & 1) == 0) {
 			return;
@@ -117,7 +121,9 @@ public sealed class Es1MfdButton : Es1ButtonWidget {
 /// screen takes the point. Its slots are <c>MFDListGadgetVtable</c> (<c>000941de</c>)'s.
 /// </summary>
 public sealed class Es1MfdClickSurface : Es1ButtonWidget {
-	/// <summary><c>MFDListGadget_Ctor</c> (<c>0003afe0</c>)(0, <paramref name="display"/>, <paramref name="rect"/>): the widget on the rect, the drag flag 0, the display <c>+0x20</c> and the state 0.</summary>
+	/// <summary><c>MFDListGadget_Ctor</c> (<c>0003afe0</c>)(0, display, rect): the widget on the rect, the drag flag 0, the display <c>+0x20</c> and the state 0.</summary>
+	/// <param name="display">The display the surface belongs to.</param>
+	/// <param name="rect">The surface's rectangle.</param>
 	internal Es1MfdClickSurface(Es1MfdDisplay display, Es1Rect rect) {
 		Display = display;
 		Rect = rect;
@@ -127,9 +133,10 @@ public sealed class Es1MfdClickSurface : Es1ButtonWidget {
 	public Es1MfdDisplay Display { get; }
 
 	/// <summary>
-	/// Slot <c>+0xc</c>, <c>MFDListGadget_OnClick</c> (<c>0003b088</c>)(gadget, <paramref name="value"/>): with bit 0 set,
+	/// Slot <c>+0xc</c>, <c>MFDListGadget_OnClick</c> (<c>0003b088</c>)(gadget, value): with bit 0 set,
 	/// <c>MfdFlashComm_HandleListClick</c>(the display, the pointer's canvas point, the gadget), with no sound.
 	/// </summary>
+	/// <param name="value">The click's button bits.</param>
 	public override void OnClick(short value) {
 		if ((value & 1) == 0) {
 			return;

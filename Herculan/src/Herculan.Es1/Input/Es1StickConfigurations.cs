@@ -23,10 +23,15 @@ public static class Es1StickConfigurations {
 	private const int StickX = 0, StickY = 1, StickThird = 2, StickFourth = 3;
 
 	/// <summary>
-	/// The axes, each cut to <c>int16</c>, and the buttons configuration <paramref name="configuration"/> gives in stick
-	/// mode <paramref name="stickMode"/>. <paramref name="thirdAxis"/> is option 9; <paramref name="throttleKeys"/> is
+	/// The axes, each cut to <c>int16</c>, and the buttons the configuration gives in the stick
+	/// mode. The third-axis flag is option 9; the throttle-keys flag is
 	/// option 10 while no round is flown, which keeps the stick's Y, or the fourth axis, off the throttle.
 	/// </summary>
+	/// <param name="configuration">The stick configuration.</param>
+	/// <param name="stickMode">The stick mode.</param>
+	/// <param name="thirdAxis">Option 9.</param>
+	/// <param name="throttleKeys">Option 10 while no round is flown.</param>
+	/// <param name="sources">The input sources.</param>
 	public static (short[] Axes, byte[] Buttons) Choose(
 		byte configuration, byte stickMode, bool thirdAxis, bool throttleKeys, Es1InputSources sources) {
 		int[] kb = sources.Keyboard, stick = sources.Stick;

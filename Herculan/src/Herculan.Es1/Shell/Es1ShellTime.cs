@@ -42,10 +42,11 @@ public sealed class Es1ShellTime {
 
 	/// <summary>
 	/// <c>ShellTime_Init</c> (<c>000119fc</c>): both scales 1.0 (<c>0x100</c>), and the first time, with
-	/// <paramref name="timer"/> the timer GL slot 0 holds, <see cref="Tick"/> registered at a count of 2 and the
+	/// the timer GL slot 0 holds, <see cref="Tick"/> registered at a count of 2 and the
 	/// interrupts a second derived from the divisor as the simulator derives them (<see cref="Es1SimClock.InterruptsPerSecond"/>),
 	/// with a tenth of them for the units and the elapsed count, and the countdown at the full count.
 	/// </summary>
+	/// <param name="timer">The simulation clock.</param>
 	public void Init(Es1SimClock timer) {
 		Scale = 0x100;
 		Scale2 = 0x100;

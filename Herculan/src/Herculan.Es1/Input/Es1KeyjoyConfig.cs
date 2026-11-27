@@ -31,9 +31,11 @@ public sealed class Es1KeyjoyConfig {
 
 	/// <summary>
 	/// <c>Config_BuildPath</c>(<c>keyjoy.cfg</c>) of the install, opened in mode <c>rt</c>: <c>data\keyjoy.cfg</c>, or
-	/// with <paramref name="tapePlayback"/> (<c>TapePlayback</c>) the tape's <c>tapes\keyjoy.cfg</c>; all three switches
+	/// with a tape's playback (<c>TapePlayback</c>) the tape's <c>tapes\keyjoy.cfg</c>; all three switches
 	/// clear when it does not open.
 	/// </summary>
+	/// <param name="installRoot">The install folder.</param>
+	/// <param name="tapePlayback">Whether a tape is played back.</param>
 	public static Es1KeyjoyConfig Load(string installRoot, bool tapePlayback = false) {
 		string path = tapePlayback
 			? HercWorks.Core.Io.CaseInsensitivePath.Combine(installRoot, Es1TapePlayback.TapesFolder, FileName)

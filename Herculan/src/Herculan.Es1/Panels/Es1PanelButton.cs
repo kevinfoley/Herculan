@@ -19,11 +19,14 @@ public sealed class Es1PanelButton : Es1Widget {
 	private readonly HudFont?[] _fonts;
 
 	/// <summary>
-	/// <c>PanelButton_Ctor</c> (<c>000467c8</c>)(0, <paramref name="index"/>, <paramref name="owner"/>,
-	/// <paramref name="rect"/>): the widget on the rect, the owner <c>+0x20</c>, the index <c>+0x28</c>, state 0 and drag
+	/// <c>PanelButton_Ctor</c> (<c>000467c8</c>)(0, index, owner,
+	/// rect): the widget on the rect, the owner <c>+0x20</c>, the index <c>+0x28</c>, state 0 and drag
 	/// flag 0; and the three-entry tables indexed by the state, style records 0, 1 and 2 at <c>+0x3c</c> and the fonts
 	/// <c>active</c>, <c>pushed</c> and <c>inactive</c> at <c>+0x48</c>. The caption label is left unset.
 	/// </summary>
+	/// <param name="index">The button's index.</param>
+	/// <param name="owner">The panel the button belongs to.</param>
+	/// <param name="rect">The button's rectangle.</param>
 	public Es1PanelButton(int index, Es1AlertPanel owner, Es1Rect rect) {
 		Rect = rect;
 		Owner = owner;
@@ -67,10 +70,11 @@ public sealed class Es1PanelButton : Es1Widget {
 	public override void Invalidate() => PaintCounter = RepaintPasses;
 
 	/// <summary>
-	/// Slot <c>+0xc</c>, <c>PanelButton_OnClick</c> (<c>000469ac</c>)(button, <paramref name="value"/>): the owner's
+	/// Slot <c>+0xc</c>, <c>PanelButton_OnClick</c> (<c>000469ac</c>)(button, value): the owner's
 	/// child click with the flags and the button, the focus moved to the button, its own invalidate, and the mixin's click
 	/// sound (<see cref="Es1AlertGlobals.PlayClickSound"/>).
 	/// </summary>
+	/// <param name="value">The click's button bits.</param>
 	public override void OnClick(short value) {
 		Owner.OnChildClick(value, this);
 		Owner.FocusChild(this);

@@ -54,10 +54,17 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	private Vector3[] _groundColours;
 
 	/// <summary>
-	/// Uploads the scene's backdrop tables, their indices shown in <paramref name="palette"/>, the live one;
-	/// <paramref name="ground"/>, <paramref name="skyline"/>, <paramref name="clouds"/> and <paramref name="specks"/> are
+	/// Uploads the scene's backdrop tables, their indices shown in the palette, the live one;
+	/// the ground, the skyline, the clouds and the specks are
 	/// null where the theater has none.
 	/// </summary>
+	/// <param name="gl">The GL context.</param>
+	/// <param name="horizon">The horizon.</param>
+	/// <param name="ground">The textured ground, or null.</param>
+	/// <param name="skyline">The skyline, or null.</param>
+	/// <param name="clouds">The clouds, or null.</param>
+	/// <param name="specks">The ground specks, or null.</param>
+	/// <param name="palette">The live palette.</param>
 	public Es1Backdrop(GL gl, Es1Horizon horizon, Es1TexturedGround? ground, Es1Skyline? skyline,
 			Es1Clouds? clouds, Es1GroundSpecks? specks, DynamixPalette palette) {
 		_gl = gl;
@@ -98,12 +105,13 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	}
 
 	/// <summary>
-	/// The backdrop's colours shown in <paramref name="palette"/>, the live palette after it changed: the sky's bands, the
+	/// The backdrop's colours shown in the palette, the live palette after it changed: the sky's bands, the
 	/// banded ground's bands, the textured ground's colour tables, the skyline, the clouds and the scattered points, whose
 	/// palette indices retail's screen shows through the live palette as it shows every other
-	/// (docs/es1/rendering/palette.md#installing-colors). A run of bands with an entry <paramref name="palette"/> lacks
+	/// (docs/es1/rendering/palette.md#installing-colors). A run of bands with an entry the palette lacks
 	/// stays as it was.
 	/// </summary>
+	/// <param name="palette">The live palette.</param>
 	public void ShowIn(DynamixPalette palette) {
 		_skyColours = _horizon.SkyColorsIn(palette) ?? _skyColours;
 		_groundColours = _horizon.GroundColorsIn(palette) ?? _groundColours;

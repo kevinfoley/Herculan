@@ -61,10 +61,12 @@ public sealed class Es1ProjectilePool {
 	public IReadOnlyList<TSObject> BulletShapes { get; private init; } = [];
 
 	/// <summary>
-	/// The phase-2 loads: the projectile records of <paramref name="weapons"/>, and <c>dat\rockets</c>, <c>dts\rockets</c>,
+	/// The phase-2 loads: the projectile records of the weapons, and <c>dat\rockets</c>, <c>dts\rockets</c>,
 	/// <c>dat\bullets</c> and <c>dts\bullets</c> through <c>HercWorks.Core</c>. A missing file, where retail asserts, leaves
 	/// its table empty.
 	/// </summary>
+	/// <param name="content">The game's content.</param>
+	/// <param name="weapons">The weapons.</param>
 	public static Es1ProjectilePool Load(GameContent content, Es1Weapons weapons) => new() {
 		Records = weapons.Projectiles,
 		RocketTypes = content.Read("dat", "ROCKETS.DAT") is { } rockets
@@ -84,7 +86,7 @@ public sealed class Es1ProjectilePool {
 
 	/// <summary>
 	/// <c>Proj_LookupRecord</c> (<c>0000c2d0</c>): the first of the
-	/// records whose type is <paramref name="type"/> and subtype id <paramref name="subtype"/>, or null
+	/// records whose type is type and subtype id subtype, or null
 	/// (docs/es1/formats/weapons-dat-sim.md#the-projectile-lookups).
 	/// </summary>
 	/// <param name="records">The projectile records searched.</param>
@@ -103,7 +105,8 @@ public sealed class Es1ProjectilePool {
 	/// <summary>A constructed projectile taken into the pool, after <see cref="CanAllocate"/>.</summary>
 	internal void Add(Es1Projectile projectile) => _live.Add(projectile);
 
-	/// <summary>Whether <paramref name="projectile"/> is live, <c>Pool_Prev</c>'s walk for it.</summary>
+	/// <summary>Whether the projectile is live, <c>Pool_Prev</c>'s walk for it.</summary>
+	/// <param name="projectile">The projectile, or null.</param>
 	public bool Contains(Es1Projectile? projectile) => projectile != null && _live.Contains(projectile);
 
 	/// <summary>

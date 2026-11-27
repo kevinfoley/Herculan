@@ -42,7 +42,8 @@ public sealed class Es1GunsightState {
 	/// <summary>A copy of the block, as <c>Player_PerFrameCockpitUpdate</c> takes one before it writes.</summary>
 	public Es1GunsightState Copy() => (Es1GunsightState)MemberwiseClone();
 
-	/// <summary>The <c>0x26</c> bytes of <paramref name="other"/> copied over these.</summary>
+	/// <summary>The <c>0x26</c> bytes of another state copied over these.</summary>
+	/// <param name="other">The state copied from.</param>
 	internal void CopyFrom(Es1GunsightState other) {
 		Heading = other.Heading;
 		Twist = other.Twist;

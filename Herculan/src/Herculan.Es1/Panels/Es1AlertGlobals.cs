@@ -132,7 +132,8 @@ public sealed class Es1AlertGlobals {
 	/// <summary>A panel's rect added to <see cref="OpenRects"/> as it goes up.</summary>
 	internal void AddOpenRect(Es1Rect rect) => _openRects.Add(rect);
 
-	/// <summary>The last of <see cref="OpenRects"/> equal to <paramref name="rect"/> taken off as its panel comes down.</summary>
+	/// <summary>The last of <see cref="OpenRects"/> equal to the rect taken off as its panel comes down.</summary>
+	/// <param name="rect">The rect.</param>
 	internal void RemoveOpenRect(Es1Rect rect) {
 		int index = _openRects.LastIndexOf(rect);
 		if (index >= 0) {

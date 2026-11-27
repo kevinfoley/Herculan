@@ -177,7 +177,7 @@ public sealed class Es1CareerAfterMission {
 	/// <summary>
 	/// <c>Herc_ScrapToSalvage</c> (<c>00024cec</c>) (docs/es1/shell/between-missions.md#lost-squadmates): for each mount below the mount count whose weapon is not
 	/// empty, with its per-mount word below 80 the weapon's value × the word / 100 added to <c>Career_Salvage</c>, otherwise
-	/// the word pushed onto the stock's slot of the weapon (<see cref="Es1WeaponStock.Add"/>); then <paramref name="value"/>
+	/// the word pushed onto the stock's slot of the weapon (<see cref="Es1WeaponStock.Add"/>); then value
 	/// added to <c>Career_Salvage</c>, or, when it is 0, the HERC's <see cref="Es1RepairCosts.ScrapValue"/>.
 	/// </summary>
 	/// <param name="herc">The HERC scrapped.</param>
@@ -266,7 +266,7 @@ public sealed class Es1CareerAfterMission {
 
 	/// <summary>
 	/// <c>CareerRecord_AutoRepairFrom</c> (<c>0001605c</c>): for each
-	/// entry from <paramref name="first"/> to 3 on strength with a slot, <see cref="RepairAuto"/>(its pay share, its slot).
+	/// entry from first to 3 on strength with a slot, <see cref="RepairAuto"/>(its pay share, its slot).
 	/// </summary>
 	/// <param name="record">The career record.</param>
 	/// <param name="first">The first pilot entry repaired.</param>

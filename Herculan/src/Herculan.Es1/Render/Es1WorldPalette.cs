@@ -25,8 +25,8 @@ public sealed class Es1WorldPalette {
 	private int[] _shownColors;
 
 	/// <summary>
-	/// Keeps <paramref name="renderer"/>'s live palette, <paramref name="backdrops"/>' ground and
-	/// <paramref name="billboards"/>, the effects' billboards' palette, to <paramref name="presenter"/>'s live palette,
+	/// Keeps the renderer's live palette, the backdrops' ground and
+	/// billboards, the effects' billboards' palette, to the presenter's live palette,
 	/// which they were set up in.
 	/// </summary>
 	/// <param name="renderer">The world's renderer, its live palette already <paramref name="presenter"/>'s.</param>
@@ -42,7 +42,7 @@ public sealed class Es1WorldPalette {
 		_shownColors = Colors(presenter.Palette);
 	}
 
-	/// <summary>The world shown in <paramref name="presenter"/>'s live palette when an entry changed since it last was.</summary>
+	/// <summary>The world shown in the presenter's live palette when an entry changed since it last was.</summary>
 	/// <param name="presenter">The screen whose live palette the world follows.</param>
 	public void Follow(Es1ScreenPresenter presenter) {
 		if (presenter.PaletteVersion == _shownVersion || presenter.Palette is not { } live) {
@@ -64,7 +64,8 @@ public sealed class Es1WorldPalette {
 		_billboards?.Show(live);
 	}
 
-	/// <summary>Each entry's color as one value, red in the low byte, or −1 where <paramref name="palette"/> lacks it.</summary>
+	/// <summary>Each entry's color as one value, red in the low byte, or −1 where the palette lacks it.</summary>
+	/// <param name="palette">The palette, or null.</param>
 	private static int[] Colors(DynamixPalette? palette) {
 		var colors = new int[256];
 		for (int index = 0; index < colors.Length; index++) {

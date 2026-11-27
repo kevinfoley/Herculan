@@ -118,8 +118,9 @@ public sealed class Es1Joystick {
 	/// <c>DVJoystick_ReadAxes</c> (<c>0006b638</c>)(out): nothing while disabled. Otherwise each axis in the mask takes its
 	/// port value, held to at most +128 as retail holds a count to the calibration's maximum and to nothing at the
 	/// minimum; axes outside the mask keep their last value. The four values and <see cref="ButtonsCopy"/> are copied to
-	/// <paramref name="buffer"/> (docs/es1/simulation/joystick.md#normalising-an-axis).
+	/// the buffer (docs/es1/simulation/joystick.md#normalising-an-axis).
 	/// </summary>
+	/// <param name="buffer">The buffer the values are copied to.</param>
 	public bool ReadAxes(Es1JoystickAxisBuffer buffer) {
 		if (!Enabled) {
 			return false;

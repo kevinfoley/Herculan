@@ -34,7 +34,7 @@ public sealed class Es1ShellTuning {
 	public Es1CtlMgrBnd CtlMgrBnd { get; private init; } = new(null);
 
 	/// <summary>
-	/// Subsystem phase 1 on <paramref name="content"/>'s <c>bnd\</c>. Null when a file does not open or holds fewer bytes
+	/// Subsystem phase 1 on the content's <c>bnd\</c>. Null when a file does not open or holds fewer bytes
 	/// than its loader reads, where <c>Ovl_ReadFile</c>'s fatal assert ends the program before any assert hook is added;
 	/// the assert is written to the error stream.
 	/// </summary>

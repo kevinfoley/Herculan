@@ -32,8 +32,10 @@ public sealed class Es1JoystickDevices {
 
 	/// <summary>
 	/// <c>Input_CreateJoystickDevices</c> (<c>ES1DBSIM 0004af0c</c>), at the end of <c>Prefs_Init</c>: the devices
-	/// <see cref="Build"/> builds on <paramref name="port"/>.
+	/// <see cref="Build"/> builds on the port.
 	/// </summary>
+	/// <param name="preferences">The options.</param>
+	/// <param name="port">The game port.</param>
 	public static Es1JoystickDevices Create(Es1Preferences preferences, IEs1GamePort port) {
 		var devices = new Es1JoystickDevices(port);
 		devices.Build(preferences);
@@ -137,9 +139,10 @@ public sealed class Es1JoystickDevices {
 
 	/// <summary>
 	/// <c>Input_ReadJoystickState</c> (<c>0004c4ac</c>)(kind, record): a copy of the record slot <c>+4</c> of the
-	/// device's vtable returns, or null, the answer 0, for no device of <paramref name="kind"/> or one not enabled
+	/// device's vtable returns, or null, the answer 0, for no device of the kind or one not enabled
 	/// (docs/es1/simulation/input.md#the-live-block--input_polldeviceblock-0004c2d0).
 	/// </summary>
+	/// <param name="kind">The input device kind.</param>
 	public Es1JoystickRecord? ReadJoystickState(int kind) {
 		var device = kind switch {
 			FirstKind => First,
