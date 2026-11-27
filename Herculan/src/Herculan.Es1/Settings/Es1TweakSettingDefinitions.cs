@@ -140,6 +140,14 @@ public static class Es1TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> WingmanTakesLead = new("tweak.es1_wingman_takes_lead", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
+	/// A squadmate's line that is cancelled or dropped before it is shown, as one whose voice fails to play is, no longer
+	/// silences every squadmate's line after it.
+	/// <para>Defaults on, an exception to the retail-by-default rule, the user's choice. See
+	/// <see cref="Messages.Es1MessagePort.ClearDueOnRemoval"/>.</para>
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FixUnresponsiveSquadmates = new("tweak.es1_fix_unresponsive_squadmates", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
+
+	/// <summary>
 	/// A new career is numbered by the least pair of career files no other career uses, gets its own careers-log entry
 	/// however many are made in one run of the shell, and is written to the log at once. See
 	/// <see cref="Shell.Es1ShellData.FixCareerSaves"/>.
@@ -163,7 +171,7 @@ public static class Es1TweakSettingDefinitions {
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
+		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixUnresponsiveSquadmates, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 
 	/// <summary>
@@ -178,6 +186,6 @@ public static class Es1TweakSettingDefinitions {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming, TweakSettingDefinitions.MouseOutsideView,
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
+		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixUnresponsiveSquadmates, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 }

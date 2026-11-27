@@ -216,6 +216,11 @@ public abstract class Es1MessagePort {
 	/// true, removed, with the current message, the cancelled and the ready latch cleared. Neither: past its most wait it
 	/// is removed unshown, with the current message, the line and both latches cleared; past its least wait and not yet
 	/// due, it becomes due, ready clears and each begin callback runs with it.
+	///
+	/// <para>Only the show clears the due latch, so a due message taken down or removed before it was shown leaves it set,
+	/// and no later message becomes due: on the pilot channel no comm box begins a line again, and every squadmate's
+	/// line goes by unshown for the rest of the mission (docs/es1/simulation/cockpit-messages.md#the-lifecycle). With
+	/// <see cref="ClearDueOnRemoval"/> both removals clear it too.</para>
 	/// </summary>
 	public void Tick() {
 		uint now = Now;
@@ -249,6 +254,7 @@ public abstract class Es1MessagePort {
 			Current = null;
 			Cancelled = false;
 			Ready = false;
+			Due &= !ClearDueOnRemoval;
 			return;
 		}
 
@@ -258,6 +264,7 @@ public abstract class Es1MessagePort {
 			LineUp = false;
 			Cancelled = false;
 			Ready = false;
+			Due &= !ClearDueOnRemoval;
 			return;
 		}
 
@@ -271,6 +278,14 @@ public abstract class Es1MessagePort {
 			callback(current);
 		}
 	}
+
+	/// <summary>
+	/// Whether <see cref="Tick"/>'s take-down and its removal unshown clear the due latch as well, so a line cancelled or
+	/// dropped before its show no longer stops every later one from becoming due. Off, retail's. <b>This engine's
+	/// own</b>, from <see cref="Settings.Es1TweakSettingDefinitions.FixUnresponsiveSquadmates"/>.
+	/// </summary>
+	public static bool ClearDueOnRemoval =>
+		Engine.Settings.TweakSettings.Current.GetSettingValue(Settings.Es1TweakSettingDefinitions.FixUnresponsiveSquadmates);
 
 	/// <summary>Slot <c>+4</c>, show the current message; answers whether it went up.</summary>
 	protected abstract bool Show();
