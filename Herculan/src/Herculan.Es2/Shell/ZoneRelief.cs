@@ -44,9 +44,11 @@ public sealed class ZoneRelief {
 	}
 
 	/// <summary>
-	/// The height of cell (<paramref name="x"/>, <paramref name="y"/>): row <paramref name="y"/> counts up
+	/// The height of a cell: its row counts up
 	/// from the bitmap's last row. A read past the grid, which the original makes into the heap, is 0.
 	/// </summary>
+	/// <param name="x">The cell's column.</param>
+	/// <param name="y">The cell's row.</param>
 	private int Height(int x, int y) {
 		int row = Rows - 1 - y;
 		int at = row * Size + x;

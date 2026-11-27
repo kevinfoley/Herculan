@@ -261,8 +261,8 @@ public sealed partial class MechObject {
 	}
 
 	/// <summary>
-	/// One subtype's countdown. <paramref name="building"/> false holds the timer at
-	/// <paramref name="lockTime"/> so no lock can form; true lets it run, and reaching zero latches
+	/// One subtype's countdown. While the subtype is not building, the timer is held at the lock time so no lock can form;
+	/// otherwise it runs, and reaching zero latches
 	/// the flag.
 	/// </summary>
 	/// <param name="missileType">Which <c>PROJ.DAT</c> missile subtype.</param>

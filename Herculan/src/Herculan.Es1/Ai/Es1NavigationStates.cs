@@ -265,11 +265,15 @@ public static class Es1NavigationStates {
 	/// <summary>
 	/// The acquisition <c>patrolling</c> and <c>search destroy</c> share. A machine out of action takes
 	/// <c>Ai_SelectTarget</c>(machine, 0), installed whatever it finds, and with a target the aim slot −1 and
-	/// <c>fleeing</c>. Any other, when <paramref name="acquires"/>, takes <c>Ai_SelectTarget</c>(machine, 1); with
-	/// <paramref name="installAny"/> it installs what it finds and enters combat with a target, otherwise it installs and
+	/// <c>fleeing</c>. Any other, when it acquires, takes <c>Ai_SelectTarget</c>(machine, 1); when it installs any
+	/// target it installs what it finds and enters combat with a target, otherwise it installs and
 	/// enters combat only with a target <c>Group_IsOrderTarget</c> passes. Entering combat sets <c>+0xa6</c> and runs
 	/// <c>Mech_AiEnterCombat</c>.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="acquires">Whether the state acquires targets.</param>
+	/// <param name="installAny">Whether it installs any target it finds.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	private static void Acquire(Es1Mech mech, bool acquires, bool installAny, Es1SimGlobals globals) {
 		if (mech.OutOfAction) {
 			mech.InstallTarget(Es1Targets.SelectTarget(mech, 0, globals));

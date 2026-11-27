@@ -89,7 +89,8 @@ public sealed record ShellWorkingFiles(string? Script, string? Text, string? Pla
 	/// <summary>The install's <c>data\</c>, which holds the working files and the mission handoff.</summary>
 	public static string DataDirectory(string installRoot) => CaseInsensitivePath.Combine(installRoot, MissionLoader.DataFolderName);
 
-	/// <summary>The three files under their <c>data\</c> names in <paramref name="directory"/>.</summary>
+	/// <summary>The three files under their <c>data\</c> names in a directory.</summary>
+	/// <param name="directory">The directory.</param>
 	public static ShellWorkingFiles In(string directory) =>
 		new(CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName), CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName),
 			CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName));
@@ -102,10 +103,12 @@ public sealed record ShellWorkingFiles(string? Script, string? Text, string? Pla
 	public static void WriteMissionFile(string path, byte[] bytes) => ShellSaveSlots.WriteInPlace(path, bytes);
 
 	/// <summary>
-	/// Runs <paramref name="write"/>, and returns false with the reason when the file system refuses it — an install
+	/// Runs a write, and returns false with the reason when the file system refuses it — an install
 	/// on a disc or in a protected folder, or a file marked read-only or held open — so the caller reports it as it
 	/// reports a missing file instead of throwing.
 	/// </summary>
+	/// <param name="write">The write to run.</param>
+	/// <param name="failure">The reason the file system refuses it, else null.</param>
 	public static bool TryWrite(Action write, out string? failure) {
 		try {
 			write();
@@ -181,9 +184,9 @@ public static class ShellSaveSlots {
 		label.Length > LabelPrefixLength ? label : label + (emptyWord ?? string.Empty);
 
 	/// <summary>
-	/// <c>Game_SaveSlot(slot, label)</c> (<c>0040e37b</c>): writes <paramref name="game"/> as slot
-	/// <paramref name="slot"/> and returns the slot's new directory entry, or null when nothing was
-	/// written. Slot 10 is slot 11 in training. A player slot (0-9) takes <paramref name="label"/> as its
+	/// <c>Game_SaveSlot(slot, label)</c> (<c>0040e37b</c>): writes a game as a slot
+	/// and returns the slot's new directory entry, or null when nothing was
+	/// written. Slot 10 is slot 11 in training. A player slot (0-9) takes the label as its
 	/// label; every slot is marked in use, and the whole directory is written back
 	/// (<c>Game_SetSlotInUse</c> (<c>0040e115</c>)). The save follows, and <c>Career_SaveSlot</c> (<c>00412a71</c>) copies the
 	/// three working files beside it. See docs/retail/formats/save-games.md. A missing working file is skipped,
@@ -192,6 +195,9 @@ public static class ShellSaveSlots {
 	/// <para>The summary is not restaged here: only <c>ACCEPT</c> does that, through
 	/// <c>Stats_StageCurrentGame</c>.</para>
 	/// </summary>
+	/// <param name="slot">The slot.</param>
+	/// <param name="label">The label a player slot (0-9) takes.</param>
+	/// <param name="game">The game written.</param>
 	public static ShellSaveSlot? SaveGame(string installRoot, IReadOnlyList<ShellSaveSlot> slots, int slot, string? label,
 			bool training, PlayerSave game, ShellWorkingFiles working, out string? failure) {
 		if (slot == SaveSlotDirectory.ResumeSlot && training) {
@@ -282,10 +288,12 @@ public static class ShellSaveSlots {
 	private const int SaveTailLength = PlayerSave.CampaignFlagCount * 2 + 2 + 20;
 
 	/// <summary>
-	/// Writes over whatever is at <paramref name="path"/> without truncating it, as
+	/// Writes over whatever is at a path without truncating it, as
 	/// <c>FileRWStream_Open</c> (<c>0044e46c</c>) opens every save: a shorter payload leaves the old tail
 	/// in place (docs/retail/formats/save-games.md#streams-never-truncate).
 	/// </summary>
+	/// <param name="path">The file's path.</param>
+	/// <param name="bytes">The payload.</param>
 	internal static void WriteInPlace(string path, byte[] bytes) {
 		using var stream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
 		stream.Write(bytes);

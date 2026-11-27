@@ -36,7 +36,10 @@ public sealed partial class ShellMap {
 		return (clamped.X + PanX, clamped.Y + PanY, clamped.Z);
 	}
 
-	/// <summary>A world point on the canvas through <paramref name="camera"/>: <c>Map_Project</c> (<c>0041fff2</c>)'s plan-view projection about the viewport's centre.</summary>
+	/// <summary>A world point on the canvas through a camera: <c>Map_Project</c> (<c>0041fff2</c>)'s plan-view projection about the viewport's centre.</summary>
+	/// <param name="camera">The camera point.</param>
+	/// <param name="x">The world point's X.</param>
+	/// <param name="y">The world point's Y.</param>
 	private static (int X, int Y) Project((int X, int Y, int Z) camera, int x, int y) => unchecked(
 		(CentreX + ((x - camera.X) << FocalShift) / camera.Z, CentreY - ((y - camera.Y) << FocalShift) / camera.Z));
 
@@ -85,9 +88,12 @@ public sealed partial class ShellMap {
 	/// <c>ShellMap_PaintGrid</c> (<c>004258f6</c>): grid lines in <c>0x0f</c> through the projected world origin, one every
 	/// <see cref="GridSpacing"/> — the spacing measured on the projection of sixteen of them along x —
 	/// rightwards, leftwards, downwards and upwards, across the whole viewport; then, outside the intro's
-	/// first paint, the bounds outlined in colour 10. Draws at most <paramref name="limit"/> lines and
+	/// first paint, the bounds outlined in colour 10. Draws no more lines than a limit and
 	/// returns how many there are.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="camera">The camera point.</param>
+	/// <param name="limit">The most lines to draw.</param>
 	private int PaintGrid(ShellSurface surface, (int X, int Y, int Z) camera, int limit) {
 		int drawn = 0;
 		void Line(int x0, int y0, int x1, int y1) {

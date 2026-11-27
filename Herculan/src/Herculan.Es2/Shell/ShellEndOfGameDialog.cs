@@ -56,10 +56,11 @@ public sealed class ShellEndOfGameDialog {
 			: null;
 
 	/// <summary>
-	/// Draws the dialog over whatever <paramref name="surface"/> holds: <c>ESTitle_Ctor</c>'s filled body
+	/// Draws the dialog over whatever the surface holds: <c>ESTitle_Ctor</c>'s filled body
 	/// under the face and plate the builder writes, and the two lines centred in <c>0x29</c> with no backing.
-	/// <paramref name="lit"/> is the widget a press has lit.
 	/// </summary>
+	/// <param name="surface">The surface to draw over.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		if (!IsOpen) {
 			return;

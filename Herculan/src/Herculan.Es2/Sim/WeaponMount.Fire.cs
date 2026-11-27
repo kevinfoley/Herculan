@@ -408,13 +408,14 @@ public sealed partial class WeaponMount {
 	/// <para>The magazine drops by the template's <c>+0x38</c> before the projectile type is looked
 	/// at, so a launcher pays as a gun does, and a magazine that reaches zero clears
 	/// <see cref="Selectable"/>, dropping the weapon out of the selection cycle. A free shot
-	/// (<paramref name="freeShot"/>) skips both.</para>
+	/// skips both.</para>
 	///
 	/// <para><c>Bullet_Fire</c> takes anything that is not a <see cref="ProjectileType.Rocket"/>,
 	/// <c>Rocket_Fire</c> one that is. Only the gun branch raises the muzzle flash
 	/// (<see cref="StartMuzzleFlash"/>). See
 	/// docs/retail/simulation/weapon-firing.md#the-ammunition-dispatch.</para>
 	/// </summary>
+	/// <param name="freeShot">Whether the shot is free.</param>
 	private void FireAmmunition(MechObject owner, SimWorld world, ProjectileData.Projectile projectile,
 			in Transform3 bone, Vec3i muzzle, bool freeShot) {
 		// The whole of what the free-shot flag buys: the round count is left alone, so the mount also
@@ -466,12 +467,14 @@ public sealed partial class WeaponMount {
 
 	/// <summary>
 	/// <c>Mech_ConvergeGunsOnRange</c> (<c>0041a74c</c>) — the toe-in that makes this hardpoint's
-	/// shots cross the sight line at <paramref name="range"/>, for every mount through
+	/// shots cross the sight line at a range, for every mount through
 	/// <see cref="WeaponMounts.ConvergeOnRange"/>; a range of zero squares them up again.
 	///
 	/// <para>The angle is taken from <see cref="MountPointOffset"/>, <c>WeaponMount_MuzzleOffset</c>'s
 	/// result, not from <see cref="MuzzleOffset"/>: the barrel length is not part of it.</para>
 	/// </summary>
+	/// <param name="owner">The machine the mount hangs off.</param>
+	/// <param name="range">The range to converge on.</param>
 	internal void ConvergeOnRange(MechObject owner, int range) {
 		if (range == 0) {
 			_convergePitch = 0;

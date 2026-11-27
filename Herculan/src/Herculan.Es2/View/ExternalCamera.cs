@@ -56,11 +56,12 @@ public static class ExternalCamera {
 	private static int Units(float meters) => (int)(meters * WorldScale.WorldUnitsPerMeter);
 
 	/// <summary>
-	/// Points <paramref name="camera"/> at <paramref name="subject"/>'s orbit centre, from
-	/// <see cref="DistanceMeters"/> away on the orbit <paramref name="orbitYawBam"/> and
-	/// <paramref name="orbitPitchBam"/> describe.
-	/// <paramref name="terrain"/> is optional and only used for the ground clearance floor.
+	/// Points a camera at a subject's orbit centre, from
+	/// <see cref="DistanceMeters"/> away on the orbit the yaw and pitch describe.
 	/// </summary>
+	/// <param name="camera">The camera to place.</param>
+	/// <param name="subject">The object the camera orbits.</param>
+	/// <param name="terrain">The terrain, optional and only used for the ground clearance floor.</param>
 	/// <param name="orbitYawBam">
 	/// Orbit angle around the subject, in BAM (see <see cref="BinaryAngle"/>), offset from directly
 	/// behind it — zero reproduces the view's original fixed chase position.

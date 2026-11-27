@@ -109,7 +109,7 @@ public sealed class ShieldCharge {
 	/// <c>CockpitPalette.ShieldFacingCharge</c>), which is why the two halves of the widget can
 	/// disagree so completely — dark rings over a confident "100".</para>
 	///
-	/// <para><paramref name="rounded"/> is <b>not retail</b> — it is the
+	/// <para>The rounding is <b>not retail</b> — it is the
 	/// <see cref="Settings.Es2TweakSettingDefinitions.RoundShieldBalance"/> tweak, which snaps the
 	/// front number to the nearest multiple of <see cref="ReadoutStep"/>, so it reads 120/80, 140/60 …
 	/// where retail reads 119/81, 139/61 … <see cref="AdjustBalance"/> is the only thing that moves
@@ -117,6 +117,7 @@ public sealed class ShieldCharge {
 	/// nearest point would not be enough: a run of ten steps back from either clamped end drifts 0.78
 	/// of a point, so 310 would read 61. Snapping has ten points of margin.</para>
 	/// </summary>
+	/// <param name="rounded">Whether the tweak's rounding is on.</param>
 	public (int Front, int Rear) Readout(bool rounded) {
 		int front = rounded
 			? ((Balance * (ReadoutTotal / ReadoutStep) + (BalanceMax >> 1)) >> 10) * ReadoutStep
@@ -159,7 +160,7 @@ public sealed class ShieldCharge {
 	/// array still moves charge across.</para>
 	/// </summary>
 	/// <param name="request">Energy on offer this tick, in pool units.</param>
-	/// <returns>The unclaimed part of <paramref name="request"/>, handed back to the pool.</returns>
+	/// <returns>The unclaimed part of the request, handed back to the pool.</returns>
 	public short RechargeTick(short request) {
 		short deficit = (short)(Max - (_front + Rear));
 

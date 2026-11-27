@@ -23,7 +23,9 @@ public sealed class ShellAlarm {
 	/// <summary>Whether the alarm is installed.</summary>
 	public bool Installed { get; private set; }
 
-	/// <summary><c>WinTimer_InstallAlarm</c>: the first tick <paramref name="delay"/> ms on, then one each <paramref name="period"/>.</summary>
+	/// <summary><c>WinTimer_InstallAlarm</c>: the first tick a delay in ms on, then one each period.</summary>
+	/// <param name="delay">Milliseconds until the first tick.</param>
+	/// <param name="period">Milliseconds between the ticks after it.</param>
 	public void Install(int delay, int period) {
 		Installed = true;
 		_remaining = delay;
@@ -34,9 +36,10 @@ public sealed class ShellAlarm {
 	public void Remove() => Installed = false;
 
 	/// <summary>
-	/// <c>Timer_Tick</c>'s pass at <paramref name="now"/>: whether the alarm ticks. Run it every pass of the
+	/// <c>Timer_Tick</c>'s pass at a time: whether the alarm ticks. Run it every pass of the
 	/// loop, installed or not, since the timer measures from its own last run.
 	/// </summary>
+	/// <param name="now">The time of this pass, as the timer measures it.</param>
 	public bool Tick(long now) {
 		long elapsed = now - _lastTick;
 		_lastTick = now;

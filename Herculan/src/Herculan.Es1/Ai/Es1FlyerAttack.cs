@@ -79,7 +79,7 @@ public static class Es1FlyerAttack {
 
 	/// <summary>
 	/// <c>Flyer_AttackRun</c> (<c>0001bba4</c>)
-	/// (docs/es1/simulation/flyers.md#the-attack-run--flyer_attackrun-0001bba4): the run at <paramref name="target"/>. The point is the target's position; the
+	/// (docs/es1/simulation/flyers.md#the-attack-run--flyer_attackrun-0001bba4): the run at the target. The point is the target's position; the
 	/// bearing error to it (<c>Math_HeadingToward</c> less the heading); the ground range <i>r</i>
 	/// (<c>Math_DistanceBetweenPoints2D</c>), taken once; the flyer's and the target's speeds through slot <c>+0x3c</c>.
 	/// <list type="number">

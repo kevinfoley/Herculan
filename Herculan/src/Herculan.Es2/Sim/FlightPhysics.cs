@@ -159,13 +159,13 @@ internal static class FlightPhysics {
 	public const int ComponentRightWing = 8;
 
 	/// <summary>
-	/// One step of the model. <paramref name="analogueThrottle"/> is the original's
-	/// input-preferences test, <see cref="Input.JoystickBindings.FlightThrottleIsLever"/>: when it holds
+	/// One step of the model.
+	/// </summary>
+	/// <param name="analogueThrottle">The original's input-preferences test, <see cref="Input.JoystickBindings.FlightThrottleIsLever"/>: when it holds
 	/// the axis is read as a position rather than a rate. It is a global in DBSIM, so it applies to
 	/// <i>every</i> airframe in the mission rather than only to the one the player flies — and an AI
 	/// flyer passes a zero throttle axis, so with such a device configured every Cybrid flyer's
-	/// throttle is held at the middle of its range; see <see cref="FlyerObject"/>.
-	/// </summary>
+	/// throttle is held at the middle of its range; see <see cref="FlyerObject"/>.</param>
 	public static void Step(IFlightBody body, ref FlightBlock state, FlightModelRecord flight,
 			short aileron, short elevator, short rudder, short throttleAxis, int groundHeight,
 			bool analogueThrottle) {
@@ -401,7 +401,9 @@ internal static class FlightPhysics {
 		: value <= -ThrottleFull ? (short)-ThrottleFull
 		: (short)value;
 
-	/// <summary>Clamps to ±<paramref name="limit"/>, the shape every rate and acceleration cap takes.</summary>
+	/// <summary>Clamps to ± a limit, the shape every rate and acceleration cap takes.</summary>
+	/// <param name="value">The value to clamp.</param>
+	/// <param name="limit">The limit.</param>
 	private static short ClampSymmetric(short value, short limit) {
 		short low = (short)-limit;
 		return value >= limit ? limit : value <= low ? low : value;

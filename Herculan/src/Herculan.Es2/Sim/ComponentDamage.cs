@@ -715,9 +715,12 @@ public sealed class ComponentDamage {
 	/// <para>Two things it does that a plain accumulate would not. An entry already holding
 	/// <see cref="Destroyed"/> absorbs nothing at all, so a lost part cannot be shot again. And an
 	/// entry the damage finishes stores the sentinel rather than the maximum and <b>writes the excess
-	/// back into <paramref name="damage"/></b>, which is the mechanism the whole spill is built
+	/// back into the damage being applied</b>, which is the mechanism the whole spill is built
 	/// on.</para>
 	/// </summary>
+	/// <param name="entry">The entry.</param>
+	/// <param name="maximum">The maximum.</param>
+	/// <param name="damage">The damage to add; the excess is written back into it.</param>
 	/// <returns>Whether the entry is now destroyed.</returns>
 	private static bool AddDamage(ref short entry, short maximum, ref short damage) {
 		if (entry < 0) {

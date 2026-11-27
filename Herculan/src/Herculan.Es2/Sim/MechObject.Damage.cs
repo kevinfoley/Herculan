@@ -179,15 +179,18 @@ public sealed partial class MechObject {
 	/// </summary>
 	private bool[] _legsLost = System.Array.Empty<bool>();
 
-	/// <summary>Whether leg <paramref name="leg"/> has been shot off.</summary>
+	/// <summary>Whether a leg has been shot off.</summary>
+	/// <param name="leg">The leg's index.</param>
 	public bool LegLost(int leg) => leg >= 0 && leg < _legsLost.Length && _legsLost[leg];
 
 	/// <summary>
 	/// <c>Group_ApplyOutnumberedDamage</c> (<c>00423f08</c>): <see cref="ApplyOutnumberedDamage"/> on
-	/// every member of <paramref name="group"/>. <see cref="SimWorld"/> runs it on the player's group when
+	/// every member of a group. <see cref="SimWorld"/> runs it on the player's group when
 	/// the mission poll answers <see cref="MissionStatus.PlayerImmobilised"/>. See
 	/// docs/retail/simulation/mission-objectives.md#the-poll--mission_pollstatus-004131ac.
 	/// </summary>
+	/// <param name="world">The world.</param>
+	/// <param name="group">The group.</param>
 	internal static void ApplyGroupOutnumberedDamage(SimWorld world, MissionGroup group) {
 		for (int i = 0; i < group.Members.Count; i++) {
 			if (group.Members[i] is MechObject member) {
@@ -511,7 +514,7 @@ public sealed partial class MechObject {
 	/// <see cref="ComponentBlastOdds"/> in 4096 — a little over half — to be considered at all, so
 	/// two identical blasts on an identical machine do not wreck the same parts.</item>
 	/// <item><b>Distance and falloff.</b> A component that passed its roll is placed in the world and
-	/// measured against the blast point; inside <paramref name="blastRadius"/> it takes the shield
+	/// measured against the blast point; inside the blast radius it takes the shield
 	/// overflow scaled linearly to zero at the radius, through the same
 	/// <see cref="ComponentDamageWrite"/> endpoint a beam's damage ends in.</item>
 	/// </list>
@@ -525,6 +528,11 @@ public sealed partial class MechObject {
 	/// them exactly as a beam does. The debris a component lost this way throws goes through
 	/// <see cref="ComponentDamage.ApplyDamage"/> like any other loss.</para>
 	/// </summary>
+	/// <param name="world">The world.</param>
+	/// <param name="damage">The blast's damage.</param>
+	/// <param name="hitPoint">The blast point.</param>
+	/// <param name="blastRadius">The radius within which a component is damaged, in world units.</param>
+	/// <param name="attacker">The object that caused the blast, or null.</param>
 	public override void ExplosiveDamage(SimWorld world, short damage, Vec3i hitPoint, int blastRadius,
 			SimObject? attacker) {
 		if (_damage == null || blastRadius <= 0) {

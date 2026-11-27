@@ -298,10 +298,11 @@ public sealed partial class BaseObject : SimObject {
 		: StructureClass.Unclassified;
 
 	/// <summary>
-	/// Whether <c>BASES.DAT</c> type <paramref name="typeIndex"/> is built as a <see cref="StructureClass.GroundVehicle"/>: a
+	/// Whether a <c>BASES.DAT</c> type is built as a <see cref="StructureClass.GroundVehicle"/>: a
 	/// structure group whose first member is one is a convoy, which drives its route
 	/// (docs/retail/simulation/ground-vehicles.md#the-ground-vehicle-tick--0046a5d0).
 	/// </summary>
+	/// <param name="typeIndex">The <c>BASES.DAT</c> type index.</param>
 	public static bool IsGroundVehicle(int typeIndex) => GroundVehicleTypes.Contains(typeIndex);
 
 	/// <summary>The first arm of <c>Base_Construct</c>'s switch, as its own case labels.</summary>

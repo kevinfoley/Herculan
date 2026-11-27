@@ -253,9 +253,11 @@ public struct BehaviourBlock {
 
 	/// <summary>
 	/// <c>Behaviour_SetState</c> (<c>00413e50</c>): installs a descriptor and arms its countdown at
-	/// the descriptor's dwell plus a 0-15 count jitter off <paramref name="jitter"/>, zeroing the tick
+	/// the descriptor's dwell plus a 0-15 count jitter off a jitter source, zeroing the tick
 	/// counter and the block's two scratch regions — which here is everything the block holds.
 	/// </summary>
+	/// <param name="state">The descriptor to install.</param>
+	/// <param name="jitter">The jitter source.</param>
 	public void SetState(BehaviourState state, DwellJitter jitter) {
 		State = state;
 		DwellCountdown = state.Dwell + jitter.Next();

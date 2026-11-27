@@ -300,11 +300,14 @@ public sealed partial class MechObject : IFlightBody {
 	/// One wing. A point is tested against the ground under it <i>and</i> the wing's own point is
 	/// swept forward as a ray, so a wing catches a building as readily as a hillside.
 	///
-	/// <para>The ground point is <paramref name="offset"/> through <paramref name="shared"/> as it
+	/// <para>The ground point is the wing's offset through the shared transform as it
 	/// stands, whose translation an earlier ray probe may have left behind, and it is where a contact
-	/// of either kind is reported. The wing's own <paramref name="rayOrigin"/> is then written into
+	/// of either kind is reported. The wing's own ray origin is then written into
 	/// that translation for the ray, and left there.</para>
 	/// </summary>
+	/// <param name="offset">The wing's offset.</param>
+	/// <param name="rayOrigin">The wing's own point, swept forward as a ray.</param>
+	/// <param name="shared">The shared probe transform.</param>
 	/// <param name="rollAway">Which way a contact rolls the airframe: -1 for a surface out to starboard.</param>
 	private void WingProbe(SimWorld world, Vec3i offset, Vec3i rayOrigin, int component,
 			ref Transform3 shared, int airSpeed, int rollAway) {
@@ -342,10 +345,12 @@ public sealed partial class MechObject : IFlightBody {
 	}
 
 	/// <summary>
-	/// One nacelle. No ground test — only the object ray, from <paramref name="rayOrigin"/> written
-	/// into <paramref name="shared"/>'s translation and left there — and a flat roll kick twice the
+	/// One nacelle. No ground test — only the object ray, from the nacelle's ray origin written
+	/// into the shared transform's translation and left there — and a flat roll kick twice the
 	/// wings'.
 	/// </summary>
+	/// <param name="rayOrigin">The nacelle's ray origin.</param>
+	/// <param name="shared">The shared probe transform.</param>
 	/// <param name="reported">
 	/// Where a contact is reported: the left nacelle's point for both, as in the original, whose
 	/// right-hand branch passes the left point's address (KNOWN_ISSUES_ES2.md).
@@ -481,10 +486,11 @@ public sealed partial class MechObject : IFlightBody {
 	}
 
 	/// <summary>
-	/// Whether the ray <paramref name="ray"/> describes struck anything: one tick's travel long, from
+	/// Whether a probe ray struck anything: one tick's travel long, from
 	/// its translation along its attitude — the shared probe transform as the last
 	/// <see cref="AimProbeRay"/> left it.
 	/// </summary>
+	/// <param name="ray">The probe ray.</param>
 	private bool ProbeStruckObject(SimWorld world, in Transform3 ray, int airSpeed, int clearance) {
 		var probe = new WeaponShot(ray, airSpeed, ContactDamageShield, ContactDamageShield,
 			AirframeContact, owner: null, excluded: this, clearance: clearance);

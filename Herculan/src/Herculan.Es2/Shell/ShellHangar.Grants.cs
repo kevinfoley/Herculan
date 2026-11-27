@@ -77,27 +77,30 @@ public sealed partial class ShellHangar {
 	}
 
 	/// <summary>
-	/// The weapon id whose units campaign flag <paramref name="flag"/> stocks at the debrief (<see cref="GrantCampaignWeapons"/>),
+	/// The weapon id whose units a campaign flag stocks at the debrief (<see cref="GrantCampaignWeapons"/>),
 	/// for a flag of the retail table, <c>0x15</c> to <c>0x2a</c>; null for any other, the table's overrun included.
 	/// </summary>
+	/// <param name="flag">The campaign flag.</param>
 	public static int? UnitGrantWeapon(int flag) =>
 		flag >= FirstUnitGrantFlag && flag < FirstUnitGrantFlag + UnitGrantTableLength
 			? WeaponUnitGrantIds[flag - FirstUnitGrantFlag]
 			: null;
 
 	/// <summary>
-	/// The weapon id campaign flag <paramref name="flag"/> unlocks at the debrief while it is locked, and the value the flag must
+	/// The weapon id a campaign flag unlocks at the debrief while it is locked, and the value the flag must
 	/// hold (<see cref="GrantCampaignWeapons"/>); null for a flag no weapon's unlock tests.
 	/// </summary>
+	/// <param name="flag">The campaign flag.</param>
 	public static (int Weapon, short Value)? WeaponUnlock(int flag) {
 		int id = Array.IndexOf(WeaponUnlockSlots, (short)flag);
 		return flag >= 0 && id >= 0 ? (id, WeaponUnlockValues[id]) : null;
 	}
 
 	/// <summary>
-	/// The chassis type campaign flag <paramref name="flag"/> makes available at the debrief while it is not, and the value the
+	/// The chassis type a campaign flag makes available at the debrief while it is not, and the value the
 	/// flag must hold (<see cref="GrantChassis"/>); null for a flag no chassis grant tests.
 	/// </summary>
+	/// <param name="flag">The campaign flag.</param>
 	public static (int Chassis, int Value)? ChassisUnlock(int flag) {
 		foreach (var (type, slot, expected) in ChassisSlots()) {
 			if (slot == flag) {

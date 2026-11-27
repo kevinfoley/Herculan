@@ -20,15 +20,17 @@ namespace Herculan.Es2.Terrain;
 /// </summary>
 public sealed partial class HeightGrid {
 	/// <summary>
-	/// Walks the grid from <paramref name="start"/> to <paramref name="end"/> and reports the first
+	/// Walks the grid from a start to an end and reports the first
 	/// point at which the segment passes into the ground — mode 0, the thin ray.
 	///
 	/// <para>Each cell step tests the edge it leaves through (<see cref="ExitBelowSurface"/>); the last
-	/// step, which ends at <paramref name="end"/>, height-queries its endpoint instead, and its start
+	/// step, which ends at the end, height-queries its endpoint instead, and its start
 	/// too when it is also the first. A crossing is placed on the cell's triangle planes
 	/// (<see cref="SurfaceIntersection"/>). A segment starting outside the grid, or walking off it, is
 	/// no hit. See docs/retail/simulation/terrain-heightmap.md#mode-0--the-thin-ray.</para>
 	/// </summary>
+	/// <param name="start">The segment's start.</param>
+	/// <param name="end">The segment's end.</param>
 	/// <param name="rules">Which release's handling of a crossing the solve cannot place, and the tweak — see <see cref="ThinRayRules"/>.</param>
 	/// <param name="hitPoint">Where the segment met the ground; only meaningful when this returns true.</param>
 	public bool RayWalk(Vec3i start, Vec3i end, ThinRayRules rules, out Vec3i hitPoint) =>
@@ -454,9 +456,17 @@ public sealed partial class HeightGrid {
 	/// <para>The near triangle, by the diagonal split <see cref="HeightAtWorld"/> uses, is tried first
 	/// and a hit outside it falls through to the far one. For selector 0 the far plane's corner comes
 	/// from the cell to the east; for selector 2 the far plane keeps the near triangle's constant, as
-	/// the original's does, unless <paramref name="exactFarPlane"/> is set. See
+	/// the original's does, unless the tweak asks for the exact far plane. See
 	/// docs/retail/simulation/terrain-heightmap.md#mode-0--the-thin-ray.</para>
 	/// </summary>
+	/// <param name="cellX">The cell's column.</param>
+	/// <param name="cellY">The cell's row.</param>
+	/// <param name="fromX">The segment's start, X.</param>
+	/// <param name="fromY">The segment's start, Y.</param>
+	/// <param name="fromZ">The segment's start, Z.</param>
+	/// <param name="toX">The segment's end, X.</param>
+	/// <param name="toY">The segment's end, Y.</param>
+	/// <param name="toZ">The segment's end, Z.</param>
 	/// <param name="exactFarPlane">
 	/// The <see cref="Settings.Es2TweakSettingDefinitions.FixTerrainHitPoint"/> tweak: recompute the far
 	/// plane's constant through corner <c>00</c> with the far normal, which both of a selector-2 cell's
@@ -694,9 +704,8 @@ public sealed partial class HeightGrid {
 	}
 
 	/// <summary>
-	/// <c>Terrain_FindDiagonalCrossing</c> (<c>0046fcac</c>) — where a step from
-	/// (<paramref name="fromX"/>, <paramref name="fromY"/>) to (<paramref name="toX"/>,
-	/// <paramref name="toY"/>) inside one cell enters the triangle its far end lies in: the step's own
+	/// <c>Terrain_FindDiagonalCrossing</c> (<c>0046fcac</c>) — where a step from one point to another
+	/// inside one cell enters the triangle its far end lies in: the step's own
 	/// start when both ends are on the same side of the cell's diagonal, otherwise the point where it
 	/// crosses the diagonal, found by at most eight bisections and reported with <c>z</c> 0.
 	///
@@ -704,6 +713,13 @@ public sealed partial class HeightGrid {
 	/// anti-diagonal split (selector 0), so one comparison, <c>y &lt; x</c>, serves both
 	/// diagonals.</para>
 	/// </summary>
+	/// <param name="cellX">The cell's column.</param>
+	/// <param name="cellY">The cell's row.</param>
+	/// <param name="fromX">The step's start, X.</param>
+	/// <param name="fromY">The step's start, Y.</param>
+	/// <param name="fromZ">The step's start, Z.</param>
+	/// <param name="toX">The step's end, X.</param>
+	/// <param name="toY">The step's end, Y.</param>
 	private Vec3i DiagonalCrossing(int cellX, int cellY, int fromX, int fromY, int fromZ, int toX, int toY) {
 		int cellSize = 1 << CellSizeShift;
 		int originX = cellX << CellSizeShift;

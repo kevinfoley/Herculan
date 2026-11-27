@@ -162,9 +162,9 @@ public sealed class ShellMovieRun : IDisposable {
 	}
 
 	/// <summary>
-	/// One step of the run. <paramref name="stopPressed"/> is a mouse button, Esc or Space going down
-	/// since the last step, which ends the movie on screen.
+	/// One step of the run.
 	/// </summary>
+	/// <param name="stopPressed">A mouse button, Esc or Space going down since the last step, which ends the movie on screen.</param>
 	public void Update(GL gl, TimeSpan delta, bool stopPressed) {
 		switch (_stage) {
 			case Stage.FadingOut:

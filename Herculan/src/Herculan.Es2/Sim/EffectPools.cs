@@ -49,7 +49,7 @@ public sealed class EffectPools {
 	public EffectLightField Lights { get; } = new();
 
 	/// <summary>
-	/// <c>Explosion_Construct</c> (<c>00407f1c</c>) — puts one impact effect at <paramref name="position"/>. Called from the
+	/// <c>Explosion_Construct</c> (<c>00407f1c</c>) — puts one impact effect at a position. Called from the
 	/// two places the original calls it from along this path: from inside an object's hit test, where
 	/// the effect belongs to the object struck (and is spawned whether or not the sweep goes on to
 	/// find something nearer), and from the tail of <see cref="HitTests.Raycast"/> itself for a shot that ends
@@ -99,12 +99,16 @@ public sealed class EffectPools {
 		effects is { Length: > 0 } ? effects[_world.Random.NextMasked(3) % effects.Length] : (short)0;
 
 	/// <summary>
-	/// <see cref="SpawnImpactEffect"/> with the id drawn from <paramref name="effects"/> by
+	/// <see cref="SpawnImpactEffect"/> with the id drawn from an array of effects by
 	/// <see cref="PickImpactEffect"/> only once a pool slot is known to be free. This is the order of the
 	/// ground hit and of the mech and structure hit tests, whose <c>Math_RandomNext</c> sits inside the
 	/// allocation's null test, so a full pool leaves the generator where it was. The flyer's hit test
 	/// draws before it allocates and goes through <see cref="PickImpactEffect"/> itself.
 	/// </summary>
+	/// <param name="effects">The <c>ImpactFX</c> array the id is drawn from.</param>
+	/// <param name="position">Where the shot landed, in world units.</param>
+	/// <param name="owner">As for <see cref="SpawnImpactEffect"/>.</param>
+	/// <param name="playSound">As for <see cref="SpawnImpactEffect"/>.</param>
 	internal void SpawnPickedImpactEffect(short[]? effects, Vec3i position, SimObject? owner,
 			bool playSound = true) {
 		if (!ImpactEffectPoolFull) {
@@ -128,13 +132,13 @@ public sealed class EffectPools {
 	public IReadOnlyList<FireEffect> Fires => _fires;
 
 	/// <summary>
-	/// <c>Debris_ThrowGroup</c> (<c>004086bc</c>) — throws one debris group at <paramref name="frame"/>,
+	/// <c>Debris_ThrowGroup</c> (<c>004086bc</c>) — throws one debris group from a frame,
 	/// all its pieces or a weighted random draw of them as <see cref="DebrisGroup"/> describes.
 	///
 	/// <para>Each piece is placed by <c>Debris_Throw</c> (<c>00408588</c>) from its own yaws, or on a
 	/// random bearing from the frame's translation when it states neither, and launched by
-	/// <c>Debris_Launch</c> (<c>004089e4</c>): the pitch drawn between <paramref name="pitchMin"/> and
-	/// <paramref name="pitchMax"/>, the speed <paramref name="speedScale"/> shifted up ten over the
+	/// <c>Debris_Launch</c> (<c>004089e4</c>): the pitch drawn between the lowest and highest launch pitch,
+	/// the speed scale shifted up ten over the
 	/// piece's own mass, plus <see cref="DebrisCarrierVelocity"/>. See
 	/// docs/retail/simulation/destruction-effects.md#throwing-a-group.</para>
 	/// </summary>
@@ -273,7 +277,7 @@ public sealed class EffectPools {
 	}
 
 	/// <summary>
-	/// <c>Debris_Launch</c>'s velocity — the speed is <paramref name="speedScale"/> shifted up ten and
+	/// <c>Debris_Launch</c>'s velocity — the speed is the speed scale shifted up ten and
 	/// divided by the piece's mass, split into a horizontal part by the pitch and then onto the two
 	/// horizontal axes by the bearing.
 	///
@@ -281,6 +285,10 @@ public sealed class EffectPools {
 	/// aircraft's wreckage keeps flying rather than dropping out of the sky where the aircraft
 	/// was.</para>
 	/// </summary>
+	/// <param name="bearing">The launch bearing.</param>
+	/// <param name="pitch">The launch pitch.</param>
+	/// <param name="mass">The piece's mass.</param>
+	/// <param name="speedScale">What the launch speed is shifted up ten from, before it is divided by the piece's mass.</param>
 	private (short X, short Y, short Z) LaunchVelocity(short bearing, short pitch, short mass,
 			int speedScale) {
 		int speed = mass != 0 ? (speedScale << 10) / mass : 0;

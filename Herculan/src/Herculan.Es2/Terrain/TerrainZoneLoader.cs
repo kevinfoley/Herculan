@@ -34,27 +34,31 @@ public static class TerrainZoneLoader {
 	/// </summary>
 	public const byte DefaultHeightBias = 0;
 
-	/// <summary>Zone <paramref name="zoneIndex"/>'s header file name, <c>zoneNNNN.dat</c>, in <see cref="HeaderFolder"/> and a handoff alike.</summary>
+	/// <summary>A zone's header file name, <c>zoneNNNN.dat</c>, in <see cref="HeaderFolder"/> and a handoff alike.</summary>
+	/// <param name="zoneIndex">The zone index.</param>
 	public static string HeaderFile(int zoneIndex) => $"zone{zoneIndex}.dat";
 
-	/// <summary>Zone <paramref name="zoneIndex"/>'s heightmap file name, <c>zoneNNNN.dba</c>, in <see cref="HeightmapFolder"/> and a handoff alike.</summary>
+	/// <summary>A zone's heightmap file name, <c>zoneNNNN.dba</c>, in <see cref="HeightmapFolder"/> and a handoff alike.</summary>
+	/// <param name="zoneIndex">The zone index.</param>
 	public static string HeightmapFile(int zoneIndex) => $"zone{zoneIndex}.dba";
 
 	/// <summary>
-	/// Loads zone <paramref name="zoneIndex"/> (e.g. 504 for <c>ZONE504</c>) from mounted content.
-	/// <paramref name="materials"/> supplies the shared <c>dat\mat0</c> table, whose first record
-	/// sizes the material-roll block (see <see cref="TerrainMaterial.BlockShift"/>);
-	/// <paramref name="random"/> drives the roll itself.
+	/// Loads a zone (e.g. 504 for <c>ZONE504</c>) from mounted content.
+	/// The shared <c>dat\mat0</c> table's first record sizes the material-roll block (see <see cref="TerrainMaterial.BlockShift"/>).
 	///
 	/// <para>A zone a mission carries of its own (<see cref="ZoneFiles"/>) is read first from
-	/// <paramref name="handoffDirectory"/>, beside the handoff's <c>script.dat</c>, under <see cref="HeaderFile"/> and
+	/// the handoff directory, beside the handoff's <c>script.dat</c>, under <see cref="HeaderFile"/> and
 	/// <see cref="HeightmapFile"/>, and checked as <see cref="ZoneFiles.Read"/> checks it; a pair there that does not read,
 	/// or half of one, is an <see cref="InvalidDataException"/>. Retail reads no zone from its handoff; this lookup is this
 	/// engine's, and the handoff writer is <see cref="Shell.MissionFileLaunch"/>.</para>
 	/// </summary>
+	/// <param name="zoneIndex">The zone index (e.g. 504 for <c>ZONE504</c>).</param>
+	/// <param name="materials">The shared <c>dat\mat0</c> table.</param>
+	/// <param name="random">Drives the material roll.</param>
 	/// <param name="detailLevel">
 	/// The terrain-detail setting the zone's draw radius comes from — see <see cref="TerrainDetail"/>.
 	/// </param>
+	/// <param name="handoffDirectory">The folder beside the handoff's <c>script.dat</c>, or null.</param>
 	public static HeightGrid Load(GameContent content, int zoneIndex, TerrainMaterialTable materials,
 			SimRandom random, byte heightBias = DefaultHeightBias,
 			int detailLevel = TerrainDetail.DefaultLevel, string? handoffDirectory = null) {
@@ -82,9 +86,12 @@ public static class TerrainZoneLoader {
 	}
 
 	/// <summary>
-	/// The terrain of <paramref name="zone"/>, a zone a mission carries of its own, built as <see cref="Load"/> builds one
-	/// read from a handoff, the roll drawn on <paramref name="random"/>.
+	/// The terrain of a zone a mission carries of its own, built as <see cref="Load"/> builds one
+	/// read from a handoff, the roll drawn on the generator.
 	/// </summary>
+	/// <param name="zone">The mission's zone files.</param>
+	/// <param name="materials">The shared <c>dat\mat0</c> table.</param>
+	/// <param name="random">The generator the roll is drawn on.</param>
 	public static HeightGrid FromZone(ZoneFiles zone, TerrainMaterialTable materials, SimRandom random,
 			byte heightBias = DefaultHeightBias, int detailLevel = TerrainDetail.DefaultLevel) =>
 		PopulateFromBitmap(zone.Heightmap(), zone.CellSizeShift, zone.HeightScale, materials, random, heightBias, detailLevel);
@@ -215,12 +222,13 @@ public static class TerrainZoneLoader {
 	}
 
 	/// <summary>
-	/// The cell grid's width and height shifts for heightmap <paramref name="image"/>, as
+	/// The cell grid's width and height shifts for a heightmap image, as
 	/// <c>TerrainZone_PopulateFromBitmap</c> derives them from the image itself (<see cref="ZoneFiles.GridShift"/>); the
 	/// zone header's copies are never read. Cols drives the width shift and Rows the height shift, matching the original's
 	/// reads at bitmap offsets +6 and +4 respectively. Every retail zone is square (128x128 or 256x256),
 	/// so no real data distinguishes the two — worth knowing if a non-square zone ever turns up.
 	/// </summary>
+	/// <param name="image">The heightmap image.</param>
 	public static (int Width, int Height) GridShifts(DynamixBitmap image) =>
 		(ZoneFiles.GridShift(image.Cols), ZoneFiles.GridShift(image.Rows));
 }

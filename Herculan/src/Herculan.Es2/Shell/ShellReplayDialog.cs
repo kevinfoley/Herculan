@@ -75,9 +75,10 @@ public sealed class ShellReplayDialog {
 	/// Draws the dialog. The picture under it is the shell's own backdrop at the display's origin with no
 	/// border, which is what the renderer already draws beneath the content, so it is left unpainted here.
 	/// The panel keeps a dithered body (<c>+0x59</c> cleared) over it, so the bay shows through at half
-	/// strength; the title and the buttons are as the other dialogs draw theirs. <paramref name="lit"/> is the
-	/// widget a press has lit.
+	/// strength; the title and the buttons are as the other dialogs draw theirs.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		if (!IsOpen) {
 			return;

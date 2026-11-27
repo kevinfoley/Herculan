@@ -180,7 +180,8 @@ internal static class ShellWeaponProse {
 			"Reichweite: 320 m  Erforderl. Material: 18.000 kg",
 	};
 
-	/// <summary><paramref name="text"/>, or its corrected line when the tweak is on and it has one.</summary>
+	/// <summary>A text, or its corrected line when the tweak is on and it has one.</summary>
+	/// <param name="text">The text, or null.</param>
 	public static string? Correct(string? text) =>
 		text != null && Corrections.TryGetValue(text, out string? corrected)
 			&& TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.ShowCorrectStats)

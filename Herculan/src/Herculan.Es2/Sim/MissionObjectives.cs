@@ -112,9 +112,10 @@ public sealed class MissionObjectives {
 
 	/// <summary>
 	/// <c>Ai_ChooseWeapon</c>'s write to <c>MissionPollTimer_Count</c> (<c>004a9ee7</c>): put the next
-	/// poll at least <paramref name="minimum"/> away, leaving one already further off alone. See
+	/// poll at least a minimum away, leaving one already further off alone. See
 	/// docs/retail/simulation/ai-weapons.md, "Running dry".
 	/// </summary>
+	/// <param name="minimum">The least time away the next poll is put.</param>
 	internal void DeferPoll(short minimum) {
 		if (_pollInterval < minimum) {
 			_pollInterval = minimum;
@@ -367,7 +368,7 @@ public sealed class MissionObjectives {
 
 	/// <summary>
 	/// <c>Mission_IsClearOfThreats</c> (<c>004137b4</c>) — whether nothing hostile is both aware of
-	/// <paramref name="subject"/> and near it. This is the escort objective's whole test, and it is
+	/// the subject and near it. This is the escort objective's whole test, and it is
 	/// also what gates every conclusive mission status.
 	///
 	/// <para>It walks the live object list and skips anything undeployed, on the subject's own side,
@@ -384,6 +385,8 @@ public sealed class MissionObjectives {
 	/// it.</description></item>
 	/// </list>
 	/// </summary>
+	/// <param name="world">The world.</param>
+	/// <param name="subject">The machine to test.</param>
 	public static bool IsClearOfThreats(SimWorld world, SimObject subject) {
 		if (subject.Group is not { } subjectGroup) {
 			return true;
@@ -464,8 +467,11 @@ public sealed class MissionObjectives {
 
 	/// <summary>
 	/// <c>Mission_IsOutsideBox</c> (<c>0041373c</c>) — whether a position is outside the mission's bounding box, grown by
-	/// <paramref name="margin"/> on every side. See <see cref="MissionRuntime.Box"/>.
+	/// a margin on every side. See <see cref="MissionRuntime.Box"/>.
 	/// </summary>
+	/// <param name="world">The world.</param>
+	/// <param name="subject">The object whose position is tested.</param>
+	/// <param name="margin">How far the box is grown on every side.</param>
 	private static bool IsOutsideMissionBox(SimWorld world, SimObject subject, int margin) {
 		var box = world.Mission.Box;
 

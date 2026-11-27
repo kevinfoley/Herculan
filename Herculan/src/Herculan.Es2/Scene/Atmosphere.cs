@@ -40,11 +40,12 @@ namespace Herculan.Es2.Scene;
 public readonly record struct Atmosphere(float FogStart, float FogEnd, Vector3? FogColor,
 		float CellSize, SkyGradient? Sky) {
 	/// <summary>
-	/// Reads all of it off the loaded zone and theater. <paramref name="shading"/> may be null (no
-	/// ramp), which costs the colours but not the distances: those come from the grid alone.
-	/// <paramref name="world"/> is the theater's <c>.WLD</c>, which says which palette entries the
-	/// sky runs over and how its bands are laid out.
+	/// Reads all of it off the loaded zone and theater. Without a shading (no ramp) it costs the colours but not the
+	/// distances: those come from the grid alone.
 	/// </summary>
+	/// <param name="terrain">The zone's height grid.</param>
+	/// <param name="shading">The theater's shading, or null for no ramp.</param>
+	/// <param name="world">The theater's <c>.WLD</c>, which says which palette entries the sky runs over and how its bands are laid out.</param>
 	public static Atmosphere From(HeightGrid terrain, SurfaceShading? shading, WorldData world) {
 		long range = terrain.VisibilityRange;
 		return new Atmosphere(

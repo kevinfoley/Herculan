@@ -65,13 +65,15 @@ public static class ShellDebrief {
 	private const int PilotsLostFlag = 9;
 
 	/// <summary>
-	/// Runs the debrief on <paramref name="game"/> and <paramref name="hangar"/>, the hangar read from it,
-	/// and stores the hangar back into the game. <paramref name="campaign"/> is <c>CampaignModeFlag == 1</c>;
-	/// <paramref name="repairMode"/> is <c>prefs.cfg</c> option 44 and <paramref name="manualBuild"/> option 45
-	/// set (docs/retail/simulation/preferences.md). <paramref name="roll"/> is <c>ShellRandom_Below</c> (<c>004659ec</c>),
-	/// which the flown mission's text reload draws from. Null, with the reason, when the install lacks a
+	/// Runs the debrief on a game and the hangar read from it, and stores the hangar back into the game. Null, with the reason, when the install lacks a
 	/// catalog the original reads.
 	/// </summary>
+	/// <param name="game">The career's game.</param>
+	/// <param name="hangar">The hangar read from the game.</param>
+	/// <param name="campaign"><c>CampaignModeFlag == 1</c>.</param>
+	/// <param name="repairMode"><c>prefs.cfg</c> option 44 (docs/retail/simulation/preferences.md).</param>
+	/// <param name="manualBuild"><c>prefs.cfg</c> option 45 set.</param>
+	/// <param name="roll"><c>ShellRandom_Below</c> (<c>004659ec</c>), which the flown mission's text reload draws from.</param>
 	public static ShellDebriefResult? Process(PlayerSave game, ShellHangar hangar, GameContent content, byte[] missionVar,
 			byte[] results, bool campaign, int repairMode, bool manualBuild, Func<short, int> roll, out string? failure) {
 		if (ShellRepairCosts.Load(content) is not { } costs
@@ -184,12 +186,13 @@ public static class ShellDebrief {
 
 	/// <summary>
 	/// One machine's turn in the debrief's accounting: <c>Herc_ReadStatusBlock</c> (<c>00411720</c>) over the
-	/// machine in <paramref name="bay"/> when there is one, the pilot's condition set from its overall slot or
+	/// machine in a bay when there is one, the pilot's condition set from its overall slot or
 	/// to 100 with none, <c>Pilot_AccumulateMissionStats</c> (<c>0041000e</c>), and
 	/// <see cref="ShellHangar.SettleAfterMission"/>, whose salvage goes into the pool. Returns 1 when the
 	/// machine was scrapped. An empty bay reads no status block, so the file's block for it is read as
 	/// the pilot's counters, as the original reads it.
 	/// </summary>
+	/// <param name="bay">The bay.</param>
 	private static int SettleMachine(ShellHangar hangar, ShellRepairCosts costs, int bay, PilotEntry pilot, Reader reader) {
 		var machine = hangar.Bay(bay);
 		if (machine != null) {

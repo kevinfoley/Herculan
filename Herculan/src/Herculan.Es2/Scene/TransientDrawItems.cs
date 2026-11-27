@@ -89,11 +89,13 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 	/// length — the MFD's missile camera, whose paint submits the frame again with itself as the view object
 	/// (docs/retail/simulation/mfd.md, "<c>MFDMissileView</c> — mode 5"). Those are the items that carry a
 	/// level of detail — rounds, wreckage and guns, after <see cref="WorldDrawItems.SelectDetail"/> has picked
-	/// each machine's root for <paramref name="camera"/>, which decides the hardpoint slot each gun is painted
+	/// each machine's root for the camera, which decides the hardpoint slot each gun is painted
 	/// in — and the ground shapes, which are submitted by their distance from the view object and conformed
 	/// to the terrain as they are drawn. Everything keeps this frame's draw entries.
 	/// <see cref="RestoreFrameView"/> puts the frame camera's back.
 	/// </summary>
+	/// <param name="camera">The camera, with its own eye and focal length.</param>
+	/// <param name="focalPixels">The camera's focal length in pixels.</param>
 	public void RefreshForView(Camera camera, int focalPixels) {
 		_frameGroundShapes.Clear();
 		_frameGroundShapes.AddRange(world.GroundLayer.Shapes);

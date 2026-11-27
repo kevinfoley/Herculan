@@ -171,10 +171,11 @@ public sealed class ShellArt {
 			: null;
 
 	/// <summary>
-	/// Reads and decodes one <c>.DBM</c> through <paramref name="palette"/>. Index 0 stays opaque:
+	/// Reads and decodes one <c>.DBM</c> through a palette. Index 0 stays opaque:
 	/// a shell bitmap is a background plate, not a sprite with a cutout, so there is nothing behind it
 	/// for a transparent index to reveal.
 	/// </summary>
+	/// <param name="palette">The palette the bitmap is decoded through.</param>
 	private static ShellImage? LoadImage(GameContent content, string folder, string name, DynamixPalette palette) {
 		return content.Read(folder, name) is { } bytes && new DynamixBitmapTransformer().Parse(bytes) is DynamixBitmap image
 			? Decode(image, palette)

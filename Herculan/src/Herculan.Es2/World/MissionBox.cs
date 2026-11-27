@@ -17,11 +17,13 @@ public readonly record struct MissionBox(int MinX, int MinY, int MaxX, int MaxY)
 	/// <summary>Span on y.</summary>
 	public int Height => MaxY - MinY;
 
-	/// <summary>This box grown by <paramref name="margin"/> world units on every edge.</summary>
+	/// <summary>This box grown by a margin of world units on every edge.</summary>
+	/// <param name="margin">The margin, in world units.</param>
 	public MissionBox Grown(int margin) =>
 		new(MinX - margin, MinY - margin, MaxX + margin, MaxY + margin);
 
-	/// <summary>The bounding box of <paramref name="points"/>, or an empty box when there are none.</summary>
+	/// <summary>The bounding box of some points, or an empty box when there are none.</summary>
+	/// <param name="points">The points.</param>
 	public static MissionBox Of(IReadOnlyList<Vec3i> points) {
 		ArgumentNullException.ThrowIfNull(points);
 		if (points.Count == 0) {

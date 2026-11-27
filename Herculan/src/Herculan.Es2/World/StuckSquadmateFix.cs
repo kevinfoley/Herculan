@@ -33,9 +33,11 @@ internal static class StuckSquadmateFix {
 	private static readonly (int X, int Y) Clear = (1011869, 1013133);
 
 	/// <summary>
-	/// <paramref name="placement"/> moved clear of the transport when it is the blocked squad machine of a mission that
-	/// places the transport where <c>C5_05</c> does, and <paramref name="placement"/> itself otherwise.
+	/// The placement moved clear of the transport when it is the blocked squad machine of a mission that
+	/// places the transport where <c>C5_05</c> does, and itself otherwise.
 	/// </summary>
+	/// <param name="placement">The placement.</param>
+	/// <param name="placements">Every placement of the mission.</param>
 	public static MissionPlacement Adjust(MissionPlacement placement, IReadOnlyList<MissionPlacement> placements) {
 		if (!placement.IsPlayerSquad || (placement.Position.X, placement.Position.Y) != Blocked) {
 			return placement;

@@ -64,9 +64,11 @@ public sealed class ShellScreen {
 	public bool StripVisible { get; private set; } = true;
 
 	/// <summary>
-	/// Builds the shell frame: the tab strip, captioned from <paramref name="text"/>, with
-	/// <paramref name="selectedTab"/> current and <paramref name="mode"/>'s tabs gated.
+	/// Builds the shell frame: the tab strip, captioned from the shell text, with a tab current and a mode's tabs gated.
 	/// </summary>
+	/// <param name="text">The shell text, or null.</param>
+	/// <param name="selectedTab">The current tab.</param>
+	/// <param name="mode">The campaign mode whose tabs are gated.</param>
 	public static ShellScreen CreateFrame(ShellText? text, int selectedTab = 0,
 			ShellCampaignMode mode = ShellCampaignMode.Campaign) {
 		var screen = new ShellScreen();
@@ -187,10 +189,11 @@ public sealed class ShellScreen {
 	}
 
 	/// <summary>
-	/// The strip's lit flags alone moved to one tab: every button unlit and <paramref name="index"/>
+	/// The strip's lit flags alone moved to one tab: every button unlit and that tab's
 	/// lit, with no change to which tab is current — what <c>Movie_PlayQueue</c> (<c>0041e368</c>) does
 	/// to MISSION before each movie while the frame is up.
 	/// </summary>
+	/// <param name="index">The tab to light.</param>
 	public void LightOnly(int index) {
 		foreach (var button in _buttons) {
 			button.Lit = button.Id == index;

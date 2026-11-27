@@ -35,15 +35,15 @@ public static class Deployment {
 	public const int MaxSearchSteps = 512;
 
 	/// <summary>
-	/// Picks a clear point at <paramref name="distance"/> from the player along
-	/// (player heading + <paramref name="bearing"/>), stepping outward in
+	/// Picks a clear point at a distance from the player along
+	/// (player heading + a bearing), stepping outward in
 	/// <see cref="SearchStep"/> increments until it clears everything that could be standing there —
 	/// <c>Deployment_PickPointNearPlayer</c> (<c>0042354c</c>), see
 	/// docs/retail/simulation/mission-deployment.md#picking-the-point--deployment_pickpointnearplayer-0042354c.
 	///
 	/// <para>Three tests, in the original's order and with the original's asymmetry:</para>
 	/// <list type="number">
-	/// <item><b>Deployed objects</b>, and <i>only when <paramref name="avoidObjects"/></i> — which is
+	/// <item><b>Deployed objects</b>, and <i>only when objects are to be avoided</i> — which is
 	/// set for the two walk-on verbs and clear for the drop pod. A pod is allowed to come down on top
 	/// of a machine, which is exactly the case its own landing blast latch exists to handle. Objects
 	/// still awaiting deployment are skipped, so a group never lands on one that has not arrived, and

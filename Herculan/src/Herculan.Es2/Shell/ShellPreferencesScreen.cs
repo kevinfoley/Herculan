@@ -167,9 +167,11 @@ public sealed class ShellPreferencesScreen {
 	/// <summary>
 	/// Runs a widget's handler. Returns true for <c>Cancel</c> and <c>Accept</c>, whose handlers then take
 	/// the screen down (<c>PreferencesScreen_Hide</c> (<c>00436717</c>)) and put the main menu up, which is the caller's. The fades go
-	/// to <paramref name="sound"/>, and do nothing without one, as the original's do with no sound
+	/// to the sound, and do nothing without one, as the original's do with no sound
 	/// manager.
 	/// </summary>
+	/// <param name="widget">The widget.</param>
+	/// <param name="sound">The sound manager, or null.</param>
 	public bool Click(ShellPreferencesWidget widget, ShellSound? sound) {
 		switch (widget) {
 			// PreferencesScreen_ToggleAudioOption (00436841)(0): MUSIC on then the fade in, or the fade out then MUSIC off.
@@ -320,10 +322,11 @@ public sealed class ShellPreferencesScreen {
 	}
 
 	/// <summary>
-	/// Draws the screen into <paramref name="surface"/>. The caller clears it first; the content panel's
-	/// dithered body leaves every other pixel to the backdrop, as the main menu's does. <paramref name="lit"/> is
-	/// the widget a press has lit.
+	/// Draws the screen into a surface. The caller clears it first; the content panel's
+	/// dithered body leaves every other pixel to the backdrop, as the main menu's does.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 

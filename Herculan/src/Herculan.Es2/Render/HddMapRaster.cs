@@ -59,10 +59,13 @@ public sealed class HddMapRaster {
 	public int WorldY1 { get; }
 
 	/// <summary>
-	/// Builds the raster for <paramref name="bounds"/> out of <paramref name="grid"/>, resolving each
-	/// palette index through <paramref name="palette"/> — <see cref="CockpitArt.PaletteEntry"/>, so the
+	/// Builds the raster for a box out of a height grid, resolving each
+	/// palette index through a delegate — <see cref="CockpitArt.PaletteEntry"/>, so the
 	/// map takes the same live palette the terrain does. Returns null for an empty box.
 	/// </summary>
+	/// <param name="grid">The zone's height grid.</param>
+	/// <param name="bounds">The box the raster covers.</param>
+	/// <param name="palette">Resolves a palette index to its colour, or null.</param>
 	public static HddMapRaster? Build(HeightGrid grid, MissionBox bounds, Func<int, Vector3?> palette) {
 		ArgumentNullException.ThrowIfNull(grid);
 		ArgumentNullException.ThrowIfNull(palette);

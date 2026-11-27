@@ -318,9 +318,10 @@ public sealed class TargetSelection {
 	}
 
 	/// <summary>
-	/// Bearing to <paramref name="candidate"/> measured from the turret's centreline, as both the
+	/// Bearing to a candidate measured from the turret's centreline, as both the
 	/// cone test and the bucket sort want it.
 	/// </summary>
+	/// <param name="candidate">The candidate.</param>
 	private short BearingError(SimObject candidate) {
 		short bearing = Detection.HeadingToward(candidate.Position, _viewer.Position);
 		return (short)(bearing - _viewer.Heading + _viewer.AimTwist);

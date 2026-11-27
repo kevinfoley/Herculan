@@ -43,7 +43,7 @@ public sealed class CanopyPanelPainter {
 
 	/// <summary>
 	/// Draws one panel into the given viewport sub-rect: the cockpit-art quad at its own native aspect
-	/// ratio (never stretched), then (when <paramref name="hud"/> is non-null) that herc's HUD widgets
+	/// ratio (never stretched), then, with a HUD, that herc's HUD widgets
 	/// on top, aligned to the same transform.
 	/// </summary>
 	/// <param name="mirrorHorizontally">
@@ -166,12 +166,13 @@ public sealed class CanopyPanelPainter {
 	/// <summary>
 	/// The center panel's target box alone, drawn into a viewport wider than the panel so it is not cut at the
 	/// panel's edges — for the side panels' art to cover instead, the caller drawing them after it. The box keeps the
-	/// panel's own placement: <paramref name="panelX"/> and <paramref name="panelWidth"/> are the panel's viewport
-	/// columns in the same framebuffer, and the viewport shares its rows.
+	/// panel's own placement, a column range of the same framebuffer, and the viewport shares its rows.
 	///
 	/// <para>This engine's: the original clips the box to the forward view's canopy cutout
 	/// (<see cref="GunsightPainter.AddTargetBoxLayer"/>), and never shows the glances' windows beside it at rest.</para>
 	/// </summary>
+	/// <param name="panelX">The panel's first viewport column.</param>
+	/// <param name="panelWidth">The panel's width in viewport columns.</param>
 	public void DrawTargetBox(int viewportX, int viewportY, int viewportWidth, int viewportHeight,
 			int panelX, int panelWidth, int cockpitTextureWidth, int cockpitTextureHeight,
 			CockpitArt hud, GpuTexture spriteTexture, CockpitHudState? hudState) {

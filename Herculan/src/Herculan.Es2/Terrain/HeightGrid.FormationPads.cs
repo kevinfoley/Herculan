@@ -31,8 +31,7 @@ public sealed partial class HeightGrid {
 	public void RestoreUnpaintedMaterials() => _unpaintedFlags?.CopyTo(_cellFlags, 0);
 
 	/// <summary>
-	/// Paints one base formation's material over the terrain tile <paramref name="worldX"/>,
-	/// <paramref name="worldY"/> falls in.
+	/// Paints one base formation's material over the terrain tile a world point falls in.
 	///
 	/// <para>The tile, one <c>mat0</c> frame, is <c>1 &lt;&lt; (0x15 - blockShift)</c> world units
 	/// square whatever <see cref="CellSizeShift"/> is, and the layout map spans it, so each cell takes
@@ -43,6 +42,8 @@ public sealed partial class HeightGrid {
 	/// zero and paints cell 0 instead — the same deviation, and for the same reason, as
 	/// <see cref="MarkStructureFootprint"/>.</para>
 	/// </summary>
+	/// <param name="worldX">The world X of a point in the tile.</param>
+	/// <param name="worldY">The world Y of a point in the tile.</param>
 	/// <param name="materialIndex">
 	/// The formation's <c>dat\mat0</c> index. Its <c>BlockShift</c> is
 	/// <paramref name="blockShift"/> and its <c>Index</c> is the bank frame that gets drawn.

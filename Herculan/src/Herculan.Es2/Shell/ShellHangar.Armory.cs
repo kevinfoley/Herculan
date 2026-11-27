@@ -58,13 +58,16 @@ public sealed partial class ShellHangar {
 
 	/// <summary>
 	/// <c>Herc_FitMount</c> (<c>004114ec</c>), which the weapons screen's row click runs through
-	/// <c>Arming_FitSelected</c>: the unit in <paramref name="slot"/> goes back onto its weapon's stock
+	/// <c>Arming_FitSelected</c>: the unit in the slot goes back onto its weapon's stock
 	/// list, and then <c>None</c> (0) leaves the slot empty at condition 100, and any other weapon takes
 	/// the head of that weapon's list — its <see cref="ShellWeaponUnit.FitCondition"/> becomes the
 	/// hardpoint's condition and its guidance is reset, to ARH for the three missile racks and to none for
 	/// everything else, the Razor's launcher included. With that list empty the slot is left empty and
 	/// its condition untouched. See docs/retail/shell/weapons-and-repair.md#fitting-a-weapon.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="slot">The mount slot.</param>
+	/// <param name="weaponId">The weapon's id.</param>
 	public void FitMount(ShellBayMachine machine, int slot, int weaponId) {
 		if (machine.Mount(slot) is { } old) {
 			AddUnit(old);
@@ -85,9 +88,10 @@ public sealed partial class ShellHangar {
 	}
 
 	/// <summary>
-	/// The guidance kind <see cref="FitMount"/> gives a unit of <paramref name="weaponId"/> as it fits it: ARH for the three
+	/// The guidance kind <see cref="FitMount"/> gives a unit of a weapon as it fits it: ARH for the three
 	/// missile racks and none for everything else, the Razor's launcher included.
 	/// </summary>
+	/// <param name="weaponId">The weapon's id.</param>
 	public static int FitGuidance(int weaponId) =>
 		weaponId is >= FirstGuidedRack and <= LastGuidedRack ? ArhGuidance : ShellWeaponUnit.NoGuidance;
 
@@ -108,7 +112,8 @@ public sealed partial class ShellHangar {
 	/// <summary>The weapon id in each queue slot, 0 for an empty one.</summary>
 	public IReadOnlyList<int> QueuedWeapons => _queue;
 
-	/// <summary><c>Armory_QueuedCount</c> (<c>00412642</c>) — how many of the five queue slots hold <paramref name="weaponId"/>.</summary>
+	/// <summary><c>Armory_QueuedCount</c> (<c>00412642</c>) — how many of the five queue slots hold a weapon.</summary>
+	/// <param name="weaponId">The weapon's id.</param>
 	public int QueuedCount(int weaponId) => _queue.Count(id => id == weaponId);
 
 	/// <summary>
@@ -162,8 +167,10 @@ public sealed partial class ShellHangar {
 	/// <summary>
 	/// The weapon scrap dialog's ACCEPT, <c>Armory_ScrapWeapons</c> (<c>0040e7b2</c>) through
 	/// <c>Armory_ScrapStock</c> (<c>00412555</c>): every unit of the weapon the armory holds is freed and
-	/// <paramref name="valueTons"/> times 1000 goes into the pool.
+	/// the value in tons times 1000 goes into the pool.
 	/// </summary>
+	/// <param name="weaponId">The weapon's id.</param>
+	/// <param name="valueTons">The weapon's value in tons.</param>
 	public void ScrapStock(int weaponId, int valueTons) {
 		Stock(weaponId).Units.Clear();
 		SalvageKilograms += valueTons * ShellRepairCosts.KilogramsPerTon;

@@ -153,9 +153,10 @@ public sealed class ShellSaveScreen {
 	/// rewritten as <c>"%2d. "</c>, the slot number with the name gone. Taking the pointer onto the row is
 	/// the host's, through <see cref="ShellPointer.Grab"/>.
 	///
-	/// <para>A <paramref name="name"/> is this engine's own: the row starts with it after the prefix
+	/// <para>Giving a name is this engine's own: the row starts with it after the prefix
 	/// (<see cref="RowLabel"/>) rather than empty, for the player to accept or edit.</para>
 	/// </summary>
+	/// <param name="name">The name the row starts with, or null for an empty row.</param>
 	public void BeginRename(string? name = null, HudFont? font = null) {
 		_caretEnabled[_selected] = true;
 		_caretOn[_selected] = true;
@@ -164,11 +165,13 @@ public sealed class ShellSaveScreen {
 	}
 
 	/// <summary>
-	/// A row's string for <paramref name="name"/>, as typing it into the row after a rename's <c>"%2d. "</c>
+	/// A row's string for a name, as typing it into the row after a rename's <c>"%2d. "</c>
 	/// prefix leaves it: a character the row's set refuses is dropped, and the name stops at the first one
 	/// that would break the length or fit test, so the row shows all of what it keeps. This engine's own, for
 	/// names the player did not type.
 	/// </summary>
+	/// <param name="row">The row.</param>
+	/// <param name="name">The name.</param>
 	public string RowLabel(int row, string name, HudFont? font) {
 		string prefix = $"{row + 1,2}. ";
 		string text = prefix;
@@ -188,11 +191,13 @@ public sealed class ShellSaveScreen {
 	}
 
 	/// <summary>
-	/// The name this engine gives a save of <paramref name="summary"/>'s game: <paramref name="format"/> of the
+	/// The name this engine gives a save of a game: the format string filled with the
 	/// pilot's name, the sector and the mission number as the detail panel prints them (<c>{0}</c>, <c>{1}</c>,
 	/// <c>{2}</c>), with the gap an empty part leaves closed up. A stage outside the campaign's 1-5, such as a
 	/// training career's 0, has no sector word.
 	/// </summary>
+	/// <param name="summary">The save's summary.</param>
+	/// <param name="format">The format string.</param>
 	public static string AutoName(ShellSaveSummary summary, ShellText? text, string format) {
 		string sector = summary.Sector is >= 1 and <= SectorCount ? text?.Text(FirstSectorWord + summary.Sector) ?? string.Empty
 			: string.Empty;
@@ -253,7 +258,9 @@ public sealed class ShellSaveScreen {
 		return true;
 	}
 
-	/// <summary><c>ESDialog_TypeChar</c>'s length and fit tests for <paramref name="c"/> going on the end of <paramref name="text"/>.</summary>
+	/// <summary><c>ESDialog_TypeChar</c>'s length and fit tests for a character going on the end of a text.</summary>
+	/// <param name="text">The text so far.</param>
+	/// <param name="c">The character.</param>
 	private bool Fits(int row, string text, char c, HudFont? font) {
 		var rect = RowRect(row);
 		return text.Length + 1 < MaxLength
@@ -428,11 +435,13 @@ public sealed class ShellSaveScreen {
 	};
 
 	/// <summary>
-	/// Draws the whole screen into <paramref name="surface"/>. The caller clears it first; what this
+	/// Draws the whole screen into a surface. The caller clears it first; what this
 	/// leaves untouched is what the shell's backdrop shows through, which the content panel's dithered
-	/// body relies on. <paramref name="focusedRow"/> is the row that has the pointer's focus, whose caret
-	/// shows while its blink phase is on, and <paramref name="lit"/> the widget a press has lit.
+	/// body relies on.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="focusedRow">The row that has the pointer's focus, whose caret shows while its blink phase is on.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, int? focusedRow = null,
 			ShellWidget? lit = null) {
 		var font = sprites?.Font(ShellArt.ScreenFont);

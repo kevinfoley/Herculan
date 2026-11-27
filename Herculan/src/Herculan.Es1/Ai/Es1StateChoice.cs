@@ -44,9 +44,11 @@ public static class Es1StateChoice {
 	/// <summary>
 	/// The jump table <c>Mech_AiSelectBehaviourVerbTable</c> (<c>00091d14</c>) over the orders 0–11: 1 <c>search
 	/// destroy</c>, 3 <c>ramming</c>, 6 <c>guarding</c>, 7 and 8 <c>patrolling</c>, 10 <c>sleeping</c>, 11
-	/// <c>travelling</c>, or <c>bulldog travel</c> when <paramref name="twistLimit"/> is above
+	/// <c>travelling</c>, or <c>bulldog travel</c> when the twist limit is above
 	/// <see cref="BulldogTwistLimit"/>; null for an order with no case.
 	/// </summary>
+	/// <param name="order">The order.</param>
+	/// <param name="twistLimit">The machine's twist limit.</param>
 	public static int? StateForOrder(short order, short twistLimit) => order switch {
 		1 => Es1MechBehaviour.SearchDestroy,
 		3 => Es1MechBehaviour.Ramming,

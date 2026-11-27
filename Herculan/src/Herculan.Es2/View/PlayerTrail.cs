@@ -29,7 +29,8 @@ public sealed class PlayerTrail {
 	private readonly int[] _lengths = new int[Length];
 	private int _cursor;
 
-	/// <summary>Records one frame of <paramref name="player"/>, at the current tick length.</summary>
+	/// <summary>Records one frame of a player, at the current tick length.</summary>
+	/// <param name="player">The player.</param>
 	public void Record(SimObject player) {
 		_positions[_cursor] = player.Position;
 		_rotations[_cursor] = (player.Pitch, player.Roll, (short)player.Heading);

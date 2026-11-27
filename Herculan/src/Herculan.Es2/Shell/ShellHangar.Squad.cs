@@ -11,12 +11,14 @@ public sealed partial class ShellHangar {
 	private readonly List<ShellBayPilot> _squad = new();
 
 	/// <summary>
-	/// <c>Squad_TakeMember</c> (<c>0040fb4f</c>) as the debrief uses it to replace squad member
-	/// <paramref name="member"/>: the next record of the member's pilot pool, by the pool's cursor, becomes the member, the cursor steps
+	/// <c>Squad_TakeMember</c> (<c>0040fb4f</c>) as the debrief uses it to replace a squad member:
+	/// the next record of the member's pilot pool, by the pool's cursor, becomes the member, the cursor steps
 	/// modulo 12, and the record is reset by <see cref="ShellRoster.SetDefaults"/>. The debrief then takes one off
-	/// <see cref="MachinesOnStrength"/>. The record written is <paramref name="save"/>'s, the game this hangar
+	/// <see cref="MachinesOnStrength"/>. The record written is the save's, the game this hangar
 	/// was read from; the pilot it replaces keeps its own record as it was.
 	/// </summary>
+	/// <param name="member">The squad member to replace.</param>
+	/// <param name="save">The game this hangar was read from.</param>
 	internal void ReplaceSquadMember(int member, PlayerSave save) {
 		if (member < 0 || member >= _squad.Count || save.Squadmates == null) {
 			return;
@@ -37,7 +39,8 @@ public sealed partial class ShellHangar {
 		MachinesOnStrength--;
 	}
 
-	/// <summary>Which of the save's 36 pool records squad member <paramref name="member"/> is.</summary>
+	/// <summary>Which of the save's 36 pool records a squad member is.</summary>
+	/// <param name="member">The squad member.</param>
 	internal int SquadRecordIndex(int member) => _squadRecords[member];
 
 	/// <summary>The player's own pilot record, embedded in the player structure at <c>+0x04</c>.</summary>
@@ -67,9 +70,10 @@ public sealed partial class ShellHangar {
 
 	/// <summary>
 	/// <c>Squad_MemberAtPosition</c> (<c>004102d6</c>) — the index among <see cref="SquadMembers"/> of
-	/// the member whose <c>+0x27</c> is <paramref name="position"/>, or <c>-1</c>. It tests the three in
+	/// the member whose <c>+0x27</c> is a position, or <c>-1</c>. It tests the three in
 	/// pointer order and takes the first.
 	/// </summary>
+	/// <param name="position">The position.</param>
 	public int SquadMemberIndexAt(int position) {
 		for (int member = 0; member < _squad.Count; member++) {
 			if (_squad[member].SquadPosition == position) {
@@ -80,7 +84,8 @@ public sealed partial class ShellHangar {
 		return -1;
 	}
 
-	/// <summary>The squad member at <paramref name="position"/>, as <see cref="SquadMemberIndexAt"/> finds them, or null.</summary>
+	/// <summary>The squad member at a position, as <see cref="SquadMemberIndexAt"/> finds them, or null.</summary>
+	/// <param name="position">The position.</param>
 	public ShellBayPilot? SquadMemberAt(int position) =>
 		SquadMemberIndexAt(position) is >= 0 and var member ? _squad[member] : null;
 
@@ -91,7 +96,9 @@ public sealed partial class ShellHangar {
 	/// </summary>
 	public static void SetBay(ShellBayPilot pilot, int bay) => pilot.Bay = bay;
 
-	/// <summary><c>Squad_SetMemberPosition</c> (<c>004102be</c>) — writes squad member <paramref name="member"/>'s position, <c>+0x27</c>.</summary>
+	/// <summary><c>Squad_SetMemberPosition</c> (<c>004102be</c>) — writes a squad member's position, <c>+0x27</c>.</summary>
+	/// <param name="member">The squad member.</param>
+	/// <param name="position">The position.</param>
 	public void SetSquadPosition(int member, int position) {
 		if (member >= 0 && member < _squad.Count) {
 			_squad[member].SquadPosition = position;
@@ -99,9 +106,10 @@ public sealed partial class ShellHangar {
 	}
 
 	/// <summary>
-	/// <c>Squad_SetMemberBay(member, -1)</c> (<c>0040e6d7</c>) — takes squad member <paramref name="member"/> out of any bay and
+	/// <c>Squad_SetMemberBay(member, -1)</c> (<c>0040e6d7</c>) — takes a squad member out of any bay and
 	/// off strength. That is the only way the crew screen calls it.
 	/// </summary>
+	/// <param name="member">The squad member.</param>
 	public void UnassignSquadMemberBay(int member) {
 		if (member >= 0 && member < _squad.Count) {
 			_squad[member].Bay = -1;
@@ -110,9 +118,10 @@ public sealed partial class ShellHangar {
 	}
 
 	/// <summary>
-	/// <c>Squad_UpdateOnStrength</c> (<c>00410366</c>) — the member at <paramref name="position"/> is on
+	/// <c>Squad_UpdateOnStrength</c> (<c>00410366</c>) — the member at a position is on
 	/// strength when the position is in play and they have a bay, and off it otherwise.
 	/// </summary>
+	/// <param name="position">The position.</param>
 	public void UpdateOnStrength(int position) {
 		int member = SquadMemberIndexAt(position);
 		if (member != -1) {

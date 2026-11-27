@@ -39,17 +39,21 @@ public sealed record ShellCampaignMission(string ScriptPath, string MissionPath,
 /// </summary>
 public static class ShellCampaignLaunch {
 	/// <summary>
-	/// Loads the mission at career position (<paramref name="stage"/>, <paramref name="mission"/>), or
-	/// <paramref name="missionPath"/> in its place, and writes its <c>script.dat</c> and <c>mission.str</c> into
-	/// <paramref name="directory"/>, or returns null with the reason when the install lacks a file the original would
+	/// Loads the mission at a career position, or a path in its place, and writes its <c>script.dat</c> and <c>mission.str</c> into
+	/// a directory, or returns null with the reason when the install lacks a file the original would
 	/// open. A path in place of the position's is the DEBUG dialog's; the position still seeds the flags and picks
-	/// the theater. <paramref name="flags"/> is the career's
-	/// campaign flag array, which the load seeds and the mission's header patch clears in place;
-	/// <paramref name="clearList"/> is the row-2 clear list the shell keeps across loads;
-	/// <paramref name="skill"/> is the player pilot's skill, the mission's difficulty. <paramref name="roll"/> is
-	/// VSHELL's <c>ShellRandom_Below</c> (<c>004659ec</c>), a draw in <c>[0, n)</c>. <paramref name="generating"/> is told
-	/// what the mission load is handed.
+	/// the theater.
 	/// </summary>
+	/// <param name="directory">The folder the files are written into.</param>
+	/// <param name="stage">The career stage.</param>
+	/// <param name="mission">The mission's position in the stage.</param>
+	/// <param name="skill">The player pilot's skill, the mission's difficulty.</param>
+	/// <param name="flags">The career's campaign flag array, which the load seeds and the mission's header patch clears in place.</param>
+	/// <param name="clearList">The row-2 clear list the shell keeps across loads.</param>
+	/// <param name="roll">VSHELL's <c>ShellRandom_Below</c> (<c>004659ec</c>), a draw in <c>[0, n)</c>.</param>
+	/// <param name="failure">The reason the install lacks a file, else null.</param>
+	/// <param name="missionPath">The path of a mission to load in place of the position's, or null.</param>
+	/// <param name="generating">Told what the mission load is handed, or null.</param>
 	public static ShellCampaignMission? Write(string directory, GameContent content, int stage, int mission, short skill,
 			short[] flags, short[] clearList, Func<short, int> roll, out string? failure, string? missionPath = null,
 			MissionGenerating? generating = null) {
@@ -68,10 +72,14 @@ public static class ShellCampaignLaunch {
 	}
 
 	/// <summary>
-	/// <see cref="Write"/> for a mission already read: the <c>.MSN</c> <paramref name="msn"/> and its text
-	/// <paramref name="text"/>, or null, named <paramref name="missionPath"/>, loaded at career position
-	/// (<paramref name="stage"/>, <paramref name="mission"/>), which seeds the flags and picks the theater.
+	/// <see cref="Write"/> for a mission already read: its <c>.MSN</c> and its text, or null, named by a path, loaded at a career
+	/// position, which seeds the flags and picks the theater.
 	/// </summary>
+	/// <param name="stage">The career stage.</param>
+	/// <param name="mission">The mission's position in the stage.</param>
+	/// <param name="missionPath">The mission's path.</param>
+	/// <param name="msn">The mission's <c>.MSN</c>.</param>
+	/// <param name="text">The mission's text, or null.</param>
 	private static ShellCampaignMission? Load(string directory, GameContent content, int stage, int mission, string missionPath,
 			byte[] msn, byte[]? text, short skill, short[] flags, short[] clearList, Func<short, int> roll, out string? failure,
 			MissionGenerating? generating = null) {
@@ -120,12 +128,12 @@ public static class ShellCampaignLaunch {
 	/// last unit listed at the head, as <c>Armory_AddUnit</c> left it. A save written from that hangar
 	/// lists them head first, as <c>Armory_Write</c> does.</para>
 	///
-	/// <para><paramref name="held"/> is the game the shell's memory holds, the last one loaded or started, or
-	/// null for the startup's. The new career writes none of block 11, the 20 bytes at <c>004832c8</c>, so
-	/// both modes keep that game's, or the startup's zeros. A training career also keeps its chassis flags,
+	/// <para>The new career writes none of block 11, the 20 bytes at <c>004832c8</c>, so
+	/// both modes keep the held game's, or the startup's zeros. A training career also keeps its chassis flags,
 	/// which only the startup's and the campaign's <c>LoadHercInfDat</c> put back to the file's, and the
 	/// career block's text, which only a campaign load's <c>Career_SetBriefing</c> (<c>00412ece</c>) writes.</para>
 	/// </summary>
+	/// <param name="held">The game the shell's memory holds, the last one loaded or started, or null for the startup's.</param>
 	public static PlayerSave? NewCareer(GameContent content, string name, int skill, ShellCampaignMode mode,
 			Func<short, int> roll, PlayerSave? held, out string? failure) {
 		bool campaign = mode == ShellCampaignMode.Campaign;
@@ -225,16 +233,20 @@ public static class ShellCampaignLaunch {
 	}
 
 	/// <summary>
-	/// <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>)'s campaign load for <paramref name="game"/>'s
+	/// <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>)'s campaign load for a game's
 	/// position, which the DEBUG dialog's <c>Use Default</c> runs, or <c>MissionNameDialog_OnLoad</c>'s
-	/// (<c>0044d5bd</c>) of <paramref name="missionPath"/>: <see cref="Write"/> into
-	/// <paramref name="directory"/> against the career's flags and its player's skill, the flags the load
+	/// (<c>0044d5bd</c>) of a mission path: <see cref="Write"/> into
+	/// a directory against the career's flags and its player's skill, the flags the load
 	/// seeded and cleared written back, <c>Career_SetBriefing</c> (<c>00412ece</c>) into the career block,
-	/// the squad positions in play set in <paramref name="hangar"/>, and <c>Game_ExportMissionHandoff</c>
+	/// the squad positions in play set in the hangar, and <c>Game_ExportMissionHandoff</c>
 	/// (<c>0040f0d4</c>)'s <c>mission.var</c> and <c>player.mec</c> beside the mission. Null, with the reason,
 	/// when the install lacks a file or the mission has no row 4 — where the original asserts. See
 	/// docs/retail/shell/campaign-loop.md#loading-the-careers-mission.
 	/// </summary>
+	/// <param name="directory">The folder the files are written into.</param>
+	/// <param name="game">The career's game.</param>
+	/// <param name="hangar">The hangar the squad positions in play are set in.</param>
+	/// <param name="missionPath">The path of a mission to load in place of the position's, or null.</param>
 	public static ShellCampaignMission? LoadCareerMission(string directory, GameContent content, PlayerSave game,
 			ShellHangar hangar, short[] clearList, Func<short, int> roll, out string? failure, string? missionPath = null) {
 		var flags = new short[PlayerSave.CampaignFlagCount];
@@ -297,10 +309,10 @@ public static class ShellCampaignLaunch {
 	private const int HeldBlockLength = 20;
 
 	/// <summary>
-	/// The first career position whose <c>missions.bin</c> name has <paramref name="name"/>'s file name — a
-	/// bare <c>C1_03</c>, <c>C1_03.MSN</c> or <c>MSN\C1_03.MSN</c> — or null when <c>gam\career.dat</c> has
+	/// The first career position whose <c>missions.bin</c> name has a given file name, or null when <c>gam\career.dat</c> has
 	/// none. The original only ever loads a mission by position; looking one up by name is this engine's.
 	/// </summary>
+	/// <param name="name">The file name: a bare <c>C1_03</c>, <c>C1_03.MSN</c> or <c>MSN\C1_03.MSN</c>.</param>
 	public static (int Stage, int Mission)? Find(GameContent content, string name) {
 		if (ShellCareerMissions.CareerStages(content) is not { } stages || ShellText.Load(content, "MISSIONS.BIN") is not { } names) {
 			return null;

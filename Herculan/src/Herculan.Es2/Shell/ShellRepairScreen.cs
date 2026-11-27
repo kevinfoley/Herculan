@@ -417,11 +417,12 @@ public sealed class ShellRepairScreen {
 	};
 
 	/// <summary>
-	/// Draws the whole screen into <paramref name="surface"/>. The caller clears it first; the content
+	/// Draws the whole screen into a surface. The caller clears it first; the content
 	/// panel's body is filled rather than dithered here, so unlike the save screen nothing of the
-	/// backdrop shows through it — the builder leaves <c>+0x59</c> at the constructor's 1. <paramref name="lit"/>
-	/// is the widget a press has lit.
+	/// backdrop shows through it — the builder leaves <c>+0x59</c> at the constructor's 1.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 

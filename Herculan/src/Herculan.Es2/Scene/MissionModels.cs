@@ -182,8 +182,9 @@ public sealed class MissionModels {
 
 	/// <summary>
 	/// Builds the scene's models once its simulation is set up, binding the shape-derived figures into
-	/// <paramref name="world"/> as it goes.
+	/// the world as it goes.
 	/// </summary>
+	/// <param name="world">The simulation world the shape-derived figures are bound into.</param>
 	/// <param name="groundShapeModels">The theater's ground-shape set, which the simulation needed before any object joined it.</param>
 	internal static MissionModels Build(GameContent content, TheaterDescriptor theater, TerrainMaterialTable materials,
 			SceneModelLibrary models, SimWorld world, IReadOnlyList<SceneObject> objects,

@@ -148,11 +148,12 @@ public sealed class ViewCamera {
 	}
 
 	/// <summary>
-	/// <c>Cam_AttachTo</c> (<c>0045ed94</c>): asks <paramref name="target"/> for its <see cref="SimObject.ViewMounts"/>
+	/// <c>Cam_AttachTo</c> (<c>0045ed94</c>): asks the target for its <see cref="SimObject.ViewMounts"/>
 	/// and attaches to it twice over — <c>Cam_AttachEye</c> (<c>0040111c</c>) takes the eye and sets
 	/// <see cref="ViewCameraMode.Attached"/>, then <c>Cam_AttachOrbit</c> (<c>0040109c</c>) takes the orbit centre, starts
 	/// the orbit over from directly behind at no distance, and sets <see cref="ViewCameraMode.Orbit"/>.
 	/// </summary>
+	/// <param name="target">The object to attach to.</param>
 	public void AttachTo(SimObject target) {
 		if (Locked) {
 			return;
@@ -214,10 +215,10 @@ public sealed class ViewCamera {
 	}
 
 	/// <summary>
-	/// <c>Cam_Update</c> (<c>004011a0</c>)'s placement, after it has recorded the player into
-	/// <paramref name="trail"/>. <paramref name="terrain"/> may be null, which drops the ground
-	/// clearance; retail always has a zone.
+	/// <c>Cam_Update</c> (<c>004011a0</c>)'s placement, after it has recorded the player into the trail.
 	/// </summary>
+	/// <param name="terrain">The terrain, or null, which drops the ground clearance; retail always has a zone.</param>
+	/// <param name="trail">The player trail.</param>
 	public void Update(HeightGrid? terrain, PlayerTrail trail) {
 		switch (Mode) {
 			case ViewCameraMode.Free:

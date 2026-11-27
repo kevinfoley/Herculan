@@ -135,13 +135,14 @@ public sealed partial class WeaponMount {
 	}
 
 	/// <summary>
-	/// The charge bar's slider committed at <paramref name="position"/>, under
+	/// The charge bar's slider committed at a position, under
 	/// <see cref="Settings.Es2TweakSettingDefinitions.ChargeBarPowerLevel"/>. Retail's path, which no press
 	/// reaches there: <c>EnergyWeaponGauge_OnChildClick</c> (<c>00440ef0</c>) clamps the position to
 	/// 0..<see cref="ChargeBarRange"/> into the gauge's state block, and the next
 	/// <see cref="PushGaugeState"/> with the hand-off clear reads it back as the charge target. A key
 	/// press whose hand-off is still pending wins over it; docs/retail/simulation/weapon-firing.md#the-charge-bar.
 	/// </summary>
+	/// <param name="position">The slider's position.</param>
 	/// <returns>Whether this mount has a charge bar to take it — an energy or ELF mount still working.</returns>
 	internal bool SetPowerFromChargeBar(int position) {
 		if (!IsEnergyClass || Disabled || _chargeBarPosition == null) {

@@ -108,11 +108,13 @@ public sealed class BaseFormationTable {
 	public int Count => _formations.Length;
 
 	/// <summary>
-	/// The spread offset for a group's <paramref name="memberIndex"/>-th member (its position within
+	/// The spread offset for a group's member at an index (its position within
 	/// the claiming block-11 record's <c>MemberRefs</c> array), or null when the slot takes no
 	/// offset — member index 0 (the group's first-claimed member), an out-of-range formation id, or a
 	/// formation with fewer follower slots than this index needs.
 	/// </summary>
+	/// <param name="formationId">The formation id.</param>
+	/// <param name="memberIndex">The member's index.</param>
 	public BaseFormationOffset? OffsetFor(int formationId, int memberIndex) {
 		if (memberIndex <= 0 || formationId < 0 || formationId >= _formations.Length) {
 			return null;
@@ -124,9 +126,10 @@ public sealed class BaseFormationTable {
 	}
 
 	/// <summary>
-	/// How many member slots formation <paramref name="formationId"/> places apart: slot 0, on the group's point, and one
+	/// How many member slots a formation places apart: slot 0, on the group's point, and one
 	/// per follower offset it holds (<see cref="OffsetFor"/>). Zero for an id outside the table.
 	/// </summary>
+	/// <param name="formationId">The formation id.</param>
 	public int SlotCount(int formationId) =>
 		formationId >= 0 && formationId < _formations.Length ? _formations[formationId].Length + 1 : 0;
 

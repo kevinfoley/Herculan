@@ -22,7 +22,7 @@ namespace Herculan.Es2.Sim;
 public sealed class MeteorObject {
 	/// <summary>
 	/// <c>Meteor_Construct</c> (<c>00409b44</c>) — puts a pod in the air on a trajectory that lands
-	/// it on <paramref name="target"/>.
+	/// it on its target.
 	///
 	/// <para><b>The pod is not dropped straight down.</b> It is placed a random heading's worth of
 	/// distance <i>short</i> of the target and flown in along that heading at a flat 2,000 units a

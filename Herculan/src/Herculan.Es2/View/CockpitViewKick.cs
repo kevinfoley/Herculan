@@ -44,11 +44,12 @@ public sealed class CockpitViewKick {
 	}
 
 	/// <summary>
-	/// Advances the curve and restarts it on each new footfall. <paramref name="footfalls"/> is
-	/// <see cref="Sim.MechObject.Footfalls"/>; passing a machine's running count rather than a flag
-	/// is what lets this be driven from the render loop without missing a step the simulation took
-	/// between two frames.
+	/// Advances the curve and restarts it on each new footfall.
 	/// </summary>
+	/// <param name="deltaSeconds">The seconds since the last update.</param>
+	/// <param name="footfalls"><see cref="Sim.MechObject.Footfalls"/>; passing a machine's running count rather than a flag
+	/// is what lets this be driven from the render loop without missing a step the simulation took
+	/// between two frames.</param>
 	public void Update(double deltaSeconds, int footfalls) {
 		if (footfalls != _lastFootfalls) {
 			_lastFootfalls = footfalls;

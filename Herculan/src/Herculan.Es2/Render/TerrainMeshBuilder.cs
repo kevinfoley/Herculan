@@ -36,10 +36,12 @@ public static class TerrainMeshBuilder {
 	/// LOD parameter (<see cref="HeightGrid.DetailLod"/>) is carried on the grid for whenever they
 	/// stop being premature.
 	///
-	/// <para>With a <paramref name="bank"/>, each cell gets the atlas rect its material selects; any
+	/// <para>With a texture bank, each cell gets the atlas rect its material selects; any
 	/// cell whose material or frame does not resolve keeps the untextured ramp colour, which is why
 	/// <see cref="MeshVertex.Textured"/> is per-vertex.</para>
 	/// </summary>
+	/// <param name="grid">The zone's height grid.</param>
+	/// <param name="bank">The theater's terrain texture bank, or null for untextured cells.</param>
 	/// <param name="shading">
 	/// The theater's ramp and palette, which bake the shade and resolve the untextured fill. Without
 	/// them the mesh is drawn unshaded and an untextured cell takes
@@ -53,11 +55,15 @@ public static class TerrainMeshBuilder {
 	}
 
 	/// <summary>
-	/// Builds again, in place in <paramref name="vertices"/> (a mesh <see cref="Build"/> made of the same grid), the
-	/// cells from (<paramref name="minCellX"/>, <paramref name="minCellY"/>) to (<paramref name="maxCellX"/>,
-	/// <paramref name="maxCellY"/>) inclusive, for a grid whose heights have changed there. Answers the run of
+	/// Builds again, in place in an existing mesh (one <see cref="Build"/> made of the same grid), the cells in a
+	/// cell rectangle, inclusive, for a grid whose heights have changed there. Answers the run of
 	/// vertices holding those cells' whole rows, which is what a caller uploads again.
 	/// </summary>
+	/// <param name="vertices">The mesh to rebuild in place.</param>
+	/// <param name="minCellX">The rectangle's first column.</param>
+	/// <param name="minCellY">The rectangle's first row.</param>
+	/// <param name="maxCellX">The rectangle's last column.</param>
+	/// <param name="maxCellY">The rectangle's last row.</param>
 	public static (int FirstVertex, int VertexCount) Rebuild(MeshVertex[] vertices, HeightGrid grid,
 			TerrainTextureBank? bank, SurfaceShading? shading, int minCellX, int minCellY, int maxCellX, int maxCellY) {
 		int quadsX = grid.Width - 1;

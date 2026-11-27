@@ -53,13 +53,14 @@ public sealed class EffectLightField : Engine.Render.IEffectLightSlots {
 
 	/// <summary>
 	/// <c>EffectLight_Construct</c> (<c>00407604</c>) and <c>LightManager_ClaimSlot</c> (<c>00406f38</c>) — takes a handle
-	/// and claims the first free slot for a light at <paramref name="position"/> with
-	/// <paramref name="intensity"/>, returning its index, or -1 when all <see cref="HandleCount"/>
+	/// and claims the first free slot for a light, returning its index, or -1 when all <see cref="HandleCount"/>
 	/// handles are out and the effect runs without a light.
 	///
 	/// <para>The original seeds the intensity to 255 and lets <c>LightManager_SetSlotIntensity</c> (<c>00407048</c>) overwrite it a
 	/// call later; the two are folded together here because no caller can observe the gap.</para>
 	/// </summary>
+	/// <param name="position">The light's position.</param>
+	/// <param name="intensity">The light's intensity.</param>
 	public int Claim(Vec3i position, int intensity) {
 		if (_handlesInUse >= HandleCount) {
 			return -1;

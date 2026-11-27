@@ -134,11 +134,12 @@ public sealed class ShellRegistrationScreen {
 	private static ShellRect NameBox => Inside(Box, NameBoxRect);
 
 	/// <summary>
-	/// Draws the screen into <paramref name="surface"/>, in the builder's order. The caller clears it
-	/// first; the panel's dithered body leaves the rest to the backdrop. <paramref name="focused"/> is
-	/// whether the field has the pointer's focus, whose caret shows while the blink phase is on, and
-	/// <paramref name="lit"/> the widget a press has lit.
+	/// Draws the screen into a surface, in the builder's order. The caller clears it
+	/// first; the panel's dithered body leaves the rest to the backdrop.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="focused">Whether the field has the pointer's focus, whose caret shows while the blink phase is on.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, bool focused, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 

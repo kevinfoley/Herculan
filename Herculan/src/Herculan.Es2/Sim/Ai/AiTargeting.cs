@@ -295,9 +295,11 @@ public static class AiTargeting {
 
 	/// <summary>
 	/// <c>Ai_SumAttackerRatings</c> (<c>0041cb44</c>) — the combined combat rating of every machine
-	/// currently holding <paramref name="subject"/> as its target, which is what
+	/// currently holding a subject as its target, which is what
 	/// <see cref="MechObject.FleeCheck"/> weighs its own against.
 	/// </summary>
+	/// <param name="world">The running world.</param>
+	/// <param name="subject">The machine whose attackers are summed.</param>
 	public static int SumAttackerRatings(SimWorld world, SimObject subject) {
 		int total = 0;
 

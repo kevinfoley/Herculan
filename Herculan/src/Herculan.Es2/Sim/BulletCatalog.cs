@@ -60,9 +60,10 @@ public sealed class BulletCatalog {
 			: null;
 
 	/// <summary>
-	/// The record for <paramref name="subtypeId"/>, or null when the id is outside the table — which
+	/// The record for a subtype id, or null when the id is outside the table — which
 	/// no retail <c>Bullet</c> record is, but a hand-edited <c>PROJ.DAT</c> could be.
 	/// </summary>
+	/// <param name="subtypeId">The bullet subtype id.</param>
 	public BulletType? Record(int subtypeId) =>
 		_table.Entries is { } entries && subtypeId >= 0 && subtypeId < entries.Length
 			? entries[subtypeId]

@@ -559,10 +559,11 @@ public sealed partial class MechObject : SimObject {
 
 	/// <summary>
 	/// <c>Mech_GetShieldByHeading</c> (<c>004154d0</c>), the mech vtable's <c>+0x34</c>: the facing
-	/// within ±90° of <paramref name="heading"/>. The damage path asks it with a real bearing; the
+	/// within ±90° of a heading. The damage path asks it with a real bearing; the
 	/// AI's weapon choice asks it with a boolean, which is a bug in the original — see
 	/// docs/retail/simulation/ai-weapons.md.
 	/// </summary>
+	/// <param name="heading">The heading to test the facing against.</param>
 	public override short ShieldByHeading(short heading) =>
 		(ushort)(heading + BinaryAngle.QuarterTurn) < BinaryAngle.HalfTurn
 			? Shields.Front
@@ -615,10 +616,12 @@ public readonly record struct MechLoadout(
 	/// <summary>An empty fit, for a machine spawned outside a mission.</summary>
 	public static MechLoadout None => new(Array.Empty<int>(), Array.Empty<short>());
 
-	/// <summary>The weapon id in fit slot <paramref name="slot"/>, or 0 when the fit has no such slot.</summary>
+	/// <summary>The weapon id in a fit slot, or 0 when the fit has no such slot.</summary>
+	/// <param name="slot">The fit slot.</param>
 	public int WeaponAt(int slot) => slot >= 0 && slot < WeaponIds.Count ? WeaponIds[slot] : 0;
 
-	/// <summary>The ammunition type in fit slot <paramref name="slot"/>, defaulting to retail's own filler.</summary>
+	/// <summary>The ammunition type in a fit slot, defaulting to retail's own filler.</summary>
+	/// <param name="slot">The fit slot.</param>
 	public short SecondaryAt(int slot) =>
 		slot >= 0 && slot < SecondaryKeys.Count ? SecondaryKeys[slot] : WeaponCatalog.DefaultSecondaryKey;
 }

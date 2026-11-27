@@ -265,9 +265,11 @@ public sealed class ShellPracticeScreen {
 	}
 
 	/// <summary>
-	/// Draws the screen into <paramref name="surface"/>. The caller clears it first; the content panel's
+	/// Draws the screen into a surface. The caller clears it first; the content panel's
 	/// dithered body leaves every other pixel to the backdrop, as the main menu's does.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 

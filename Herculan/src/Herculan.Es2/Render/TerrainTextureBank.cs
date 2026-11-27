@@ -42,10 +42,11 @@ public sealed class TerrainTextureBank {
 	public string BankName { get; }
 
 	/// <summary>
-	/// Loads and packs the theater's terrain bank, decoded through <paramref name="palette"/> — the
+	/// Loads and packs the theater's terrain bank, decoded through the given palette — the
 	/// scene's live palette, <see cref="Scene.SceneModelLibrary.Palette"/>. Returns null when the bank
 	/// is missing or holds no usable frames, in which case terrain draws every cell flat-shaded.
 	/// </summary>
+	/// <param name="palette">The scene's live palette, or null.</param>
 	public static TerrainTextureBank? Load(GameContent content, TheaterDescriptor theater,
 			TerrainMaterialTable materials, DynamixPalette? palette) {
 		byte[]? bankBytes = content.Read("dba", theater.TerrainBankName + ".DBA");
@@ -59,7 +60,7 @@ public sealed class TerrainTextureBank {
 	}
 
 	/// <summary>
-	/// The atlas rect cell (<paramref name="cellX"/>, <paramref name="cellY"/>) samples, or null when
+	/// The atlas rect a cell samples, or null when
 	/// its material or frame does not resolve — in which case the caller falls back to flat shading
 	/// for that cell rather than sampling an arbitrary part of the atlas.
 	///
@@ -74,6 +75,9 @@ public sealed class TerrainTextureBank {
 	/// (docs/retail/rendering/terrain-texturing.md#which-quad-corner-takes-which-uv). Handing the pair
 	/// over the other way mirrors every cell against the row below it.</para>
 	/// </summary>
+	/// <param name="grid">The zone's height grid.</param>
+	/// <param name="cellX">The cell's column.</param>
+	/// <param name="cellY">The cell's row.</param>
 	public AtlasRect? CellRect(HeightGrid grid, int cellX, int cellY) {
 		int material = grid.MaterialIndexAt(cellX, cellY);
 		if (material < 0 || material >= Materials.Count) {

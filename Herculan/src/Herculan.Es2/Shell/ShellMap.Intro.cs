@@ -81,10 +81,11 @@ public sealed partial class ShellMap {
 	public void Skip() => _skip = true;
 
 	/// <summary>
-	/// One pass of <c>ShellMap_IntroStep</c>, the intro's state machine, at <paramref name="now"/> in the
+	/// One pass of <c>ShellMap_IntroStep</c>, the intro's state machine, at a given time in the
 	/// original's timer ticks (<c>GetTickCount() &gt;&gt; 4</c>). The caller paints after every pass.
 	/// Returns whether the intro is still running.
 	/// </summary>
+	/// <param name="now">The time, in the original's timer ticks.</param>
 	public bool Advance(uint now) {
 		if (_slowPaintStart is { } start) {
 			if (now - start < SlowPaintClearWait + SlowPaintReliefWait + GridLineCount()) {
@@ -296,14 +297,18 @@ public sealed partial class ShellMap {
 		}
 	}
 
-	/// <summary>A move to <paramref name="to"/> over <paramref name="ticks"/>, stepped by whole-tick fractions computed once, as the originals are.</summary>
+	/// <summary>A move to a target over a number of ticks, stepped by whole-tick fractions computed once, as the originals are.</summary>
+	/// <param name="to">The target.</param>
+	/// <param name="ticks">The move's length in ticks.</param>
 	private void StartMove((int X, int Y, int Z) to, int ticks) {
 		_from = (CameraX, CameraY, CameraZ);
 		_to = to;
 		_step = ticks == 0 ? (0, 0, 0) : ((to.X - _from.X) / ticks, (to.Y - _from.Y) / ticks, (to.Z - _from.Z) / ticks);
 	}
 
-	/// <summary>Where the move is at <paramref name="now"/>, landing exactly on its target once its deadline passes. Returns whether it is still under way.</summary>
+	/// <summary>Where the move is at a given time, landing exactly on its target once its deadline passes. Returns whether it is still under way.</summary>
+	/// <param name="now">The time, in the original's timer ticks.</param>
+	/// <param name="ticks">The move's length in ticks.</param>
 	private bool Move(uint now, int ticks) {
 		if (now < _deadline) {
 			int elapsed = ticks - (int)(_deadline - now);

@@ -180,7 +180,7 @@ public sealed partial class BaseObject {
 	/// <see cref="ArrivalRange"/>, but two things differ.
 	///
 	/// <para><b>It does not steer at the point.</b> It steers at a point offset from it along
-	/// <paramref name="leg"/> by <c>9000 - range</c> — so while the vehicle is further out than 9000
+	/// the route leg by <c>9000 - range</c> — so while the vehicle is further out than 9000
 	/// the aim point sits <i>short</i> of the destination, back down the incoming line, and inside
 	/// 9000 it swings past it. That is what pulls a convoy onto its route leg instead of letting each
 	/// vehicle cut its own corner.</para>
@@ -188,6 +188,8 @@ public sealed partial class BaseObject {
 	/// <para><b>And its steering gain is four times a HERC's</b> — the bearing error over 16, not
 	/// over 64.</para>
 	/// </summary>
+	/// <param name="point">The point to drive to.</param>
+	/// <param name="leg">The heading of the route leg the vehicle is on.</param>
 	/// <param name="speed">Zero means "no speed stated", which takes <see cref="DefaultSpeed"/>.</param>
 	private bool GroundVehicleDriveToPoint(Vec3i point, short leg, short speed) {
 		int range = GroundDistanceTo(point);

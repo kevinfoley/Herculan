@@ -143,7 +143,7 @@ public static class MissionPlacementRules {
 	}
 
 	/// <summary>
-	/// The first-claim map of one roster: each record a group of <paramref name="kind"/> names, to the group that places it
+	/// The first-claim map of one roster: each record a group of the roster's kind names, to the group that places it
 	/// and the record's position within that group's member slots. Groups are walked in file order and the first to name a
 	/// record wins, matching <c>Mech_AttachToGroup</c> (<c>00417aa8</c>)'s "only if it has no position yet" test. The
 	/// squad's group (<see cref="SquadGroupIndex"/>) is skipped, since it activates nothing.
@@ -177,11 +177,13 @@ public static class MissionPlacementRules {
 
 	/// <summary>
 	/// The record a structure group's pad is read from: its first-attached member, the one of
-	/// <paramref name="structureClaims"/> that <paramref name="group"/> claims at the lowest member index — the lowest
+	/// the one of the structure claims that the group claims at the lowest member index — the lowest
 	/// populated slot of its member array, not necessarily slot 0, though every retail structure group that paints does
 	/// populate slot 0. Null when it claims none. <c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) passes that member to
 	/// <c>Base_ApplyFormationTerrain</c> (<c>00405db0</c>) for a group with a <see cref="PadLayout"/>.
 	/// </summary>
+	/// <param name="structureClaims">The records structure groups claim.</param>
+	/// <param name="group">The group's index.</param>
 	public static TKey? PadLead<TKey>(IReadOnlyDictionary<TKey, MissionMemberClaim> structureClaims, int group)
 			where TKey : struct {
 		TKey? lead = null;
@@ -197,11 +199,16 @@ public static class MissionPlacementRules {
 	}
 
 	/// <summary>
-	/// A herc's place in <paramref name="group"/> at <paramref name="memberIndex"/>: its own point, else the group's point
+	/// A herc's place in a group at a member index: its own point, else the group's point
 	/// spread by its <see cref="MechFormationTable"/> slot and rotated by the group's heading
 	/// (<c>Mech_ApplyFormationOffset</c>'s <c>Formation_RotateAndAddOffset</c>, <c>00411d64</c>); its own heading, else the
 	/// group's. With no point of its own its spawn height is read at the group's point.
 	/// </summary>
+	/// <param name="group">The group.</param>
+	/// <param name="mechFormations">The mech formation table.</param>
+	/// <param name="memberIndex">The herc's member slot in the group.</param>
+	/// <param name="ownPoint">The herc's own point, or null.</param>
+	/// <param name="ownHeading">The herc's own heading, or null.</param>
 	public static MissionMemberPlace PlaceHerc(MissionGroupSetup group, MechFormationTable mechFormations, int memberIndex,
 			Vec3i? ownPoint, int? ownHeading) {
 		var offset = mechFormations.OffsetFor(group.FormationId, memberIndex);
@@ -214,7 +221,7 @@ public static class MissionPlacementRules {
 	}
 
 	/// <summary>
-	/// A squad machine's place: <paramref name="entryIndex"/> is its entry in <c>player.mec</c>, and it spreads from the
+	/// A squad machine's place: it spreads from the
 	/// squad's group as a herc of that group's member slot with no point or heading of its own.
 	///
 	/// <para>The squad spreads exactly as any other group does, because in the original it <i>is</i>
@@ -226,6 +233,9 @@ public static class MissionPlacementRules {
 	/// player (<see cref="Sim.MechObject.FormationOffset"/>); without it the post is the player's own
 	/// position, and <c>Mech_CollisionTest</c> refuses a position that overlaps another machine.</para>
 	/// </summary>
+	/// <param name="squadGroup">The squad's group.</param>
+	/// <param name="mechFormations">The mech formation table.</param>
+	/// <param name="entryIndex">The machine's entry in <c>player.mec</c>.</param>
 	public static MissionMemberPlace PlaceSquadMember(MissionGroupSetup squadGroup, MechFormationTable mechFormations,
 			int entryIndex) =>
 		PlaceHerc(squadGroup, mechFormations, entryIndex, ownPoint: null, ownHeading: null);
@@ -273,10 +283,14 @@ public static class MissionPlacementRules {
 	}
 
 	/// <summary>
-	/// Rotates a formation offset by the group's heading and adds it to <paramref name="anchor"/> —
+	/// Rotates a formation offset by the group's heading and adds it to an anchor —
 	/// the fixed-point 2D rotation <c>Formation_RotateAndAddOffset</c> (<c>00411d64</c>) reduces to
 	/// for a heading-only object (no pitch/roll), shared by every formation kind.
 	/// </summary>
+	/// <param name="anchor">The point the offset is added to.</param>
+	/// <param name="heading">The group's heading.</param>
+	/// <param name="dx">The offset's X.</param>
+	/// <param name="dy">The offset's Y.</param>
 	public static Vec3i FormationSpread(Vec3i anchor, int heading, int dx, int dy) {
 		short cos = BinaryAngle.Cos(heading);
 		short sin = BinaryAngle.Sin(heading);

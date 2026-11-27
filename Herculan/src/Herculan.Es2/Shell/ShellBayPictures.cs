@@ -108,11 +108,13 @@ public sealed class ShellBayPictures {
 
 	/// <summary>
 	/// The outline <c>Arming_MarkHardpoint</c> (<c>004155db</c>) puts in part slot 12 for
-	/// <paramref name="mount"/>: the socket's record for the weapon fitted there, <c>None</c>'s for an
+	/// a mount: the socket's record for the weapon fitted there, <c>None</c>'s for an
 	/// empty mount, drawn from the chassis's <c>_out</c> bank at the record's second position, one pixel
 	/// in as the loader leaves it, with <c>0xba</c> remapped to <c>99</c>. Null when there is no record or
 	/// its frame is <c>-1</c>, in which case the original leaves whatever outline the slot already holds.
 	/// </summary>
+	/// <param name="machine">The machine.</param>
+	/// <param name="mount">The mount.</param>
 	public ShellGridPart? Outline(ShellBayMachine machine, int mount) {
 		int type = machine.ChassisType;
 		if (Layouts.Layout(type) is not { } layout
@@ -154,9 +156,12 @@ public sealed class ShellBayPictures {
 
 	/// <summary>
 	/// Paints the picture <c>Squad_ShowPanel</c> puts up: the selected bay's, or the empty picture when
-	/// no bay is selected. Both have their grid lines off. <paramref name="outline"/> is the weapons
-	/// screen's socket outline, drawn in part slot 12 of a bay's picture.
+	/// no bay is selected. Both have their grid lines off.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="hangar">The hangar.</param>
+	/// <param name="selectedBay">The selected bay.</param>
+	/// <param name="outline">The weapons screen's socket outline, drawn in part slot 12 of a bay's picture.</param>
 	public void Paint(ShellSurface surface, ShellHangar hangar, int selectedBay, ShellGridPart? outline = null) {
 		if (selectedBay < 0) {
 			ShellGrid.Paint(surface, EmptyPictureRect, gridLines: false, EmptyBayParts());

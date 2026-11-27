@@ -112,9 +112,12 @@ public static class Es1Ramming {
 	}
 
 	/// <summary>
-	/// The steer at <paramref name="target"/>: <c>Mech_LocomotionTick</c>(machine, <see cref="AvoidanceArgument"/>,
+	/// The steer at the target: <c>Mech_LocomotionTick</c>(machine, <see cref="AvoidanceArgument"/>,
 	/// <see cref="Es1Navigation.Full"/>, the bearing error shifted right by <see cref="Es1Navigation.SteerShift"/>).
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="target">The target.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	private static void Steer(Es1Mech mech, IEs1SimObject target, Es1SimGlobals globals) {
 		short error = (short)(Es1MissionGroup.HeadingToward(mech.Position, target.Position) - mech.Heading);
 		mech.Locomotion.LocomotionTick(globals, AvoidanceArgument, Es1Navigation.Full, (short)(error >> Es1Navigation.SteerShift));

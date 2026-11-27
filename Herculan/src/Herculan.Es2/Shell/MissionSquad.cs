@@ -46,18 +46,22 @@ public sealed class MissionSquad {
 	public bool LeavesLastSquadmate { get; }
 
 	/// <summary>
-	/// The <c>player.mec</c> the launch would write for <paramref name="mission"/>, a generation of the mission opened; null
+	/// The <c>player.mec</c> the launch would write for a generation of the mission opened; null
 	/// for a campaign mission, whose squad is the career's whatever the mission holds, or when the install lacks a file the
 	/// career needs.
 	/// </summary>
+	/// <param name="mission">A generation of the mission opened.</param>
 	public byte[]? PlayerMec(MissionGenerator mission) => _export?.Invoke(mission);
 
 	/// <summary>
-	/// A training-mode load on <paramref name="row"/> (<see cref="ShellTrainingLaunch.NewCareer"/>, then
+	/// A training-mode load on a career row (<see cref="ShellTrainingLaunch.NewCareer"/>, then
 	/// <see cref="ShellTrainingLaunch.BuildSquad"/> and <see cref="ShellMissionLaunch.ExportPlayerMec"/>), whose
-	/// <see cref="ShellTrainingLaunch.NewCareer"/> drew from <paramref name="start"/>, copied, and whose build fields every
-	/// squadmate when <paramref name="wholeSquad"/> is set.
+	/// <see cref="ShellTrainingLaunch.NewCareer"/> drew from a generator, copied, and whose build fields every
+	/// squadmate when asked.
 	/// </summary>
+	/// <param name="row">The career row.</param>
+	/// <param name="start">The generator the new career draws from, copied.</param>
+	/// <param name="wholeSquad">Whether the build fields every squadmate.</param>
 	internal static MissionSquad Training(GameContent content, SimulatorPreferences options, int row, bool instantAction,
 			SimRandom start, bool wholeSquad) {
 		var begun = start.Copy();

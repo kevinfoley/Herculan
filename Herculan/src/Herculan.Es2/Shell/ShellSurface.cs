@@ -55,9 +55,10 @@ public sealed class ShellSurface {
 	public ShellRect ClipRect { get; private set; }
 
 	/// <summary>
-	/// Narrows the clip to the intersection of <paramref name="rect"/> and the current one, and returns
+	/// Narrows the clip to the intersection of a rect and the current one, and returns
 	/// what it was so the caller can put it back with <see cref="PopClip"/>.
 	/// </summary>
+	/// <param name="rect">The rect to intersect with the current clip.</param>
 	public ShellRect PushClip(ShellRect rect) {
 		var previous = ClipRect;
 		ClipRect = new ShellRect(
@@ -205,10 +206,15 @@ public sealed class ShellSurface {
 	private const int MirrorXFlag = 2;
 
 	/// <summary>
-	/// A bitmap drawn to fill a rectangle <paramref name="width"/> by <paramref name="height"/> from
-	/// <paramref name="left"/>, <paramref name="top"/> — the blitter's scaled path, <c>Bitmap_BlitScaledClipDispatch</c> (<c>00458e78</c>),
+	/// A bitmap drawn to fill a rectangle from a corner, at a width and height — the blitter's scaled path,
+	/// <c>Bitmap_BlitScaledClipDispatch</c> (<c>00458e78</c>),
 	/// sampled nearest. Source index 0 is left alone, as in <see cref="Blit"/>.
 	/// </summary>
+	/// <param name="bitmap">The bitmap.</param>
+	/// <param name="left">The rectangle's left edge.</param>
+	/// <param name="top">The rectangle's top edge.</param>
+	/// <param name="width">The rectangle's width.</param>
+	/// <param name="height">The rectangle's height.</param>
 	public void ScaledBlit(DynamixBitmap bitmap, int left, int top, int width, int height) {
 		byte[] source = bitmap.ImageData ?? Array.Empty<byte>();
 		int cols = bitmap.Cols;
@@ -229,11 +235,14 @@ public sealed class ShellSurface {
 	}
 
 	/// <summary>
-	/// Another surface drawn stretched over the inclusive rectangle from <paramref name="left"/>,
-	/// <paramref name="top"/> to <paramref name="left"/> + <paramref name="width"/>, <paramref name="top"/>
-	/// + <paramref name="height"/> — <c>GLBitmap_DrawStretched</c> (<c>0045330c</c>), a texture-mapped quad whose corners carry the
+	/// Another surface drawn stretched over an inclusive rectangle — <c>GLBitmap_DrawStretched</c> (<c>0045330c</c>), a texture-mapped quad whose corners carry the
 	/// source's corner texels, sampled nearest. Source index 0 is left alone.
 	/// </summary>
+	/// <param name="source">The surface to draw.</param>
+	/// <param name="left">The rectangle's left edge.</param>
+	/// <param name="top">The rectangle's top edge.</param>
+	/// <param name="width">The rectangle's width: its right edge is <c>left</c> + <c>width</c>, inclusive.</param>
+	/// <param name="height">The rectangle's height: its bottom edge is <c>top</c> + <c>height</c>, inclusive.</param>
 	public void StretchBlit(ShellSurface source, int left, int top, int width, int height) {
 		if (width <= 0 || height <= 0 || source.Width <= 0 || source.Height <= 0) {
 			return;
@@ -303,7 +312,9 @@ public sealed class ShellSurface {
 		}
 	}
 
-	/// <summary>A filled ellipse inside the inclusive box around (<paramref name="cx"/>, <paramref name="cy"/>) — <c>Gfx_FillEllipse</c> (<c>0045852c</c>)'s solid path.</summary>
+	/// <summary>A filled ellipse inside the inclusive box around a centre — <c>Gfx_FillEllipse</c> (<c>0045852c</c>)'s solid path.</summary>
+	/// <param name="cx">The centre's X.</param>
+	/// <param name="cy">The centre's Y.</param>
 	public void FillEllipse(int cx, int cy, int radiusX, int radiusY, byte index) {
 		if (radiusX <= 0 || radiusY <= 0) {
 			Fill(cx - radiusX, cy - radiusY, cx + radiusX, cy + radiusY, index);
@@ -317,12 +328,13 @@ public sealed class ShellSurface {
 	}
 
 	/// <summary>
-	/// Resolves the surface through <paramref name="palette"/> into RGBA8, top row first, with
+	/// Resolves the surface through a palette into RGBA8, top row first, with
 	/// <see cref="Transparent"/> becoming alpha 0 so the backdrop behind it shows through. An index the
 	/// palette does not carry comes out as opaque grey of that index's value, the same fallback
 	/// <see cref="ShellArt"/> uses for a bitmap, so a wrong index reads as a wrong shade rather than as
 	/// nothing at all.
 	/// </summary>
+	/// <param name="palette">The palette the surface is resolved through.</param>
 	public ShellImage ToImage(DynamixPalette palette) {
 		var pixels = new byte[Width * Height * 4];
 		for (int i = 0; i < _indices.Length; i++) {

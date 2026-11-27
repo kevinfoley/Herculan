@@ -753,7 +753,7 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_SpreadImpactDamage</c> (<c>00417a04</c>) — spreads one impact over the whole machine. Every live component draws
-	/// its own <paramref name="odds"/> roll out of 256, and one that is caught takes
+	/// its own roll against the odds, out of 256, and one that is caught takes
 	/// <c>Q8(roll + max/2, totalArmor)</c>, so the share scales with what that component had to lose
 	/// rather than being flat. The damage goes in through
 	/// <see cref="ComponentDamageWrite"/> like any other, cascade and death gate included — which is
@@ -762,6 +762,9 @@ public sealed partial class MechObject {
 	/// <para>The original's other caller is the graded hard-landing handler; see
 	/// <see cref="Collapsed"/>.</para>
 	/// </summary>
+	/// <param name="world">The world.</param>
+	/// <param name="maxDamage">The impact's maximum damage.</param>
+	/// <param name="odds">The odds, out of 256, that a component is caught.</param>
 	private void SpreadImpactDamage(SimWorld world, short maxDamage, short odds) {
 		if (_damage == null || maxDamage == 0) {
 			return;

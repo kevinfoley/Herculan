@@ -41,10 +41,12 @@ public sealed class ShellLaunchRefusalDialog {
 			: null;
 
 	/// <summary>
-	/// Draws the dialog over whatever <paramref name="surface"/> holds. The builder writes the face and the
+	/// Draws the dialog over whatever the surface holds. The builder writes the face and the
 	/// title plate and leaves <c>ESTitle_Ctor</c>'s filled body; the two lines are centred in <c>0x29</c>
-	/// with no backing. <paramref name="lit"/> is the widget a press has lit.
+	/// with no backing.
 	/// </summary>
+	/// <param name="surface">The surface to draw over.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		if (!IsOpen) {
 			return;

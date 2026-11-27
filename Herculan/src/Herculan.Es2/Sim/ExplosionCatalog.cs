@@ -56,18 +56,21 @@ public sealed class ExplosionCatalog {
 			? new ExplosionCatalog(table)
 			: null;
 
-	/// <summary>The type row for <paramref name="typeId"/>, or null when the id is outside the table.</summary>
+	/// <summary>The type row for a type id, or null when the id is outside the table.</summary>
+	/// <param name="typeId">The explosion type id.</param>
 	public ExplosionTypeEntry? Type(int typeId) =>
 		_table.Types is { } types && typeId >= 0 && typeId < types.Length ? types[typeId] : null;
 
 	/// <summary>
-	/// The int16 <c>Explosion_TickUpdate</c> (<c>0040813c</c>) reads as frame <paramref name="frame"/>'s light
+	/// The int16 <c>Explosion_TickUpdate</c> (<c>0040813c</c>) reads as a frame's light
 	/// intensity: the word at <c>row + 0x08 + frame * 2</c>, unbounded. Past the twelve ramp entries
 	/// that is the row's proximity radius (low word, then high), its sound id and its object class,
 	/// then the next row's fields — docs/retail/simulation/impact-effects.md, "Tick". Past the end of the
 	/// table it answers 0, which is this engine's: the original reads whatever follows the table in
 	/// memory, and no retail shape's flipbook runs that far.
 	/// </summary>
+	/// <param name="typeId">The explosion type id.</param>
+	/// <param name="frame">The frame.</param>
 	public short RampWord(int typeId, int frame) {
 		int offset = typeId * TypeRowSize + RampOffset + frame * 2;
 		if (offset < 0 || Type(offset / TypeRowSize) is not { } row) {
@@ -94,7 +97,8 @@ public sealed class ExplosionCatalog {
 	/// <summary>Where a type row's intensity ramp starts.</summary>
 	private const int RampOffset = 0x08;
 
-	/// <summary>The shape row for <paramref name="shapeIndex"/>, or null when it is outside the table.</summary>
+	/// <summary>The shape row for a shape index, or null when it is outside the table.</summary>
+	/// <param name="shapeIndex">The shape index.</param>
 	public ExplosionShapeEntry? Shape(int shapeIndex) =>
 		_table.Shapes is { } shapes && shapeIndex >= 0 && shapeIndex < shapes.Length ? shapes[shapeIndex] : null;
 
@@ -113,10 +117,11 @@ public sealed class ExplosionCatalog {
 	}
 
 	/// <summary>
-	/// How many frames shape <paramref name="shapeIndex"/>'s flipbook has, or zero when it has none
+	/// How many frames a shape's flipbook has, or zero when it has none
 	/// or the counts were never bound. An effect on a zero-frame shape is dropped on its first timer
 	/// expiry, which is what the original's negative-sequence branch does.
 	/// </summary>
+	/// <param name="shapeIndex">The shape index.</param>
 	public int FrameCount(int shapeIndex) =>
 		shapeIndex >= 0 && shapeIndex < _frameCounts.Length ? _frameCounts[shapeIndex] : 0;
 }

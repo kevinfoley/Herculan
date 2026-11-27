@@ -578,13 +578,16 @@ public partial class MechObject {
 	/// <summary>
 	/// <c>Ai_PostSquadMessage</c> (<c>00420a98</c>) — posts to the pilot-and-squad message port, the
 	/// second instance of the port the cockpit computer uses. A destroyed machine says nothing unless
-	/// <paramref name="force"/> is set, which is how a machine gets to cry out as it dies — see
-	/// <see cref="CreditNeutralised"/>, the original's only caller that sets it.
+	/// forced, which is how a machine gets to cry out as it dies — see
+	/// <see cref="CreditNeutralised"/>, the original's only caller that forces it.
 	///
 	/// <para>The id is also kept (<see cref="LastSquadMessage"/>) — the port itself decides whether
 	/// anything is heard, and drops the post entirely for a machine that is not one of the player's
 	/// three squadmates.</para>
 	/// </summary>
+	/// <param name="world">The world.</param>
+	/// <param name="messageId">The message id.</param>
+	/// <param name="force">Whether to post even for a destroyed machine.</param>
 	private void PostSquadMessage(SimWorld world, int messageId, bool force = false) {
 		if (Destroyed && !force) {
 			return;

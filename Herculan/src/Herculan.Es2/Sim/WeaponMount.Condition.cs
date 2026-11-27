@@ -39,7 +39,7 @@ public sealed partial class WeaponMount {
 	/// code is under <see cref="GunLayout.HardpointEntry.InvisibleMounting"/>, the gun's own shape, out of
 	/// <see cref="DebrisShapeLibraryName"/>, leaves the mount point as a <see cref="DebrisObject"/>
 	/// heading away from the machine's aim point, at the hardpoint's own pitch and
-	/// <see cref="DebrisMass"/>, keeping the mount's attitude. <paramref name="rolled"/> picks the
+	/// <see cref="DebrisMass"/>, keeping the mount's attitude. The path that destroyed it picks the
 	/// kind: the certain path throws a piece that bursts, group
 	/// <see cref="ComponentDamage.DefaultDebrisGroup"/> with <see cref="DebrisBurstEffect"/>, and the
 	/// roll a plain piece that just falls. See

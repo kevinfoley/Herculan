@@ -330,13 +330,15 @@ public sealed class ExternalViewChain {
 	public void DeveloperHandOff() => InputDrivesCamera = !InputDrivesCamera;
 
 	/// <summary>
-	/// One tick of the chain. <paramref name="steer"/>, <paramref name="throttle"/> and
-	/// <paramref name="trigger"/> are the tick's steering and throttle axes and trigger, which reach
-	/// the camera only while <paramref name="controlsDriveCamera"/>; otherwise it is steered with
-	/// nothing, which lets its rates run down. <paramref name="deathCamera"/> runs
-	/// <see cref="DeathCameraTick"/>, which <c>Sim_MainTick</c> calls while the player's machine is
-	/// destroyed and the simulation is not frozen.
+	/// One tick of the chain.
 	/// </summary>
+	/// <param name="steer">The tick's steering axis.</param>
+	/// <param name="throttle">The tick's throttle axis.</param>
+	/// <param name="trigger">The tick's trigger.</param>
+	/// <param name="controlsDriveCamera">Whether the steering, throttle and trigger reach the camera; otherwise it is steered with
+	/// nothing, which lets its rates run down.</param>
+	/// <param name="deathCamera">Runs <see cref="DeathCameraTick"/>, which <c>Sim_MainTick</c> calls while the player's machine is
+	/// destroyed and the simulation is not frozen.</param>
 	/// <returns>Whether the death camera's countdown has run out: the moment to raise the status alert.</returns>
 	public bool Advance(short steer, short throttle, bool trigger, bool controlsDriveCamera,
 			HeightGrid? terrain, bool deathCamera = false) {

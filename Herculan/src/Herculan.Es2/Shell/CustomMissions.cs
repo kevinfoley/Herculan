@@ -63,23 +63,29 @@ public static class CustomMissions {
 	public static IReadOnlyList<string> IncludedNames() =>
 		Bundles(IncludedFolder).Select(path => ReadBundle(path, out _)?.Name).OfType<string>().ToList();
 
-	/// <summary>The bundle HERCULAN comes with whose mission is named <paramref name="name"/> (no extension, any case), or null.</summary>
+	/// <summary>The bundle HERCULAN comes with of a mission's name, or null.</summary>
+	/// <param name="name">The mission's name (no extension, any case).</param>
 	public static MissionBundle? FindIncluded(string name) =>
 		Bundles(IncludedFolder).Select(path => ReadBundle(path, out _))
 			.FirstOrDefault(bundle => bundle != null && bundle.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 
 	/// <summary>
-	/// What mission <paramref name="name"/>'s about file says, from the install's saved files when it has them, else from the
+	/// What a mission's about file says, from the install's saved files when it has them, else from the
 	/// bundle HERCULAN comes with of that name; null with neither.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name.</param>
 	public static MissionAbout? About(string installRoot, string name) =>
 		SavedMissions.Exists(installRoot, name) ? SavedMissions.ReadAbout(installRoot, name) : FindIncluded(name)?.About;
 
 	/// <summary>
-	/// Mission <paramref name="name"/>'s own zone, from the install's saved files when it has them
-	/// (<see cref="SavedMissions.ReadZone"/>, which gives the reason in <paramref name="failure"/> when they do not read), else
+	/// A mission's own zone, from the install's saved files when it has them
+	/// (<see cref="SavedMissions.ReadZone"/>, which gives a reason when they do not read), else
 	/// from the bundle HERCULAN comes with of that name; null without one.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name.</param>
+	/// <param name="failure">The reason the saved files do not read, else null.</param>
 	public static ZoneFiles? Zone(string installRoot, string name, out string? failure) {
 		failure = null;
 		return SavedMissions.Exists(installRoot, name) ? SavedMissions.ReadZone(installRoot, name, out failure) : FindIncluded(name)?.Zone;
@@ -112,10 +118,12 @@ public static class CustomMissions {
 	}
 
 	/// <summary>
-	/// The files <see cref="Delete"/> removes for <paramref name="mission"/>: none for one HERCULAN comes with; a bundle's own
+	/// The files <see cref="Delete"/> removes for a mission: none for one HERCULAN comes with; a bundle's own
 	/// file; a loose mission's <c>.MSN</c>, its text in every language, its about file, its own zone's header and heightmap,
 	/// and the mission editor's backup of each (<see cref="SavedMissions.BackupExtension"/>), those that exist.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="mission">The mission.</param>
 	public static IReadOnlyList<string> Files(string installRoot, CustomMission mission) {
 		if (mission.Form == CustomMissionForm.Included) {
 			return [];
@@ -134,7 +142,9 @@ public static class CustomMissions {
 			.ToList();
 	}
 
-	/// <summary>Deletes <paramref name="mission"/>'s <see cref="Files"/>, and returns them.</summary>
+	/// <summary>Deletes a mission's <see cref="Files"/>, and returns them.</summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="mission">The mission.</param>
 	public static IReadOnlyList<string> Delete(string installRoot, CustomMission mission) {
 		var files = Files(installRoot, mission);
 		foreach (string file in files) {
@@ -145,11 +155,14 @@ public static class CustomMissions {
 	}
 
 	/// <summary>
-	/// The bundle at <paramref name="source"/>, read and checked for import into the install's mission folder under its own
+	/// The bundle at a path, read and checked for import into the install's mission folder under its own
 	/// file name, or null with the reason it cannot be: it is not a <c>.hcm</c>, is already in that folder, or is not a
 	/// bundle that could be played. The bytes checked are the bytes <see cref="Import"/> writes, so the file changing
 	/// meanwhile changes nothing.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="source">The path of the bundle.</param>
+	/// <param name="failure">The reason the bundle cannot be imported, else null.</param>
 	public static CustomMissionImport? ReadImport(string installRoot, string source, out string? failure) {
 		string file = Path.GetFileName(source);
 		if (!Path.GetExtension(file).Equals(MissionBundle.Extension, StringComparison.OrdinalIgnoreCase)) {
@@ -176,17 +189,23 @@ public static class CustomMissions {
 		return new CustomMissionImport(bundle.Name, destination, bytes, File.Exists(destination));
 	}
 
-	/// <summary>Writes the bundle <paramref name="import"/> read into the install's mission folder, creating the folder.</summary>
+	/// <summary>Writes the bundle an import read into the install's mission folder, creating the folder.</summary>
+	/// <param name="import">The import <see cref="ReadImport"/> made.</param>
 	public static void Import(CustomMissionImport import) {
 		Directory.CreateDirectory(Path.GetDirectoryName(import.Destination)!);
 		File.WriteAllBytes(import.Destination, import.Bytes);
 	}
 
 	/// <summary>
-	/// Writes the handoff for <paramref name="mission"/> into <paramref name="directory"/>, on the mission's own theater and
-	/// time of day, and returns its <c>script.dat</c>, or null with the reason. <paramref name="shellContent"/> is VSHELL's
-	/// mount of the install. A mission's file is anyone's, so a load it trips up is a failure to report, not the shell's crash.
+	/// Writes the handoff for a mission into a directory, on the mission's own theater and
+	/// time of day, and returns its <c>script.dat</c>, or null with the reason.
+	/// A mission's file is anyone's, so a load it trips up is a failure to report, not the shell's crash.
 	/// </summary>
+	/// <param name="shellContent">VSHELL's mount of the install.</param>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="mission">The mission.</param>
+	/// <param name="directory">The folder the handoff is written into.</param>
+	/// <param name="failure">The reason the handoff cannot be written, else null.</param>
 	public static string? WriteHandoff(GameContent shellContent, string installRoot, CustomMission mission, string directory,
 			out string? failure) {
 		try {
@@ -213,7 +232,9 @@ public static class CustomMissions {
 		}
 	}
 
-	/// <summary>The text the shell running in <paramref name="language"/> reads from <paramref name="bundle"/>: its language's, else English, else the first held.</summary>
+	/// <summary>The text the shell running in a language reads from a bundle: its language's, else English, else the first held.</summary>
+	/// <param name="bundle">The bundle.</param>
+	/// <param name="language">The shell's language.</param>
 	public static byte[]? Text(MissionBundle bundle, GameLanguage language) =>
 		bundle.Text(ShellCareerMissions.MissionTextExtension(language))
 		?? bundle.Text(ShellCareerMissions.MissionTextExtension(GameLanguage.English))

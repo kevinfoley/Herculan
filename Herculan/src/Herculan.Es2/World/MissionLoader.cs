@@ -85,24 +85,29 @@ public static class MissionLoader {
 		CaseInsensitivePath.Combine(installRoot, DataFolderName, ScriptFileName);
 
 	/// <summary>
-	/// Loads the mission at <paramref name="scriptPath"/>. <paramref name="content"/> supplies the
-	/// type-name lists, which live in the archives rather than beside the mission.
+	/// Loads the mission at a script path.
 	///
 	/// <para><c>mission.var</c> and <c>player.mec</c> are looked for next to the script, and the load
 	/// throws <see cref="MissingHandoffFileException"/> when either is not there, as the original
 	/// asserts on each.</para>
 	/// </summary>
+	/// <param name="content">The content, which supplies the type-name lists, which live in the archives rather than beside the mission.</param>
+	/// <param name="scriptPath">The path of the handoff's script file.</param>
 	public static Mission Load(GameContent content, string scriptPath) => Load(content, ReadScript(scriptPath), scriptPath);
 
-	/// <summary>Parses the handoff at <paramref name="scriptPath"/>, throwing <see cref="InvalidDataException"/> when it does not.</summary>
+	/// <summary>Parses the handoff at a script path, throwing <see cref="InvalidDataException"/> when it does not.</summary>
+	/// <param name="scriptPath">The path of the handoff's script file.</param>
 	public static ScriptDat ReadScript(string scriptPath) =>
 		new ScriptDatTransformer().Parse(File.ReadAllBytes(scriptPath)) as ScriptDat
 			?? throw new InvalidDataException($"{scriptPath} did not parse as a script.dat.");
 
 	/// <summary>
-	/// <see cref="Load(GameContent, string)"/> over a <paramref name="script"/> already read from
-	/// <paramref name="scriptPath"/>, which still locates the files beside it.
+	/// <see cref="Load(GameContent, string)"/> over a script already read, from a path
+	/// which still locates the files beside it.
 	/// </summary>
+	/// <param name="content">The content.</param>
+	/// <param name="script">The script already read.</param>
+	/// <param name="scriptPath">The path it was read from, which still locates the files beside it.</param>
 	public static Mission Load(GameContent content, ScriptDat script, string scriptPath) {
 		var header = ScriptDatHeader.From(script);
 		var mechNames = UnitTypeNames.LoadMechs(content);

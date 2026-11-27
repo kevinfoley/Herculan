@@ -234,11 +234,12 @@ public sealed class WeaponShot {
 	public ProjectileData.Projectile Effects { get; }
 
 	/// <summary>
-	/// One of the four ids in the group <paramref name="group"/> names. The original addresses all
+	/// One of the four ids in a group. The original addresses all
 	/// three arrays as one twelve-entry short array off the shot record's <c>+0x0a</c> and indexes it
 	/// <c>group * 4 + (rand &amp; 3)</c>, so the groups are ordered exactly as the file writes them —
 	/// see <see cref="ImpactFxGroup"/> for which branch reaches each.
 	/// </summary>
+	/// <param name="group">The impact FX group.</param>
 	public short[] ImpactFx(ImpactFxGroup group) => group switch {
 		ImpactFxGroup.Shield => Effects.ImpactFXShield,
 		ImpactFxGroup.Ground => Effects.ImpactFXGround,

@@ -152,9 +152,8 @@ public static class HitTests {
 	/// probe, called by <see cref="MechObject"/>'s obstacle avoidance and its line-of-sight test (see
 	/// docs/retail/simulation/hit-detection.md, "The shape probe").
 	///
-	/// <para>The ray is built as a shot's is — pointed from <paramref name="from"/> at
-	/// <paramref name="to"/> by <see cref="SimTrig.EulerToward"/>, starting at
-	/// <paramref name="from"/>, as long as the sqrt-free distance between them — and each candidate
+	/// <para>The ray is built as a shot's is — pointed from its start at its end by <see cref="SimTrig.EulerToward"/>,
+	/// starting at the start, as long as the sqrt-free distance between them — and each candidate
 	/// is tested by <see cref="BaseObject.VolumeRaycast"/>. Candidates are every structure
 	/// <see cref="BaseObject.InShapeList"/> admits, oldest first as <c>Pool_Prev</c> walks the
 	/// structure pool. The original gathers them with no deployment test, so a structure whose group

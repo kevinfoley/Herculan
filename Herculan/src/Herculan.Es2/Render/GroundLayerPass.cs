@@ -27,8 +27,8 @@ public sealed class GroundLayerPass : IDisposable {
 
 	/// <summary>
 	/// One pass with the ground drawn as the original paints it and every object depth-tested per pixel:
-	/// <paramref name="ground"/>'s terrain first, then its ground shapes in the terrain's paint order, then everything else
-	/// in <paramref name="items"/> (which may hold the terrain item too; it is not drawn twice). This is the mission
+	/// the ground layer's terrain first, then its ground shapes in the terrain's paint order, then everything else
+	/// in the items (which may hold the terrain item too; it is not drawn twice). This is the mission
 	/// editor's draw, and the simulator's when its "Per-pixel depth sorting" tweak is on; the simulator's default, the
 	/// original's painter's order, is <see cref="WorldDrawPass"/>.
 	///
@@ -58,11 +58,13 @@ public sealed class GroundLayerPass : IDisposable {
 	/// it struck, shows only its nearer part.</para>
 	///
 	/// <para>Before any of it, the pass rebuilds the zone's visible region for its own view, as
-	/// <c>Terrain_SetupVisibleRegion</c> does before the submit, and files <paramref name="ground"/>'s
+	/// <c>Terrain_SetupVisibleRegion</c> does before the submit, and files the ground layer's
 	/// <see cref="GroundShapeLayer.Objects"/> by it; an item whose <see cref="SceneItem.Filing"/> that
 	/// leaves undrawn, and a ground shape filed under a cell the draw does not reach, are skipped. The
 	/// billboards and beams drawn after this call for the same pass read the same answers.</para>
 	/// </summary>
+	/// <param name="items">The items to draw.</param>
+	/// <param name="ground">The ground layer: the terrain and its ground shapes.</param>
 	public void Draw(Camera camera, IEnumerable<SceneItem> items, GroundShapeLayer ground,
 			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
 		float aspect = (float)viewportWidth / System.Math.Max(viewportHeight, 1);
@@ -92,11 +94,12 @@ public sealed class GroundLayerPass : IDisposable {
 	}
 
 	/// <summary>
-	/// The start of a <see cref="WorldDrawPass"/> pass in the original's painter's order: files <paramref name="ground"/>'s
+	/// The start of a <see cref="WorldDrawPass"/> pass in the original's painter's order: files the ground layer's
 	/// objects for this view as <see cref="Draw"/> does, draws the terrain's paint ranks (<see cref="TerrainPaintRankBuffer"/>)
 	/// for every entry to test against, and starts the renderer's pass (<see cref="SceneRenderer.BeginPass"/>). Returns
 	/// the walk's order.
 	/// </summary>
+	/// <param name="ground">The ground layer: the terrain and its ground shapes.</param>
 	public TerrainPaintOrder BeginPainted(Camera camera, GroundShapeLayer ground,
 			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
 		float aspect = (float)viewportWidth / System.Math.Max(viewportHeight, 1);

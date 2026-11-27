@@ -59,10 +59,11 @@ public abstract class SimObject : Engine.Render.ILightSubject {
 	public int Heading { get; set; }
 
 	/// <summary>
-	/// Turns the object to face <paramref name="heading"/> from outside the simulation, as the mission editor re-places it: a
+	/// Turns the object to face a heading from outside the simulation, as the mission editor re-places it: a
 	/// class that caches a frame built from its attitude marks it stale, as its own turns do. The simulation's own turns write
 	/// <see cref="Heading"/> and stale the frame where the original does.
 	/// </summary>
+	/// <param name="heading">The heading.</param>
 	public virtual void Face(int heading) => Heading = heading;
 
 	/// <summary>
@@ -233,29 +234,34 @@ public abstract class SimObject : Engine.Render.ILightSubject {
 	public virtual bool OutOfAction => Neutralised;
 
 	/// <summary>
-	/// Vtable <c>+0x50</c> — a shot from <paramref name="attacker"/> just struck this object, made by
+	/// Vtable <c>+0x50</c> — a shot from an attacker just struck this object, made by
 	/// <see cref="HitTests.Raycast"/>. Every class but the HERC installs <c>SimObject_AiOnTakingFire</c>
 	/// (<c>00411aec</c>), which does nothing but share the attacker with this object's side
 	/// (<see cref="Detection.ShareContact"/>); the HERC overrides it with its reaction
 	/// (docs/retail/simulation/ai-targeting.md, "Passing a contact on").
 	/// </summary>
+	/// <param name="world">The world.</param>
+	/// <param name="attacker">The object that fired the shot.</param>
 	/// <param name="damage">The shot's damage, which only a HERC's reaction reads.</param>
 	public virtual void OnTakingFire(SimWorld world, SimObject attacker, short damage) =>
 		Detection.ShareContact(world, this, attacker);
 
 	/// <summary>
-	/// Vtable <c>+0x48</c> — this object's sweep is about to paint <paramref name="enemy"/> on radar or
+	/// Vtable <c>+0x48</c> — this object's sweep is about to paint an enemy on radar or
 	/// make it a contact (<see cref="Detection"/>). Every class but the HERC installs
 	/// <c>SimObject_AiEnemySightedNoOp</c> (<c>004127f8</c>), an empty body; the HERC's is the
 	/// "enemy detected" callout, <see cref="MechObject.EnemySighted"/>.
 	/// </summary>
+	/// <param name="world">The world.</param>
+	/// <param name="enemy">The enemy sighted.</param>
 	internal virtual void EnemySighted(SimWorld world, SimObject enemy) {
 	}
 
 	/// <summary>
-	/// Vtable <c>+0x34</c> — the shield facing <paramref name="heading"/> points at, front within
+	/// Vtable <c>+0x34</c> — the shield facing a heading points at, front within
 	/// ±90° and rear outside it. Zero for everything but a HERC.
 	/// </summary>
+	/// <param name="heading">The heading.</param>
 	public virtual short ShieldByHeading(short heading) => 0;
 
 	/// <summary>
@@ -290,10 +296,11 @@ public abstract class SimObject : Engine.Render.ILightSubject {
 	public bool RunInto { get; internal set; }
 
 	/// <summary>
-	/// Whether this object holds <paramref name="other"/> as a known contact — one row of
+	/// Whether this object holds another object as a known contact — one row of
 	/// <c>obj+0xc2</c>, the flat per-object contact table addressed by
 	/// <see cref="ListIndex"/>. See <see cref="Detection"/> for what fills and empties it.
 	/// </summary>
+	/// <param name="other">The other object.</param>
 	public bool Detects(SimObject other) =>
 		other.ListIndex >= 0 && other.ListIndex < _contacts.Length && _contacts[other.ListIndex];
 
@@ -305,10 +312,11 @@ public abstract class SimObject : Engine.Render.ILightSubject {
 	}
 
 	/// <summary>
-	/// Grows the two per-object tables to cover a world of <paramref name="objectCount"/> objects.
+	/// Grows the two per-object tables to cover a world of a given number of objects.
 	/// The original allocates each object whole, with both tables sized to the sim's fixed object
 	/// cap; this grows on demand because <see cref="SimWorld"/> has no cap.
 	/// </summary>
+	/// <param name="objectCount">The number of objects in the world.</param>
 	internal void EnsureTableSize(int objectCount) {
 		if (_contacts.Length >= objectCount) {
 			return;
@@ -566,21 +574,26 @@ public abstract class SimObject : Engine.Render.ILightSubject {
 
 	/// <summary>
 	/// Vtable <c>+0x54</c> asked with a pose — which of this object's live components a missile
-	/// launched from <paramref name="from"/> pointing along <paramref name="attitude"/> locks on to,
+	/// launched from a point pointing along an attitude locks on to,
 	/// or −1 for none. <c>Rocket_Fire</c> is the only caller that hands it a pose; see
 	/// <see cref="Rocket.LockComponent"/>. The base is the flyer's
 	/// <c>SimObject_ComponentNearestAim_None</c> (<c>00411a44</c>), a bare <c>return -1</c>, so a
 	/// round fired at an aircraft always steers at its aim point.
 	/// </summary>
+	/// <param name="from">The launch point.</param>
+	/// <param name="attitude">The launch attitude.</param>
 	public virtual short ComponentNearestAim(Vec3i from, (short X, short Y, short Z) attitude) => -1;
 
 	/// <summary>
 	/// The measure <c>Mech_ComponentNearestAim</c> (<c>0041b534</c>) and
 	/// <c>Base_FirstLiveComponent</c> (<c>00406868</c>) each inline: the bearing from
-	/// <paramref name="from"/> to <paramref name="component"/> less <paramref name="attitude"/>, as
+	/// a point to a component less an attitude, as
 	/// <c>|Δpitch| + |Δheading|</c>, each difference wrapped to 16 bits and a difference of
 	/// <c>-0x8000</c> counted as <c>0x7fff</c>. The roll element is computed and ignored.
 	/// </summary>
+	/// <param name="component">The component's position.</param>
+	/// <param name="from">The point the bearing is taken from.</param>
+	/// <param name="attitude">The attitude subtracted.</param>
 	private protected static int AimOffset(Vec3i component, Vec3i from, (short X, short Y, short Z) attitude) {
 		var (bearingX, _, bearingZ) = SimTrig.EulerToward(component, from);
 		return AbsAngle((short)(bearingX - attitude.X)) + AbsAngle((short)(bearingZ - attitude.Z));
@@ -728,12 +741,16 @@ public abstract class SimObject : Engine.Render.ILightSubject {
 	}
 
 	/// <summary>
-	/// Vtable <c>+0x74</c> — <paramref name="damage"/> written straight onto one component, with every
+	/// Vtable <c>+0x74</c> — damage written straight onto one component, with every
 	/// consequence the class attaches to losing it. The three shootable classes each route it to their
 	/// own endpoint; the base does nothing. The simulation's own damage paths reach those endpoints
 	/// directly; this is the slot for a caller that holds only a <see cref="SimObject"/>, as the
 	/// developer keys' <c>Ctrl+Alt+D</c> and <c>Ctrl+Alt+N</c> do.
 	/// </summary>
+	/// <param name="world">The world.</param>
+	/// <param name="componentIndex">The component's index.</param>
+	/// <param name="damage">The damage.</param>
+	/// <param name="attacker">The attacker, or null.</param>
 	public virtual void ApplyComponentDamage(SimWorld world, int componentIndex, short damage,
 			SimObject? attacker) {
 	}

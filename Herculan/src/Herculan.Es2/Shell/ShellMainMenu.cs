@@ -106,9 +106,11 @@ public sealed class ShellMainMenu {
 	}
 
 	/// <summary>
-	/// Draws the screen into <paramref name="surface"/>. The caller clears it first; the panel's dithered
-	/// body leaves every other pixel to the backdrop. <paramref name="lit"/> is the widget a press has lit.
+	/// Draws the screen into a surface. The caller clears it first; the panel's dithered
+	/// body leaves every other pixel to the backdrop.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 

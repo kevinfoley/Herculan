@@ -284,13 +284,15 @@ public sealed partial class MissionGroup {
 
 	/// <summary>
 	/// <c>Group_ReportIfAllOutOfAction</c> (<c>00423f30</c>) — runs the group's writes if every member
-	/// but <paramref name="reporting"/> is destroyed or immobilised. The one reporting is skipped
+	/// but the reporting one is destroyed or immobilised. The one reporting is skipped
 	/// rather than tested because its own flag is not set yet at every call site.
 	///
 	/// <para>Nothing latches it. It runs each time a member reports, and only the report of the last
 	/// member still standing finds all the others down, so a group writes once — a member reports only
 	/// on going out of the fight, and never twice.</para>
 	/// </summary>
+	/// <param name="world">The world.</param>
+	/// <param name="reporting">The member reporting.</param>
 	internal void ReportIfAllOthersOutOfAction(SimWorld world, SimObject reporting) {
 		for (int i = 0; i < _members.Count; i++) {
 			var member = _members[i];

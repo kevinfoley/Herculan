@@ -125,8 +125,9 @@ public sealed class ShellRepairCosts {
 
 	/// <summary>
 	/// <c>Repair_LevelForCondition</c> (<c>0041381c</c>) — the first level whose band floor is at or
-	/// below <paramref name="condition"/>, so 90 and up is level 0 and 0 is level 5.
+	/// below a condition, so 90 and up is level 0 and 0 is level 5.
 	/// </summary>
+	/// <param name="condition">The condition.</param>
 	public static int LevelForCondition(int condition) {
 		for (int level = 0; level < LevelCount; level++) {
 			if (RepairLevelFloor[level] <= condition) {
@@ -160,8 +161,10 @@ public sealed class ShellRepairCosts {
 
 	/// <summary>
 	/// <c>Repair_ItemCost</c> (<c>0041392a</c>) — what it costs to lift one component from
-	/// <paramref name="condition"/> to <paramref name="target"/>. Nothing, if it is already there.
+	/// a condition to a target. Nothing, if it is already there.
 	/// </summary>
+	/// <param name="condition">The component's current condition.</param>
+	/// <param name="target">The condition to lift it to.</param>
 	public static int ItemCost(int unitValue, int condition, int target) =>
 		target <= condition ? 0 : (RepairTarget[LevelForCondition(target)] - condition) * unitValue / 100;
 
@@ -185,17 +188,20 @@ public sealed class ShellRepairCosts {
 
 	/// <summary>
 	/// <c>Repair_TargetForLevel</c> (<c>00413838</c>) — what one REPAIR lifts a component in
-	/// <paramref name="level"/> to: 100 for level 0, otherwise one more than the level's
+	/// a level to: 100 for level 0, otherwise one more than the level's
 	/// <see cref="RepairTarget"/>, which is the floor of the band above.
 	/// </summary>
+	/// <param name="level">The repair level.</param>
 	public static int TargetForLevel(int level) =>
 		level == 0 ? RepairTarget[0] : RepairTarget[level] + 1;
 
 	/// <summary>
-	/// <c>Repair_HercCost</c> (<c>004139f7</c>) — the whole machine to <paramref name="target"/>:
+	/// <c>Repair_HercCost</c> (<c>004139f7</c>) — the whole machine to a target condition:
 	/// every external group, every internal, and every occupied mount whose condition is not already
 	/// zero. A mount at 0 is destroyed rather than damaged and is not billed for.
 	/// </summary>
+	/// <param name="machine">The machine, or null.</param>
+	/// <param name="target">The condition to repair to.</param>
 	public int HercCost(ShellBayMachine? machine, int target = 100) {
 		if (machine == null) {
 			return 0;

@@ -43,12 +43,11 @@ public sealed partial class MechObject {
 	/// so does reversing it. The angle then integrates the mean of the rate before and after, which
 	/// is a trapezoid rule while ramping and a plain step while not, and clamps to ±the type's
 	/// limit.</para>
-	///
-	/// <para><paramref name="snapTarget"/> is only consulted when <paramref name="snapEnable"/> is
-	/// set, which normal piloting does not: the input path passes it disabled. It stops the torso
-	/// dead on the tick it crosses the target angle, and is how
-	/// <see cref="CenterTorsoTick"/> lands exactly on centre instead of oscillating about it.</para>
 	/// </summary>
+	/// <param name="axis">The twist stick axis.</param>
+	/// <param name="snapTarget">The angle the torso stops dead on the tick it crosses; only consulted when <c>snapEnable</c> is set.</param>
+	/// <param name="snapEnable">Whether the snap is on, which normal piloting does not: the input path passes it disabled. It is how
+	/// <see cref="CenterTorsoTick"/> lands exactly on centre instead of oscillating about it.</param>
 	public void TorsoTwistTick(SimWorld world, short axis, short snapTarget = -1, bool snapEnable = false) {
 		short previousAngle = TorsoTwistAngle;
 		short rate = TorsoTwistRate;
@@ -108,12 +107,10 @@ public sealed partial class MechObject {
 	/// <c>Mech_CenterTorsoTick</c> (<c>0041e8d4</c>) — the [Backspace] "Center Turret" command, run every tick until the pilot
 	/// takes the torso back. It drives both axes from the angles themselves, so the torso runs home
 	/// fast and eases off as it arrives, and enables the snap so it stops exactly on centre.
-	///
-	/// <para><paramref name="convergeRange"/> is passed straight through to the pitch tick's
-	/// convergence pass, so the guns keep toeing in on the selected target while the turret comes
-	/// home. The player's input path is the only caller that has a range to give; every AI caller
-	/// passes zero.</para>
 	/// </summary>
+	/// <param name="convergeRange">Passed straight through to the pitch tick's convergence pass, so the guns keep toeing in on the selected
+	/// target while the turret comes home. The player's input path is the only caller that has a range to give; every AI caller
+	/// passes zero.</param>
 	public void CenterTorsoTick(SimWorld world, int convergeRange = 0) {
 		TorsoTwistTick(world, (short)-ClampAxis(SimMath.Q10Multiply(CenterGain, TorsoTwistAngle)),
 			snapTarget: 0, snapEnable: true);
@@ -122,7 +119,7 @@ public sealed partial class MechObject {
 	}
 
 	/// <summary>
-	/// <c>Cockpit_TargetAnglesFromCameraBone</c> (<c>0041ef14</c>) — bring <paramref name="point"/>
+	/// <c>Cockpit_TargetAnglesFromCameraBone</c> (<c>0041ef14</c>) — bring a world point
 	/// into the pilot's own frame, drive both turret axes at it, and hand back what is left of the
 	/// error. It is the whole of "point the turret at that", and the AI's fire path reaches it exactly
 	/// as the player's automatic tracking does. The derivation is in docs/retail/simulation/torso-aim.md,
@@ -138,6 +135,7 @@ public sealed partial class MechObject {
 	/// point, so the axis stops exactly there rather than swinging through it.</item>
 	/// </list>
 	/// </summary>
+	/// <param name="point">The world point to aim at.</param>
 	/// <returns>The residual aim error: yaw and pitch, in binary angle.</returns>
 	public (short Yaw, short Pitch) TrackWorldPoint(SimWorld world, Vec3i point) {
 		var local = CameraNodeTransform.Inverted().TransformPoint(point.X, point.Y, point.Z);
@@ -166,9 +164,12 @@ public sealed partial class MechObject {
 	}
 
 	/// <summary>
-	/// The far-range dead band: below <paramref name="deadband"/> of error the axis is stilled
+	/// The far-range dead band: below a dead band of error the axis is stilled
 	/// outright, and otherwise its demand is cut to <see cref="TrackFarGain"/>.
 	/// </summary>
+	/// <param name="demand">The axis' demand.</param>
+	/// <param name="error">The axis' residual error.</param>
+	/// <param name="deadband">The error below which the axis is stilled.</param>
 	private static int DampedFarDemand(int demand, short error, short deadband) {
 		if (error >= TrackTrackingBand) {
 			return demand;
@@ -219,9 +220,12 @@ public sealed partial class MechObject {
 	}
 
 	/// <summary>
-	/// Whether the angle moved onto or across <paramref name="target"/> this tick — the original's
+	/// Whether the angle moved onto or across a target this tick — the original's
 	/// own sign test on the before and after differences, which counts landing exactly on it.
 	/// </summary>
+	/// <param name="before">The angle before the tick.</param>
+	/// <param name="after">The angle after the tick.</param>
+	/// <param name="target">The target angle.</param>
 	private static bool CrossedTarget(short before, short after, short target) {
 		int now = (short)(after - target);
 		int then = (short)(before - target);

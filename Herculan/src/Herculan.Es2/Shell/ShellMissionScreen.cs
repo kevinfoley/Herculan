@@ -40,7 +40,9 @@ public enum ShellMissionArrow {
 public sealed record ShellMissionTexts(string Briefing, string Objectives, string Intelligence) {
 	public static readonly ShellMissionTexts Empty = new(string.Empty, string.Empty, string.Empty);
 
-	/// <summary>The texts of <paramref name="save"/>, assembled from its working <c>mission.str</c>, or <see cref="Empty"/>.</summary>
+	/// <summary>The texts of a save, assembled from its working <c>mission.str</c>, or <see cref="Empty"/>.</summary>
+	/// <param name="working">The working files.</param>
+	/// <param name="save">The game, or null.</param>
 	public static ShellMissionTexts Load(ShellWorkingFiles working, PlayerSave? save) {
 		string? path = working.Text;
 		if (save == null || !File.Exists(path) || SimStrings.Parse(File.ReadAllBytes(path)) is not { GroupCount: > 0 } table) {
@@ -207,7 +209,9 @@ public sealed class ShellTextBox {
 		return starts.ConvertAll(start => LineAt(buffer, start));
 	}
 
-	/// <summary>The string a line pointer names: from <paramref name="start"/> to the next terminator.</summary>
+	/// <summary>The string a line pointer names: from a start to the next terminator.</summary>
+	/// <param name="buffer">The text buffer.</param>
+	/// <param name="start">The line pointer.</param>
 	private static string LineAt(char[] buffer, int start) {
 		int end = start;
 		while (end < buffer.Length && buffer[end] != '\0') {
@@ -233,10 +237,11 @@ public static class ShellCampaignText {
 	private const string ResourceName = "CAMPAIGN.STR";
 
 	/// <summary>
-	/// Stage <paramref name="stage"/>'s text, or null when the file is missing or has no string for the
+	/// A stage's text, or null when the file is missing or has no string for the
 	/// stage. The original leaves its result pointer null in that case and hands it to
 	/// <c>TextBox_SetText</c>; what that does with it is not read, and here the box stays empty.
 	/// </summary>
+	/// <param name="stage">The campaign stage.</param>
 	public static string? Load(GameContent content, int stage) =>
 		content.Read(Folder(content), ResourceName) is { } bytes && SimStrings.Parse(bytes) is { } table
 			? table.Text(0, stage - 1) : null;
@@ -266,7 +271,8 @@ public sealed class ShellMissionArt {
 	/// <summary><c>dba\th_moon.dba</c> frame 0, the same from stage 5.</summary>
 	public DynamixBitmap? Moon { get; }
 
-	/// <summary><c>dba\miss_arw.dba</c> frame <paramref name="index"/>, or null.</summary>
+	/// <summary><c>dba\miss_arw.dba</c> frame, or null.</summary>
+	/// <param name="index">The frame's index.</param>
 	public DynamixBitmap? Arrow(int index) => _arrows is { } frames && index >= 0 && index < frames.Length ? frames[index] : null;
 
 	public static ShellMissionArt Load(GameContent content) =>
@@ -380,7 +386,8 @@ public sealed class ShellMissionScreen {
 	/// </summary>
 	public ShellMissionButton ShownText { get; private set; } = ShellMissionButton.Briefing;
 
-	/// <summary>The text box <paramref name="text"/> fills.</summary>
+	/// <summary>The text box a button fills.</summary>
+	/// <param name="text">The button.</param>
 	public ShellTextBox Box(ShellMissionButton text) => _boxes[(int)text];
 
 	/// <summary>
@@ -522,7 +529,9 @@ public sealed class ShellMissionScreen {
 		return null;
 	}
 
-	/// <summary>Draws the view that is up into <paramref name="surface"/>, with <paramref name="lit"/> drawn pressed. The caller clears it first.</summary>
+	/// <summary>Draws the view that is up into a surface, with a widget drawn pressed. The caller clears it first.</summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="lit">The widget drawn pressed.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit = null) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
@@ -574,7 +583,9 @@ public sealed class ShellMissionScreen {
 		}
 	}
 
-	/// <summary>The arrows from <paramref name="first"/> on, each in its lit face while <paramref name="lit"/> is it.</summary>
+	/// <summary>The arrows from a first one on, each in its lit face while it is the lit widget.</summary>
+	/// <param name="lit">The lit widget.</param>
+	/// <param name="first">The first arrow.</param>
 	private void PaintArrows(ShellSurface surface, ShellWidget? lit, ShellMissionArrow first) {
 		foreach (var arrow in Enum.GetValues<ShellMissionArrow>()) {
 			if (arrow < first) {

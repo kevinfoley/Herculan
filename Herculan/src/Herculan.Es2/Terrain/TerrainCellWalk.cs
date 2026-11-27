@@ -18,11 +18,15 @@ namespace Herculan.Es2.Terrain;
 /// </summary>
 public static class TerrainCellWalk {
 	/// <summary>
-	/// Calls <paramref name="visit"/> once for each cell the walk of <paramref name="polygon"/> (the
-	/// region in cell coordinates, <c>grid+0xc8</c>) about cell (<paramref name="centreX"/>,
-	/// <paramref name="centreY"/>) visits — by column when <paramref name="byColumn"/>, as the view's
+	/// Calls a visitor once for each cell the walk of a polygon (the
+	/// region in cell coordinates, <c>grid+0xc8</c>) about a centre cell visits — by column or by row, as the view's
 	/// heading chooses. A cell two quadrants' spans both reach is visited twice.
 	/// </summary>
+	/// <param name="polygon">The region in cell coordinates, <c>grid+0xc8</c>.</param>
+	/// <param name="centreX">The centre cell's column.</param>
+	/// <param name="centreY">The centre cell's row.</param>
+	/// <param name="byColumn">Whether to walk by column, as the view's heading chooses.</param>
+	/// <param name="visit">Called with each cell's column and row.</param>
 	public static void Visit(IReadOnlyList<(int X, int Y)> polygon, int centreX, int centreY,
 			bool byColumn, Action<int, int> visit) {
 		var points = new List<(int X, int Y)>(polygon.Count);
@@ -88,12 +92,15 @@ public static class TerrainCellWalk {
 
 	/// <summary>
 	/// <c>Poly_ClipToHalfPlane</c> (<c>00472ac0</c>): one Sutherland–Hodgman pass keeping the part of
-	/// the polygon with X (<paramref name="alongX"/>) or Y at or above <paramref name="value"/>
-	/// (<paramref name="keepHigh"/>) or at or below it, points on the line kept. What each edge emits is
+	/// the polygon with X or Y at or above a value or at or below it, points on the line kept. What each edge emits is
 	/// the function's 19-byte selector table, indexed by the previous and current points' sides, whose
 	/// byte picks one of five cases through its jump table (docs/retail/rendering/polygon-fill.md,
 	/// "Walking a polygon's cells").
 	/// </summary>
+	/// <param name="keepHigh">True to keep the part at or above the value, false for the part at or below it.</param>
+	/// <param name="alongX">True to clip on X, false on Y.</param>
+	/// <param name="value">The value of the clip line.</param>
+	/// <param name="polygon">The polygon.</param>
 	private static List<(int X, int Y)> ClipToHalfPlane(bool keepHigh, bool alongX, int value,
 			List<(int X, int Y)> polygon) {
 		var output = new List<(int X, int Y)>(polygon.Count + 2);

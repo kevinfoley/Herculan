@@ -150,7 +150,8 @@ internal sealed class HddMapPainter {
 		return hud.Colors?.PaletteIndex(id) is { } index ? hud.PaletteEntry(index - 1) : null;
 	}
 
-	/// <summary>The marker belonging to squad slot <paramref name="slot"/>, or null.</summary>
+	/// <summary>The marker belonging to a squad slot, or null.</summary>
+	/// <param name="slot">The squad slot.</param>
 	private static HddMapMarker? PilotMarker(IReadOnlyList<HddMapMarker> markers, int slot) {
 		foreach (var marker in markers) {
 			if (marker.PilotSlot == slot) {

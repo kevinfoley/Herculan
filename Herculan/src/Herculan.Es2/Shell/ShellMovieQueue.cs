@@ -119,7 +119,8 @@ public sealed class ShellMovieQueue {
 	/// <summary>The movie file an id names, or null for an id past the table.</summary>
 	public static string? FileName(int id) => id >= 0 && id < FileNames.Length ? FileNames[id] : null;
 
-	/// <summary>The disc folder <paramref name="language"/>'s intro is read from.</summary>
+	/// <summary>The disc folder a language's intro is read from.</summary>
+	/// <param name="language">The shell's language.</param>
 	public static string IntroFolder(GameLanguage language) => language switch {
 		GameLanguage.French => "AVF",
 		GameLanguage.German => "AVG",

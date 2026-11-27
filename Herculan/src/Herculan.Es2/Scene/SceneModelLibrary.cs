@@ -120,15 +120,17 @@ public sealed class SceneModelLibrary {
 	private const string GunLayoutFolder = "gl";
 
 	/// <summary>
-	/// <paramref name="theater"/> supplies the palette every bank in this mission decodes against —
-	/// the WORLD&lt;n&gt; palettes are per-theater, loaded once by <c>maybe_World_LoadTheater</c> and
+	/// The library of one mission's models, decoded against its theater's live palette.
+	/// ///
+	/// <para>The WORLD&lt;n&gt; palettes are per-theater, loaded once by <c>maybe_World_LoadTheater</c> and
 	/// active for everything the theater draws, so a mech's colours depend on where it is standing.
-	///
-	/// <para>It is the live palette, not the bare file: <paramref name="cockpitSchemeIndex"/>, the
-	/// player's herc's cockpit scheme, goes in over slots 42-65 just as it does for the cockpit — see
-	/// <see cref="CockpitPalette"/>. The theater files park those slots at pure green, and
+	/// It is the live palette, not the bare file: the player's herc's cockpit scheme goes in over slots 42-65 just as it
+	/// does for the cockpit — see <see cref="CockpitPalette"/>. The theater files park those slots at pure green, and
 	/// <c>FIRE1.DBA</c>'s rubble and some <c>WORLD&lt;n&gt;.RMP</c> shades land in them.</para>
 	/// </summary>
+	/// <param name="content">The game's content.</param>
+	/// <param name="theater">The theater, which supplies the palette every bank in this mission decodes against.</param>
+	/// <param name="cockpitSchemeIndex">The index of the player's herc's cockpit scheme.</param>
 	public SceneModelLibrary(GameContent content, TheaterDescriptor theater, int cockpitSchemeIndex) {
 		_content = content;
 
@@ -414,9 +416,7 @@ public sealed class SceneModelLibrary {
 	/// <summary>
 	/// The shape a travelling shot is drawn as — a root of <c>dts\BULLETS.DTS</c>, textured from
 	/// <c>dba\BULLETS.DBA</c>. Both come from the bullet module's own init (<c>Bullet_LoadResources</c>, <c>0040ade0</c>),
-	/// which loads the shape file into <c>DAT_004a9784</c> and binds that one bank to every shape in
-	/// it; <paramref name="modelId"/> is the <c>BULLETS.DAT</c> record's first field, which
-	/// <c>Bullet_Construct</c> uses as the index into that array.
+	/// which loads the shape file into <c>DAT_004a9784</c> and binds that one bank to every shape in it.
 	///
 	/// <para>Retail ships nine roots and the twelve records between them name all nine, but two of
 	/// them — roots 2 and 3, which are the <b>three EMP cannons' rounds</b> — are not geometry at
@@ -431,6 +431,7 @@ public sealed class SceneModelLibrary {
 	/// other seven are <c>TSSolidPoly</c> geometry coloured through the theater ramp and never sample
 	/// it at all.</para>
 	/// </summary>
+	/// <param name="modelId">The <c>BULLETS.DAT</c> record's first field, which <c>Bullet_Construct</c> uses as the index into that array.</param>
 	public SceneModel? Bullet(int modelId) =>
 		Build(BulletLibraryName, modelId, BulletBankName, transparentBank: true);
 
@@ -449,9 +450,8 @@ public sealed class SceneModelLibrary {
 	/// <para>It is a list because the shape's <see cref="TSCellAnimPart"/>s hold geometry, not
 	/// billboards: the flipbook is the exhaust flame, so the shape is built once per cell for the
 	/// flame to move. See <see cref="DtsMeshBuilder.CellFrameCount"/>.</para>
-	///
-	/// <para><paramref name="modelId"/> is the <c>ROCKETS.DAT</c> record's first field.</para>
 	/// </summary>
+	/// <param name="modelId">The <c>ROCKETS.DAT</c> record's first field.</param>
 	/// <returns>The cells in order, or empty when the shape file or the index is missing.</returns>
 	public IReadOnlyList<SceneModel> Rocket(int modelId) {
 		if (Root(RocketLibraryName, modelId) is not { } root) {
@@ -480,11 +480,8 @@ public sealed class SceneModelLibrary {
 	/// the rest are the flash, as real geometry rather than billboards — see
 	/// <see cref="Sim.WeaponMount.FlashCell"/> and
 	/// docs/retail/simulation/weapon-mounts.md#the-muzzle-flash.</para>
-	///
-	/// <para><paramref name="shapeIndex"/> is one of the four
-	/// <see cref="Weapons.WeaponMountTemplate.ModelShapeIndex"/> entries, chosen by how the hardpoint
-	/// hangs off the chassis.</para>
 	/// </summary>
+	/// <param name="shapeIndex">One of the four <see cref="Weapons.WeaponMountTemplate.ModelShapeIndex"/> entries, chosen by how the hardpoint hangs off the chassis.</param>
 	/// <returns>The cells in order, or empty when the shape file or the index is missing.</returns>
 	public IReadOnlyList<SceneModel> MechWeapon(int shapeIndex) {
 		if (Root(MechWeaponLibraryName, shapeIndex) is not { } root) {
@@ -879,10 +876,11 @@ public sealed class SceneModelLibrary {
 	}
 
 	/// <summary>
-	/// <paramref name="transparentIndex0"/> decodes palette index 0 to alpha 0 rather than to an
-	/// opaque colour. An explosion frame is a round puff on a field of index 0 and the original's
-	/// blit skips that index rather than writing it (docs/retail/rendering/dts-billboards.md, "Brush mode 5
-	/// skips palette index 0"), so every sprite bank asks for it.
+	/// Loads a bank as a texture atlas, decoding palette index 0 to an opaque colour or, for a transparent bank, to alpha 0.
+	/// ///
+	/// <para>An explosion frame is a round puff on a field of index 0 and the original's blit skips that index rather
+	/// than writing it (docs/retail/rendering/dts-billboards.md, "Brush mode 5 skips palette index 0"), so every
+	/// sprite bank asks for a transparent one.</para>
 	///
 	/// <para>The <b>structure</b> banks are cutouts too: <c>BASETEX</c> frames 11, 36, 38, 39, 52, 53,
 	/// 60, 61, 63, 64 and 65 are 20-73% index 0 each, and they are the lattice girders on a
@@ -898,6 +896,8 @@ public sealed class SceneModelLibrary {
 	/// paint rather than cutouts, and punching single-pixel holes in a HERC to generalise a rule this
 	/// session did not fully trace would be a worse trade than leaving them opaque.</para>
 	/// </summary>
+	/// <param name="bankName">The bank's name.</param>
+	/// <param name="transparentIndex0">Whether palette index 0 decodes to alpha 0 rather than to an opaque colour.</param>
 	private TextureAtlas? LoadAtlas(string bankName, bool transparentIndex0 = false) {
 		// The two decodings of one bank are different images, so they cache apart. No retail bank is
 		// asked for both ways; the key keeps that from being an assumption.

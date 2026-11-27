@@ -50,13 +50,16 @@ public sealed partial class HeightGrid {
 	public byte LoadedHeightAt(int cellX, int cellY) => (_unlevelledHeights ?? _rawHeights)[CellIndex(cellX, cellY)];
 
 	/// <summary>
-	/// Writes the raw heights the zone loaded (<see cref="LoadedHeightAt"/>) over the cells from (<paramref name="left"/>,
-	/// <paramref name="bottom"/>): <paramref name="heights"/> holds rows of <paramref name="width"/> cells, the lowest cell
+	/// Writes the raw heights the zone loaded (<see cref="LoadedHeightAt"/>) over a rectangle of cells, the lowest cell
 	/// row first. The heights in use, and the surface, change only once <see cref="RestoreUnlevelledHeights"/> puts these in
 	/// place and <see cref="RebuildSurface"/> or <see cref="FlattenStructureFootprints"/> builds it.
 	/// <see cref="MaxWorldHeight"/> follows the highest loaded height, as the loader sets it. Not retail: the mission
 	/// editor's sculpting writes the heightmap this way.
 	/// </summary>
+	/// <param name="left">The rectangle's first column.</param>
+	/// <param name="bottom">The rectangle's first row.</param>
+	/// <param name="width">The rectangle's width, in cells.</param>
+	/// <param name="heights">The heights, in rows of <c>width</c> cells.</param>
 	public void WriteLoadedHeights(int left, int bottom, int width, ReadOnlySpan<byte> heights) {
 		int rows = width > 0 ? heights.Length / width : 0;
 		if (left < 0 || bottom < 0 || width <= 0 || rows * width != heights.Length
@@ -79,12 +82,15 @@ public sealed partial class HeightGrid {
 
 	/// <summary>
 	/// <c>Terrain_MarkStructureFootprint</c> (<c>00470dc8</c>) — registers one structure's
-	/// footprint. <paramref name="radius"/> is <see cref="Sim.SimObject.ShapeRadius"/>.
+	/// footprint.
 	///
 	/// <para>Clamped to the grid, where the original bounds-checks nothing beyond refusing to step to
 	/// a negative index: a structure near a zone edge would write past the array there, and an
 	/// out-of-bounds write is a crash rather than behaviour worth reproducing.</para>
 	/// </summary>
+	/// <param name="worldX">The structure's world X.</param>
+	/// <param name="worldY">The structure's world Y.</param>
+	/// <param name="radius">The structure's <see cref="Sim.SimObject.ShapeRadius"/>.</param>
 	public void MarkStructureFootprint(int worldX, int worldY, int radius) {
 		int cellX = worldX >> CellSizeShift;
 		int cellY = worldY >> CellSizeShift;
@@ -182,10 +188,9 @@ public sealed partial class HeightGrid {
 
 	/// <summary>
 	/// <c>Terrain_WriteFootprintHeight</c> (<c>0047101c</c>) — writes the footprint's average
-	/// height back over the same region. <paramref name="force"/> is what gains the region one sample
-	/// to the east and north, and so turns it into a flat <i>quad</i> rather than a flat set of corner
-	/// samples.
+	/// height back over the same region.
 	/// </summary>
+	/// <param name="force">Gains the region one sample to the east and north, and so turns it into a flat <i>quad</i> rather than a flat set of corner samples.</param>
 	private void WriteFootprintHeight(int cellX, int cellY, byte height, bool force) {
 		if (cellX < 0 || cellX >= 1 << WidthShift || cellY < 0 || cellY >= 1 << HeightShift) {
 			return;

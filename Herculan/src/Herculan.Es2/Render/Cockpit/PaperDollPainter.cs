@@ -30,10 +30,11 @@ internal static class PaperDollPainter {
 	/// weapon stays green. The doll under them is blue by then and takes no part.</item>
 	/// </list>
 	///
-	/// <para><paramref name="iconsOnTop"/> is the <see cref="Settings.Es2TweakSettingDefinitions.HddWeaponIconsOnTop"/>
-	/// tweak, a HERCULAN departure: the caller draws the region tints first, and the structural and internal
+	/// <para>The <see cref="Settings.Es2TweakSettingDefinitions.HddWeaponIconsOnTop"/> tweak, a HERCULAN departure, puts
+	/// the icons on top: the caller draws the region tints first, and the structural and internal
 	/// recolour then turns only the icons' own pixels blue, leaving the doll under an icon's rect as it is.</para>
 	/// </summary>
+	/// <param name="iconsOnTop">Whether the icons go on top of the region tints, as the tweak has them.</param>
 	internal static void AddHddWeaponIcons(CockpitArt hud, HudSpriteSheet sprites, HddDamageView view,
 			string dollBank, PaperDollGraphic.ViewEntry doll, int dollView, PaperDollGraphic.HardpointEntry[]? entries,
 			IReadOnlyList<DamageHardpoint?> hardpoints, IReadOnlyList<short>? readings, bool iconsOnTop, float dollLeft,
@@ -126,8 +127,8 @@ internal static class PaperDollPainter {
 	/// <para>Both colours are palette indices: the region's own is the <c>COLORS.DAT</c> id the file
 	/// carries, resolved at load in the original (<c>PaperDoll_Load</c>) and here at draw time, and
 	/// the tint is <see cref="PaperDollDamage.TintColorId"/>'s. When the two agree
-	/// <c>PaperDoll_RecolorRect</c> skips the walk, and so does this unless <paramref name="repaintIntact"/>
-	/// is set: <c>PaperDoll_RecolorRectFromArt</c> walks anyway, and on the Heads-Down Display, which runs
+	/// <c>PaperDoll_RecolorRect</c> skips the walk, and so does this unless asked to repaint an intact region:
+	/// <c>PaperDoll_RecolorRectFromArt</c> walks anyway, and on the Heads-Down Display, which runs
 	/// it after the weapon icons, that is what puts an undamaged region's pixels back over them —
 	/// docs/retail/simulation/heads-down-display.md#damage-detail--page-1.</para>
 	///
@@ -136,6 +137,7 @@ internal static class PaperDollPainter {
 	/// (docs/retail/formats/pdg-paper-doll.md#views). Matching pixels go out as merged horizontal runs
 	/// rather than one quad each.</para>
 	/// </summary>
+	/// <param name="repaintIntact">Whether to walk the region even when its colour and the tint agree.</param>
 	internal static void AddPaperDollTint(CockpitArt hud, HudSpriteSheet sprites, string bank, int frame,
 			PaperDollGraphic.ViewRegion region, int? reading, bool repaintIntact, float dollLeft, float dollTop,
 			Action<float, float, float, float, Vector3> fillRect) {

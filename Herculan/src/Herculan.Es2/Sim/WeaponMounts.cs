@@ -150,11 +150,12 @@ public sealed class WeaponMounts {
 	}
 
 	/// <summary>
-	/// Whether cockpit weapon row <paramref name="mountIndex"/> draws as armed. The armed mount does,
+	/// Whether a cockpit weapon row draws as armed. The armed mount does,
 	/// and so does the other half of a linked pair when its partner is the armed one — which is what
 	/// makes linking visible: both rows light together. <c>WeaponMounts_PerFrameUpdate</c> computes exactly this and
 	/// pushes it to each row's gauge.
 	/// </summary>
+	/// <param name="mountIndex">The mount's index.</param>
 	public bool IsArmedRow(int mountIndex) {
 		if (mountIndex == Selected) {
 			return true;
@@ -187,12 +188,14 @@ public sealed class WeaponMounts {
 		&& PartnerOf(armed) is { } partner
 		&& partner.WeaponId == armed.WeaponId;
 
-	/// <summary>Whether <paramref name="mountIndex"/> is in the currently selected fire group.</summary>
+	/// <summary>Whether a mount is in the currently selected fire group.</summary>
+	/// <param name="mountIndex">The mount's index.</param>
 	public bool InCurrentGroup(int mountIndex) =>
 		Group >= 0 && Group < _groups.Length && mountIndex >= 0 && mountIndex < _groups[Group].Length
 			&& _groups[Group][mountIndex];
 
-	/// <summary>The mount that owns cockpit weapon row <paramref name="gaugeSlot"/>, or null when none does.</summary>
+	/// <summary>The mount that owns a cockpit weapon row, or null when none does.</summary>
+	/// <param name="gaugeSlot">The row's gauge slot.</param>
 	public WeaponMount? BySlot(int gaugeSlot) => Mounts.FirstOrDefault(m => m.GaugeSlot == gaugeSlot);
 
 	/// <summary>
@@ -273,7 +276,7 @@ public sealed class WeaponMounts {
 	}
 
 	/// <summary>
-	/// A press on cockpit weapon row <paramref name="gaugeSlot"/>, dispatched by the row's gauge class
+	/// A press on a cockpit weapon row, dispatched by the row's gauge class
 	/// as the original does:
 	///
 	/// <list type="bullet">
@@ -308,13 +311,14 @@ public sealed class WeaponMounts {
 	}
 
 	/// <summary>
-	/// Arm the mount that owns cockpit weapon row <paramref name="gaugeSlot"/> — what a left click on
+	/// Arm the mount that owns a cockpit weapon row — what a left click on
 	/// that row and the matching number key both do. The original reaches this by two different
 	/// routes that meet in <c>WeaponMounts_SelectByGauge</c> (<c>004106ac</c>): a click goes through the row gadget
 	/// (<c>EnergyWeaponGauge_OnChildClick</c> (<c>00440ef0</c>)/<c>AmmoWeaponGauge_OnChildClick</c> (<c>004414b4</c>) → <c>CockpitView_ArmWeaponByGauge</c> (<c>00432a50</c>)), and a number key indexes the
 	/// cockpit's own ten-gauge array at <c>CockpitViewInstance+0x70</c> and presses that gauge's
 	/// select gadget.
 	/// </summary>
+	/// <param name="gaugeSlot">The row pressed, zero-based.</param>
 	/// <returns>Whether anything was armed.</returns>
 	public bool SelectBySlot(int gaugeSlot) =>
 		BySlot(gaugeSlot) is { } mount && Select(mount.MountIndex);
@@ -404,14 +408,15 @@ public sealed class WeaponMounts {
 	}
 
 	/// <summary>
-	/// <c>WeaponMounts_ToggleChainMember</c> (<c>004110ac</c>) with <c>WeaponMounts_XorChainBit</c> (<c>00410cd0</c>): add or remove the mount on cockpit weapon row
-	/// <paramref name="gaugeSlot"/> from the <i>current</i> fire chain — a right click on the row, or
+	/// <c>WeaponMounts_ToggleChainMember</c> (<c>004110ac</c>) with <c>WeaponMounts_XorChainBit</c> (<c>00410cd0</c>): add or remove the mount on a cockpit weapon row
+	/// from the <i>current</i> fire chain — a right click on the row, or
 	/// <c>[Alt]</c> and its number key. It toggles membership rather than setting it, and it does not
 	/// arm anything.
 	///
 	/// <para>A hardpoint whose weapon has no range is skipped outright, so the pods on the panel
 	/// cannot be chained — see <see cref="WeaponMount.Range"/>.</para>
 	/// </summary>
+	/// <param name="gaugeSlot">The row's gauge slot, zero-based.</param>
 	/// <returns>Whether a mount was found to toggle.</returns>
 	public bool ToggleChain(int gaugeSlot) {
 		var mount = Mounts.FirstOrDefault(m => m.GaugeSlot == gaugeSlot && m.Range > 0);
@@ -485,7 +490,7 @@ public sealed class WeaponMounts {
 	/// <para>The range is stored before the advance, so a weapon that cannot reach the selected target
 	/// is stepped past and its row lights red; it still fires if armed, since <see cref="FireTick"/>
 	/// does not consult this. While an electro-optical missile is being flown
-	/// (<paramref name="missileFlown"/>) the advance does not run (<c>WeaponMounts_ChainReady</c>,
+	/// the advance does not run (<c>WeaponMounts_ChainReady</c>,
 	/// <c>00410a04</c>); once the flight is over, <see cref="ElectroOpticalFired"/> steps the selection
 	/// on by one first. See docs/retail/simulation/weapon-mounts.md#arming-chaining-and-linking.</para>
 	/// </summary>
@@ -654,11 +659,13 @@ public sealed class WeaponMounts {
 	}
 
 	/// <summary>
-	/// A drag released on weapon row <paramref name="gaugeSlot"/>'s charge bar, under
+	/// A drag released on a weapon row's charge bar, under
 	/// <see cref="Settings.Es2TweakSettingDefinitions.ChargeBarPowerLevel"/> — see
 	/// <see cref="WeaponMount.SetPowerFromChargeBar"/>. Unlike the keys, which reach only the armed
 	/// mount, the bar sets the power level of whichever row it belongs to.
 	/// </summary>
+	/// <param name="gaugeSlot">The row's gauge slot.</param>
+	/// <param name="position">The slider's position.</param>
 	/// <returns>Whether a mount took it.</returns>
 	public bool SetPowerFromChargeBar(int gaugeSlot, int position) =>
 		BySlot(gaugeSlot)?.SetPowerFromChargeBar(position) ?? false;
@@ -698,7 +705,7 @@ public sealed class WeaponMounts {
 	/// <c>WeaponMounts_ArbitrateEnergy</c> (<c>004107e4</c>), called from <c>Mech_PerTickSystemsUpdate</c> between the reactor's
 	/// contribution and the shields'.
 	///
-	/// <para>The armed mount (<paramref name="selected"/>) is served first, then the rest one at a
+	/// <para>The armed mount is served first, then the rest one at a
 	/// time by <see cref="WeaponMount.EnergyPriority"/>; once any mount reports itself mid-charge,
 	/// every mount served after it this tick bleeds its capacitor back into the pool instead. A served
 	/// mount whose <see cref="WeaponMount.AutoFireDue"/> is set fires its burst follow-up here, with no

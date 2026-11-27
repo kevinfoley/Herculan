@@ -472,9 +472,10 @@ public sealed class Rocket {
 	public short LockComponent { get; private set; } = -1;
 
 	/// <summary>
-	/// <c>Rocket_Fire</c>'s lock: attaches <paramref name="target"/> and, when there is one, asks it
+	/// <c>Rocket_Fire</c>'s lock: attaches a target and, when there is one, asks it
 	/// (vtable <c>+0x54</c>) for the component nearest the missile's launch attitude from the muzzle.
 	/// </summary>
+	/// <param name="target">The target, or null.</param>
 	internal void Lock(SimObject? target) {
 		Target = target;
 		if (target != null) {

@@ -47,10 +47,13 @@ public sealed class ShellArmingLayouts {
 		chassisType >= 0 && chassisType < _layouts.Length ? _layouts[chassisType] : null;
 
 	/// <summary>
-	/// Whether the chassis's layout has a record for <paramref name="weaponId"/> in <paramref name="mount"/>'s
+	/// Whether the chassis's layout has a record for a weapon in a mount's
 	/// socket, whatever its frame — <c>Arming_RowLive</c> (<c>004149fb</c>)'s test of
 	/// <c>RepairLayout_FindWeaponPart</c>. Every retail layout has a <c>None</c> (0) record for every socket.
 	/// </summary>
+	/// <param name="chassisType">The chassis type.</param>
+	/// <param name="weaponId">The weapon's id.</param>
+	/// <param name="mount">The mount whose socket is tested.</param>
 	public bool HasSocket(int chassisType, int weaponId, int mount) =>
 		Layout(chassisType) is { } layout && FindRecord(layout, weaponId, mount) != null;
 

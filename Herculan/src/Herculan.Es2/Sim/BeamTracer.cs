@@ -102,10 +102,11 @@ public sealed class BeamTracer {
 	public int SpanCount { get; }
 
 	/// <summary>
-	/// Span <paramref name="index"/>'s two ends: from <see cref="Start"/> plus that many
+	/// A span's two ends: from <see cref="Start"/> plus its index in
 	/// <see cref="SpanStep"/>s to one more, and the last to <see cref="End"/>. The start is the
 	/// position the span's tracer is filed by.
 	/// </summary>
+	/// <param name="index">The span's index.</param>
 	public (Vec3i From, Vec3i To) Span(int index) {
 		var from = new Vec3i(Start.X + index * SpanStep.X, Start.Y + index * SpanStep.Y,
 			Start.Z + index * SpanStep.Z);
@@ -155,11 +156,12 @@ public sealed class BeamTracer {
 	public int QuadCount => _points.Length == 0 ? 0 : _points.Length / 2 - 1;
 
 	/// <summary>
-	/// The four points of quad <paramref name="index"/>, in the order the original's vertex-index
+	/// The four points of a quad, in the order the original's vertex-index
 	/// table puts them — low, high, high, low, so the quad is wound as a ribbon rather than crossed.
 	/// The table and how it is built are in docs/retail/simulation/beam-visuals.md, "The paint uses the
 	/// polygon renderers' project, clip and fill chain".
 	/// </summary>
+	/// <param name="index">The quad's index.</param>
 	public (Vec3i A, Vec3i B, Vec3i C, Vec3i D) Quad(int index) {
 		int node = index * 2;
 		return (_points[node + 1], _points[node], _points[node + 2], _points[node + 3]);

@@ -52,10 +52,12 @@ public sealed class TerrainPaintRankBuffer : IDisposable {
 	public uint RankTexture => _rankTexture;
 
 	/// <summary>
-	/// Draws <paramref name="terrain"/>'s ranks under <paramref name="order"/> into the target, over
+	/// Draws a terrain item's ranks under a paint order into the target, over
 	/// the viewport the scene pass is about to use and under whatever scissor the caller has set.
 	/// Leaves the caller's framebuffer bound again, and the viewport as given.
 	/// </summary>
+	/// <param name="terrain">The terrain item.</param>
+	/// <param name="order">The walk's paint order.</param>
 	public void Draw(SceneItem terrain, HeightGrid grid, TerrainPaintOrder order,
 			Matrix4x4 view, Matrix4x4 projection,
 			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
@@ -122,10 +124,12 @@ public sealed class TerrainPaintRankBuffer : IDisposable {
 	}
 
 	/// <summary>
-	/// Grows the target to cover every pixel of a viewport reaching <paramref name="width"/> across
-	/// and <paramref name="height"/> up from the framebuffer's origin. Never shrinks: a cockpit pass
+	/// Grows the target to cover every pixel of a viewport reaching a width across and a height up from the
+	/// framebuffer's origin. Never shrinks: a cockpit pass
 	/// and a full-window pass in the same frame then share one allocation.
 	/// </summary>
+	/// <param name="width">How far across the viewport reaches, in pixels.</param>
+	/// <param name="height">How far up the viewport reaches, in pixels.</param>
 	private void EnsureTarget(int width, int height) {
 		if (_framebuffer != 0 && width <= _width && height <= _height) {
 			return;

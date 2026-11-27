@@ -81,7 +81,8 @@ public static class ShellLayout {
 	/// </summary>
 	public const int FirstTabCaption = 0x13;
 
-	/// <summary>Tab <paramref name="index"/>'s rect. Tab 0 is <c>{0x19, 4, 0x63, 0x1b}</c>.</summary>
+	/// <summary>A tab's rect. Tab 0 is <c>{0x19, 4, 0x63, 0x1b}</c>.</summary>
+	/// <param name="index">The tab's index.</param>
 	public static ShellRect Tab(int index) {
 		int x0 = FirstTabX + index * TabPitch;
 		return new ShellRect(x0, TabTop, x0 + TabWidth - 1, TabBottom);

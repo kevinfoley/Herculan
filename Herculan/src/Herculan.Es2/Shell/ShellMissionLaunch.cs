@@ -152,13 +152,18 @@ public static class ShellMissionLaunch {
 	}
 
 	/// <summary>
-	/// Writes the handoff the simulator loads into <paramref name="directory"/>: the working
+	/// Writes the handoff the simulator loads into a directory: the working
 	/// <c>script.dat</c> and <c>mission.str</c> (<see cref="ShellWorkingFiles"/>), which a slot's load or the
 	/// career's mission load put in <c>data\</c>; <c>mission.var</c>, the 2000-byte campaign flag array
 	/// <c>MissionVar_Write</c> (<c>0040e9cb</c>) writes; and <c>player.mec</c> from the hangar as the
 	/// screens have left it. Returns the path of the <c>script.dat</c> written, or null with the reason when
 	/// there is no mission file to copy or the handoff cannot be written.
 	/// </summary>
+	/// <param name="directory">The folder the handoff is written into.</param>
+	/// <param name="working">The working files to copy.</param>
+	/// <param name="save">The game.</param>
+	/// <param name="hangar">The hangar <c>player.mec</c> is written from.</param>
+	/// <param name="failure">The reason the handoff cannot be written, else null.</param>
 	public static string? WriteHandoff(string directory, ShellWorkingFiles working, PlayerSave save, ShellHangar hangar,
 			out string? failure) {
 		if (working.Script is not { } script || !File.Exists(script)) {
@@ -186,8 +191,10 @@ public static class ShellMissionLaunch {
 
 	/// <summary>
 	/// <c>MissionVar_Write</c> (<c>0040e9cb</c>): the game's 2000-byte campaign flag array written as
-	/// <c>mission.var</c> in <paramref name="directory"/>. Nothing for a game that carries no campaign state.
+	/// <c>mission.var</c> in a directory. Nothing for a game that carries no campaign state.
 	/// </summary>
+	/// <param name="directory">The folder <c>mission.var</c> is written into.</param>
+	/// <param name="save">The game.</param>
 	public static void WriteCampaignFlags(string directory, PlayerSave save) {
 		if (!save.HasCampaignState) {
 			return;

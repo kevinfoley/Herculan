@@ -104,15 +104,19 @@ public static class CollisionModel {
 
 	/// <summary>
 	/// <c>Collision_ReplaceClusters</c> (<c>0040cec0</c>) with the count of one
-	/// <c>Mech_ConfigureLoadout</c> passes it: the first cluster, node by node, whose component is
-	/// <paramref name="componentIndex"/> takes copies of <paramref name="spheres"/>, each centre moved by
-	/// <paramref name="offset"/> in 16 bits and its radius kept (<c>Collision_CopyClusterSpheres</c>,
+	/// <c>Mech_ConfigureLoadout</c> passes it: the first cluster, node by node, whose component is the given one
+	/// takes copies of the given spheres, each centre moved by an offset in 16 bits and its radius kept
+	/// (<c>Collision_CopyClusterSpheres</c>,
 	/// <c>0040c834</c>), and its bound is derived again. A model with no such cluster comes back as it
 	/// went in. See docs/retail/formats/collision-spheres.md#a-fitted-weapon-brings-its-own-spheres.
 	///
 	/// <para>The model passed in is the type's, shared by every object of it, so the node and cluster
 	/// arrays the replacement touches are copied rather than written.</para>
 	/// </summary>
+	/// <param name="model">The type's collision model, shared by every object of it.</param>
+	/// <param name="componentIndex">The component whose cluster is replaced.</param>
+	/// <param name="spheres">The spheres copied in.</param>
+	/// <param name="offset">The offset each centre is moved by.</param>
 	public static ColliderNode[] ReplaceCluster(ColliderNode[] model, short componentIndex,
 			ColliderSphere[] spheres, Vec3i offset) {
 		for (int n = 0; n < model.Length; n++) {
@@ -154,7 +158,7 @@ public static class CollisionModel {
 	}
 
 	/// <summary>
-	/// <c>Collision_RaySphereTest</c> (<c>0040c428</c>) — one sphere against the ray, clipping <paramref name="distance"/> to the
+	/// <c>Collision_RaySphereTest</c> (<c>0040c428</c>) — one sphere against the ray, clipping the distance to the
 	/// entry point on a hit.
 	///
 	/// <para>The entry point is the original's linearisation, <c>alongAxis - (radius - offAxis)</c>,
@@ -163,6 +167,7 @@ public static class CollisionModel {
 	/// written as is kept because the doubled radius can overflow a signed short, and the original
 	/// relies on the wrap.</para>
 	/// </summary>
+	/// <param name="distance">The ray's distance, clipped to the entry point on a hit.</param>
 	private static bool SphereStruck(Vec3i center, short radius, int clearance, ref int distance) {
 		if ((uint)center.Y >= (uint)distance) {
 			return false;

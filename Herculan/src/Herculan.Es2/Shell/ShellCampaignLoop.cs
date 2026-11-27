@@ -184,11 +184,12 @@ public sealed class ShellCampaignLoop {
 
 	/// <summary>
 	/// Career_LoadCurrentMission (0044d4cc) in training, or MissionNameDialog_OnLoad (0044d5bd) with the typed
-	/// <paramref name="missionPath"/>: the mission <see cref="StartTraining"/>'s career is on loaded and the handoff
+	/// path: the mission <see cref="StartTraining"/>'s career is on loaded and the handoff
 	/// written, for the shell to close on exit code 2. The career stays the game in progress, which the loop exit's
 	/// autosave writes as slot 11 with the handoff's three working files. Returns the launch, or null when it could not
 	/// be written.
 	/// </summary>
+	/// <param name="missionPath">The mission path typed in the dialog, or null for the career's current mission.</param>
 	public ShellLaunch? LaunchTraining(string label, string? missionPath = null) {
 		if (_game.LoadedGame is not { } game) {
 			return null;
@@ -218,11 +219,12 @@ public sealed class ShellCampaignLoop {
 
 	/// <summary>
 	/// Career_LoadCurrentMission (0044d4cc) in a campaign, or MissionNameDialog_OnLoad (0044d5bd) with the typed
-	/// <paramref name="missionPath"/>: the mission loaded for the game in progress — a new career or one a debrief goes
+	/// path: the mission loaded for the game in progress — a new career or one a debrief goes
 	/// on with — and adopted again. Its campaign end rebuilds the map and the texts (here on the adopt) and stages slot
 	/// 10's summary, which no save row shows; the screen then puts the frame up with the strip regated and calls
 	/// Mission_ShowView(MissionScreenView, 1). Returns whether it loaded.
 	/// </summary>
+	/// <param name="missionPath">The mission path typed in the dialog, or null for the career's current mission.</param>
 	public bool LoadCareerMission(string? missionPath = null) {
 		if (_game.LoadedGame is not { } game) {
 			return false;

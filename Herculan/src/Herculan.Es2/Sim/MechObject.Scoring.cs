@@ -10,19 +10,19 @@ namespace Herculan.Es2.Sim;
 public sealed partial class MechObject {
 	/// <summary>
 	/// <c>Mech_CreditNeutralisedTarget</c> (<c>00415710</c>), the mech's vtable <c>+0x60</c> — told to the machine that just put
-	/// <paramref name="victim"/> out of the fight, from both of
+	/// the victim out of the fight, from both of
 	/// <see cref="ComponentDamageWrite"/>'s branches, from <see cref="BaseObject.ApplyDamage"/> and from
 	/// <see cref="FlyerObject.ApplyComponentDamage"/>. The base class' slot
 	/// (<c>SimObject_CreditNeutralisedTargetNoOp</c> (<c>00411b2c</c>)) is an empty stub, so only a HERC credits anything.
 	/// Retail behavior: docs/retail/simulation/component-damage.md#what-the-attacker-is-told--mech_creditneutralisedtarget-00415710.
 	///
-	/// <para><paramref name="wasImmobilised"/> is the victim's reading from <i>before</i> this
-	/// change, and it is what stops a machine being counted twice: a HERC whose legs went first was
+	/// <para>The victim's immobilised state from <i>before</i> this
+	/// change is what stops a machine being counted twice: a HERC whose legs went first was
 	/// already credited then, so finishing it off scores nothing more. Only a first, cross-team
 	/// neutralisation adds to the tally — <see cref="KillsOf"/>, one counter per target class.</para>
 	///
 	/// <para>Two callouts go out from here, and only the first is under
-	/// <paramref name="wasImmobilised"/>: a squadmate that scored says so, and a squadmate that has
+	/// the victim's earlier immobilised state: a squadmate that scored says so, and a squadmate that has
 	/// just been stopped cries out whether or not this was the blow that counted. The second is the
 	/// one place in the original that forces a post past a destroyed machine's own silence — see
 	/// <see cref="PostSquadMessage"/>.</para>
@@ -34,6 +34,8 @@ public sealed partial class MechObject {
 	/// (<c>00423b34</c>) builds every member of a group from the one class its discriminator names, so
 	/// the squadmate half never meets a structure or a flyer.</para>
 	/// </summary>
+	/// <param name="victim">The machine put out of the fight.</param>
+	/// <param name="wasImmobilised">Whether the victim was already immobilised before this change.</param>
 	internal void CreditNeutralised(SimWorld world, SimObject victim, bool wasImmobilised) {
 		MechObject? player = world.PlayerMech;
 
@@ -65,7 +67,7 @@ public sealed partial class MechObject {
 	}
 
 	/// <summary>
-	/// <c>mech+0x2a4</c> — how many of <paramref name="targetClass"/> this machine has put out of the
+	/// <c>mech+0x2a4</c> — how many of a target class this machine has put out of the
 	/// fight this mission, counted once per victim: <c>INC word [mech + class*2 + 0x2a4]</c> at
 	/// <c>0041576d</c>, the class being the victim's <c>+0x1a8</c>. The first three are the Herc, Base and
 	/// Flyer kills the mission's results carry to the pilot (<see cref="MissionResults"/>).
@@ -74,6 +76,7 @@ public sealed partial class MechObject {
 	/// kept for here; how far the original's array runs past the three the results read is not
 	/// established.</para>
 	/// </summary>
+	/// <param name="targetClass">The target class.</param>
 	public short KillsOf(TargetClass targetClass) =>
 		(uint)targetClass < (uint)_killsByClass.Length ? _killsByClass[(int)targetClass] : (short)0;
 

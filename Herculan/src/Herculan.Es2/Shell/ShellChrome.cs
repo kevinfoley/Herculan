@@ -136,12 +136,13 @@ public static class ShellChrome {
 
 	/// <summary>
 	/// <c>ESRegionFill_Paint</c> — a plain bordered box: the interior cleared, the chamfered border, then
-	/// a 50% checkerboard over the interior in <paramref name="faceColor"/>.
+	/// a 50% checkerboard over the interior in the face colour.
 	///
 	/// <para>The save screen sets that face colour to <see cref="InteriorColor"/> on all three of its
 	/// framed panels, so retail's dither there lands the same colour it is dithering over and the box
 	/// reads as flat. The class default is <c>0x25</c>, which does not.</para>
 	/// </summary>
+	/// <param name="faceColor">The checkerboard's colour.</param>
 	public static void PaintFramedPanel(ShellSurface surface, ShellRect rect, byte borderColor,
 			byte faceColor, bool fill) {
 		int w = rect.Width - 1;
@@ -162,11 +163,8 @@ public static class ShellChrome {
 	/// <c>ESTitle_Paint</c> — the group box every tab screen's content sits in: a header strip with
 	/// a diagonal hatch and a clear plate for its title, a divider under it, and a body that is either
 	/// filled or dithered.
-	///
-	/// <para><paramref name="fill"/> set clears the body to <see cref="InteriorColor"/>; clear, the body
-	/// is a 50% checkerboard in <paramref name="bodyDitherColor"/> that the backdrop shows through
-	/// (docs/retail/shell/widgets.md#how-a-widget-paints).</para>
 	/// </summary>
+	/// <param name="bodyDitherColor">The colour of the body's 50% checkerboard when it is not filled.</param>
 	/// <param name="headerHeight">
 	/// The widget's <c>+0x61</c>, and the constructor's last argument: how tall the header strip is, and
 	/// also the row the divider lands on. 19 on the save screen, 20 for the subclass at
@@ -178,6 +176,7 @@ public static class ShellChrome {
 	/// </param>
 	/// <param name="plateFirst">The widget's <c>+0x6d</c> — where the title's clear plate starts.</param>
 	/// <param name="plateLast">And its <c>+0x71</c>, where the plate ends.</param>
+	/// <param name="fill">True to clear the body to <see cref="InteriorColor"/>; false for a 50% checkerboard that the backdrop shows through (docs/retail/shell/widgets.md#how-a-widget-paints).</param>
 	public static void PaintTitledPanel(ShellSurface surface, ShellRect rect, byte borderColor,
 			byte faceColor, byte bodyDitherColor, int headerHeight, bool headerChrome,
 			int plateFirst, int plateLast, bool fill) {
@@ -224,7 +223,7 @@ public static class ShellChrome {
 
 	/// <summary>
 	/// <c>ESArm_Paint</c> (<c>0040c513</c>) — a bordered box whose interior is laid down as
-	/// horizontal lines in <paramref name="lineColor"/> from row <paramref name="firstLine"/> to the
+	/// horizontal lines in a line colour from a first row to the
 	/// bottom, with an optional second border one pixel inside the first. With the first line at 0 the
 	/// lines are a solid fill; the class is a line fill because its constructor starts them at the
 	/// bottom edge, drawing none.
@@ -284,14 +283,11 @@ public static class ShellChrome {
 	/// <summary>
 	/// <c>ESMessage_Paint</c> (<c>0040b439</c>) — one label or readout.
 	///
-	/// <para><paramref name="backingColor"/> is the widget's <c>+0xc1</c>/<c>+0xc5</c> pair: a value
-	/// field clears its own rect first so a refresh overwrites cleanly, and a static label does not, so
-	/// it draws straight over whatever the panel put down. Passing null is the label case.</para>
-	///
 	/// <para>The vertical placement is the original's arithmetic, integer division included, and it
 	/// differs from the edit field's below by a pixel or two — both are reproduced as written rather
 	/// than unified, since which one a widget uses is a property of its class.</para>
 	/// </summary>
+	/// <param name="backingColor">The widget's <c>+0xc1</c>/<c>+0xc5</c> pair: a value field clears its own rect first so a refresh overwrites cleanly, and a static label does not, so it draws straight over whatever the panel put down. Null is the label case.</param>
 	public static void PaintText(ShellSurface surface, ShellRect rect, HudFont? font, string? text,
 			ShellTextAlign align, byte color, byte? backingColor = null) =>
 		PaintString(surface, rect, font, text, align, color, backingColor, baseline: null);
@@ -299,8 +295,9 @@ public static class ShellChrome {
 	/// <summary>
 	/// <c>ESMessage_Paint</c>'s body. Its second argument is <c>-1</c> for a <c>Text</c> painting itself, which
 	/// centres the string by its own rule, and otherwise the row its owner chose, one below the baseline
-	/// drawn (<paramref name="baseline"/>).
+	/// drawn.
 	/// </summary>
+	/// <param name="baseline">The row baseline its owner chose, or null for a <c>Text</c> painting itself.</param>
 	private static void PaintString(ShellSurface surface, ShellRect rect, HudFont? font, string? text,
 			ShellTextAlign align, byte color, byte? backingColor, int? baseline) {
 		int w = rect.Width - 1;
@@ -325,8 +322,9 @@ public static class ShellChrome {
 	/// <summary>
 	/// <c>ESDialog_Paint</c> (<c>0040c14f</c>) — the editable text field the save screen's ten slot rows are, painted whole:
 	/// its rect cleared, its string drawn left-aligned one pixel in, an optional caret block, and the
-	/// ink remapped to <paramref name="color"/>.
+	/// ink remapped to the field's colour.
 	/// </summary>
+	/// <param name="color">The colour the ink is remapped to.</param>
 	/// <param name="caret">
 	/// The widget's <c>+0xa7</c> and <c>+0xb3</c> together: whether the field has the focus and whether
 	/// the caret's blink phase is on.
@@ -385,10 +383,11 @@ public static class ShellChrome {
 	private const int HatchBands = 26;
 
 	/// <summary>
-	/// The 50% checkerboard both the framed and the titled panel use, from
-	/// <paramref name="firstRow"/> down to the bottom border. The phase flips every row, and the row it
+	/// The 50% checkerboard both the framed and the titled panel use, from a first row
+	/// down to the bottom border. The phase flips every row, and the row it
 	/// starts on is the only difference between the two callers.
 	/// </summary>
+	/// <param name="firstRow">The first row of the checkerboard.</param>
 	private static void Dither(ShellSurface surface, ShellRect rect, int firstRow, byte color) {
 		int w = rect.Width - 1;
 		int h = rect.Height - 1;
@@ -414,10 +413,11 @@ public static class ShellChrome {
 	}
 
 	/// <summary>
-	/// <c>Font_DrawString</c> (<c>0045409c</c>) — a run of glyphs, aligned in a field of <paramref name="fieldWidth"/> and
-	/// then advanced glyph by glyph. <paramref name="baselineY"/> is the ink baseline; each glyph's top
-	/// row lands <see cref="HudFont.InkHeight"/> above it.
+	/// <c>Font_DrawString</c> (<c>0045409c</c>) — a run of glyphs, aligned in a field of a given width and
+	/// then advanced glyph by glyph. Each glyph's top row lands <see cref="HudFont.InkHeight"/> above the ink baseline.
 	/// </summary>
+	/// <param name="baselineY">The ink baseline.</param>
+	/// <param name="fieldWidth">The width of the field the run is aligned in.</param>
 	private static void DrawString(ShellSurface surface, HudFont font, string text, int left,
 			int baselineY, ShellTextAlign align, int fieldWidth) {
 		int pen = align switch {

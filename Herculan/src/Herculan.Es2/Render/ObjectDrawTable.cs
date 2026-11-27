@@ -97,7 +97,8 @@ public sealed class DrawEntry : IDrawFiling {
 	/// </summary>
 	public object? HiddenWhenRidden { get; set; }
 
-	/// <summary>Its distance from <paramref name="viewer"/> as the original's render entry carries it — see <see cref="ObjectDrawTable.EntryDistance"/>.</summary>
+	/// <summary>Its distance from a viewer as the original's render entry carries it — see <see cref="ObjectDrawTable.EntryDistance"/>.</summary>
+	/// <param name="viewer">The viewer's position.</param>
 	public int DistanceFrom(Vec3i viewer) => ObjectDrawTable.EntryDistance(Tag, Position, EntryHeight, viewer);
 
 	/// <summary>Whether this pass draws it. True until a pass has filed it.</summary>
@@ -188,17 +189,20 @@ public sealed class ObjectDrawTable {
 	public MechObject? LocalPlayer { get; set; }
 
 	/// <summary>
-	/// Files every entry for a view at <paramref name="viewer"/> and settles each one's
-	/// <see cref="DrawEntry.Drawn"/>. <paramref name="region"/> must already be this view's, as
+	/// Files every entry for a view and settles each one's
+	/// <see cref="DrawEntry.Drawn"/>. The visible region must already be this view's, as
 	/// <c>Terrain_SetupVisibleRegion</c> builds it before the submit.
 	///
-	/// <para>With <paramref name="reachesView"/>, a structure filed under a cell the draw does not reach is drawn anyway
+	/// <para>With a view-sphere test, a structure filed under a cell the draw does not reach is drawn anyway
 	/// when its shape radius about its position reaches into the view, and is then held to the same ridden-camera and
 	/// draw-distance tests as one the walk reached. This is the widescreen tweak's, not the original's: retail draws
 	/// nothing filed under a cell its walk misses, so a large building whose centre lies past the walk's margin vanishes
 	/// whole while part of it is on screen (docs/retail/rendering/terrain-drawing.md, "The visible region" and "What is
 	/// filed where"). Null is retail.</para>
 	/// </summary>
+	/// <param name="viewer">The view's position.</param>
+	/// <param name="region">This view's visible region.</param>
+	/// <param name="reachesView">Tests whether a shape's sphere reaches into the view; null is retail.</param>
 	public void File(HeightGrid grid, TerrainVisibleRegion region, Vec3i viewer, TerrainPaintOrder order,
 			ViewSphereTest? reachesView = null) {
 		_grid = grid;
@@ -267,11 +271,12 @@ public sealed class ObjectDrawTable {
 	}
 
 	/// <summary>
-	/// Where this pass paints what is filed under <paramref name="cell"/>: in the walk when the walk draws that cell's
+	/// Where this pass paints what is filed under a cell: in the walk when the walk draws that cell's
 	/// objects (<see cref="TerrainPaintOrder.Rank"/> orders them), in the no-cell bucket for a null cell, after it for a
 	/// flying player's cell the walk did not reach (<c>ObjList_DrawAfterTerrain</c>, <c>0042883c</c>), and nowhere
 	/// otherwise. Before the first <see cref="File"/>, every cell is in the walk.
 	/// </summary>
+	/// <param name="cell">The cell's (X, Y), or null for the no-cell bucket.</param>
 	internal PaintPhase PhaseOf((int X, int Y)? cell) {
 		if (cell is not { } filed) {
 			return PaintPhase.NoCell;
@@ -325,8 +330,12 @@ public sealed class ObjectDrawTable {
 	/// <summary>
 	/// The distance <c>ObjList_DrawCellObjects</c> (<c>00428c60</c>) stores at a render entry's <c>+0x12</c>, which the
 	/// draw-distance test, the distance colour bands and the fade all take: <c>Math_DistanceBetweenPoints</c> from the
-	/// viewer to the object's position, raised by <paramref name="entryHeight"/> for a structure or a HERC.
+	/// viewer to the object's position, raised by the entry height for a structure or a HERC.
 	/// </summary>
+	/// <param name="tag">The object's type tag.</param>
+	/// <param name="position">The object's position.</param>
+	/// <param name="entryHeight">What a structure or a HERC raises the distance by.</param>
+	/// <param name="viewer">The viewer's position.</param>
 	internal static int EntryDistance(ObjectTypeTag tag, Vec3i position, int entryHeight, Vec3i viewer) {
 		var measured = tag is ObjectTypeTag.Structure or ObjectTypeTag.Herc
 			? new Vec3i(position.X, position.Y, position.Z + entryHeight)

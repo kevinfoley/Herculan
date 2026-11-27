@@ -47,12 +47,15 @@ public static class Es1SquadOrders {
 	public const int OnPointRange = 2000;
 
 	/// <summary>
-	/// <c>Mech_ReceiveSquadOrder</c>(<paramref name="mech"/>, <paramref name="reply"/>, <paramref name="order"/>): the order
+	/// <c>Mech_ReceiveSquadOrder</c>(machine, reply, order): the order
 	/// taken or refused by its verb (<see cref="Act"/>) with a reply id; the reply posted on the pilot channel
 	/// (<see cref="Messages.Es1PilotChannel.PostSquadMessage"/>, not forced) when the reply so far is 0, or is 1 and the
 	/// order was taken, so only the first told, or the first to take it, speaks. Answers 1 when taken, else 0, retail's
 	/// <c>AX</c>, the rest of <c>EAX</c> left as it was, which neither caller reads.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="reply">The reply id so far.</param>
+	/// <param name="order">The order.</param>
 	/// <param name="globals">The simulation's globals, whose cockpit's pilot channel the reply is posted to.</param>
 	public static short Receive(Es1Mech mech, short reply, Es1SquadOrder order, Es1SimGlobals globals) {
 		var (id, taken) = Act(mech, order, globals);
@@ -357,12 +360,16 @@ public static class Es1SquadOrders {
 	}
 
 	/// <summary>
-	/// Verbs <c>0xd</c> and <c>0xe</c>, with the standing order <paramref name="verb"/> each stores, 2 and 1: refused
+	/// Verbs <c>0xd</c> and <c>0xe</c>, with the standing order each stores, 2 and 1: refused
 	/// <see cref="OutOfActionReply"/> when immobilized, and <see cref="AlreadyCoveredReply"/> when the standing order is
-	/// already <paramref name="verb"/> and the machine lies within <see cref="OnPointRange"/> of the order's point
-	/// (<c>Math_DistanceBetweenPoints</c>); otherwise <c>patrolling</c> and the standing order <paramref name="verb"/>,
+	/// already that order and the machine lies within <see cref="OnPointRange"/> of the order's point
+	/// (<c>Math_DistanceBetweenPoints</c>); otherwise <c>patrolling</c> and that standing order,
 	/// <see cref="MovingReply"/>. Then, taken or not, <see cref="StorePoint"/>.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="order">The order.</param>
+	/// <param name="verb">The standing order the verb stores: 2 for <c>0xd</c>, 1 for <c>0xe</c>.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	private static (short, bool) MoveToPoint(Es1Mech mech, Es1SquadOrder order, short verb, Es1SimGlobals globals) {
 		(short, bool) result;
 		if (mech.Immobilized) {
@@ -386,15 +393,20 @@ public static class Es1SquadOrders {
 	private static void StorePoint(Es1Mech mech, Es1SquadOrder order) =>
 		mech.SquadPoint = new Vec3i(order.Point.X, order.Point.Y, mech.SquadPoint.Z);
 
-	/// <summary>Whether the standing order is already to engage <paramref name="target"/>: verb 4 with <c>+0x1dc</c> it.</summary>
+	/// <summary>Whether the standing order is already to engage a target: verb 4 with <c>+0x1dc</c> it.</summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="target">The target, or null.</param>
 	private static bool EngagesAlready(Es1Mech mech, IEs1SimObject? target) =>
 		mech.SquadVerb == Es1NavigationStates.EngageSquadVerb && ReferenceEquals(mech.SquadTarget, target);
 
 	/// <summary>
-	/// The engage order verbs 0, 2 and <c>0xb</c> store: the standing order 4 on <paramref name="target"/>, its abandon
+	/// The engage order verbs 0, 2 and <c>0xb</c> store: the standing order 4 on the target, its abandon
 	/// threshold <see cref="Es1Targets.TargetStateTier"/> of it, <see cref="EngageOrderedTarget"/>, and
 	/// <see cref="Es1Mech.DamageInPlayerSquad"/> cleared.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="target">The target to engage.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	private static void TakeEngageOrder(Es1Mech mech, IEs1SimObject target, Es1SimGlobals globals) {
 		mech.SquadVerb = Es1NavigationStates.EngageSquadVerb;
 		mech.SquadTarget = target;
@@ -429,8 +441,10 @@ public static class Es1SquadOrders {
 	}
 
 	/// <summary>
-	/// Flag <paramref name="index"/> of the machine's behaviour descriptor, the byte <c>+8</c> + <paramref name="index"/>;
+	/// A flag of the machine's behaviour descriptor, the byte <c>+8</c> + its index;
 	/// retail reads it unchecked, and the constructor always installs one, so none reads clear here.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="index">The flag's index.</param>
 	internal static bool Flag(Es1Mech mech, int index) => mech.Behaviour.Descriptor?.Flags[index] == true;
 }

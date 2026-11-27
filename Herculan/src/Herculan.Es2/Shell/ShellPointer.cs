@@ -117,10 +117,14 @@ public readonly record struct ShellWidget(ShellWidgetKind Kind, int Index, int S
 /// </summary>
 public readonly record struct ShellHit(ShellWidget Widget, ShellHandler Handler, int Leaf = -1) {
 	/// <summary>
-	/// Which of <paramref name="children"/>, each in <paramref name="widget"/>'s own coordinates, a
+	/// Which of a widget's children, each in the widget's own coordinates, a
 	/// canvas point is on, or <c>-1</c>. Siblings are hit newest first, so where two share an edge the
 	/// one later in the list — built later — answers.
 	/// </summary>
+	/// <param name="widget">The widget's rect.</param>
+	/// <param name="children">The children's rects.</param>
+	/// <param name="canvasX">The canvas point's X.</param>
+	/// <param name="canvasY">The canvas point's Y.</param>
 	public static int LeafAt(ShellRect widget, ReadOnlySpan<ShellRect> children, float canvasX, float canvasY) {
 		for (int i = children.Length - 1; i >= 0; i--) {
 			var child = children[i];
@@ -134,21 +138,31 @@ public readonly record struct ShellHit(ShellWidget Widget, ShellHandler Handler,
 	}
 
 	/// <summary>
-	/// A <c>Button</c> at <paramref name="rect"/>. Its caption is the <c>Text</c> child
+	/// A <c>Button</c> at a rect. Its caption is the <c>Text</c> child
 	/// <c>ESButtonFont_Ctor</c> builds at <c>{1, 0, w, h}</c>, so the button's own left column is the one part
 	/// of it the caption does not cover.
 	/// </summary>
+	/// <param name="widget">The button's widget.</param>
+	/// <param name="rect">The button's rect.</param>
+	/// <param name="canvasX">The canvas point's X.</param>
+	/// <param name="canvasY">The canvas point's Y.</param>
 	public static ShellHit Button(ShellWidget widget, ShellRect rect, float canvasX, float canvasY) =>
 		new(widget, ShellHandler.Button,
 			LeafAt(rect, [new ShellRect(1, 0, rect.Width - 1, rect.Height - 1)], canvasX, canvasY));
 
 	/// <summary>
-	/// A list row at <paramref name="rect"/> whose four text columns <c>ESQuad_AddColumns</c>
-	/// (<c>0040a310</c>) cut at <paramref name="cut1"/>, <paramref name="cut2"/> and
-	/// <paramref name="cut3"/>: each column is the row's full height, the first starts at 2 and the last
+	/// A list row at a rect whose four text columns <c>ESQuad_AddColumns</c>
+	/// (<c>0040a310</c>) cut at three offsets: each column is the row's full height, the first starts at 2 and the last
 	/// ends one inside the row's right edge, so only the two columns at the left and the right edge
 	/// itself are the row's own.
 	/// </summary>
+	/// <param name="widget">The row's widget.</param>
+	/// <param name="rect">The row's rect.</param>
+	/// <param name="cut1">The first cut.</param>
+	/// <param name="cut2">The second cut.</param>
+	/// <param name="cut3">The third cut.</param>
+	/// <param name="canvasX">The canvas point's X.</param>
+	/// <param name="canvasY">The canvas point's Y.</param>
 	public static ShellHit ListRow(ShellWidget widget, ShellRect rect, int cut1, int cut2, int cut3,
 			float canvasX, float canvasY) {
 		int bottom = rect.Height - 1;
@@ -219,11 +233,13 @@ public sealed class ShellPointer {
 	public int RepeatCount(ShellWidget widget) => _repeats.GetValueOrDefault(widget);
 
 	/// <summary>
-	/// A tick of <paramref name="widget"/>'s alarm (event <c>0x200</c>), which <c>ESButtonBitmap_HandleEvent</c>
+	/// A tick of a widget's alarm (event <c>0x200</c>), which <c>ESButtonBitmap_HandleEvent</c>
 	/// acts on for an auto-repeating button that is lit, enabled and shown: one more on its count, a repaint,
 	/// and its handler run again. The caller passes only buttons that are shown. Whichever button lit it, so a
 	/// right press repeats as a left one does.
 	/// </summary>
+	/// <param name="widget">The widget.</param>
+	/// <param name="fire">Runs the widget's handler.</param>
 	public void RepeatTick(ShellWidget widget, Action<ShellWidget> fire) {
 		if (_lit != widget) {
 			return;
@@ -235,9 +251,11 @@ public sealed class ShellPointer {
 
 	/// <summary>
 	/// What <c>SaveScreen_BeginRename</c> (<c>004377d2</c>) does to the pointer: the target moved onto
-	/// <paramref name="field"/> without a hit test (<c>Pointer_SetTarget</c>, <c>00469cbc</c>), the lock
+	/// the field without a hit test (<c>Pointer_SetTarget</c>, <c>00469cbc</c>), the lock
 	/// set, and a left press posted at it, which gives the field the focus and runs its handler.
 	/// </summary>
+	/// <param name="field">The field's hit.</param>
+	/// <param name="fire">Runs the widget's handler.</param>
 	public void Grab(ShellHit field, Action<ShellWidget> fire) {
 		Leave();
 		Target = field;
@@ -256,10 +274,12 @@ public sealed class ShellPointer {
 	}
 
 	/// <summary>
-	/// A left press and release delivered at <paramref name="hit"/> wherever the pointer is, then the pointer back on
+	/// A left press and release delivered at a hit wherever the pointer is, then the pointer back on
 	/// what it is over: this engine's own, for a gamepad button that stands for a click on one widget. A locked edit field
 	/// gives up the focus and the lock first, as the press of a click elsewhere makes it.
 	/// </summary>
+	/// <param name="hit">The hit the click is delivered at.</param>
+	/// <param name="fire">Runs the widget's handler.</param>
 	public void Click(ShellHit hit, Action<ShellWidget> fire) {
 		if (Locked) {
 			ReleaseFocus();
@@ -273,11 +293,12 @@ public sealed class ShellPointer {
 	}
 
 	/// <summary>
-	/// A move to wherever <paramref name="hit"/> is. When the hit differs from the target, the target is
+	/// A move to wherever a hit is. When the hit differs from the target, the target is
 	/// sent a leave and the new hit becomes the target, as <c>EventQueue_Pump</c> (<c>00469ba4</c>)
 	/// does; none of these classes acts on the enter that follows. While the pointer is locked the pump
 	/// skips the hit test and nothing changes, but the position is kept for when it is released.
 	/// </summary>
+	/// <param name="hit">The hit under the pointer, or null for none.</param>
 	public void Move(ShellHit? hit) {
 		_underPointer = hit;
 		if (!Locked && hit != Target) {
@@ -286,7 +307,9 @@ public sealed class ShellPointer {
 		}
 	}
 
-	/// <summary>A button going down, delivered to the target. <paramref name="fire"/> runs the widget's handler.</summary>
+	/// <summary>A button going down, delivered to the target.</summary>
+	/// <param name="button">The button.</param>
+	/// <param name="fire">Runs the widget's handler.</param>
 	public void Press(ShellMouseButton button, Action<ShellWidget> fire) {
 		if (Target is not { } target) {
 			return;

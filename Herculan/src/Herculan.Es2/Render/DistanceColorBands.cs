@@ -97,26 +97,33 @@ public sealed class DistanceColorBands : IBandRampSource {
 	}
 
 	/// <summary>
-	/// The ramps <paramref name="item"/> is drawn with, by its filing's tag and distance from <paramref name="viewer"/>, as
+	/// The ramps an item is drawn with, by its filing's tag and distance from the viewer, as
 	/// <c>WorldShades_ApplyForObject</c> picks them before <c>ObjList_DrawEntryRender</c> draws it. An item with no
 	/// filing is not banded.
 	/// </summary>
+	/// <param name="item">The item.</param>
+	/// <param name="viewer">The viewer's position.</param>
 	public IReadOnlyList<BandRamp> For(SceneItem item, Vec3i viewer) =>
 		item.Filing is DrawEntry entry
 			? Ramps(entry.Tag, Band(entry.Tag, entry.DistanceFrom(viewer), entry.ShapeRadius))
 			: Array.Empty<BandRamp>();
 
-	/// <summary>The ramps an object of <paramref name="tag"/> is drawn with re-pointed in <paramref name="band"/>, in list order.</summary>
+	/// <summary>The ramps an object of a tag is drawn with re-pointed in a band, in list order.</summary>
+	/// <param name="tag">The object's tag.</param>
+	/// <param name="band">The distance band.</param>
 	public IReadOnlyList<BandRamp> Ramps(ObjectTypeTag tag, int band) =>
 		_ramps.TryGetValue(((int)tag, band), out var ramps) ? ramps : Array.Empty<BandRamp>();
 
 	/// <summary>
-	/// <c>Palette_InterpolateIndexRanges</c> (<c>00430d08</c>): for each of <paramref name="columns"/> columns,
-	/// <paramref name="levels"/> palette index ranges stepping from <paramref name="from"/>'s range to
-	/// <paramref name="to"/>'s in 8.8 fixed point, the last exactly <paramref name="to"/>'s. Each entry of the two tables holds
-	/// a range's first index in its low half and its count in its high half. The step is a whole index more than the span
-	/// over the level count less one, truncated, as the original computes it.
+	/// <c>Palette_InterpolateIndexRanges</c> (<c>00430d08</c>): for each column, a number of palette index ranges stepping
+	/// from the start table's range to the end table's in 8.8 fixed point, the last exactly the end's. Each entry of the two
+	/// tables holds a range's first index in its low half and its count in its high half. The step is a whole index more
+	/// than the span over the level count less one, truncated, as the original computes it.
 	/// </summary>
+	/// <param name="from">The table of the first range of each column.</param>
+	/// <param name="to">The table of the last range of each column.</param>
+	/// <param name="columns">The number of columns.</param>
+	/// <param name="levels">The number of index ranges per column.</param>
 	internal static (short Start, short Count)[] InterpolateIndexRanges(int[] from, int[] to, int columns, int levels) {
 		var ranges = new (short Start, short Count)[columns * levels];
 		int at = 0;

@@ -38,10 +38,12 @@ public sealed class FlyerFormationTable {
 	public int Count => _formations.Length;
 
 	/// <summary>
-	/// The station offset for a group's <paramref name="memberIndex"/>-th flyer, or null when the
+	/// The station offset for a group's flyer at a member index, or null when the
 	/// slot takes none — member 0 (the leader), an out-of-range formation id, or a member index past
 	/// the table's three follower slots.
 	/// </summary>
+	/// <param name="formationId">The formation id.</param>
+	/// <param name="memberIndex">The member's index.</param>
 	public Vec3i? OffsetFor(int formationId, int memberIndex) {
 		if (memberIndex <= 0 || formationId < 0 || formationId >= _formations.Length) {
 			return null;

@@ -333,17 +333,20 @@ public static class Detection {
 	///
 	/// <para>The ray runs between the two objects' shape centres
 	/// (<see cref="SimObject.SightHeight"/>) and a terrain hit anywhere along it means no sight. The
-	/// result is stored on <paramref name="self"/> in the row belonging to
-	/// <paramref name="other"/>, and returned from there on every call until the cache expires.</para>
+	/// result is stored on the first object in the row belonging to
+	/// the second, and returned from there on every call until the cache expires.</para>
 	///
 	/// <para><b>The cache gate is the original's, oddity included.</b> It tests
-	/// <i><paramref name="other"/>'s</i> countdown to decide whether to recompute, and then reloads
-	/// <i><paramref name="self"/>'s</i>. Verified against the raw disassembly at <c>00412617</c> and
+	/// <i>the second object's</i> countdown to decide whether to recompute, and then reloads
+	/// <i>the first's</i>. Verified against the raw disassembly at <c>00412617</c> and
 	/// <c>0041263f</c> — <c>CMP word ptr [ESI + 0x1e3], 0x0</c> against
 	/// <c>MOV word ptr [EBX + 0x1e3], AX</c> — rather than taken from the decompiler, because it
 	/// reads like a transcription slip and is not one. The practical effect is that the reload rarely
 	/// suppresses anything, so most pairs are re-walked whenever they are asked about.</para>
 	/// </summary>
+	/// <param name="world">The running world.</param>
+	/// <param name="self">The first object, which the result is stored on.</param>
+	/// <param name="other">The second object, whose row in the first holds the result.</param>
 	public static bool LineOfSight(SimWorld world, SimObject self, SimObject other) {
 		if (other.SightCacheTimer == 0) {
 			self.SightCacheTimer = (short)(world.Random.NextBelow(TimerJitter) + SightCacheInterval);
@@ -371,9 +374,11 @@ public static class Detection {
 
 	/// <summary>
 	/// <c>Math_HeadingToward</c> (<c>00492828</c>) — the ground-plane bearing from
-	/// <paramref name="from"/> to <paramref name="to"/>, less the quarter turn every bearing in the
+	/// one point to another, less the quarter turn every bearing in the
 	/// simulation carries because a machine's forward axis is model Y.
 	/// </summary>
+	/// <param name="to">The destination.</param>
+	/// <param name="from">The origin.</param>
 	/// <remarks>
 	/// The original's argument order is the destination first; this takes them the way round the name
 	/// reads. The degenerate guard is <c>Math_Atan2Guarded</c> (<c>00492800</c>)'s own, which nudges the <b>x</b> delta so a

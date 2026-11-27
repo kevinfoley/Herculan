@@ -45,11 +45,12 @@ internal static class ShellCareerMissions {
 			: null;
 
 	/// <summary>
-	/// A mission and its text as <c>MsnGen_ParseMsnFile</c> opens them: the <c>.MSN</c> at
-	/// <paramref name="missionPath"/>, and the text <c>Msn_LoadEngText</c> (<c>0041768c</c>) finds by
+	/// A mission and its text as <c>MsnGen_ParseMsnFile</c> opens them: the <c>.MSN</c> at a path, and the
+	/// text <c>Msn_LoadEngText</c> (<c>0041768c</c>) finds by
 	/// swapping everything from the name's first <c>.</c> for the shell language's extension, or null text when
 	/// there is none. Null when the mission itself is not in the archives.
 	/// </summary>
+	/// <param name="missionPath">The mission's path in the archives.</param>
 	internal static (byte[] Msn, byte[]? Text)? ReadMission(GameContent content, string missionPath) {
 		int split = missionPath.LastIndexOf('\\');
 		string folder = split < 0 ? string.Empty : missionPath[..split];
@@ -63,7 +64,8 @@ internal static class ShellCareerMissions {
 		return (msn, content.Read(folder, stem + MissionTextExtension(content.Language)));
 	}
 
-	/// <summary><c>Msn_LoadEngText</c>'s extension for <paramref name="language"/>'s mission text.</summary>
+	/// <summary><c>Msn_LoadEngText</c>'s extension for a language's mission text.</summary>
+	/// <param name="language">The shell's language.</param>
 	internal static string MissionTextExtension(GameLanguage language) => language switch {
 		GameLanguage.French => ".FRE",
 		GameLanguage.German => ".GER",

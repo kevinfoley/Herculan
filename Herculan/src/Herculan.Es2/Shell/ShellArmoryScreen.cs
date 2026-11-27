@@ -441,9 +441,10 @@ public sealed class ShellArmoryScreen {
 	}
 
 	/// <summary>
-	/// Draws the whole screen into <paramref name="surface"/>. The caller clears it first. <paramref name="lit"/>
-	/// is the widget a press has lit.
+	/// Draws the whole screen into a surface. The caller clears it first.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 

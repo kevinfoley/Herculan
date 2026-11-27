@@ -182,13 +182,15 @@ public sealed class WorldDrawItems {
 	}
 
 	/// <summary>
-	/// Which root of each machine and which level of every detail part <paramref name="camera"/> sees, and the
+	/// Which root of each machine and which level of every detail part the camera sees, and the
 	/// pose and the cells of the pieces that selects. <see cref="Refresh"/> runs it for the frame's own camera;
 	/// a pass from a camera with its own eye and focal length — the MFD's missile camera — runs it again for
 	/// that camera, as the original picks every level per view
 	/// (docs/retail/simulation/mfd.md, "<c>MFDMissileView</c> — mode 5"), and
 	/// <see cref="RestoreFrameDetail"/> after it.
 	/// </summary>
+	/// <param name="camera">The camera to select the detail for.</param>
+	/// <param name="focalPixels">The camera's focal length in pixels.</param>
 	public void SelectDetail(Camera camera, int focalPixels) {
 		if (_preferences is not { } preferences) {
 			return;

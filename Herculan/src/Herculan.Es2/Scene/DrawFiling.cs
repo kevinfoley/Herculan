@@ -62,10 +62,12 @@ public sealed class DrawFiling(MissionScene scene) {
 	}
 
 	/// <summary>
-	/// A new entry this frame for one tracer object of <paramref name="tracer"/>, filed by <paramref name="start"/> with no
+	/// A new entry this frame for one object of a beam tracer, filed by its span's start with no
 	/// radius — see <see cref="BeamSpanDraw"/>. Each span of a straight beam is an object of its own in the original, so
 	/// each call makes another.
 	/// </summary>
+	/// <param name="tracer">The beam tracer.</param>
+	/// <param name="start">The span's start point.</param>
 	public DrawEntry SpanEntry(BeamTracer tracer, Vec3i start) {
 		var entry = new DrawEntry(tracer) { Tag = ObjectTypeTag.Projectile, Position = start };
 		_frameOrder.Add(entry);

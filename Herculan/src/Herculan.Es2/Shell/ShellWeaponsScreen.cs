@@ -168,9 +168,10 @@ public sealed class ShellWeaponsScreen {
 	private ShellHangar _hangar;
 
 	/// <summary>
-	/// Builds the screen and enters it with <paramref name="bay"/> selected, the bay the previous tab
+	/// Builds the screen and enters it with a bay selected, the bay the previous tab
 	/// left in <c>SelectedBaySlot</c> (<c>00482ae5</c>).
 	/// </summary>
+	/// <param name="bay">The selected bay.</param>
 	public ShellWeaponsScreen(ShellHangar? hangar = null, int bay = -1, ShellWeaponsArt? art = null,
 			ShellBayPictures? pictures = null) {
 		_hangar = hangar ?? ShellHangar.From(null);
@@ -281,7 +282,7 @@ public sealed class ShellWeaponsScreen {
 
 	/// <summary>
 	/// <c>Arming_SelectRow</c> (<c>0043f71c</c>). A row's own handler, through the 27 thunks from
-	/// <c>Arming_OnRow00</c> (<c>00440300</c>), is the only caller that passes <paramref name="fit"/> — the thunk's
+	/// <c>Arming_OnRow00</c> (<c>00440300</c>), is the only caller that fits the row's weapon — the thunk's
 	/// <c>Arming_FitArmed</c> — so a selection made by the entry, a bay change, a hardpoint or the rack
 	/// button fits nothing.
 	///
@@ -294,6 +295,8 @@ public sealed class ShellWeaponsScreen {
 	/// fifth captioned with the rack's name, and with a hardpoint lights the mount's kind; any other row
 	/// takes all five down and forgets the guidance kind. Returns whether it went through.</para>
 	/// </summary>
+	/// <param name="row">The weapon row.</param>
+	/// <param name="fit">Whether the selection fits the weapon: only a row's own handler passes true.</param>
 	public bool SelectRow(int row, bool fit) {
 		if (row < 0 || row >= RowWeapons.Length
 			|| (row == SelectedRow && ShownGuidance == -1 && SelectedHardpoint == -1)) {
@@ -384,10 +387,12 @@ public sealed class ShellWeaponsScreen {
 
 	/// <summary>
 	/// <c>Arming_ShowGuidance(kind, show)</c>. The kind's button is lit, and none for the unguided kind 5.
-	/// With <paramref name="show"/> clear the pictures are left as the row selection put them. Either way
+	/// Without showing them the pictures are left as the row selection put them. Either way
 	/// <c>Arming_SetMountGuidance</c> (<c>0043dcb6</c>) writes the kind into the selected hardpoint's mount
 	/// when there is one and it is fitted.
 	/// </summary>
+	/// <param name="kind">The guidance kind.</param>
+	/// <param name="show">Whether to show the guidance pictures.</param>
 	private void ShowGuidanceKind(int kind, bool show) {
 		_litGuidanceButton = Array.IndexOf(ButtonGuidance, kind);
 		if (show) {
@@ -481,9 +486,10 @@ public sealed class ShellWeaponsScreen {
 	}
 
 	/// <summary>
-	/// Draws the whole screen into <paramref name="surface"/>, the squad panel included. The caller clears it first.
-	/// <paramref name="lit"/> is the widget a press has lit.
+	/// Draws the whole screen into a surface, the squad panel included. The caller clears it first.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
@@ -574,7 +580,8 @@ public sealed class ShellWeaponsScreen {
 		}
 	}
 
-	/// <summary>One button: its double-bordered box in <paramref name="border"/> and its caption in <c>0x29</c>.</summary>
+	/// <summary>One button: its double-bordered box in a border colour and its caption in <c>0x29</c>.</summary>
+	/// <param name="border">The box's border colour.</param>
 	private static void PaintButton(ShellSurface surface, HudFont? font, ShellWeaponsButton button, string? caption,
 			byte border, ShellWidget? lit) =>
 		ShellChrome.PaintButton(surface, ButtonRect(button), border, font, caption, ShellChrome.FontInkColor,

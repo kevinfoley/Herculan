@@ -256,9 +256,9 @@ public sealed class MechTypeRecord {
 
 	/// <summary>
 	/// The fore/aft position a leg node passes through as the foot plants, per gait — see
-	/// <see cref="HercSimDat.FootfallTriggerWalk"/>. <paramref name="gait"/> is the original's own
-	/// index: 0 walking, 1 reversing, 2 running.
+	/// <see cref="HercSimDat.FootfallTriggerWalk"/>.
 	/// </summary>
+	/// <param name="gait">The original's own gait index: 0 walking, 1 reversing, 2 running.</param>
 	public short FootfallTrigger(int gait) => gait switch {
 		0 => Data.FootfallTriggerWalk,
 		1 => Data.FootfallTriggerReverse,

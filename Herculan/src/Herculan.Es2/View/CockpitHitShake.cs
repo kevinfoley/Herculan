@@ -135,10 +135,11 @@ public sealed class CockpitHitShake {
 	public bool FlashSurvivesRestart { get; set; }
 
 	/// <summary>
-	/// Advances the shake and starts one on each new cockpit hit. <paramref name="cockpitHits"/> is
-	/// <see cref="Sim.MechObject.CockpitHits"/>; as with the step kick it is a running count rather
-	/// than a flag, so a hit the simulation took between two frames is not missed.
+	/// Advances the shake and starts one on each new cockpit hit.
 	/// </summary>
+	/// <param name="deltaSeconds">The seconds since the last update.</param>
+	/// <param name="cockpitHits"><see cref="Sim.MechObject.CockpitHits"/>; as with the step kick it is a running count rather
+	/// than a flag, so a hit the simulation took between two frames is not missed.</param>
 	public void Update(double deltaSeconds, int cockpitHits) {
 		if (cockpitHits != _lastHits) {
 			_lastHits = cockpitHits;
@@ -216,10 +217,9 @@ public sealed class CockpitHitShake {
 	/// Drops a shake in progress and everything it put in place — the original's view mode 4, which
 	/// clears the end tick outright so leaving the cockpit ends a shake rather than pausing it. The
 	/// host calls it every frame an outside view is up, in place of <see cref="Update"/>.
-	/// <paramref name="cockpitHits"/> is the same count <see cref="Update"/> takes: it is taken as
-	/// seen, so a hit that lands while outside never shakes the cockpit on the way back in, as
-	/// <c>Cockpit_StartHitShake</c> returns at once in view mode 4.
 	/// </summary>
+	/// <param name="cockpitHits">The same count <see cref="Update"/> takes: it is taken as seen, so a hit that lands while outside
+	/// never shakes the cockpit on the way back in, as <c>Cockpit_StartHitShake</c> returns at once in view mode 4.</param>
 	public void Reset(int cockpitHits) {
 		_lastHits = cockpitHits;
 		_running = false;
@@ -251,12 +251,13 @@ public sealed class CockpitHitShake {
 
 	/// <summary>
 	/// <c>CockpitView_StepShake</c>'s arithmetic: move toward the farther limit by up to
-	/// <paramref name="step"/>, and no farther than that limit. Landing exactly on a limit is what
+	/// a step, and no farther than that limit. Landing exactly on a limit is what
 	/// turns the walk round, since the other one is then the farther of the two. At the middle the two
 	/// are equally far and the step goes toward the lower limit, whichever side of the rest the band
 	/// lies on, so the two walks are not mirror images: one reaches 8 rows down the canvas from the rest,
 	/// the other 9 rows up it.
 	/// </summary>
+	/// <param name="step">The step.</param>
 	private void StepBand(int step) {
 		if (!_banded) {
 			return;

@@ -17,9 +17,11 @@ public sealed class SteadyEye {
 	public bool Enabled { get; set; }
 
 	/// <summary>
-	/// Applies the pin to a cockpit eye position: with it off this returns <paramref name="eye"/> untouched, with
+	/// Applies the pin to a cockpit eye position: with it off this returns the eye untouched, with
 	/// it on the eye's height is held at the rise it had the moment the pin was switched on.
 	/// </summary>
+	/// <param name="eye">The cockpit eye position.</param>
+	/// <param name="mechPosition">The machine's position.</param>
 	public Vec3i PinEyeHeight(Vec3i eye, Vec3i mechPosition) {
 		if (!Enabled) {
 			_captured = false;

@@ -74,11 +74,13 @@ public static class Es1CombatRating {
 	}
 
 	/// <summary>
-	/// <c>Mech_CompareCombatRating</c> (<c>00016968</c>), the HERC's slot <c>+0x50</c>, (<paramref name="mech"/>,
-	/// <paramref name="candidate"/>): for a candidate of class 0, each rating plus <c>Math_RandomNext</c> &amp;
+	/// <c>Mech_CompareCombatRating</c> (<c>00016968</c>), the HERC's slot <c>+0x50</c>, (machine, candidate): for a candidate of class 0, each rating plus <c>Math_RandomNext</c> &amp;
 	/// <see cref="JitterMask"/>, the machine's drawn first; 1 when the two differ by under <see cref="EvenRange"/>, 2 when
 	/// the candidate's is the higher, otherwise 0; 0 for any other class.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="candidate">The candidate.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static int Compare(Es1Mech mech, IEs1SimObject candidate, Es1SimGlobals globals) {
 		if (candidate.TargetClass != 0) {
 			return 0;
@@ -97,7 +99,7 @@ public static class Es1CombatRating {
 
 	/// <summary>
 	/// <c>Ai_SumAttackerRatings</c> (<c>00016a14</c>): the sum of the ratings of every machine of
-	/// <c>g_MechPool</c>, walked oldest first with <c>Pool_Prev</c>, whose target is <paramref name="mech"/>.
+	/// <c>g_MechPool</c>, walked oldest first with <c>Pool_Prev</c>, whose target is the machine.
 	/// </summary>
 	/// <param name="mech">The machine whose attackers are summed.</param>
 	/// <param name="globals">The simulation's globals.</param>

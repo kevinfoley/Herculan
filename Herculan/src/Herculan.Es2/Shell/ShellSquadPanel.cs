@@ -108,19 +108,25 @@ public static class ShellSquadPanel {
 
 	/// <summary>
 	/// <c>Squad_SelectBay</c> (<c>0043d64d</c>)'s crew-tab arm: no bay at all, or a bay holding a finished machine — and not
-	/// the Razor unless <paramref name="crewRow"/> is the player's own row, 0, since a squad member
+	/// the Razor unless the crew row is the player's own row, 0, since a squad member
 	/// cannot fly it. The row it tests is the crew screen's selection at the moment of the call, which
 	/// on a crew-row click is still the row being left.
 	/// </summary>
+	/// <param name="hangar">The hangar.</param>
+	/// <param name="bay">The bay.</param>
+	/// <param name="crewRow">The crew screen's selected row.</param>
 	public static bool CanSelectForCrew(ShellHangar hangar, int bay, int crewRow) =>
 		bay == -1 || (hangar.Bay(bay) is { IsBuilt: true } machine
 			&& (crewRow == 0 || machine.ChassisType != ShellRepairScreen.FlyerChassisType));
 
 	/// <summary>
-	/// Draws the picture of <paramref name="selectedBay"/> when <paramref name="pictures"/> is given, with
-	/// the weapons screen's socket <paramref name="outline"/> on it, then the readout for it and the eight
+	/// Draws the picture of the selected bay when there are pictures, with
+	/// the weapons screen's socket outline on it, then the readout for it and the eight
 	/// rows under it.
 	/// </summary>
+	/// <param name="selectedBay">The selected bay.</param>
+	/// <param name="pictures">The bay pictures, or null to draw none.</param>
+	/// <param name="outline">The weapons screen's socket outline, or null.</param>
 	public static void Paint(ShellSurface surface, HudFont? font, ShellText? text, ShellHangar hangar,
 			int selectedBay, ShellBayPictures? pictures = null, ShellGridPart? outline = null) {
 		pictures?.Paint(surface, hangar, selectedBay, outline);

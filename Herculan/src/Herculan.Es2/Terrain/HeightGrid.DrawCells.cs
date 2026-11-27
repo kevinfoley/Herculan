@@ -6,13 +6,17 @@ public sealed partial class HeightGrid {
 	/// <summary>
 	/// <c>HeightGrid_PickDrawCell</c> (<c>0046e528</c>) — the terrain cell an object is filed under
 	/// for drawing, which decides where the terrain walk paints it: its own cell, or the next one
-	/// toward the viewer on either axis when <paramref name="radius"/> reaches over the edge the two
+	/// toward the viewer on either axis when the radius reaches over the edge the two
 	/// share. The move is undone on both axes when the terrain face under
-	/// <paramref name="position"/> turns away from <paramref name="viewer"/>, and on each axis whose
-	/// new cell lies one past <paramref name="region"/>'s bounding box. Null off the grid, which is
+	/// the position turns away from the viewer, and on each axis whose
+	/// new cell lies one past the visible region's bounding box. Null off the grid, which is
 	/// the original's no-cell bucket. See docs/retail/rendering/terrain-drawing.md,
 	/// "<c>HeightGrid_PickDrawCell</c>".
 	/// </summary>
+	/// <param name="position">The object's position.</param>
+	/// <param name="radius">The object's radius.</param>
+	/// <param name="viewer">The viewer's position.</param>
+	/// <param name="region">The visible region.</param>
 	public (int X, int Y)? PickDrawCell(Vec3i position, int radius, Vec3i viewer,
 			TerrainVisibleRegion region) {
 		int cellX = position.X >> CellSizeShift;

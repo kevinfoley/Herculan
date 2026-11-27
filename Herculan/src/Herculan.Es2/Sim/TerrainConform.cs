@@ -9,7 +9,7 @@ namespace Herculan.Es2.Sim;
 /// <c>FlatObj_Draw</c> (<c>0040991c</c>), which runs it on every ground shape it draws
 /// (<see cref="GroundShape"/>).
 ///
-/// <para>Four ground samples, at <paramref name="radius"/> forward, back, left and right in the
+/// <para>Four ground samples, at the footprint radius forward, back, left and right in the
 /// object's own frame. Pitch is the arctangent of the fore-aft drop over the span between those two
 /// samples and roll the same across the beam; Z is the mean of all four, so the object rides on the
 /// average of the ground under its footprint rather than on the point its origin happens to sit

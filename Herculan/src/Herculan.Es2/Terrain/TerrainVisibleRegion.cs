@@ -47,10 +47,14 @@ public sealed class TerrainVisibleRegion {
 	public int MaxCellY { get; private set; } = int.MinValue;
 
 	/// <summary>
-	/// Rebuilds the region for a view at <paramref name="eye"/> turned by <paramref name="rotation"/>
+	/// Rebuilds the region for a view at an eye position turned by a rotation
 	/// (the view's euler matrix, rows right, forward, up) — the region half of
 	/// <c>Terrain_SetupVisibleRegion</c>.
 	/// </summary>
+	/// <param name="grid">The zone's height grid.</param>
+	/// <param name="eye">The view's position.</param>
+	/// <param name="rotation">The view's euler matrix, rows right, forward, up.</param>
+	/// <param name="edges">The view's edge slopes.</param>
 	public void Update(HeightGrid grid, Vec3i eye, in Transform3 rotation, ViewEdgeSlopes edges) {
 		int far = (int)grid.VisibilityRange;
 		if (far <= 0) {
@@ -85,10 +89,13 @@ public sealed class TerrainVisibleRegion {
 
 	/// <summary>
 	/// <c>Terrain_BuildDrawRegionQuad</c> (<c>0046d220</c>): the square of half-width
-	/// <paramref name="far"/> round the viewer, clamped to the grid's first cell and to two cells
+	/// the far distance round the viewer, clamped to the grid's first cell and to two cells
 	/// short of its far edges, as four corners in the order the original writes them. Empty when
 	/// the clamp leaves nothing.
 	/// </summary>
+	/// <param name="grid">The zone's height grid.</param>
+	/// <param name="eye">The viewer's position.</param>
+	/// <param name="far">The far distance, the square's half-width.</param>
 	private static List<Vec3i> DrawRegionSquare(HeightGrid grid, Vec3i eye, int far) {
 		int x0 = eye.X - far <= 0 ? 0 : eye.X - far;
 		int y0 = eye.Y - far <= 0 ? 0 : eye.Y - far;
@@ -109,10 +116,15 @@ public sealed class TerrainVisibleRegion {
 	/// <summary>
 	/// <c>ViewFrustum_Build</c> (<c>004948d8</c>), its six planes indexed as it stores them: near,
 	/// far, top, bottom, left, right. Each is built in view axes (across, depth, up), rotated into the
-	/// world, and passes <paramref name="margin"/> outside the eye rather than through it; the near
+	/// world, and passes a margin outside the eye rather than through it; the near
 	/// plane sits that far behind it. A negated point or normal is negated after the rotation, as the
 	/// original does it, which rounds differently from rotating the negated vector.
 	/// </summary>
+	/// <param name="eye">The view's position.</param>
+	/// <param name="rotation">The view's euler matrix.</param>
+	/// <param name="edges">The view's edge slopes.</param>
+	/// <param name="far">The far distance.</param>
+	/// <param name="margin">How far outside the eye the planes pass.</param>
 	private static Plane[] BuildFrustum(Vec3i eye, in Transform3 rotation, ViewEdgeSlopes edges,
 			int far, int margin) {
 		// cx·F >> s and its siblings: an edge's slope scaled out to the far distance.
@@ -161,10 +173,12 @@ public sealed class TerrainVisibleRegion {
 	/// <summary>
 	/// <c>ViewFrustum_ClipGroundPolygon</c> (<c>00494d4c</c>). Every plane with a Z component, or
 	/// with no normal at all, is shifted along Z first (<c>Plane_ShiftAlongZ</c>): by
-	/// <paramref name="lowZ"/> when that component is 0 or less and by −<paramref name="highZ"/>
+	/// the low shift when that component is 0 or less and by the negated high shift
 	/// when it is positive, so it is met at whichever height passes it more easily. The polygon is
 	/// cut relative to the eye, against left, right, top, bottom, far and near in that order.
 	/// </summary>
+	/// <param name="lowZ">The shift for a component of 0 or less.</param>
+	/// <param name="highZ">The negated shift for a positive component.</param>
 	private static List<Vec3i> ClipGroundPolygon(Plane[] planes, Vec3i eye, List<Vec3i> polygon,
 			int lowZ, int highZ) {
 		var points = new List<Vec3i>(polygon.Count);

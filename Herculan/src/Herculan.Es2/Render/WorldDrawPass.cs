@@ -86,11 +86,17 @@ public sealed class WorldDrawPass : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws the world from <paramref name="camera"/> into the viewport (<paramref name="viewportX"/>,
-	/// <paramref name="viewportY"/>, <paramref name="viewportWidth"/>, <paramref name="viewportHeight"/>), under whatever
-	/// scissor the caller has set. <paramref name="tracers"/> are what the per-pixel depth draw draws the beams from and
-	/// <paramref name="beamSpans"/> what the painter's order does; both are the same shots.
+	/// Draws the world from a camera into a viewport, under whatever
+	/// scissor the caller has set. The tracers are what the per-pixel depth draw draws the beams from and
+	/// the beam spans what the painter's order does; both are the same shots.
 	/// </summary>
+	/// <param name="camera">The camera to draw from.</param>
+	/// <param name="tracers">The shots the per-pixel depth draw draws its beams from.</param>
+	/// <param name="beamSpans">The shots the painter's order draws its beams from.</param>
+	/// <param name="viewportX">The viewport's left edge.</param>
+	/// <param name="viewportY">The viewport's bottom edge.</param>
+	/// <param name="viewportWidth">The viewport's width.</param>
+	/// <param name="viewportHeight">The viewport's height.</param>
 	public void Draw(WorldDrawMode mode, Camera camera, IEnumerable<SceneItem> items, GroundShapeLayer ground,
 			IReadOnlyList<SpriteBatch> sprites, IReadOnlyList<BeamTracer> tracers, IReadOnlyList<BeamSpanDraw> beamSpans,
 			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {

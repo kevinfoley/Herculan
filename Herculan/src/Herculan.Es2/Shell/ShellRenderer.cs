@@ -69,10 +69,11 @@ public sealed class ShellRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws <paramref name="image"/> in the backdrop's place, or the backdrop again for null — what the
+	/// Draws an image in the backdrop's place, or the backdrop again for null — what the
 	/// startup sequence's full-window widget shows while nothing else is up
 	/// (<see cref="ShellStartupSequence"/>).
 	/// </summary>
+	/// <param name="image">The image, or null for the backdrop.</param>
 	public void SetBackdropOverride(ShellImage? image) {
 		if (ReferenceEquals(image, _backdropOverrideImage)) {
 			return;
@@ -84,9 +85,11 @@ public sealed class ShellRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws <paramref name="screen"/> into the whole window. The caller clears first: the shell fills
+	/// Draws a screen into the whole window. The caller clears first: the shell fills
 	/// the canvas but not the letterbox either side of it, and what shows there is the host's call.
 	/// </summary>
+	/// <param name="layout">The screen's layout.</param>
+	/// <param name="screen">The screen.</param>
 	public void Draw(ShellScreenLayout layout, ShellScreen screen) {
 		if (layout.Scale <= 0f) {
 			return;
@@ -131,10 +134,16 @@ public sealed class ShellRenderer : IDisposable {
 	}
 
 	/// <summary>
-	/// Draws <paramref name="texture"/> stretched over a canvas rect, on top of whatever
+	/// Draws a texture stretched over a canvas rect, on top of whatever
 	/// <see cref="Draw"/> put there — a movie in its window, or a picture over the whole canvas. Its top
 	/// row is its first, as a <c>VideoFrame</c>'s and a <see cref="ShellImage"/>'s are.
 	/// </summary>
+	/// <param name="layout">The screen's layout.</param>
+	/// <param name="texture">The texture.</param>
+	/// <param name="x">The rect's left edge.</param>
+	/// <param name="y">The rect's top edge.</param>
+	/// <param name="width">The rect's width.</param>
+	/// <param name="height">The rect's height.</param>
 	public void DrawTexture(ShellScreenLayout layout, GpuTexture texture, int x, int y, int width, int height) {
 		if (layout.Scale <= 0f) {
 			return;

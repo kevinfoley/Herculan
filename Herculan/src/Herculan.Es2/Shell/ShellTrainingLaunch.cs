@@ -80,8 +80,9 @@ public static class ShellTrainingLaunch {
 
 	/// <summary>
 	/// Both steps in one, as the shell takes them without <c>-@</c>: <see cref="NewCareer"/> on the row, then
-	/// <see cref="Load"/> of its mission. <paramref name="random"/> is VSHELL's generator, which both draw from.
+	/// <see cref="Load"/> of its mission.
 	/// </summary>
+	/// <param name="random">VSHELL's generator, which both draw from.</param>
 	public static ShellTrainingHandoff? Write(string directory, GameContent content, SimulatorPreferences options,
 			int row, bool instantAction, SimRandom random, short[] clearList, PlayerSave? held, out string? failure,
 			MissionGenerating? generating = null, bool ownWorld = false) {
@@ -94,11 +95,12 @@ public static class ShellTrainingLaunch {
 
 	/// <summary>
 	/// <c>Game_NewCareer("TRAINEE", option 0x27)</c> in training mode, its position step
-	/// <c>Career_SeedPosition</c> (<c>00412a2f</c>) putting it on stage 0 at <paramref name="row"/>, and the hangar it
+	/// <c>Career_SeedPosition</c> (<c>00412a2f</c>) putting it on stage 0 at a practice row, and the hangar it
 	/// leaves. The step ends by showing the mission-name dialog, whose button the mission load is (<see cref="Load"/>).
-	/// <paramref name="held"/> is the game the shell's memory holds, as <see cref="ShellCampaignLaunch.NewCareer"/> takes
-	/// it. Null, with the reason, when the install lacks a file the original would open.
+	/// Null, with the reason, when the install lacks a file the original would open.
 	/// </summary>
+	/// <param name="row">The practice screen's row.</param>
+	/// <param name="held">The game the shell's memory holds, as <see cref="ShellCampaignLaunch.NewCareer"/> takes it.</param>
 	public static (PlayerSave Game, ShellHangar Hangar)? NewCareer(GameContent content, SimulatorPreferences options, int row,
 			Func<short, int> roll, PlayerSave? held, out string? failure) {
 		if (ShellCampaignLaunch.NewCareer(content, TraineeName, options[DifficultyOption], ShellCampaignMode.Training, roll,
@@ -112,17 +114,18 @@ public static class ShellTrainingLaunch {
 	}
 
 	/// <summary>
-	/// The training half of <c>MsnGen_LoadMission</c> (<c>0041c73d</c>) for <paramref name="game"/>, which
+	/// The training half of <c>MsnGen_LoadMission</c> (<c>0041c73d</c>) for a game, which
 	/// <see cref="NewCareer"/> started, with the handoff exported (<c>Game_ExportMissionHandoff</c>, <c>0040f0d4</c>) into
-	/// <paramref name="directory"/>. <paramref name="missionPath"/> is the career position's mission
-	/// (<see cref="ShellCareerMissions.MissionPath"/>), as <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>) loads it, or the DEBUG
-	/// dialog's typed one. <paramref name="row"/> is the practice screen's lit row, <c>PracticeScreen_SelectedRow</c>
-	/// (<c>00479bb8</c>), which picks the player's machine. <paramref name="clearList"/> is the row-2 clear list the shell
-	/// keeps across loads (<see cref="MissionGenerator.Load"/>), and <paramref name="instantAction"/> is
-	/// <c>InstantAction_Active</c> (<c>0047363c</c>), which <c>INSTANT ACTION</c> sets. <paramref name="generating"/> is
-	/// told what the mission load is handed, and <paramref name="ownWorld"/> keeps the mission's own theater and time of day
-	/// (<see cref="PracticeHeader"/>). Null, with the reason, when the install lacks a file the original would open.
+	/// a directory. Null, with the reason, when the install lacks a file the original would open.
 	/// </summary>
+	/// <param name="directory">The folder the handoff is exported into.</param>
+	/// <param name="row">The practice screen's lit row, <c>PracticeScreen_SelectedRow</c> (<c>00479bb8</c>), which picks the player's machine.</param>
+	/// <param name="missionPath">The career position's mission (<see cref="ShellCareerMissions.MissionPath"/>), as <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>) loads it, or the DEBUG dialog's typed one.</param>
+	/// <param name="instantAction"><c>InstantAction_Active</c> (<c>0047363c</c>), which <c>INSTANT ACTION</c> sets.</param>
+	/// <param name="clearList">The row-2 clear list the shell keeps across loads (<see cref="MissionGenerator.Load"/>).</param>
+	/// <param name="game">The game <see cref="NewCareer"/> started.</param>
+	/// <param name="generating">Told what the mission load is handed.</param>
+	/// <param name="ownWorld">Whether to keep the mission's own theater and time of day (<see cref="PracticeHeader"/>).</param>
 	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
 			string? missionPath, bool instantAction, Func<short, int> roll, short[] clearList, PlayerSave game,
 			ShellHangar hangar, out string? failure, MissionGenerating? generating = null, bool ownWorld = false) {
@@ -142,12 +145,15 @@ public static class ShellTrainingLaunch {
 
 	/// <summary>
 	/// <see cref="Load(string, GameContent, SimulatorPreferences, int, string?, bool, Func{short, int}, short[], PlayerSave,
-	/// ShellHangar, out string?, MissionGenerating?)"/> for a mission already read: the <c>.MSN</c> <paramref name="msn"/>
-	/// and its text <paramref name="text"/>, or null, named <paramref name="missionPath"/>. The original reads every mission
+	/// ShellHangar, out string?, MissionGenerating?)"/> for a mission already read: its <c>.MSN</c>
+	/// and its text, or null, named by a path. The original reads every mission
 	/// from its archives; this engine's mission editor hands one it holds in memory (<see cref="MissionFileLaunch.OpenNew"/>).
-	/// <paramref name="ownWorld"/> keeps the mission's own theater and time of day (<see cref="PracticeHeader"/>), and
-	/// <paramref name="wholeSquad"/> fields every squadmate (<see cref="BuildSquad"/>).
 	/// </summary>
+	/// <param name="missionPath">The mission's name.</param>
+	/// <param name="msn">The mission's <c>.MSN</c>.</param>
+	/// <param name="text">The mission's text, or null.</param>
+	/// <param name="ownWorld">Keeps the mission's own theater and time of day (<see cref="PracticeHeader"/>).</param>
+	/// <param name="wholeSquad">Fields every squadmate (<see cref="BuildSquad"/>).</param>
 	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
 			string missionPath, byte[] msn, byte[]? text, bool instantAction, Func<short, int> roll, short[] clearList,
 			PlayerSave game, ShellHangar hangar, out string? failure, MissionGenerating? generating = null, bool ownWorld = false,
@@ -191,14 +197,17 @@ public static class ShellTrainingLaunch {
 
 	/// <summary>
 	/// The squad half of the training load, between the write of <c>script.dat</c> and the export: the positions in play from
-	/// <paramref name="mission"/>'s group 0, the player's machine into bay 0, and a machine, a bay and a position for each
-	/// wingman, into <paramref name="hangar"/>, which <see cref="NewCareer"/> left. Returns the positions in play. See
+	/// the mission's group 0, the player's machine into bay 0, and a machine, a bay and a position for each
+	/// wingman, into the hangar, which <see cref="NewCareer"/> left. Returns the positions in play. See
 	/// docs/retail/shell/main-menu.md#starting-a-practice-mission.
 	///
-	/// <para><paramref name="wholeSquad"/> puts the last squadmate on strength too, which retail's build never does: this
+	/// <para>A whole squad puts the last squadmate on strength too, which retail's build never does: this
 	/// engine's departure for a mission <c>gam\career.dat</c> does not list, which retail has no path for (the user's
 	/// choice, <c>KNOWN_ISSUES_ES2.md</c>). The practice missions and the demos keep the retail build.</para>
 	/// </summary>
+	/// <param name="mission">The mission whose group 0 gives the positions in play.</param>
+	/// <param name="hangar">The hangar <see cref="NewCareer"/> left.</param>
+	/// <param name="wholeSquad">Whether the last squadmate is put on strength too.</param>
 	internal static int BuildSquad(GameContent content, SimulatorPreferences options, int row, bool instantAction,
 			MissionGenerator mission, ShellHangar hangar, bool wholeSquad) {
 		int positions = mission.SquadPositions;
@@ -245,10 +254,11 @@ public static class ShellTrainingLaunch {
 
 	/// <summary>
 	/// The header words a training load writes over the loaded header: word 0 set to <see cref="PracticeTheater"/>, then the ammunition, damage,
-	/// difficulty and time-of-day options into words 5 to 7 and 9, and word 8 cleared. <paramref name="ownWorld"/> leaves words
+	/// difficulty and time-of-day options into words 5 to 7 and 9, and word 8 cleared. Playing on its own world leaves words
 	/// 0 and 9 as the mission sets them, so it plays on its own theater and time of day: this engine's departure for a mission
 	/// played from the mission editor (docs/herculan/editor-design.md#saving-and-playing), which retail has no path for.
 	/// </summary>
+	/// <param name="ownWorld">Whether the mission plays on its own theater and time of day.</param>
 	private static short?[] PracticeHeader(SimulatorPreferences options, bool ownWorld) => [
 		ownWorld ? null : PracticeTheater, null, null, null, null,
 		options[AmmoOption], options[DamageOption], options[DifficultyOption], 0, ownWorld ? null : options[TimeOfDayOption],

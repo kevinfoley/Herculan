@@ -34,9 +34,10 @@ public sealed class CockpitPan {
 	public const float DurationSeconds = OriginalStepCount / ReferenceRefreshHz;
 
 	/// <summary>
-	/// Creates a pan over <paramref name="travelRows"/> device rows of cockpit canvas — normally
+	/// Creates a pan over a number of device rows of cockpit canvas — normally
 	/// <see cref="Content.CockpitViewGeometry.HeadsDownTravelY"/>. Starts parked at the forward view.
 	/// </summary>
+	/// <param name="travelRows">The number of device rows the pan travels.</param>
 	public CockpitPan(int travelRows) => TravelRows = Math.Max(travelRows, 0);
 
 	/// <summary>Distance between the forward and heads-down canvas origins, in device rows.</summary>

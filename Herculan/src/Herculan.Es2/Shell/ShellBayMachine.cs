@@ -98,8 +98,9 @@ public sealed class ShellBayMachine {
 	/// <summary>
 	/// <c>Herc_BuildTick</c> (<c>00411086</c>) — one mission of construction: <see cref="BuildMissionsLeft"/> down
 	/// by one and <see cref="BuildPercent"/> recomputed against the chassis's <c>herc_inf.dat</c> build time,
-	/// <paramref name="buildTime"/>, as <c>((buildTime - left) * 100) / buildTime</c>.
+	/// as <c>((buildTime - left) * 100) / buildTime</c>.
 	/// </summary>
+	/// <param name="buildTime">The chassis's <c>herc_inf.dat</c> build time, in missions.</param>
 	public void BuildTick(int buildTime) {
 		BuildMissionsLeft--;
 		BuildPercent = (short)((buildTime - BuildMissionsLeft) * 100 / buildTime);
@@ -222,10 +223,11 @@ public sealed class ShellBayMachine {
 	}
 
 	/// <summary>
-	/// <c>Repair_Apply</c> (<c>004113af</c>) — <paramref name="target"/> into all 13 external facets, all
+	/// <c>Repair_Apply</c> (<c>004113af</c>) — a target condition into all 13 external facets, all
 	/// nine internals and each mount slot below the capacity, except that an empty slot is set to 100.
 	/// A fitted mount at 0 is written too, although <see cref="ShellRepairCosts.HercCost"/> bills nothing for it.
 	/// </summary>
+	/// <param name="target">The condition written.</param>
 	public void ApplyRepair(int target) {
 		Array.Fill(_external, (short)target);
 		Array.Fill(_internal, (short)target);
@@ -312,8 +314,10 @@ public sealed class ShellBayMachine {
 	/// A machine just bought — <c>Herc_Order</c> (<c>00411019</c>) over the record <c>HercRecord_Ctor</c>
 	/// (<c>00410d7a</c>) leaves: every condition 100, no weapon in any mount, the chassis type, the
 	/// capacity <c>Herc_CapacityForType</c> (<c>00410d54</c>) reads, 0% built, and
-	/// <paramref name="buildMissions"/>, the chassis's <c>herc_inf.dat</c> build time, left to go.
+	/// the chassis's <c>herc_inf.dat</c> build time, in missions, left to go.
 	/// </summary>
+	/// <param name="chassisType">The chassis type.</param>
+	/// <param name="buildMissions">The chassis's <c>herc_inf.dat</c> build time, in missions.</param>
 	public static ShellBayMachine Ordered(int chassisType, int buildMissions) {
 		static short[] Full(int length) => Enumerable.Repeat((short)Complete, length).ToArray();
 
@@ -323,11 +327,12 @@ public sealed class ShellBayMachine {
 	}
 
 	/// <summary>
-	/// A machine of <paramref name="chassisType"/> with nothing fitted — <c>HercRecord_Ctor</c>
+	/// A machine of a chassis type with nothing fitted — <c>HercRecord_Ctor</c>
 	/// (<c>00410d7a</c>) then <c>Herc_SetType</c> (<c>00410fde</c>): built with no missions left, every
 	/// condition 100, and the capacity <c>Herc_CapacityForType</c> (<c>00410d54</c>) reads.
 	/// <see cref="Fit"/> arms it.
 	/// </summary>
+	/// <param name="chassisType">The chassis type.</param>
 	public static ShellBayMachine Delivered(int chassisType) {
 		var machine = Ordered(chassisType, 0);
 		return new ShellBayMachine(chassisType, machine.MountCapacity, Complete, 0, machine._external, machine._internal,
@@ -335,10 +340,13 @@ public sealed class ShellBayMachine {
 	}
 
 	/// <summary>
-	/// <c>Herc_FitNewUnit</c> (<c>004115c6</c>) — a new unit of <paramref name="weaponId"/> in <paramref name="slot"/> carrying
-	/// <paramref name="guidance"/>, taken from no stock, and the hardpoint at 100. How a mission's own
+	/// <c>Herc_FitNewUnit</c> (<c>004115c6</c>) — a new unit of a weapon in a mount slot carrying a guidance kind,
+	/// taken from no stock, and the hardpoint at 100. How a mission's own
 	/// machine is armed.
 	/// </summary>
+	/// <param name="slot">The mount slot.</param>
+	/// <param name="weaponId">The weapon's id.</param>
+	/// <param name="guidance">The guidance kind.</param>
 	internal void Fit(int slot, int weaponId, int guidance) {
 		SetMount(slot, new ShellWeaponUnit(weaponId, guidance: guidance));
 		SetCondition(ShellRepairCategory.Hardpoint, slot, Complete);

@@ -72,7 +72,7 @@ public sealed partial class ShellHangar {
 	}
 
 	/// <summary>
-	/// Writes what the screens change back into <paramref name="save"/>, the game it was read from, so
+	/// Writes what the screens change back into the save, the game it was read from, so
 	/// that <c>Game_SaveSlot</c> (<c>0040e37b</c>) can write the whole of it: the armory stock and build
 	/// queue, the bays, the salvage pool, the chassis flags <see cref="GrantChassis"/> sets, the player's
 	/// bay, the three squad members' bay, position and on-strength byte, and the player block's two
@@ -83,6 +83,7 @@ public sealed partial class ShellHangar {
 	/// (<c>004121cf</c>) walks it, and read back by pushing each unit onto the head, so each save and load
 	/// reverses the order (docs/retail/formats/save-games.md#armory-stock-record).</para>
 	/// </summary>
+	/// <param name="save">The game this hangar was read from.</param>
 	public void Store(PlayerSave save) {
 		var items = new Inventory.InventoryItem[ShellMissionLaunch.WeaponCatalogCount];
 		for (int id = 0; id < items.Length; id++) {

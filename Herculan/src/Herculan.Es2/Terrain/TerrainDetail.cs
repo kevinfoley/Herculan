@@ -43,7 +43,7 @@ public static class TerrainDetail {
 	}
 
 	/// <summary>
-	/// The setting the install at <paramref name="dataDirectory"/> is on, or
+	/// The setting the install at a data directory is on, or
 	/// <see cref="DefaultLevel"/> when there is no readable preferences file there. Reading it rather
 	/// than picking one keeps the engine's draw distance in step with the retail install beside it,
 	/// which is what a side-by-side capture is comparing against.

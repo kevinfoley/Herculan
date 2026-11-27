@@ -36,7 +36,8 @@ public sealed class ShellStartupSequence {
 	/// <summary><c>DAT_00473604</c>: the handler has hidden the widget and shown the menu.</summary>
 	public bool Done { get; private set; }
 
-	/// <summary>The show (<c>ESAnim2_HandleEvent</c> (<c>0040c8b3</c>), event 1): frame 0 on screen and the alarm installed at <paramref name="now"/>.</summary>
+	/// <summary>The show (<c>ESAnim2_HandleEvent</c> (<c>0040c8b3</c>), event 1): frame 0 on screen and the alarm installed at a given time.</summary>
+	/// <param name="now">The time.</param>
 	public void Show(long now) {
 		IsUp = true;
 		Frame = 0;
@@ -45,10 +46,12 @@ public sealed class ShellStartupSequence {
 	}
 
 	/// <summary>
-	/// One pass of the shell's loop at <paramref name="now"/>: the alarm's tick when it is due, which
-	/// advances the frame and runs the handler, calling <paramref name="playSwitch"/> on its first run.
+	/// One pass of the shell's loop: the alarm's tick when it is due, which
+	/// advances the frame and runs the handler, calling the switch sound on its first run.
 	/// Returns whether the frame changed.
 	/// </summary>
+	/// <param name="now">The time of this pass.</param>
+	/// <param name="playSwitch">Plays the switch sound.</param>
 	public bool Advance(long now, Action playSwitch) {
 		if (!IsUp || _alarm == null || !_alarm.Tick(now)) {
 			return false;

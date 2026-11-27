@@ -68,7 +68,7 @@ public sealed class CockpitGlance {
 	public bool Sliding => OffsetPanels != (int)Requested * _reachPanels;
 
 	/// <summary>
-	/// The original's glance command toward <paramref name="side"/>, with its queue gate: from the
+	/// The original's glance command toward a side, with its queue gate: from the
 	/// forward view it starts that glance; from the opposite glance it returns to the forward view;
 	/// from the same glance it does nothing.
 	///
@@ -79,6 +79,7 @@ public sealed class CockpitGlance {
 	/// from one side window to the other. Nor does one start when the window already shows the whole
 	/// side window (reach 0), since there would be nothing to slide.</para>
 	/// </summary>
+	/// <param name="side">The side to glance toward.</param>
 	public void Command(GlanceSide side) {
 		if (side == GlanceSide.Forward || side == Requested) {
 			return;

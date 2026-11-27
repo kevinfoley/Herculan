@@ -150,8 +150,9 @@ public sealed class MissionScene {
 	public int UnmodelledCount => Objects.Count(o => o.Model == null);
 
 	/// <summary>
-	/// Loads the mission at <paramref name="scriptPath"/> and everything it needs.
+	/// Loads a mission and everything it needs.
 	/// </summary>
+	/// <param name="scriptPath">The path of the mission's script.</param>
 	/// <param name="dataDirectory">Where the simulator's settings are, when not beside the script.</param>
 	/// <param name="script">The script already read from <paramref name="scriptPath"/>, or null to read it here.</param>
 	public static MissionScene Load(GameContent content, string scriptPath, string? dataDirectory = null,
@@ -281,13 +282,14 @@ public sealed class MissionScene {
 	}
 
 	/// <summary>
-	/// Loads the world <paramref name="mission"/> plays in and nothing that stands in it: the zone, its terrain and the
+	/// Loads the world a mission plays in and nothing that stands in it: the zone, its terrain and the
 	/// theater's models, the simulation and the camera <see cref="Load"/> builds, with no object placed, no group and no
 	/// action, the terrain neither painted nor levelled and <see cref="Objects"/> empty. The mission editor's, which builds
 	/// its own objects (<see cref="CreateObject"/>) and stands them on the ground as <see cref="Load"/> does
 	/// (<see cref="Settle"/>). It draws from the session's generator what <see cref="Load"/> draws before its first object:
 	/// the zone's roll.
 	/// </summary>
+	/// <param name="mission">The mission.</param>
 	/// <param name="dataDirectory">Where the simulator's settings are, when not beside <paramref name="mission"/>'s script.</param>
 	public static MissionScene LoadWorld(GameContent content, Mission mission, string? dataDirectory = null) {
 		var (materials, theater, world, beams, cockpitScheme, models, groundShapeModels, tables) =
@@ -301,13 +303,15 @@ public sealed class MissionScene {
 	}
 
 	/// <summary>
-	/// Stands <paramref name="objects"/>, built by <see cref="CreateObject"/>, on the ground as <see cref="Load"/> stands
+	/// Stands the objects, built by <see cref="CreateObject"/>, on the ground as <see cref="Load"/> stands
 	/// its own: each structure's footprint marked and each object at its spawn position (<see cref="SpawnPosition"/>), then
-	/// <paramref name="pads"/> painted, the ground levelled once under every footprint, the structures settled on it again,
+	/// then the pads painted, the ground levelled once under every footprint, the structures settled on it again,
 	/// and <see cref="Models"/> built again for the objects over the levelled terrain. Once, over a world loaded alone
 	/// (<see cref="LoadWorld"/>): the passes only accumulate. The objects are not added to <see cref="World"/>, listed in
 	/// <see cref="Objects"/> or bound to actions, and nothing is drawn from the generator.
 	/// </summary>
+	/// <param name="objects">The objects, built by <see cref="CreateObject"/>.</param>
+	/// <param name="pads">The base pads to paint.</param>
 	public void Settle(IReadOnlyList<SceneObject> objects, IReadOnlyList<MissionBasePad> pads) => Settle(objects, pads, objects);
 
 	// Settle, with <modelled> the objects Models is built for.
@@ -321,12 +325,16 @@ public sealed class MissionScene {
 	}
 
 	/// <summary>
-	/// Puts <paramref name="terrain"/> in place of the zone's (<see cref="SimWorld.ReplaceTerrain"/>), as the zone loaded it,
-	/// then stands <paramref name="objects"/> on it and paints and levels it for them and <paramref name="pads"/> as
+	/// Puts a terrain in place of the zone's (<see cref="SimWorld.ReplaceTerrain"/>), as the zone loaded it,
+	/// then stands the objects on it and paints and levels it for them and the pads as
 	/// <see cref="Settle"/> does, building <see cref="Models"/> again, the terrain mesh among them, for
-	/// <paramref name="modelled"/>, as <see cref="ChangeTheater"/> builds them. The mission editor's, when a mission's terrain
+	/// the modelled objects, as <see cref="ChangeTheater"/> builds them. The mission editor's, when a mission's terrain
 	/// is replaced or put back; retail loads one zone per mission.
 	/// </summary>
+	/// <param name="terrain">The terrain to put in place of the zone's.</param>
+	/// <param name="objects">The objects to stand on it.</param>
+	/// <param name="pads">The base pads to paint.</param>
+	/// <param name="modelled">The objects whose models are built again.</param>
 	public void ReplaceTerrain(HeightGrid terrain, IReadOnlyList<SceneObject> objects, IReadOnlyList<MissionBasePad> pads,
 			IReadOnlyList<SceneObject> modelled) {
 		// A grid an undo puts back was painted and levelled for the structures as they stood then.
@@ -483,22 +491,25 @@ public sealed class MissionScene {
 	public SceneObject? CreateObject(MissionPlacement placement) => Spawn(placement, _library, _tables, World.Random, World.Tweaks, World.DwellJitter);
 
 	/// <summary>
-	/// The wreck <see cref="BaseType.HulkTypeIndex"/> <paramref name="index"/> names, from the model library: the one
+	/// The wreck a <see cref="BaseType.HulkTypeIndex"/> names, from the model library: the one
 	/// <see cref="MissionModels.Hulks"/> holds for a structure the scene was loaded with, or for a type
 	/// <see cref="CreateObject"/> built since, built now. Null for a root the library does not have.
 	/// </summary>
+	/// <param name="index">The hulk type index.</param>
 	public SceneModel? Hulk(int index) => _library.Hulk(index);
 
 	/// <summary>
-	/// Dresses the scene in theater <paramref name="theaterIndex"/>'s <paramref name="variant"/> in place of the one it
+	/// Dresses the scene in a theater's variant in place of the one it
 	/// was loaded with, as <c>World_LoadTheater</c> (<c>0042e010</c>) would have loaded it at the start
 	/// (docs/retail/formats/wld-world.md): the palette and shade ramp every model is built through, the terrain bank, the
-	/// sky and fog, the ground-shape set and the beam colours, with each of <paramref name="objects"/>' models built again
+	/// sky and fog, the ground-shape set and the beam colours, with each object's models built again
 	/// through them and <see cref="Models"/> built again for them. The terrain as it stands, the objects and the simulation
 	/// are kept; a HERC's shadow already on the ground keeps the radius its set gave it. The mission editor's, for a
 	/// mission whose theater or time of day is changed: the simulator never changes theater once a mission is loaded.
-	/// <paramref name="objects"/> are every object to dress, which for the editor are more than <see cref="Objects"/>.
 	/// </summary>
+	/// <param name="theaterIndex">The theater's index.</param>
+	/// <param name="variant">The theater's variant.</param>
+	/// <param name="objects">Every object to dress, which for the editor are more than <see cref="Objects"/>.</param>
 	public void ChangeTheater(int theaterIndex, int variant, IReadOnlyList<SceneObject> objects) {
 		var theater = TheaterDescriptor.Load(_content, theaterIndex, variant);
 		var library = new SceneModelLibrary(_content, theater, _cockpitScheme);
@@ -516,9 +527,12 @@ public sealed class MissionScene {
 	}
 
 	/// <summary>
-	/// Loads <paramref name="theater"/>'s ground-shape set from <paramref name="models"/>, one model per cell of each root,
-	/// and binds each root's radius and cell count into <paramref name="world"/>.
+	/// Loads a theater's ground-shape set from the model library, one model per cell of each root,
+	/// and binds each root's radius and cell count into the simulation world.
 	/// </summary>
+	/// <param name="models">The model library.</param>
+	/// <param name="theater">The theater.</param>
+	/// <param name="world">The simulation world.</param>
 	private static IReadOnlyList<SceneModel>[] BindGroundShapes(SceneModelLibrary models, TheaterDescriptor theater, SimWorld world) {
 		var groundShapeModels = new IReadOnlyList<SceneModel>[models.ShapeCount(theater.FlatSetName + ".DTS")];
 		var groundShapeRadii = new int[groundShapeModels.Length];
@@ -744,10 +758,13 @@ public sealed class MissionScene {
 		WorldScale.ToRenderMatrix(sceneObject.Object.WorldFrame);
 
 	/// <summary>
-	/// Where the spawn pass stands <paramref name="simObject"/>, built for <paramref name="placement"/>, on
-	/// <paramref name="terrain"/>: at the placement's point, a flyer at the point's height or the hover height for a Z of
+	/// Where the spawn pass stands an object, built for a placement, on
+	/// the terrain: at the placement's point, a flyer at the point's height or the hover height for a Z of
 	/// 0, a mech at its spawn height (<see cref="MechSpawnHeight"/>), anything else on the ground.
 	/// </summary>
+	/// <param name="terrain">The terrain.</param>
+	/// <param name="simObject">The object.</param>
+	/// <param name="placement">The placement the object was built for.</param>
 	public static Vec3i SpawnPosition(HeightGrid terrain, SimObject simObject, MissionPlacement placement) {
 		var at = SpawnPoint(simObject, placement);
 		return new Vec3i(at.X, at.Y, simObject switch {
@@ -765,10 +782,13 @@ public sealed class MissionScene {
 			: placement.Position;
 
 	/// <summary>
-	/// A mech's spawn height — <c>Mech_AttachToGroup</c> (<c>00417aa8</c>): the ground under
-	/// <paramref name="groundPoint"/> plus the chassis' ride height, and <see cref="FlyerSpawnLift"/>
+	/// A mech's spawn height — <c>Mech_AttachToGroup</c> (<c>00417aa8</c>): the ground under the point
+	/// plus the chassis' ride height, and <see cref="FlyerSpawnLift"/>
 	/// more for a flyer. See docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 5.
 	/// </summary>
+	/// <param name="terrain">The terrain.</param>
+	/// <param name="mech">The mech.</param>
+	/// <param name="groundPoint">The point on the ground the mech spawns over.</param>
 	public static int MechSpawnHeight(HeightGrid terrain, MechObject mech, Vec3i groundPoint) =>
 		terrain.HeightAtWorld(groundPoint.X, groundPoint.Y) + mech.Type.RideHeight
 			+ (mech.Type.IsFlyer ? FlyerSpawnLift : 0);
@@ -921,7 +941,10 @@ public sealed class MissionScene {
 		}
 	}
 
-	/// <summary>The model and LOD chain <see cref="Create"/> builds a placement's object with, from <paramref name="models"/>.</summary>
+	/// <summary>The model and LOD chain <see cref="Create"/> builds a placement's object with, from the model library.</summary>
+	/// <param name="placement">The placement.</param>
+	/// <param name="models">The model library.</param>
+	/// <param name="baseTypes">The base type table.</param>
 	private static (SceneModel? Model, ShapeDetailChain? Detail) ModelOf(MissionPlacement placement, SceneModelLibrary models,
 			BaseTypeTable baseTypes) => placement.Kind switch {
 		MissionUnitKind.Mech when placement.TypeName != null => MechModel(models, placement.TypeName),

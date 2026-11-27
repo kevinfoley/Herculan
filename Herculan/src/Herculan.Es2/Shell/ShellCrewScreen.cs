@@ -93,9 +93,10 @@ public sealed class ShellCrewScreen {
 	private ShellHangar _hangar;
 
 	/// <summary>
-	/// Builds the screen and enters it with <paramref name="bay"/> selected, the way the previous tab
+	/// Builds the screen and enters it with a bay selected, the way the previous tab
 	/// left <c>SelectedBaySlot</c> (<c>00482ae5</c>); the entry then moves it — see <see cref="SelectedBay"/>.
 	/// </summary>
+	/// <param name="bay">The selected bay.</param>
 	public ShellCrewScreen(ShellHangar? hangar = null, int bay = -1, ShellBayPictures? pictures = null,
 			ShellCrewPortraits? portraits = null) {
 		_hangar = hangar ?? ShellHangar.From(null);
@@ -133,12 +134,14 @@ public sealed class ShellCrewScreen {
 	public ShellBayPilot? RowPilot(int row) => row == 0 ? _hangar.Player : _hangar.SquadMemberAt(row);
 
 	/// <summary>
-	/// <c>Crew_Enter</c> (<c>00441a01</c>), the tab's entry, over <paramref name="hangar"/> with
-	/// <paramref name="bay"/> as the bay the previous tab left selected. The tab handler sets
+	/// <c>Crew_Enter</c> (<c>00441a01</c>), the tab's entry, over a hangar with a bay as the bay the
+	/// previous tab left selected. The tab handler sets
 	/// <c>CurrentTabIndex</c> (<c>0047581c</c>) to 6 before calling it — the one tab handler that does so before its builder
 	/// rather than after — so every bay move below takes <c>Squad_SelectBay</c> (<c>0043d64d</c>)'s
 	/// crew arm.
 	/// </summary>
+	/// <param name="hangar">The hangar.</param>
+	/// <param name="bay">The bay the previous tab left selected.</param>
 	public void Enter(ShellHangar hangar, int bay) {
 		_hangar = hangar;
 		SelectedBay = bay;
@@ -180,12 +183,13 @@ public sealed class ShellCrewScreen {
 
 	/// <summary>
 	/// A squad portrait's handler (<c>Crew_OnSquadPortrait0</c> (<c>00442151</c>), <c>Crew_OnSquadPortrait1</c> (<c>004421fc</c>), <c>Crew_OnSquadPortrait2</c> (<c>004422a7</c>)): lights
-	/// portrait <paramref name="member"/> and unlights the other two, then
+	/// a portrait and unlights the other two, then
 	/// <c>Crew_AssignSquadMember(member)</c> (<c>00441eb8</c>). On the player's row the portrait
 	/// lights and nothing else happens. On a squad row, whoever holds the row's position gives it up,
 	/// the member takes it, and the member is then given the selected bay by the same assignment a
 	/// roster click makes.
 	/// </summary>
+	/// <param name="member">The portrait's squad member.</param>
 	public void ClickPortrait(int member) {
 		if (member < 0 || member >= AvailablePilotCount) {
 			return;
@@ -342,10 +346,11 @@ public sealed class ShellCrewScreen {
 			PanelRect.X0 + RowRight, PanelRect.Y0 + row * RowPitch + FirstRowTop + RowBottomOffset);
 
 	/// <summary>
-	/// Draws the whole screen into <paramref name="surface"/>, the squad panel included. The caller
-	/// clears it first; the content panel's body is filled, as the repair screen's is. <paramref name="lit"/> is
-	/// the widget a press has lit.
+	/// Draws the whole screen into a surface, the squad panel included. The caller
+	/// clears it first; the content panel's body is filled, as the repair screen's is.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 

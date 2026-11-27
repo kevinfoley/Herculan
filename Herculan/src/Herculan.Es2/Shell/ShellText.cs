@@ -27,7 +27,8 @@ public sealed class ShellText {
 	/// <summary>The folder of the English tables.</summary>
 	public const string EnglishFolder = "ENG";
 
-	/// <summary>The <c>LANG0.VOL</c> folder of <paramref name="language"/>'s tables.</summary>
+	/// <summary>The <c>LANG0.VOL</c> folder of a language's tables.</summary>
+	/// <param name="language">The shell's language.</param>
 	public static string LanguageFolder(GameLanguage language) => language switch {
 		GameLanguage.French => "FRE",
 		GameLanguage.German => "GER",
@@ -42,10 +43,11 @@ public sealed class ShellText {
 	public int Count => _values.Length;
 
 	/// <summary>
-	/// Entry <paramref name="index"/>, or null when the index is out of range. Callers draw no text on
+	/// An entry, or null when the index is out of range. Callers draw no text on
 	/// null rather than substituting a placeholder: a missing caption should read as missing, the same
 	/// call the cockpit's own label paths make.
 	/// </summary>
+	/// <param name="index">The entry's index.</param>
 	public string? Text(int index) =>
 		index >= 0 && index < _values.Length && _values[index].Length > 0 ? _values[index] : null;
 

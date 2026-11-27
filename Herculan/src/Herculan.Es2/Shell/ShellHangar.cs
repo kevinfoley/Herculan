@@ -28,12 +28,13 @@ public sealed partial class ShellHangar {
 	public const int SettleScrapCondition = 30;
 
 	/// <summary>
-	/// <c>Herc_SettleAfterMission</c> (<c>00410c7c</c>) — the machine in <paramref name="bay"/> below
+	/// <c>Herc_SettleAfterMission</c> (<c>00410c7c</c>) — the machine in a bay below
 	/// <see cref="SettleScrapCondition"/> overall (<see cref="ShellBayMachine.OverallCondition"/>) is valued,
 	/// its mounts stripped into stock and the bay emptied, and the value returned with <c>Scrapped</c> set; at
 	/// or above, only its overall slot goes back to 100. Unlike <see cref="Scrap"/> the pilot keeps the bay.
 	/// An empty bay settles nothing: the original writes the overall slot through the empty bay's null record.
 	/// </summary>
+	/// <param name="bay">The bay.</param>
 	public (int Salvage, bool Scrapped) SettleAfterMission(int bay, ShellRepairCosts? costs) {
 		if (Bay(bay) is not { } machine) {
 			return (0, false);
@@ -51,12 +52,14 @@ public sealed partial class ShellHangar {
 	}
 
 	/// <summary>
-	/// <c>Repair_Auto</c> (<c>00411328</c>) — the repair level, from 0 down, that <paramref name="budget"/>
+	/// <c>Repair_Auto</c> (<c>00411328</c>) — the repair level, from 0 down, that a budget
 	/// covers: while the cost of repairing to the level's target is above the budget, step down a level,
 	/// unless the machine's own overall condition is already at or above that level. A cost below the
 	/// budget is applied (<see cref="ShellBayMachine.ApplyRepair"/>) and returned; otherwise nothing is
 	/// repaired and 0 returned. Both comparisons are unsigned, as the original's are.
 	/// </summary>
+	/// <param name="machine">The machine to repair.</param>
+	/// <param name="budget">The budget to repair within.</param>
 	public static uint AutoRepair(ShellBayMachine machine, uint budget, ShellRepairCosts costs) {
 		int level = 0;
 		uint cost = (uint)costs.HercCost(machine, ShellRepairCosts.RepairTarget[level]);
@@ -78,11 +81,12 @@ public sealed partial class ShellHangar {
 	}
 
 	/// <summary>
-	/// <c>HercList_RemoveFirstOfType</c> (<c>00410bbe</c>) — the first bay holding a <paramref name="chassisType"/> machine has its mounts
+	/// <c>HercList_RemoveFirstOfType</c> (<c>00410bbe</c>) — the first bay holding a machine of a chassis type has its mounts
 	/// stripped into stock and is emptied, for no salvage, and its index is returned. With none, it returns
 	/// what its last probe read, bay 7's chassis type, or <c>-1</c> for an empty bay 7 — which its caller,
 	/// <c>Hangar_WithdrawChassis</c> (<c>0040e7cd</c>), then uses as a bay.
 	/// </summary>
+	/// <param name="chassisType">The chassis type.</param>
 	public int RemoveFirstOfType(int chassisType) {
 		int probe = -1;
 		for (int bay = 0; bay < BayCount; bay++) {
@@ -105,11 +109,15 @@ public sealed partial class ShellHangar {
 	public const int ReturnToStockCondition = 80;
 
 	/// <summary>
-	/// BUILD's order, <c>Hangar_BuySelected</c> (<c>0040e91c</c>): <c>HercList_OrderIntoSelected</c> (<c>00410982</c>) puts a new record in <paramref name="bay"/> — the
+	/// BUILD's order, <c>Hangar_BuySelected</c> (<c>0040e91c</c>): <c>HercList_OrderIntoSelected</c> (<c>00410982</c>) puts a new record in a bay — the
 	/// selected one, whatever it holds — and <see cref="ShellBayMachine.Ordered"/> fills it with
-	/// <paramref name="buildMissions"/> to go, and the price, <paramref name="priceTons"/> times 1000, comes
+	/// its build missions to go, and the price in tons times 1000, comes
 	/// off the pool. Returns the price.
 	/// </summary>
+	/// <param name="bay">The bay: the selected one, whatever it holds.</param>
+	/// <param name="chassisType">The chassis type.</param>
+	/// <param name="priceTons">The price in tons.</param>
+	/// <param name="buildMissions">The build missions to go.</param>
 	public int Order(int bay, int chassisType, int priceTons, int buildMissions) {
 		if (bay < 0 || bay >= BayCount) {
 			return 0;
@@ -123,10 +131,11 @@ public sealed partial class ShellHangar {
 
 	/// <summary>
 	/// The scrap dialog's ACCEPT, <c>Hangar_ScrapSelected</c> (<c>0040e757</c>, docs/retail/shell/armory.md#scrapping): the machine in
-	/// <paramref name="bay"/> is valued, its mounts stripped into stock and the bay emptied
+	/// the machine in a bay is valued, its mounts stripped into stock and the bay emptied
 	/// (<c>HercList_ScrapSelected</c>, <c>00410922</c>), the value goes into the pool, and the pilot the bay had loses it — and whoever
 	/// holds that pilot's squad position is taken off strength. Returns the salvage credited.
 	/// </summary>
+	/// <param name="bay">The bay.</param>
 	public int Scrap(int bay, ShellRepairCosts? costs) {
 		if (bay < 0 || bay >= BayCount) {
 			return 0;

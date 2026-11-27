@@ -75,11 +75,13 @@ public static class ShellPalette {
 	/// rather than defensive: <c>Shell_SelectTabPalette</c> (<c>0043b162</c>)'s mission arm is three bare <c>if</c>s against
 	/// <c>MissionScreenView</c> (<c>0048106c</c>) with no <c>else</c>, so a fourth value leaves whatever palette was up.
 	///
-	/// <para><paramref name="stage"/> is the campaign stage as the save holds it, 1-5 for the campaign.
-	/// The arithmetic is the original's and is unguarded there: it is reproduced unguarded here, so a
+	/// <para>The arithmetic on the campaign stage is the original's and is unguarded there: it is reproduced unguarded here, so a
 	/// stage outside 1-5 gives an index outside the briefing or debrief run exactly as it does in
 	/// retail, and <see cref="Name"/> is what refuses it.</para>
 	/// </summary>
+	/// <param name="tab">The tab.</param>
+	/// <param name="view">The mission screen's view.</param>
+	/// <param name="stage">The campaign stage as the save holds it, 1-5 for the campaign.</param>
 	public static int? ForTab(int tab, ShellMissionView view = ShellMissionView.Map, int stage = 1) => tab switch {
 		// Main menu and save do not go through the tab switch at all — their handlers install this
 		// directly, and 0043b23d installs it again on the way in.
@@ -96,7 +98,7 @@ public static class ShellPalette {
 	};
 
 	/// <summary>
-	/// Whether switching to <paramref name="tab"/> leaves the canvas below the strip filled with the
+	/// Whether switching to a tab leaves the canvas below the strip filled with the
 	/// shell's background colour. Tabs 2-7 install their palette through the scope (<c>Shell_SelectTabPalette</c> (<c>0043b162</c>)
 	/// cases 2-7 all call <c>Shell_SetPaletteScope</c> (<c>00439da0</c>)), and showing the scope posts its paint,
 	/// <c>ESPal_Paint</c> (<c>0040cb40</c>), which fills its whole rect with <c>0x10</c> before the hide installs the
@@ -105,6 +107,7 @@ public static class ShellPalette {
 	/// the save screen go through the scope too, but then put up their own backdrop-textured root over
 	/// it.
 	/// </summary>
+	/// <param name="tab">The tab.</param>
 	public static bool FillsScope(int tab) => tab >= 2 && tab <= 7;
 
 	/// <summary><c>ESPal_Paint</c> (<c>0040cb40</c>): the scope's rect filled with <see cref="ShellChrome.InteriorColor"/>.</summary>

@@ -166,9 +166,11 @@ public sealed class GameInProgress {
 	}
 
 	/// <summary>
-	/// ACCEPT's save (SaveScreen_OnAccept, 00437ffa): Game_SaveSlot under <paramref name="label"/>, then Stats_StageCurrentGame,
+	/// ACCEPT's save (SaveScreen_OnAccept, 00437ffa): Game_SaveSlot under a label, then Stats_StageCurrentGame,
 	/// so the slot's summary is the game just written. Returns the slot as the screen now shows it.
 	/// </summary>
+	/// <param name="slot">The slot.</param>
+	/// <param name="label">The label the slot is saved under.</param>
 	public ShellSaveSlot? SaveNamed(int slot, string label) {
 		if (Save(slot, label) is not { } entry || LoadedGame == null) {
 			return null;

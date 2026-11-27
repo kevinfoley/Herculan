@@ -57,11 +57,14 @@ public static class Es1Navigation {
 	}
 
 	/// <summary>
-	/// <c>Ai_DriveToPoint</c>, (machine, <paramref name="point"/>): the control law at the cruise speed
+	/// <c>Ai_DriveToPoint</c>, (machine, point): the control law at the cruise speed
 	/// (<see cref="Es1Mech.CruiseSpeed"/>, or <see cref="DefaultCruiseSpeed"/> when it is 0) and the steer of the bearing
 	/// error (<c>Math_HeadingToward</c>); answers whether <c>Math_DistanceBetweenPoints2D</c> from the point is under
 	/// <see cref="ArrivalRange"/>, the range taken before the step.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="point">The point to drive to.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static bool DriveToPoint(Es1Mech mech, Vec3i point, Es1SimGlobals globals) {
 		short bearing = Es1MissionGroup.HeadingToward(mech.Position, point);
 		int distance = Es1PlayerThink.DistanceBetweenPoints2D(point, mech.Position);
@@ -148,7 +151,9 @@ public static class Es1Navigation {
 	public static void UpdateWeaponsFree(Es1Mech mech) =>
 		mech.RadarOn = Leader(mech) is { IsPlayer: true } ? mech.RadarKeptOn : mech.RadarSetting;
 
-	/// <summary>The bearing error's steer: (<c>int16</c>)(<paramref name="bearing"/> − <paramref name="heading"/>) &gt;&gt; <see cref="SteerShift"/>.</summary>
+	/// <summary>The bearing error's steer: (<c>int16</c>)(bearing − heading) &gt;&gt; <see cref="SteerShift"/>.</summary>
+	/// <param name="bearing">The bearing.</param>
+	/// <param name="heading">The heading.</param>
 	public static short Steer(short bearing, short heading) => (short)((short)(bearing - heading) >> SteerShift);
 
 	/// <summary>

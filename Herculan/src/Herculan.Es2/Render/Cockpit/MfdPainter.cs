@@ -41,10 +41,11 @@ internal sealed class MfdPainter {
 	/// <para><b>Each screen draws its own content.</b> STATUS and TARGET STATUS share one
 	/// method off one <see cref="MfdStatusSubject"/> — the squad roster's current entry for F1, the
 	/// current selection for F5 — SCANNER plots live contacts, and FLASH COMM lists the string table's order
-	/// rows. NAV MAP draws the terrain raster turned to the machine's heading, through
-	/// <paramref name="drawNavMapTerrain"/>, and its centre cross; MISSILE CAM draws whatever its
-	/// screen last painted, the world from the missile going through <paramref name="drawMissileView"/>.</para>
+	/// rows. NAV MAP draws the terrain raster turned to the machine's heading, through a writer, and its centre cross;
+	/// MISSILE CAM draws whatever its screen last painted, the world from the missile going through another writer.</para>
 	/// </summary>
+	/// <param name="drawNavMapTerrain">Draws the terrain raster turned to the machine's heading, or null to leave the screen on its flood.</param>
+	/// <param name="drawMissileView">Draws the world from the missile into the MISSILE CAM screen, or null to leave the screen on its flood.</param>
 	internal static void AddMfd(CockpitArt hud, CockpitHudState state,
 			Action<string, int, float, float> blitDevice,
 			ClippedBlitWriter blitDeviceClipped,
@@ -362,7 +363,7 @@ internal sealed class MfdPainter {
 	/// The status screen shared by F1 and F5 (<c>0043a2e0</c>): five stacked labels down the left of
 	/// the screen and the subject's damage diagram in a viewport whose left edge is the labels' right
 	/// edge. One method for both keys, because there is one screen class for both in the original too
-	/// — F1 and F5 differ only in <paramref name="subject"/>.
+	/// — F1 and F5 differ only in the subject shown.
 	///
 	/// <list type="number">
 	/// <item><c>ID:</c> for the player's own machine, <c>TARGET:</c> for anything else;</item>
@@ -378,6 +379,7 @@ internal sealed class MfdPainter {
 	/// then tinted region by region (see <see cref="PaperDollPainter.AddPaperDollTint"/>), or a flat silhouette from the
 	/// <c>BASES</c>, <c>VEHICLES</c> or <c>FLYERS</c> bank centred in the viewport.</para>
 	/// </summary>
+	/// <param name="subject">The machine the screen reports on: the squad roster's current entry for F1, the current selection for F5.</param>
 	private static void AddMfdStatusScreen(CockpitArt hud, MfdStatusSubject subject,
 			Action<string, int, float, float> blitDevice, MfdLabelWriter drawLabel,
 			Action<float, float, float, float, Vector3> fillRect,

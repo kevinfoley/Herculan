@@ -115,9 +115,11 @@ public sealed class ShellRepairDiagrams {
 	public int LayoutCount => _layouts.Count(layout => layout != null);
 
 	/// <summary>
-	/// Paints the picture a selection in <paramref name="column"/> shows for
-	/// <paramref name="machine"/>, or the empty picture when there is none.
+	/// Paints the picture a selection in a column shows for a machine, or the empty picture when there is none.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="machine">The machine, or null for none.</param>
+	/// <param name="column">The selection's column.</param>
 	public void Paint(ShellSurface surface, ShellBayMachine? machine, int column) {
 		if (machine == null) {
 			ShellGrid.Paint(surface, EmptyPictureRect, gridLines: false, Array.Empty<ShellGridPart>());
@@ -270,12 +272,13 @@ public sealed class ShellRepairDiagrams {
 	}
 
 	/// <summary>
-	/// The external group whose damage a layout's group <paramref name="group"/> shows and whose row its hotspot
+	/// The external group whose damage a layout's group shows and whose row its hotspot
 	/// selects. Retail's are the same, which puts <c>Left Torso</c> on the viewer's left and <c>Left Leg</c> on the
 	/// viewer's right (docs/retail/shell/weapons-and-repair.md, "The damage diagram").
 	/// <see cref="Es2TweakSettingDefinitions.FixRepairDiagramSides"/> swaps the two torsos, so both pairs read as seen
 	/// from the front. Only the colouring and the clicks change: the parts stay where the layout puts them.
 	/// </summary>
+	/// <param name="group">The layout's group.</param>
 	private static int GroupDrawnAt(int group) =>
 		!TweakSettings.Current.GetSettingValue(Es2TweakSettingDefinitions.FixRepairDiagramSides) ? group
 			: group == LeftTorsoGroup ? RightTorsoGroup

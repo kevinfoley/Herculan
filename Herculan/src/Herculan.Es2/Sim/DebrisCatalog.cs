@@ -196,7 +196,7 @@ public sealed class DebrisCatalog {
 	/// <summary>
 	/// <c>Debris_Resolve</c> — splits a debris index into the database that owns it and its group
 	/// inside that database. Null when the index falls in the alternate half and
-	/// <paramref name="installed"/> is nothing, or when it names a group neither table has.
+	/// no alternate is installed, or when it names a group neither table has.
 	/// </summary>
 	/// <param name="index">The index a spawn site names.</param>
 	/// <param name="installed">What that site had installed as the alternate.</param>

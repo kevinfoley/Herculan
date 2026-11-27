@@ -29,10 +29,12 @@ public static class CollisionModelReader {
 	public const short ObjectFrameNode = -1;
 
 	/// <summary>
-	/// One model out of <paramref name="bytes"/>, bounds included. Advances
-	/// <paramref name="offset"/> past everything it read, which is what lets
+	/// One model out of a byte buffer, bounds included. Advances the offset
+	/// past everything it read, which is what lets
 	/// <see cref="BaseCollisionTable"/> walk 65 of them out of one stream.
 	/// </summary>
+	/// <param name="bytes">The buffer.</param>
+	/// <param name="offset">Where the model starts; advanced past everything read.</param>
 	public static ColliderNode[] Read(byte[] bytes, ref int offset) =>
 		WithBounds(new HercColliderTransformer().ReadNodes(bytes, ref offset));
 

@@ -29,8 +29,8 @@ public static class Es1ObstacleAvoidance {
 	public const int ProbeStartX = 1500, ProbeEndX = 10000, ProbeLength = 20000;
 
 	/// <summary>
-	/// The avoidance on <paramref name="desired"/> and <paramref name="steer"/>. It runs when the machine moves or is asked
-	/// to, and asked backwards only while the unstick countdown runs. With <paramref name="flags"/>' <see cref="SkipBit"/>
+	/// The avoidance on the desired speed and the steer. It runs when the machine moves or is asked
+	/// to, and asked backwards only while the unstick countdown runs. With the flags' <see cref="SkipBit"/>
 	/// clear: each probe's nearest hit (<see cref="Probe"/>) is its side's figure, then each live object but this one whose
 	/// group holds no action and whose body radius (slot <c>+0x60</c>) is not 0, at Q10(<c>Math_DistanceBetweenPoints</c>,
 	/// <see cref="ObjectRangeScale"/>) and inside <see cref="ObjectArc"/> of the heading, lowers the right figure for a
@@ -39,6 +39,11 @@ public static class Es1ObstacleAvoidance {
 	/// it; the steer gains (<see cref="ClearRange"/> − nearer) × <see cref="Gain"/> / <see cref="ClearRange"/>, negated when the
 	/// left is nearer or equal; and the desired speed becomes 0 when the nearer is negative.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="flags">The avoidance flags.</param>
+	/// <param name="desired">The desired speed.</param>
+	/// <param name="steer">The steer.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	public static void Avoid(Es1Mech mech, short flags, ref short desired, ref short steer, Es1SimGlobals globals) {
 		if ((mech.Speed == 0 && desired == 0) || (desired < 0 && mech.UnstickCountdown == 0)) {
 			return;
@@ -100,11 +105,16 @@ public static class Es1ObstacleAvoidance {
 	}
 
 	/// <summary>
-	/// One probe, from (<paramref name="startX"/>, 0, 0) to (<paramref name="endX"/>, <see cref="ProbeLength"/>, 0) taken
+	/// One probe, from (the start X, 0, 0) to (the end X, <see cref="ProbeLength"/>, 0) taken
 	/// through the machine's frame: <c>Sim_RaycastShapes</c> (<c>00020b70</c>)(0, the end, the start, result) against the
-	/// zone's shapes, its distance replacing <paramref name="figure"/> on a hit, then <see cref="StructureRaycastShapes"/>,
+	/// zone's shapes, its distance replacing the figure on a hit, then <see cref="StructureRaycastShapes"/>,
 	/// its distance kept when nearer.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="startX">The probe's start X.</param>
+	/// <param name="endX">The probe's end X.</param>
+	/// <param name="figure">The side's figure so far.</param>
+	/// <param name="globals">The simulation's globals.</param>
 	private static int Probe(Es1Mech mech, int startX, int endX, int figure, Es1SimGlobals globals) {
 		var frame = mech.Frame;
 		var from = frame.TransformPoint(startX, 0, 0);
@@ -121,7 +131,7 @@ public static class Es1ObstacleAvoidance {
 	}
 
 	/// <summary>
-	/// <c>Structure_RaycastShapes</c> (<c>000038b8</c>): the ray from <paramref name="from"/> to <paramref name="to"/>
+	/// <c>Structure_RaycastShapes</c> (<c>000038b8</c>): the ray from its start to its end
 	/// (<see cref="Es1Ray.Between"/>) against the structures of that side, or every side's for −1
 	/// (<see cref="Es1ShapeTests.RaycastShapeList"/>, docs/es1/simulation/terrain.md#the-structures-tests), and whether it
 	/// struck one, with the result's distance.

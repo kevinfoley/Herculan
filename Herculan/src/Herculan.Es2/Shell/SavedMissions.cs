@@ -29,9 +29,10 @@ public static class SavedMissions {
 	public const int MaxNameLength = 8;
 
 	/// <summary>
-	/// Why <paramref name="name"/> cannot name a saved mission, or null when it can: one to
+	/// Why a name cannot name a saved mission, or null when it can: one to
 	/// <see cref="MaxNameLength"/> characters, each an ASCII letter, a digit or <c>_</c>.
 	/// </summary>
+	/// <param name="name">The name to check.</param>
 	public static string? WhyNotName(string name) {
 		if (name.Length == 0) {
 			return "Type a name.";
@@ -46,23 +47,32 @@ public static class SavedMissions {
 			: "A mission name holds only letters, digits and _.";
 	}
 
-	/// <summary>The loose <c>.MSN</c> for mission <paramref name="name"/> (no extension) under <paramref name="installRoot"/>.</summary>
+	/// <summary>The loose <c>.MSN</c> of a mission under the install.</summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name (no extension).</param>
 	public static string MissionPath(string installRoot, string name) =>
 		CaseInsensitivePath.Combine(installRoot, MissionFileLaunch.MissionFolder, name + MissionFileLaunch.MissionExtension);
 
-	/// <summary>The loose text file for mission <paramref name="name"/>, as a shell running in <paramref name="language"/> reads it.</summary>
+	/// <summary>The loose text file of a mission, as a shell running in a language reads it.</summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name.</param>
+	/// <param name="language">The shell's language.</param>
 	public static string TextPath(string installRoot, string name, GameLanguage language) =>
 		CaseInsensitivePath.Combine(installRoot, MissionFileLaunch.MissionFolder,
 			name + ShellCareerMissions.MissionTextExtension(language));
 
-	/// <summary>The about file for mission <paramref name="name"/> under <paramref name="installRoot"/>.</summary>
+	/// <summary>The about file of a mission under the install.</summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name.</param>
 	public static string AboutPath(string installRoot, string name) =>
 		CaseInsensitivePath.Combine(installRoot, MissionFileLaunch.MissionFolder, name + MissionAbout.Extension);
 
 	/// <summary>
-	/// What mission <paramref name="name"/>'s about file says, or null when it has none, or one that cannot be read or is
+	/// What a mission's about file says, or null when it has none, or one that cannot be read or is
 	/// larger than <see cref="MissionAbout.MaxSize"/>.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name.</param>
 	public static MissionAbout? ReadAbout(string installRoot, string name) {
 		string path = AboutPath(installRoot, name);
 		try {
@@ -74,20 +84,26 @@ public static class SavedMissions {
 		}
 	}
 
-	/// <summary>The header of mission <paramref name="name"/>'s own zone under <paramref name="installRoot"/>.</summary>
+	/// <summary>The header of a mission's own zone under the install.</summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name.</param>
 	public static string ZoneHeaderPath(string installRoot, string name) =>
 		CaseInsensitivePath.Combine(installRoot, MissionFileLaunch.MissionFolder, name + ZoneFiles.HeaderExtension);
 
-	/// <summary>The heightmap of mission <paramref name="name"/>'s own zone under <paramref name="installRoot"/>.</summary>
+	/// <summary>The heightmap of a mission's own zone under the install.</summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name.</param>
 	public static string ZoneHeightmapPath(string installRoot, string name) =>
 		CaseInsensitivePath.Combine(installRoot, MissionFileLaunch.MissionFolder, name + ZoneFiles.HeightmapExtension);
 
 	/// <summary>
-	/// Mission <paramref name="name"/>'s own zone, or null: with a null <paramref name="failure"/> when it has neither
-	/// file, else with the reason the pair is not a zone, prefixed with the file it is about. That is one file of the two
-	/// missing, a file larger than a zone's or one that cannot be read, or <see cref="ZoneFiles.Read"/>'s reason, prefixed
-	/// with both.
+	/// A mission's own zone, or null with the reason the pair is not a zone, prefixed with the file it is about: one file of
+	/// the two missing, a file larger than a zone's or one that cannot be read, or <see cref="ZoneFiles.Read"/>'s reason,
+	/// prefixed with both. A mission with neither file has no zone and no reason.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name.</param>
+	/// <param name="failure">The reason the pair is not a zone, or null when it is one or the mission has neither file.</param>
 	public static ZoneFiles? ReadZone(string installRoot, string name, out string? failure) {
 		string headerPath = ZoneHeaderPath(installRoot, name);
 		string heightmapPath = ZoneHeightmapPath(installRoot, name);
@@ -135,7 +151,9 @@ public static class SavedMissions {
 		}
 	}
 
-	/// <summary>Whether the install has a loose <c>.MSN</c> for mission <paramref name="name"/>.</summary>
+	/// <summary>Whether the install has a loose <c>.MSN</c> for a mission.</summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name.</param>
 	public static bool Exists(string installRoot, string name) => File.Exists(MissionPath(installRoot, name));
 
 	/// <summary>Every loose <c>.MSN</c> in the install's mission folder, by file name.</summary>
@@ -154,12 +172,18 @@ public static class SavedMissions {
 	}
 
 	/// <summary>
-	/// Writes mission <paramref name="name"/>'s <c>.MSN</c> <paramref name="msn"/>, unless null its text
-	/// <paramref name="text"/>, unless blank its about file <paramref name="about"/>, and unless null its own zone
-	/// <paramref name="zone"/>'s header and heightmap into the install's mission folder, creating the folder, each replaced
-	/// file copied to its <see cref="BackupExtension"/> first. A blank <paramref name="about"/> removes the about file there,
-	/// and a null <paramref name="zone"/> the zone's files, after the same copy. Returns the paths written.
+	/// Writes a mission's <c>.MSN</c>, unless null its text, unless blank its about file, and unless null its own zone's
+	/// header and heightmap into the install's mission folder, creating the folder, each replaced
+	/// file copied to its <see cref="BackupExtension"/> first. A blank about file removes the about file there,
+	/// and a null zone the zone's files, after the same copy. Returns the paths written.
 	/// </summary>
+	/// <param name="installRoot">The install's root.</param>
+	/// <param name="name">The mission's name.</param>
+	/// <param name="language">The language of the text.</param>
+	/// <param name="msn">The mission's <c>.MSN</c>.</param>
+	/// <param name="text">The mission's text, or null.</param>
+	/// <param name="about">The mission's about file, blank to remove it.</param>
+	/// <param name="zone">The mission's own zone, or null to remove its files.</param>
 	public static IReadOnlyList<string> Write(string installRoot, string name, GameLanguage language, byte[] msn, byte[]? text,
 			MissionAbout about, ZoneFiles? zone) {
 		if (WhyNotName(name) is { } why) {

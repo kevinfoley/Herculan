@@ -93,10 +93,11 @@ public sealed class ShellScrapDialog {
 	}
 
 	/// <summary>
-	/// Draws the dialog over whatever <paramref name="surface"/> holds. The panel's body is dithered in
-	/// <c>0x10</c> rather than filled, so the screen shows through it at half strength. <paramref name="lit"/> is
-	/// the widget a press has lit.
+	/// Draws the dialog over whatever the surface holds. The panel's body is dithered in
+	/// <c>0x10</c> rather than filled, so the screen shows through it at half strength.
 	/// </summary>
+	/// <param name="surface">The surface to draw over.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		if (!IsOpen) {
 			return;

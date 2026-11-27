@@ -39,11 +39,13 @@ public sealed class MechFormationTable {
 	public int Count => _formations.Length;
 
 	/// <summary>
-	/// The spread offset for a group's <paramref name="memberIndex"/>-th member (its position within
+	/// The spread offset for a group's member at a member index (its position within
 	/// the claiming block-11 record's <c>MemberRefs</c> array), or null when the slot takes no
 	/// offset — member index 0 (the group's first-claimed member), an out-of-range formation id, or a
 	/// member index past the table's 7 follower slots.
 	/// </summary>
+	/// <param name="formationId">The formation id.</param>
+	/// <param name="memberIndex">The member's index.</param>
 	public MechFormationOffset? OffsetFor(int formationId, int memberIndex) {
 		if (memberIndex <= 0 || formationId < 0 || formationId >= _formations.Length) {
 			return null;

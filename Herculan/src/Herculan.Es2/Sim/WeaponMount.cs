@@ -189,9 +189,10 @@ public sealed partial class WeaponMount {
 	/// look the record up again by type and subtype id (<see cref="WeaponCatalog.Lookup"/>) and take
 	/// the first match, which for <c>ATC75</c>, <c>ATC100</c>, <c>LAS400</c> and <c>LAS500</c> is an
 	/// earlier weapon's record. With <see cref="Es2TweakSettingDefinitions.FixWeaponDamageRecords"/> on in
-	/// <paramref name="world"/>'s <see cref="SimWorld.Tweaks"/>, the shot is <see cref="Projectile"/> under its corrected subtype id
+	/// the world's <see cref="SimWorld.Tweaks"/>, the shot is <see cref="Projectile"/> under its corrected subtype id
 	/// (<see cref="WeaponCatalog.CorrectedProjectile"/>). See docs/retail/formats/proj-dat.md#lookup.
 	/// </summary>
+	/// <param name="world">The world whose tweaks are consulted.</param>
 	public ProjectileData.Projectile? ShotProjectile(SimWorld world) =>
 		world.Tweaks.GetSettingValue(Es2TweakSettingDefinitions.FixWeaponDamageRecords)
 			? _correctedProjectile
@@ -391,11 +392,12 @@ public sealed partial class WeaponMount {
 		_template?.Tail is { Length: >= 0x14 } tail ? BitConverter.ToInt16(tail, 0x12) : (short)0;
 
 	/// <summary>
-	/// <c>WeaponMount_RangeAllows</c> (<c>0040e5f8</c>) — whether a target at <paramref name="range"/> is inside this weapon's
+	/// <c>WeaponMount_RangeAllows</c> (<c>0040e5f8</c>) — whether a target at a range is inside this weapon's
 	/// engagement window, <see cref="MinimumRange"/> exclusive to <see cref="Range"/> exclusive. Both
 	/// the AI's weapon choice and its ELF latch ask it, as does the cockpit's readiness predicate;
 	/// see docs/retail/simulation/weapon-mounts.md ("Readiness").
 	/// </summary>
+	/// <param name="range">The target's range.</param>
 	public bool RangeAllows(int range) => MinimumRange < range && range < Range;
 
 	/// <summary>

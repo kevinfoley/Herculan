@@ -84,9 +84,10 @@ public sealed class SimWorld {
 	public HeightGrid Terrain { get; private set; }
 
 	/// <summary>
-	/// Puts <paramref name="terrain"/> in place of the loaded zone's. Not retail, which loads one zone per mission: the
+	/// Puts a terrain in place of the loaded zone's. Not retail, which loads one zone per mission: the
 	/// mission editor's, when a mission's terrain is replaced (<see cref="Scene.MissionScene.ReplaceTerrain"/>).
 	/// </summary>
+	/// <param name="terrain">The terrain.</param>
 	public void ReplaceTerrain(HeightGrid terrain) => Terrain = terrain;
 
 	/// <summary>The travelling-projectile table, or null when the resource was not loaded.</summary>
@@ -158,7 +159,7 @@ public sealed class SimWorld {
 
 	/// <summary>
 	/// <c>Damage_ScaleByDifficulty</c> (<c>00426b04</c>) — the Q10 factor a shot fired by
-	/// <paramref name="side"/> has its damage multiplied by at this difficulty.
+	/// a shot fired by a side has its damage multiplied by at this difficulty.
 	///
 	/// <para><b>The two sides move in opposite directions.</b> A human shot is scaled <i>up</i> at
 	/// every level and a Cybrid one <i>down</i> at every level, and each step closes the gap: at
@@ -170,6 +171,7 @@ public sealed class SimWorld {
 	/// <c>owner-&gt;group-&gt;side</c>. The side is copied onto the object at spawn and nothing changes
 	/// it mid-mission, so it is the same byte without the unguarded dereference.</para>
 	/// </summary>
+	/// <param name="side">The firing side.</param>
 	public int DamageScaleFor(World.MissionSide side) =>
 		(side == World.MissionSide.Human ? DamageScaleHuman : DamageScaleCybrid)[Difficulty];
 
@@ -323,9 +325,11 @@ public sealed class SimWorld {
 
 	/// <summary>
 	/// <c>Group_DeploymentCheck</c>'s pod branch — takes a pod off the pool and puts it in the air
-	/// over <paramref name="target"/>. A full pool delivers nothing, which is the original's own
+	/// over a target. A full pool delivers nothing, which is the original's own
 	/// answer to an exhausted pool: it checks the allocation and quietly does without.
 	/// </summary>
+	/// <param name="target">The point the pod is aimed at.</param>
+	/// <param name="group">The group the pod delivers.</param>
 	internal void LaunchDropPod(Vec3i target, MissionGroup group) {
 		if (_meteors.Count >= MeteorObject.PoolSize) {
 			return;
@@ -353,12 +357,14 @@ public sealed class SimWorld {
 
 	/// <summary>
 	/// <c>Pool_Alloc(g_FlatObjPool)</c> and the <c>FlatObj</c> construction every spawner inlines after
-	/// it: root <paramref name="shapeIndex"/> of the flat set at <paramref name="position"/>, heading 0.
+	/// it: one root of the flat set at a position, heading 0.
 	///
 	/// <para>A full pool gives null. <b>None of the three spawners checks for that</b>: each goes on
 	/// to write the position (or, in the HERC's case, the Z) through the pointer it got, which is a
 	/// crash in the original (KNOWN_ISSUES_ES2.md). Here each caller simply does without the shape.</para>
 	/// </summary>
+	/// <param name="shapeIndex">The root's index in the flat set.</param>
+	/// <param name="position">The position.</param>
 	internal GroundShape? SpawnGroundShape(int shapeIndex, Vec3i position) {
 		if (_groundShapes.Count >= GroundShape.PoolSize) {
 			return null;
@@ -391,7 +397,8 @@ public sealed class SimWorld {
 		_groundShapeFrames = frameCounts;
 	}
 
-	/// <summary>How many cells root <paramref name="shapeIndex"/>'s sequence 0 has, or 0 unbound.</summary>
+	/// <summary>How many cells a root's sequence 0 has, or 0 unbound.</summary>
+	/// <param name="shapeIndex">The root's index.</param>
 	internal int GroundShapeFrameCount(int shapeIndex) =>
 		shapeIndex >= 0 && shapeIndex < _groundShapeFrames.Count ? _groundShapeFrames[shapeIndex] : 0;
 
@@ -523,13 +530,15 @@ public sealed class SimWorld {
 
 	/// <summary>
 	/// <c>DAT_004a9b84[obj+0x4b]</c> — whether the player's group has already had its chance to call
-	/// <paramref name="enemy"/> in, a per-object latch indexed by <see cref="SimObject.ListIndex"/>
+	/// an enemy in, a per-object latch indexed by <see cref="SimObject.ListIndex"/>
 	/// and never cleared during a mission. Written only by <see cref="MechObject.EnemySighted"/>.
 	/// </summary>
+	/// <param name="enemy">The enemy.</param>
 	internal bool SightingCalledIn(SimObject enemy) =>
 		enemy.ListIndex >= 0 && enemy.ListIndex < _sightingCalledIn.Length && _sightingCalledIn[enemy.ListIndex];
 
-	/// <summary>Raises <see cref="SightingCalledIn"/> for <paramref name="enemy"/>.</summary>
+	/// <summary>Raises <see cref="SightingCalledIn"/> for an enemy.</summary>
+	/// <param name="enemy">The enemy.</param>
 	internal void LatchSighting(SimObject enemy) {
 		if (enemy.ListIndex >= 0 && enemy.ListIndex < _sightingCalledIn.Length) {
 			_sightingCalledIn[enemy.ListIndex] = true;
@@ -722,12 +731,10 @@ public sealed class SimWorld {
 	/// <summary>
 	/// Advances the simulation by one tick: publishes the timestep, then updates every live object.
 	/// Objects flagged removed are skipped, matching how the original's tick walks its lists.
-	///
-	/// <para><paramref name="tickDelta"/> is the <c>SimTickDelta</c> the tick runs with and
-	/// <paramref name="elapsedMilliseconds"/> the time it stands for. Anything but the engine's own
-	/// pair comes from a replayed tape, whose frames each carry the delta the original measured for
-	/// them.</para>
 	/// </summary>
+	/// <param name="tickDelta">The <c>SimTickDelta</c> the tick runs with.</param>
+	/// <param name="elapsedMilliseconds">The time the tick stands for. Anything but the engine's own pair comes from a replayed tape,
+	/// whose frames each carry the delta the original measured for them.</param>
 	public void Tick(short tickDelta, double elapsedMilliseconds) {
 		SimClock.TickDelta = tickDelta;
 		_beams.Clear();

@@ -48,10 +48,13 @@ public readonly struct TerrainPaintOrder : IEquatable<TerrainPaintOrder> {
 	public bool ByColumn { get; }
 
 	/// <summary>
-	/// The walk for a view at <paramref name="viewer"/> with the simulation heading
-	/// <paramref name="heading"/> (the view's euler Z, <c>view+0x14</c>): by column when its
+	/// The walk for a view, from the viewer's position and the simulation heading
+	/// (the view's euler Z, <c>view+0x14</c>): by column when its
 	/// magnitude, <c>−0x8000</c> read as <c>0x7fff</c>, lies in <c>0x2001</c>..<c>0x5fff</c>.
 	/// </summary>
+	/// <param name="grid">The zone's height grid.</param>
+	/// <param name="viewer">The view's position.</param>
+	/// <param name="heading">The simulation heading, the view's euler Z.</param>
 	public static TerrainPaintOrder For(HeightGrid grid, Vec3i viewer, short heading) {
 		int magnitude = heading == short.MinValue ? short.MaxValue : System.Math.Abs((int)heading);
 		return new TerrainPaintOrder(viewer.X >> grid.CellSizeShift, viewer.Y >> grid.CellSizeShift,
@@ -59,10 +62,12 @@ public readonly struct TerrainPaintOrder : IEquatable<TerrainPaintOrder> {
 	}
 
 	/// <summary>
-	/// Where cell (<paramref name="cellX"/>, <paramref name="cellY"/>) falls in the walk: a larger
+	/// Where a cell falls in the walk: a larger
 	/// rank is painted later. Always above <see cref="NoTerrain"/> and below
 	/// <see cref="AfterTerrain"/>.
 	/// </summary>
+	/// <param name="cellX">The cell's column.</param>
+	/// <param name="cellY">The cell's row.</param>
 	public uint Rank(int cellX, int cellY) {
 		int dx = cellX - CentreX;
 		int dy = cellY - CentreY;

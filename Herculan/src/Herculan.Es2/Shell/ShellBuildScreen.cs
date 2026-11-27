@@ -103,9 +103,10 @@ public sealed class ShellBuildScreen {
 	private ShellHangar _hangar;
 
 	/// <summary>
-	/// Builds the screen and enters it with <paramref name="bay"/> selected, the bay the previous tab
+	/// Builds the screen and enters it with a bay selected, the bay the previous tab
 	/// left in <c>SelectedBaySlot</c> (<c>00482ae5</c>).
 	/// </summary>
+	/// <param name="bay">The selected bay.</param>
 	public ShellBuildScreen(ShellHangar? hangar = null, int bay = -1, IReadOnlyList<HercInfEntry>? catalog = null,
 			ShellRepairDiagrams? blueprints = null, ShellBayPictures? pictures = null) {
 		_hangar = hangar ?? ShellHangar.From(null);
@@ -283,11 +284,12 @@ public sealed class ShellBuildScreen {
 	}
 
 	/// <summary>
-	/// Draws the whole screen into <paramref name="surface"/>, the squad panel included. The caller
+	/// Draws the whole screen into a surface, the squad panel included. The caller
 	/// clears it first. The content panel's body is dithered, where the repair and crew screens fill
 	/// theirs: the builder writes <c>+0x59</c> to 0 and the dither colour <c>+0x5d</c> to <c>0x25</c>.
-	/// <paramref name="lit"/> is the widget a press has lit.
 	/// </summary>
+	/// <param name="surface">The surface to draw into.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 

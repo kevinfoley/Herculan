@@ -69,9 +69,9 @@ public sealed class ShellMissionNameDialog {
 	public static ShellHit FieldHit => new(new ShellWidget(ShellWidgetKind.MissionNameField, 0), ShellHandler.EditField);
 
 	/// <summary>
-	/// <c>MissionNameDialog_Show</c>: <paramref name="defaultName"/>, the career position's mission or null past the
-	/// end of its stage, written as the default, and the dialog shown.
+	/// <c>MissionNameDialog_Show</c>: the default name written, and the dialog shown.
 	/// </summary>
+	/// <param name="defaultName">The career position's mission, or null past the end of its stage.</param>
 	public void Open(string? defaultName) {
 		DefaultName = defaultName;
 		IsOpen = true;
@@ -116,10 +116,10 @@ public sealed class ShellMissionNameDialog {
 
 	/// <summary>
 	/// Draws the dialog, in the builder's order. The root's backdrop is what the renderer draws beneath an empty
-	/// content, so the caller clears the surface and paints nothing else. <paramref name="focused"/> is whether the
-	/// field has the pointer's focus, whose caret shows while the blink phase is on, and <paramref name="lit"/> the
-	/// widget a press has lit.
+	/// content, so the caller clears the surface and paints nothing else.
 	/// </summary>
+	/// <param name="focused">Whether the field has the pointer's focus, whose caret shows while the blink phase is on.</param>
+	/// <param name="lit">The widget a press has lit.</param>
 	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, bool focused, ShellWidget? lit) {
 		if (!IsOpen) {
 			return;

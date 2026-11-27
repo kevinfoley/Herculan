@@ -16,10 +16,12 @@ public static class Es1Skirting {
 	public const int RetestInterval = 5000;
 
 	/// <summary>
-	/// <c>Mech_AiOnLineOfFireBlocked</c> (<c>00017a80</c>), the HERC's slot <c>+0x68</c>: <paramref name="blocker"/> stored
+	/// <c>Mech_AiOnLineOfFireBlocked</c> (<c>00017a80</c>), the HERC's slot <c>+0x68</c>: the blocker stored
 	/// in <see cref="Es1Mech.LineOfFireBlocker"/> (<c>+0x246</c>) and <see cref="Es1Mech.LineOfFireBlocked"/>
 	/// (<c>+0xa7</c>) set.
 	/// </summary>
+	/// <param name="mech">The machine.</param>
+	/// <param name="blocker">The object blocking the line of fire.</param>
 	public static void OnLineOfFireBlocked(Es1Mech mech, IEs1Placed blocker) {
 		mech.LineOfFireBlocker = blocker;
 		mech.LineOfFireBlocked = true;

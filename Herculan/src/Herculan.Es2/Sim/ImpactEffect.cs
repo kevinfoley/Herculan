@@ -113,11 +113,12 @@ public sealed class ImpactEffect {
 
 	/// <summary>
 	/// <c>Explosion_IsHiddenFromOwnerCockpit</c> (<c>00408240</c>) — whether the view leaves this effect out:
-	/// it has an owner, the camera is attached to that owner (<paramref name="cameraAttachedTo"/>, the
-	/// object <c>Cam_IsAttachedTo</c> (<c>00401078</c>) would answer true for), and it is not one of the types
+	/// it has an owner, the camera is attached to that owner (the object
+	/// <c>Cam_IsAttachedTo</c> (<c>00401078</c>) would answer true for), and it is not one of the types
 	/// always drawn. So from inside a cockpit the effects on that machine's own hull are not drawn. See
 	/// docs/retail/simulation/impact-effects.md#drawing.
 	/// </summary>
+	/// <param name="cameraAttachedTo">The object the camera is attached to, or null.</param>
 	public bool HiddenFromOwnerCockpit(SimObject? cameraAttachedTo) {
 		// The type id is the byte at +0x41, tested as 2 or as an unsigned (id - 11) < 4.
 		byte type = (byte)TypeId;

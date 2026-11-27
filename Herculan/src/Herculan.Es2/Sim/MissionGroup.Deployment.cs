@@ -94,7 +94,7 @@ public sealed partial class MissionGroup {
 	}
 
 	/// <summary>
-	/// Puts the group down around <paramref name="point"/>: the leader on it exactly, and every other
+	/// Puts the group down around a point: the leader on it exactly, and every other
 	/// member at its own formation offset rotated by the leader's new heading — the same vtable
 	/// <c>+0x78</c> call that spread the group over its spawn point at mission load.
 	///
@@ -102,6 +102,8 @@ public sealed partial class MissionGroup {
 	/// with, which is the original's behaviour and not an omission; the AI turns them within a tick
 	/// or two anyway.</para>
 	/// </summary>
+	/// <param name="point">The point the group is put down around.</param>
+	/// <param name="leaderHeading">The leader's new heading.</param>
 	internal void PlaceOnFoot(Vec3i point, short leaderHeading) {
 		if (Leader is not { } leader) {
 			return;
