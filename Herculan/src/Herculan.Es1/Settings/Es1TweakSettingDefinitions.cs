@@ -107,6 +107,13 @@ public static class Es1TweakSettingDefinitions {
 	/// <see cref="Shell.Hangar.Es1HercSquash"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> SquashBayHercs = new("tweak.es1_herc_bay_aspect", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// The digital sounds but a song's are silent while the mission is paused, behind <c>P</c>'s PAUSE panel or the host's
+	/// pause menu, and heard again where they stand when it resumes. This engine's invention. See
+	/// <see cref="Es1Sound.MuteWhilePaused"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> MuteWhilePaused = new("tweak.es1_mute_sfx_while_paused", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
 	#endregion
 
 	#region FUNCTIONAL
@@ -178,7 +185,7 @@ public static class Es1TweakSettingDefinitions {
 	/// <summary>Every Metaltech: Earthsiege tweak setting, listed after the core's in its file.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, SquashBayHercs, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixUnresponsiveSquadmates, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
+		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, SquashBayHercs, MuteWhilePaused, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixUnresponsiveSquadmates, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 
 	/// <summary>
@@ -193,6 +200,6 @@ public static class Es1TweakSettingDefinitions {
 		TweakSettingDefinitions.HighResolutionWidescreen, TweakSettingDefinitions.SmootherTurretMovement,
 		TweakSettingDefinitions.FasterKeyboardAiming, TweakSettingDefinitions.MouseOutsideView,
 		PerspectiveTextureMapping, NearestOfferWins, Stereo, ExtendedDetailRange, FixCockpitEdgeFlicker, FixCrewCancelBay, SkipScreenPause,
-		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, SquashBayHercs, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixUnresponsiveSquadmates, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
+		FixHitShakeGlitches, FixRhinoTopMount, RefreshWeaponArt, FixScrambleLights, FixGlanceCursor, SquashBayHercs, MuteWhilePaused, ProceedKeepsLevels, RealTimeRoundLife, Es2FlyerSpeed, DropDisabledOrderTarget, WingmanTakesLead, FixUnresponsiveSquadmates, FixCareerSaves, CareerOverStops, ShownChassisFollowsCareer,
 	};
 }

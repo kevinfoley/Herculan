@@ -132,6 +132,12 @@ public sealed class Es1Simulation {
 	public bool QuitFlag { get; private set; }
 
 	/// <summary>
+	/// <b>This engine's own:</b> whether <c>P</c>'s PAUSE panel is up, from its raise to its close, which the host tells
+	/// the sound (<see cref="Sound.Es1Sound.SetPaused"/>).
+	/// </summary>
+	public bool PausePanelUp { get; private set; }
+
+	/// <summary>
 	/// <c>Sim_MainTick</c>: one tick, in retail's order, yielding a wait at each pass of a panel's loop the commands
 	/// raise, the status panel and the death flash among them, from which the caller goes on (plan decision 11).
 	/// <paramref name="ended"/> is set when the tick ends the mission: a command's panel answered 2 (the quit prompt's
@@ -364,10 +370,12 @@ public sealed class Es1Simulation {
 			}
 			case P: {
 				var term = new StrongBox<int>();
+				PausePanelUp = true;
 				foreach (var wait in RunStatusPanel(Es1StatusAlertPanel.PauseStatus, term)) {
 					yield return wait;
 				}
 
+				PausePanelUp = false;
 				second = (short)term.Value;
 				break;
 			}

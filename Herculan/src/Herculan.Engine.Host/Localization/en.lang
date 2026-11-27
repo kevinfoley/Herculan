@@ -103,6 +103,8 @@ tweak.es1_fix_glance_cursor.display_name  Fix cursor after side view
 tweak.es1_fix_glance_cursor.description  In the simulator, fixes the cursor getting stuck as a crosshair after glancing left or right.
 tweak.es1_herc_bay_aspect.display_name  Correct HERC Bay aspect ratio
 tweak.es1_herc_bay_aspect.description  Add aspect ratio correction for HERCs in the HERC bay. The original game rendered at 320x200 (16:10) but would have been scaled to 4:3 on a monitor of that era. The artists forgot to account for this with the artwork of HERCs in the bay.
+tweak.es1_mute_sfx_while_paused.display_name  Mute SFX while paused
+tweak.es1_mute_sfx_while_paused.description  Earthsiege has several short looping sound effects that can be very annoying while paused; use this if they drive you crazy. Music is not affected.
 tweak.es1_no_free_repair_level.display_name  No free repair level
 tweak.es1_no_free_repair_level.description  On the SYSTEM REPAIR screen, PROCEED keeps only the repairs you paid for with + and −. Retail repairs the item to the level the STATUS list shows, which after a + is one level more than you paid for.
 tweak.es1_real_time_round_life.display_name  Full cannon range

@@ -636,6 +636,7 @@ public static class Es1MissionHost {
 			}
 
 			pauseHost.Update();
+			sound.SetPaused(pauseMenu.IsOpen || runner?.Simulation.PausePanelUp == true);
 
 			// Sim_Main leaves its loop for Sim_Shutdown. Only a tick ends the mission, so the runner exists here.
 			if (ended && runner != null) {

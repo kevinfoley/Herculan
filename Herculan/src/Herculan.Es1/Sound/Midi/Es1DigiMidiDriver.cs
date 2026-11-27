@@ -253,7 +253,7 @@ public sealed class Es1DigiMidiDriver : IEs1MidiDriver {
 					SetDword(bank, block + 0x40, _pan[slot] << 9);
 				}
 
-				int voice = _digital.StartSample(Start(slot, data1, bank, block), Due());
+				int voice = _digital.StartSample(Start(slot, data1, bank, block), Due(), music: true);
 				if (voice != -1) {
 					AddVoice(slot, voice, Dword(bank, block + 0x18), data2, channel);
 				}

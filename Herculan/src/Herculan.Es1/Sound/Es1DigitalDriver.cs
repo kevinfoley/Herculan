@@ -63,6 +63,7 @@ public sealed class Es1DigitalDriver {
 	private readonly IAudioBackend _backend;
 	private readonly Dictionary<string, int> _samples = new(StringComparer.Ordinal);
 	private readonly Voice[] _voices = new Voice[Voices];
+	private bool _muted;
 
 	/// <param name="backend">The host's mixer; <see cref="NullAudioBackend"/> plays nothing.</param>
 	public Es1DigitalDriver(IAudioBackend backend) {
@@ -85,7 +86,10 @@ public sealed class Es1DigitalDriver {
 	/// <see cref="Update"/> for which <paramref name="due"/> answers true; a volume or pan set before then is the one it
 	/// starts with, and a stop before then frees the voice unheard.</para>
 	/// </summary>
-	public int StartSample(in Es1SampleStart block, Func<bool>? due = null) {
+	/// <param name="block">The start block.</param>
+	/// <param name="due">When the voice's playback may start; none starts it at once.</param>
+	/// <param name="music">Whether the voice plays a song's note, which <see cref="Muted"/> leaves heard.</param>
+	public int StartSample(in Es1SampleStart block, Func<bool>? due = null, bool music = false) {
 		int voice = Array.FindIndex(_voices, v => !v.Busy);
 		if (voice < 0) {
 			return -1;
@@ -99,6 +103,7 @@ public sealed class Es1DigitalDriver {
 		v.Pan = block.StereoPan;
 		v.Repeats = (short)block.Repeats;
 		v.Sample = Sample(block);
+		v.Music = music;
 		v.Due = due;
 		if (due == null || due()) {
 			v.Due = null;
@@ -149,8 +154,29 @@ public sealed class Es1DigitalDriver {
 
 		int old = (short)v.Volume;
 		v.Volume = volume;
-		_backend.SetGain(v.Play, Gain(volume));
+		_backend.SetGain(v.Play, Heard(v));
 		return old;
+	}
+
+	/// <summary>
+	/// <b>This engine's own:</b> whether every voice but a song's is heard at gain 0, its volume, repeats and end running on
+	/// unchanged, so that it is heard again at its volume once this is cleared. The host sets it while the mission is
+	/// paused under <see cref="Es1Sound.MuteWhilePaused"/>.
+	/// </summary>
+	public bool Muted {
+		get => _muted;
+		set {
+			if (value == _muted) {
+				return;
+			}
+
+			_muted = value;
+			foreach (var v in _voices) {
+				if (v.Busy && !v.Music) {
+					_backend.SetGain(v.Play, Heard(v));
+				}
+			}
+		}
 	}
 
 	/// <summary>
@@ -231,7 +257,10 @@ public sealed class Es1DigitalDriver {
 
 	/// <summary>A voice's playback started from its block, at its volume and pan.</summary>
 	private void Begin(Voice v) =>
-		v.Play = v.Sample < 0 ? -1 : _backend.Start(v.Sample, Gain(v.Volume), v.Pan, 1, false);
+		v.Play = v.Sample < 0 ? -1 : _backend.Start(v.Sample, Heard(v), v.Pan, 1, false);
+
+	/// <summary>The gain a voice is heard at: its volume's, or 0 while <see cref="Muted"/> holds it.</summary>
+	private float Heard(Voice v) => _muted && !v.Music ? 0 : Gain(v.Volume);
 
 	/// <summary>The backend's sample for the block's name, decoded and registered the first time a name plays.</summary>
 	private int Sample(in Es1SampleStart block) {
@@ -262,6 +291,7 @@ public sealed class Es1DigitalDriver {
 		public short Repeats;
 		public int Sample = -1;
 		public int Play = -1;
+		public bool Music;
 		public Func<bool>? Due;
 	}
 }

@@ -103,6 +103,25 @@ public sealed class Es1Sound {
 	/// </summary>
 	public static bool Stereo => TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.Stereo);
 
+	/// <summary>
+	/// Whether the digital sounds, every one but a song's, are silent while the mission is paused
+	/// (<see cref="SetPaused"/>); off, they play on through the pause as retail's do. This engine's invention; from
+	/// <see cref="Es1TweakSettingDefinitions.MuteWhilePaused"/>.
+	/// </summary>
+	public static bool MuteWhilePaused => TweakSettings.Current.GetSettingValue(Es1TweakSettingDefinitions.MuteWhilePaused);
+
+	/// <summary>
+	/// <b>This engine's own:</b> the host's word, once a host frame, of whether the mission is paused: with
+	/// <see cref="MuteWhilePaused"/> the driver is muted while it is (<see cref="Es1DigitalDriver.Muted"/>), and otherwise
+	/// not. Nothing with no manager.
+	/// </summary>
+	/// <param name="paused">Whether the mission is paused.</param>
+	public void SetPaused(bool paused) {
+		if (Manager != null) {
+			Manager.Driver.Muted = paused && MuteWhilePaused;
+		}
+	}
+
 	/// <summary><c>Sound_Listener</c> (<c>000bd730</c>): the camera <see cref="UpdateListener"/> last kept, none until then.</summary>
 	public Es1Camera? Listener { get; private set; }
 
