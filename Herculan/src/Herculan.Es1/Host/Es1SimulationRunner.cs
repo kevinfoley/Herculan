@@ -250,7 +250,7 @@ public sealed class Es1SimulationRunner : IEs1FramePacer, IDisposable {
 
 	// The profile's keys, then the typematic.
 	private void AdvanceKeyboard(TimeSpan elapsed) {
-		_customKeys.Update(Simulation.Input.TapePlayback ? [] : CustomKeyActions?.Invoke() ?? []);
+		_customKeys.Update(Simulation.Input.TapePlayback ? [] : CustomKeyActions?.Invoke() ?? [], Simulation.Cockpit?.Mfd.Mode);
 		_hostKeyboard.Advance(elapsed.TotalSeconds);
 	}
 

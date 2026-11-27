@@ -23,8 +23,7 @@ namespace Herculan.Es1.Host;
 internal sealed class Es1PadRadials(Func<Es1SimulationRunner?> runner, Func<Es1ControllerPort?> port) {
 	// The screen radial's eight, in its order: the MFD's six, then the Heads-Down Display's two pages.
 	private static readonly KeyAction[] ScreenActions = [
-		KeyAction.MfdStatus, KeyAction.MfdFlashComm, KeyAction.MfdNavMap, KeyAction.MfdScanner, KeyAction.MfdTarget,
-		KeyAction.MfdMissileCam, KeyAction.CommandDisplay, KeyAction.DamageDetail,
+		.. Es1CustomControls.MfdScreens, KeyAction.CommandDisplay, KeyAction.DamageDetail,
 	];
 
 	private const int MfdScreenCount = Es1MfdDisplay.ModeCount;

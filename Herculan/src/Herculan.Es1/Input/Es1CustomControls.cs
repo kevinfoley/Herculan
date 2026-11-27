@@ -59,6 +59,12 @@ public sealed class Es1CustomControls {
 
 	private static readonly ImmutableHashSet<KeyAction> ThroughBlock = [KeyAction.Fire, .. ViewButtons];
 
+	/// <summary>The MFD's six screens' actions in mode order, each pressing its button through its function key.</summary>
+	public static readonly ImmutableArray<KeyAction> MfdScreens = [
+		KeyAction.MfdStatus, KeyAction.MfdFlashComm, KeyAction.MfdNavMap, KeyAction.MfdScanner, KeyAction.MfdTarget,
+		KeyAction.MfdMissileCam,
+	];
+
 	private readonly ControllerProfile _profile;
 
 	public Es1CustomControls(ControllerProfile profile) {
@@ -67,8 +73,9 @@ public sealed class Es1CustomControls {
 
 	/// <summary>
 	/// The key ES1 gives the action, its first where it has several, or null for an action ES1 sends no key
-	/// for: one Earthsiege 2 alone has, and <see cref="KeyAction.MfdNextScreen"/>, which is the MFD's own step button.
-	/// Most are Earthsiege 2's (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8); these differ.
+	/// for: one Earthsiege 2 alone has, and <see cref="KeyAction.MfdNextScreen"/>, the MFD's title button, which has no
+	/// key and goes in as the next screen's (<see cref="NextScreenChord"/>). Most are Earthsiege 2's
+	/// (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8); these differ.
 	/// </summary>
 	/// <param name="action">The action.</param>
 	public static KeyChord? ChordOf(KeyAction action) => action switch {
@@ -83,6 +90,15 @@ public sealed class Es1CustomControls {
 		_ when HostActions.Contains(action) || ThroughBlock.Contains(action) => null,
 		_ => KeyMap.Default.Chords(action) is { Length: > 0 } chords ? chords[0] : null,
 	};
+
+	/// <summary>
+	/// <b>This engine's own:</b> the key <see cref="KeyAction.MfdNextScreen"/> goes in as, the function key of the MFD's
+	/// next screen, 5 wrapping to 0 and −1, before the first screen is set, going to 0. Pressing that screen's button sets
+	/// the mode that clicking the title sets through <c>MfdDisplay_CycleMode</c>
+	/// (docs/es1/simulation/mfd-display.md#clicks-and-keys), and a recording takes the key.
+	/// </summary>
+	/// <param name="mode">The MFD's mode.</param>
+	public static KeyChord NextScreenChord(int mode) => ChordOf(MfdScreens[(mode + 1) % MfdScreens.Length])!.Value;
 
 	/// <summary>The profile's axes, Fire and views on the device this frame.</summary>
 	/// <param name="device">The controller's state.</param>
@@ -124,10 +140,10 @@ public sealed class Es1CustomControls {
 		return Math.Abs(setting) < LeverDeadband ? 0 : setting;
 	}
 
-	/// <summary>The actions held on the device that go in as a key (<see cref="ChordOf"/>).</summary>
+	/// <summary>The actions held on the device that go in as a key (<see cref="ChordOf"/>, <see cref="NextScreenChord"/>).</summary>
 	/// <param name="device">The controller's state.</param>
 	public IEnumerable<KeyAction> KeyActions(ControllerState device) =>
-		_profile.Held(device, razor: false).Where(action => ChordOf(action) != null);
+		_profile.Held(device, razor: false).Where(action => ChordOf(action) != null || action == KeyAction.MfdNextScreen);
 
 	/// <summary>The first input bound to the action held on the device, or null for none.</summary>
 	/// <param name="device">The controller's state.</param>

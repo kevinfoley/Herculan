@@ -9,16 +9,26 @@ namespace Herculan.Es1.Input;
 /// frame an input bound to it is pressed, and up the frame the last such input is let go, so <c>Keyboard_Dispatch</c>,
 /// the typematic and a recording take it as the key itself
 /// (docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20). A modifier two
-/// held actions share stays down until neither is held.
+/// held actions share stays down until neither is held. <see cref="KeyAction.MfdNextScreen"/> is tapped instead, once a
+/// press, as the next screen's key (<see cref="Es1CustomControls.NextScreenChord"/>).
 /// </summary>
 public sealed class Es1CustomKeys(Es1HostKeyboard keyboard) {
 	private readonly HashSet<KeyAction> _down = [];
 	private readonly HashSet<Key> _modifiers = [];
+	private bool _nextScreenHeld;
 
 	/// <summary>Once a host frame, before the tick: presses the actions newly in the held actions and lets go of the rest.</summary>
 	/// <param name="held">The actions held this frame.</param>
-	public void Update(IEnumerable<KeyAction> held) {
-		var now = held.Where(action => Es1CustomControls.ChordOf(action) != null).ToHashSet();
+	/// <param name="mfdMode">The MFD's mode, which a new press of MFD next screen steps on from; with none, the press sends nothing.</param>
+	public void Update(IEnumerable<KeyAction> held, int? mfdMode = null) {
+		var actions = held.ToHashSet();
+		bool nextScreen = actions.Contains(KeyAction.MfdNextScreen);
+		if (nextScreen && !_nextScreenHeld && mfdMode is { } mode) {
+			keyboard.Tap(Es1CustomControls.NextScreenChord(mode));
+		}
+
+		_nextScreenHeld = nextScreen;
+		var now = actions.Where(action => Es1CustomControls.ChordOf(action) != null).ToHashSet();
 		foreach (var action in _down.Except(now).ToList()) {
 			_down.Remove(action);
 			keyboard.KeyUp(Es1CustomControls.ChordOf(action)!.Value.Key);
